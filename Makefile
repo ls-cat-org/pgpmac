@@ -1,4 +1,4 @@
 
 
-pgpmac: pgpmac.c
-	gcc -o pgpmac pgpmac.c
+pgpmac: pgpmac.c Makefile
+	gcc -g -o pgpmac pgpmac.c -lpq -lncurses
