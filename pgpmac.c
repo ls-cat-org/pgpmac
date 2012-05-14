@@ -165,7 +165,7 @@ typedef struct lsDisplayStruct {
   int motor_num;		// pmac motor number
   char *units;			// string to use as the units
   char *format;			// printf format
-  double c2u;			// conversion from counts to units
+  double u2c;			// conversion from counts to units
   WINDOW *win;			// our ncurses window
 } ls_display_t;
 static ls_display_t ls_displays[32];
@@ -207,7 +207,7 @@ typedef struct lspgQueryQueueStruct {
   void (*onResponse)( struct lspgQueryQueueStruct *qq, PGresult *pgr);		//
 } lspg_query_queue_t;
 
-#define LS_PG_QUERY_QUEUE_LENGTH 1024
+#define LS_PG_QUERY_QUEUE_LENGTH 16318
 static lspg_query_queue_t lspg_query_queue[LS_PG_QUERY_QUEUE_LENGTH];
 static unsigned int lspg_query_queue_on    = 0;
 static unsigned int lspg_query_queue_off   = 0;
@@ -369,6 +369,7 @@ Program		Description
 			P170  = X
 			P171  = Y
 			P172  = Z
+
 
 */
 
@@ -581,14 +582,14 @@ pmac_cmd_queue_t *lsPmacPopReply() {
   return &(ethCmdQueue[(ethCmdReply++) % PMAC_CMD_QUEUE_LENGTH]);
 }
 
-lspg_query_queue_t *lspg_query_pop() {
+lspg_query_queue_t *lspg_query_next() {
   if( lspg_query_queue_off == lspg_query_queue_on)
     return NULL;
 
   return &(lspg_query_queue[(lspg_query_queue_off++) % LS_PG_QUERY_QUEUE_LENGTH]);
 }
 
-void lspg_query_reply_pop() {
+void lspg_query_reply_next() {
   //
   // this is called only when there is nothing else to do to service
   // the reply: this pop does not return anything.
@@ -707,17 +708,17 @@ void lspg_init_motors_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   int i, j;
   uint32_t  motor_number, motor_number_column;
   uint32_t units_column;
-  uint32_t c2u_column;
+  uint32_t u2c_column;
   uint32_t format_column;
   char *sp;
   ls_display_t *lsdp;
   
   motor_number_column = PQfnumber( pgr, "mm_motor");
   units_column        = PQfnumber( pgr, "mm_unit");
-  c2u_column          = PQfnumber( pgr, "mm_c2u");
+  u2c_column          = PQfnumber( pgr, "mm_u2c");
   format_column       = PQfnumber( pgr, "mm_printf");
 
-  if( motor_number_column == -1 || units_column == -1 || c2u_column == -1 || format_column == -1)
+  if( motor_number_column == -1 || units_column == -1 || u2c_column == -1 || format_column == -1)
     return;
 
   for( i=0; i<PQntuples( pgr); i++) {
@@ -730,7 +731,7 @@ void lspg_init_motors_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
 	lsdp = &(ls_displays[j]);
 	lsdp->units = strdup( PQgetvalue( pgr, i, units_column));
 	lsdp->format= strdup( PQgetvalue( pgr, i, format_column));
-	lsdp->c2u   = atof(PQgetvalue( pgr, i, c2u_column));
+	lsdp->u2c   = atof(PQgetvalue( pgr, i, u2c_column));
 	break;
       }
     }
@@ -738,8 +739,8 @@ void lspg_init_motors_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
       continue;
       
 
-    if( fabs(lsdp->c2u) <= 1.0e-9)
-      lsdp->c2u = 1.0;
+    if( fabs(lsdp->u2c) <= 1.0e-9)
+      lsdp->u2c = 1.0;
       
   }
 }
@@ -762,7 +763,7 @@ void lspg_cmd_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
       // This should solve a potential problem where
       // more than one command is put on the queue for a given notify.
       //
-      lspg_query_push( "select pmac.md2_queue_pop()", lspg_cmd_cb);
+      lspg_query_push( "select pmac.md2_queue_next()", lspg_cmd_cb);
     }
   }
 }
@@ -824,7 +825,7 @@ void lsPGService( struct pollfd *evt) {
       while( !PQisBusy( q)) {
 	pgr = PQgetResult( q);
 	if( pgr == NULL) {
-	  lspg_query_reply_pop();
+	  lspg_query_reply_next();
 	  //
 	  // we are now done reading the response from the database
 	  //
@@ -872,7 +873,7 @@ void lsPGService( struct pollfd *evt) {
 	pgn = PQnotifies( q);
 	if( pgn == NULL)
 	  break;
-	lspg_query_push( "select pmac.md2_queue_pop()", lspg_cmd_cb);
+	lspg_query_push( "select pmac.md2_queue_next()", lspg_cmd_cb);
 	PQfreemem( pgn);
       }
     }
@@ -901,7 +902,7 @@ void lsPGService( struct pollfd *evt) {
       lspg_query_queue_t *qqp;
       int err;
 
-      qqp = lspg_query_pop();
+      qqp = lspg_query_next();
       if( qqp == NULL) {
 	//
 	// A send without a query?  Should never happen.
@@ -914,14 +915,14 @@ void lsPGService( struct pollfd *evt) {
 	//
 	// Do we really have to check this case?
 	// It would only come up if we stupidly pushed a null query string
-	// or popped past the top of the stack
+	// or ran off the end of the list
 	//
 	wprintw( term_output, "\nPopped empty query string.  Probably bad things are going on.\n");
 	wnoutrefresh( term_output);
 	wnoutrefresh( term_input);
 	doupdate();
 
-	lspg_query_reply_pop();
+	lspg_query_reply_next();
 	ls_pg_state = LS_PG_STATE_IDLE;
       } else {
 	err = PQsendQuery( q, qqp->qs);
@@ -931,7 +932,7 @@ void lsPGService( struct pollfd *evt) {
 	  wnoutrefresh( term_input);
 	  doupdate();
 
-	  lspg_query_reply_pop();
+	  lspg_query_reply_next();
 	  ls_pg_state == LS_PG_STATE_RESET;
 	} else {
 	  ls_pg_state = LS_PG_STATE_RECV;
@@ -1303,7 +1304,7 @@ void MD2GetStatusCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) 
     mvwprintw( dtp->win, 2, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, " ");
     mvwprintw( dtp->win, 2, 1, "%*d cts", LS_DISPLAY_WINDOW_WIDTH-6, dtp->raw_position);
     mvwprintw( dtp->win, 3, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, " ");
-    mvwprintw( dtp->win, 3, 1, dtp->format, LS_DISPLAY_WINDOW_WIDTH-2-strlen(dtp->units)-1, dtp->raw_position/dtp->c2u);
+    mvwprintw( dtp->win, 3, 1, dtp->format, LS_DISPLAY_WINDOW_WIDTH-2-strlen(dtp->units)-1, dtp->raw_position/dtp->u2c);
     wnoutrefresh( dtp->win);
   }
   wnoutrefresh( term_input);
@@ -1312,6 +1313,40 @@ void MD2GetStatusCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) 
 
 void PmacGetMd2Status() {
   lsSendCmd( VR_UPLOAD, VR_PMAC_GETMEM, 0x180, 0, sizeof(md2_status_t), NULL, MD2GetStatusCB, 0, -1);
+}
+
+
+void PmacGetAllIVarsCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) {
+  static char qs[LS_PG_QUERY_STRING_LENGTH];
+  char *sp;
+  int i;
+  for( i=0, sp=strtok(buff, "\r"); sp != NULL; sp=strtok( NULL, "\r"), i++) {
+    snprintf( qs, sizeof( qs)-1, "SELECT pmac.md2_ivar_set( %d, '%s')", i, sp);
+    qs[sizeof( qs)-1]=0;
+    lspg_query_push( qs, NULL);
+  }
+}
+
+void PmacGetAllIVars() {
+  static char *cmds = "I0..8191";
+  lsSendCmd( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( cmds), cmds, PmacGetAllIVarsCB, 0, -1);
+}
+
+void PmacGetAllMVarsCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) {
+  static char qs[LS_PG_QUERY_STRING_LENGTH];
+  char *sp;
+  int i;
+  for( i=0, sp=strtok(buff, "\r"); sp != NULL; sp=strtok( NULL, "\r"), i++) {
+    snprintf( qs, sizeof( qs)-1, "SELECT pmac.md2_mvar_set( %d, '%s')", i, sp);
+    qs[sizeof( qs)-1]=0;
+    lspg_query_push( qs, NULL);
+  }
+  PmacGetAllIVars();
+}
+
+void PmacGetAllMVars() {
+  static char *cmds = "M0..8191->";
+  lsSendCmd( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( cmds), cmds, PmacGetAllMVarsCB, 0, -1);
 }
 
 
@@ -1588,8 +1623,12 @@ int main( int argc, char **argv) {
       if( ls_pmac_state != LS_PMAC_STATE_DETACHED) {
 	PmacSockFlush();
 
-	PmacSockSendline( "I5=2");
+	PmacGetAllMVars();
+	/*
+	PmacSockSendline( "I5=3");
+	PmacSockSendline( "ENABLE PLCC 0");
 	PmacSockSendline( "ENABLE PLCC 1");
+	*/
       }
     }
 
