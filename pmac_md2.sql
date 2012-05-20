@@ -92,7 +92,8 @@ CREATE OR REPLACE FUNCTION pmac.md2_init( the_stn int) returns void as $$
 
     PERFORM pmac.md2_queue_push( the_stn, 'I5=3');
     PERFORM pmac.md2_queue_push( the_stn, 'ENABLE PLCC 0');
-    PERFORM pmac.md2_queue_push( the_stn, 'ENABLE PLCC 1');
+    PERFORM pmac.md2_queue_push( the_stn, 'DISABLE PLCC 1');
+    PERFORM pmac.md2_queue_push( the_stn, 'ENABLE PLCC 2');
 
     FOR motor IN SELECT * FROM pmac.md2_motors ORDER BY mm_motor LOOP
       IF motor.mm_active THEN
@@ -188,8 +189,8 @@ ALTER TABLE pmac.md2_motors OWNER TO lsadmin;
 INSERT INTO pmac.md2_motors (mm_stn, mm_motor, mm_coord, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max) VALUES
                             ( 2,     1,        1,        'omega',  'deg',   12800.0,  1664.0,       2.0,          '%*.4f°',   '-Infinity', 'Infinity');
 
-UPDATE pmac.md2_motors SET mm_active_init   = '{"M31=1", "&1#1->X", "M700=(M700 | $000001) ^ $000001"}' WHERE mm_motor=1;
-UPDATE pmac.md2_motors SET mm_inactive_init = '{"M31=0", "&1#1->0", "M700=M700 | $000001"}' WHERE mm_motor=1;
+UPDATE pmac.md2_motors SET mm_active_init   = '{"M31=1", "&1#1->X", "M700=(M700 | $000001) ^ $000001", "M1115=1"}' WHERE mm_motor=1;
+UPDATE pmac.md2_motors SET mm_inactive_init = '{"M31=0", "&1#1->0", "M700=M700 | $000001", "M1115=0"}' WHERE mm_motor=1;
 
 INSERT INTO pmac.md2_motors (mm_stn, mm_motor, mm_coord, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max) VALUES
                             ( 2,     2,        3,        'alignx', 'mm',    60620.8,  121.0,        0.5,           '%*.3f mm',  0.01,         4.0);
@@ -210,7 +211,7 @@ UPDATE pmac.md2_motors SET mm_active_init   = '{"M34=1", "&3#4->Z", "M700=(M700 
 UPDATE pmac.md2_motors SET mm_inactive_init = '{"M34=0", "&3#4->0", "M700=M700 | $000008"}' WHERE mm_motor=4;
 
 INSERT INTO pmac.md2_motors (mm_stn, mm_motor, mm_coord, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max) VALUES
-                            ( 2,     5,        0,        'anal',   'deg',   142.0,    3.0,          0.2,          '%*.0f mm',   '-Infinity', 'Infinity');
+                            ( 2,     5,        0,        'anal',   'deg',   142.0,    3.0,          0.2,          '%*.0f°',   '-Infinity', 'Infinity');
 
 INSERT INTO pmac.md2_motors (mm_stn, mm_motor, mm_coord, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max) VALUES
                             ( 2,     6,        4,        'zoom',   'cts',   1.0,      10.0,         0.2,          '%*.0f cts',   0.0,         35700);
