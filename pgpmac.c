@@ -37,60 +37,8 @@
 //
 //
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <string.h>
-#include <netinet/in.h>
-#include <errno.h>
-#include <poll.h>
-#include <libpq-fe.h>
-#include <ncurses.h>
-#include <math.h>
+#include "pgpmac.h"
 
-/*
-  This is a state machine (surprise!)
-  Lacking is support for writingbuffer, control writing and reading, as well as double buffered memory
-  It looks like several different methods of managing PMAC communications are possible.  Here is set up a queue
-  of outgoing commands and deal completely with the result before sending the next.  A full handshake of acknowledgements
-  and "readready" is expected.
-
-  State		Description
-
- -1		Reset the connection
-  0		Detached: need to connect to tcp port
-  1		Idle (waiting for a command to send to the pmac)
-  2		Send command
-  3		Waiting for command acknowledgement (no further response expected)
-  4		Waiting for control character acknowledgement (further response expected)
-  5		Waiting for command acknowledgement (further response expected)
-  6		Waiting for get memory response
-  7		Send controlresponse
-  8		Send readready
-  9		Waiting for acknowledgement of "readready"
- 10		Send readbuffer
- 11		Waiting for control response
- 12		Waiting for readbuffer response
-*/
-
-#define LS_PMAC_STATE_RESET	-1
-#define LS_PMAC_STATE_DETACHED  0
-#define LS_PMAC_STATE_IDLE	1
-#define LS_PMAC_STATE_SC	2
-#define LS_PMAC_STATE_WACK_NFR	3
-#define LS_PMAC_STATE_WACK_CC	4
-#define LS_PMAC_STATE_WACK	5
-#define LS_PMAC_STATE_GMR	6
-#define LS_PMAC_STATE_CR	7
-#define LS_PMAC_STATE_RR	8
-#define LS_PMAC_STATE_WACK_RR	9
-#define LS_PMAC_STATE_GB       10
-#define LS_PMAC_STATE_WCR      11
-#define LS_PMAC_STATE_WGB      12
-static int ls_pmac_state = LS_PMAC_STATE_DETACHED;
 
 /*
   Database state machine
@@ -122,83 +70,21 @@ static int ls_pg_state = LS_PG_STATE_INIT;
 
 
 
-typedef unsigned char BYTE;
-typedef unsigned short WORD;
 
 
 
-//
-// Stylistically this is a define.  Really, though, this value will never change.
-//
-#define PMACPORT 1025
 
-//
-// this size does not include the data
-//
-#define pmac_cmd_size 8
+ls_display_t ls_displays[32];
+int ls_ndisplays = 0;
+WINDOW *term_output;		// place to print stuff out
+WINDOW *term_input;		// place to put the cursor
 
-#define VR_UPLOAD		0xc0
-#define VR_DOWNLOAD		0x40
+static int front_dac;
+static int back_dac;
+static int scint_piezo;
 
-#define VR_PMAC_SENDLINE	0xb0
-#define VR_PMAC_GETLINE		0xb1
-#define VR_PMAC_FLUSH		0xb3
-#define VR_PMAC_GETMEM		0xb4
-#define VR_PMAC_SETMEM		0xb5
-#define VR_PMAC_SENDCTRLCHAR	0xb6
-#define VR_PMAC_SETBIT		0xba
-#define VR_PMAC_SETBITS		0xbb
-#define VR_PMAC_PORT		0xbe
-#define VR_PMAC_GETRESPONSE	0xbf
-#define VR_PMAC_READREADY	0xc2
-#define VR_CTRL_RESPONSE	0xc4
-#define VR_PMAC_GETBUFFER	0xc5
-#define VR_PMAC_WRITEBUFFER	0xc6
-#define VR_PMAC_WRITEERROR	0xc7
-#define VR_FWDOWNLOAD		0xcb
-#define VR_IPADDRESS		0xe0
+WINDOW *term_status;		// shutter, lamp, air, etc status
 
-
-typedef struct lsDisplayStruct {
-  int raw_position;		// raw position read from dpram
-  int dpram_position_offset;	// offset of our position in the md2_status buffer ready by getmem
-  int motor_num;		// pmac motor number
-  char *units;			// string to use as the units
-  char *format;			// printf format
-  double u2c;			// conversion from counts to units
-  WINDOW *win;			// our ncurses window
-} ls_display_t;
-static ls_display_t ls_displays[32];
-static ls_ndisplays = 0;
-static WINDOW *term_output;		// place to print stuff out
-static WINDOW *term_input;		// place to put the cursor
-
-#define LS_DISPLAY_WINDOW_HEIGHT 6
-#define LS_DISPLAY_WINDOW_WIDTH  16
-
-typedef struct tagEthernetCmd {
-  BYTE RequestType;
-  BYTE Request;
-  WORD wValue;
-  WORD wIndex;
-  WORD wLength;
-  BYTE bData[1492];
-} pmac_cmd_t;
-
-typedef struct pmacCmdQueueStruct {
-  pmac_cmd_t pcmd;				// the pmac command to send
-  int no_reply;					// 1 = no reply is expected, 0 = expect a reply
-  int motor_group;				// group of 8 motors that status has been requested (0-3 for motors 1-8, 9-16, 17-24, and 25-32), -1 means status not yet requested
-  unsigned char rbuff[1400];			// buffer for the returned bytes
-  void (*onResponse)(struct pmacCmdQueueStruct *,int, unsigned char *);	// function to call when response is received.  args are (int fd, nreturned, buffer)
-} pmac_cmd_queue_t;
-
-typedef struct pmacMotorStruct {
-  int status;			// 24 bits of status
-  double p;			// position
-  double v;			// velocity
-  double f;			// following error
-} pmac_motor_t;
 
 
 #define LS_PG_QUERY_STRING_LENGTH 1024
@@ -216,55 +102,13 @@ static unsigned int lspg_query_queue_reply = 0;
 //
 // globals
 //
-static struct pollfd pmacfda;			// pollfd object for the pmac
 static struct pollfd pgfda;			// pollfd object for the database connection
 static struct pollfd stdinfda;			// Handle input from the keyboard
-static int chatty=0;				// say what is going on
-static int linesReceived=0;			// current number of lines received
-static pmac_motor_t motors[32];			// current status of our motors
-static unsigned char dbmem[64*1024];		// double buffered memory
-static int dbmemIn = 0;				// next location
+
 static PGconn *q = NULL;
 static PostgresPollingStatusType lspg_connectPoll_response;
 static PostgresPollingStatusType lspg_resetPoll_response;
 
-void PmacSockSendline( char *s);
-
-//
-// minimum time between commands to the pmac
-//
-#define PMAC_MIN_CMD_TIME 20000.0
-static struct timeval pmac_time_sent, now;	// used to ensure we do not send commands to the pmac too often.  Only needed for non-DB commands.
-
-#define PMAC_CMD_QUEUE_LENGTH 2048
-static pmac_cmd_t rr_cmd, gb_cmd, cr_cmd;		// commands to send out "readready", "getbuffer", controlresponse (initialized in main)
-static pmac_cmd_queue_t ethCmdQueue[PMAC_CMD_QUEUE_LENGTH];
-static unsigned int ethCmdOn    = 0;
-static unsigned int ethCmdOff   = 0;
-static unsigned int ethCmdReply = 0;
-
-static char *pmac_error_strs[] = {
-  "ERR000: Unknown error",
-  "ERR001: Command not allowed during program execution",
-  "ERR002: Password error",
-  "ERR003: Data error or unrecognized command",
-  "ERR004: Illegal character",
-  "ERR005: Command not allowed unless buffer is open",
-  "ERR006: No room in buffer for command",
-  "ERR007: Buffer already in use",
-  "ERR008: MACRO auziliary communication error",
-  "ERR009: Program structure error (e.g. ENDIF without IF)",
-  "ERR010: Both overtravel limits set for a motor in the C.S.",
-  "ERR011: Previous move not completed",
-  "ERR012: A motor in the coordinate system is open-loop",
-  "ERR013: A motor in the coordinate system is not activated",
-  "ERR014: No motors in the coordinate system",
-  "ERR015: Not pointer to valid program buffer",
-  "ERR016: Running improperly structure program (e.g. missing ENDWHILE)",
-  "ERR017: Trying to resume after H or Q with motors out of stopped position",
-  "ERR018: Attempt to perform phase reference during move, move during phase reference, or enabling with phase clock error",
-  "ERR019: Illegal position-chage command while moves stored in CCBUFFER"
-};
 
 /*
 **
@@ -374,213 +218,8 @@ Program		Description
 */
 
 
-//
-// DPRAM is from $60000 to ????
-// 
-// We can quickly read 1400 bytes = 350 32-bit registers
-// so reading $60000 to 60015D is not too expensive
-//
-// Gather data starts at $600450 (per turbo pmac user manual)
-//
-// MD2 seems to use $60060 to 
-//
-typedef  struct md2StatusStruct {
-  //
-  // Pmac stores data in 24 bit or 48 bit words
-  //
-  // The DP: addresses point to the low 16 bits of the 24 bit X and Y registers
-  //
-  //  PMAC       Our dp ram offset
-  //
-  // Y:$060000      0x0000
-  // X:$060000      0x0002
-  // Y:$060001      0x0004
-  // X:$060001      0x0006
-  // And so forth
-  //
-  //
-  int omegaHome;		// 0x00           $60060 omega encoder reading at home position
-  int dummy1[31];		//
-  int omega;			// 0x080           $60080
-  int tablex;			// 0x084           $60081
-  int tabley;			// 0x088           $60082
-  int tablez;			// 0x08C           $60083
-  int analyzer;			// 0x090           $60084
-  int zoom;			// 0x094           $60085
-  int aperturey;		// 0x098           $60086
-  int aperturez;		// 0x09C           $60087
-  int capy;			// 0x0A0           $60088
-  int capz;			// 0x0A4           $60089
-  int scinz;			// 0x0A8           $6008A
-  int dummy2[5];		// 0x0AC - 0x0BC   $6008B - $6008F
-  int centerx;			// 0x0C0           $60090
-  int centery;			// 0x0C4           $60091
-  int kappa;			// 0x0C8           $60092
-  int phi;			// 0x0CC           $60093
-  int dummy3[4];		// 0x0D0 - 0x0DC   $60094 - $60097
-  int dummy4[28];		// 0x0E0 - 0x14C   $60098 - $600B3
-  int freq;			// 0x150           $600B4  (commented out in Pmac_MD2.pmc so it's not being set)
-  int dummy5[11];		// 0x154 - 0x17C   $600B5 - $600BF
-  int globalstat1;		// 0x180           $600C0
-  int globalstat2;		// 0x184           $600C1
-  int globalstat3;		// 0x188           $600C2
-
-} md2_status_t;
-
-static md2_status_t md2_status;
 
 
-// swap double to put in into network byte order                                                                                                                           
-// from http://www.dmh2000.com/cpp/dswap.shtml                                                                                                                             
-//                                                                                                                                                                         
-unsigned long long  swapd(double d) {
-  unsigned long long a;
-  unsigned char *dst = (unsigned char *)&a;
-  unsigned char *src = (unsigned char *)&d;
-
-  dst[0] = src[7];
-  dst[1] = src[6];
-  dst[2] = src[5];
-  dst[3] = src[4];
-  dst[4] = src[3];
-  dst[5] = src[2];
-  dst[6] = src[1];
-  dst[7] = src[0];
-
-  return a;
-}
-
-double unswapd( long long a) {
-  double d;
-  unsigned char *dst = (unsigned char *)&d;
-  unsigned char *src = (unsigned char *)&a;
-
-  dst[0] = src[7];
-  dst[1] = src[6];
-  dst[2] = src[5];
-  dst[3] = src[4];
-  dst[4] = src[3];
-  dst[5] = src[2];
-  dst[6] = src[1];
-  dst[7] = src[0];
-
-  return d;
-}
-
-
-void hex_dump( int n, unsigned char *s) {
-  int i,j;
-  for( i=0; n > 0; i++) {
-    for( j=0; j<16 && n > 0; j++) {
-      if( j==8)
-	wprintw( term_output, "  ");
-      wprintw( term_output, " %02x", *(s + 16*i + j));
-      n--;
-    }
-    wprintw( term_output, "\n");
-  }
-  wprintw( term_output, "\n");
-}
-
-void cleanstr( char *s) {
-  int i;
-
-  for( i=0; i<strlen( s); i++) {
-    if( s[i] == '\r')
-      wprintw( term_output, "\n");
-    else
-      wprintw( term_output, "%c", s[i]);
-  }
-}
-
-void lsConnect( char *ipaddr) {
-  int psock;			// our socket: value stored in pmacfda.fd
-  int err;			// error code from some system calls
-  struct sockaddr_in *addrP;	// our address structure to connect to
-  struct addrinfo ai_hints;	// required for getaddrinfo
-  struct addrinfo *ai_resultP;	// linked list of address structures (we'll always pick the first)
-
-  pmacfda.fd     = -1;
-  pmacfda.events = 0;
-
-  // Initial buffer(s)
-  memset( &ai_hints,  0, sizeof( ai_hints));
-  
-  ai_hints.ai_family   = AF_INET;
-  ai_hints.ai_socktype = SOCK_STREAM;
-  
-
-  //
-  // get address
-  //
-  err = getaddrinfo( ipaddr, NULL, &ai_hints, &ai_resultP);
-  if( err != 0) {
-    wprintw( term_output, "Could not find address: %s\n", gai_strerror( err));
-
-    wnoutrefresh( term_output);
-    wnoutrefresh( term_input);
-    doupdate();
-    return;
-  }
-
-  
-  addrP = (struct sockaddr_in *)ai_resultP->ai_addr;
-  addrP->sin_port = htons( PMACPORT);
-
-
-  psock = socket( PF_INET, SOCK_STREAM, 0);
-  if( psock == -1) {
-    wprintw( term_output, "Could not create socket\n");
-
-    wnoutrefresh( term_output);
-    wnoutrefresh( term_input);
-    doupdate();
-    return;
-  }
-
-  err = connect( psock, (const struct sockaddr *)addrP, sizeof( *addrP));
-  if( err != 0) {
-    wprintw( term_output, "Could not connect socket: %s\n", strerror( errno));
-
-    wnoutrefresh( term_output);
-    wnoutrefresh( term_input);
-    doupdate();
-    return;
-  }
-  
-  ls_pmac_state = LS_PMAC_STATE_IDLE;
-  pmacfda.fd     = psock;
-  pmacfda.events = POLLIN;
-
-}
-
-
-//
-// put a new command on the queue
-//
-void lsPmacPushQueue( pmac_cmd_queue_t *cmd) {
-
-  memcpy( &(ethCmdQueue[(ethCmdOn++) % PMAC_CMD_QUEUE_LENGTH]), cmd, sizeof( pmac_cmd_queue_t));
-}
-
-pmac_cmd_queue_t *lsPmacPopQueue() {
-  pmac_cmd_queue_t *rtn;
-
-  if( ethCmdOn == ethCmdOff)
-    return NULL;
-
-  rtn = &(ethCmdQueue[(ethCmdOff++) % PMAC_CMD_QUEUE_LENGTH]);
-
-  return rtn;
-}
-
-
-pmac_cmd_queue_t *lsPmacPopReply() {
-  if( ethCmdOn == ethCmdReply)
-    return NULL;
-  
-  return &(ethCmdQueue[(ethCmdReply++) % PMAC_CMD_QUEUE_LENGTH]);
-}
 
 lspg_query_queue_t *lspg_query_next() {
   if( lspg_query_queue_off == lspg_query_queue_on)
@@ -621,87 +260,6 @@ void lspg_query_push( char *s, void (*cb)( lspg_query_queue_t *, PGresult *pgr))
   lspg_query_queue_on++;
 };
 
-
-void lsSendCmd( int rqType, int rq, int wValue, int wIndex, int wLength, unsigned char *data, void (*responseCB)(pmac_cmd_queue_t *, int, unsigned char *), int no_reply, int motor_group) {
-  static pmac_cmd_queue_t cmd;
-
-  cmd.pcmd.RequestType = rqType;
-  cmd.pcmd.Request     = rq;
-  cmd.pcmd.wValue      = htons(wValue);
-  cmd.pcmd.wIndex      = htons(wIndex);
-  cmd.pcmd.wLength     = htons(wLength);
-  cmd.onResponse       = responseCB;
-  cmd.no_reply	       = no_reply;
-  cmd.motor_group      = motor_group;
-
-  //
-  // Setting the message buff bData requires a bit more care to avoid over filling it
-  // or sending garbage in the unused bytes.
-  //
-  
-  if( wLength > sizeof( cmd.pcmd.bData)) {
-    //
-    // Bad things happen if we do not catch this case.
-    //
-    wprintw( term_output, "Message Length %d longer than maximum of %ld, aborting\n", wLength, sizeof( cmd.pcmd.bData));
-
-    wnoutrefresh( term_output);
-    wnoutrefresh( term_input);
-    doupdate();
-    exit( -1);
-  }
-  if( data == NULL) {
-    memset( cmd.pcmd.bData, 0, sizeof( cmd.pcmd.bData));
-  } else {
-    //
-    // This could leave bData non-null terminated.  I do not know if this is a problem.
-    //
-    if( wLength > 0)
-      memcpy( cmd.pcmd.bData, data, wLength);
-    if( wLength < sizeof( cmd.pcmd.bData))
-      memset( cmd.pcmd.bData + wLength, 0, sizeof( cmd.pcmd.bData) - wLength);
-  }
-
-  lsPmacPushQueue( &cmd);
-}
-
-
-void PmacSockFlush() {
-  lsSendCmd( VR_DOWNLOAD, VR_PMAC_FLUSH, 0, 0, 0, NULL, NULL, 1, -1);
-}
-
-void lsPmacReset() {
-  ls_pmac_state = LS_PMAC_STATE_IDLE;
-
-  // clear queue
-  ethCmdReply = ethCmdOn;
-  ethCmdOff   = ethCmdOn;
-
-  PmacSockFlush();
-}
-
-
-//
-// the service routing detected an error condition
-//
-void lsPmacError( unsigned char *buff) {
-  int err;
-  //
-  // assume buff points to a 1400 byte array of stuff read from the pmac
-  //
-
-  if( buff[0] == 7 && buff[1] == 'E' && buff[2] == 'R' && buff[3] == 'R') {
-    buff[7] = 0;  // For null termination
-    err = atoi( &(buff[4]));
-    if( err > 0 && err < 20) {
-      wprintw( term_output, "\n%s\n", pmac_error_strs[err]);
-      wnoutrefresh( term_output);
-      wnoutrefresh( term_input);
-      doupdate();
-    }
-  }
-  lsPmacReset();
-}
 
 
 void lspg_init_motors_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
@@ -969,400 +527,6 @@ void lsPGService( struct pollfd *evt) {
   }
 }
 
-void lsPmacService( struct pollfd *evt) {
-  static unsigned char *receiveBuffer = NULL;	// the buffer inwhich to stick our incomming characters
-  static int receiveBufferSize = 0;		// size of receiveBuffer
-  static int receiveBufferIn = 0;		// next location to write to in receiveBuffer
-  pmac_cmd_queue_t *cmd;			// maybe the command we are servicing
-  ssize_t nsent, nread;				// nbytes dealt with
-  int i;					// loop counter
-  int foundEOCR;				// end of command response flag
-
-  if( evt->revents & (POLLERR | POLLHUP | POLLNVAL)) {
-    if( pmacfda.fd != -1) {
-      close( pmacfda.fd);
-      pmacfda.fd = -1;
-    }
-    ls_pmac_state = LS_PMAC_STATE_DETACHED;
-    return;
-  }
-
-
-  if( evt->revents & POLLOUT) {
-
-    switch( ls_pmac_state) {
-    case LS_PMAC_STATE_DETACHED:
-      break;
-    case LS_PMAC_STATE_IDLE:
-      break;
-
-    case LS_PMAC_STATE_SC:
-      cmd = lsPmacPopQueue();      
-      if( cmd != NULL) {
-	if( cmd->pcmd.Request == VR_PMAC_GETMEM) {
-	  nsent = send( pmacfda.fd, cmd, pmac_cmd_size, 0);
-	  if( nsent != pmac_cmd_size) {
-	    wprintw( term_output, "\nCould only send %d of %d bytes....Not good.", (int)nsent, (int)(pmac_cmd_size));
-	    wnoutrefresh( term_output);
-	    wnoutrefresh( term_input);
-	    doupdate();
-	  }
-	} else {
-	  nsent = send( pmacfda.fd, cmd, pmac_cmd_size + ntohs(cmd->pcmd.wLength), 0);
-	  gettimeofday( &pmac_time_sent, NULL);
-	  if( nsent != pmac_cmd_size + ntohs(cmd->pcmd.wLength)) {
-	    wprintw( term_output, "\nCould only send %d of %d bytes....Not good.", (int)nsent, (int)(pmac_cmd_size + ntohs(cmd->pcmd.wLength)));
-	    wnoutrefresh( term_output);
-	    wnoutrefresh( term_input);
-	    doupdate();
-	  }
-	}
-      }
-      if( cmd->pcmd.Request == VR_PMAC_SENDCTRLCHAR)
-	ls_pmac_state = LS_PMAC_STATE_WACK_CC;
-      else if( cmd->pcmd.Request == VR_PMAC_GETMEM)
-	ls_pmac_state = LS_PMAC_STATE_GMR;
-      else if( cmd->no_reply == 0)
-	ls_pmac_state = LS_PMAC_STATE_WACK;
-      else
-	ls_pmac_state = LS_PMAC_STATE_WACK_NFR;
-      break;
-
-    case LS_PMAC_STATE_CR:
-      nsent = send( pmacfda.fd, &cr_cmd, pmac_cmd_size, 0);
-      gettimeofday( &pmac_time_sent, NULL);
-      ls_pmac_state = LS_PMAC_STATE_WCR;
-      break;
-
-    case LS_PMAC_STATE_RR:
-      nsent = send( pmacfda.fd, &rr_cmd, pmac_cmd_size, 0);
-      gettimeofday( &pmac_time_sent, NULL);
-      ls_pmac_state = LS_PMAC_STATE_WACK_RR;
-      break;
-
-    case LS_PMAC_STATE_GB:
-      nsent = send( pmacfda.fd, &gb_cmd, pmac_cmd_size, 0);
-      gettimeofday( &pmac_time_sent, NULL);
-      ls_pmac_state = LS_PMAC_STATE_WGB;
-      break;
-    }
-  }
-
-  if( evt->revents & POLLIN) {
-
-    if( receiveBufferSize - receiveBufferIn < 1400) {
-      unsigned char *newbuff;
-
-      receiveBufferSize += 1400;
-      newbuff = calloc( receiveBufferSize, sizeof( unsigned char));
-      if( newbuff == NULL) {
-	wprintw( term_output, "\nOut of memory\n");
-	wnoutrefresh( term_output);
-	wnoutrefresh( term_input);
-	doupdate();
-	exit( -1);
-      }
-      memcpy( newbuff, receiveBuffer, receiveBufferIn);
-      receiveBuffer = newbuff;
-    }
-
-    nread = read( evt->fd, receiveBuffer + receiveBufferIn, 1400);
-
-    foundEOCR = 0;
-    if( ls_pmac_state == LS_PMAC_STATE_GMR) {
-      //
-      // get memory returns binary stuff, don't try to parse it
-      //
-      receiveBufferIn += nread;
-    } else {
-      //
-      // other commands end in 6 if OK, 7 if not
-      //
-      for( i=receiveBufferIn; i<receiveBufferIn+nread; i++) {
-	if( receiveBuffer[i] == 7) {
-	  //
-	  // Error condition
-	  //
-	  lsPmacError( &(receiveBuffer[i]));
-	  receiveBufferIn = 0;
-	  return;
-	}
-	if( receiveBuffer[i] == 6) {
-	  //
-	  // End of command response
-	  //
-	  foundEOCR = 1;
-	  receiveBuffer[i] = 0;
-	  break;
-	}
-      }
-      receiveBufferIn = i;
-    }
-
-    cmd = NULL;
-
-    switch( ls_pmac_state) {
-    case LS_PMAC_STATE_WACK_NFR:
-      receiveBuffer[--receiveBufferIn] = 0;
-      cmd = lsPmacPopReply();
-      ls_pmac_state = LS_PMAC_STATE_IDLE;
-      break;
-    case LS_PMAC_STATE_WACK:
-      receiveBuffer[--receiveBufferIn] = 0;
-      ls_pmac_state = LS_PMAC_STATE_RR;
-      break;
-    case LS_PMAC_STATE_WACK_CC:
-      receiveBuffer[--receiveBufferIn] = 0;
-      ls_pmac_state = LS_PMAC_STATE_CR;
-      break;
-    case LS_PMAC_STATE_WACK_RR:
-      receiveBufferIn -= 2;
-      if( receiveBuffer[receiveBufferIn])
-	ls_pmac_state = LS_PMAC_STATE_GB;
-      else
-	ls_pmac_state = LS_PMAC_STATE_RR;
-      receiveBuffer[receiveBufferIn] = 0;
-      break;
-    case LS_PMAC_STATE_GMR:
-      cmd = lsPmacPopReply();
-      ls_pmac_state = LS_PMAC_STATE_IDLE;
-      break;
-      
-    case LS_PMAC_STATE_WCR:
-      cmd = lsPmacPopReply();
-      ls_pmac_state = LS_PMAC_STATE_IDLE;
-      break;
-    case LS_PMAC_STATE_WGB:
-      if( foundEOCR) {
-	cmd = lsPmacPopReply();
-	ls_pmac_state = LS_PMAC_STATE_IDLE;
-      } else {
-	ls_pmac_state = LS_PMAC_STATE_RR;
-      }
-      break;
-    }
-
-
-    if( cmd != NULL && cmd->onResponse != NULL) {
-      cmd->onResponse( cmd, receiveBufferIn, receiveBuffer);
-      receiveBufferIn = 0;
-    }
-  }
-}
-
-void PmacSetPositions( int motor_group, char *s) {
-  int i;
-  char *sp;
-
-  sp = strtok( s, " ");
-  for( i=motor_group*8; sp != NULL && i<(motor_group + 1)*8; i++) {
-    motors[i].p = atof( sp);
-  }
-}
-void PmacSetVelocities( int motor_group, char *s) {
-  int i;
-  char *sp;
-
-  sp = strtok( s, " ");
-  for( i=motor_group*8; sp != NULL && i<(motor_group + 1)*8; i++) {
-    motors[i].v = atof( sp);
-  }
-}
-
-void PmacSetFollowingErrors( int motor_group, char *s) {
-  int i;
-  char *sp;
-
-  sp = strtok( s, " ");
-  for( i=motor_group*8; sp != NULL && i<(motor_group + 1)*8; i++) {
-    motors[i].f = atof( sp);
-  }
-}
-
-void PmacSetStatuses( int motor_group, char *s) {
-  int i;
-  char *sp;
-
-  sp = strtok( s, " ");
-  for( i=motor_group*8; sp != NULL && i<(motor_group + 1)*8; i++) {
-    motors[i].status = strtol( sp, NULL,  16);
-  }
-}
-
-void PmacGetShortReplyCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) {
-  char *sp;
-
-  if( nreceived < 1400)
-    buff[nreceived]=0;
-
-  sp = (char *)(cmd->pcmd.bData);
-  
-  if( *buff == 0) {
-    wprintw( term_output, "%s\n", sp);
-  } else {
-    wprintw( term_output, "%s: ", sp);
-    cleanstr( buff);
-  }
-  wnoutrefresh( term_output);
-  wnoutrefresh( term_input);
-  doupdate();
-
-  memset( cmd->pcmd.bData, 0, sizeof( cmd->pcmd.bData));
-}
-
-void PmacSendControlReplyPrintCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) {
-    wprintw( term_output, "control-%c: ", '@'+ ntohs(cmd->pcmd.wValue));
-    hex_dump( nreceived, buff);
-    wnoutrefresh( term_output);
-    wnoutrefresh( term_input);
-    doupdate();
-}
-
-void PmacSendControlReplyCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) {
-
-
-  if( cmd->motor_group >=0 && cmd->motor_group < 4) {
-    switch( ntohs(cmd->pcmd.wValue)) {
-    case '\x02':
-      PmacSetStatuses( cmd->motor_group, buff);
-      break;
-    case '\x06':
-      PmacSetFollowingErrors( cmd->motor_group, buff);
-      break;
-    case '\x10':
-      PmacSetPositions( cmd->motor_group, buff);
-      break;
-    case '\x16':
-      PmacSetVelocities( cmd->motor_group, buff);
-      break;
-    default:
-      wprintw( term_output, "control-%c: ", '@'+ ntohs(cmd->pcmd.wValue));
-      cleanstr( buff);
-      wnoutrefresh( term_output);
-      wnoutrefresh( term_input);
-      doupdate();
-    }
-  } else {
-    wprintw( term_output, "control-%c: ", '@'+ ntohs(cmd->pcmd.wValue));
-    cleanstr( buff);
-    wnoutrefresh( term_output);
-    wnoutrefresh( term_input);
-    doupdate();
-  }
-
-
-  memset( cmd->pcmd.bData, 0, sizeof( cmd->pcmd.bData));
-
-}
-
-void PmacGetmemReplyCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) {
-  memcpy( &(dbmem[ntohs(cmd->pcmd.wValue)]), buff, nreceived);
-
-  dbmemIn += nreceived;
-  if( dbmemIn >= sizeof( dbmem)) {
-    dbmemIn = 0;
-  }
-}
-	       
-void PmacSockGetmem( int offset, int nbytes)  {
-  lsSendCmd( VR_UPLOAD,   VR_PMAC_GETMEM, offset, 0, nbytes, NULL, PmacGetmemReplyCB, 0, -1);
-}
-void PmacSockSendline( char *s) {
-  lsSendCmd( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( s), s, PmacGetShortReplyCB, 0, -1);
-}
-void PmacSockSendline_nr( char *s) {
-  lsSendCmd( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( s), s, NULL, 1, -1);
-}
-
-void PmacSockSendControlChar( char c, int motor_group) {
-  lsSendCmd( VR_DOWNLOAD, VR_PMAC_SENDCTRLCHAR, c, 0, 0, NULL, PmacSendControlReplyCB, 0, motor_group);
-}
-
-void PmacSockSendControlCharPrint( char c) {
-  lsSendCmd( VR_DOWNLOAD, VR_PMAC_SENDCTRLCHAR, c, 0, 0, NULL, PmacSendControlReplyPrintCB, 0, -1);
-}
-
-void PmacGetmem() {
-  int nbytes;
-  nbytes = (dbmemIn + 1400 > sizeof( dbmem)) ? sizeof( dbmem) - dbmemIn : 1400;
-  PmacSockGetmem( dbmemIn, nbytes);
-}
-
-void MD2GetStatusCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) {
-  static int cnt = 0;
-  int i, pos;
-  ls_display_t *dtp;
-
-  memcpy( &md2_status, buff, sizeof(md2_status));
-
-  //  hex_dump( nreceived, buff);
-
-
-  for( i=0; i<ls_ndisplays; i++) {
-    dtp = &(ls_displays[i]);
-    memcpy( &(dtp->raw_position), buff+dtp->dpram_position_offset, sizeof( int));
-    mvwprintw( dtp->win, 2, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, " ");
-    mvwprintw( dtp->win, 2, 1, "%*d cts", LS_DISPLAY_WINDOW_WIDTH-6, dtp->raw_position);
-    mvwprintw( dtp->win, 3, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, " ");
-    mvwprintw( dtp->win, 3, 1, dtp->format, LS_DISPLAY_WINDOW_WIDTH-2-strlen(dtp->units)-1, dtp->raw_position/dtp->u2c);
-    wnoutrefresh( dtp->win);
-  }
-  wnoutrefresh( term_input);
-  doupdate();
-}
-
-void PmacGetMd2Status() {
-  lsSendCmd( VR_UPLOAD, VR_PMAC_GETMEM, 0x180, 0, sizeof(md2_status_t), NULL, MD2GetStatusCB, 0, -1);
-}
-
-
-void PmacGetAllIVarsCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) {
-  static char qs[LS_PG_QUERY_STRING_LENGTH];
-  char *sp;
-  int i;
-  for( i=0, sp=strtok(buff, "\r"); sp != NULL; sp=strtok( NULL, "\r"), i++) {
-    snprintf( qs, sizeof( qs)-1, "SELECT pmac.md2_ivar_set( %d, '%s')", i, sp);
-    qs[sizeof( qs)-1]=0;
-    lspg_query_push( qs, NULL);
-  }
-}
-
-void PmacGetAllIVars() {
-  static char *cmds = "I0..8191";
-  lsSendCmd( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( cmds), cmds, PmacGetAllIVarsCB, 0, -1);
-}
-
-void PmacGetAllMVarsCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) {
-  static char qs[LS_PG_QUERY_STRING_LENGTH];
-  char *sp;
-  int i;
-  for( i=0, sp=strtok(buff, "\r"); sp != NULL; sp=strtok( NULL, "\r"), i++) {
-    snprintf( qs, sizeof( qs)-1, "SELECT pmac.md2_mvar_set( %d, '%s')", i, sp);
-    qs[sizeof( qs)-1]=0;
-    lspg_query_push( qs, NULL);
-  }
-  PmacGetAllIVars();
-}
-
-void PmacGetAllMVars() {
-  static char *cmds = "M0..8191->";
-  lsSendCmd( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( cmds), cmds, PmacGetAllMVarsCB, 0, -1);
-}
-
-
-void PmacGetMotors() {
-  int i;
-  char s[32];
-  for( i=0; i<4; i++) {
-    sprintf( s, "##%d", i);
-    PmacSockSendline_nr( s);
-    PmacSockSendControlChar( '\x02', i);	// control-b report 8 motor status words to host
-    PmacSockSendControlChar( '\x06', i);	// control-f report 8 motor following errors
-    PmacSockSendControlChar( '\x10', i);	// control-p report 8 motor positions
-    PmacSockSendControlChar( '\x16', i);	// control-v report 8 motor velocities
-  }
-}
-
 
 void pg_conn() {
   PGresult *pgr;
@@ -1517,9 +681,11 @@ void stdinService( struct pollfd *evt) {
   }
 }
 
-void ls_display_init( ls_display_t *d, int motor_number, int wy, int wx, int dpoff, char *wtitle) {
+void ls_display_init( ls_display_t *d, int motor_number, int wy, int wx, int dpoff, int dpoffs1, int dpoffs2, char *wtitle) {
   ls_ndisplays++;
   d->dpram_position_offset = dpoff;
+  d->status1_offset = dpoffs1;
+  d->status2_offset = dpoffs2;
   d->motor_num = motor_number;
   d->win = newwin( LS_DISPLAY_WINDOW_HEIGHT, LS_DISPLAY_WINDOW_WIDTH, wy*LS_DISPLAY_WINDOW_HEIGHT, wx*LS_DISPLAY_WINDOW_WIDTH);
   box( d->win, 0, 0);
@@ -1529,6 +695,7 @@ void ls_display_init( ls_display_t *d, int motor_number, int wy, int wx, int dpo
 
 int main( int argc, char **argv) {
   static nfds_t nfds;
+  static struct pollfd main_pmac_fda;
   static struct pollfd fda[3], *fdp;	// input for poll: room for postgres, pmac, and stdin
   static int nfd = 0;			// number of items in fda
   static int pollrtn = 0;
@@ -1542,61 +709,45 @@ int main( int argc, char **argv) {
   keypad( stdscr, TRUE);		// Why is F1 nifty?
   refresh();
 
-  ls_display_init( &(ls_displays[ 0]),  1, 0, 0, 0x080, "Omega   #1 &1"); 
-  ls_display_init( &(ls_displays[ 1]),  2, 0, 1, 0x084, "Align X #2 &3"); 
-  ls_display_init( &(ls_displays[ 2]),  3, 0, 2, 0x088, "Align Y #3 &3"); 
-  ls_display_init( &(ls_displays[ 3]),  4, 0, 3, 0x08C, "Align Z #4 &3"); 
-  ls_display_init( &(ls_displays[ 4]),  5, 1, 0, 0x090, "Anal    #5"); 
-  ls_display_init( &(ls_displays[ 5]),  6, 1, 1, 0x094, "Zoom    #6 &4"); 
-  ls_display_init( &(ls_displays[ 6]),  7, 1, 2, 0x098, "Aper Y  #7 &5"); 
-  ls_display_init( &(ls_displays[ 7]),  8, 1, 3, 0x09C, "Aper Z  #8 &5"); 
-  ls_display_init( &(ls_displays[ 8]),  9, 2, 0, 0x0A0, "Cap Y   #9 &5"); 
-  ls_display_init( &(ls_displays[ 9]), 10, 2, 1, 0x0A4, "Cap Z  #10 &5"); 
-  ls_display_init( &(ls_displays[10]), 11, 2, 2, 0x0A8, "Scin Z #11 &5"); 
-  ls_display_init( &(ls_displays[11]), 17, 2, 3, 0x0C0, "Cen X  #17 &2"); 
-  ls_display_init( &(ls_displays[12]), 18, 3, 0, 0x0C4, "Cen Y  #18 &2"); 
-  ls_display_init( &(ls_displays[13]), 19, 3, 1, 0x0C8, "Kappa  #19 &7"); 
-  ls_display_init( &(ls_displays[14]), 20, 3, 2, 0x0CC, "Phi    #20 &7"); 
+  ls_display_init( &(ls_displays[ 0]),  1, 0, 0, 0x084, 0x004, 0x044, "Omega   #1 &1 X"); 
+  ls_display_init( &(ls_displays[ 1]),  2, 0, 1, 0x088, 0x008, 0x048, "Align X #2 &3 X"); 
+  ls_display_init( &(ls_displays[ 2]),  3, 0, 2, 0x08C, 0x00C, 0x04C, "Align Y #3 &3 Y"); 
+  ls_display_init( &(ls_displays[ 3]),  4, 0, 3, 0x090, 0x010, 0x050, "Align Z #4 &3 Z"); 
+  ls_display_init( &(ls_displays[ 4]),  5, 1, 0, 0x094, 0x014, 0x054, "Anal    #5"); 
+  ls_display_init( &(ls_displays[ 5]),  6, 1, 1, 0x098, 0x018, 0x058, "Zoom    #6 &4 Z"); 
+  ls_display_init( &(ls_displays[ 6]),  7, 1, 2, 0x09C, 0x01C, 0x05C, "Aper Y  #7 &5 Y"); 
+  ls_display_init( &(ls_displays[ 7]),  8, 1, 3, 0x0A0, 0x020, 0x060, "Aper Z  #8 &5 Z"); 
+  ls_display_init( &(ls_displays[ 8]),  9, 2, 0, 0x0A4, 0x024, 0x064, "Cap Y   #9 &5 U"); 
+  ls_display_init( &(ls_displays[ 9]), 10, 2, 1, 0x0A8, 0x028, 0x068, "Cap Z  #10 &5 V"); 
+  ls_display_init( &(ls_displays[10]), 11, 2, 2, 0x0AC, 0x02C, 0x06C, "Scin Z #11 &5 W"); 
+  ls_display_init( &(ls_displays[11]), 17, 2, 3, 0x0B0, 0x030, 0x070, "Cen X  #17 &2 X"); 
+  ls_display_init( &(ls_displays[12]), 18, 3, 0, 0x0B4, 0x034, 0x074, "Cen Y  #18 &2 Y"); 
+  ls_display_init( &(ls_displays[13]), 19, 3, 1, 0x0B8, 0x038, 0x078, "Kappa  #19 &7 X"); 
+  ls_display_init( &(ls_displays[14]), 20, 3, 2, 0x0BC, 0x03C, 0x07C, "Phi    #20 &7 Y"); 
 
-
+  term_status = newwin( LS_DISPLAY_WINDOW_HEIGHT, LS_DISPLAY_WINDOW_WIDTH, 3*LS_DISPLAY_WINDOW_HEIGHT, 3*LS_DISPLAY_WINDOW_WIDTH);
+  box( term_status, 0, 0);
+  wnoutrefresh( term_status);
+						      
   term_output = newwin( 10, 4*LS_DISPLAY_WINDOW_WIDTH, 4*LS_DISPLAY_WINDOW_HEIGHT, 0);
-  scrollok( term_output, 1);
-  wnoutrefresh( term_output);
-
+  scrollok( term_output, 1);			      
+  wnoutrefresh( term_output);			      
+						      
   term_input  = newwin( 3, 4*LS_DISPLAY_WINDOW_WIDTH, 10+4*LS_DISPLAY_WINDOW_HEIGHT, 0);
-  box( term_input, 0, 0);
-  mvwprintw( term_input, 1, 1, "PMAC> ");
-  nodelay( term_input, TRUE);
-  keypad( term_input, TRUE);
-  wnoutrefresh( term_input);
+  box( term_input, 0, 0);			      
+  mvwprintw( term_input, 1, 1, "PMAC> ");	      
+  nodelay( term_input, TRUE);			      
+  keypad( term_input, TRUE);			      
+  wnoutrefresh( term_input);			      
+						      
+  doupdate();					      
 
-  doupdate();
 
-  rr_cmd.RequestType = VR_UPLOAD;
-  rr_cmd.Request     = VR_PMAC_READREADY;
-  rr_cmd.wValue      = 0;
-  rr_cmd.wIndex      = 0;
-  rr_cmd.wLength     = htons(2);
-  memset( rr_cmd.bData, 0, sizeof(rr_cmd.bData));
-
-  gb_cmd.RequestType = VR_UPLOAD;
-  gb_cmd.Request     = VR_PMAC_GETBUFFER;
-  gb_cmd.wValue      = 0;
-  gb_cmd.wIndex      = 0;
-  gb_cmd.wLength     = htons(1400);
-  memset( gb_cmd.bData, 0, sizeof(gb_cmd.bData));
-
-  cr_cmd.RequestType = VR_UPLOAD;
-  cr_cmd.Request     = VR_CTRL_RESPONSE;
-  cr_cmd.wValue      = 0;
-  cr_cmd.wIndex      = 0;
-  cr_cmd.wLength     = htons(1400);
-  memset( cr_cmd.bData, 0, sizeof(cr_cmd.bData));
+  lspmac_init( &main_pmac_fda);
 
   //
   //  make sure these file descriptors are not legal until they've been conneceted
   //
-  pmacfda.fd = -1;
   pgfda.fd   = -1;
 
   while( 1) {
@@ -1611,70 +762,7 @@ int main( int argc, char **argv) {
       pg_conn();
 
 
-    //
-    // Connect to the pmac
-    //
-    if( ls_pmac_state == LS_PMAC_STATE_DETACHED) {
-      lsConnect( "192.6.94.5");
-
-      //
-      // If the connect was successful we can proceed with the initialization
-      //
-      if( ls_pmac_state != LS_PMAC_STATE_DETACHED) {
-	PmacSockFlush();
-
-	PmacGetAllMVars();
-	/*
-	PmacSockSendline( "I5=3");
-	PmacSockSendline( "ENABLE PLCC 0");
-	PmacSockSendline( "ENABLE PLCC 1");
-	*/
-      }
-    }
-
-    //
-    // when we are ready, trigger sending a command
-    //
-    if( ls_pmac_state == LS_PMAC_STATE_IDLE && ethCmdOn != ethCmdOff)
-      ls_pmac_state = LS_PMAC_STATE_SC;
-
-
-    //
-    // Set the events flag
-    switch( ls_pmac_state) {
-    case LS_PMAC_STATE_DETACHED:
-      //
-      // there shouldn't be a valid fd, so ignore the events
-      //
-      pmacfda.events = 0;
-      break;
-	
-    case LS_PMAC_STATE_IDLE:
-      if( ethCmdOn == ethCmdOff)
-	PmacGetMd2Status();
-
-    case LS_PMAC_STATE_WACK_NFR:
-    case LS_PMAC_STATE_WACK:
-    case LS_PMAC_STATE_WACK_CC:
-    case LS_PMAC_STATE_WACK_RR:
-    case LS_PMAC_STATE_WCR:
-    case LS_PMAC_STATE_WGB:
-    case LS_PMAC_STATE_GMR:
-      pmacfda.events = POLLIN;
-      break;
-	
-    case LS_PMAC_STATE_SC:
-    case LS_PMAC_STATE_CR:
-    case LS_PMAC_STATE_RR:
-    case LS_PMAC_STATE_GB:
-      gettimeofday( &now, NULL);
-      if(  ((now.tv_sec * 1000000. + now.tv_usec) - (pmac_time_sent.tv_sec * 1000000. + pmac_time_sent.tv_usec)) < PMAC_MIN_CMD_TIME) {
-	pmacfda.events = 0;
-      } else {
-	pmacfda.events = POLLOUT;
-      }
-      break;
-    }
+    lspmac_next_state( &main_pmac_fda);
 
 
     if( ls_pg_state == LS_PG_STATE_IDLE && lspg_query_queue_on != lspg_query_queue_off)
@@ -1718,8 +806,8 @@ int main( int argc, char **argv) {
 
     //
     // pmac socket
-    if( pmacfda.fd != -1) {
-      memcpy( &(fda[nfd++]), &pmacfda, sizeof( struct pollfd));
+    if( main_pmac_fda.fd != -1) {
+      memcpy( &(fda[nfd++]), &main_pmac_fda, sizeof( struct pollfd));
     }
     //
     // postgres socket
@@ -1750,7 +838,7 @@ int main( int argc, char **argv) {
     for( i=0; pollrtn>0 && i<nfd; i++) {
       if( fda[i].revents) {
 	pollrtn--;
-	if( fda[i].fd == pmacfda.fd) {
+	if( fda[i].fd == main_pmac_fda.fd) {
 	  lsPmacService( &fda[i]);
 	} else if( fda[i].fd == PQsocket( q)) {
 	  lsPGService( &fda[i]);
