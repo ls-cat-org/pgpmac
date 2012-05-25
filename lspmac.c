@@ -46,6 +46,12 @@ typedef unsigned char BYTE;
 typedef unsigned short WORD;
 
 
+static pthread_t pmac_thread;			// our thread to manage access and communication to the pmac
+static pthread_mutex_t pmac_queue_mutex;	// manage access to the pmac command queue
+static struct pollfd pmacfd;		        // our poll structure
+
+
+
 //
 // Stylistically this is a define.  Really, though, this value will never change.
 //
@@ -242,6 +248,9 @@ static md2_status_t md2_status;
 
 void hex_dump( int n, unsigned char *s) {
   int i,j;
+
+  pthread_mutex_lock( &ncurses_mutex);
+
   for( i=0; n > 0; i++) {
     for( j=0; j<16 && n > 0; j++) {
       if( j==8)
@@ -252,10 +261,14 @@ void hex_dump( int n, unsigned char *s) {
     wprintw( term_output, "\n");
   }
   wprintw( term_output, "\n");
+
+  pthread_mutex_unlock( &ncurses_mutex);
 }
 
 void cleanstr( char *s) {
   int i;
+
+  pthread_mutex_lock( &ncurses_mutex);
 
   for( i=0; i<strlen( s); i++) {
     if( s[i] == '\r')
@@ -263,17 +276,19 @@ void cleanstr( char *s) {
     else
       wprintw( term_output, "%c", s[i]);
   }
+
+  pthread_mutex_unlock( &ncurses_mutex);
 }
 
-void lsConnect( struct pollfd *fdap, char *ipaddr) {
+void lsConnect( char *ipaddr) {
   int psock;			// our socket: value stored in pmacfda.fd
   int err;			// error code from some system calls
   struct sockaddr_in *addrP;	// our address structure to connect to
   struct addrinfo ai_hints;	// required for getaddrinfo
   struct addrinfo *ai_resultP;	// linked list of address structures (we'll always pick the first)
 
-  fdap->fd     = -1;
-  fdap->events = 0;
+  pmacfd.fd     = -1;
+  pmacfd.events = 0;
 
   // Initial buffer(s)
   memset( &ai_hints,  0, sizeof( ai_hints));
@@ -287,11 +302,17 @@ void lsConnect( struct pollfd *fdap, char *ipaddr) {
   //
   err = getaddrinfo( ipaddr, NULL, &ai_hints, &ai_resultP);
   if( err != 0) {
+
+    pthread_mutex_lock( &ncurses_mutex);
+
     wprintw( term_output, "Could not find address: %s\n", gai_strerror( err));
 
     wnoutrefresh( term_output);
     wnoutrefresh( term_input);
     doupdate();
+
+    pthread_mutex_unlock( &ncurses_mutex);
+
     return;
   }
 
@@ -302,27 +323,32 @@ void lsConnect( struct pollfd *fdap, char *ipaddr) {
 
   psock = socket( PF_INET, SOCK_STREAM, 0);
   if( psock == -1) {
+
+    pthread_mutex_lock( &ncurses_mutex);
     wprintw( term_output, "Could not create socket\n");
 
     wnoutrefresh( term_output);
     wnoutrefresh( term_input);
     doupdate();
+    pthread_mutex_unlock( &ncurses_mutex);
     return;
   }
 
   err = connect( psock, (const struct sockaddr *)addrP, sizeof( *addrP));
   if( err != 0) {
+    pthread_mutex_lock( &ncurses_mutex);
     wprintw( term_output, "Could not connect socket: %s\n", strerror( errno));
 
     wnoutrefresh( term_output);
     wnoutrefresh( term_input);
     doupdate();
+    pthread_mutex_unlock( &ncurses_mutex);
     return;
   }
   
   ls_pmac_state = LS_PMAC_STATE_IDLE;
-  fdap->fd     = psock;
-  fdap->events = POLLIN;
+  pmacfd.fd     = psock;
+  pmacfd.events = POLLIN;
 
 }
 
@@ -331,26 +357,38 @@ void lsConnect( struct pollfd *fdap, char *ipaddr) {
 //
 void lsPmacPushQueue( pmac_cmd_queue_t *cmd) {
 
+  pthread_mutex_lock( &pmac_queue_mutex);
   memcpy( &(ethCmdQueue[(ethCmdOn++) % PMAC_CMD_QUEUE_LENGTH]), cmd, sizeof( pmac_cmd_queue_t));
+  pthread_mutex_unlock( &pmac_queue_mutex);
 }
 
 pmac_cmd_queue_t *lsPmacPopQueue() {
   pmac_cmd_queue_t *rtn;
 
+  pthread_mutex_lock( &pmac_queue_mutex);
+
   if( ethCmdOn == ethCmdOff)
-    return NULL;
+    rtn = NULL;
+  else
+    rtn = &(ethCmdQueue[(ethCmdOff++) % PMAC_CMD_QUEUE_LENGTH]);
 
-  rtn = &(ethCmdQueue[(ethCmdOff++) % PMAC_CMD_QUEUE_LENGTH]);
-
+  pthread_mutex_unlock( &pmac_queue_mutex);
   return rtn;
 }
 
 
 pmac_cmd_queue_t *lsPmacPopReply() {
+  pmac_cmd_queue_t *rtn;
+
+  pthread_mutex_lock( &pmac_queue_mutex);
+
   if( ethCmdOn == ethCmdReply)
-    return NULL;
-  
-  return &(ethCmdQueue[(ethCmdReply++) % PMAC_CMD_QUEUE_LENGTH]);
+    rtn = NULL;
+  else
+    rtn = &(ethCmdQueue[(ethCmdReply++) % PMAC_CMD_QUEUE_LENGTH]);
+
+  pthread_mutex_unlock( &pmac_queue_mutex);
+  return rtn;
 }
 
 void lsSendCmd( int rqType, int rq, int wValue, int wIndex, int wLength, unsigned char *data, void (*responseCB)(pmac_cmd_queue_t *, int, unsigned char *), int no_reply, int motor_group) {
@@ -374,11 +412,13 @@ void lsSendCmd( int rqType, int rq, int wValue, int wIndex, int wLength, unsigne
     //
     // Bad things happen if we do not catch this case.
     //
+    pthread_mutex_lock( &ncurses_mutex);
     wprintw( term_output, "Message Length %d longer than maximum of %ld, aborting\n", wLength, sizeof( cmd.pcmd.bData));
 
     wnoutrefresh( term_output);
     wnoutrefresh( term_input);
     doupdate();
+    pthread_mutex_unlock( &ncurses_mutex);
     exit( -1);
   }
   if( data == NULL) {
@@ -425,10 +465,12 @@ void lsPmacError( unsigned char *buff) {
     buff[7] = 0;  // For null termination
     err = atoi( &(buff[4]));
     if( err > 0 && err < 20) {
+      pthread_mutex_lock( &ncurses_mutex);
       wprintw( term_output, "\n%s\n", pmac_error_strs[err]);
       wnoutrefresh( term_output);
       wnoutrefresh( term_input);
       doupdate();
+      pthread_mutex_unlock( &ncurses_mutex);
     }
   }
   lsPmacReset();
@@ -467,19 +509,23 @@ void lsPmacService( struct pollfd *evt) {
 	if( cmd->pcmd.Request == VR_PMAC_GETMEM) {
 	  nsent = send( evt->fd, cmd, pmac_cmd_size, 0);
 	  if( nsent != pmac_cmd_size) {
+	    pthread_mutex_lock( &ncurses_mutex);
 	    wprintw( term_output, "\nCould only send %d of %d bytes....Not good.", (int)nsent, (int)(pmac_cmd_size));
 	    wnoutrefresh( term_output);
 	    wnoutrefresh( term_input);
 	    doupdate();
+	    pthread_mutex_unlock( &ncurses_mutex);
 	  }
 	} else {
 	  nsent = send( evt->fd, cmd, pmac_cmd_size + ntohs(cmd->pcmd.wLength), 0);
 	  gettimeofday( &pmac_time_sent, NULL);
 	  if( nsent != pmac_cmd_size + ntohs(cmd->pcmd.wLength)) {
+	    pthread_mutex_lock( &ncurses_mutex);
 	    wprintw( term_output, "\nCould only send %d of %d bytes....Not good.", (int)nsent, (int)(pmac_cmd_size + ntohs(cmd->pcmd.wLength)));
 	    wnoutrefresh( term_output);
 	    wnoutrefresh( term_input);
 	    doupdate();
+	    pthread_mutex_unlock( &ncurses_mutex);
 	  }
 	}
       }
@@ -521,10 +567,12 @@ void lsPmacService( struct pollfd *evt) {
       receiveBufferSize += 1400;
       newbuff = calloc( receiveBufferSize, sizeof( unsigned char));
       if( newbuff == NULL) {
+	pthread_mutex_lock( &ncurses_mutex);
 	wprintw( term_output, "\nOut of memory\n");
 	wnoutrefresh( term_output);
 	wnoutrefresh( term_input);
 	doupdate();
+	pthread_mutex_unlock( &ncurses_mutex);
 	exit( -1);
       }
       memcpy( newbuff, receiveBuffer, receiveBufferIn);
@@ -626,9 +674,13 @@ void PmacGetShortReplyCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *b
   sp = (char *)(cmd->pcmd.bData);
   
   if( *buff == 0) {
+    pthread_mutex_lock( &ncurses_mutex);
     wprintw( term_output, "%s\n", sp);
+    pthread_mutex_unlock( &ncurses_mutex);
   } else {
+    pthread_mutex_lock( &ncurses_mutex);
     wprintw( term_output, "%s: ", sp);
+    pthread_mutex_unlock( &ncurses_mutex);
     cleanstr( buff);
   }
   wnoutrefresh( term_output);
@@ -639,11 +691,15 @@ void PmacGetShortReplyCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *b
 }
 
 void PmacSendControlReplyPrintCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) {
+    pthread_mutex_lock( &ncurses_mutex);
     wprintw( term_output, "control-%c: ", '@'+ ntohs(cmd->pcmd.wValue));
+    pthread_mutex_unlock( &ncurses_mutex);
     hex_dump( nreceived, buff);
+    pthread_mutex_lock( &ncurses_mutex);
     wnoutrefresh( term_output);
     wnoutrefresh( term_input);
     doupdate();
+    pthread_mutex_unlock( &ncurses_mutex);
 }
 
 
@@ -681,16 +737,19 @@ void MD2GetStatusCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) 
   static char s[256];
   char *sp;
   int i, pos;
-  ls_display_t *dtp;
+  lspmac_motor_t *dtp;
 
   memcpy( &md2_status, buff, sizeof(md2_status));
 
 
-  for( i=0; i<ls_ndisplays; i++) {
-    dtp = &(ls_displays[i]);
+  pthread_mutex_lock( &ncurses_mutex);
+
+  for( i=0; i<lspmac_nmotors; i++) {
+    dtp = &(lspmac_motors[i]);
     memcpy( &(dtp->raw_position), buff+dtp->dpram_position_offset, sizeof( int));
     memcpy( &(dtp->status1), buff+dtp->status1_offset, sizeof( int));
     memcpy( &(dtp->status2), buff+dtp->status2_offset, sizeof( int));
+
     mvwprintw( dtp->win, 2, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, " ");
     mvwprintw( dtp->win, 2, 1, "%*d cts", LS_DISPLAY_WINDOW_WIDTH-6, dtp->raw_position);
     mvwprintw( dtp->win, 3, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, " ");
@@ -790,6 +849,7 @@ void MD2GetStatusCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) 
 
   wnoutrefresh( term_input);
   doupdate();
+  pthread_mutex_unlock( &ncurses_mutex);
 }
 
 void PmacGetMd2Status() {
@@ -804,7 +864,7 @@ void PmacGetAllIVarsCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buf
   for( i=0, sp=strtok(buff, "\r"); sp != NULL; sp=strtok( NULL, "\r"), i++) {
     snprintf( qs, sizeof( qs)-1, "SELECT pmac.md2_ivar_set( %d, '%s')", i, sp);
     qs[sizeof( qs)-1]=0;
-    lspg_query_push( qs, NULL);
+    lspg_query_push( NULL, qs);
   }
 }
 
@@ -820,7 +880,7 @@ void PmacGetAllMVarsCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buf
   for( i=0, sp=strtok(buff, "\r"); sp != NULL; sp=strtok( NULL, "\r"), i++) {
     snprintf( qs, sizeof( qs)-1, "SELECT pmac.md2_mvar_set( %d, '%s')", i, sp);
     qs[sizeof( qs)-1]=0;
-    lspg_query_push( qs, NULL);
+    lspg_query_push( NULL, qs);
   }
   PmacGetAllIVars();
 }
@@ -831,41 +891,29 @@ void PmacGetAllMVars() {
 }
 
 
-void lspmac_init( struct pollfd *fdap) {
 
-  rr_cmd.RequestType = VR_UPLOAD;
-  rr_cmd.Request     = VR_PMAC_READREADY;
-  rr_cmd.wValue      = 0;
-  rr_cmd.wIndex      = 0;
-  rr_cmd.wLength     = htons(2);
-  memset( rr_cmd.bData, 0, sizeof(rr_cmd.bData));
+void lspmac_sendcmd_nocb( char *fmt, ...) {
+  static char tmps[1024];
+  va_list arg_ptr;
 
-  gb_cmd.RequestType = VR_UPLOAD;
-  gb_cmd.Request     = VR_PMAC_GETBUFFER;
-  gb_cmd.wValue      = 0;
-  gb_cmd.wIndex      = 0;
-  gb_cmd.wLength     = htons(1400);
-  memset( gb_cmd.bData, 0, sizeof(gb_cmd.bData));
+  va_start( arg_ptr, fmt);
+  vsnprintf( tmps, sizeof(tmps)-1, fmt, arg_ptr);
+  tmps[sizeof(tmps)-1]=0;
+  va_end( arg_ptr);
 
-  cr_cmd.RequestType = VR_UPLOAD;
-  cr_cmd.Request     = VR_CTRL_RESPONSE;
-  cr_cmd.wValue      = 0;
-  cr_cmd.wIndex      = 0;
-  cr_cmd.wLength     = htons(1400);
-  memset( cr_cmd.bData, 0, sizeof(cr_cmd.bData));
-
-  fdap->fd = -1;
-
+  lsSendCmd( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen(tmps), tmps, NULL, 0, -1);
 }
 
 
-void lspmac_next_state( struct pollfd *fdap) {
+
+
+void lspmac_next_state() {
 
     //
     // Connect to the pmac
     //
     if( ls_pmac_state == LS_PMAC_STATE_DETACHED) {
-      lsConnect( fdap, "192.6.94.5");
+      lsConnect( "192.6.94.5");
 
       //
       // If the connect was successful we can proceed with the initialization
@@ -892,7 +940,7 @@ void lspmac_next_state( struct pollfd *fdap) {
       //
       // there shouldn't be a valid fd, so ignore the events
       //
-      fdap->events = 0;
+      pmacfd.events = 0;
       break;
 	
     case LS_PMAC_STATE_IDLE:
@@ -906,7 +954,7 @@ void lspmac_next_state( struct pollfd *fdap) {
     case LS_PMAC_STATE_WCR:
     case LS_PMAC_STATE_WGB:
     case LS_PMAC_STATE_GMR:
-      fdap->events = POLLIN;
+      pmacfd.events = POLLIN;
       break;
 	
     case LS_PMAC_STATE_SC:
@@ -915,10 +963,64 @@ void lspmac_next_state( struct pollfd *fdap) {
     case LS_PMAC_STATE_GB:
       gettimeofday( &now, NULL);
       if(  ((now.tv_sec * 1000000. + now.tv_usec) - (pmac_time_sent.tv_sec * 1000000. + pmac_time_sent.tv_usec)) < PMAC_MIN_CMD_TIME) {
-	fdap->events = 0;
+	pmacfd.events = 0;
       } else {
-	fdap->events = POLLOUT;
+	pmacfd.events = POLLOUT;
       }
       break;
     }
+}
+
+
+void *lspmac_worker( void *dummy) {
+
+  while( 1) {
+    int pollrtn;
+
+    lspmac_next_state();
+
+    if( pmacfd.fd == -1) {
+      sleep( 10);	// The pmac is not connected.  Should we warn someone?
+      continue;
+    }
+
+    pollrtn = poll( &pmacfd, 1, 10);
+    if( pollrtn) {
+      lsPmacService( &pmacfd);
+    }
+  }
+}
+
+
+void lspmac_init() {
+  rr_cmd.RequestType = VR_UPLOAD;
+  rr_cmd.Request     = VR_PMAC_READREADY;
+  rr_cmd.wValue      = 0;
+  rr_cmd.wIndex      = 0;
+  rr_cmd.wLength     = htons(2);
+  memset( rr_cmd.bData, 0, sizeof(rr_cmd.bData));
+
+  gb_cmd.RequestType = VR_UPLOAD;
+  gb_cmd.Request     = VR_PMAC_GETBUFFER;
+  gb_cmd.wValue      = 0;
+  gb_cmd.wIndex      = 0;
+  gb_cmd.wLength     = htons(1400);
+  memset( gb_cmd.bData, 0, sizeof(gb_cmd.bData));
+
+  cr_cmd.RequestType = VR_UPLOAD;
+  cr_cmd.Request     = VR_CTRL_RESPONSE;
+  cr_cmd.wValue      = 0;
+  cr_cmd.wIndex      = 0;
+  cr_cmd.wLength     = htons(1400);
+  memset( cr_cmd.bData, 0, sizeof(cr_cmd.bData));
+
+  pthread_mutex_init( &pmac_queue_mutex, NULL);
+  pmacfd.fd = -1;
+
+}
+
+void lspmac_run() {
+
+  pthread_create( &pmac_thread, NULL, lspmac_worker, NULL);
+
 }

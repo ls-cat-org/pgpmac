@@ -32,11 +32,13 @@
 
 #include "pgpmac.h"
 
-ls_display_t ls_displays[32];
-int ls_ndisplays = 0;
-WINDOW *term_output;		// place to print stuff out
-WINDOW *term_input;		// place to put the cursor
-WINDOW *term_status;		// shutter, lamp, air, etc status
+lspmac_motor_t lspmac_motors[32];
+int lspmac_nmotors = 0;
+WINDOW *term_output;			// place to print stuff out
+WINDOW *term_input;			// place to put the cursor
+WINDOW *term_status;			// shutter, lamp, air, etc status
+
+pthread_mutex_t ncurses_mutex;		// allow more than one thread access to the screen
 
 
 //
@@ -224,8 +226,8 @@ void stdinService( struct pollfd *evt) {
   }
 }
 
-void ls_display_init( ls_display_t *d, int motor_number, int wy, int wx, int dpoff, int dpoffs1, int dpoffs2, char *wtitle) {
-  ls_ndisplays++;
+void ls_display_init( lspmac_motor_t *d, int motor_number, int wy, int wx, int dpoff, int dpoffs1, int dpoffs2, char *wtitle) {
+  lspmac_nmotors++;
   d->dpram_position_offset = dpoff;
   d->status1_offset = dpoffs1;
   d->status2_offset = dpoffs2;
@@ -238,8 +240,6 @@ void ls_display_init( ls_display_t *d, int motor_number, int wy, int wx, int dpo
 
 int main( int argc, char **argv) {
   static nfds_t nfds;
-  static struct pollfd main_pmac_fda;
-  static struct pollfd main_pg_fda;
 
   static struct pollfd fda[3], *fdp;	// input for poll: room for postgres, pmac, and stdin
   static int nfd = 0;			// number of items in fda
@@ -254,21 +254,24 @@ int main( int argc, char **argv) {
   keypad( stdscr, TRUE);		// Why is F1 nifty?
   refresh();
 
-  ls_display_init( &(ls_displays[ 0]),  1, 0, 0, 0x084, 0x004, 0x044, "Omega   #1 &1 X"); 
-  ls_display_init( &(ls_displays[ 1]),  2, 0, 1, 0x088, 0x008, 0x048, "Align X #2 &3 X"); 
-  ls_display_init( &(ls_displays[ 2]),  3, 0, 2, 0x08C, 0x00C, 0x04C, "Align Y #3 &3 Y"); 
-  ls_display_init( &(ls_displays[ 3]),  4, 0, 3, 0x090, 0x010, 0x050, "Align Z #4 &3 Z"); 
-  ls_display_init( &(ls_displays[ 4]),  5, 1, 0, 0x094, 0x014, 0x054, "Anal    #5"); 
-  ls_display_init( &(ls_displays[ 5]),  6, 1, 1, 0x098, 0x018, 0x058, "Zoom    #6 &4 Z"); 
-  ls_display_init( &(ls_displays[ 6]),  7, 1, 2, 0x09C, 0x01C, 0x05C, "Aper Y  #7 &5 Y"); 
-  ls_display_init( &(ls_displays[ 7]),  8, 1, 3, 0x0A0, 0x020, 0x060, "Aper Z  #8 &5 Z"); 
-  ls_display_init( &(ls_displays[ 8]),  9, 2, 0, 0x0A4, 0x024, 0x064, "Cap Y   #9 &5 U"); 
-  ls_display_init( &(ls_displays[ 9]), 10, 2, 1, 0x0A8, 0x028, 0x068, "Cap Z  #10 &5 V"); 
-  ls_display_init( &(ls_displays[10]), 11, 2, 2, 0x0AC, 0x02C, 0x06C, "Scin Z #11 &5 W"); 
-  ls_display_init( &(ls_displays[11]), 17, 2, 3, 0x0B0, 0x030, 0x070, "Cen X  #17 &2 X"); 
-  ls_display_init( &(ls_displays[12]), 18, 3, 0, 0x0B4, 0x034, 0x074, "Cen Y  #18 &2 Y"); 
-  ls_display_init( &(ls_displays[13]), 19, 3, 1, 0x0B8, 0x038, 0x078, "Kappa  #19 &7 X"); 
-  ls_display_init( &(ls_displays[14]), 20, 3, 2, 0x0BC, 0x03C, 0x07C, "Phi    #20 &7 Y"); 
+  pthread_mutex_init( &ncurses_mutex, NULL);	// might as well start practicing good thread behaviour
+  pthread_mutex_lock( &ncurses_mutex);
+
+  ls_display_init( &(lspmac_motors[ 0]),  1, 0, 0, 0x084, 0x004, 0x044, "Omega   #1 &1 X"); 
+  ls_display_init( &(lspmac_motors[ 1]),  2, 0, 1, 0x088, 0x008, 0x048, "Align X #2 &3 X"); 
+  ls_display_init( &(lspmac_motors[ 2]),  3, 0, 2, 0x08C, 0x00C, 0x04C, "Align Y #3 &3 Y"); 
+  ls_display_init( &(lspmac_motors[ 3]),  4, 0, 3, 0x090, 0x010, 0x050, "Align Z #4 &3 Z"); 
+  ls_display_init( &(lspmac_motors[ 4]),  5, 1, 0, 0x094, 0x014, 0x054, "Anal    #5"); 
+  ls_display_init( &(lspmac_motors[ 5]),  6, 1, 1, 0x098, 0x018, 0x058, "Zoom    #6 &4 Z"); 
+  ls_display_init( &(lspmac_motors[ 6]),  7, 1, 2, 0x09C, 0x01C, 0x05C, "Aper Y  #7 &5 Y"); 
+  ls_display_init( &(lspmac_motors[ 7]),  8, 1, 3, 0x0A0, 0x020, 0x060, "Aper Z  #8 &5 Z"); 
+  ls_display_init( &(lspmac_motors[ 8]),  9, 2, 0, 0x0A4, 0x024, 0x064, "Cap Y   #9 &5 U"); 
+  ls_display_init( &(lspmac_motors[ 9]), 10, 2, 1, 0x0A8, 0x028, 0x068, "Cap Z  #10 &5 V"); 
+  ls_display_init( &(lspmac_motors[10]), 11, 2, 2, 0x0AC, 0x02C, 0x06C, "Scin Z #11 &5 W"); 
+  ls_display_init( &(lspmac_motors[11]), 17, 2, 3, 0x0B0, 0x030, 0x070, "Cen X  #17 &2 X"); 
+  ls_display_init( &(lspmac_motors[12]), 18, 3, 0, 0x0B4, 0x034, 0x074, "Cen Y  #18 &2 Y"); 
+  ls_display_init( &(lspmac_motors[13]), 19, 3, 1, 0x0B8, 0x038, 0x078, "Kappa  #19 &7 X"); 
+  ls_display_init( &(lspmac_motors[14]), 20, 3, 2, 0x0BC, 0x03C, 0x07C, "Phi    #20 &7 Y"); 
 
   term_status = newwin( LS_DISPLAY_WINDOW_HEIGHT, LS_DISPLAY_WINDOW_WIDTH, 3*LS_DISPLAY_WINDOW_HEIGHT, 3*LS_DISPLAY_WINDOW_WIDTH);
   box( term_status, 0, 0);
@@ -286,34 +289,28 @@ int main( int argc, char **argv) {
   wnoutrefresh( term_input);			      
 						      
   doupdate();					      
+  pthread_mutex_unlock( &ncurses_mutex);
 
 
-  lspmac_init( &main_pmac_fda);
+  //
+  // Since the modules reference objects in other modules it is important
+  // that everyone is initiallized before anyone runs
+  //
+  lspmac_init();
+  lspg_init();
+  md2cmds_init();
 
-  lspg_init( &main_pg_fda);
-
+  lspmac_run();
+  lspg_run();
+  md2cmds_run();
 
   while( 1) {
     //
     // Big loop
     //
 
-    lspg_next_state( &main_pg_fda);
-    lspmac_next_state( &main_pmac_fda);
-
     nfd = 0;
 
-    //
-    // pmac socket
-    if( main_pmac_fda.fd != -1) {
-      memcpy( &(fda[nfd++]), &main_pmac_fda, sizeof( struct pollfd));
-    }
-    //
-    // postgres socket
-    //
-    if( main_pg_fda.fd != -1) {
-      memcpy( &(fda[nfd++]), &main_pg_fda, sizeof( struct pollfd));
-    }
     //
     // keyboard
     //
@@ -337,11 +334,7 @@ int main( int argc, char **argv) {
     for( i=0; pollrtn>0 && i<nfd; i++) {
       if( fda[i].revents) {
 	pollrtn--;
-	if( fda[i].fd == main_pmac_fda.fd) {
-	  lsPmacService( &fda[i]);
-	} else if( fda[i].fd == main_pg_fda.fd) {
-	  lsPGService( &fda[i]);
-	} else if( fda[i].fd == 0) {
+	if( fda[i].fd == 0) {
 	  stdinService( &fda[i]);
 	}
       }
