@@ -3489,6 +3489,17 @@ DWELL0
 PhiScan = 0
 FShutterManualEnable = 1
 FShutterScanEnable = 0
+DWELL0
+
+;
+; Set up the next scan
+;
+If (P171 - P170 != 0)
+  X(P171-P5000-P178)      ;  Move Phi to the next start position
+EndIf
+DWELL0
+
+
 M431=0                         ;  Clear the VB synchro. flag
 CLOSE
 
@@ -4192,6 +4203,10 @@ M6004->Y:$78C05,0,24,U	; 7 Etel Enable, 8 F Shutter Enable, 9 F Shutter Man Enab
 
 OPEN PLCC 2 CLEAR
 
+;Motor encoder home capture position
+M522=M520  ;Used for A&B registers set up.
+
+
 M5001=M1	; Omega
 M5002=M2	; Alignment Table X
 M5003=M3	; Alignment Table Y
@@ -4260,4 +4275,120 @@ M5072=P3001	; FastShutterHasOpened
 M5073=P3005	; FastShutterHasGloballyOpened
 M5074=P177	; Number of passes (FShutterIsOpen false and FastShutterHasOpened true and npasses=1 means we can read the detector)
 
+CLOSE
+
+
+
+;
+; LS-CAT modification to omega scan prog 31
+;
+; P170->Shutter Open Counts       P171->Delta omega counts
+;                                 P173->Phi Velocity (floating point)
+;                                 P175->Acceleration time (floating point)
+;                                 P177->Number of passes
+; P178->Shutter Rising Distance   P179->Shutter Falling Distance
+; P180->Exposure Time (ms)
+
+&1
+OPEN PROG 131 CLEAR
+%100
+dwell0
+dwell0
+FastShutterOpenHist = 0 ; clear shutter openings history
+PhiScan = 1
+P5000=P173*(P175 + 200)/2      ;  Calcul of Accel Dist + 200 ms of margin
+TM(1)                    ;  In order to have the maximum speed
+ABS(X)
+If (P171 = 0)
+  X(P170)                 ;  Move Phi to the start position
+Else
+  X(P170-P5000-P178)      ;  Move Phi to the start position
+EndIf
+DWELL0
+LINEAR
+F(P173)                 ;  New velocity
+TS(P175/2)              ;  S curve acceleration  time set to 0
+DWELL0
+If (P171 = 0)
+  FShutterScanEnable = 0
+  FShutterManualEnable = 1
+  FastShutterHasOpened = 0
+  DWELL1 ; Allow data gathering to see the shutter command
+  FShutterManualOn     = 1
+  DWell(P180)
+  FShutterManualOn     = 0
+  DWELL1 ; Allow data gathering to see the shutter command
+  FShutterManualEnable = 0
+  If (FastShutterHasOpened = 1)
+    FastShutterOpenHist =  FastShutterOpenHist + 1
+  EndIf
+Else
+  FShutterManualEnable  = 0
+  M601=ShutterPulseDuration * P173 ; get the phi delta position for the shutter pulse
+  While (P177 > 0)
+    If (P177 > 0)
+      M3021=M522+P170-P178          ;  CaptureOffset + OpenPos - RisingDist
+      M3022=M3021+M601              ;  Large step to support the RC on ETEL card
+      M3031=M522+P170+P171-P179     ;  CaptureOffset + ClosePos - FallingDist
+      M3032=M3031+M601
+      DWELL0
+      M3025=0
+      M3024=1
+      M3035=0
+      M3034=1
+      FastShutterHasOpened = 0
+      DWELL0
+      Cmd "m1124=1" ;FShutterScanEnable=1
+      DWELL0
+      X(P170+P171+P5000+P178)       ;  Phi to the stop position
+      DWELL0
+      Cmd "m1124=0" ;FShutterScanEnable=0
+      DWELL0
+      If (FastShutterHasOpened = 1)
+        FastShutterOpenHist =  FastShutterOpenHist + 1
+      EndIf
+      P177=P177-1
+    EndIf
+    If (P177 > 0)               ;  Here P171 & P170 are inverted because the sens has changed
+      M3021=M522+P170+P171+P178 ;  CaptureOffset + OpenPos + RisingDist
+      M3022=M3021-M601
+      M3031=M522+P170+P179      ;  CaptureOffset + OpenPos + FallingDist
+      M3032=M3031-M601
+      DWELL0
+      M3025=0
+      M3024=1
+      M3035=0
+      M3034=1
+      FastShutterHasOpened = 0
+      DWELL0
+      cmd "m1124=1" ;FShutterScanEnable=1
+      DWELL0
+      X(P170-P5000-P178)       ;  Phi to the stop position
+      DWELL0
+      cmd "m1124=0" ;FShutterScanEnable=0
+      DWELL0
+      If (FastShutterHasOpened = 1)
+        FastShutterOpenHist =  FastShutterOpenHist + 1
+      EndIf
+  
+      P177=P177-1
+    EndIf
+  EndWhile
+EndIf
+DWELL0
+F(I122)
+DWELL0
+PhiScan = 0
+FShutterManualEnable = 1
+FShutterScanEnable = 0
+DWELL0
+;
+; Set up the next scan
+;
+If (P171 != 0)
+  X(P170+P171-P5000-P178)      ;  Move Phi to the next start position
+EndIf
+DWELL0
+
+M431=0                         ;  Clear the VB synchro. flag
 CLOSE
