@@ -42,14 +42,40 @@
 
 static int ls_pmac_state = LS_PMAC_STATE_DETACHED;
 
-typedef unsigned char BYTE;
-typedef unsigned short WORD;
+int lspmac_shutter_state;
+int lspmac_shutter_has_opened;
+pthread_mutex_t lspmac_shutter_mutex;
+pthread_cond_t  lspmac_shutter_cond;
+pthread_mutex_t lspmac_moving_mutex;
+pthread_cond_t  lspmac_moving_cond;
+int lspmac_moving_flags;
 
 
 static pthread_t pmac_thread;			// our thread to manage access and communication to the pmac
 static pthread_mutex_t pmac_queue_mutex;	// manage access to the pmac command queue
+static pthread_cond_t  pmac_queue_cond;
 static struct pollfd pmacfd;		        // our poll structure
 
+static int getivars = 0;			// flag set at initialization to send i vars to db
+static int getmvars = 0;			// flag set at initialization to send m vars to db
+
+lspmac_motor_t lspmac_motors[32];
+int lspmac_nmotors = 0;
+lspmac_motor_t *omega;
+lspmac_motor_t *alignx;
+lspmac_motor_t *aligny;
+lspmac_motor_t *alignz;
+lspmac_motor_t *anal;
+lspmac_motor_t *zoom;
+lspmac_motor_t *apery;
+lspmac_motor_t *aperz;
+lspmac_motor_t *capy;
+lspmac_motor_t *capz;
+lspmac_motor_t *scinz;
+lspmac_motor_t *cenx;
+lspmac_motor_t *ceny;
+lspmac_motor_t *kappa;
+lspmac_motor_t *phi;
 
 
 //
@@ -82,23 +108,6 @@ static struct pollfd pmacfd;		        // our poll structure
 #define VR_PMAC_WRITEERROR	0xc7
 #define VR_FWDOWNLOAD		0xcb
 #define VR_IPADDRESS		0xe0
-
-typedef struct tagEthernetCmd {
-  BYTE RequestType;
-  BYTE Request;
-  WORD wValue;
-  WORD wIndex;
-  WORD wLength;
-  BYTE bData[1492];
-} pmac_cmd_t;
-
-typedef struct pmacCmdQueueStruct {
-  pmac_cmd_t pcmd;				// the pmac command to send
-  int no_reply;					// 1 = no reply is expected, 0 = expect a reply
-  int motor_group;				// group of 8 motors that status has been requested (0-3 for motors 1-8, 9-16, 17-24, and 25-32), -1 means status not yet requested
-  unsigned char rbuff[1400];			// buffer for the returned bytes
-  void (*onResponse)(struct pmacCmdQueueStruct *,int, unsigned char *);	// function to call when response is received.  args are (int fd, nreturned, buffer)
-} pmac_cmd_queue_t;
 
 
 static int linesReceived=0;			// current number of lines received
@@ -241,7 +250,10 @@ typedef  struct md2StatusStruct {
   int fs_is_open;		// 0x100		$60140
   int phiscan;			// 0x104		$60141
   int fs_has_opened;		// 0x108		$60142
-  
+  int fs_has_opened_globally;	// 0x10C		$60143
+  int number_passes;		// 0x110		$60144	
+
+  int moving_flags;		// 0x11C		$60145
 } md2_status_t;
 
 static md2_status_t md2_status;
@@ -355,29 +367,39 @@ void lsConnect( char *ipaddr) {
 //
 // put a new command on the queue
 //
-void lsPmacPushQueue( pmac_cmd_queue_t *cmd) {
+// Pointer is returned so caller can evaluate the time command was actually sent
+//
+pmac_cmd_queue_t *lspmac_push_queue( pmac_cmd_queue_t *cmd) {
+  pmac_cmd_queue_t *rtn;
 
   pthread_mutex_lock( &pmac_queue_mutex);
-  memcpy( &(ethCmdQueue[(ethCmdOn++) % PMAC_CMD_QUEUE_LENGTH]), cmd, sizeof( pmac_cmd_queue_t));
+  rtn = &(ethCmdQueue[(ethCmdOn++) % PMAC_CMD_QUEUE_LENGTH]);
+  memcpy( rtn, cmd, sizeof( pmac_cmd_queue_t));
+  rtn->time_sent.tv_sec  = 0;
+  rtn->time_sent.tv_nsec = 0;
+  pthread_cond_signal( &pmac_queue_cond);
   pthread_mutex_unlock( &pmac_queue_mutex);
+
+  return rtn;
 }
 
-pmac_cmd_queue_t *lsPmacPopQueue() {
+pmac_cmd_queue_t *lspmac_pop_queue() {
   pmac_cmd_queue_t *rtn;
 
   pthread_mutex_lock( &pmac_queue_mutex);
 
   if( ethCmdOn == ethCmdOff)
     rtn = NULL;
-  else
+  else {
     rtn = &(ethCmdQueue[(ethCmdOff++) % PMAC_CMD_QUEUE_LENGTH]);
-
+    clock_gettime( CLOCK_REALTIME, &(rtn->time_sent));
+  }
   pthread_mutex_unlock( &pmac_queue_mutex);
   return rtn;
 }
 
 
-pmac_cmd_queue_t *lsPmacPopReply() {
+pmac_cmd_queue_t *lspmac_pop_reply() {
   pmac_cmd_queue_t *rtn;
 
   pthread_mutex_lock( &pmac_queue_mutex);
@@ -391,7 +413,7 @@ pmac_cmd_queue_t *lsPmacPopReply() {
   return rtn;
 }
 
-void lsSendCmd( int rqType, int rq, int wValue, int wIndex, int wLength, unsigned char *data, void (*responseCB)(pmac_cmd_queue_t *, int, unsigned char *), int no_reply, int motor_group) {
+pmac_cmd_queue_t *lspmac_send_command( int rqType, int rq, int wValue, int wIndex, int wLength, unsigned char *data, void (*responseCB)(pmac_cmd_queue_t *, int, unsigned char *), int no_reply) {
   static pmac_cmd_queue_t cmd;
 
   cmd.pcmd.RequestType = rqType;
@@ -401,7 +423,6 @@ void lsSendCmd( int rqType, int rq, int wValue, int wIndex, int wLength, unsigne
   cmd.pcmd.wLength     = htons(wLength);
   cmd.onResponse       = responseCB;
   cmd.no_reply	       = no_reply;
-  cmd.motor_group      = motor_group;
 
   //
   // Setting the message buff bData requires a bit more care to avoid over filling it
@@ -433,29 +454,29 @@ void lsSendCmd( int rqType, int rq, int wValue, int wIndex, int wLength, unsigne
       memset( cmd.pcmd.bData + wLength, 0, sizeof( cmd.pcmd.bData) - wLength);
   }
 
-  lsPmacPushQueue( &cmd);
+  return lspmac_push_queue( &cmd);
 }
 
 
-void PmacSockFlush() {
-  lsSendCmd( VR_DOWNLOAD, VR_PMAC_FLUSH, 0, 0, 0, NULL, NULL, 1, -1);
+void lspmac_SockFlush() {
+  lspmac_send_command( VR_DOWNLOAD, VR_PMAC_FLUSH, 0, 0, 0, NULL, NULL, 1);
 }
 
-void lsPmacReset() {
+void lspmac_Reset() {
   ls_pmac_state = LS_PMAC_STATE_IDLE;
 
   // clear queue
   ethCmdReply = ethCmdOn;
   ethCmdOff   = ethCmdOn;
 
-  PmacSockFlush();
+  lspmac_SockFlush();
 }
 
 
 //
 // the service routing detected an error condition
 //
-void lsPmacError( unsigned char *buff) {
+void lspmac_Error( unsigned char *buff) {
   int err;
   //
   // assume buff points to a 1400 byte array of stuff read from the pmac
@@ -473,10 +494,10 @@ void lsPmacError( unsigned char *buff) {
       pthread_mutex_unlock( &ncurses_mutex);
     }
   }
-  lsPmacReset();
+  lspmac_Reset();
 }
 
-void lsPmacService( struct pollfd *evt) {
+void lspmac_Service( struct pollfd *evt) {
   static unsigned char *receiveBuffer = NULL;	// the buffer inwhich to stick our incomming characters
   static int receiveBufferSize = 0;		// size of receiveBuffer
   static int receiveBufferIn = 0;		// next location to write to in receiveBuffer
@@ -504,7 +525,7 @@ void lsPmacService( struct pollfd *evt) {
       break;
 
     case LS_PMAC_STATE_SC:
-      cmd = lsPmacPopQueue();      
+      cmd = lspmac_pop_queue();      
       if( cmd != NULL) {
 	if( cmd->pcmd.Request == VR_PMAC_GETMEM) {
 	  nsent = send( evt->fd, cmd, pmac_cmd_size, 0);
@@ -596,7 +617,7 @@ void lsPmacService( struct pollfd *evt) {
 	  //
 	  // Error condition
 	  //
-	  lsPmacError( &(receiveBuffer[i]));
+	  lspmac_Error( &(receiveBuffer[i]));
 	  receiveBufferIn = 0;
 	  return;
 	}
@@ -617,7 +638,7 @@ void lsPmacService( struct pollfd *evt) {
     switch( ls_pmac_state) {
     case LS_PMAC_STATE_WACK_NFR:
       receiveBuffer[--receiveBufferIn] = 0;
-      cmd = lsPmacPopReply();
+      cmd = lspmac_pop_reply();
       ls_pmac_state = LS_PMAC_STATE_IDLE;
       break;
     case LS_PMAC_STATE_WACK:
@@ -637,17 +658,17 @@ void lsPmacService( struct pollfd *evt) {
       receiveBuffer[receiveBufferIn] = 0;
       break;
     case LS_PMAC_STATE_GMR:
-      cmd = lsPmacPopReply();
+      cmd = lspmac_pop_reply();
       ls_pmac_state = LS_PMAC_STATE_IDLE;
       break;
       
     case LS_PMAC_STATE_WCR:
-      cmd = lsPmacPopReply();
+      cmd = lspmac_pop_reply();
       ls_pmac_state = LS_PMAC_STATE_IDLE;
       break;
     case LS_PMAC_STATE_WGB:
       if( foundEOCR) {
-	cmd = lsPmacPopReply();
+	cmd = lspmac_pop_reply();
 	ls_pmac_state = LS_PMAC_STATE_IDLE;
       } else {
 	ls_pmac_state = LS_PMAC_STATE_RR;
@@ -665,7 +686,7 @@ void lsPmacService( struct pollfd *evt) {
 
 
 
-void PmacGetShortReplyCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) {
+void lspmac_GetShortReplyCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) {
   char *sp;
 
   if( nreceived < 1400)
@@ -690,7 +711,7 @@ void PmacGetShortReplyCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *b
   memset( cmd->pcmd.bData, 0, sizeof( cmd->pcmd.bData));
 }
 
-void PmacSendControlReplyPrintCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) {
+void lspmac_SendControlReplyPrintCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) {
     pthread_mutex_lock( &ncurses_mutex);
     wprintw( term_output, "control-%c: ", '@'+ ntohs(cmd->pcmd.wValue));
     pthread_mutex_unlock( &ncurses_mutex);
@@ -703,7 +724,7 @@ void PmacSendControlReplyPrintCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned
 }
 
 
-void PmacGetmemReplyCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) {
+void lspmac_GetmemReplyCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) {
   memcpy( &(dbmem[ntohs(cmd->pcmd.wValue)]), buff, nreceived);
 
   dbmemIn += nreceived;
@@ -712,82 +733,144 @@ void PmacGetmemReplyCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buf
   }
 }
 	       
-void PmacSockGetmem( int offset, int nbytes)  {
-  lsSendCmd( VR_UPLOAD,   VR_PMAC_GETMEM, offset, 0, nbytes, NULL, PmacGetmemReplyCB, 0, -1);
-}
-void PmacSockSendline( char *s) {
-  lsSendCmd( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( s), s, PmacGetShortReplyCB, 0, -1);
-}
-void PmacSockSendline_nr( char *s) {
-  lsSendCmd( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( s), s, NULL, 1, -1);
+pmac_cmd_queue_t *lspmac_SockGetmem( int offset, int nbytes)  {
+  return lspmac_send_command( VR_UPLOAD,   VR_PMAC_GETMEM, offset, 0, nbytes, NULL, lspmac_GetmemReplyCB, 0);
 }
 
-void PmacSockSendControlCharPrint( char c) {
-  lsSendCmd( VR_DOWNLOAD, VR_PMAC_SENDCTRLCHAR, c, 0, 0, NULL, PmacSendControlReplyPrintCB, 0, -1);
+pmac_cmd_queue_t *lspmac_SockSendline( char *fmt, ...) {
+  va_list arg_ptr;
+  char payload[1400];
+
+  va_start( arg_ptr, fmt);
+  vsnprintf( payload, sizeof(payload)-1, fmt, arg_ptr);
+  payload[ sizeof(payload)-1] = 0;
+  va_end( arg_ptr);
+
+  return lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( payload), payload, lspmac_GetShortReplyCB, 0);
 }
 
-void PmacGetmem() {
+pmac_cmd_queue_t *lspmac_SockSendline_nr( char *s) {
+  return lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( s), s, NULL, 1);
+}
+
+pmac_cmd_queue_t *lspmac_SockSendControlCharPrint( char c) {
+  return lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDCTRLCHAR, c, 0, 0, NULL, lspmac_SendControlReplyPrintCB, 0);
+}
+
+void lspmac_Getmem() {
   int nbytes;
   nbytes = (dbmemIn + 1400 > sizeof( dbmem)) ? sizeof( dbmem) - dbmemIn : 1400;
-  PmacSockGetmem( dbmemIn, nbytes);
+  lspmac_SockGetmem( dbmemIn, nbytes);
 }
 
-void MD2GetStatusCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) {
+void lspmac_get_status_cb( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) {
   static int cnt = 0;
   static char s[256];
+  
   char *sp;
   int i, pos;
-  lspmac_motor_t *dtp;
-
+  lspmac_motor_t *mp;
+  
   memcpy( &md2_status, buff, sizeof(md2_status));
+
+  //
+  // track the shutter state and signal if it has changed
+  //
+  pthread_mutex_lock( &lspmac_shutter_mutex);
+  if( md2_status.fs_has_opened && !lspmac_shutter_has_opened && !md2_status.fs_is_open) {
+    //
+    // Here the shutter opened and closed again before we got the memo
+    // Treat it as a shutter closed event
+    //
+    pthread_cond_signal( &lspmac_shutter_cond);
+  }
+  lspmac_shutter_has_opened = md2_status.fs_has_opened;
+
+  if( lspmac_shutter_state !=  md2_status.fs_is_open) {
+    lspmac_shutter_state = md2_status.fs_is_open;
+    pthread_cond_signal( &lspmac_shutter_cond);
+  }
+  pthread_mutex_unlock( &lspmac_shutter_mutex);
+
+  //
+  // track the coordinate system moving flags
+  //
+  pthread_mutex_lock( &lspmac_moving_mutex);
+  if( md2_status.moving_flags != lspmac_moving_flags) {
+    lspmac_moving_flags = md2_status.moving_flags;
+    pghread_cond_signal( &lspmac_moving_cond);
+  }
+  pthread_mutex_unlock( &lspmac_moving_mutex);
 
 
   pthread_mutex_lock( &ncurses_mutex);
 
   for( i=0; i<lspmac_nmotors; i++) {
-    dtp = &(lspmac_motors[i]);
-    memcpy( &(dtp->raw_position), buff+dtp->dpram_position_offset, sizeof( int));
-    memcpy( &(dtp->status1), buff+dtp->status1_offset, sizeof( int));
-    memcpy( &(dtp->status2), buff+dtp->status2_offset, sizeof( int));
+    mp = &(lspmac_motors[i]);
+    memcpy( &(mp->actual_pos_cnts), buff+mp->dpram_position_offset, sizeof( int));
+    memcpy( &(mp->status1), buff+mp->status1_offset, sizeof( int));
+    memcpy( &(mp->status2), buff+mp->status2_offset, sizeof( int));
 
-    mvwprintw( dtp->win, 2, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, " ");
-    mvwprintw( dtp->win, 2, 1, "%*d cts", LS_DISPLAY_WINDOW_WIDTH-6, dtp->raw_position);
-    mvwprintw( dtp->win, 3, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, " ");
+    if( mp->status2 & 0x000001) {
+      if( mp->not_done) {
+	pthread_mutex_lock( &(mp->mutex));
+	mp->not_done = 0;
+	pthread_cond_signal( &(mp->cond));
+	pthread_mutex_unlock( &(mp->mutex));
+      }
+    } else if( mp->not_done == 0) {
+      mp->not_done = 1;
+    }
 
-    snprintf( s, sizeof(s)-1, dtp->format, 8, dtp->raw_position/dtp->u2c);
+    if( (mp->status1 & 0x020000) || (mp->status1 & 0x000400)) {
+      if( mp->motion_seen == 0) {
+	pthread_mutex_lock( &(mp->mutex));
+	mp->motion_seen = 1;
+	pthread_cond_signal( &(mp->cond));
+	pthread_mutex_unlock( &(mp->mutex));
+      }
+    }
+
+    mvwprintw( mp->win, 2, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, " ");
+    mvwprintw( mp->win, 2, 1, "%*d cts", LS_DISPLAY_WINDOW_WIDTH-6, mp->actual_pos_cnts);
+    mvwprintw( mp->win, 3, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, " ");
+
+    snprintf( s, sizeof(s)-1, mp->format, 8, mp->actual_pos_cnts/mp->u2c);
     s[sizeof(s)-1] = 0;
-    mvwprintw( dtp->win, 3, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-6, s);
+    mvwprintw( mp->win, 3, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-6, s);
 
-    mvwprintw( dtp->win, 4, 1, "%*u", LS_DISPLAY_WINDOW_WIDTH-2, dtp->status1);
-    mvwprintw( dtp->win, 5, 1, "%*u", LS_DISPLAY_WINDOW_WIDTH-2, dtp->status2);
+    mvwprintw( mp->win, 4, 1, "%*u", LS_DISPLAY_WINDOW_WIDTH-2, mp->status1);
+    mvwprintw( mp->win, 5, 1, "%*u", LS_DISPLAY_WINDOW_WIDTH-2, mp->status2);
     sp = "";
-    if( dtp->status2 & 0x000002)
+    if( mp->status2 & 0x000002)
       sp = "Following Warning";
-    else if( dtp->status2 & 0x000004)
+    else if( mp->status2 & 0x000004)
       sp = "Following Error";
-    else if( dtp->status2 & 0x000020)
+    else if( mp->status2 & 0x000020)
       sp = "I2T Amp Fault";
-    else if( dtp->status2 & 0x000008)
+    else if( mp->status2 & 0x000008)
       sp = "Amp. Fault";
-    else if( dtp->status2 & 0x000800)
+    else if( mp->status2 & 0x000800)
       sp = "Stopped on Limit";
-    else if( dtp->status1 & 0x040000)
+    else if( mp->status1 & 0x040000)
       sp = "Open Loop";
-    else if( ~dtp->status1 & 0x080000)
+    else if( ~mp->status1 & 0x080000)
       sp = "Motor Disabled";
-    else if( (dtp->status1 & 0x600000) == 0x600000)
+    else if( mp->status1 & 0x000400)
+      sp = "Homing";
+    else if( (mp->status1 & 0x600000) == 0x600000)
       sp = "Both Limits Tripped";
-    else if( dtp->status1 & 0x200000)
+    else if( mp->status1 & 0x200000)
       sp = "Positive Limit";
-    else if( dtp->status1 & 0x400000)
+    else if( mp->status1 & 0x400000)
       sp = "Negative Limit";
-    else if( ~dtp->status2 & 0x000400)
+    else if( ~mp->status2 & 0x000400)
       sp = "Not Homed";
-    else if( dtp->status2 & 0x000001)
+    else if( mp->status2 & 0x000001)
       sp = "In Position";
 
-    mvwprintw( dtp->win, 6, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, sp);
-    wnoutrefresh( dtp->win);
+    mvwprintw( mp->win, 6, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, sp);
+    wnoutrefresh( mp->win);
   }
   if( md2_status.fs_is_open)
     mvwprintw( term_status, 1, 1, "Shutter Open  ");
@@ -852,12 +935,12 @@ void MD2GetStatusCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) 
   pthread_mutex_unlock( &ncurses_mutex);
 }
 
-void PmacGetMd2Status() {
-  lsSendCmd( VR_UPLOAD, VR_PMAC_GETMEM, 0x400, 0, sizeof(md2_status_t), NULL, MD2GetStatusCB, 0, -1);
+void lspmac_get_status() {
+  lspmac_send_command( VR_UPLOAD, VR_PMAC_GETMEM, 0x400, 0, sizeof(md2_status_t), NULL, lspmac_get_status_cb, 0);
 }
 
 
-void PmacGetAllIVarsCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) {
+void lspmac_GetAllIVarsCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) {
   static char qs[LS_PG_QUERY_STRING_LENGTH];
   char *sp;
   int i;
@@ -868,12 +951,12 @@ void PmacGetAllIVarsCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buf
   }
 }
 
-void PmacGetAllIVars() {
+void lspmac_GetAllIVars() {
   static char *cmds = "I0..8191";
-  lsSendCmd( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( cmds), cmds, PmacGetAllIVarsCB, 0, -1);
+  lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( cmds), cmds, lspmac_GetAllIVarsCB, 0);
 }
 
-void PmacGetAllMVarsCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) {
+void lspmac_GetAllMVarsCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) {
   static char qs[LS_PG_QUERY_STRING_LENGTH];
   char *sp;
   int i;
@@ -882,12 +965,11 @@ void PmacGetAllMVarsCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buf
     qs[sizeof( qs)-1]=0;
     lspg_query_push( NULL, qs);
   }
-  PmacGetAllIVars();
 }
 
-void PmacGetAllMVars() {
+void lspmac_GetAllMVars() {
   static char *cmds = "M0..8191->";
-  lsSendCmd( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( cmds), cmds, PmacGetAllMVarsCB, 0, -1);
+  lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( cmds), cmds, lspmac_GetAllMVarsCB, 0);
 }
 
 
@@ -901,7 +983,7 @@ void lspmac_sendcmd_nocb( char *fmt, ...) {
   tmps[sizeof(tmps)-1]=0;
   va_end( arg_ptr);
 
-  lsSendCmd( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen(tmps), tmps, NULL, 0, -1);
+  lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen(tmps), tmps, NULL, 0);
 }
 
 
@@ -919,10 +1001,17 @@ void lspmac_next_state() {
       // If the connect was successful we can proceed with the initialization
       //
       if( ls_pmac_state != LS_PMAC_STATE_DETACHED) {
-	PmacSockFlush();
+	lspmac_SockFlush();
 
-	PmacGetAllMVars();
+	if( getmvars) {
+	  lspmac_GetAllMVars();
+	  getmvars = 0;
+	}
 
+	if( getivars) {
+	  lspmac_GetAllIVars();
+	  getivars = 0;
+	}
       }
     }
 
@@ -945,7 +1034,7 @@ void lspmac_next_state() {
 	
     case LS_PMAC_STATE_IDLE:
       if( ethCmdOn == ethCmdOff)
-	PmacGetMd2Status();
+	lspmac_get_status();
 
     case LS_PMAC_STATE_WACK_NFR:
     case LS_PMAC_STATE_WACK:
@@ -986,13 +1075,126 @@ void *lspmac_worker( void *dummy) {
 
     pollrtn = poll( &pmacfd, 1, 10);
     if( pollrtn) {
-      lsPmacService( &pmacfd);
+      lspmac_Service( &pmacfd);
     }
   }
 }
 
 
-void lspmac_init() {
+void lspmac_moveabs_queue( lspmac_motor_t *mp, double requested_position) {
+  char s[512];
+
+  pthread_mutex_lock( &(mp->mutex));
+  if( mp->u2c != 0.0) {
+    mp->not_done    = 1;
+    mp->motion_seen = 0;
+    mp->requested_pos_cnts = mp->u2c * requested_position;
+    snprintf( s, sizeof(s)-1, "#%d j=%d", mp->motor_num, mp->requested_pos_cnts);
+    mp->pq = lspmac_SockSendline_nr( s);
+  }
+  pthread_mutex_unlock( &(mp->mutex));
+
+}
+
+void lspmac_moveabs_wait( lspmac_motor_t *mp) {
+  struct timespec wt;
+  int return_code;
+
+  pthread_mutex_lock( &pmac_queue_mutex);
+
+  //
+  // wait for the command to be sent
+  //
+  while( mp->pq->time_sent.tv_sec==0)
+    pthread_cond_wait( &pmac_queue_cond, &pmac_queue_mutex);
+
+  //
+  // set the timeout to be long enough after we sent the motion request to ensure that
+  // we will have read back the motor moving status but not so long that the timeout causes
+  // problems;
+  //
+  wt.tv_sec  = mp->pq->time_sent.tv_sec;
+  wt.tv_nsec = mp->pq->time_sent.tv_nsec + 500000000;
+
+  pthread_mutex_unlock( &pmac_queue_mutex);
+
+  if( wt.tv_nsec >= 1000000000) {
+    wt.tv_nsec -= 1000000000;
+    wt.tv_sec += 1;
+  }
+
+  //
+  // wait for the motion to have started
+  // This will time out if the motion ends before we can read the status back
+  // hence the added complication of time stamp of the sent packet.
+  //
+
+  return_code=0;
+
+  pthread_mutex_lock( &(mp->mutex));
+  while( mp->motion_seen == 0 && return_code == 0)
+    return_code = pthread_cond_timedwait( &(mp->cond), &(mp->mutex), &wt);
+
+  if( return_code == 0) {
+    //
+    // wait for the motion that we know has started to finish
+    //
+    while( mp->not_done)
+      pthread_cond_wait( &(mp->cond), &(mp->mutex));
+
+  }
+
+  //
+  // if return code was not 0 then we know we shouldn't wait for not_done flag.
+  // In this case the motion ended before we read the status that should the motor moving.
+  //
+  pthread_mutex_unlock( &(mp->mutex));
+
+}
+
+
+lspmac_motor_t *lspmac_motor_init( lspmac_motor_t *d, int motor_number, int wy, int wx, int dpoff, int dpoffs1, int dpoffs2, char *wtitle) {
+  lspmac_nmotors++;
+
+  pthread_mutex_init( &(d->mutex), NULL);
+  pthread_cond_init(  &(d->cond), NULL);
+
+  d->dpram_position_offset = dpoff;
+  d->status1_offset = dpoffs1;
+  d->status2_offset = dpoffs2;
+  d->motor_num = motor_number;
+  d->win = newwin( LS_DISPLAY_WINDOW_HEIGHT, LS_DISPLAY_WINDOW_WIDTH, wy*LS_DISPLAY_WINDOW_HEIGHT, wx*LS_DISPLAY_WINDOW_WIDTH);
+  box( d->win, 0, 0);
+  mvwprintw( d->win, 1, 1, "%s", wtitle);
+  wnoutrefresh( d->win);
+
+  return d;
+
+}
+
+void lspmac_init( int ivarsflag, int mvarsflag) {
+
+  getivars = ivarsflag;
+  getmvars = mvarsflag;
+
+  omega  = lspmac_motor_init( &(lspmac_motors[ 0]),  1, 0, 0, 0x084, 0x004, 0x044, "Omega   #1 &1 X"); 
+  alignx = lspmac_motor_init( &(lspmac_motors[ 1]),  2, 0, 1, 0x088, 0x008, 0x048, "Align X #2 &3 X"); 
+  aligny = lspmac_motor_init( &(lspmac_motors[ 2]),  3, 0, 2, 0x08C, 0x00C, 0x04C, "Align Y #3 &3 Y"); 
+  alignz = lspmac_motor_init( &(lspmac_motors[ 3]),  4, 0, 3, 0x090, 0x010, 0x050, "Align Z #4 &3 Z"); 
+  anal   = lspmac_motor_init( &(lspmac_motors[ 4]),  5, 1, 0, 0x094, 0x014, 0x054, "Anal    #5"); 
+  zoom   = lspmac_motor_init( &(lspmac_motors[ 5]),  6, 1, 1, 0x098, 0x018, 0x058, "Zoom    #6 &4 Z"); 
+  apery  = lspmac_motor_init( &(lspmac_motors[ 6]),  7, 1, 2, 0x09C, 0x01C, 0x05C, "Aper Y  #7 &5 Y"); 
+  aperz  = lspmac_motor_init( &(lspmac_motors[ 7]),  8, 1, 3, 0x0A0, 0x020, 0x060, "Aper Z  #8 &5 Z"); 
+  capy   = lspmac_motor_init( &(lspmac_motors[ 8]),  9, 2, 0, 0x0A4, 0x024, 0x064, "Cap Y   #9 &5 U"); 
+  capz   = lspmac_motor_init( &(lspmac_motors[ 9]), 10, 2, 1, 0x0A8, 0x028, 0x068, "Cap Z  #10 &5 V"); 
+  scinz  = lspmac_motor_init( &(lspmac_motors[10]), 11, 2, 2, 0x0AC, 0x02C, 0x06C, "Scin Z #11 &5 W"); 
+  cenx   = lspmac_motor_init( &(lspmac_motors[11]), 17, 2, 3, 0x0B0, 0x030, 0x070, "Cen X  #17 &2 X"); 
+  ceny   = lspmac_motor_init( &(lspmac_motors[12]), 18, 3, 0, 0x0B4, 0x034, 0x074, "Cen Y  #18 &2 Y"); 
+  kappa  = lspmac_motor_init( &(lspmac_motors[13]), 19, 3, 1, 0x0B8, 0x038, 0x078, "Kappa  #19 &7 X"); 
+  phi    = lspmac_motor_init( &(lspmac_motors[14]), 20, 3, 2, 0x0BC, 0x03C, 0x07C, "Phi    #20 &7 Y"); 
+
+
+
   rr_cmd.RequestType = VR_UPLOAD;
   rr_cmd.Request     = VR_PMAC_READREADY;
   rr_cmd.wValue      = 0;
@@ -1015,7 +1217,15 @@ void lspmac_init() {
   memset( cr_cmd.bData, 0, sizeof(cr_cmd.bData));
 
   pthread_mutex_init( &pmac_queue_mutex, NULL);
+  pthread_cond_init(  &pmac_queue_cond, NULL);
+
+  lspmac_shutter_state = 0;				// assume the shutter is now closed: not a big deal if we are wrong
+  pthread_mutex_init( &lspmac_shutter_mutex, NULL);
+  pthread_cond_init(  &lspmac_shutter_cond, NULL);
   pmacfd.fd = -1;
+
+  pthread_mutex_init( &lspmac_moving_mutex, NULL);
+  pthread_cond_init(  &lspmac_moving_mutex, NULL);
 
 }
 

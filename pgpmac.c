@@ -32,8 +32,6 @@
 
 #include "pgpmac.h"
 
-lspmac_motor_t lspmac_motors[32];
-int lspmac_nmotors = 0;
 WINDOW *term_output;			// place to print stuff out
 WINDOW *term_input;			// place to put the cursor
 WINDOW *term_status;			// shutter, lamp, air, etc status
@@ -151,6 +149,33 @@ Program		Description
 			P172  = Z
 
 
+131		LS-CAT Modified Omega Scan
+			P170	= Shutter open position, in counts
+			P171    = Delta omega, in counts
+			P173    = Omega velocity (counts/msec)
+			P175    = Acceleration Time (msec)
+			P177    = Number of passes
+			P178    = Shutter Rising Distance
+			P179    = Shutter Falling Distance
+			P180    = Exposure TIme (msec)
+
+140		LS-CAT Move X Absolute
+			Q10    = X Value (cts)
+
+141		LS-CAT Move Y Absolute
+			Q11    = Y Value (cts)
+
+142		LS-CAT Move Z Absolute
+			Q12    = Z Value (cts)
+			
+150		LS-CAT Move X, Y Absolute
+			Q20    = X Value
+			Q21    = Y Value
+
+160		LS-CAT Move X, Y, Z  Absolute
+			Q30    = X Value
+			Q31    = Y Value
+			Q32    = Z Value
 */
 
 
@@ -191,7 +216,7 @@ void stdinService( struct pollfd *evt) {
     case 0x0016:	// Control-V
       cntrlcmd[0] = ch;
       cntrlcmd[1] = 0;
-      PmacSockSendline( cntrlcmd);
+      lspmac_SockSendline( cntrlcmd);
       //      PmacSockSendControlCharPrint( ch);
       break;
 
@@ -203,7 +228,7 @@ void stdinService( struct pollfd *evt) {
     case KEY_ENTER:
     case 0x000a:
       if( cmds_on > 0 && strlen( cmds) > 0) {
-	PmacSockSendline( cmds);
+	lspmac_SockSendline( cmds);
       }
       memset( cmds, 0, sizeof(cmds));
       cmds_on = 0;
@@ -226,25 +251,40 @@ void stdinService( struct pollfd *evt) {
   }
 }
 
-void ls_display_init( lspmac_motor_t *d, int motor_number, int wy, int wx, int dpoff, int dpoffs1, int dpoffs2, char *wtitle) {
-  lspmac_nmotors++;
-  d->dpram_position_offset = dpoff;
-  d->status1_offset = dpoffs1;
-  d->status2_offset = dpoffs2;
-  d->motor_num = motor_number;
-  d->win = newwin( LS_DISPLAY_WINDOW_HEIGHT, LS_DISPLAY_WINDOW_WIDTH, wy*LS_DISPLAY_WINDOW_HEIGHT, wx*LS_DISPLAY_WINDOW_WIDTH);
-  box( d->win, 0, 0);
-  mvwprintw( d->win, 1, 1, "%s", wtitle);
-  wnoutrefresh( d->win);
-}
-
 int main( int argc, char **argv) {
   static nfds_t nfds;
 
   static struct pollfd fda[3], *fdp;	// input for poll: room for postgres, pmac, and stdin
   static int nfd = 0;			// number of items in fda
   static int pollrtn = 0;
+  static struct option long_options[] = {
+    { "i-vars", 0, NULL, 'i'},
+    { "m-vars", 0, NULL, 'm'},
+    { NULL,     0, NULL, 0}
+  };
+  int c;
+  int ivars, mvars;
+  mvars=0;
+  ivars=0;
+
   int i;				// standard loop counter
+
+  while( 1) {
+    c=getopt_long( argc, argv, "im", long_options, NULL);
+    if( c == -1)
+      break;
+
+    switch( c) {
+    case 'i':
+      ivars=1;
+      break;
+
+    case 'm':
+      mvars=1;
+      break;
+
+    }
+  }
 
   stdinfda.fd = 0;
   stdinfda.events = POLLIN;
@@ -254,24 +294,15 @@ int main( int argc, char **argv) {
   keypad( stdscr, TRUE);		// Why is F1 nifty?
   refresh();
 
-  pthread_mutex_init( &ncurses_mutex, NULL);	// might as well start practicing good thread behaviour
-  pthread_mutex_lock( &ncurses_mutex);
+  pthread_mutex_init( &ncurses_mutex, NULL);	// don't lock this mutex yet because we are not multi-threaded until the "_run" functions
 
-  ls_display_init( &(lspmac_motors[ 0]),  1, 0, 0, 0x084, 0x004, 0x044, "Omega   #1 &1 X"); 
-  ls_display_init( &(lspmac_motors[ 1]),  2, 0, 1, 0x088, 0x008, 0x048, "Align X #2 &3 X"); 
-  ls_display_init( &(lspmac_motors[ 2]),  3, 0, 2, 0x08C, 0x00C, 0x04C, "Align Y #3 &3 Y"); 
-  ls_display_init( &(lspmac_motors[ 3]),  4, 0, 3, 0x090, 0x010, 0x050, "Align Z #4 &3 Z"); 
-  ls_display_init( &(lspmac_motors[ 4]),  5, 1, 0, 0x094, 0x014, 0x054, "Anal    #5"); 
-  ls_display_init( &(lspmac_motors[ 5]),  6, 1, 1, 0x098, 0x018, 0x058, "Zoom    #6 &4 Z"); 
-  ls_display_init( &(lspmac_motors[ 6]),  7, 1, 2, 0x09C, 0x01C, 0x05C, "Aper Y  #7 &5 Y"); 
-  ls_display_init( &(lspmac_motors[ 7]),  8, 1, 3, 0x0A0, 0x020, 0x060, "Aper Z  #8 &5 Z"); 
-  ls_display_init( &(lspmac_motors[ 8]),  9, 2, 0, 0x0A4, 0x024, 0x064, "Cap Y   #9 &5 U"); 
-  ls_display_init( &(lspmac_motors[ 9]), 10, 2, 1, 0x0A8, 0x028, 0x068, "Cap Z  #10 &5 V"); 
-  ls_display_init( &(lspmac_motors[10]), 11, 2, 2, 0x0AC, 0x02C, 0x06C, "Scin Z #11 &5 W"); 
-  ls_display_init( &(lspmac_motors[11]), 17, 2, 3, 0x0B0, 0x030, 0x070, "Cen X  #17 &2 X"); 
-  ls_display_init( &(lspmac_motors[12]), 18, 3, 0, 0x0B4, 0x034, 0x074, "Cen Y  #18 &2 Y"); 
-  ls_display_init( &(lspmac_motors[13]), 19, 3, 1, 0x0B8, 0x038, 0x078, "Kappa  #19 &7 X"); 
-  ls_display_init( &(lspmac_motors[14]), 20, 3, 2, 0x0BC, 0x03C, 0x07C, "Phi    #20 &7 Y"); 
+  //
+  // Since the modules reference objects in other modules it is important
+  // that everyone is initiallized before anyone runs
+  //
+  lspmac_init( ivars, mvars);
+  lspg_init();
+  md2cmds_init();
 
   term_status = newwin( LS_DISPLAY_WINDOW_HEIGHT, LS_DISPLAY_WINDOW_WIDTH, 3*LS_DISPLAY_WINDOW_HEIGHT, 3*LS_DISPLAY_WINDOW_WIDTH);
   box( term_status, 0, 0);
@@ -289,16 +320,6 @@ int main( int argc, char **argv) {
   wnoutrefresh( term_input);			      
 						      
   doupdate();					      
-  pthread_mutex_unlock( &ncurses_mutex);
-
-
-  //
-  // Since the modules reference objects in other modules it is important
-  // that everyone is initiallized before anyone runs
-  //
-  lspmac_init();
-  lspg_init();
-  md2cmds_init();
 
   lspmac_run();
   lspg_run();

@@ -4,7 +4,7 @@
 # All Rights Reserved
 #
 pgpmac: pgpmac.c pgpmac.h lspg.o lspmac.o md2cmds.o Makefile
-	gcc -g -pthread -o pgpmac pgpmac.c md2cmds.o lspmac.o lspg.o -lpq -lncurses -lpthread
+	gcc -g -pthread -o pgpmac pgpmac.c md2cmds.o lspmac.o lspg.o -lpq -lncurses -lpthread -lrt
 
 clean:
 	rm *.o

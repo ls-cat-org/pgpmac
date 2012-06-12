@@ -125,17 +125,19 @@ void lspg_query_push( void (*cb)( lspg_query_queue_t *, PGresult *), char *fmt, 
 
 void lspg_init_motors_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   int i, j;
-  uint32_t  motor_number, motor_number_column;
+  uint32_t  motor_number, motor_number_column, max_speed_column, max_accel_column;
   uint32_t units_column;
   uint32_t u2c_column;
   uint32_t format_column;
   char *sp;
   lspmac_motor_t *lsdp;
   
-  motor_number_column = PQfnumber( pgr, "mm_motor");
-  units_column        = PQfnumber( pgr, "mm_unit");
-  u2c_column          = PQfnumber( pgr, "mm_u2c");
-  format_column       = PQfnumber( pgr, "mm_printf");
+  motor_number_column    = PQfnumber( pgr, "mm_motor");
+  units_column           = PQfnumber( pgr, "mm_unit");
+  u2c_column             = PQfnumber( pgr, "mm_u2c");
+  format_column          = PQfnumber( pgr, "mm_printf");
+  max_speed_column = PQfnumber( pgr, "mm_max_speed");
+  max_accel_column = PQfnumber( pgr, "mm_max_speed");
 
   if( motor_number_column == -1 || units_column == -1 || u2c_column == -1 || format_column == -1)
     return;
@@ -151,6 +153,8 @@ void lspg_init_motors_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
 	lsdp->units = strdup( PQgetvalue( pgr, i, units_column));
 	lsdp->format= strdup( PQgetvalue( pgr, i, format_column));
 	lsdp->u2c   = atof(PQgetvalue( pgr, i, u2c_column));
+	lsdp->max_speed = atof(PQgetvalue( pgr, i, max_speed_column));
+	lsdp->max_accel = atof(PQgetvalue( pgr, i, max_accel_column));
 	break;
       }
     }
@@ -166,44 +170,78 @@ void lspg_init_motors_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
 
 lspg_nextshot_t lspg_nextshot;
 
+
+/*
+**       dsdir text, dspid text, dsowidth numeric, dsoscaxis text, dsexp numeric, skey int, sstart numeric, sfn text,
+**       dsphi numeric, dsomega numeric, dskappa numeric, dsdist numeric, dsnrg numeric, dshpid int,
+**       cx numeric, cy numeric, ax numeric, ay numeric, az numeric, active int, sindex int, stype text,
+**       dsowidth2 numeric, dsoscaxis2 text, dsexp2 numeric, sstart2 numeric, dsphi2 numeric, dsomega2 numeric, dskappa2 numeric, dsdist2 numeric, dsnrg2 numeric,
+**       cx2 numeric, cy2 numeric, ax2 numeric, ay2 numeric, az2 numeric, active2 int, sindex2 int, stype2 text);
+*/
+
 void lspg_nextshot_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   static int got_col_nums=0;
   static int
     dsdir_c, dspid_c, dsowidth_c, dsoscaxis_c, dsexp_c, skey_c, sstart_c, sfn_c, dsphi_c,
     dsomega_c, dskappa_c, dsdist_c, dsnrg_c, dshpid_c, cx_c, cy_c, ax_c, ay_c, az_c,
-    active_c, sindex_c, stype_c;
+    active_c, sindex_c, stype_c,
+    dsowidth2_c, dsoscaxis2_c, dsexp2_c, sstart2_c, dsphi2_c, dsomega2_c, dskappa2_c, dsdist2_c, dsnrg2_c,
+    cx2_c, cy2_c, ax2_c, ay2_c, az2_c, active2_c, sindex2_c, stype2_c;
   
-  if( PQntuples( pgr) <= 0)
+  pthread_mutex_lock( &(lspg_nextshot.mutex));
+
+  lspg_nextshot.no_rows_returned = PQntuples( pgr) <= 0;
+  if( lspg_nextshot.no_rows_returned) {
+    lspg_nextshot.new_value_ready = 1;
+    pthread_cond_signal( &(lspg_nextshot.cond));
+    pthread_mutex_unlock( &(lspg_nextshot.mutex));
     return;			// I guess there was no shot after all
+  }
 
   if( got_col_nums == 0) {
-    dsdir_c     = PQfnumber( pgr, "dsdir");
-    dspid_c     = PQfnumber( pgr,"dspid");
-    dsowidth_c  = PQfnumber( pgr,"dsowidth");
-    dsoscaxis_c = PQfnumber( pgr,"dsoscaxis");
-    dsexp_c     = PQfnumber( pgr,"dsexp");
-    skey_c      = PQfnumber( pgr,"skey");
-    sstart_c    = PQfnumber( pgr,"sstart");
-    sfn_c       = PQfnumber( pgr,"sfn");
-    dsphi_c     = PQfnumber( pgr,"dsphi");
-    dsomega_c   = PQfnumber( pgr,"dsomega");
-    dskappa_c   = PQfnumber( pgr,"dskappa");
-    dsdist_c    = PQfnumber( pgr,"dsdist");
-    dsnrg_c     = PQfnumber( pgr,"dsnrg");
-    dshpid_c    = PQfnumber( pgr,"dshpid");
-    cx_c        = PQfnumber( pgr,"cx");
-    cy_c        = PQfnumber( pgr,"cy");
-    ax_c        = PQfnumber( pgr,"ax");
-    ay_c        = PQfnumber( pgr,"ay");
-    az_c        = PQfnumber( pgr,"az");
-    active_c    = PQfnumber( pgr,"active");
-    sindex_c    = PQfnumber( pgr,"sindex");
-    stype_c     = PQfnumber( pgr,"stype");
+    dsdir_c      = PQfnumber( pgr, "dsdir");
+    dspid_c      = PQfnumber( pgr, "dspid");
+    dsowidth_c   = PQfnumber( pgr, "dsowidth");
+    dsoscaxis_c  = PQfnumber( pgr, "dsoscaxis");
+    dsexp_c      = PQfnumber( pgr, "dsexp");
+    skey_c       = PQfnumber( pgr, "skey");
+    sstart_c     = PQfnumber( pgr, "sstart");
+    sfn_c        = PQfnumber( pgr, "sfn");
+    dsphi_c      = PQfnumber( pgr, "dsphi");
+    dsomega_c    = PQfnumber( pgr, "dsomega");
+    dskappa_c    = PQfnumber( pgr, "dskappa");
+    dsdist_c     = PQfnumber( pgr, "dsdist");
+    dsnrg_c      = PQfnumber( pgr, "dsnrg");
+    dshpid_c     = PQfnumber( pgr, "dshpid");
+    cx_c         = PQfnumber( pgr, "cx");
+    cy_c         = PQfnumber( pgr, "cy");
+    ax_c         = PQfnumber( pgr, "ax");
+    ay_c         = PQfnumber( pgr, "ay");
+    az_c         = PQfnumber( pgr, "az");
+    active_c     = PQfnumber( pgr, "active");
+    sindex_c     = PQfnumber( pgr, "sindex");
+    stype_c      = PQfnumber( pgr, "stype");
+    dsowidth2_c  = PQfnumber( pgr, "dsowidth2");
+    dsoscaxis2_c = PQfnumber( pgr, "dsoscaxis2");
+    dsexp2_c     = PQfnumber( pgr, "dsexp2");
+    sstart2_c    = PQfnumber( pgr, "sstart2");
+    dsphi2_c     = PQfnumber( pgr, "dsphi2");
+    dsomega2_c   = PQfnumber( pgr, "dsomega2");
+    dskappa2_c   = PQfnumber( pgr, "dskappa2");
+    dsdist2_c    = PQfnumber( pgr, "dsdist2");
+    dsnrg2_c     = PQfnumber( pgr, "dsnrg2");
+    cx2_c        = PQfnumber( pgr, "cx2");
+    cy2_c        = PQfnumber( pgr, "cy2");
+    ax2_c        = PQfnumber( pgr, "ax2");
+    ay2_c        = PQfnumber( pgr, "ay2");
+    az2_c        = PQfnumber( pgr, "az2");
+    active2_c    = PQfnumber( pgr, "active2");
+    sindex2_c    = PQfnumber( pgr, "sindex2");
+    stype2_c     = PQfnumber( pgr, "stype2");
     
     got_col_nums = 1;
   }
 
-  pthread_mutex_lock( &(lspg_nextshot.mutex));
 
   //
   // NULL string values come back as empty strings
@@ -225,6 +263,11 @@ void lspg_nextshot_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
     free( lspg_nextshot.dsoscaxis);
   lspg_nextshot.dsoscaxis = strdup( PQgetvalue( pgr, 0, dsoscaxis_c));
 
+  lspg_nextshot.dsoscaxis2_isnull = PQgetisnull( pgr, 0, dsoscaxis2_c);
+  if( lspg_nextshot.dsoscaxis2 != NULL)
+    free( lspg_nextshot.dsoscaxis2);
+  lspg_nextshot.dsoscaxis2 = strdup( PQgetvalue( pgr, 0, dsoscaxis2_c));
+
   lspg_nextshot.sfn_isnull = PQgetisnull(pgr, 0, sfn_c);
   if( lspg_nextshot.sfn != NULL)
     free( lspg_nextshot.sfn);
@@ -235,64 +278,147 @@ void lspg_nextshot_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
     free( lspg_nextshot.stype);
   lspg_nextshot.stype = strdup( PQgetvalue( pgr, 0, stype_c));
 
+  lspg_nextshot.stype2_isnull = PQgetisnull( pgr, 0, stype2_c);
+  if( lspg_nextshot.stype2 != NULL)
+    free( lspg_nextshot.stype2);
+  lspg_nextshot.stype2 = strdup( PQgetvalue( pgr, 0, stype2_c));
+
   //
   // Probably shouldn't try to convert null number values
   //
-  if( lspg_nextshot.dsowidth_isnull = PQgetisnull( pgr, 0, dsowidth_c))
+  lspg_nextshot.dsowidth_isnull = PQgetisnull( pgr, 0, dsowidth_c);
+  if( lspg_nextshot.dsowidth_isnull == 0)
     lspg_nextshot.dsowidth = atof( PQgetvalue( pgr,0, dsowidth_c));
 
-  if( lspg_nextshot.dsexp_isnull = PQgetisnull( pgr, 0, dsexp_c))
+  lspg_nextshot.dsexp_isnull = PQgetisnull( pgr, 0, dsexp_c);
+  if( lspg_nextshot.dsexp_isnull == 0)
     lspg_nextshot.dsexp    = atof( PQgetvalue( pgr,0, dsexp_c));
 
-  if( lspg_nextshot.sstart_isnull = PQgetisnull( pgr, 0, sstart_c))
+  lspg_nextshot.sstart_isnull = PQgetisnull( pgr, 0, sstart_c);
+  if( lspg_nextshot.sstart_isnull == 0)
     lspg_nextshot.sstart   = atof( PQgetvalue( pgr,0, sstart_c));
 
-  if( lspg_nextshot.dsphi_isnull = PQgetisnull( pgr, 0, dsphi_c))
+  lspg_nextshot.dsphi_isnull = PQgetisnull( pgr, 0, dsphi_c);
+  if( lspg_nextshot.dsphi_isnull == 0)
     lspg_nextshot.dsphi    = atof( PQgetvalue( pgr,0, dsphi_c));
 
-  if( lspg_nextshot.dsomega_isnull = PQgetisnull( pgr, 0, dsomega_c))
+  lspg_nextshot.dsomega_isnull = PQgetisnull( pgr, 0, dsomega_c);
+  if( lspg_nextshot.dsomega_isnull == 0)
     lspg_nextshot.dsomega  = atof( PQgetvalue( pgr,0, dsomega_c));
 
-  if( lspg_nextshot.dskappa_isnull = PQgetisnull( pgr, 0, dskappa_c))
+  lspg_nextshot.dskappa_isnull = PQgetisnull( pgr, 0, dskappa_c);
+  if( lspg_nextshot.dskappa_isnull == 0)
     lspg_nextshot.dskappa  = atof( PQgetvalue( pgr,0, dskappa_c));
 
-  if( lspg_nextshot.dsdist_isnull = PQgetisnull( pgr, 0, dsdist_c))
+  lspg_nextshot.dsdist_isnull = PQgetisnull( pgr, 0, dsdist_c);
+  if( lspg_nextshot.dsdist_isnull == 0)
     lspg_nextshot.dsdist   = atof( PQgetvalue( pgr,0, dsdist_c));
 
-  if( lspg_nextshot.dsnrg_isnull = PQgetisnull( pgr, 0, dsnrg_c))
+  lspg_nextshot.dsnrg_isnull = PQgetisnull( pgr, 0, dsnrg_c);
+  if( lspg_nextshot.dsnrg_isnull == 0)
     lspg_nextshot.dsnrg    = atof( PQgetvalue( pgr,0, dsnrg_c));
 
-  if( lspg_nextshot.cx_isnull = PQgetisnull( pgr, 0, cx_c))
+  lspg_nextshot.cx_isnull = PQgetisnull( pgr, 0, cx_c);
+  if( lspg_nextshot.cx_isnull == 0)
     lspg_nextshot.cx       = atof( PQgetvalue( pgr,0, cx_c));
 
-  if( lspg_nextshot.cy_isnull = PQgetisnull( pgr, 0, cy_c))
+  lspg_nextshot.cy_isnull = PQgetisnull( pgr, 0, cy_c);
+  if( lspg_nextshot.cy_isnull == 0)
     lspg_nextshot.cy       = atof( PQgetvalue( pgr,0, cy_c));
 
-  if( lspg_nextshot.ax_isnull = PQgetisnull( pgr, 0, ax_c))
+  lspg_nextshot.ax_isnull = PQgetisnull( pgr, 0, ax_c);
+  if( lspg_nextshot.ax_isnull == 0)
     lspg_nextshot.ax       = atof( PQgetvalue( pgr,0, ax_c));
 
-  if( lspg_nextshot.ay_isnull = PQgetisnull( pgr, 0, ay_c))
+  lspg_nextshot.ay_isnull = PQgetisnull( pgr, 0, ay_c);
+  if( lspg_nextshot.ay_isnull == 0)
     lspg_nextshot.ay       = atof( PQgetvalue( pgr,0, ay_c));
 
-  if( lspg_nextshot.az_isnull = PQgetisnull( pgr, 0, az_c))
+  lspg_nextshot.az_isnull = PQgetisnull( pgr, 0, az_c);
+  if( lspg_nextshot.az_isnull == 0)
     lspg_nextshot.az       = atof( PQgetvalue( pgr,0, az_c));
   
-  if( lspg_nextshot.active_isnull = PQgetisnull( pgr, 0, active_c))
+  lspg_nextshot.active_isnull = PQgetisnull( pgr, 0, active_c);
+  if( lspg_nextshot.active_isnull == 0)
     lspg_nextshot.active = atoi( PQgetvalue( pgr, 0, active_c));
 
-  if( lspg_nextshot.sindex_isnull = PQgetisnull( pgr, 0, sindex_c))
+  lspg_nextshot.sindex_isnull = PQgetisnull( pgr, 0, sindex_c);
+  if( lspg_nextshot.sindex_isnull == 0)
     lspg_nextshot.sindex = atoi( PQgetvalue( pgr, 0, sindex_c));
 
-  if( lspg_nextshot.dshpid_isnull = PQgetisnull( pgr, 0, dshpid_c))
+  lspg_nextshot.dshpid_isnull = PQgetisnull( pgr, 0, dshpid_c);
+  if( lspg_nextshot.dshpid_isnull == 0)
     lspg_nextshot.dshpid = atoi( PQgetvalue( pgr, 0, dshpid_c));
   
-  if( lspg_nextshot.skey_isnull = PQgetisnull( pgr, 0, skey_c))
+  lspg_nextshot.skey_isnull = PQgetisnull( pgr, 0, skey_c);
+  if( lspg_nextshot.skey_isnull == 0)
     lspg_nextshot.skey   = atoll( PQgetvalue( pgr, 0, skey_c));
+
+  lspg_nextshot.dsowidth2_isnull = PQgetisnull( pgr, 0, dsowidth2_c);
+  if( lspg_nextshot.dsowidth2_isnull == 0)
+    lspg_nextshot.dsowidth2 = atof( PQgetvalue( pgr,0, dsowidth2_c));
+
+  lspg_nextshot.dsexp2_isnull = PQgetisnull( pgr, 0, dsexp2_c);
+  if( lspg_nextshot.dsexp2_isnull == 0)
+    lspg_nextshot.dsexp2    = atof( PQgetvalue( pgr,0, dsexp2_c));
+
+  lspg_nextshot.sstart2_isnull = PQgetisnull( pgr, 0, sstart2_c);
+  if( lspg_nextshot.sstart2_isnull == 0)
+    lspg_nextshot.sstart2   = atof( PQgetvalue( pgr,0, sstart2_c));
+
+  lspg_nextshot.dsphi2_isnull = PQgetisnull( pgr, 0, dsphi2_c);
+  if( lspg_nextshot.dsphi2_isnull == 0)
+    lspg_nextshot.dsphi2    = atof( PQgetvalue( pgr,0, dsphi2_c));
+
+  lspg_nextshot.dsomega2_isnull = PQgetisnull( pgr, 0, dsomega2_c);
+  if( lspg_nextshot.dsomega2_isnull == 0)
+    lspg_nextshot.dsomega2  = atof( PQgetvalue( pgr,0, dsomega2_c));
+
+  lspg_nextshot.dskappa2_isnull = PQgetisnull( pgr, 0, dskappa2_c);
+  if( lspg_nextshot.dskappa2_isnull == 0)
+    lspg_nextshot.dskappa2  = atof( PQgetvalue( pgr,0, dskappa2_c));
+
+  lspg_nextshot.dsdist2_isnull = PQgetisnull( pgr, 0, dsdist2_c);
+  if( lspg_nextshot.dsdist2_isnull == 0)
+    lspg_nextshot.dsdist2   = atof( PQgetvalue( pgr,0, dsdist2_c));
+
+  lspg_nextshot.dsnrg2_isnull = PQgetisnull( pgr, 0, dsnrg2_c);
+  if( lspg_nextshot.dsnrg2_isnull == 0)
+    lspg_nextshot.dsnrg2    = atof( PQgetvalue( pgr,0, dsnrg2_c));
+
+  lspg_nextshot.cx2_isnull = PQgetisnull( pgr, 0, cx2_c);
+  if( lspg_nextshot.cx2_isnull == 0)
+    lspg_nextshot.cx2       = atof( PQgetvalue( pgr,0, cx2_c));
+
+  lspg_nextshot.cy2_isnull = PQgetisnull( pgr, 0, cy2_c);
+  if( lspg_nextshot.cy2_isnull == 0)
+    lspg_nextshot.cy2       = atof( PQgetvalue( pgr,0, cy2_c));
+
+  lspg_nextshot.ax2_isnull = PQgetisnull( pgr, 0, ax2_c);
+  if( lspg_nextshot.ax2_isnull == 0)
+    lspg_nextshot.ax2       = atof( PQgetvalue( pgr,0, ax2_c));
+
+  lspg_nextshot.ay2_isnull = PQgetisnull( pgr, 0, ay2_c);
+  if( lspg_nextshot.ay2_isnull == 0)
+    lspg_nextshot.ay2       = atof( PQgetvalue( pgr,0, ay2_c));
+
+  lspg_nextshot.az2_isnull = PQgetisnull( pgr, 0, az2_c);
+  if( lspg_nextshot.az2_isnull == 0)
+    lspg_nextshot.az2       = atof( PQgetvalue( pgr,0, az2_c));
+  
+  lspg_nextshot.active2_isnull = PQgetisnull( pgr, 0, active2_c);
+  if( lspg_nextshot.active2_isnull == 0)
+    lspg_nextshot.active2 = atoi( PQgetvalue( pgr, 0, active2_c));
+
+  lspg_nextshot.sindex2_isnull = PQgetisnull( pgr, 0, sindex2_c);
+  if( lspg_nextshot.sindex2_isnull == 0)
+    lspg_nextshot.sindex2 = atoi( PQgetvalue( pgr, 0, sindex2_c));
 
   lspg_nextshot.new_value_ready = 1;
 
   pthread_cond_signal( &(lspg_nextshot.cond));
   pthread_mutex_unlock( &(lspg_nextshot.mutex));
+
 }
 
 void lspg_nextshot_init() {
@@ -453,6 +579,51 @@ void lspg_lock_detector_all() {
   lspg_lock_detector_done();
 }
 
+typedef struct lspg_seq_run_prep_struct {
+  pthread_mutex_t mutex;
+  pthread_cond_t  cond;
+  int new_value_ready;
+} lspg_seq_run_prep_t;
+static lspg_seq_run_prep_t lspg_seq_run_prep;
+
+void lspg_seq_run_prep_init() {
+  lspg_seq_run_prep.new_value_ready = 0;
+  pthread_mutex_init( &(lspg_seq_run_prep.mutex), NULL);
+  pthread_cond_init(  &(lspg_seq_run_prep.cond),  NULL);
+}
+
+void lspg_seq_run_prep_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+  pthread_mutex_lock( &(lspg_seq_run_prep.mutex));
+  lspg_seq_run_prep.new_value_ready = 1;
+  pthread_cond_signal( &(lspg_seq_run_prep.cond));
+  pthread_mutex_unlock( &(lspg_seq_run_prep.mutex));
+}
+
+void lspg_seq_run_prep_call( long long skey, double kappa, double phi, double cx, double cy, double ax, double ay, double az) {
+  pthread_mutex_lock( &(lspg_seq_run_prep.mutex));
+  lspg_seq_run_prep.new_value_ready = 0;
+  pthread_mutex_unlock( &(lspg_seq_run_prep.mutex));
+
+  lspg_query_push( lspg_seq_run_prep_cb, "SELECT px.seq_run_prep( %lld, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f)",
+		   skey, kappa, phi, cx, cy, ax, ay, az);
+}
+
+void lspg_seq_run_prep_wait() {
+  pthread_mutex_lock( &(lspg_seq_run_prep.mutex));
+  while( lspg_seq_run_prep.new_value_ready == 0)
+    pthread_cond_wait( &(lspg_seq_run_prep.cond), &(lspg_seq_run_prep.mutex));
+}
+
+void lspg_seq_run_prep_done() {
+  pthread_mutex_unlock( &(lspg_seq_run_prep.mutex));
+}
+
+void lspg_seq_run_prep_all( long long skey, double kappa, double phi, double cx, double cy, double ax, double ay, double az) {
+  lspg_seq_run_prep_call( skey, kappa, phi, cx, cy, ax, ay, az);
+  lspg_seq_run_prep_wait();
+  lspg_seq_run_prep_done();
+}
+
 void lspg_getcenter_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   int theZoom;
   double dxp, dyp, z, b;
@@ -495,7 +666,7 @@ void lspg_cmd_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   for( i=0; i<PQntuples( pgr); i++) {
     sp = PQgetvalue( pgr, i, 0);
     if( sp != NULL && *sp != 0) {
-      PmacSockSendline( sp);
+      lspmac_SockSendline( sp);
       //
       // Keep asking for more until
       // there are no commands left

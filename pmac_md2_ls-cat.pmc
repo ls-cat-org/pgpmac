@@ -3389,9 +3389,9 @@ P5000=P173*(P175 + 200)/2 ;  Calcul of Accel Dist + 200 ms of margin
 TM(1)                   ;  In order to have the maximum speed
 ABS(X)
 If (P170 = P171)
-  X(P170)                 ;  Move Phi to the start position
+  RAPID X(P170)                 ;  Move Phi to the start position
 Else
-  X(P170-P5000-P178)      ;  Move Phi to the start position
+  RAPID X(P170-P5000-P178)      ;  Move Phi to the start position
 EndIf
 DWELL0
 If (P174 != 0 And P176 != 0)
@@ -3495,7 +3495,7 @@ DWELL0
 ; Set up the next scan
 ;
 If (P171 - P170 != 0)
-  X(P171-P5000-P178)      ;  Move Phi to the next start position
+  RAPID X(P171-P5000-P178)      ;  Move Phi to the next start position
 EndIf
 DWELL0
 
@@ -4195,6 +4195,8 @@ M5072->DP:$60142	; FastShutterHasOpened
 M5073->DP:$60143	; FastShutterHasGloballyOpened
 M5074->DP:$60144	; Number of passes (FShutterIsOpen false and FastShutterHasOpened true and npasses=1 means we can read the detector)
 
+M5075->DP:$60145	; Coordinate System Moving Flags
+
 M6000->Y:$78C00,0,24,U	; 0 Air Pressure OK, 1 Air Bearing OK, 2 Cryo Front PB, 6 Cryo is Back
 M6001->Y:$78C01,0,24,U	; 0 Fluo Det is Back, 1 Sample Detected, 5 Etel Ready, 6 Etel On, 7 Etel Init OK
 M6002->Y:$78C02,0,24,U	; 0 MiniKappaOK, 3 Arm Parked
@@ -4275,6 +4277,8 @@ M5072=P3001	; FastShutterHasOpened
 M5073=P3005	; FastShutterHasGloballyOpened
 M5074=P177	; Number of passes (FShutterIsOpen false and FastShutterHasOpened true and npasses=1 means we can read the detector)
 
+; M5075 is set directly, no need to do anything here
+
 CLOSE
 
 
@@ -4300,9 +4304,9 @@ P5000=P173*(P175 + 200)/2      ;  Calcul of Accel Dist + 200 ms of margin
 TM(1)                    ;  In order to have the maximum speed
 ABS(X)
 If (P171 = 0)
-  X(P170)                 ;  Move Phi to the start position
+  RAPID X(P170)                 ;  Move Phi to the start position
 Else
-  X(P170-P5000-P178)      ;  Move Phi to the start position
+  RAPID X(P170-P5000-P178)      ;  Move Phi to the start position
 EndIf
 DWELL0
 LINEAR
@@ -4386,9 +4390,69 @@ DWELL0
 ; Set up the next scan
 ;
 If (P171 != 0)
-  X(P170+P171-P5000-P178)      ;  Move Phi to the next start position
+  RAPID X(P170+P171-P5000-P178)      ;  Move Phi to the next start position
 EndIf
 DWELL0
 
 M431=0                         ;  Clear the VB synchro. flag
 CLOSE
+
+;140		LS-CAT Move X Absolute
+;			Q10    = X Value (cts)
+;			Q100   = 1 << (coord sys no  - 1)
+OPEN PROG 140 CLEAR
+  DWELL0
+  ABS(X)
+  X(Q10)
+  DWELL0
+  M7075 = (M7075 | Q100) ^ Q100		; Lower the running flag
+CLOSE
+
+			
+;141		LS-CAT Move Y Absolute
+;			Q11    = Y Value (cts)
+;			Q100   = 1 << (coord sys no  - 1)
+OPEN PROG 141 CLEAR
+  DWELL0
+  ABS(Y)
+  Y(Q11)
+  DWELL0
+  M7075 = (M7075 | Q100) ^ Q100		; Lower the running flag
+CLOSE
+
+;142		LS-CAT Move Z Absolute
+;			Q12    = Z Value (cts)
+;			Q100   = 1 << (coord sys no  - 1)
+OPEN PROG 142 CLEAR
+  DWELL0
+  ABS(Z)
+  Z(Q12)
+  DWELL0
+  M7075 = (M7075 | Q100) ^ Q100		; Lower the running flag
+CLOSE
+			
+;150		LS-CAT Move X, Y Absolute
+;			Q20    = X Value
+;			Q21    = Y Value
+;			Q100   = 1 << (coord sys no  - 1)
+OPEN PROG 150 CLEAR
+  DWELL0
+  ABS(X,Y)
+  X(Q20) Y(Q21)
+  DWELL0
+  M7075 = (M7075 | Q100) ^ Q100		; Lower the running flag
+CLOSE
+
+;160		LS-CAT Move X, Y, Z  Absolute
+;			Q30    = X Value
+;			Q31    = Y Value
+;			Q32    = Z Value
+;			Q100   = 1 << (coord sys no  - 1)
+OPEN PROG 160 CLEAR
+  DWELL0
+  ABS(X,Y,Z)
+  X(Q30) Y(Q31) Z(Q32)
+  DWELL0
+  M7075 = (M7075 | Q100) ^ Q100		; Lower the running flag
+CLOSE
+
