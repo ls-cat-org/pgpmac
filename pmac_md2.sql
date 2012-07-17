@@ -81,33 +81,42 @@ CREATE OR REPLACE FUNCTION pmac.md2_init( the_stn int) returns void as $$
     motor record;
     minit text;
   BEGIN
-    INSERT INTO pmac.md2_registration (mr_stn) values (the_stn);
     SELECT INTO ntfy cnotifypmac FROM px._config WHERE cstnkey=the_stn;
     IF NOT FOUND THEN
       RAISE EXCEPTION 'Cannot find station %', the_stn;
     END IF;
     EXECUTE 'LISTEN ' || ntfy;
 
+    INSERT INTO pmac.md2_registration (mr_stn) values (the_stn);
+
+    PERFORM px.ininotifies( the_stn);
+
+
     DELETE FROM pmac.md2_queue WHERE mq_stn=the_stn;
 
+    --
+    -- I5=3 allows foreground (plcc 0) and background (all others)
+    -- PLCC 1 fills DPRAM for EMBL VB code (unused here)
+    -- PLCC 2 fills DPRAM for us
+    --
     PERFORM pmac.md2_queue_push( the_stn, 'I5=3');
     PERFORM pmac.md2_queue_push( the_stn, 'ENABLE PLCC 0');
     PERFORM pmac.md2_queue_push( the_stn, 'DISABLE PLCC 1');
     PERFORM pmac.md2_queue_push( the_stn, 'ENABLE PLCC 2');
 
-    FOR motor IN SELECT * FROM pmac.md2_motors ORDER BY mm_motor LOOP
-      IF motor.mm_active THEN
-        FOR minit IN SELECT unnest( motor.mm_active_init) LOOP
-          PERFORM pmac.md2_queue_push( the_stn, minit);
-        END LOOP;
-      ELSE
-        FOR minit IN SELECT unnest( motor.mm_inactive_init) LOOP
-          PERFORM pmac.md2_queue_push( the_stn, minit);
-        END LOOP;
-      END IF;
-    END LOOP;
+    -- FOR motor IN SELECT * FROM pmac.md2_motors ORDER BY mm_motor LOOP
+    --  IF motor.mm_active THEN
+    --    FOR minit IN SELECT unnest( motor.mm_active_init) LOOP
+    --      PERFORM pmac.md2_queue_push( the_stn, minit);
+    --    END LOOP;
+    --  ELSE
+    --    FOR minit IN SELECT unnest( motor.mm_inactive_init) LOOP
+    --      PERFORM pmac.md2_queue_push( the_stn, minit);
+    --    END LOOP;
+    --  END IF;
+    --END LOOP;
 
-    PERFORM pmac.md2_queue_push( the_stn, 'M2000=1');
+  PERFORM pmac.md2_queue_push( the_stn, 'M2000=1');
 
   END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -295,31 +304,22 @@ CREATE OR REPLACE FUNCTION pmac.md2_home_omega( the_stn int) returns void as $$
     --
     -- Run pmac program 1: home omega
     --
-    PERFORM pmac.md2_queue_push( the_stn, 'M401=1');    -- flag indicating program is running
-    PERFORM pmac.md2_queue_push( the_stn, 'M1115=1');   -- Enable the Etel amplifier
-    PERFORM pmac.md2_queue_push( the_stn, '&1');        -- Omega is in coordinate system 1
-    PERFORM pmac.md2_queue_push( the_stn, 'E');         -- Enable omega
-    PERFORM pmac.md2_queue_push( the_stn, 'B1');        -- Run program 1 from the beginning
-    PERFORM pmac.md2_queue_push( the_stn, 'R');         -- GO!
+    --    M401=1    flag indicating program is running
+    --    M1115=1   Enable the Etel amplifier
+    --    &1        Omega is in coordinate system 1
+    --    E         Enable omega
+    --    B1        Run program 1 from the beginning
+    --    R         GO!
+    --
+    -- For some reason the pmac thinks the B command is part of a motion program if it's on the same line as the E command
+    --
+    PERFORM pmac.md2_queue_push( the_stn, 'M401=1 M1115=1 #1$ &1B1R');
+
+    
   END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ALTER FUNCTION pmac.md2_home_omega( int) OWNER TO lsadmin;
 
-CREATE OR REPLACE FUNCTION pmac.md2_scan_omega( the_stn int) returns void as $$
-  DECLARE
-  BEGIN
-    --
-    -- Run pmac program 1: home omega
-    --
-    PERFORM pmac.md2_queue_push( the_stn, 'M401=1');    -- flag indicating program is running
-    PERFORM pmac.md2_queue_push( the_stn, 'M1115=1');   -- Enable the Etel amplifier
-    PERFORM pmac.md2_queue_push( the_stn, '&1');        -- Omega is in coordinate system 1
-    PERFORM pmac.md2_queue_push( the_stn, 'E');         -- Enable omega
-    PERFORM pmac.md2_queue_push( the_stn, 'B1');        -- Run program 1 from the beginning
-    PERFORM pmac.md2_queue_push( the_stn, 'R');         -- GO!
-  END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-ALTER FUNCTION pmac.md2_scan_omega( int) OWNER TO lsadmin;
 
 CREATE OR REPLACE FUNCTION pmac.md2_home_centers( the_stn int) returns void as $$
   DECLARE
@@ -327,11 +327,14 @@ CREATE OR REPLACE FUNCTION pmac.md2_home_centers( the_stn int) returns void as $
     --
     -- Run pmac program 53: centerx and centery homing
     --
-    PERFORM pmac.md2_queue_push( the_stn, 'M453=1');    -- flag indicating program is running
-    PERFORM pmac.md2_queue_push( the_stn, '&2');        -- The centering stages are in coordinate system 2
-    PERFORM pmac.md2_queue_push( the_stn, 'E');         -- Enable centerx and centery
-    PERFORM pmac.md2_queue_push( the_stn, 'B53');       -- Run program 53 from the beginning
-    PERFORM pmac.md2_queue_push( the_stn, 'R');         -- GO!
+    --  M453=1		flag indicating program is running
+    --  &2              The centering stages are in coordinate system 2
+    --  E               Enable centerx and centery
+    --  B53             Run program 53 from the beginning
+    --  R               GO!
+
+    PERFORM pmac.md2_queue_push( the_stn, 'M453=1&2E'); --
+    PERFORM pmac.md2_queue_push( the_stn, '&2B53R');	-- make sure another coordinate system didn't sneak in
   END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ALTER FUNCTION pmac.md2_home_centers( int) OWNER TO lsadmin;
@@ -342,11 +345,16 @@ CREATE OR REPLACE FUNCTION pmac.md2_home_alignment_x( the_stn int) returns void 
     --
     -- Run pmac program 2: alignment x homing
     --
-    PERFORM pmac.md2_queue_push( the_stn, 'M402=1');    -- flag indicating program is running
-    PERFORM pmac.md2_queue_push( the_stn, '&3');        -- The alignment stages are in coordinate system 3
-    PERFORM pmac.md2_queue_push( the_stn, 'E');         -- Enable the alignment stages
-    PERFORM pmac.md2_queue_push( the_stn, 'B2');        -- Run program 2 from the beginning
-    PERFORM pmac.md2_queue_push( the_stn, 'R');         -- GO!
+    -- M402=1    flag indicating program is running
+    -- &3        The alignment stages are in coordinate system 3
+    -- E         Enable the alignment stages
+    -- B2        Run program 2 from the beginning
+    -- R         GO!
+    --
+
+    PERFORM pmac.md2_queue_push( the_stn, 'M402=1 &3E');
+    PERFORM pmac.md2_queue_push( the_stn, '&3B2R');
+
   END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ALTER FUNCTION pmac.md2_home_alignment_x( int) OWNER TO lsadmin;
@@ -357,11 +365,15 @@ CREATE OR REPLACE FUNCTION pmac.md2_home_alignment_y( the_stn int) returns void 
     --
     -- Run pmac program 3: alignment y homing
     --
-    PERFORM pmac.md2_queue_push( the_stn, 'M403=1');    -- flag indicating program is running
-    PERFORM pmac.md2_queue_push( the_stn, '&3');        -- The alignment stages are in coordinate system 3
-    PERFORM pmac.md2_queue_push( the_stn, 'E');         -- Enable the alignment stages
-    PERFORM pmac.md2_queue_push( the_stn, 'B3');        -- Run program 3 from the beginning
-    PERFORM pmac.md2_queue_push( the_stn, 'R');         -- GO!
+    --  M403=1    flag indicating program is running
+    --  &3        The alignment stages are in coordinate system 3
+    --  E         Enable the alignment stages
+    --  B3        Run program 3 from the beginning
+    --  R         GO!
+
+    PERFORM pmac.md2_queue_push( the_stn, 'M403=1&3E');
+    PERFORM pmac.md2_queue_push( the_stn, '&3B3R');
+
   END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ALTER FUNCTION pmac.md2_home_alignment_y( int) OWNER TO lsadmin;
@@ -372,11 +384,15 @@ CREATE OR REPLACE FUNCTION pmac.md2_home_alignment_z( the_stn int) returns void 
     --
     -- Run pmac program 4: alignment z homing
     --
-    PERFORM pmac.md2_queue_push( the_stn, 'M404=1');    -- flag indicating program is running
-    PERFORM pmac.md2_queue_push( the_stn, '&3');        -- The alignment stages are in coordinate system 3
-    PERFORM pmac.md2_queue_push( the_stn, 'E');         -- Enable the alignment stages
-    PERFORM pmac.md2_queue_push( the_stn, 'B4');        -- Run program 4 from the beginning
-    PERFORM pmac.md2_queue_push( the_stn, 'R');         -- GO!
+    -- M404=1    flag indicating program is running
+    -- &3        The alignment stages are in coordinate system 3
+    -- E         Enable the alignment stages
+    -- B4        Run program 4 from the beginning
+    -- R         GO!
+
+    PERFORM pmac.md2_queue_push( the_stn, 'M404=1&3E');
+    PERFORM pmac.md2_queue_push( the_stn, '&3B4R');
+
   END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ALTER FUNCTION pmac.md2_home_alignment_z( int) OWNER TO lsadmin;
@@ -387,11 +403,14 @@ CREATE OR REPLACE FUNCTION pmac.md2_home_zoom( the_stn int) returns void as $$
     --
     -- Run pmac program 6: camera zoom
     --
-    PERFORM pmac.md2_queue_push( the_stn, 'M406=1');    -- flag indicating program is running
-    PERFORM pmac.md2_queue_push( the_stn, '&4');        -- The zoom is in coordinate system 4
-    PERFORM pmac.md2_queue_push( the_stn, 'E');         -- Enable the alignment stages
-    PERFORM pmac.md2_queue_push( the_stn, 'B6');        -- Run program 6 from the beginning
-    PERFORM pmac.md2_queue_push( the_stn, 'R');         -- GO!
+    --  M406=1	  flag indicating program is running
+    --  &4        The zoom is in coordinate system 4
+    --  E         Enable the alignment stages
+    --  B6        Run program 6 from the beginning
+    --  R         GO!
+
+    PERFORM pmac.md2_queue_push( the_stn, 'M406=1&4E');
+    PERFORM pmac.md2_queue_push( the_stn, '&4B6R');
   END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ALTER FUNCTION pmac.md2_home_zoom( int) OWNER TO lsadmin;
@@ -402,11 +421,14 @@ CREATE OR REPLACE FUNCTION pmac.md2_home_organs( the_stn int) returns void as $$
     --
     -- Run pmac program 35: home organs
     --
-    PERFORM pmac.md2_queue_push( the_stn, 'M435=1');    -- flag indicating program is running
-    PERFORM pmac.md2_queue_push( the_stn, '&5');        -- The organs are in coordinate system 5
-    PERFORM pmac.md2_queue_push( the_stn, 'E');         -- Enable the organs
-    PERFORM pmac.md2_queue_push( the_stn, 'B35');       -- Run program 35 from the beginning
-    PERFORM pmac.md2_queue_push( the_stn, 'R');         -- GO!
+    --  M435=1    flag indicating program is running
+    --  &5        The organs are in coordinate system 5
+    --  E         Enable the organs
+    --  B35       Run program 35 from the beginning
+    --  R         GO!
+
+    PERFORM pmac.md2_queue_push( the_stn, 'M435=1&5E');
+    PERFORM pmac.md2_queue_push( the_stn, '&5B35R');
   END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ALTER FUNCTION pmac.md2_home_organs( int) OWNER TO lsadmin;
@@ -417,11 +439,14 @@ CREATE OR REPLACE FUNCTION pmac.md2_home_aperture_y( the_stn int) returns void a
     --
     -- Run pmac program 7: home aperture y
     --
-    PERFORM pmac.md2_queue_push( the_stn, 'M407=1');    -- flag indicating program is running
-    PERFORM pmac.md2_queue_push( the_stn, '&5');        -- The organs are in coordinate system 5
-    PERFORM pmac.md2_queue_push( the_stn, 'E');         -- Enable the organs
-    PERFORM pmac.md2_queue_push( the_stn, 'B7');        -- Run program 7 from the beginning
-    PERFORM pmac.md2_queue_push( the_stn, 'R');         -- GO!
+    --  M407=1    flag indicating program is running
+    --  &5        The organs are in coordinate system 5
+    --  E         Enable the organs
+    --  B7        Run program 7 from the beginning
+    --  R         GO!
+
+    PERFORM pmac.md2_queue_push( the_stn, 'M407=1&5E');    -- flag indicating program is running
+    PERFORM pmac.md2_queue_push( the_stn, '&5B7R');        -- The organs are in coordinate system 5
   END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ALTER FUNCTION pmac.md2_home_aperture_y( int) OWNER TO lsadmin;
@@ -432,11 +457,14 @@ CREATE OR REPLACE FUNCTION pmac.md2_home_aperture_z( the_stn int) returns void a
     --
     -- Run pmac program 8: home aperture z
     --
-    PERFORM pmac.md2_queue_push( the_stn, 'M408=1');    -- flag indicating program is running
-    PERFORM pmac.md2_queue_push( the_stn, '&5');        -- The organs are in coordinate system 5
-    PERFORM pmac.md2_queue_push( the_stn, 'E');         -- Enable the organs
-    PERFORM pmac.md2_queue_push( the_stn, 'B8');        -- Run program 8 from the beginning
-    PERFORM pmac.md2_queue_push( the_stn, 'R');         -- GO!
+    --  M408=1    flag indicating program is running
+    --  &5        The organs are in coordinate system 5
+    --  E         Enable the organs
+    --  B8        Run program 8 from the beginning
+    --  R         GO!
+
+    PERFORM pmac.md2_queue_push( the_stn, 'M408=1&5E');    -- flag indicating program is running
+    PERFORM pmac.md2_queue_push( the_stn, '&5B8R');        -- The organs are in coordinate system 5
   END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ALTER FUNCTION pmac.md2_home_aperture_z( int) OWNER TO lsadmin;
@@ -447,11 +475,14 @@ CREATE OR REPLACE FUNCTION pmac.md2_home_capillary_y( the_stn int) returns void 
     --
     -- Run pmac program 9: home capillary y
     --
-    PERFORM pmac.md2_queue_push( the_stn, 'M409=1');    -- flag indicating program is running
-    PERFORM pmac.md2_queue_push( the_stn, '&5');        -- The organs are in coordinate system 5
-    PERFORM pmac.md2_queue_push( the_stn, 'E');         -- Enable the organs
-    PERFORM pmac.md2_queue_push( the_stn, 'B9');        -- Run program 9 from the beginning
-    PERFORM pmac.md2_queue_push( the_stn, 'R');         -- GO!
+    --  M409=1    flag indicating program is running
+    --  &5        The organs are in coordinate system 5
+    --  E         Enable the organs
+    --  B9        Run program 9 from the beginning
+    --  R         GO!
+
+    PERFORM pmac.md2_queue_push( the_stn, 'M409=1&5E');    -- flag indicating program is running
+    PERFORM pmac.md2_queue_push( the_stn, '&5B9R');        -- The organs are in coordinate system 5
   END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ALTER FUNCTION pmac.md2_home_capillary_y( int) OWNER TO lsadmin;
@@ -462,11 +493,14 @@ CREATE OR REPLACE FUNCTION pmac.md2_home_capillary_z( the_stn int) returns void 
     --
     -- Run pmac program 10: home capillary z
     --
-    PERFORM pmac.md2_queue_push( the_stn, 'M410=1');    -- flag indicating program is running
-    PERFORM pmac.md2_queue_push( the_stn, '&5');        -- The organs are in coordinate system 5
-    PERFORM pmac.md2_queue_push( the_stn, 'E');         -- Enable the organs
-    PERFORM pmac.md2_queue_push( the_stn, 'B10');       -- Run program 10 from the beginning
-    PERFORM pmac.md2_queue_push( the_stn, 'R');         -- GO!
+    --  M410=1    flag indicating program is running
+    --  &5        The organs are in coordinate system 5
+    --  E         Enable the organs
+    --  B10       Run program 10 from the beginning
+    --  R         GO!
+
+    PERFORM pmac.md2_queue_push( the_stn, 'M410=1&5E');    -- flag indicating program is running
+    PERFORM pmac.md2_queue_push( the_stn, '&5B10R');        -- The organs are in coordinate system 5
   END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ALTER FUNCTION pmac.md2_home_capillary_z( int) OWNER TO lsadmin;
@@ -477,11 +511,14 @@ CREATE OR REPLACE FUNCTION pmac.md2_home_scintillator_z( the_stn int) returns vo
     --
     -- Run pmac program 11: home scintillator z
     --
-    PERFORM pmac.md2_queue_push( the_stn, 'M411=1');    -- flag indicating program is running
-    PERFORM pmac.md2_queue_push( the_stn, '&5');        -- The organs are in coordinate system 5
-    PERFORM pmac.md2_queue_push( the_stn, 'E');         -- Enable the organs
-    PERFORM pmac.md2_queue_push( the_stn, 'B11');       -- Run program 11 from the beginning
-    PERFORM pmac.md2_queue_push( the_stn, 'R');         -- GO!
+    --  M411=1    flag indicating program is running
+    --  &5        The organs are in coordinate system 5
+    --  E         Enable the organs
+    --  B11       Run program 11 from the beginning
+    --  R         GO!
+
+    PERFORM pmac.md2_queue_push( the_stn, 'M411=1&5E');    -- flag indicating program is running
+    PERFORM pmac.md2_queue_push( the_stn, '&5B11R');        -- The organs are in coordinate system 5
   END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ALTER FUNCTION pmac.md2_home_scintillator_z( int) OWNER TO lsadmin;
@@ -492,11 +529,14 @@ CREATE OR REPLACE FUNCTION pmac.md2_home_center_x( the_stn int) returns void as 
     --
     -- Run pmac program 17: home center x
     --
-    PERFORM pmac.md2_queue_push( the_stn, 'M417=1');    -- flag indicating program is running
-    PERFORM pmac.md2_queue_push( the_stn, '&2');        -- The centers are in coordinate system 2
-    PERFORM pmac.md2_queue_push( the_stn, 'E');         -- Enable the centerx and centery
-    PERFORM pmac.md2_queue_push( the_stn, 'B17');       -- Run program 17 from the beginning
-    PERFORM pmac.md2_queue_push( the_stn, 'R');         -- GO!
+    --  M417=1    flag indicating program is running
+    --  &2        The centers are in coordinate system 2
+    --  E         Enable the centerx and centery
+    --  B17       Run program 17 from the beginning
+    --  R         GO!
+
+    PERFORM pmac.md2_queue_push( the_stn, 'M417=1&2E');    -- flag indicating program is running
+    PERFORM pmac.md2_queue_push( the_stn, '&2B17R');        -- The centers are in coordinate system 2
   END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ALTER FUNCTION pmac.md2_home_center_x( int) OWNER TO lsadmin;
@@ -507,11 +547,14 @@ CREATE OR REPLACE FUNCTION pmac.md2_home_center_y( the_stn int) returns void as 
     --
     -- Run pmac program 18: home center y
     --
-    PERFORM pmac.md2_queue_push( the_stn, 'M418=1');    -- flag indicating program is running
-    PERFORM pmac.md2_queue_push( the_stn, '&2');        -- The centers are in coordinate system 2
-    PERFORM pmac.md2_queue_push( the_stn, 'E');         -- Enable centerx and centery
-    PERFORM pmac.md2_queue_push( the_stn, 'B18');       -- Run program 18 from the beginning
-    PERFORM pmac.md2_queue_push( the_stn, 'R');         -- GO!
+    --  M418=1    flag indicating program is running
+    --  &2        The centers are in coordinate system 2
+    --  E         Enable centerx and centery
+    --  B18       Run program 18 from the beginning
+    --  R         GO!
+
+    PERFORM pmac.md2_queue_push( the_stn, 'M418=1&2E');    -- flag indicating program is running
+    PERFORM pmac.md2_queue_push( the_stn, '&2B18R');        -- The centers are in coordinate system 2
   END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ALTER FUNCTION pmac.md2_home_center_y( int) OWNER TO lsadmin;
@@ -522,11 +565,14 @@ CREATE OR REPLACE FUNCTION pmac.md2_home_kappa( the_stn int) returns void as $$
     --
     -- Run pmac program 19: home kappa
     --
-    PERFORM pmac.md2_queue_push( the_stn, 'M419=1');    -- flag indicating program is running
-    PERFORM pmac.md2_queue_push( the_stn, '&7');        -- The kappa and phi are in coordinate system 7
-    PERFORM pmac.md2_queue_push( the_stn, 'E');         -- Enable kappa and phi
-    PERFORM pmac.md2_queue_push( the_stn, 'B19');       -- Run program 19 from the beginning
-    PERFORM pmac.md2_queue_push( the_stn, 'R');         -- GO!
+    --  M419=1    flag indicating program is running
+    --  &7        The kappa and phi are in coordinate system 7
+    --  E         Enable kappa and phi
+    --  B19       Run program 19 from the beginning
+    --  R         GO!
+
+    PERFORM pmac.md2_queue_push( the_stn, 'M419=1&7E');    -- flag indicating program is running
+    PERFORM pmac.md2_queue_push( the_stn, '&7B19R');        -- The kappa and phi are in coordinate system 7
   END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ALTER FUNCTION pmac.md2_home_kappa( int) OWNER TO lsadmin;
@@ -537,11 +583,14 @@ CREATE OR REPLACE FUNCTION pmac.md2_home_phi( the_stn int) returns void as $$
     --
     -- Run pmac program 20: home phi
     --
-    PERFORM pmac.md2_queue_push( the_stn, 'M420=1');    -- flag indicating program is running
-    PERFORM pmac.md2_queue_push( the_stn, '&7');        -- The kappa and phi are in coordinate system 7
-    PERFORM pmac.md2_queue_push( the_stn, 'E');         -- Enable kappa and phi
-    PERFORM pmac.md2_queue_push( the_stn, 'B20');       -- Run program 20 from the beginning
-    PERFORM pmac.md2_queue_push( the_stn, 'R');         -- GO!
+    --  M420=1    flag indicating program is running
+    --  &7        The kappa and phi are in coordinate system 7
+    --  E         Enable kappa and phi
+    --  B20       Run program 20 from the beginning
+    --  R         GO!
+
+    PERFORM pmac.md2_queue_push( the_stn, 'M420=1&7E');    -- flag indicating program is running
+    PERFORM pmac.md2_queue_push( the_stn, '&7B20R');        -- The kappa and phi are in coordinate system 7
   END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ALTER FUNCTION pmac.md2_home_phi( int) OWNER TO lsadmin;
@@ -620,18 +669,8 @@ CREATE OR REPLACE FUNCTION pmac.md2_scan_omega( the_stn int, start_angle float, 
       RAISE EXCEPTION 'Omega motor not found for station %', the_stn;
     END IF;
 
-    PERFORM pmac.md2_queue_push( the_stn, 'P170='||p170);	-- start angle
-    PERFORM pmac.md2_queue_push( the_stn, 'P171='||p171);	-- end angle
-    PERFORM pmac.md2_queue_push( the_stn, 'P173='||p173);	-- velocity
-    PERFORM pmac.md2_queue_push( the_stn, 'P174=0');		-- sampling rate (0 disables sampling) see I5049
-    PERFORM pmac.md2_queue_push( the_stn, 'P175='||p175);	-- acceleration time
-    PERFORM pmac.md2_queue_push( the_stn, 'P176=0');		-- gathering sources 2
-    PERFORM pmac.md2_queue_push( the_stn, 'P177=1');		-- number of passes
-    PERFORM pmac.md2_queue_push( the_stn, 'P178=0');		-- shutter rise distance
-    PERFORM pmac.md2_queue_push( the_stn, 'P179=0');		-- shutter fall distance
-    PERFORM pmac.md2_queue_push( the_stn, 'P180='||p180);	-- exposure time (msec)
-    PERFORM pmac.md2_queue_push( the_stn, 'M431=1');		-- Flag indicating program running
-    PERFORM pmac.md2_queue_push( the_stn, '&1B31R');		-- run program 31 in coord system 1 from the beginning
+    PERFORM pmac.md2_queue_push( the_stn, 'P170='||p170||' P171='||p171||' P173='||p173||' P174=0 P175='||p175||' P176=0 P177=1 P178=0 P179=0 P180='||p180||' M431=1'||' &1B31R');
+
 
   END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
