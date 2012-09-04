@@ -77,10 +77,13 @@ lspmac_motor_t *ceny;
 lspmac_motor_t *kappa;
 lspmac_motor_t *phi;
 
+lspmac_motor_t *fshut;
+lspmac_motor_t *flight;
+lspmac_motor_t *blight;
+lspmac_motor_t *fscint;
 
-//
-// Stylistically this is a define.  Really, though, this value will never change.
-//
+lspmac_motor_t *blight_ud;
+
 #define PMACPORT 1025
 
 //
@@ -257,6 +260,8 @@ typedef  struct md2StatusStruct {
 } md2_status_t;
 
 static md2_status_t md2_status;
+pthread_mutex_t md2_status_mutex;
+
 
 void hex_dump( int n, unsigned char *s) {
   int i,j;
@@ -749,7 +754,15 @@ pmac_cmd_queue_t *lspmac_SockSendline( char *fmt, ...) {
   return lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( payload), payload, lspmac_GetShortReplyCB, 0);
 }
 
-pmac_cmd_queue_t *lspmac_SockSendline_nr( char *s) {
+pmac_cmd_queue_t *lspmac_SockSendline_nr( char *fmt, ...) {
+  va_list arg_ptr;
+  char s[512];
+
+  va_start( arg_ptr, fmt);
+  vsnprintf( s, sizeof(s)-1, fmt, arg_ptr);
+  s[sizeof(s)-1] = 0;
+  va_end( arg_ptr);
+
   return lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( s), s, NULL, 1);
 }
 
@@ -763,16 +776,31 @@ void lspmac_Getmem() {
   lspmac_SockGetmem( dbmemIn, nbytes);
 }
 
-void lspmac_get_status_cb( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) {
-  static int cnt = 0;
-  static char s[256];
-  
-  char *sp;
-  int i, pos;
-  lspmac_motor_t *mp;
-  
-  memcpy( &md2_status, buff, sizeof(md2_status));
+void lspmac_bio_read( lspmac_motor_t *mp) {
+  char s[512];
+  int pos;
 
+  pthread_mutex_lock( &(mp->mutex));
+
+  pos = (*(mp->read_ptr) & mp->read_mask) == 0 ? 0 : 1;
+  mp->position = pos;
+
+  if( mp->u2c != 0.0) {
+    mp->position = *mp->actual_pos_cnts_p/mp->u2c;
+    snprintf( s, sizeof(s)-1, mp->format, 8, pos/mp->u2c);
+  } else {
+    mp->position = 1.0* (*mp->actual_pos_cnts_p);
+    snprintf( s, sizeof(s)-1, mp->format, 8, 1.0* (pos));
+  }
+
+  pthread_mutex_unlock( &(mp->mutex));
+}
+
+void lspmac_dac_read( lspmac_motor_t *mp) {
+  // TODO: impliement
+}
+
+void lspmac_shutter_read( lspmac_motor_t *mp) {
   //
   // track the shutter state and signal if it has changed
   //
@@ -790,7 +818,102 @@ void lspmac_get_status_cb( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *
     lspmac_shutter_state = md2_status.fs_is_open;
     pthread_cond_signal( &lspmac_shutter_cond);
   }
+
+  if( md2_status.fs_is_open) {
+    mvwprintw( term_status2, 1, 1, "Shutter Open  ");
+    mp->position = 1;
+  } else {
+    mvwprintw( term_status2, 1, 1, "Shutter Closed");
+    mp->position = 0;
+  }
+
   pthread_mutex_unlock( &lspmac_shutter_mutex);
+} 
+
+void lspmac_pmacmotor_read( lspmac_motor_t *mp) {
+  char s[512], *sp;
+
+  if( *mp->status2 & 0x000001) {
+    if( mp->not_done) {
+      pthread_mutex_lock( &(mp->mutex));
+      mp->not_done = 0;
+      pthread_cond_signal( &(mp->cond));
+      pthread_mutex_unlock( &(mp->mutex));
+    }
+  } else if( mp->not_done == 0) {
+    mp->not_done = 1;
+  }
+
+  if( (*mp->status1 & 0x020000) || (*mp->status1 & 0x000400)) {
+    if( mp->motion_seen == 0) {
+      pthread_mutex_lock( &(mp->mutex));
+      mp->motion_seen = 1;
+      pthread_cond_signal( &(mp->cond));
+      pthread_mutex_unlock( &(mp->mutex));
+    }
+  }
+
+  mvwprintw( mp->win, 2, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, " ");
+  mvwprintw( mp->win, 2, 1, "%*d cts", LS_DISPLAY_WINDOW_WIDTH-6, *mp->actual_pos_cnts_p);
+  mvwprintw( mp->win, 3, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, " ");
+
+  if( mp->u2c != 0.0) {
+    mp->position = *mp->actual_pos_cnts_p/mp->u2c;
+    snprintf( s, sizeof(s)-1, mp->format, 8, *mp->actual_pos_cnts_p/mp->u2c);
+  } else {
+    mp->position = 1.0* (*mp->actual_pos_cnts_p);
+    snprintf( s, sizeof(s)-1, mp->format, 8, 1.0* (*mp->actual_pos_cnts_p));
+  }
+  s[sizeof(s)-1] = 0;
+  mvwprintw( mp->win, 3, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-6, s);
+
+  mvwprintw( mp->win, 4, 1, "%*u", LS_DISPLAY_WINDOW_WIDTH-2, *mp->status1);
+  mvwprintw( mp->win, 5, 1, "%*u", LS_DISPLAY_WINDOW_WIDTH-2, *mp->status2);
+  sp = "";
+  if( *mp->status2 & 0x000002)
+    sp = "Following Warning";
+  else if( *mp->status2 & 0x000004)
+    sp = "Following Error";
+  else if( *mp->status2 & 0x000020)
+    sp = "I2T Amp Fault";
+  else if( *mp->status2 & 0x000008)
+    sp = "Amp. Fault";
+  else if( *mp->status2 & 0x000800)
+    sp = "Stopped on Limit";
+  else if( *mp->status1 & 0x040000)
+    sp = "Open Loop";
+  else if( ~(*mp->status1) & 0x080000)
+    sp = "Motor Disabled";
+  else if( *mp->status1 & 0x000400)
+    sp = "Homing";
+  else if( (*mp->status1 & 0x600000) == 0x600000)
+    sp = "Both Limits Tripped";
+  else if( *mp->status1 & 0x200000)
+    sp = "Positive Limit";
+  else if( *mp->status1 & 0x400000)
+    sp = "Negative Limit";
+  else if( ~(*mp->status2) & 0x000400)
+    sp = "Not Homed";
+  else if( *mp->status2 & 0x000001)
+    sp = "In Position";
+
+  mvwprintw( mp->win, 6, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, sp);
+  wnoutrefresh( mp->win);
+}
+
+
+void lspmac_get_status_cb( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) {
+  static int cnt = 0;
+  static char s[256];
+  
+  char *sp;
+  int i, pos;
+  lspmac_motor_t *mp;
+  
+  pthread_mutex_lock( &md2_status_mutex);
+  memcpy( &md2_status, buff, sizeof(md2_status));
+  pthread_mutex_unlock( &md2_status_mutex);
+
 
   //
   // track the coordinate system moving flags
@@ -798,7 +921,7 @@ void lspmac_get_status_cb( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *
   pthread_mutex_lock( &lspmac_moving_mutex);
   if( md2_status.moving_flags != lspmac_moving_flags) {
     lspmac_moving_flags = md2_status.moving_flags;
-    pghread_cond_signal( &lspmac_moving_cond);
+    pthread_cond_signal( &lspmac_moving_cond);
   }
   pthread_mutex_unlock( &lspmac_moving_mutex);
 
@@ -806,76 +929,9 @@ void lspmac_get_status_cb( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *
   pthread_mutex_lock( &ncurses_mutex);
 
   for( i=0; i<lspmac_nmotors; i++) {
-    mp = &(lspmac_motors[i]);
-    memcpy( &(mp->actual_pos_cnts), buff+mp->dpram_position_offset, sizeof( int));
-    memcpy( &(mp->status1), buff+mp->status1_offset, sizeof( int));
-    memcpy( &(mp->status2), buff+mp->status2_offset, sizeof( int));
-
-    if( mp->status2 & 0x000001) {
-      if( mp->not_done) {
-	pthread_mutex_lock( &(mp->mutex));
-	mp->not_done = 0;
-	pthread_cond_signal( &(mp->cond));
-	pthread_mutex_unlock( &(mp->mutex));
-      }
-    } else if( mp->not_done == 0) {
-      mp->not_done = 1;
-    }
-
-    if( (mp->status1 & 0x020000) || (mp->status1 & 0x000400)) {
-      if( mp->motion_seen == 0) {
-	pthread_mutex_lock( &(mp->mutex));
-	mp->motion_seen = 1;
-	pthread_cond_signal( &(mp->cond));
-	pthread_mutex_unlock( &(mp->mutex));
-      }
-    }
-
-    mvwprintw( mp->win, 2, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, " ");
-    mvwprintw( mp->win, 2, 1, "%*d cts", LS_DISPLAY_WINDOW_WIDTH-6, mp->actual_pos_cnts);
-    mvwprintw( mp->win, 3, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, " ");
-
-    snprintf( s, sizeof(s)-1, mp->format, 8, mp->actual_pos_cnts/mp->u2c);
-    s[sizeof(s)-1] = 0;
-    mvwprintw( mp->win, 3, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-6, s);
-
-    mvwprintw( mp->win, 4, 1, "%*u", LS_DISPLAY_WINDOW_WIDTH-2, mp->status1);
-    mvwprintw( mp->win, 5, 1, "%*u", LS_DISPLAY_WINDOW_WIDTH-2, mp->status2);
-    sp = "";
-    if( mp->status2 & 0x000002)
-      sp = "Following Warning";
-    else if( mp->status2 & 0x000004)
-      sp = "Following Error";
-    else if( mp->status2 & 0x000020)
-      sp = "I2T Amp Fault";
-    else if( mp->status2 & 0x000008)
-      sp = "Amp. Fault";
-    else if( mp->status2 & 0x000800)
-      sp = "Stopped on Limit";
-    else if( mp->status1 & 0x040000)
-      sp = "Open Loop";
-    else if( ~mp->status1 & 0x080000)
-      sp = "Motor Disabled";
-    else if( mp->status1 & 0x000400)
-      sp = "Homing";
-    else if( (mp->status1 & 0x600000) == 0x600000)
-      sp = "Both Limits Tripped";
-    else if( mp->status1 & 0x200000)
-      sp = "Positive Limit";
-    else if( mp->status1 & 0x400000)
-      sp = "Negative Limit";
-    else if( ~mp->status2 & 0x000400)
-      sp = "Not Homed";
-    else if( mp->status2 & 0x000001)
-      sp = "In Position";
-
-    mvwprintw( mp->win, 6, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, sp);
-    wnoutrefresh( mp->win);
+    lspmac_motors[i].read(&(lspmac_motors[i]));
   }
-  if( md2_status.fs_is_open)
-    mvwprintw( term_status, 1, 1, "Shutter Open  ");
-  else
-    mvwprintw( term_status, 1, 1, "Shutter Closed");
+
   // acc11c_1
   // mask  bit
   // 0x01  0	Air pressure OK
@@ -887,9 +943,9 @@ void lspmac_get_status_cb( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *
   // 0x40  6	Cryo is back
 
   if( md2_status.acc11c_1 & 0x40)
-    mvwprintw( term_status, 3, 1, "%*s", -8, "Cryo Out");
+    mvwprintw( term_status2, 3, 1, "%*s", -8, "Cryo Out");
   else
-    mvwprintw( term_status, 3, 1, "%*s", -8, "Cryo In ");
+    mvwprintw( term_status2, 3, 1, "%*s", -8, "Cryo In ");
 
   //
   // acc11c_2
@@ -904,14 +960,20 @@ void lspmac_get_status_cb( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *
   // 0x80  7	Etel Init OK
 
   if( md2_status.acc11c_2 & 0x01)
-    mvwprintw( term_status, 3, 10, "%*s", -8, "Fluor Out");
+    mvwprintw( term_status2, 3, 10, "%*s", -8, "Fluor Out");
   else
-    mvwprintw( term_status, 3, 10, "%*s", -8, "Fluor In");
+    mvwprintw( term_status2, 3, 10, "%*s", -8, "Fluor In");
+
+  if( md2_status.acc11c_5 & 0x08)
+    mvwprintw( term_status2, 4, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Dryer On");
+  else
+    mvwprintw( term_status2, 4, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Dryer Off");
 
   if( md2_status.acc11c_2 & 0x02)
-    mvwprintw( term_status, 2, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Cap Dectected");
+    mvwprintw( term_status2, 2, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Cap Dectected");
   else
-    mvwprintw( term_status, 2, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Cap Not Dectected");
+    mvwprintw( term_status2, 2, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Cap Not Dectected");
+  wnoutrefresh( term_status2);
 
 
   // acc11c_3
@@ -923,7 +985,28 @@ void lspmac_get_status_cb( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *
 
   // acc11c_5
   // mask  bit
+  // 0x01  0    Mag Off
+  // 0x02  1    Condenser Out
+  // 0x04  2    Cryo Back
+  // 0x08  3    Dryer On
+  // 0x10  4    FluoDet Out
+  // 0x20  5    
+  // 0x40  6    1=SmartMag, 0=Permanent Mag
   //
+
+  // acc11c_6
+  // mask   bit
+  // 0x0080   7   Etel Enable
+  // 0x0100   8   Fast Shutter Enable
+  // 0x0200   9   Fast Shutter Manual Enable
+  // 0x0400  10   Fast Shutter On
+
+
+
+  if( md2_status.acc11c_5 & 0x02)
+    mvwprintw( term_status,  3, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Backlight Up");
+  else
+    mvwprintw( term_status,  3, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Backlight Down");
 
   mvwprintw( term_status, 4, 1, "Front: %*d", LS_DISPLAY_WINDOW_WIDTH-2-8, md2_status.front_dac);
   mvwprintw( term_status, 5, 1, "Back: %*d", LS_DISPLAY_WINDOW_WIDTH-2-7, md2_status.back_dac);
@@ -1081,10 +1164,166 @@ void *lspmac_worker( void *dummy) {
 }
 
 
+//
+// use a lookup table to find the "counts" to move the motor to the requested position
+// The look up table is a simple one dimensional array with the x values as even indicies
+// and the y values as odd indices
+//
+double lspmac_lut( int nlut, double *lut, double x) {
+  int i, foundone;
+  double m;
+  double y1, y2, x1, x2, y;
+
+  
+  foundone = 0;
+  if( lut != NULL && nlut > 1) {
+
+    for( i=0; i < 2*nlut; i += 2) {
+
+      x1 = lut[i];
+      y1 = lut[i+1];
+      if( i < 2*nlut - 2) {
+	x2 = lut[i+2];
+	y2 = lut[i+3];
+      }
+
+      //
+      // First one too big?  Use the y value of the first element
+      //
+      if( i == 0 && x1 > x) {
+	y = y1;
+	foundone = 1;
+	break;
+      }
+
+      //
+      // Look for equality
+      //
+      if( x1 == x) {
+	y = y1;
+	foundone = 1;
+	break;
+      }
+      
+      //
+      // Maybe interpolate
+      //
+      if( (i < 2*nlut-2) && x < x2) {
+	m = (y2 - y1) / (x2 - x1);
+	y = m*(x - x1) + y1;
+	foundone = 1;
+	break;
+      }
+    }
+    if( foundone == 0) {
+      // must be bigger than the last entry
+      //
+      //
+      y = lut[2*(nlut-1) + 1];
+    }
+    return y;
+  }
+}
+
+
+void lspmac_movedac_queue( lspmac_motor_t *mp, double requested_position) {
+  char s[512];
+  double y;
+
+  pthread_mutex_lock( &(mp->mutex));
+
+  mp->requested_position = requested_position;
+
+  if( mp->nlut > 0 && mp->lut != NULL) {
+    y = lspmac_lut( mp->nlut, mp->lut, requested_position);
+
+    mp->requested_pos_cnts = (int)y * mp->u2c;
+    mp->not_done    = 1;
+    mp->motion_seen = 0;
+
+
+    //
+    //  By convension requested_pos_cnts scales from 0 to 100
+    //  for the lights u2c converts this to 0 to 16,000
+    //  for the scintilator focus this is   0 to 32,000
+    //
+    snprintf( s, sizeof(s)-1, "%s=%d", mp->dac_mvar, (int)mp->requested_pos_cnts);
+    mp->pq = lspmac_SockSendline_nr( s);
+
+  }
+  
+  pthread_mutex_unlock( &(mp->mutex));
+}
+
+
+void lspmac_movezoom_queue( lspmac_motor_t *mp, double requested_position) {
+  char s[512];
+  double y;
+  pthread_mutex_lock( &(mp->mutex));
+    
+  mp->requested_position = requested_position;
+
+  if( mp->nlut > 0 && mp->lut != NULL) {
+    y = lspmac_lut( mp->nlut, mp->lut, requested_position);
+
+    mp->requested_pos_cnts = (int)y;
+    mp->not_done    = 1;
+    mp->motion_seen = 0;
+
+
+    snprintf( s, sizeof(s)-1, "#%d j=%d", mp->motor_num, mp->requested_pos_cnts);
+    mp->pq = lspmac_SockSendline_nr( s);
+
+  }
+  pthread_mutex_unlock( &(mp->mutex));
+
+  //
+  // the lights should "move" with the zoom motor
+  //
+  lspmac_movedac_queue( flight, requested_position);
+  lspmac_movedac_queue( blight, requested_position);
+}
+
+void lspmac_moveabs_fshut_queue( lspmac_motor_t *mp, double requested_position) {
+  pthread_mutex_lock( &(mp->mutex));
+
+
+  mp->requested_position = requested_position;
+  mp->not_done    = 1;
+  mp->motion_seen = 0;
+  mp->requested_pos_cnts = requested_position;
+  if( requested_position != 0) {
+    //
+    // ScanEnable=0, ManualEnable=1, ManualOn=1
+    //
+    mp->pq = lspmac_SockSendline_nr( "M1124=0 M1125=1 M1126=1");
+  } else {
+    //
+    // ManualOn=0, ManualEnable=0, ScanEnable=1
+    //
+    mp->pq = lspmac_SockSendline_nr( "M1126=0 M1125=0 M1124=1");
+  }
+
+  pthread_mutex_unlock( &(mp->mutex));
+}
+
+
+
+void lspmac_moveabs_bio_queue( lspmac_motor_t *mp, double requested_position) {
+  pthread_mutex_lock( &(mp->mutex));
+  mp->requested_position = requested_position;
+  mp->not_done    = 1;
+  mp->motion_seen = 0;
+  mp->requested_pos_cnts = requested_position;
+  mp->pq = lspmac_SockSendline_nr( mp->write_fmt, mp->requested_pos_cnts);
+  pthread_mutex_unlock( &(mp->mutex));
+}
+
 void lspmac_moveabs_queue( lspmac_motor_t *mp, double requested_position) {
   char s[512];
 
   pthread_mutex_lock( &(mp->mutex));
+  mp->requested_position = requested_position;
   if( mp->u2c != 0.0) {
     mp->not_done    = 1;
     mp->motion_seen = 0;
@@ -1093,8 +1332,9 @@ void lspmac_moveabs_queue( lspmac_motor_t *mp, double requested_position) {
     mp->pq = lspmac_SockSendline_nr( s);
   }
   pthread_mutex_unlock( &(mp->mutex));
-
 }
+
+
 
 void lspmac_moveabs_wait( lspmac_motor_t *mp) {
   struct timespec wt;
@@ -1153,47 +1393,120 @@ void lspmac_moveabs_wait( lspmac_motor_t *mp) {
 }
 
 
-lspmac_motor_t *lspmac_motor_init( lspmac_motor_t *d, int motor_number, int wy, int wx, int dpoff, int dpoffs1, int dpoffs2, char *wtitle) {
+lspmac_motor_t *lspmac_motor_init( lspmac_motor_t *d, int motor_number, int wy, int wx, int *posp, int *stat1p, int *stat2p, char *wtitle, char *name, void (*moveAbs)(lspmac_motor_t *,double)) {
   lspmac_nmotors++;
+
 
   pthread_mutex_init( &(d->mutex), NULL);
   pthread_cond_init(  &(d->cond), NULL);
 
-  d->dpram_position_offset = dpoff;
-  d->status1_offset = dpoffs1;
-  d->status2_offset = dpoffs2;
+  d->name = strdup(name);
+  d->moveAbs = moveAbs;
+  d->read = lspmac_pmacmotor_read;
+  d->lut = NULL;
+  d->nlut = 0;
+  d->actual_pos_cnts_p = posp;
+  d->status1           = stat1p;
+  d->status2           = stat2p;
   d->motor_num = motor_number;
+  d->dac_mvar          = NULL;
   d->win = newwin( LS_DISPLAY_WINDOW_HEIGHT, LS_DISPLAY_WINDOW_WIDTH, wy*LS_DISPLAY_WINDOW_HEIGHT, wx*LS_DISPLAY_WINDOW_WIDTH);
   box( d->win, 0, 0);
   mvwprintw( d->win, 1, 1, "%s", wtitle);
   wnoutrefresh( d->win);
 
   return d;
+}
 
+lspmac_motor_t *lspmac_fshut_init( lspmac_motor_t *d) {
+  lspmac_nmotors++;
+  d->name           = strdup("fastShutter");
+  d->moveAbs        = lspmac_moveabs_fshut_queue;
+  d->read           = lspmac_shutter_read;
+  d->lut            = NULL;
+  d->nlut           = 0;
+  d->actual_pos_cnts_p = NULL;
+  d->status1           = NULL;
+  d->status2           = NULL;
+  d->motor_num         = -1;
+  d->dac_mvar          = NULL;
+  d->win               = NULL;
+}
+
+
+
+
+
+lspmac_motor_t *lspmac_bio_init( lspmac_motor_t *d, char *name, char *write_fmt, int *read_ptr, int read_mask) {
+  lspmac_nmotors++;
+  
+  d->name              = strdup( name);
+  d->moveAbs           = lspmac_moveabs_bio_queue;
+  d->read              = lspmac_bio_read;
+  d->lut               = NULL;
+  d->nlut              = 0;
+  d->actual_pos_cnts_p = NULL;
+  d->status1           = NULL;
+  d->status2           = NULL;
+  d->motor_num         = -1;
+  d->dac_mvar          = NULL;
+  d->win               = NULL;
+  d->write_fmt         = strdup( write_fmt);
+  d->read_ptr	       = read_ptr;
+  d->read_mask         = read_mask;
+  d->win               = NULL;
+  d->u2c               = 1.0;
+}  
+
+
+lspmac_motor_t *lspmac_dac_init( lspmac_motor_t *d, int *posp, double scale, char *mvar, char *name) {
+  lspmac_nmotors++;
+  d->name     = strdup( name);
+  d->moveAbs  = lspmac_movedac_queue;
+  d->read     = lspmac_dac_read;
+  d->lut      = NULL;
+  d->nlut     = 0;
+  d->actual_pos_cnts_p = posp;
+  d->actual_pos_cnts_p = NULL;
+  d->status1           = NULL;
+  d->status2           = NULL;
+  d->motor_num         = -1;
+  d->dac_mvar          = strdup(mvar);
+  d->u2c               = scale;
+  d->win               = NULL;
 }
 
 void lspmac_init( int ivarsflag, int mvarsflag) {
-
+  md2_status_t *p;
   getivars = ivarsflag;
   getmvars = mvarsflag;
 
-  omega  = lspmac_motor_init( &(lspmac_motors[ 0]),  1, 0, 0, 0x084, 0x004, 0x044, "Omega   #1 &1 X"); 
-  alignx = lspmac_motor_init( &(lspmac_motors[ 1]),  2, 0, 1, 0x088, 0x008, 0x048, "Align X #2 &3 X"); 
-  aligny = lspmac_motor_init( &(lspmac_motors[ 2]),  3, 0, 2, 0x08C, 0x00C, 0x04C, "Align Y #3 &3 Y"); 
-  alignz = lspmac_motor_init( &(lspmac_motors[ 3]),  4, 0, 3, 0x090, 0x010, 0x050, "Align Z #4 &3 Z"); 
-  anal   = lspmac_motor_init( &(lspmac_motors[ 4]),  5, 1, 0, 0x094, 0x014, 0x054, "Anal    #5"); 
-  zoom   = lspmac_motor_init( &(lspmac_motors[ 5]),  6, 1, 1, 0x098, 0x018, 0x058, "Zoom    #6 &4 Z"); 
-  apery  = lspmac_motor_init( &(lspmac_motors[ 6]),  7, 1, 2, 0x09C, 0x01C, 0x05C, "Aper Y  #7 &5 Y"); 
-  aperz  = lspmac_motor_init( &(lspmac_motors[ 7]),  8, 1, 3, 0x0A0, 0x020, 0x060, "Aper Z  #8 &5 Z"); 
-  capy   = lspmac_motor_init( &(lspmac_motors[ 8]),  9, 2, 0, 0x0A4, 0x024, 0x064, "Cap Y   #9 &5 U"); 
-  capz   = lspmac_motor_init( &(lspmac_motors[ 9]), 10, 2, 1, 0x0A8, 0x028, 0x068, "Cap Z  #10 &5 V"); 
-  scinz  = lspmac_motor_init( &(lspmac_motors[10]), 11, 2, 2, 0x0AC, 0x02C, 0x06C, "Scin Z #11 &5 W"); 
-  cenx   = lspmac_motor_init( &(lspmac_motors[11]), 17, 2, 3, 0x0B0, 0x030, 0x070, "Cen X  #17 &2 X"); 
-  ceny   = lspmac_motor_init( &(lspmac_motors[12]), 18, 3, 0, 0x0B4, 0x034, 0x074, "Cen Y  #18 &2 Y"); 
-  kappa  = lspmac_motor_init( &(lspmac_motors[13]), 19, 3, 1, 0x0B8, 0x038, 0x078, "Kappa  #19 &7 X"); 
-  phi    = lspmac_motor_init( &(lspmac_motors[14]), 20, 3, 2, 0x0BC, 0x03C, 0x07C, "Phi    #20 &7 Y"); 
+  pthread_mutex_init( &md2_status_mutex, NULL);
 
+  p = &md2_status;
 
+  omega  = lspmac_motor_init( &(lspmac_motors[ 0]),  1, 0, 0, &p->omega_act_pos,     &p->omega_status_1,     &p->omega_status_2,     "Omega   #1 &1 X", "omega",       lspmac_moveabs_queue);
+  alignx = lspmac_motor_init( &(lspmac_motors[ 1]),  2, 0, 1, &p->alignx_act_pos,    &p->alignx_status_1,    &p->alignx_status_2,    "Align X #2 &3 X", "align.x",     lspmac_moveabs_queue);
+  aligny = lspmac_motor_init( &(lspmac_motors[ 2]),  3, 0, 2, &p->aligny_act_pos,    &p->aligny_status_1,    &p->aligny_status_2,    "Align Y #3 &3 Y", "align.y",     lspmac_moveabs_queue);
+  alignz = lspmac_motor_init( &(lspmac_motors[ 3]),  4, 0, 3, &p->alignz_act_pos,    &p->alignz_status_1,    &p->alignz_status_2,    "Align Z #4 &3 Z", "align.z",     lspmac_moveabs_queue);
+  anal   = lspmac_motor_init( &(lspmac_motors[ 4]),  5, 0, 4, &p->analyzer_act_pos,  &p->analyzer_status_1,  &p->analyzer_status_2,  "Anal    #5",      "lightPolar",  lspmac_moveabs_queue);
+  zoom   = lspmac_motor_init( &(lspmac_motors[ 5]),  6, 1, 0, &p->zoom_act_pos,      &p->zoom_status_1,      &p->zoom_status_2,      "Zoom    #6 &4 Z", "zoom",        lspmac_movezoom_queue);
+  apery  = lspmac_motor_init( &(lspmac_motors[ 6]),  7, 1, 1, &p->aperturey_act_pos, &p->aperturey_status_1, &p->aperturey_status_2, "Aper Y  #7 &5 Y", "appy",        lspmac_moveabs_queue);
+  aperz  = lspmac_motor_init( &(lspmac_motors[ 7]),  8, 1, 2, &p->aperturez_act_pos, &p->aperturez_status_1, &p->aperturez_status_2, "Aper Z  #8 &5 Z", "appz",        lspmac_moveabs_queue);
+  capy   = lspmac_motor_init( &(lspmac_motors[ 8]),  9, 1, 3, &p->capy_act_pos,      &p->capy_status_1,      &p->capy_status_2,      "Cap Y   #9 &5 U", "capy",        lspmac_moveabs_queue); 
+  capz   = lspmac_motor_init( &(lspmac_motors[ 9]), 10, 1, 4, &p->capz_act_pos,      &p->capz_status_1,      &p->capz_status_2,      "Cap Z  #10 &5 V", "capz",        lspmac_moveabs_queue); 
+  scinz  = lspmac_motor_init( &(lspmac_motors[10]), 11, 2, 0, &p->scint_act_pos,     &p->scint_status_1,     &p->scint_status_2,     "Scin Z #11 &5 W", "scint",       lspmac_moveabs_queue); 
+  cenx   = lspmac_motor_init( &(lspmac_motors[11]), 17, 2, 1, &p->centerx_act_pos,   &p->centerx_status_1,   &p->centerx_status_2,   "Cen X  #17 &2 X", "centering.x", lspmac_moveabs_queue); 
+  ceny   = lspmac_motor_init( &(lspmac_motors[12]), 18, 2, 2, &p->centery_act_pos,   &p->centery_status_1,   &p->centery_status_2,   "Cen Y  #18 &2 Y", "centering.y", lspmac_moveabs_queue); 
+  kappa  = lspmac_motor_init( &(lspmac_motors[13]), 19, 2, 3, &p->kappa_act_pos,     &p->kappa_status_1,     &p->kappa_status_2,     "Kappa  #19 &7 X", "kappa",       lspmac_moveabs_queue); 
+  phi    = lspmac_motor_init( &(lspmac_motors[14]), 20, 2, 4, &p->phi_act_pos,       &p->phi_status_1,       &p->phi_status_2,       "Phi    #20 &7 Y", "phi",         lspmac_moveabs_queue); 
+
+  fshut  = lspmac_fshut_init( &(lspmac_motors[15]));
+  flight = lspmac_dac_init( &(lspmac_motors[16]), &p->front_dac,   160.0, "M1200", "frontLight.intensity");
+  blight = lspmac_dac_init( &(lspmac_motors[17]), &p->back_dac,    160.0, "M1201", "backLight.intensity");
+  fscint = lspmac_dac_init( &(lspmac_motors[18]), &p->scint_piezo, 320.0, "M1203", "scint.focus");
+
+  blight_ud = lspmac_bio_init( &(lspmac_motors[19]), "backLight", "M1101=%d", &(md2_status.acc11c_5), 0x02);
 
   rr_cmd.RequestType = VR_UPLOAD;
   rr_cmd.Request     = VR_PMAC_READREADY;
@@ -1225,7 +1538,7 @@ void lspmac_init( int ivarsflag, int mvarsflag) {
   pmacfd.fd = -1;
 
   pthread_mutex_init( &lspmac_moving_mutex, NULL);
-  pthread_cond_init(  &lspmac_moving_mutex, NULL);
+  pthread_cond_init(  &lspmac_moving_cond, NULL);
 
 }
 

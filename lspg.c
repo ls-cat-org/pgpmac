@@ -179,6 +179,78 @@ lspg_nextshot_t lspg_nextshot;
 **       cx2 numeric, cy2 numeric, ax2 numeric, ay2 numeric, az2 numeric, active2 int, sindex2 int, stype2 text);
 */
 
+void lspg_zoom_lut_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+  int i;
+  
+  pthread_mutex_lock( &(zoom->mutex));
+
+  zoom->nlut = PQntuples( pgr)/2;
+  zoom->lut  = calloc( 2*zoom->nlut, sizeof(double));
+  if( zoom->lut == NULL) {
+    wprintw( term_output, "\nOut of memmory (lspg_zoom_lut_cb)");
+    wnoutrefresh( term_output);
+    wnoutrefresh( term_output);
+    doupdate();
+    pthread_mutex_unlock( &(zoom->mutex));
+    return;
+  }
+  
+  for( i=0; i<PQntuples( pgr); i++) {
+    zoom->lut[i] = strtod( PQgetvalue( pgr, i, 0), NULL);
+  }
+
+  pthread_mutex_unlock( &(zoom->mutex));
+
+}
+
+void lspg_flight_lut_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+  int i;
+  
+  pthread_mutex_lock( &(flight->mutex));
+
+  flight->nlut = PQntuples( pgr)/2;
+  flight->lut  = calloc( 2*flight->nlut, sizeof(double));
+  if( flight->lut == NULL) {
+    wprintw( term_output, "\nOut of memmory (lspg_flight_lut_cb)");
+    wnoutrefresh( term_output);
+    wnoutrefresh( term_output);
+    doupdate();
+    pthread_mutex_unlock( &(flight->mutex));
+    return;
+  }
+  
+  for( i=0; i<PQntuples( pgr); i++) {
+    flight->lut[i] = strtod( PQgetvalue( pgr, i, 0), NULL);
+  }
+
+  pthread_mutex_unlock( &(flight->mutex));
+
+}
+
+void lspg_blight_lut_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+  int i;
+  
+  pthread_mutex_lock( &(blight->mutex));
+
+  blight->nlut = PQntuples( pgr)/2;
+  blight->lut  = calloc( 2*blight->nlut, sizeof(double));
+  if( blight->lut == NULL) {
+    wprintw( term_output, "\nOut of memmory (lspg_blight_lut_cb)");
+    wnoutrefresh( term_output);
+    wnoutrefresh( term_output);
+    doupdate();
+    pthread_mutex_unlock( &(blight->mutex));
+    return;
+  }
+  
+  for( i=0; i<PQntuples( pgr); i++) {
+    blight->lut[i] = strtod( PQgetvalue( pgr, i, 0), NULL);
+  }
+
+  pthread_mutex_unlock( &(blight->mutex));
+
+}
+
 void lspg_nextshot_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   static int got_col_nums=0;
   static int
@@ -824,7 +896,7 @@ void lspg_receive() {
 	//
 	// If the response is likely to take awhile we should probably
 	// add a new state and put something in the main look to run the onResponse
-	// routine in the main loop.  For now, though, we only expect very breif onResponse routines
+	// routine in the main loop.  For now, though, we only expect very brief onResponse routines
 	//
 	if( qqp != NULL && qqp->onResponse != NULL)
 	  qqp->onResponse( qqp, pgr);
@@ -1014,6 +1086,10 @@ void lspg_pg_connect() {
     } else if( lspg_connectPoll_response == PGRES_POLLING_OK) {
       lspg_query_push( lspg_init_motors_cb, "select * from pmac.md2_getmotors()");
       lspg_query_push( NULL, "select pmac.md2_init()");
+      lspg_query_push( lspg_zoom_lut_cb, "SELECT * FROM pmac.md2_zoom_lut()");
+      lspg_query_push( lspg_flight_lut_cb, "SELECT * FROM pmac.md2_flight_lut()");
+      lspg_query_push( lspg_blight_lut_cb, "SELECT * FROM pmac.md2_blight_lut()");
+
       ls_pg_state = LS_PG_STATE_IDLE;
     }
     break;
@@ -1130,12 +1206,6 @@ void *lspg_worker( void *dummy) {
   //
   lspgfd.fd   = -1;
 
-  pthread_mutex_lock( &ncurses_mutex);
-  wprintw( term_output, "Starting pg thread\n");
-  wnoutrefresh( term_output);
-  wnoutrefresh( term_input);
-  doupdate();
-  pthread_mutex_unlock( &ncurses_mutex);
 
   while( 1) {
     int pollrtn;
@@ -1174,6 +1244,10 @@ void *lspg_worker( void *dummy) {
       lspg_pg_service( &(fda[1]));
       pollrtn--;
     } 
+
+
+
+
   }
 }
 

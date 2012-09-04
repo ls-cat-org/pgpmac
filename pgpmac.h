@@ -47,21 +47,31 @@ typedef struct lspmac_cmd_queue_struct {
 typedef struct lspmac_motor_struct {
   pthread_mutex_t mutex;	// coordinate waiting for motor to be done
   pthread_cond_t cond;		//
+  void (*read)( struct lspmac_motor_struct *);	// function to read the motor status and position
   int not_done;			// set to 1 when request is queued, zero after motion has toggled
   int motion_seen;		// set to 1 when motion has been verified to have started
   struct lspmac_cmd_queue_struct *pq;	// the queue item requesting motion.  Used to check time request was made
 
   int requested_pos_cnts;	// requested position
-  int actual_pos_cnts;		// raw position read from dpram
-  int dpram_position_offset;	// offset of our position in the md2_status buffer ready by getmem
-  int status1;
-  int status1_offset;		// offset in md2_status for the status 1 24 bits
-  int status2;
-  int status2_offset;		// offset in md2_status for the status 2 24 bits
+  int *actual_pos_cnts_p;	// pointer to the md2_status structure to the actual position
+  double position;		// scaled position
+  double reported_position;	// previous position reported to the database
+  double requested_position;	// The position as requested by the user
+  double update_resolution;	// Change needs to be at least this big to report as a new position to the database
+  int *status1;
+  int *status2;
   int motor_num;		// pmac motor number
+  char *dac_mvar;		// controlling mvariable as a string
+  char *name;			// Name of motor as refered by ls database kvs table
   char *units;			// string to use as the units
   char *format;			// printf format
+  char *write_fmt;		// 
+  int *read_ptr;
+  int read_mask;
+  void (*moveAbs)( struct lspmac_motor_struct *, double);	// function to move the motor
   double u2c;			// conversion from counts to units: 0.0 means not loaded yet
+  double *lut;			// lookup table (instead of u2c)
+  int  nlut;			// length of lut
   double max_speed;		// our maximum speed (cts/msec)
   double max_accel;		// our maximum acceleration (cts/msec^2)
   WINDOW *win;			// our ncurses window
@@ -210,11 +220,19 @@ extern lspmac_motor_t *ceny;
 extern lspmac_motor_t *kappa;
 extern lspmac_motor_t *phi;
 
+extern lspmac_motor_t *fshut;
+extern lspmac_motor_t *flight;
+extern lspmac_motor_t *blight;
+extern lspmac_motor_t *fscint;
+
+extern lspmac_motor_t *blight_up;
+
 extern int lspmac_nmotors;
 
 extern WINDOW *term_output;
 extern WINDOW *term_input;
 extern WINDOW *term_status;
+extern WINDOW *term_status2;
 
 extern pthread_mutex_t ncurses_mutex;
 
@@ -231,9 +249,21 @@ extern pthread_mutex_t lspmac_moving_mutex;
 extern pthread_cond_t  lspmac_moving_cond;
 extern int lspmac_moving_flags;
 
+extern pthread_mutex_t md2_status_mutex;
+
 #define MD2CMDS_CMD_LENGTH  32
 extern char md2cmds_cmd[];			// our command;
 
 
-void PmacSockSendline( char *s);
-void lspg_seq_run_prep_all( long long skey, double kappa, double phi, double cx, double cy, double ax, double ay, double az);
+extern void PmacSockSendline( char *s);
+extern void lspg_seq_run_prep_all( long long skey, double kappa, double phi, double cx, double cy, double ax, double ay, double az);
+extern void lspg_zoom_lut_call();
+extern void pgpmac_printf( char *fmt, ...);
+extern void lspmac_init( int, int);
+extern void lspg_init();
+extern void lsupdate_init();
+extern void md2cmds_init();
+extern void lspmac_run();
+extern void lspg_run();
+extern void lsupdate_run();
+extern void md2cmds_run();

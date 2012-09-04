@@ -43,6 +43,75 @@ char *logtime() {
   return rtn;
 }
 
+void md2cmds_moveAbs( char *cmd) {
+  char *ignore;
+  char *ptr;
+  char *mtr;
+  char *pos;
+  double fpos;
+  char *endptr;
+  lspmac_motor_t *mp;
+  int i;
+
+  // Parse the command string
+  //
+  ignore = strtok_r( cmd, " ", &ptr);
+  if( ignore == NULL) {
+    //
+    // Should generate error message
+    // about blank command
+    //
+    return;
+  }
+
+  // The first string should be "moveAbs" cause that's how we got here.
+  // Toss it.
+  
+  mtr = strtok_r( NULL, " ", &ptr);
+  if( mtr == NULL) {
+    //
+    // Should generate error message
+    // about missing motor name
+    //
+    return;
+  }
+
+  pos = strtok_r( NULL, " ", &ptr);
+  if( pos == NULL) {
+    //
+    // Should generate error message
+    // about missing position
+    //
+    return;
+  }
+
+  fpos = strtod( pos, &endptr);
+  if( pos == endptr) {
+    //
+    // Should generate error message 
+    // about bad double conversion
+    //
+    return;
+  }
+  
+  mp = NULL;
+  for( i=0; i<lspmac_nmotors; i++) {
+    if( strcmp( lspmac_motors[i].name, mtr) == 0) {
+      mp = &(lspmac_motors[i]);
+      break;
+    }
+  }
+
+
+  if( mp != NULL && mp->moveAbs != NULL) {
+    wprintw( term_output, "Moving %s to %f\n", mtr, fpos);
+    wnoutrefresh( term_output);
+    mp->moveAbs( mp, fpos);
+  }
+
+}
+
+
 void md2cmds_mvcenter_prep() {
   //
   // Clears the motion flags for coordinate systems 2 and 3
@@ -94,7 +163,7 @@ void md2cmds_mvcenter_move( double cx, double cy, double ax, double ay, double a
   ay_cts = aligny->u2c * ay;
   az_cts = alignz->u2c * az;
 
-  lspmac_SockSendline( "M7075=(M7075 | 2) &2 Q100=2 Q20=%.1f Q21=%.1f B150R", cx_cts, cy_cts)
+  lspmac_SockSendline( "M7075=(M7075 | 2) &2 Q100=2 Q20=%.1f Q21=%.1f B150R", cx_cts, cy_cts);
   lspmac_SockSendline( "M7075=(M7075 | 4) &3 Q100=4 Q30=%.1f Q31=%.1f Q32=%.1f B160R", ax_cts, ay_cts, az_cts);
   
 }
@@ -159,11 +228,11 @@ void md2cmds_collect() {
     center_request = 0;
     if( lspg_nextshot.active) {
       if(
-	 (fabs( lspg_nextshot.cx - cenx.actual_pos_cnts/cenx.u2c) > 0.1) ||
-	 (fabs( lspg_nextshot.cy - ceny.actual_pos_cnts/ceny.u2c) > 0.1) ||
-	 (fabs( lspg_nextshot.ax - alignx.actual_pos_cnts/alignx.u2c) > 0.1) ||
-	 (fabs( lspg_nextshot.ay - aligny.actual_pos_cnts/aligny.u2c) > 0.1) ||
-	 (fabs( lspg_nextshot.az - alignz.actual_pos_cnts/alignz.u2c) > 0.1)) {
+	 (fabs( lspg_nextshot.cx - cenx->position) > 0.1) ||
+	 (fabs( lspg_nextshot.cy - ceny->position) > 0.1) ||
+	 (fabs( lspg_nextshot.ax - alignx->position) > 0.1) ||
+	 (fabs( lspg_nextshot.ay - aligny->position) > 0.1) ||
+	 (fabs( lspg_nextshot.az - alignz->position) > 0.1)) {
 
 	center_request = 1;
 	md2cmds_mvcenter_prep();
@@ -220,13 +289,13 @@ void md2cmds_collect() {
     // have checked that all is OK with the detector
     //
     lspg_seq_run_prep_all( skey,
-			   kappa->actual_pos_cnts/kappa->u2c,
-			   phi->actual_pos_cnts/phi->u2c,
-			   cenx->actual_pos_cnts/cenx->u2c,
-			   ceny->actual_pos_cnts/ceny->u2c,
-			   alignx->actual_pos_cnts/alignx->u2c,
-			   aligny->actual_pos_cnts/aligny->u2c,
-			   alignz->actual_pos_cnts/alignz->u2c
+			   kappa->position,
+			   phi->position,
+			   cenx->position,
+			   ceny->position,
+			   alignx->position,
+			   aligny->position,
+			   alignz->position
 			   );
 
     
@@ -291,11 +360,11 @@ void md2cmds_collect() {
 
     if( !lspg_nextshot.active2_isnull && lspg_nextshot.active2) {
       if(
-	 (fabs( lspg_nextshot.cx2 - cenx.actual_pos_cnts/cenx.u2c) > 0.1) ||
-	 (fabs( lspg_nextshot.cy2 - ceny.actual_pos_cnts/ceny.u2c) > 0.1) ||
-	 (fabs( lspg_nextshot.ax2 - alignx.actual_pos_cnts/alignx.u2c) > 0.1) ||
-	 (fabs( lspg_nextshot.ay2 - aligny.actual_pos_cnts/aligny.u2c) > 0.1) ||
-	 (fabs( lspg_nextshot.az2 - alignz.actual_pos_cnts/alignz.u2c) > 0.1)) {
+	 (fabs( lspg_nextshot.cx2 - cenx->position) > 0.1) ||
+	 (fabs( lspg_nextshot.cy2 - ceny->position) > 0.1) ||
+	 (fabs( lspg_nextshot.ax2 - alignx->position) > 0.1) ||
+	 (fabs( lspg_nextshot.ay2 - aligny->position) > 0.1) ||
+	 (fabs( lspg_nextshot.az2 - alignz->position) > 0.1)) {
 
 	center_request = 1;
 	md2cmds_mvcenter_prep();
@@ -337,6 +406,8 @@ void *md2cmds_worker( void *dummy) {
       md2cmds_rotate();
     } else if( strcmp( md2cmds_cmd, "center") == 0) {
       md2cmds_center();
+    } else if( strncmp( md2cmds_cmd, "moveAbs", 7) == 0) {
+      md2cmds_moveAbs( md2cmds_cmd);
     }
 
     md2cmds_cmd[0] = 0;

@@ -35,6 +35,7 @@
 WINDOW *term_output;			// place to print stuff out
 WINDOW *term_input;			// place to put the cursor
 WINDOW *term_status;			// shutter, lamp, air, etc status
+WINDOW *term_status2;			// shutter, lamp, air, etc status
 
 pthread_mutex_t ncurses_mutex;		// allow more than one thread access to the screen
 
@@ -251,6 +252,25 @@ void stdinService( struct pollfd *evt) {
   }
 }
 
+void pgpmac_printf( char *fmt, ...) {
+  va_list arg_ptr;
+
+  pthread_mutex_lock( &ncurses_mutex);
+
+  va_start( arg_ptr, fmt);
+  vwprintw( term_output, fmt, arg_ptr);
+  va_end( arg_ptr);
+
+  wnoutrefresh( term_output);
+  wnoutrefresh( term_input);
+  doupdate();
+
+  pthread_mutex_unlock( &ncurses_mutex);
+
+}
+
+
+
 int main( int argc, char **argv) {
   static nfds_t nfds;
 
@@ -302,17 +322,22 @@ int main( int argc, char **argv) {
   //
   lspmac_init( ivars, mvars);
   lspg_init();
+  lsupdate_init();
   md2cmds_init();
 
-  term_status = newwin( LS_DISPLAY_WINDOW_HEIGHT, LS_DISPLAY_WINDOW_WIDTH, 3*LS_DISPLAY_WINDOW_HEIGHT, 3*LS_DISPLAY_WINDOW_WIDTH);
+  term_status = newwin( LS_DISPLAY_WINDOW_HEIGHT, LS_DISPLAY_WINDOW_WIDTH, 3*LS_DISPLAY_WINDOW_HEIGHT, 0*LS_DISPLAY_WINDOW_WIDTH);
   box( term_status, 0, 0);
   wnoutrefresh( term_status);
 						      
-  term_output = newwin( 10, 4*LS_DISPLAY_WINDOW_WIDTH, 4*LS_DISPLAY_WINDOW_HEIGHT, 0);
+  term_status2 = newwin( LS_DISPLAY_WINDOW_HEIGHT, LS_DISPLAY_WINDOW_WIDTH, 3*LS_DISPLAY_WINDOW_HEIGHT, 1*LS_DISPLAY_WINDOW_WIDTH);
+  box( term_status2, 0, 0);
+  wnoutrefresh( term_status2);
+						      
+  term_output = newwin( 10, 5*LS_DISPLAY_WINDOW_WIDTH, 4*LS_DISPLAY_WINDOW_HEIGHT, 0);
   scrollok( term_output, 1);			      
   wnoutrefresh( term_output);			      
 						      
-  term_input  = newwin( 3, 4*LS_DISPLAY_WINDOW_WIDTH, 10+4*LS_DISPLAY_WINDOW_HEIGHT, 0);
+  term_input  = newwin( 3, 5*LS_DISPLAY_WINDOW_WIDTH, 10+4*LS_DISPLAY_WINDOW_HEIGHT, 0);
   box( term_input, 0, 0);			      
   mvwprintw( term_input, 1, 1, "PMAC> ");	      
   nodelay( term_input, TRUE);			      
@@ -323,6 +348,7 @@ int main( int argc, char **argv) {
 
   lspmac_run();
   lspg_run();
+  lsupdate_run();
   md2cmds_run();
 
   while( 1) {
