@@ -1,0 +1,825 @@
+.TH "pgpmac.h" 3 "12 Oct 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+pgpmac.h \- 
+.PP
+Headers for the entire pgpmac project.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stdio.h>\fP
+.br
+\fC#include <stdlib.h>\fP
+.br
+\fC#include <unistd.h>\fP
+.br
+\fC#include <sys/types.h>\fP
+.br
+\fC#include <sys/socket.h>\fP
+.br
+\fC#include <netdb.h>\fP
+.br
+\fC#include <string.h>\fP
+.br
+\fC#include <netinet/in.h>\fP
+.br
+\fC#include <errno.h>\fP
+.br
+\fC#include <poll.h>\fP
+.br
+\fC#include <libpq-fe.h>\fP
+.br
+\fC#include <ncurses.h>\fP
+.br
+\fC#include <math.h>\fP
+.br
+\fC#include <pthread.h>\fP
+.br
+\fC#include <signal.h>\fP
+.br
+\fC#include <sys/signalfd.h>\fP
+.br
+\fC#include <sys/time.h>\fP
+.br
+\fC#include <time.h>\fP
+.br
+\fC#include <getopt.h>\fP
+.br
+
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBtagEthernetCmd\fP"
+.br
+.RI "\fIPMAC ethernet packet definition. \fP"
+.ti -1c
+.RI "struct \fBlspmac_cmd_queue_struct\fP"
+.br
+.RI "\fIPMAC command queue item. \fP"
+.ti -1c
+.RI "struct \fBlspmac_motor_struct\fP"
+.br
+.RI "\fIMotor information. \fP"
+.ti -1c
+.RI "struct \fBlspg_nextshot_struct\fP"
+.br
+.RI "\fIStorage definition for nextshot query. \fP"
+.in -1c
+.SS "Defines"
+
+.in +1c
+.ti -1c
+.RI "#define \fBLS_DISPLAY_WINDOW_HEIGHT\fP   8"
+.br
+.RI "\fINumber of status box rows. \fP"
+.ti -1c
+.RI "#define \fBLS_DISPLAY_WINDOW_WIDTH\fP   24"
+.br
+.RI "\fINumber of status box columns. \fP"
+.ti -1c
+.RI "#define \fBLS_PG_QUERY_STRING_LENGTH\fP   1024"
+.br
+.RI "\fIFixed length postgresql query strings. Queries should all be function calls so this is not as weird as one might think. \fP"
+.ti -1c
+.RI "#define \fBMD2CMDS_CMD_LENGTH\fP   32"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBtagEthernetCmd\fP \fBpmac_cmd_t\fP"
+.br
+.RI "\fIPMAC ethernet packet definition. \fP"
+.ti -1c
+.RI "typedef struct \fBlspmac_cmd_queue_struct\fP \fBpmac_cmd_queue_t\fP"
+.br
+.RI "\fIPMAC command queue item. \fP"
+.ti -1c
+.RI "typedef struct \fBlspmac_motor_struct\fP \fBlspmac_motor_t\fP"
+.br
+.RI "\fIMotor information. \fP"
+.ti -1c
+.RI "typedef struct \fBlspg_nextshot_struct\fP \fBlspg_nextshot_t\fP"
+.br
+.RI "\fIStorage definition for nextshot query. \fP"
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBPmacSockSendline\fP (char *s)"
+.br
+.ti -1c
+.RI "void \fBlspg_seq_run_prep_all\fP (long long skey, double \fBkappa\fP, double \fBphi\fP, double cx, double cy, double ax, double ay, double az)"
+.br
+.RI "\fIConvinence function to call seq run prep. \fP"
+.ti -1c
+.RI "void \fBlspg_zoom_lut_call\fP ()"
+.br
+.ti -1c
+.RI "void \fBpgpmac_printf\fP (char *fmt,...)"
+.br
+.RI "\fITerminal output routine ala printf. \fP"
+.ti -1c
+.RI "void \fBlspmac_init\fP (int, int)"
+.br
+.RI "\fIInitialize this module. \fP"
+.ti -1c
+.RI "void \fBlspg_init\fP ()"
+.br
+.RI "\fIInitiallize the lspg module. \fP"
+.ti -1c
+.RI "void \fBlsupdate_init\fP ()"
+.br
+.RI "\fIInitialize this module. \fP"
+.ti -1c
+.RI "void \fBmd2cmds_init\fP ()"
+.br
+.RI "\fIInitialize the md2cmds module. \fP"
+.ti -1c
+.RI "void \fBlspmac_run\fP ()"
+.br
+.RI "\fIStart up the lspmac thread. \fP"
+.ti -1c
+.RI "void \fBlspg_run\fP ()"
+.br
+.RI "\fIStart 'er runnin'. \fP"
+.ti -1c
+.RI "void \fBlsupdate_run\fP ()"
+.br
+.RI "\fIrun the update routines \fP"
+.ti -1c
+.RI "void \fBmd2cmds_run\fP ()"
+.br
+.RI "\fIStart up the thread. \fP"
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "\fBlspg_nextshot_t\fP \fBlspg_nextshot\fP"
+.br
+.RI "\fIthe nextshot object \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP \fBlspmac_motors\fP []"
+.br
+.RI "\fIAll our motors. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBomega\fP"
+.br
+.RI "\fIMD2 omega axis (the air bearing). \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBalignx\fP"
+.br
+.RI "\fIAlignment stage X. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBaligny\fP"
+.br
+.RI "\fIAlignment stage Y. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBalignz\fP"
+.br
+.RI "\fIAlignment stage X. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBanal\fP"
+.br
+.RI "\fIPolaroid analyzer motor. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBzoom\fP"
+.br
+.RI "\fIOptical zoom. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBapery\fP"
+.br
+.RI "\fIAperture Y. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBaperz\fP"
+.br
+.RI "\fIAperture Z. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBcapy\fP"
+.br
+.RI "\fICapillary Y. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBcapz\fP"
+.br
+.RI "\fICapillary Z. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBscinz\fP"
+.br
+.RI "\fIScintillator Z. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBcenx\fP"
+.br
+.RI "\fICentering Table X. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBceny\fP"
+.br
+.RI "\fICentering Table Y. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBkappa\fP"
+.br
+.RI "\fIKappa. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBphi\fP"
+.br
+.RI "\fIPhi (not data collection axis). \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBfshut\fP"
+.br
+.RI "\fIFast shutter. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBflight\fP"
+.br
+.RI "\fIFront Light DAC. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBblight\fP"
+.br
+.RI "\fIBack Light DAC. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBfscint\fP"
+.br
+.RI "\fIScintillator Piezo DAC. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBblight_up\fP"
+.br
+.ti -1c
+.RI "int \fBlspmac_nmotors\fP"
+.br
+.RI "\fIThe number of motors we manage. \fP"
+.ti -1c
+.RI "WINDOW * \fBterm_output\fP"
+.br
+.RI "\fIplace to print stuff out \fP"
+.ti -1c
+.RI "WINDOW * \fBterm_input\fP"
+.br
+.RI "\fIplace to put the cursor \fP"
+.ti -1c
+.RI "WINDOW * \fBterm_status\fP"
+.br
+.RI "\fIshutter, lamp, air, etc status \fP"
+.ti -1c
+.RI "WINDOW * \fBterm_status2\fP"
+.br
+.RI "\fIshutter, lamp, air, etc status \fP"
+.ti -1c
+.RI "pthread_mutex_t \fBncurses_mutex\fP"
+.br
+.RI "\fIallow more than one thread access to the screen \fP"
+.ti -1c
+.RI "pthread_cond_t \fBmd2cmds_cond\fP"
+.br
+.RI "\fIcondition to signal when it's time to run an md2 command \fP"
+.ti -1c
+.RI "pthread_mutex_t \fBmd2cmds_mutex\fP"
+.br
+.RI "\fImutex for the condition \fP"
+.ti -1c
+.RI "pthread_cond_t \fBmd2cmds_pg_cond\fP"
+.br
+.RI "\fIcoordinate call and response \fP"
+.ti -1c
+.RI "pthread_mutex_t \fBmd2cmds_pg_mutex\fP"
+.br
+.RI "\fImessage passing between md2cmds and pg \fP"
+.ti -1c
+.RI "pthread_mutex_t \fBlspmac_shutter_mutex\fP"
+.br
+.RI "\fICoordinates threads reading shutter status. \fP"
+.ti -1c
+.RI "pthread_cond_t \fBlspmac_shutter_cond\fP"
+.br
+.RI "\fIAllows waiting for the shutter status to change. \fP"
+.ti -1c
+.RI "int \fBlspmac_shutter_state\fP"
+.br
+.RI "\fIState of the shutter, used to detect changes. \fP"
+.ti -1c
+.RI "int \fBlspmac_shutter_has_opened\fP"
+.br
+.RI "\fIIndicates that the shutter had opened, perhaps briefly even if the state did not change. \fP"
+.ti -1c
+.RI "pthread_mutex_t \fBlspmac_moving_mutex\fP"
+.br
+.RI "\fICoordinate moving motors between threads. \fP"
+.ti -1c
+.RI "pthread_cond_t \fBlspmac_moving_cond\fP"
+.br
+.RI "\fIWait for motor(s) to finish moving condition. \fP"
+.ti -1c
+.RI "int \fBlspmac_moving_flags\fP"
+.br
+.RI "\fIFlag used to implement motor moving condition. \fP"
+.ti -1c
+.RI "pthread_mutex_t \fBmd2_status_mutex\fP"
+.br
+.RI "\fISynchronize reading/writting status buffer. \fP"
+.ti -1c
+.RI "char \fBmd2cmds_cmd\fP []"
+.br
+.RI "\fIour command; \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+Headers for the entire pgpmac project. 
+
+\fBDate:\fP
+.RS 4
+2012 
+.RE
+.PP
+\fBAuthor:\fP
+.RS 4
+Keith Brister  All Rights Reserved 
+.RE
+.PP
+
+.PP
+Definition in file \fBpgpmac.h\fP.
+.SH "Define Documentation"
+.PP 
+.SS "#define LS_DISPLAY_WINDOW_HEIGHT   8"
+.PP
+Number of status box rows. 
+.PP
+Definition at line 29 of file pgpmac.h.
+.SS "#define LS_DISPLAY_WINDOW_WIDTH   24"
+.PP
+Number of status box columns. 
+.PP
+Definition at line 33 of file pgpmac.h.
+.SS "#define LS_PG_QUERY_STRING_LENGTH   1024"
+.PP
+Fixed length postgresql query strings. Queries should all be function calls so this is not as weird as one might think. 
+.PP
+Definition at line 36 of file pgpmac.h.
+.SS "#define MD2CMDS_CMD_LENGTH   32"
+.PP
+Definition at line 287 of file pgpmac.h.
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBlspg_nextshot_struct\fP  \fBlspg_nextshot_t\fP"
+.PP
+Storage definition for nextshot query. The next shot query returns all the information needed to collect the next data frame. Since SQL allows for null fields independently from blank strings a separate integer is used as a flag for this case. This adds to the program complexity but allows for some important cases. Suck it up. definition of the next image to be taken (and the one after that, too!) 
+.SS "typedef struct \fBlspmac_motor_struct\fP  \fBlspmac_motor_t\fP"
+.PP
+Motor information. A catchall for motors and motor like objects. Not all members are used by all objects. 
+.SS "typedef struct \fBlspmac_cmd_queue_struct\fP  \fBpmac_cmd_queue_t\fP"
+.PP
+PMAC command queue item. Command queue items are fixed length to simplify memory management. 
+.SS "typedef struct \fBtagEthernetCmd\fP  \fBpmac_cmd_t\fP"
+.PP
+PMAC ethernet packet definition. Taken directly from the Delta Tau documentation. 
+.SH "Function Documentation"
+.PP 
+.SS "void lspg_init ()"
+.PP
+Initiallize the lspg module. 
+.PP
+Definition at line 1451 of file lspg.c.
+.PP
+.nf
+1451                  {
+1452   pthread_mutex_init( &pg_queue_mutex, NULL);
+1453   lspg_nextshot_init();
+1454   lspg_wait_for_detector_init();
+1455   lspg_lock_diffractometer_init();
+1456   lspg_lock_detector_init();
+1457 }
+.fi
+.SS "void lspg_run ()"
+.PP
+Start 'er runnin'. 
+.PP
+Definition at line 1461 of file lspg.c.
+.PP
+.nf
+1461                 {
+1462   pthread_create( &lspg_thread, NULL, lspg_worker, NULL);
+1463 }
+.fi
+.SS "void lspg_seq_run_prep_all (long long skey, double kappa, double phi, double cx, double cy, double ax, double ay, double az)"
+.PP
+Convinence function to call seq run prep. \fBParameters:\fP
+.RS 4
+\fIskey\fP px.shots key for this image 
+.br
+\fIkappa\fP current kappa postion 
+.br
+\fIphi\fP current phi postition 
+.br
+\fIcx\fP current center table x 
+.br
+\fIcy\fP current center table y 
+.br
+\fIax\fP current alignment table x 
+.br
+\fIay\fP current alignment table y 
+.br
+\fIaz\fP current alignment table z 
+.RE
+.PP
+
+.PP
+Definition at line 839 of file lspg.c.
+.PP
+.nf
+848                              {
+849   lspg_seq_run_prep_call( skey, kappa, phi, cx, cy, ax, ay, az);
+850   lspg_seq_run_prep_wait();
+851   lspg_seq_run_prep_done();
+852 }
+.fi
+.SS "void lspg_zoom_lut_call ()"
+.SS "void lspmac_init (int, int)"
+.PP
+Initialize this module. 
+.PP
+Definition at line 1782 of file lspmac.c.
+.PP
+.nf
+1785                    {
+1786   md2_status_t *p;
+1787 
+1788   // Set our global harvest flags
+1789   getivars = ivarsflag;
+1790   getmvars = mvarsflag;
+1791 
+1792   // All important status mutex
+1793   pthread_mutex_init( &md2_status_mutex, NULL);
+1794 
+1795   //
+1796   // Initialize the motor objects
+1797   //
+1798 
+1799   p = &md2_status;
+1800 
+1801   omega  = lspmac_motor_init( &(lspmac_motors[ 0]),  1, 0, 0, &p->omega_act_pos,     &p->omega_status_1,     &p->omega_status_2,     'Omega   #1 &1 X', 'omega',       lspmac_moveabs_queue);
+1802   alignx = lspmac_motor_init( &(lspmac_motors[ 1]),  2, 0, 1, &p->alignx_act_pos,    &p->alignx_status_1,    &p->alignx_status_2,    'Align X #2 &3 X', 'align.x',     lspmac_moveabs_queue);
+1803   aligny = lspmac_motor_init( &(lspmac_motors[ 2]),  3, 0, 2, &p->aligny_act_pos,    &p->aligny_status_1,    &p->aligny_status_2,    'Align Y #3 &3 Y', 'align.y',     lspmac_moveabs_queue);
+1804   alignz = lspmac_motor_init( &(lspmac_motors[ 3]),  4, 0, 3, &p->alignz_act_pos,    &p->alignz_status_1,    &p->alignz_status_2,    'Align Z #4 &3 Z', 'align.z',     lspmac_moveabs_queue);
+1805   anal   = lspmac_motor_init( &(lspmac_motors[ 4]),  5, 0, 4, &p->analyzer_act_pos,  &p->analyzer_status_1,  &p->analyzer_status_2,  'Anal    #5',      'lightPolar',  lspmac_moveabs_queue);
+1806   zoom   = lspmac_motor_init( &(lspmac_motors[ 5]),  6, 1, 0, &p->zoom_act_pos,      &p->zoom_status_1,      &p->zoom_status_2,      'Zoom    #6 &4 Z', 'zoom',        lspmac_movezoom_queue);
+1807   apery  = lspmac_motor_init( &(lspmac_motors[ 6]),  7, 1, 1, &p->aperturey_act_pos, &p->aperturey_status_1, &p->aperturey_status_2, 'Aper Y  #7 &5 Y', 'appy',        lspmac_moveabs_queue);
+1808   aperz  = lspmac_motor_init( &(lspmac_motors[ 7]),  8, 1, 2, &p->aperturez_act_pos, &p->aperturez_status_1, &p->aperturez_status_2, 'Aper Z  #8 &5 Z', 'appz',        lspmac_moveabs_queue);
+1809   capy   = lspmac_motor_init( &(lspmac_motors[ 8]),  9, 1, 3, &p->capy_act_pos,      &p->capy_status_1,      &p->capy_status_2,      'Cap Y   #9 &5 U', 'capy',        lspmac_moveabs_queue);
+1810   capz   = lspmac_motor_init( &(lspmac_motors[ 9]), 10, 1, 4, &p->capz_act_pos,      &p->capz_status_1,      &p->capz_status_2,      'Cap Z  #10 &5 V', 'capz',        lspmac_moveabs_queue);
+1811   scinz  = lspmac_motor_init( &(lspmac_motors[10]), 11, 2, 0, &p->scint_act_pos,     &p->scint_status_1,     &p->scint_status_2,     'Scin Z #11 &5 W', 'scint',       lspmac_moveabs_queue);
+1812   cenx   = lspmac_motor_init( &(lspmac_motors[11]), 17, 2, 1, &p->centerx_act_pos,   &p->centerx_status_1,   &p->centerx_status_2,   'Cen X  #17 &2 X', 'centering.x', lspmac_moveabs_queue);
+1813   ceny   = lspmac_motor_init( &(lspmac_motors[12]), 18, 2, 2, &p->centery_act_pos,   &p->centery_status_1,   &p->centery_status_2,   'Cen Y  #18 &2 Y', 'centering.y', lspmac_moveabs_queue);
+1814   kappa  = lspmac_motor_init( &(lspmac_motors[13]), 19, 2, 3, &p->kappa_act_pos,     &p->kappa_status_1,     &p->kappa_status_2,     'Kappa  #19 &7 X', 'kappa',       lspmac_moveabs_queue);
+1815   phi    = lspmac_motor_init( &(lspmac_motors[14]), 20, 2, 4, &p->phi_act_pos,       &p->phi_status_1,       &p->phi_status_2,       'Phi    #20 &7 Y', 'phi',         lspmac_moveabs_queue);
+1816 
+1817   fshut  = lspmac_fshut_init( &(lspmac_motors[15]));
+1818   flight = lspmac_dac_init( &(lspmac_motors[16]), &p->front_dac,   160.0, 'M1200', 'frontLight.intensity');
+1819   blight = lspmac_dac_init( &(lspmac_motors[17]), &p->back_dac,    160.0, 'M1201', 'backLight.intensity');
+1820   fscint = lspmac_dac_init( &(lspmac_motors[18]), &p->scint_piezo, 320.0, 'M1203', 'scint.focus');
+1821 
+1822   blight_ud = lspmac_bio_init( &(lspmac_motors[19]), 'backLight', 'M1101=%d', &(md2_status.acc11c_5), 0x02);
+1823 
+1824 
+1825 
+1826 
+1827   //
+1828   // Initialize several commands that get called, perhaps, alot
+1829   //
+1830   rr_cmd.RequestType = VR_UPLOAD;
+1831   rr_cmd.Request     = VR_PMAC_READREADY;
+1832   rr_cmd.wValue      = 0;
+1833   rr_cmd.wIndex      = 0;
+1834   rr_cmd.wLength     = htons(2);
+1835   memset( rr_cmd.bData, 0, sizeof(rr_cmd.bData));
+1836 
+1837   gb_cmd.RequestType = VR_UPLOAD;
+1838   gb_cmd.Request     = VR_PMAC_GETBUFFER;
+1839   gb_cmd.wValue      = 0;
+1840   gb_cmd.wIndex      = 0;
+1841   gb_cmd.wLength     = htons(1400);
+1842   memset( gb_cmd.bData, 0, sizeof(gb_cmd.bData));
+1843 
+1844   cr_cmd.RequestType = VR_UPLOAD;
+1845   cr_cmd.Request     = VR_CTRL_RESPONSE;
+1846   cr_cmd.wValue      = 0;
+1847   cr_cmd.wIndex      = 0;
+1848   cr_cmd.wLength     = htons(1400);
+1849   memset( cr_cmd.bData, 0, sizeof(cr_cmd.bData));
+1850 
+1851   //
+1852   // Initialize some mutexs and conditions
+1853   //
+1854 
+1855   pthread_mutex_init( &pmac_queue_mutex, NULL);
+1856   pthread_cond_init(  &pmac_queue_cond, NULL);
+1857 
+1858   lspmac_shutter_state = 0;                             // assume the shutter is now closed: not a big deal if we are wrong
+1859   pthread_mutex_init( &lspmac_shutter_mutex, NULL);
+1860   pthread_cond_init(  &lspmac_shutter_cond, NULL);
+1861   pmacfd.fd = -1;
+1862 
+1863   pthread_mutex_init( &lspmac_moving_mutex, NULL);
+1864   pthread_cond_init(  &lspmac_moving_cond, NULL);
+1865 
+1866 }
+.fi
+.SS "void lspmac_run ()"
+.PP
+Start up the lspmac thread. 
+.PP
+Definition at line 1870 of file lspmac.c.
+.PP
+.nf
+1870                   {
+1871   pthread_create( &pmac_thread, NULL, lspmac_worker, NULL);
+1872 }
+.fi
+.SS "void lsupdate_init ()"
+.PP
+Initialize this module. 
+.PP
+Definition at line 89 of file lsupdate.c.
+.PP
+.nf
+89                      {
+90 }
+.fi
+.SS "void lsupdate_run ()"
+.PP
+run the update routines 
+.PP
+Definition at line 94 of file lsupdate.c.
+.PP
+.nf
+94                     {
+95   //  pthread_create( &lsupdate_thread, NULL, lsupdate_worker, NULL);
+96 }
+.fi
+.SS "void md2cmds_init ()"
+.PP
+Initialize the md2cmds module. 
+.PP
+Definition at line 461 of file md2cmds.c.
+.PP
+.nf
+461                     {
+462   memset( md2cmds_cmd, 0, sizeof( md2cmds_cmd));
+463 
+464   pthread_mutex_init( &md2cmds_mutex, NULL);
+465   pthread_cond_init( &md2cmds_cond, NULL);
+466 
+467   pthread_mutex_init( &md2cmds_pg_mutex, NULL);
+468   pthread_cond_init( &md2cmds_pg_cond, NULL);
+469 
+470 }
+.fi
+.SS "void md2cmds_run ()"
+.PP
+Start up the thread. 
+.PP
+Definition at line 474 of file md2cmds.c.
+.PP
+.nf
+474                    {
+475   pthread_create( &md2cmds_thread, NULL, md2cmds_worker, NULL);
+476 }
+.fi
+.SS "void pgpmac_printf (char * fmt,  ...)"
+.PP
+Terminal output routine ala printf. \fBParameters:\fP
+.RS 4
+\fIfmt\fP Printf style formating string 
+.RE
+.PP
+
+.PP
+Definition at line 317 of file pgpmac.c.
+.PP
+.nf
+320                      {
+321   va_list arg_ptr;
+322 
+323   pthread_mutex_lock( &ncurses_mutex);
+324 
+325   va_start( arg_ptr, fmt);
+326   vwprintw( term_output, fmt, arg_ptr);
+327   va_end( arg_ptr);
+328 
+329   wnoutrefresh( term_output);
+330   wnoutrefresh( term_input);
+331   doupdate();
+332 
+333   pthread_mutex_unlock( &ncurses_mutex);
+334 
+335 }
+.fi
+.SS "void PmacSockSendline (char * s)"
+.SH "Variable Documentation"
+.PP 
+.SS "\fBlspmac_motor_t\fP* \fBalignx\fP"
+.PP
+Alignment stage X. 
+.PP
+Definition at line 74 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBaligny\fP"
+.PP
+Alignment stage Y. 
+.PP
+Definition at line 75 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBalignz\fP"
+.PP
+Alignment stage X. 
+.PP
+Definition at line 76 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBanal\fP"
+.PP
+Polaroid analyzer motor. 
+.PP
+Definition at line 77 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBapery\fP"
+.PP
+Aperture Y. 
+.PP
+Definition at line 79 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBaperz\fP"
+.PP
+Aperture Z. 
+.PP
+Definition at line 80 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBblight\fP"
+.PP
+Back Light DAC. 
+.PP
+Definition at line 91 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBblight_up\fP"
+.SS "\fBlspmac_motor_t\fP* \fBcapy\fP"
+.PP
+Capillary Y. 
+.PP
+Definition at line 81 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBcapz\fP"
+.PP
+Capillary Z. 
+.PP
+Definition at line 82 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBcenx\fP"
+.PP
+Centering Table X. 
+.PP
+Definition at line 84 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBceny\fP"
+.PP
+Centering Table Y. 
+.PP
+Definition at line 85 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBflight\fP"
+.PP
+Front Light DAC. 
+.PP
+Definition at line 90 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBfscint\fP"
+.PP
+Scintillator Piezo DAC. 
+.PP
+Definition at line 92 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBfshut\fP"
+.PP
+Fast shutter. 
+.PP
+Definition at line 89 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBkappa\fP"
+.PP
+Kappa. 
+.PP
+Definition at line 86 of file lspmac.c.
+.SS "\fBlspg_nextshot_t\fP \fBlspg_nextshot\fP"
+.PP
+the nextshot object 
+.PP
+Definition at line 73 of file lspg.c.
+.SS "\fBlspmac_motor_t\fP \fBlspmac_motors\fP[]"
+.PP
+All our motors. 
+.PP
+Definition at line 71 of file lspmac.c.
+.SS "pthread_cond_t \fBlspmac_moving_cond\fP"
+.PP
+Wait for motor(s) to finish moving condition. 
+.PP
+Definition at line 59 of file lspmac.c.
+.SS "int \fBlspmac_moving_flags\fP"
+.PP
+Flag used to implement motor moving condition. 
+.PP
+Definition at line 60 of file lspmac.c.
+.SS "pthread_mutex_t \fBlspmac_moving_mutex\fP"
+.PP
+Coordinate moving motors between threads. 
+.PP
+Definition at line 58 of file lspmac.c.
+.SS "int \fBlspmac_nmotors\fP"
+.PP
+The number of motors we manage. 
+.PP
+Definition at line 72 of file lspmac.c.
+.SS "pthread_cond_t \fBlspmac_shutter_cond\fP"
+.PP
+Allows waiting for the shutter status to change. 
+.PP
+Definition at line 57 of file lspmac.c.
+.SS "int \fBlspmac_shutter_has_opened\fP"
+.PP
+Indicates that the shutter had opened, perhaps briefly even if the state did not change. 
+.PP
+Definition at line 55 of file lspmac.c.
+.SS "pthread_mutex_t \fBlspmac_shutter_mutex\fP"
+.PP
+Coordinates threads reading shutter status. 
+.PP
+Definition at line 56 of file lspmac.c.
+.SS "int \fBlspmac_shutter_state\fP"
+.PP
+State of the shutter, used to detect changes. 
+.PP
+Definition at line 54 of file lspmac.c.
+.SS "pthread_mutex_t \fBmd2_status_mutex\fP"
+.PP
+Synchronize reading/writting status buffer. 
+.PP
+Definition at line 277 of file lspmac.c.
+.SS "char \fBmd2cmds_cmd\fP[]"
+.PP
+our command; 
+.PP
+Definition at line 16 of file md2cmds.c.
+.SS "pthread_cond_t \fBmd2cmds_cond\fP"
+.PP
+condition to signal when it's time to run an md2 command 
+.PP
+Definition at line 10 of file md2cmds.c.
+.SS "pthread_mutex_t \fBmd2cmds_mutex\fP"
+.PP
+mutex for the condition 
+.PP
+Definition at line 11 of file md2cmds.c.
+.SS "pthread_cond_t \fBmd2cmds_pg_cond\fP"
+.PP
+coordinate call and response 
+.PP
+Definition at line 13 of file md2cmds.c.
+.SS "pthread_mutex_t \fBmd2cmds_pg_mutex\fP"
+.PP
+message passing between md2cmds and pg 
+.PP
+Definition at line 14 of file md2cmds.c.
+.SS "pthread_mutex_t \fBncurses_mutex\fP"
+.PP
+allow more than one thread access to the screen 
+.PP
+Definition at line 233 of file pgpmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBomega\fP"
+.PP
+MD2 omega axis (the air bearing). 
+.PP
+Definition at line 73 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBphi\fP"
+.PP
+Phi (not data collection axis). 
+.PP
+Definition at line 87 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBscinz\fP"
+.PP
+Scintillator Z. 
+.PP
+Definition at line 83 of file lspmac.c.
+.SS "WINDOW* \fBterm_input\fP"
+.PP
+place to put the cursor 
+.PP
+Definition at line 229 of file pgpmac.c.
+.SS "WINDOW* \fBterm_output\fP"
+.PP
+place to print stuff out 
+.PP
+Definition at line 228 of file pgpmac.c.
+.SS "WINDOW* \fBterm_status\fP"
+.PP
+shutter, lamp, air, etc status 
+.PP
+Definition at line 230 of file pgpmac.c.
+.SS "WINDOW* \fBterm_status2\fP"
+.PP
+shutter, lamp, air, etc status 
+.PP
+Definition at line 231 of file pgpmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBzoom\fP"
+.PP
+Optical zoom. 
+.PP
+Definition at line 78 of file lspmac.c.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for LS-CAT PGPMAC from the source code.

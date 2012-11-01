@@ -1,21 +1,32 @@
+/*! \file md2cmds.c
+ *  \brief Implements commands to run the md2 diffractometer attached to a PMAC controled by postgresql
+ *  \date 2012
+ *  \author Keith Brister
+ *  \copyright All Rights Reserved
+ */
 #include "pgpmac.h"
 
 
-pthread_cond_t  md2cmds_cond;	// condition to signal when it's time to run an md2 command
-pthread_mutex_t md2cmds_mutex;	// mutex for the condition
+pthread_cond_t  md2cmds_cond;		//!< condition to signal when it's time to run an md2 command
+pthread_mutex_t md2cmds_mutex;		//!< mutex for the condition
 
-pthread_cond_t  md2cmds_pg_cond;	// coordinate call and response
-pthread_mutex_t md2cmds_pg_mutex;	// message passing between md2cmds and pg
+pthread_cond_t  md2cmds_pg_cond;	//!< coordinate call and response
+pthread_mutex_t md2cmds_pg_mutex;	//!< message passing between md2cmds and pg
 
-char md2cmds_cmd[MD2CMDS_CMD_LENGTH];	// our command;
+char md2cmds_cmd[MD2CMDS_CMD_LENGTH];	//!< our command;
 
 static pthread_t md2cmds_thread;
 
 
-
+/** Transfer a sample
+ *  TODO: Implement
+ */
 void md2cmds_transfer() {
 }
 
+/** Return a time string for loggin
+ *  Time is from the first call to this funciton.
+ */
 char *logtime() {
   static char rtn[128];
   static char tmp[64];
@@ -43,7 +54,11 @@ char *logtime() {
   return rtn;
 }
 
-void md2cmds_moveAbs( char *cmd) {
+/** Move a motor to the position requested
+ */
+void md2cmds_moveAbs(
+		     char *cmd			/**< [in] The full command string to parse, ie, "moveAbs omega 180"	*/
+		     ) {
   char *ignore;
   char *ptr;
   char *mtr;
@@ -112,6 +127,10 @@ void md2cmds_moveAbs( char *cmd) {
 }
 
 
+/** Sets up a centering table and alignment table move
+ *  Ensures that when we issue the move command that
+ *  we can detect that the move happened.
+ */
 void md2cmds_mvcenter_prep() {
   //
   // Clears the motion flags for coordinate systems 2 and 3
@@ -149,7 +168,15 @@ void md2cmds_mvcenter_prep() {
   pthread_mutex_unlock( &lspmac_moving_mutex);
 }
 
-void md2cmds_mvcenter_move( double cx, double cy, double ax, double ay, double az) {
+/** Move the centering and alignment tables
+ */
+void md2cmds_mvcenter_move(
+			   double cx,	/**< [in] Requested Centering Table X		*/
+			   double cy,	/**< [in] Requested Centering Table Y		*/
+			   double ax,	/**< [in] Requested Alignment Table X		*/
+			   double ay,	/**< [in] Requested Alignment Table Y		*/
+			   double az	/**< [in] Requested Alignment Table Z		*/
+			   ) {
   //
   // centering stage is coordinate system 2
   // alignment stage is coordinate system 3
@@ -168,6 +195,8 @@ void md2cmds_mvcenter_move( double cx, double cy, double ax, double ay, double a
   
 }
 
+/** Wait for the centering and alignment tables to stop moving
+ */
 void md2cmds_mvcenter_wait() {
   //
   // Just wait until the motion flags are lowered
@@ -180,6 +209,8 @@ void md2cmds_mvcenter_wait() {
 }
 
 
+/** Collect some data
+ */
 void md2cmds_collect() {
   long long skey;
   double p170;	// start cnts
@@ -379,15 +410,25 @@ void md2cmds_collect() {
   fclose( zzlog);
 }
 
+/** Spin 360 and make a video
+ *  TODO: Implement
+ */
 void md2cmds_rotate() {
 }
 
+/** Move centering and alignment tables as requested
+ *  TODO: Implement
+ */
 void md2cmds_center() {
 }
 
 
 
-void *md2cmds_worker( void *dummy) {
+/** Our worker thread
+ */
+void *md2cmds_worker(
+		     void *dummy		/**> [in] Unused but required by protocol		*/
+		     ) {
 
   pthread_mutex_lock( &md2cmds_mutex);
 
@@ -415,9 +456,8 @@ void *md2cmds_worker( void *dummy) {
 }
 
 
-
-
-
+/** Initialize the md2cmds module
+ */
 void md2cmds_init() {
   memset( md2cmds_cmd, 0, sizeof( md2cmds_cmd));
 
@@ -429,6 +469,8 @@ void md2cmds_init() {
 
 }
 
+/** Start up the thread
+ */
 void md2cmds_run() {
   pthread_create( &md2cmds_thread, NULL, md2cmds_worker, NULL);
 }

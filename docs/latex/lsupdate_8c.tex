@@ -1,0 +1,185 @@
+\hypertarget{lsupdate_8c}{
+\section{lsupdate.c File Reference}
+\label{lsupdate_8c}\index{lsupdate.c@{lsupdate.c}}
+}
+
+
+Brings this MD2 code and the database kvs table into agreement.  
+{\ttfamily \#include \char`\"{}pgpmac.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \hyperlink{lsupdate_8c_a99020a5401c80a8ec384ed0999dc4ef8}{lsupdate\_\-updateit} (int first\_\-time)
+\begin{DoxyCompactList}\small\item\em Query the motors and perhaps tell the DB about it. \item\end{DoxyCompactList}\item 
+void $\ast$ \hyperlink{lsupdate_8c_ac4e85ea626b76b06d68c27db1c3e8b43}{lsupdate\_\-worker} (void $\ast$dummy)
+\begin{DoxyCompactList}\small\item\em Our worker thread. \item\end{DoxyCompactList}\item 
+void \hyperlink{lsupdate_8c_adf63440ffbc65024fef87ea6a11ea8b0}{lsupdate\_\-init} ()
+\begin{DoxyCompactList}\small\item\em Initialize this module. \item\end{DoxyCompactList}\item 
+void \hyperlink{lsupdate_8c_af219e9b2cc124f109aa4c2c2e16b5d07}{lsupdate\_\-run} ()
+\begin{DoxyCompactList}\small\item\em run the update routines \item\end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+static pthread\_\-t \hyperlink{lsupdate_8c_a00578477e1b3791fc8aed17ebe60b606}{lsupdate\_\-thread}
+\begin{DoxyCompactList}\small\item\em our worker thread \item\end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Brings this MD2 code and the database kvs table into agreement. \begin{DoxyDate}{Date}
+2012 
+\end{DoxyDate}
+\begin{DoxyAuthor}{Author}
+Keith Brister  All Rights Reserved 
+\end{DoxyAuthor}
+
+
+Definition in file \hyperlink{lsupdate_8c_source}{lsupdate.c}.
+
+\subsection{Function Documentation}
+\hypertarget{lsupdate_8c_adf63440ffbc65024fef87ea6a11ea8b0}{
+\index{lsupdate.c@{lsupdate.c}!lsupdate\_\-init@{lsupdate\_\-init}}
+\index{lsupdate\_\-init@{lsupdate\_\-init}!lsupdate.c@{lsupdate.c}}
+\subsubsection[{lsupdate\_\-init}]{\setlength{\rightskip}{0pt plus 5cm}void lsupdate\_\-init ()}}
+\label{lsupdate_8c_adf63440ffbc65024fef87ea6a11ea8b0}
+
+
+Initialize this module. 
+
+Definition at line 89 of file lsupdate.c.
+
+
+\begin{DoxyCode}
+89                      {
+90 }
+\end{DoxyCode}
+\hypertarget{lsupdate_8c_af219e9b2cc124f109aa4c2c2e16b5d07}{
+\index{lsupdate.c@{lsupdate.c}!lsupdate\_\-run@{lsupdate\_\-run}}
+\index{lsupdate\_\-run@{lsupdate\_\-run}!lsupdate.c@{lsupdate.c}}
+\subsubsection[{lsupdate\_\-run}]{\setlength{\rightskip}{0pt plus 5cm}void lsupdate\_\-run ()}}
+\label{lsupdate_8c_af219e9b2cc124f109aa4c2c2e16b5d07}
+
+
+run the update routines 
+
+Definition at line 94 of file lsupdate.c.
+
+
+\begin{DoxyCode}
+94                     {
+95   //  pthread_create( &lsupdate_thread, NULL, lsupdate_worker, NULL);
+96 }
+\end{DoxyCode}
+\hypertarget{lsupdate_8c_a99020a5401c80a8ec384ed0999dc4ef8}{
+\index{lsupdate.c@{lsupdate.c}!lsupdate\_\-updateit@{lsupdate\_\-updateit}}
+\index{lsupdate\_\-updateit@{lsupdate\_\-updateit}!lsupdate.c@{lsupdate.c}}
+\subsubsection[{lsupdate\_\-updateit}]{\setlength{\rightskip}{0pt plus 5cm}void lsupdate\_\-updateit (int {\em first\_\-time})}}
+\label{lsupdate_8c_a99020a5401c80a8ec384ed0999dc4ef8}
+
+
+Query the motors and perhaps tell the DB about it. 
+\begin{DoxyParams}{Parameters}
+\item[\mbox{$\leftarrow$} {\em first\_\-time}]Flag: 1 means update everything, 0 means only send stuff that has changed \end{DoxyParams}
+
+
+Definition at line 15 of file lsupdate.c.
+
+
+\begin{DoxyCode}
+16                                                               : 1 means update ev
+      erything, 0 means only send stuff that has changed  */
+17                        ) {
+18   static char s[4096];
+19   static char s1[512];
+20   lspmac_motor_t *mp;
+21   int i;
+22   int needComma;
+23   int gotone;
+24 
+25   needComma = 0;
+26   gotone = 0;
+27   s[0] = 0;
+28   strcpy(s, "select px.kvupdate('{");
+29 
+30   for( i=0; i<lspmac_nmotors; i++) {
+31     mp = &(lspmac_motors[i]);
+32 
+33     pthread_mutex_lock( &(mp->mutex));
+34     if( fabs( mp->position - mp->reported_position) < mp->update_resolution && fi
+      rst_time == 0) {
+35       pthread_mutex_unlock( &(mp->mutex));
+36     } else {
+37 
+38       gotone = 1;
+39       s1[0]=0;
+40 
+41       snprintf( s1, sizeof(s1)-1, mp->format, mp->position, sizeof( s1)-1);
+42       s1[sizeof(s1)-1] = 0;
+43     
+44       mp->reported_position = mp->position;
+45       pthread_mutex_unlock( &(mp->mutex));
+46 
+47       if( strlen(s1) + strlen(s) + 8 >= sizeof( s)-1) {
+48         // send off update now and reset s
+49         strcat( s, "}')");
+50         lspg_query_push( NULL, s);
+51         
+52         s[0] = 0;
+53         strcpy( s, "select px.kvupdate('{");
+54         needComma = 0;
+55       }
+56 
+57       if( needComma)
+58         strcat( s, ",");
+59       else
+60         needComma=1;
+61 
+62       strcat( s, "\"");
+63       strcat( s, s1);
+64       strcat( s, "\"");
+65     }
+66   }
+67 
+68   if( gotone) {
+69     strcat( s, "}')");
+70     lspg_query_push( NULL, s);
+71   }
+72 }
+\end{DoxyCode}
+\hypertarget{lsupdate_8c_ac4e85ea626b76b06d68c27db1c3e8b43}{
+\index{lsupdate.c@{lsupdate.c}!lsupdate\_\-worker@{lsupdate\_\-worker}}
+\index{lsupdate\_\-worker@{lsupdate\_\-worker}!lsupdate.c@{lsupdate.c}}
+\subsubsection[{lsupdate\_\-worker}]{\setlength{\rightskip}{0pt plus 5cm}void$\ast$ lsupdate\_\-worker (void $\ast$ {\em dummy})}}
+\label{lsupdate_8c_ac4e85ea626b76b06d68c27db1c3e8b43}
+
+
+Our worker thread. 
+\begin{DoxyParams}{Parameters}
+\item[\mbox{$\leftarrow$} {\em dummy}]Unused argument required by protocol \end{DoxyParams}
+
+
+Definition at line 76 of file lsupdate.c.
+
+
+\begin{DoxyCode}
+78                         {    
+79   sleep(10);
+80   lsupdate_updateit( 1);
+81   while( 1) {
+82     usleep( 500000);
+83     lsupdate_updateit( 0);
+84   }    
+85 }
+\end{DoxyCode}
+
+
+\subsection{Variable Documentation}
+\hypertarget{lsupdate_8c_a00578477e1b3791fc8aed17ebe60b606}{
+\index{lsupdate.c@{lsupdate.c}!lsupdate\_\-thread@{lsupdate\_\-thread}}
+\index{lsupdate\_\-thread@{lsupdate\_\-thread}!lsupdate.c@{lsupdate.c}}
+\subsubsection[{lsupdate\_\-thread}]{\setlength{\rightskip}{0pt plus 5cm}pthread\_\-t {\bf lsupdate\_\-thread}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
+\label{lsupdate_8c_a00578477e1b3791fc8aed17ebe60b606}
+
+
+our worker thread 
+
+Definition at line 10 of file lsupdate.c.

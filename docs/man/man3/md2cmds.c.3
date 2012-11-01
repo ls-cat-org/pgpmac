@@ -1,0 +1,664 @@
+.TH "md2cmds.c" 3 "12 Oct 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+md2cmds.c \- 
+.PP
+Implements commands to run the md2 diffractometer attached to a PMAC controled by postgresql.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'pgpmac.h'\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBmd2cmds_transfer\fP ()"
+.br
+.RI "\fITransfer a sample TODO: Implement. \fP"
+.ti -1c
+.RI "char * \fBlogtime\fP ()"
+.br
+.RI "\fIReturn a time string for loggin Time is from the first call to this funciton. \fP"
+.ti -1c
+.RI "void \fBmd2cmds_moveAbs\fP (char *cmd)"
+.br
+.RI "\fIMove a motor to the position requested. \fP"
+.ti -1c
+.RI "void \fBmd2cmds_mvcenter_prep\fP ()"
+.br
+.RI "\fISets up a centering table and alignment table move Ensures that when we issue the move command that we can detect that the move happened. \fP"
+.ti -1c
+.RI "void \fBmd2cmds_mvcenter_move\fP (double cx, double cy, double ax, double ay, double az)"
+.br
+.RI "\fIMove the centering and alignment tables. \fP"
+.ti -1c
+.RI "void \fBmd2cmds_mvcenter_wait\fP ()"
+.br
+.RI "\fIWait for the centering and alignment tables to stop moving. \fP"
+.ti -1c
+.RI "void \fBmd2cmds_collect\fP ()"
+.br
+.RI "\fICollect some data. \fP"
+.ti -1c
+.RI "void \fBmd2cmds_rotate\fP ()"
+.br
+.RI "\fISpin 360 and make a video TODO: Implement. \fP"
+.ti -1c
+.RI "void \fBmd2cmds_center\fP ()"
+.br
+.RI "\fIMove centering and alignment tables as requested TODO: Implement. \fP"
+.ti -1c
+.RI "void * \fBmd2cmds_worker\fP (void *dummy)"
+.br
+.RI "\fIOur worker thread. \fP"
+.ti -1c
+.RI "void \fBmd2cmds_init\fP ()"
+.br
+.RI "\fIInitialize the md2cmds module. \fP"
+.ti -1c
+.RI "void \fBmd2cmds_run\fP ()"
+.br
+.RI "\fIStart up the thread. \fP"
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "pthread_cond_t \fBmd2cmds_cond\fP"
+.br
+.RI "\fIcondition to signal when it's time to run an md2 command \fP"
+.ti -1c
+.RI "pthread_mutex_t \fBmd2cmds_mutex\fP"
+.br
+.RI "\fImutex for the condition \fP"
+.ti -1c
+.RI "pthread_cond_t \fBmd2cmds_pg_cond\fP"
+.br
+.RI "\fIcoordinate call and response \fP"
+.ti -1c
+.RI "pthread_mutex_t \fBmd2cmds_pg_mutex\fP"
+.br
+.RI "\fImessage passing between md2cmds and pg \fP"
+.ti -1c
+.RI "char \fBmd2cmds_cmd\fP [MD2CMDS_CMD_LENGTH]"
+.br
+.RI "\fIour command; \fP"
+.ti -1c
+.RI "static pthread_t \fBmd2cmds_thread\fP"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Implements commands to run the md2 diffractometer attached to a PMAC controled by postgresql. 
+
+\fBDate:\fP
+.RS 4
+2012 
+.RE
+.PP
+\fBAuthor:\fP
+.RS 4
+Keith Brister  All Rights Reserved 
+.RE
+.PP
+
+.PP
+Definition in file \fBmd2cmds.c\fP.
+.SH "Function Documentation"
+.PP 
+.SS "char* logtime ()"
+.PP
+Return a time string for loggin Time is from the first call to this funciton. 
+.PP
+Definition at line 30 of file md2cmds.c.
+.PP
+.nf
+30                 {
+31   static char rtn[128];
+32   static char tmp[64];
+33   static int first_time = 1;
+34   static struct timeval base;
+35   struct timeval now;
+36   struct tm nows;
+37   double diffs;
+38 
+39   if( first_time) {
+40     first_time=0;
+41     gettimeofday( &base, NULL);
+42     strftime(tmp, sizeof(tmp)-1, '%Y-%m-%d %H:%M:%S', localtime( &(base.tv_sec)));
+43     tmp[sizeof(tmp)-1]=0;
+44     snprintf( rtn, sizeof(rtn)-1, '%s.%06d', tmp, base.tv_usec);
+45     rtn[sizeof(rtn)-1]=0;
+46   } else {
+47     gettimeofday( &now, NULL);
+48     diffs =  (now.tv_sec - base.tv_sec);
+49     diffs += (now.tv_usec - base.tv_usec)/1000000.;
+50     snprintf( rtn, sizeof( rtn)-1, '%0.6f', diffs);
+51     rtn[sizeof(rtn)-1]=0;
+52   }
+53 
+54   return rtn;
+55 }
+.fi
+.SS "void md2cmds_center ()"
+.PP
+Move centering and alignment tables as requested TODO: Implement. 
+.PP
+Definition at line 422 of file md2cmds.c.
+.PP
+.nf
+422                       {
+423 }
+.fi
+.SS "void md2cmds_collect ()"
+.PP
+Collect some data. 
+.PP
+Definition at line 214 of file md2cmds.c.
+.PP
+.nf
+214                        {
+215   long long skey;
+216   double p170;  // start cnts
+217   double p171;  // end cnts
+218   double p173;  // omega velocity cnts/msec
+219   double p175;  // acceleration time (msec)
+220   double p180;  // exposure time (msec)
+221   FILE *zzlog;
+222   struct timeval tt_base, tt_now;
+223   int center_request;
+224 
+225   zzlog = fopen( '/tmp/collect_log.txt', 'w');
+226   fprintf( zzlog, '%s: Start md2cmds\n', logtime());
+227   fflush( zzlog);
+228 
+229   //
+230   // reset shutter has opened flag
+231   //
+232   lspmac_SockSendline( 'P3001=0 P3002=0');
+233 
+234 
+235   while( 1) {
+236     fprintf( zzlog, '%s: call lspg_nextshot_call\n', logtime());
+237     fflush( zzlog);
+238     lspg_nextshot_call();
+239 
+240     //
+241     // This is where we'd tell the md2 to move the organs into position
+242     //
+243 
+244     fprintf( zzlog, '%s: call lspg_nextshot_wait\n', logtime());
+245     fflush( zzlog);
+246 
+247     lspg_nextshot_wait();
+248     fprintf( zzlog, '%s: returned from  lspg_nextshot_wait\n', logtime());
+249     fflush( zzlog);
+250 
+251     if( lspg_nextshot.no_rows_returned) {
+252       lspg_nextshot_done();
+253       break;
+254     }
+255 
+256     skey = lspg_nextshot.skey;
+257     lspg_query_push( NULL, 'SELECT px.shots_set_state(%lld, 'Preparing')', skey);
+258 
+259     center_request = 0;
+260     if( lspg_nextshot.active) {
+261       if(
+262          (fabs( lspg_nextshot.cx - cenx->position) > 0.1) ||
+263          (fabs( lspg_nextshot.cy - ceny->position) > 0.1) ||
+264          (fabs( lspg_nextshot.ax - alignx->position) > 0.1) ||
+265          (fabs( lspg_nextshot.ay - aligny->position) > 0.1) ||
+266          (fabs( lspg_nextshot.az - alignz->position) > 0.1)) {
+267 
+268         center_request = 1;
+269         md2cmds_mvcenter_prep();
+270         md2cmds_mvcenter_move( lspg_nextshot.cx, lspg_nextshot.cy, lspg_nextshot.ax, lspg_nextshot.ay, lspg_nextshot.az);
+271       }
+272     }
+273 
+274     if( !lspg_nextshot.dsphi_isnull) {
+275       lspmac_moveabs_queue( phi, lspg_nextshot.dsphi);
+276     }
+277   
+278     if( !lspg_nextshot.dskappa_isnull) {
+279       lspmac_moveabs_queue( kappa, lspg_nextshot.dskappa);
+280     }
+281 
+282   
+283     //
+284     // Wait for all those motors to stop
+285     //
+286     if( center_request) {
+287       md2cmds_mvcenter_wait();
+288     }
+289 
+290     if( !lspg_nextshot.dsphi_isnull) {
+291       lspmac_moveabs_wait( phi);
+292     }
+293   
+294     if( !lspg_nextshot.dskappa_isnull) {
+295       lspmac_moveabs_wait( kappa);
+296     }
+297 
+298     //
+299     // Calculate the parameters we'll need to run the scan
+300     //
+301     p180 = lspg_nextshot.dsexp * 1000.0;
+302     p170 = omega->u2c * lspg_nextshot.sstart;
+303     //    p171 = omega->u2c * ( lspg_nextshot.sstart + lspg_nextshot.dsowidth);
+304     p171 = omega->u2c * lspg_nextshot.dsowidth;
+305     p173 = fabs(p180) < 1.e-4 ? 0.0 : omega->u2c * lspg_nextshot.dsowidth / p180;
+306     p175 = p173/omega->max_accel;
+307 
+308 
+309     //
+310     // free up access to nextshot
+311     //
+312     lspg_nextshot_done();
+313 
+314     fprintf( zzlog, '%s: finished with lspg_nextshot_done, calling lspg_seq_run_prep_all\n', logtime());
+315     fflush( zzlog);
+316 
+317     //
+318     // prepare the database and detector to expose
+319     // On exit we own the diffractometer lock and
+320     // have checked that all is OK with the detector
+321     //
+322     lspg_seq_run_prep_all( skey,
+323                            kappa->position,
+324                            phi->position,
+325                            cenx->position,
+326                            ceny->position,
+327                            alignx->position,
+328                            aligny->position,
+329                            alignz->position
+330                            );
+331 
+332     
+333     fprintf( zzlog, '%s: finished with lspg_seq_run_prep_all\n', logtime());
+334     fflush( zzlog);
+335     //
+336     // make sure our has opened flag is down
+337     // wait for the p3001=0 command to be noticed
+338     //
+339     pthread_mutex_lock( &lspmac_shutter_mutex);
+340     if( lspmac_shutter_has_opened == 1)
+341       pthread_cond_wait( &lspmac_shutter_cond, &lspmac_shutter_mutex);
+342     pthread_mutex_unlock( &lspmac_shutter_mutex);
+343 
+344     //
+345     // Start the exposure
+346     //
+347     lspmac_SockSendline( 'P170=%.1f P171=%.1f P173=%.1f P174=0 P175=%.1f P176=0 P177=1 P178=0 P180=%.1f M431=1 &1B131R',
+348                          p170,      p171,     p173,            p175,                          p180);
+349 
+350 
+351     fprintf( zzlog, '%s: sent command to pmac\n', logtime());
+352     fflush( zzlog);
+353 
+354     //
+355     // wait for the shutter to open
+356     //
+357     pthread_mutex_lock( &lspmac_shutter_mutex);
+358     if( lspmac_shutter_has_opened == 0)
+359       pthread_cond_wait( &lspmac_shutter_cond, &lspmac_shutter_mutex);
+360 
+361     fprintf( zzlog, '%s: shutter has opened\n', logtime());
+362     fflush( zzlog);
+363 
+364     //
+365     // wait for the shutter to close
+366     //
+367     if( lspmac_shutter_state == 1)
+368       pthread_cond_wait( &lspmac_shutter_cond, &lspmac_shutter_mutex);
+369     pthread_mutex_unlock( &lspmac_shutter_mutex);
+370 
+371     fprintf( zzlog, '%s: shutter now closed, unlocking diffractometer\n', logtime());
+372     fflush( zzlog);
+373 
+374 
+375     lspg_query_push( NULL, 'SELECT px.unlock_diffractometer()');
+376 
+377     fprintf( zzlog, '%s: unlocked diffractometer\n', logtime());
+378     fflush( zzlog);
+379 
+380     lspg_query_push( NULL, 'SELECT px.shots_set_state(%lld, 'Writing')', skey);
+381 
+382     //
+383     // reset shutter has opened flag
+384     //
+385     lspmac_SockSendline( 'P3001=0');
+386     //
+387     // TODO:
+388     // wait for omega to stop moving then position it for the next frame
+389     //
+390 
+391 
+392     if( !lspg_nextshot.active2_isnull && lspg_nextshot.active2) {
+393       if(
+394          (fabs( lspg_nextshot.cx2 - cenx->position) > 0.1) ||
+395          (fabs( lspg_nextshot.cy2 - ceny->position) > 0.1) ||
+396          (fabs( lspg_nextshot.ax2 - alignx->position) > 0.1) ||
+397          (fabs( lspg_nextshot.ay2 - aligny->position) > 0.1) ||
+398          (fabs( lspg_nextshot.az2 - alignz->position) > 0.1)) {
+399 
+400         center_request = 1;
+401         md2cmds_mvcenter_prep();
+402         md2cmds_mvcenter_move( lspg_nextshot.cx, lspg_nextshot.cy, lspg_nextshot.ax, lspg_nextshot.ay, lspg_nextshot.az);
+403         md2cmds_mvcenter_wait();
+404       }
+405     }
+406 
+407   }
+408   fprintf( zzlog, '%s: done\n', logtime());
+409   fflush( zzlog);
+410   fclose( zzlog);
+411 }
+.fi
+.SS "void md2cmds_init ()"
+.PP
+Initialize the md2cmds module. 
+.PP
+Definition at line 461 of file md2cmds.c.
+.PP
+.nf
+461                     {
+462   memset( md2cmds_cmd, 0, sizeof( md2cmds_cmd));
+463 
+464   pthread_mutex_init( &md2cmds_mutex, NULL);
+465   pthread_cond_init( &md2cmds_cond, NULL);
+466 
+467   pthread_mutex_init( &md2cmds_pg_mutex, NULL);
+468   pthread_cond_init( &md2cmds_pg_cond, NULL);
+469 
+470 }
+.fi
+.SS "void md2cmds_moveAbs (char * cmd)"
+.PP
+Move a motor to the position requested. \fBParameters:\fP
+.RS 4
+\fIcmd\fP The full command string to parse, ie, 'moveAbs omega 180' 
+.RE
+.PP
+
+.PP
+Definition at line 59 of file md2cmds.c.
+.PP
+.nf
+61                        {
+62   char *ignore;
+63   char *ptr;
+64   char *mtr;
+65   char *pos;
+66   double fpos;
+67   char *endptr;
+68   lspmac_motor_t *mp;
+69   int i;
+70 
+71   // Parse the command string
+72   //
+73   ignore = strtok_r( cmd, ' ', &ptr);
+74   if( ignore == NULL) {
+75     //
+76     // Should generate error message
+77     // about blank command
+78     //
+79     return;
+80   }
+81 
+82   // The first string should be 'moveAbs' cause that's how we got here.
+83   // Toss it.
+84   
+85   mtr = strtok_r( NULL, ' ', &ptr);
+86   if( mtr == NULL) {
+87     //
+88     // Should generate error message
+89     // about missing motor name
+90     //
+91     return;
+92   }
+93 
+94   pos = strtok_r( NULL, ' ', &ptr);
+95   if( pos == NULL) {
+96     //
+97     // Should generate error message
+98     // about missing position
+99     //
+100     return;
+101   }
+102 
+103   fpos = strtod( pos, &endptr);
+104   if( pos == endptr) {
+105     //
+106     // Should generate error message 
+107     // about bad double conversion
+108     //
+109     return;
+110   }
+111   
+112   mp = NULL;
+113   for( i=0; i<lspmac_nmotors; i++) {
+114     if( strcmp( lspmac_motors[i].name, mtr) == 0) {
+115       mp = &(lspmac_motors[i]);
+116       break;
+117     }
+118   }
+119 
+120 
+121   if( mp != NULL && mp->moveAbs != NULL) {
+122     wprintw( term_output, 'Moving %s to %f\n', mtr, fpos);
+123     wnoutrefresh( term_output);
+124     mp->moveAbs( mp, fpos);
+125   }
+126 
+127 }
+.fi
+.SS "void md2cmds_mvcenter_move (double cx, double cy, double ax, double ay, double az)"
+.PP
+Move the centering and alignment tables. \fBParameters:\fP
+.RS 4
+\fIcx\fP Requested Centering Table X 
+.br
+\fIcy\fP Requested Centering Table Y 
+.br
+\fIax\fP Requested Alignment Table X 
+.br
+\fIay\fP Requested Alignment Table Y 
+.br
+\fIaz\fP Requested Alignment Table Z 
+.RE
+.PP
+
+.PP
+Definition at line 173 of file md2cmds.c.
+.PP
+.nf
+179                              {
+180   //
+181   // centering stage is coordinate system 2
+182   // alignment stage is coordinate system 3
+183   //
+184   
+185   double cx_cts, cy_cts, ax_cts, ay_cts, az_cts;
+186 
+187   cx_cts = cenx->u2c   * cx;
+188   cy_cts = ceny->u2c   * cy;
+189   ax_cts = alignx->u2c * ax;
+190   ay_cts = aligny->u2c * ay;
+191   az_cts = alignz->u2c * az;
+192 
+193   lspmac_SockSendline( 'M7075=(M7075 | 2) &2 Q100=2 Q20=%.1f Q21=%.1f B150R', cx_cts, cy_cts);
+194   lspmac_SockSendline( 'M7075=(M7075 | 4) &3 Q100=4 Q30=%.1f Q31=%.1f Q32=%.1f B160R', ax_cts, ay_cts, az_cts);
+195   
+196 }
+.fi
+.SS "void md2cmds_mvcenter_prep ()"
+.PP
+Sets up a centering table and alignment table move Ensures that when we issue the move command that we can detect that the move happened. 
+.PP
+Definition at line 134 of file md2cmds.c.
+.PP
+.nf
+134                              {
+135   //
+136   // Clears the motion flags for coordinate systems 2 and 3
+137   // Then sets them.
+138   // Each time we wait until we've read back
+139   // the changed values
+140   //
+141   // This guarantees that when we are waiting for motion to stop that it did, in fact, start
+142   //
+143 
+144   //
+145   // Clear the centering and alignment stage flags
+146   //
+147   lspmac_SockSendline( 'M7075=(M7075 | 6) ^ 6');
+148 
+149   //
+150   // Make sure it propagates
+151   //
+152   pthread_mutex_lock( &lspmac_moving_mutex);
+153   while( lspmac_moving_flags & 6)
+154     pthread_cond_wait( &lspmac_moving_cond, &lspmac_moving_mutex);
+155   pthread_mutex_unlock( &lspmac_moving_mutex);
+156 
+157   //
+158   // Set the centering and alignment stage flags
+159   //
+160   lspmac_SockSendline( 'M7075=(M7075 | 6)');
+161 
+162   //
+163   // Make sure it propagates
+164   //
+165   pthread_mutex_lock( &lspmac_moving_mutex);
+166   while( (lspmac_moving_flags & 6) == 0)
+167     pthread_cond_wait( &lspmac_moving_cond, &lspmac_moving_mutex);
+168   pthread_mutex_unlock( &lspmac_moving_mutex);
+169 }
+.fi
+.SS "void md2cmds_mvcenter_wait ()"
+.PP
+Wait for the centering and alignment tables to stop moving. 
+.PP
+Definition at line 200 of file md2cmds.c.
+.PP
+.nf
+200                              {
+201   //
+202   // Just wait until the motion flags are lowered
+203   //
+204 
+205   pthread_mutex_lock( &lspmac_moving_mutex);
+206   while( lspmac_moving_flags & 6)
+207     pthread_cond_wait( &lspmac_moving_cond, &lspmac_moving_mutex);
+208   pthread_mutex_unlock( &lspmac_moving_mutex);
+209 }
+.fi
+.SS "void md2cmds_rotate ()"
+.PP
+Spin 360 and make a video TODO: Implement. 
+.PP
+Definition at line 416 of file md2cmds.c.
+.PP
+.nf
+416                       {
+417 }
+.fi
+.SS "void md2cmds_run ()"
+.PP
+Start up the thread. 
+.PP
+Definition at line 474 of file md2cmds.c.
+.PP
+.nf
+474                    {
+475   pthread_create( &md2cmds_thread, NULL, md2cmds_worker, NULL);
+476 }
+.fi
+.SS "void md2cmds_transfer ()"
+.PP
+Transfer a sample TODO: Implement. 
+.PP
+Definition at line 24 of file md2cmds.c.
+.PP
+.nf
+24                         {
+25 }
+.fi
+.SS "void* md2cmds_worker (void * dummy)"
+.PP
+Our worker thread. \fBParameters:\fP
+.RS 4
+\fIdummy\fP > [in] Unused but required by protocol 
+.RE
+.PP
+
+.PP
+Definition at line 429 of file md2cmds.c.
+.PP
+.nf
+431                        {
+432 
+433   pthread_mutex_lock( &md2cmds_mutex);
+434 
+435   while( 1) {
+436     //
+437     // wait for someone to give us a command (and tell us they did so)
+438     //
+439     while( md2cmds_cmd[0] == 0)
+440       pthread_cond_wait( &md2cmds_cond, &md2cmds_mutex);
+441 
+442     if( strcmp( md2cmds_cmd, 'transfer') == 0) {
+443       md2cmds_transfer();
+444     } else if( strcmp( md2cmds_cmd, 'collect') == 0) {
+445       md2cmds_collect();
+446     } else if( strcmp( md2cmds_cmd, 'rotate') == 0) {
+447       md2cmds_rotate();
+448     } else if( strcmp( md2cmds_cmd, 'center') == 0) {
+449       md2cmds_center();
+450     } else if( strncmp( md2cmds_cmd, 'moveAbs', 7) == 0) {
+451       md2cmds_moveAbs( md2cmds_cmd);
+452     }
+453 
+454     md2cmds_cmd[0] = 0;
+455   }
+456 }
+.fi
+.SH "Variable Documentation"
+.PP 
+.SS "char \fBmd2cmds_cmd\fP[MD2CMDS_CMD_LENGTH]"
+.PP
+our command; 
+.PP
+Definition at line 16 of file md2cmds.c.
+.SS "pthread_cond_t \fBmd2cmds_cond\fP"
+.PP
+condition to signal when it's time to run an md2 command 
+.PP
+Definition at line 10 of file md2cmds.c.
+.SS "pthread_mutex_t \fBmd2cmds_mutex\fP"
+.PP
+mutex for the condition 
+.PP
+Definition at line 11 of file md2cmds.c.
+.SS "pthread_cond_t \fBmd2cmds_pg_cond\fP"
+.PP
+coordinate call and response 
+.PP
+Definition at line 13 of file md2cmds.c.
+.SS "pthread_mutex_t \fBmd2cmds_pg_mutex\fP"
+.PP
+message passing between md2cmds and pg 
+.PP
+Definition at line 14 of file md2cmds.c.
+.SS "pthread_t \fBmd2cmds_thread\fP\fC [static]\fP"
+.PP
+Definition at line 18 of file md2cmds.c.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for LS-CAT PGPMAC from the source code.

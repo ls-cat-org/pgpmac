@@ -1,0 +1,2853 @@
+.TH "lspmac.c" 3 "12 Oct 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+lspmac.c \- 
+.PP
+Routines concerned with communication with PMAC.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'pgpmac.h'\fP
+.br
+
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBmd2StatusStruct\fP"
+.br
+.RI "\fIThe block of memory retrieved in a status request. \fP"
+.in -1c
+.SS "Defines"
+
+.in +1c
+.ti -1c
+.RI "#define \fBLS_PMAC_STATE_RESET\fP   -1"
+.br
+.ti -1c
+.RI "#define \fBLS_PMAC_STATE_DETACHED\fP   0"
+.br
+.ti -1c
+.RI "#define \fBLS_PMAC_STATE_IDLE\fP   1"
+.br
+.ti -1c
+.RI "#define \fBLS_PMAC_STATE_SC\fP   2"
+.br
+.ti -1c
+.RI "#define \fBLS_PMAC_STATE_WACK_NFR\fP   3"
+.br
+.ti -1c
+.RI "#define \fBLS_PMAC_STATE_WACK_CC\fP   4"
+.br
+.ti -1c
+.RI "#define \fBLS_PMAC_STATE_WACK\fP   5"
+.br
+.ti -1c
+.RI "#define \fBLS_PMAC_STATE_GMR\fP   6"
+.br
+.ti -1c
+.RI "#define \fBLS_PMAC_STATE_CR\fP   7"
+.br
+.ti -1c
+.RI "#define \fBLS_PMAC_STATE_RR\fP   8"
+.br
+.ti -1c
+.RI "#define \fBLS_PMAC_STATE_WACK_RR\fP   9"
+.br
+.ti -1c
+.RI "#define \fBLS_PMAC_STATE_GB\fP   10"
+.br
+.ti -1c
+.RI "#define \fBLS_PMAC_STATE_WCR\fP   11"
+.br
+.ti -1c
+.RI "#define \fBLS_PMAC_STATE_WGB\fP   12"
+.br
+.ti -1c
+.RI "#define \fBPMACPORT\fP   1025"
+.br
+.RI "\fIThe PMAC (only) listens on this port. \fP"
+.ti -1c
+.RI "#define \fBpmac_cmd_size\fP   8"
+.br
+.RI "\fIPMAC command size in bytes. \fP"
+.ti -1c
+.RI "#define \fBVR_UPLOAD\fP   0xc0"
+.br
+.ti -1c
+.RI "#define \fBVR_DOWNLOAD\fP   0x40"
+.br
+.ti -1c
+.RI "#define \fBVR_PMAC_SENDLINE\fP   0xb0"
+.br
+.ti -1c
+.RI "#define \fBVR_PMAC_GETLINE\fP   0xb1"
+.br
+.ti -1c
+.RI "#define \fBVR_PMAC_FLUSH\fP   0xb3"
+.br
+.ti -1c
+.RI "#define \fBVR_PMAC_GETMEM\fP   0xb4"
+.br
+.ti -1c
+.RI "#define \fBVR_PMAC_SETMEM\fP   0xb5"
+.br
+.ti -1c
+.RI "#define \fBVR_PMAC_SENDCTRLCHAR\fP   0xb6"
+.br
+.ti -1c
+.RI "#define \fBVR_PMAC_SETBIT\fP   0xba"
+.br
+.ti -1c
+.RI "#define \fBVR_PMAC_SETBITS\fP   0xbb"
+.br
+.ti -1c
+.RI "#define \fBVR_PMAC_PORT\fP   0xbe"
+.br
+.ti -1c
+.RI "#define \fBVR_PMAC_GETRESPONSE\fP   0xbf"
+.br
+.ti -1c
+.RI "#define \fBVR_PMAC_READREADY\fP   0xc2"
+.br
+.ti -1c
+.RI "#define \fBVR_CTRL_RESPONSE\fP   0xc4"
+.br
+.ti -1c
+.RI "#define \fBVR_PMAC_GETBUFFER\fP   0xc5"
+.br
+.ti -1c
+.RI "#define \fBVR_PMAC_WRITEBUFFER\fP   0xc6"
+.br
+.ti -1c
+.RI "#define \fBVR_PMAC_WRITEERROR\fP   0xc7"
+.br
+.ti -1c
+.RI "#define \fBVR_FWDOWNLOAD\fP   0xcb"
+.br
+.ti -1c
+.RI "#define \fBVR_IPADDRESS\fP   0xe0"
+.br
+.ti -1c
+.RI "#define \fBPMAC_MIN_CMD_TIME\fP   20000.0"
+.br
+.RI "\fIMinimum time between commands to the pmac. \fP"
+.ti -1c
+.RI "#define \fBPMAC_CMD_QUEUE_LENGTH\fP   2048"
+.br
+.RI "\fISize of the PMAC command queue. \fP"
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBmd2StatusStruct\fP \fBmd2_status_t\fP"
+.br
+.RI "\fIThe block of memory retrieved in a status request. \fP"
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBhex_dump\fP (int n, unsigned char *s)"
+.br
+.RI "\fIPrints a hex dump of the given data. \fP"
+.ti -1c
+.RI "void \fBcleanstr\fP (char *s)"
+.br
+.RI "\fIReplace  with 
+.br
+ in null terminated string and print result to terminal. \fP"
+.ti -1c
+.RI "void \fBlsConnect\fP (char *ipaddr)"
+.br
+.RI "\fIConnect to the PMAC socket. \fP"
+.ti -1c
+.RI "\fBpmac_cmd_queue_t\fP * \fBlspmac_push_queue\fP (\fBpmac_cmd_queue_t\fP *cmd)"
+.br
+.RI "\fIPut a new command on the queue. \fP"
+.ti -1c
+.RI "\fBpmac_cmd_queue_t\fP * \fBlspmac_pop_queue\fP ()"
+.br
+.RI "\fIRemove the oldest queue item. \fP"
+.ti -1c
+.RI "\fBpmac_cmd_queue_t\fP * \fBlspmac_pop_reply\fP ()"
+.br
+.RI "\fIRemove the next command queue item that is waiting for a reply. \fP"
+.ti -1c
+.RI "\fBpmac_cmd_queue_t\fP * \fBlspmac_send_command\fP (int rqType, int rq, int wValue, int wIndex, int wLength, unsigned char *data, void(*responseCB)(\fBpmac_cmd_queue_t\fP *, int, unsigned char *), int no_reply)"
+.br
+.RI "\fICompose a packet and send it to the PMAC. \fP"
+.ti -1c
+.RI "void \fBlspmac_SockFlush\fP ()"
+.br
+.RI "\fIReset the PMAC socket from the PMAC side. \fP"
+.ti -1c
+.RI "void \fBlspmac_Reset\fP ()"
+.br
+.RI "\fIClear the queue and put the PMAC into a known state. \fP"
+.ti -1c
+.RI "void \fBlspmac_Error\fP (unsigned char *buff)"
+.br
+.RI "\fIThe service routing detected an error condition. \fP"
+.ti -1c
+.RI "void \fBlspmac_Service\fP (struct pollfd *evt)"
+.br
+.RI "\fIService routine for packet coming from the PMAC. \fP"
+.ti -1c
+.RI "void \fBlspmac_GetShortReplyCB\fP (\fBpmac_cmd_queue_t\fP *cmd, int nreceived, unsigned char *buff)"
+.br
+.RI "\fIReceive a reply that does not require multiple buffers. \fP"
+.ti -1c
+.RI "void \fBlspmac_SendControlReplyPrintCB\fP (\fBpmac_cmd_queue_t\fP *cmd, int nreceived, unsigned char *buff)"
+.br
+.RI "\fIReceive a reply to a control character Print a 'printable' version of the character to the terminal Followed by a hex dump of the response. \fP"
+.ti -1c
+.RI "void \fBlspmac_GetmemReplyCB\fP (\fBpmac_cmd_queue_t\fP *cmd, int nreceived, unsigned char *buff)"
+.br
+.RI "\fIService a reply to the getmem command. \fP"
+.ti -1c
+.RI "\fBpmac_cmd_queue_t\fP * \fBlspmac_SockGetmem\fP (int offset, int nbytes)"
+.br
+.RI "\fIRequest a chunk of memory to be returned. \fP"
+.ti -1c
+.RI "\fBpmac_cmd_queue_t\fP * \fBlspmac_SockSendline\fP (char *fmt,...)"
+.br
+.RI "\fISend a one line command. \fP"
+.ti -1c
+.RI "\fBpmac_cmd_queue_t\fP * \fBlspmac_SockSendline_nr\fP (char *fmt,...)"
+.br
+.RI "\fISend a command and ignore the response. \fP"
+.ti -1c
+.RI "\fBpmac_cmd_queue_t\fP * \fBlspmac_SockSendControlCharPrint\fP (char c)"
+.br
+.RI "\fISend a control character. \fP"
+.ti -1c
+.RI "void \fBlspmac_Getmem\fP ()"
+.br
+.RI "\fIRequest a block of double buffer memory. \fP"
+.ti -1c
+.RI "void \fBlspmac_bio_read\fP (\fBlspmac_motor_t\fP *mp)"
+.br
+.RI "\fIRead the state of a binary i/o motor This is the read method for the binary i/o motor class. \fP"
+.ti -1c
+.RI "void \fBlspmac_dac_read\fP (\fBlspmac_motor_t\fP *mp)"
+.br
+.RI "\fIRead a DAC motor position. \fP"
+.ti -1c
+.RI "void \fBlspmac_shutter_read\fP (\fBlspmac_motor_t\fP *mp) pthread_mutex_lock(&\fBlspmac_shutter_mutex\fP)"
+.br
+.RI "\fIFast shutter read routine The shutter is mildly complicated in that we need to take into account the fact that the shutter can open and close again between status updates. \fP"
+.ti -1c
+.RI "\fBif\fP (md2_status.fs_has_opened &&!\fBlspmac_shutter_has_opened\fP &&!md2_status.fs_is_open)"
+.br
+.ti -1c
+.RI "\fBif\fP (lspmac_shutter_state!=md2_status.fs_is_open)"
+.br
+.ti -1c
+.RI "\fBif\fP (md2_status.fs_is_open)"
+.br
+.ti -1c
+.RI "void \fBlspmac_pmacmotor_read\fP (\fBlspmac_motor_t\fP *mp)"
+.br
+.RI "\fIRead the position and status of a normal PMAC motor. \fP"
+.ti -1c
+.RI "void \fBlspmac_get_status_cb\fP (\fBpmac_cmd_queue_t\fP *cmd, int nreceived, unsigned char *buff)"
+.br
+.RI "\fIService routing for status upate This updates positions and status information. \fP"
+.ti -1c
+.RI "void \fBlspmac_get_status\fP ()"
+.br
+.RI "\fIRequest a status update from the PMAC. \fP"
+.ti -1c
+.RI "void \fBlspmac_GetAllIVarsCB\fP (\fBpmac_cmd_queue_t\fP *cmd, int nreceived, unsigned char *buff)"
+.br
+.RI "\fIReceive the values of all the I variables Update our Postgresql database with the results. \fP"
+.ti -1c
+.RI "void \fBlspmac_GetAllIVars\fP ()"
+.br
+.RI "\fIRequest the values of all the I variables. \fP"
+.ti -1c
+.RI "void \fBlspmac_GetAllMVarsCB\fP (\fBpmac_cmd_queue_t\fP *cmd, int nreceived, unsigned char *buff)"
+.br
+.RI "\fIReceive the values of all the M variables Update our database with the results. \fP"
+.ti -1c
+.RI "void \fBlspmac_GetAllMVars\fP ()"
+.br
+.RI "\fIRequest the values of all the M variables. \fP"
+.ti -1c
+.RI "void \fBlspmac_sendcmd_nocb\fP (char *fmt,...)"
+.br
+.RI "\fISend a command that does not need to deal with the reply. \fP"
+.ti -1c
+.RI "void \fBlspmac_next_state\fP ()"
+.br
+.RI "\fIState machine logic. \fP"
+.ti -1c
+.RI "void * \fBlspmac_worker\fP (void *dummy)"
+.br
+.RI "\fIOur lspmac worker thread. \fP"
+.ti -1c
+.RI "double \fBlspmac_lut\fP (int nlut, double *lut, double x)"
+.br
+.RI "\fILook up table support for motor positions (think x=zoom, y=light intensity) use a lookup table to find the 'counts' to move the motor to the requested position The look up table is a simple one dimensional array with the x values as even indicies and the y values as odd indices. \fP"
+.ti -1c
+.RI "void \fBlspmac_movedac_queue\fP (\fBlspmac_motor_t\fP *mp, double requested_position)"
+.br
+.RI "\fIMove method for dac motor objects (ie, lights). \fP"
+.ti -1c
+.RI "void \fBlspmac_movezoom_queue\fP (\fBlspmac_motor_t\fP *mp, double requested_position)"
+.br
+.RI "\fIMove method for the zoom motor. \fP"
+.ti -1c
+.RI "void \fBlspmac_moveabs_fshut_queue\fP (\fBlspmac_motor_t\fP *mp, double requested_position)"
+.br
+.RI "\fIMove method for the fast shutter. \fP"
+.ti -1c
+.RI "void \fBlspmac_moveabs_bio_queue\fP (\fBlspmac_motor_t\fP *mp, double requested_position)"
+.br
+.RI "\fIMove method for binary i/o motor objects. \fP"
+.ti -1c
+.RI "void \fBlspmac_moveabs_queue\fP (\fBlspmac_motor_t\fP *mp, double requested_position)"
+.br
+.RI "\fIMove method for normal stepper and servo motor objects. \fP"
+.ti -1c
+.RI "void \fBlspmac_moveabs_wait\fP (\fBlspmac_motor_t\fP *mp)"
+.br
+.RI "\fIWait for motor to finish moving. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBlspmac_motor_init\fP (\fBlspmac_motor_t\fP *d, int motor_number, int wy, int wx, int *posp, int *stat1p, int *stat2p, char *wtitle, char *name, void(*moveAbs)(\fBlspmac_motor_t\fP *, double))"
+.br
+.RI "\fIInitialize a pmac stepper or servo motor. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBlspmac_fshut_init\fP (\fBlspmac_motor_t\fP *d)"
+.br
+.RI "\fIInitalize the fast shutter motor. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBlspmac_bio_init\fP (\fBlspmac_motor_t\fP *d, char *name, char *write_fmt, int *read_ptr, int read_mask)"
+.br
+.RI "\fIInitialize binary i/o motor. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBlspmac_dac_init\fP (\fBlspmac_motor_t\fP *d, int *posp, double scale, char *mvar, char *name)"
+.br
+.RI "\fIInitialize DAC motor Note that some motors require further initialization from a database query. \fP"
+.ti -1c
+.RI "void \fBlspmac_init\fP (int ivarsflag, int mvarsflag)"
+.br
+.RI "\fIInitialize this module. \fP"
+.ti -1c
+.RI "void \fBlspmac_run\fP ()"
+.br
+.RI "\fIStart up the lspmac thread. \fP"
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "static int \fBls_pmac_state\fP = LS_PMAC_STATE_DETACHED"
+.br
+.RI "\fICurrent state of the PMAC communications state machine. \fP"
+.ti -1c
+.RI "int \fBlspmac_shutter_state\fP"
+.br
+.RI "\fIState of the shutter, used to detect changes. \fP"
+.ti -1c
+.RI "int \fBlspmac_shutter_has_opened\fP = md2_status.fs_has_opened"
+.br
+.RI "\fIIndicates that the shutter had opened, perhaps briefly even if the state did not change. \fP"
+.ti -1c
+.RI "pthread_mutex_t \fBlspmac_shutter_mutex\fP"
+.br
+.RI "\fICoordinates threads reading shutter status. \fP"
+.ti -1c
+.RI "pthread_cond_t \fBlspmac_shutter_cond\fP"
+.br
+.RI "\fIAllows waiting for the shutter status to change. \fP"
+.ti -1c
+.RI "pthread_mutex_t \fBlspmac_moving_mutex\fP"
+.br
+.RI "\fICoordinate moving motors between threads. \fP"
+.ti -1c
+.RI "pthread_cond_t \fBlspmac_moving_cond\fP"
+.br
+.RI "\fIWait for motor(s) to finish moving condition. \fP"
+.ti -1c
+.RI "int \fBlspmac_moving_flags\fP"
+.br
+.RI "\fIFlag used to implement motor moving condition. \fP"
+.ti -1c
+.RI "static pthread_t \fBpmac_thread\fP"
+.br
+.RI "\fIour thread to manage access and communication to the pmac \fP"
+.ti -1c
+.RI "static pthread_mutex_t \fBpmac_queue_mutex\fP"
+.br
+.RI "\fImanage access to the pmac command queue \fP"
+.ti -1c
+.RI "static pthread_cond_t \fBpmac_queue_cond\fP"
+.br
+.RI "\fIwait for a command to be sent to PMAC before continuing \fP"
+.ti -1c
+.RI "static struct pollfd \fBpmacfd\fP"
+.br
+.RI "\fIour poll structure \fP"
+.ti -1c
+.RI "static int \fBgetivars\fP = 0"
+.br
+.RI "\fIflag set at initialization to send i vars to db \fP"
+.ti -1c
+.RI "static int \fBgetmvars\fP = 0"
+.br
+.RI "\fIflag set at initialization to send m vars to db \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP \fBlspmac_motors\fP [32]"
+.br
+.RI "\fIAll our motors. \fP"
+.ti -1c
+.RI "int \fBlspmac_nmotors\fP = 0"
+.br
+.RI "\fIThe number of motors we manage. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBomega\fP"
+.br
+.RI "\fIMD2 omega axis (the air bearing). \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBalignx\fP"
+.br
+.RI "\fIAlignment stage X. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBaligny\fP"
+.br
+.RI "\fIAlignment stage Y. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBalignz\fP"
+.br
+.RI "\fIAlignment stage X. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBanal\fP"
+.br
+.RI "\fIPolaroid analyzer motor. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBzoom\fP"
+.br
+.RI "\fIOptical zoom. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBapery\fP"
+.br
+.RI "\fIAperture Y. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBaperz\fP"
+.br
+.RI "\fIAperture Z. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBcapy\fP"
+.br
+.RI "\fICapillary Y. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBcapz\fP"
+.br
+.RI "\fICapillary Z. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBscinz\fP"
+.br
+.RI "\fIScintillator Z. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBcenx\fP"
+.br
+.RI "\fICentering Table X. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBceny\fP"
+.br
+.RI "\fICentering Table Y. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBkappa\fP"
+.br
+.RI "\fIKappa. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBphi\fP"
+.br
+.RI "\fIPhi (not data collection axis). \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBfshut\fP"
+.br
+.RI "\fIFast shutter. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBflight\fP"
+.br
+.RI "\fIFront Light DAC. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBblight\fP"
+.br
+.RI "\fIBack Light DAC. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBfscint\fP"
+.br
+.RI "\fIScintillator Piezo DAC. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBblight_ud\fP"
+.br
+.RI "\fIBack Light Up/Down actuator. \fP"
+.ti -1c
+.RI "static int \fBlinesReceived\fP = 0"
+.br
+.RI "\fIcurrent number of lines received \fP"
+.ti -1c
+.RI "static unsigned char \fBdbmem\fP [64 *1024]"
+.br
+.RI "\fIdouble buffered memory \fP"
+.ti -1c
+.RI "static int \fBdbmemIn\fP = 0"
+.br
+.RI "\fInext location \fP"
+.ti -1c
+.RI "static struct timeval pmac_time_sent \fBnow\fP"
+.br
+.RI "\fIused to ensure we do not send commands to the pmac too often. Only needed for non-DB commands. \fP"
+.ti -1c
+.RI "static \fBpmac_cmd_t\fP \fBrr_cmd\fP"
+.br
+.ti -1c
+.RI "static \fBpmac_cmd_t\fP \fBgb_cmd\fP"
+.br
+.ti -1c
+.RI "static \fBpmac_cmd_t\fP \fBcr_cmd\fP"
+.br
+.RI "\fIcommands to send out 'readready', 'getbuffer', controlresponse (initialized in main) \fP"
+.ti -1c
+.RI "static \fBpmac_cmd_queue_t\fP \fBethCmdQueue\fP [PMAC_CMD_QUEUE_LENGTH]"
+.br
+.RI "\fIPMAC command queue. \fP"
+.ti -1c
+.RI "static unsigned int \fBethCmdOn\fP = 0"
+.br
+.RI "\fIpoints to next empty PMAC command queue position \fP"
+.ti -1c
+.RI "static unsigned int \fBethCmdOff\fP = 0"
+.br
+.RI "\fIpoints to current command (or none if == ethCmdOn) \fP"
+.ti -1c
+.RI "static unsigned int \fBethCmdReply\fP = 0"
+.br
+.RI "\fIUsed like ethCmdOff only to deal with the pmac reply to a command. \fP"
+.ti -1c
+.RI "static char * \fBpmac_error_strs\fP []"
+.br
+.RI "\fIDecode the errors perhaps returned by the PMAC. \fP"
+.ti -1c
+.RI "static \fBmd2_status_t\fP \fBmd2_status\fP"
+.br
+.RI "\fIBuffer for MD2 Status. \fP"
+.ti -1c
+.RI "pthread_mutex_t \fBmd2_status_mutex\fP"
+.br
+.RI "\fISynchronize reading/writting status buffer. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+Routines concerned with communication with PMAC. 
+
+\fBDate:\fP
+.RS 4
+2012 
+.RE
+.PP
+\fBAuthor:\fP
+.RS 4
+Keith Brister  All Rights Reserved
+.RE
+.PP
+This is a state machine (surprise!) Lacking is support for writingbuffer, control writing and reading, as well as double buffered memory It looks like several different methods of managing PMAC communications are possible. Here is set up a queue of outgoing commands and deal completely with the result before sending the next. A full handshake of acknowledgements and 'readready' is expected.
+.PP
+State Description  -1 Reset the connection  0 Detached: need to connect to tcp port  1 Idle (waiting for a command to send to the pmac)  2 Send command  3 Waiting for command acknowledgement (no further response expected)  4 Waiting for control character acknowledgement (further response expected)  5 Waiting for command acknowledgement (further response expected)  6 Waiting for get memory response  7 Send controlresponse  8 Send readready  9 Waiting for acknowledgement of 'readready'  10 Send readbuffer  11 Waiting for control response  12 Waiting for readbuffer response 
+.PP
+
+.PP
+Definition in file \fBlspmac.c\fP.
+.SH "Define Documentation"
+.PP 
+.SS "#define LS_PMAC_STATE_CR   7"
+.PP
+Definition at line 45 of file lspmac.c.
+.SS "#define LS_PMAC_STATE_DETACHED   0"
+.PP
+Definition at line 38 of file lspmac.c.
+.SS "#define LS_PMAC_STATE_GB   10"
+.PP
+Definition at line 48 of file lspmac.c.
+.SS "#define LS_PMAC_STATE_GMR   6"
+.PP
+Definition at line 44 of file lspmac.c.
+.SS "#define LS_PMAC_STATE_IDLE   1"
+.PP
+Definition at line 39 of file lspmac.c.
+.SS "#define LS_PMAC_STATE_RESET   -1"
+.PP
+Definition at line 37 of file lspmac.c.
+.SS "#define LS_PMAC_STATE_RR   8"
+.PP
+Definition at line 46 of file lspmac.c.
+.SS "#define LS_PMAC_STATE_SC   2"
+.PP
+Definition at line 40 of file lspmac.c.
+.SS "#define LS_PMAC_STATE_WACK   5"
+.PP
+Definition at line 43 of file lspmac.c.
+.SS "#define LS_PMAC_STATE_WACK_CC   4"
+.PP
+Definition at line 42 of file lspmac.c.
+.SS "#define LS_PMAC_STATE_WACK_NFR   3"
+.PP
+Definition at line 41 of file lspmac.c.
+.SS "#define LS_PMAC_STATE_WACK_RR   9"
+.PP
+Definition at line 47 of file lspmac.c.
+.SS "#define LS_PMAC_STATE_WCR   11"
+.PP
+Definition at line 49 of file lspmac.c.
+.SS "#define LS_PMAC_STATE_WGB   12"
+.PP
+Definition at line 50 of file lspmac.c.
+.SS "#define PMAC_CMD_QUEUE_LENGTH   2048"
+.PP
+Size of the PMAC command queue. 
+.PP
+Definition at line 137 of file lspmac.c.
+.SS "#define pmac_cmd_size   8"
+.PP
+PMAC command size in bytes. 
+.PP
+Definition at line 103 of file lspmac.c.
+.SS "#define PMAC_MIN_CMD_TIME   20000.0"
+.PP
+Minimum time between commands to the pmac. 
+.PP
+Definition at line 133 of file lspmac.c.
+.SS "#define PMACPORT   1025"
+.PP
+The PMAC (only) listens on this port. 
+.PP
+Definition at line 97 of file lspmac.c.
+.SS "#define VR_CTRL_RESPONSE   0xc4"
+.PP
+Definition at line 119 of file lspmac.c.
+.SS "#define VR_DOWNLOAD   0x40"
+.PP
+Definition at line 106 of file lspmac.c.
+.SS "#define VR_FWDOWNLOAD   0xcb"
+.PP
+Definition at line 123 of file lspmac.c.
+.SS "#define VR_IPADDRESS   0xe0"
+.PP
+Definition at line 124 of file lspmac.c.
+.SS "#define VR_PMAC_FLUSH   0xb3"
+.PP
+Definition at line 110 of file lspmac.c.
+.SS "#define VR_PMAC_GETBUFFER   0xc5"
+.PP
+Definition at line 120 of file lspmac.c.
+.SS "#define VR_PMAC_GETLINE   0xb1"
+.PP
+Definition at line 109 of file lspmac.c.
+.SS "#define VR_PMAC_GETMEM   0xb4"
+.PP
+Definition at line 111 of file lspmac.c.
+.SS "#define VR_PMAC_GETRESPONSE   0xbf"
+.PP
+Definition at line 117 of file lspmac.c.
+.SS "#define VR_PMAC_PORT   0xbe"
+.PP
+Definition at line 116 of file lspmac.c.
+.SS "#define VR_PMAC_READREADY   0xc2"
+.PP
+Definition at line 118 of file lspmac.c.
+.SS "#define VR_PMAC_SENDCTRLCHAR   0xb6"
+.PP
+Definition at line 113 of file lspmac.c.
+.SS "#define VR_PMAC_SENDLINE   0xb0"
+.PP
+Definition at line 108 of file lspmac.c.
+.SS "#define VR_PMAC_SETBIT   0xba"
+.PP
+Definition at line 114 of file lspmac.c.
+.SS "#define VR_PMAC_SETBITS   0xbb"
+.PP
+Definition at line 115 of file lspmac.c.
+.SS "#define VR_PMAC_SETMEM   0xb5"
+.PP
+Definition at line 112 of file lspmac.c.
+.SS "#define VR_PMAC_WRITEBUFFER   0xc6"
+.PP
+Definition at line 121 of file lspmac.c.
+.SS "#define VR_PMAC_WRITEERROR   0xc7"
+.PP
+Definition at line 122 of file lspmac.c.
+.SS "#define VR_UPLOAD   0xc0"
+.PP
+Definition at line 105 of file lspmac.c.
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBmd2StatusStruct\fP  \fBmd2_status_t\fP"
+.PP
+The block of memory retrieved in a status request. 
+.SH "Function Documentation"
+.PP 
+.SS "void cleanstr (char * s)"
+.PP
+Replace  with 
+.br
+ in null terminated string and print result to terminal. Needed to turn PMAC messages into something printable. \fBParameters:\fP
+.RS 4
+\fIs\fP String to print to terminal. 
+.RE
+.PP
+
+.PP
+Definition at line 312 of file lspmac.c.
+.PP
+.nf
+314                 {
+315   int i;
+316 
+317   pthread_mutex_lock( &ncurses_mutex);
+318 
+319   for( i=0; i<strlen( s); i++) {
+320     if( s[i] == '\r')
+321       wprintw( term_output, '\n');
+322     else
+323       wprintw( term_output, '%c', s[i]);
+324   }
+325 
+326   pthread_mutex_unlock( &ncurses_mutex);
+327 }
+.fi
+.SS "void hex_dump (int n, unsigned char * s)"
+.PP
+Prints a hex dump of the given data. Used to debug packet data. \fBParameters:\fP
+.RS 4
+\fIn\fP Number of bytes passed in s 
+.br
+\fIs\fP Data to dump 
+.RE
+.PP
+
+.PP
+Definition at line 284 of file lspmac.c.
+.PP
+.nf
+287                 {
+288 
+289   int i;        // row counter
+290   int j;        // column counter
+291 
+292   pthread_mutex_lock( &ncurses_mutex);
+293 
+294   for( i=0; n > 0; i++) {
+295     for( j=0; j<16 && n > 0; j++) {
+296       if( j==8)
+297         wprintw( term_output, '  ');
+298       wprintw( term_output, ' %02x', *(s + 16*i + j));
+299       n--;
+300     }
+301     wprintw( term_output, '\n');
+302   }
+303   wprintw( term_output, '\n');
+304 
+305   pthread_mutex_unlock( &ncurses_mutex);
+306 }
+.fi
+.SS "if (md2_status. fs_is_open)"
+.PP
+Definition at line 968 of file lspmac.c.
+.PP
+.nf
+968                              {
+969     mvwprintw( term_status2, 1, 1, 'Shutter Open  ');
+970     mp->position = 1;
+971   } else {
+.fi
+.SS "if (lspmac_shutter_state! = \fCmd2_status.fs_is_open\fP)"
+.PP
+Definition at line 963 of file lspmac.c.
+.PP
+.nf
+963                                                       {
+964     lspmac_shutter_state = md2_status.fs_is_open;
+965     pthread_cond_signal( &lspmac_shutter_cond);
+966   }
+.fi
+.SS "if (md2_status.fs_has_opened &&!\fBlspmac_shutter_has_opened\fP &&!md2_status. fs_is_open)"
+.PP
+Definition at line 954 of file lspmac.c.
+.PP
+.nf
+954                                                                                         {
+955     //
+956     // Here the shutter opened and closed again before we got the memo
+957     // Treat it as a shutter closed event
+958     //
+959     pthread_cond_signal( &lspmac_shutter_cond);
+960   }
+.fi
+.SS "void lsConnect (char * ipaddr)"
+.PP
+Connect to the PMAC socket. Establish or reestablish communications. \fBParameters:\fP
+.RS 4
+\fIipaddr\fP String representation of the IP address (dot quad or FQN) 
+.RE
+.PP
+
+.PP
+Definition at line 333 of file lspmac.c.
+.PP
+.nf
+335                  {
+336   int psock;                    // our socket: value stored in pmacfda.fd
+337   int err;                      // error code from some system calls
+338   struct sockaddr_in *addrP;    // our address structure to connect to
+339   struct addrinfo ai_hints;     // required for getaddrinfo
+340   struct addrinfo *ai_resultP;  // linked list of address structures (we'll always pick the first)
+341 
+342   pmacfd.fd     = -1;
+343   pmacfd.events = 0;
+344 
+345   // Initial buffer(s)
+346   memset( &ai_hints,  0, sizeof( ai_hints));
+347 
+348   ai_hints.ai_family   = AF_INET;
+349   ai_hints.ai_socktype = SOCK_STREAM;
+350 
+351 
+352   //
+353   // get address
+354   //
+355   err = getaddrinfo( ipaddr, NULL, &ai_hints, &ai_resultP);
+356   if( err != 0) {
+357 
+358     pthread_mutex_lock( &ncurses_mutex);
+359 
+360     wprintw( term_output, 'Could not find address: %s\n', gai_strerror( err));
+361 
+362     wnoutrefresh( term_output);
+363     wnoutrefresh( term_input);
+364     doupdate();
+365 
+366     pthread_mutex_unlock( &ncurses_mutex);
+367 
+368     return;
+369   }
+370 
+371 
+372   addrP = (struct sockaddr_in *)ai_resultP->ai_addr;
+373   addrP->sin_port = htons( PMACPORT);
+374 
+375 
+376   psock = socket( PF_INET, SOCK_STREAM, 0);
+377   if( psock == -1) {
+378 
+379     pthread_mutex_lock( &ncurses_mutex);
+380     wprintw( term_output, 'Could not create socket\n');
+381 
+382     wnoutrefresh( term_output);
+383     wnoutrefresh( term_input);
+384     doupdate();
+385     pthread_mutex_unlock( &ncurses_mutex);
+386     return;
+387   }
+388 
+389   err = connect( psock, (const struct sockaddr *)addrP, sizeof( *addrP));
+390   if( err != 0) {
+391     pthread_mutex_lock( &ncurses_mutex);
+392     wprintw( term_output, 'Could not connect socket: %s\n', strerror( errno));
+393 
+394     wnoutrefresh( term_output);
+395     wnoutrefresh( term_input);
+396     doupdate();
+397     pthread_mutex_unlock( &ncurses_mutex);
+398     return;
+399   }
+400 
+401   ls_pmac_state = LS_PMAC_STATE_IDLE;
+402   pmacfd.fd     = psock;
+403   pmacfd.events = POLLIN;
+404 
+405 }
+.fi
+.SS "\fBlspmac_motor_t\fP* lspmac_bio_init (\fBlspmac_motor_t\fP * d, char * name, char * write_fmt, int * read_ptr, int read_mask)"
+.PP
+Initialize binary i/o motor. \fBParameters:\fP
+.RS 4
+\fId\fP Our uninitialized motor object 
+.br
+\fIname\fP Name of motor to coordinate with DB 
+.br
+\fIwrite_fmt\fP Format string used to generate PMAC command to move motor 
+.br
+\fIread_ptr\fP Pointer to byte in md2_status to find position 
+.br
+\fIread_mask\fP Bitmask to find position in *read_ptr 
+.RE
+.PP
+
+.PP
+Definition at line 1722 of file lspmac.c.
+.PP
+.nf
+1728                                   {
+1729   lspmac_nmotors++;
+1730 
+1731   d->name              = strdup( name);
+1732   d->moveAbs           = lspmac_moveabs_bio_queue;
+1733   d->read              = lspmac_bio_read;
+1734   d->lut               = NULL;
+1735   d->nlut              = 0;
+1736   d->actual_pos_cnts_p = NULL;
+1737   d->status1           = NULL;
+1738   d->status2           = NULL;
+1739   d->motor_num         = -1;
+1740   d->dac_mvar          = NULL;
+1741   d->win               = NULL;
+1742   d->write_fmt         = strdup( write_fmt);
+1743   d->read_ptr          = read_ptr;
+1744   d->read_mask         = read_mask;
+1745   d->win               = NULL;
+1746   d->u2c               = 1.0;
+1747 }
+.fi
+.SS "void lspmac_bio_read (\fBlspmac_motor_t\fP * mp)"
+.PP
+Read the state of a binary i/o motor This is the read method for the binary i/o motor class. \fBParameters:\fP
+.RS 4
+\fImp\fP The motor 
+.RE
+.PP
+
+.PP
+Definition at line 911 of file lspmac.c.
+.PP
+.nf
+913                        {
+914   char s[512];
+915   int pos;
+916 
+917   pthread_mutex_lock( &(mp->mutex));
+918 
+919   pos = (*(mp->read_ptr) & mp->read_mask) == 0 ? 0 : 1;
+920   mp->position = pos;
+921 
+922   if( mp->u2c != 0.0) {
+923     mp->position = *mp->actual_pos_cnts_p/mp->u2c;
+924     snprintf( s, sizeof(s)-1, mp->format, 8, pos/mp->u2c);
+925   } else {
+926     mp->position = 1.0* (*mp->actual_pos_cnts_p);
+927     snprintf( s, sizeof(s)-1, mp->format, 8, 1.0* (pos));
+928   }
+929 
+930   pthread_mutex_unlock( &(mp->mutex));
+931 }
+.fi
+.SS "\fBlspmac_motor_t\fP* lspmac_dac_init (\fBlspmac_motor_t\fP * d, int * posp, double scale, char * mvar, char * name)"
+.PP
+Initialize DAC motor Note that some motors require further initialization from a database query. For this reason this initialzation code must be run before the database queue is allowed to be processed. \fBParameters:\fP
+.RS 4
+\fId\fP Returns the (almost) initialized motor object [in,out] unitintialized motor 
+.br
+\fIposp\fP Location of current position 
+.br
+\fIscale\fP Scale factor (units) 
+.br
+\fImvar\fP M variable, ie, 'M1200' 
+.br
+\fIname\fP name to coordinate with DB 
+.RE
+.PP
+
+.PP
+Definition at line 1756 of file lspmac.c.
+.PP
+.nf
+1763                                   {
+1764   lspmac_nmotors++;
+1765   d->name     = strdup( name);
+1766   d->moveAbs  = lspmac_movedac_queue;
+1767   d->read     = lspmac_dac_read;
+1768   d->lut      = NULL;
+1769   d->nlut     = 0;
+1770   d->actual_pos_cnts_p = posp;
+1771   d->status1           = NULL;
+1772   d->status2           = NULL;
+1773   d->motor_num         = -1;
+1774   d->dac_mvar          = strdup(mvar);
+1775   d->u2c               = scale;
+1776   d->win               = NULL;
+1777 }
+.fi
+.SS "void lspmac_dac_read (\fBlspmac_motor_t\fP * mp)"
+.PP
+Read a DAC motor position. \fBParameters:\fP
+.RS 4
+\fImp\fP The motor 
+.RE
+.PP
+
+.PP
+Definition at line 935 of file lspmac.c.
+.PP
+.nf
+937                        {
+938   // TODO: impliement
+939 }
+.fi
+.SS "void lspmac_Error (unsigned char * buff)"
+.PP
+The service routing detected an error condition. Scan the response buffer for an error code and print it out. \fBParameters:\fP
+.RS 4
+\fIbuff\fP Buffer returned by PMAC perhaps containing a NULL terminated message. 
+.RE
+.PP
+
+.PP
+Definition at line 557 of file lspmac.c.
+.PP
+.nf
+559                     {
+560   int err;
+561   //
+562   // assume buff points to a 1400 byte array of stuff read from the pmac
+563   //
+564 
+565   if( buff[0] == 7 && buff[1] == 'E' && buff[2] == 'R' && buff[3] == 'R') {
+566     buff[7] = 0;  // For null termination
+567     err = atoi( &(buff[4]));
+568     if( err > 0 && err < 20) {
+569       pthread_mutex_lock( &ncurses_mutex);
+570       wprintw( term_output, '\n%s\n', pmac_error_strs[err]);
+571       wnoutrefresh( term_output);
+572       wnoutrefresh( term_input);
+573       doupdate();
+574       pthread_mutex_unlock( &ncurses_mutex);
+575     }
+576   }
+577   lspmac_Reset();
+578 }
+.fi
+.SS "\fBlspmac_motor_t\fP* lspmac_fshut_init (\fBlspmac_motor_t\fP * d)"
+.PP
+Initalize the fast shutter motor. \fBParameters:\fP
+.RS 4
+\fId\fP Our uninitialized motor object 
+.RE
+.PP
+
+.PP
+Definition at line 1698 of file lspmac.c.
+.PP
+.nf
+1700                                     {
+1701   lspmac_nmotors++;
+1702   d->name           = strdup('fastShutter');
+1703   d->moveAbs        = lspmac_moveabs_fshut_queue;
+1704   d->read           = lspmac_shutter_read;
+1705   d->lut            = NULL;
+1706   d->nlut           = 0;
+1707   d->actual_pos_cnts_p = NULL;
+1708   d->status1           = NULL;
+1709   d->status2           = NULL;
+1710   d->motor_num         = -1;
+1711   d->dac_mvar          = NULL;
+1712   d->win               = NULL;
+1713 }
+.fi
+.SS "void lspmac_get_status ()"
+.PP
+Request a status update from the PMAC. 
+.PP
+Definition at line 1179 of file lspmac.c.
+.PP
+.nf
+1179                          {
+1180   lspmac_send_command( VR_UPLOAD, VR_PMAC_GETMEM, 0x400, 0, sizeof(md2_status_t), NULL, lspmac_get_status_cb, 0);
+1181 }
+.fi
+.SS "void lspmac_get_status_cb (\fBpmac_cmd_queue_t\fP * cmd, int nreceived, unsigned char * buff)"
+.PP
+Service routing for status upate This updates positions and status information. \fBParameters:\fP
+.RS 4
+\fIcmd\fP The command that generated this reply 
+.br
+\fInreceived\fP Number of bytes received 
+.br
+\fIbuff\fP The Big Byte Buffer 
+.RE
+.PP
+
+.PP
+Definition at line 1057 of file lspmac.c.
+.PP
+.nf
+1061                             {
+1062   static int cnt = 0;
+1063   static char s[256];
+1064 
+1065   char *sp;
+1066   int i, pos;
+1067   lspmac_motor_t *mp;
+1068 
+1069   pthread_mutex_lock( &md2_status_mutex);
+1070   memcpy( &md2_status, buff, sizeof(md2_status));
+1071   pthread_mutex_unlock( &md2_status_mutex);
+1072 
+1073 
+1074   //
+1075   // track the coordinate system moving flags
+1076   //
+1077   pthread_mutex_lock( &lspmac_moving_mutex);
+1078   if( md2_status.moving_flags != lspmac_moving_flags) {
+1079     lspmac_moving_flags = md2_status.moving_flags;
+1080     pthread_cond_signal( &lspmac_moving_cond);
+1081   }
+1082   pthread_mutex_unlock( &lspmac_moving_mutex);
+1083 
+1084 
+1085   pthread_mutex_lock( &ncurses_mutex);
+1086 
+1087   for( i=0; i<lspmac_nmotors; i++) {
+1088     lspmac_motors[i].read(&(lspmac_motors[i]));
+1089   }
+1090 
+1091   // acc11c_1
+1092   // mask  bit
+1093   // 0x01  0    Air pressure OK
+1094   // 0x02  1    Air bearing OK
+1095   // 0x04  2    Cryo switch
+1096   // 0x08  3
+1097   // 0x10  4
+1098   // 0x20  5
+1099   // 0x40  6    Cryo is back
+1100 
+1101   if( md2_status.acc11c_1 & 0x40)
+1102     mvwprintw( term_status2, 3, 1, '%*s', -8, 'Cryo Out');
+1103   else
+1104     mvwprintw( term_status2, 3, 1, '%*s', -8, 'Cryo In ');
+1105 
+1106   //
+1107   // acc11c_2
+1108   // mask  bit
+1109   // 0x01  0    Fluor Dector back
+1110   // 0x02  1    Sample Detected
+1111   // 0x04  2
+1112   // 0x08  3
+1113   // 0x10  4
+1114   // 0x20  5    Etel Ready
+1115   // 0x40  6    Etel On
+1116   // 0x80  7    Etel Init OK
+1117 
+1118   if( md2_status.acc11c_2 & 0x01)
+1119     mvwprintw( term_status2, 3, 10, '%*s', -8, 'Fluor Out');
+1120   else
+1121     mvwprintw( term_status2, 3, 10, '%*s', -8, 'Fluor In');
+1122 
+1123   if( md2_status.acc11c_5 & 0x08)
+1124     mvwprintw( term_status2, 4, 1, '%*s', -(LS_DISPLAY_WINDOW_WIDTH-2), 'Dryer On');
+1125   else
+1126     mvwprintw( term_status2, 4, 1, '%*s', -(LS_DISPLAY_WINDOW_WIDTH-2), 'Dryer Off');
+1127 
+1128   if( md2_status.acc11c_2 & 0x02)
+1129     mvwprintw( term_status2, 2, 1, '%*s', -(LS_DISPLAY_WINDOW_WIDTH-2), 'Cap Dectected');
+1130   else
+1131     mvwprintw( term_status2, 2, 1, '%*s', -(LS_DISPLAY_WINDOW_WIDTH-2), 'Cap Not Dectected');
+1132   wnoutrefresh( term_status2);
+1133 
+1134 
+1135   // acc11c_3
+1136   // mask  bit
+1137   // 0x01  0    Minikappa OK
+1138   // 0x02  1
+1139   // 0x04  2
+1140   // 0x08  3    Arm Parked
+1141 
+1142   // acc11c_5
+1143   // mask  bit
+1144   // 0x01  0    Mag Off
+1145   // 0x02  1    Condenser Out
+1146   // 0x04  2    Cryo Back
+1147   // 0x08  3    Dryer On
+1148   // 0x10  4    FluoDet Out
+1149   // 0x20  5
+1150   // 0x40  6    1=SmartMag, 0=Permanent Mag
+1151   //
+1152 
+1153   // acc11c_6
+1154   // mask   bit
+1155   // 0x0080   7   Etel Enable
+1156   // 0x0100   8   Fast Shutter Enable
+1157   // 0x0200   9   Fast Shutter Manual Enable
+1158   // 0x0400  10   Fast Shutter On
+1159 
+1160 
+1161 
+1162   if( md2_status.acc11c_5 & 0x02)
+1163     mvwprintw( term_status,  3, 1, '%*s', -(LS_DISPLAY_WINDOW_WIDTH-2), 'Backlight Up');
+1164   else
+1165     mvwprintw( term_status,  3, 1, '%*s', -(LS_DISPLAY_WINDOW_WIDTH-2), 'Backlight Down');
+1166 
+1167   mvwprintw( term_status, 4, 1, 'Front: %*d', LS_DISPLAY_WINDOW_WIDTH-2-8, md2_status.front_dac);
+1168   mvwprintw( term_status, 5, 1, 'Back: %*d', LS_DISPLAY_WINDOW_WIDTH-2-7, md2_status.back_dac);
+1169   mvwprintw( term_status, 6, 1, 'Piezo: %*d', LS_DISPLAY_WINDOW_WIDTH-2-8, md2_status.scint_piezo);
+1170   wnoutrefresh( term_status);
+1171 
+1172   wnoutrefresh( term_input);
+1173   doupdate();
+1174   pthread_mutex_unlock( &ncurses_mutex);
+1175 }
+.fi
+.SS "void lspmac_GetAllIVars ()"
+.PP
+Request the values of all the I variables. 
+.PP
+Definition at line 1204 of file lspmac.c.
+.PP
+.nf
+1204                           {
+1205   static char *cmds = 'I0..8191';
+1206   lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( cmds), cmds, lspmac_GetAllIVarsCB, 0);
+1207 }
+.fi
+.SS "void lspmac_GetAllIVarsCB (\fBpmac_cmd_queue_t\fP * cmd, int nreceived, unsigned char * buff)"
+.PP
+Receive the values of all the I variables Update our Postgresql database with the results. \fBParameters:\fP
+.RS 4
+\fIcmd\fP The command that gave this response 
+.br
+\fInreceived\fP Number of bytes received 
+.br
+\fIbuff\fP The byte buffer 
+.RE
+.PP
+
+.PP
+Definition at line 1187 of file lspmac.c.
+.PP
+.nf
+1191                             {
+1192   static char qs[LS_PG_QUERY_STRING_LENGTH];
+1193   char *sp;
+1194   int i;
+1195   for( i=0, sp=strtok(buff, '\r'); sp != NULL; sp=strtok( NULL, '\r'), i++) {
+1196     snprintf( qs, sizeof( qs)-1, 'SELECT pmac.md2_ivar_set( %d, '%s')', i, sp);
+1197     qs[sizeof( qs)-1]=0;
+1198     lspg_query_push( NULL, qs);
+1199   }
+1200 }
+.fi
+.SS "void lspmac_GetAllMVars ()"
+.PP
+Request the values of all the M variables. 
+.PP
+Definition at line 1229 of file lspmac.c.
+.PP
+.nf
+1229                           {
+1230   static char *cmds = 'M0..8191->';
+1231   lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( cmds), cmds, lspmac_GetAllMVarsCB, 0);
+1232 }
+.fi
+.SS "void lspmac_GetAllMVarsCB (\fBpmac_cmd_queue_t\fP * cmd, int nreceived, unsigned char * buff)"
+.PP
+Receive the values of all the M variables Update our database with the results. \fBParameters:\fP
+.RS 4
+\fIcmd\fP The command that started this 
+.br
+\fInreceived\fP Number of bytes received 
+.br
+\fIbuff\fP Our byte buffer 
+.RE
+.PP
+
+.PP
+Definition at line 1212 of file lspmac.c.
+.PP
+.nf
+1216                             {
+1217   static char qs[LS_PG_QUERY_STRING_LENGTH];
+1218   char *sp;
+1219   int i;
+1220   for( i=0, sp=strtok(buff, '\r'); sp != NULL; sp=strtok( NULL, '\r'), i++) {
+1221     snprintf( qs, sizeof( qs)-1, 'SELECT pmac.md2_mvar_set( %d, '%s')', i, sp);
+1222     qs[sizeof( qs)-1]=0;
+1223     lspg_query_push( NULL, qs);
+1224   }
+1225 }
+.fi
+.SS "void lspmac_Getmem ()"
+.PP
+Request a block of double buffer memory. 
+.PP
+Definition at line 902 of file lspmac.c.
+.PP
+.nf
+902                      {
+903   int nbytes;
+904   nbytes = (dbmemIn + 1400 > sizeof( dbmem)) ? sizeof( dbmem) - dbmemIn : 1400;
+905   lspmac_SockGetmem( dbmemIn, nbytes);
+906 }
+.fi
+.SS "void lspmac_GetmemReplyCB (\fBpmac_cmd_queue_t\fP * cmd, int nreceived, unsigned char * buff)"
+.PP
+Service a reply to the getmem command. Not currently used. 
+.PP
+< [in] Buffer of bytes received \fBParameters:\fP
+.RS 4
+\fIcmd\fP Queue item this is a reply to 
+.br
+\fInreceived\fP Number of bytes received 
+.RE
+.PP
+
+.PP
+Definition at line 834 of file lspmac.c.
+.PP
+.nf
+837                                                {              
+839   memcpy( &(dbmem[ntohs(cmd->pcmd.wValue)]), buff, nreceived);
+840 
+841   dbmemIn += nreceived;
+842   if( dbmemIn >= sizeof( dbmem)) {
+843     dbmemIn = 0;
+844   }
+845 }
+.fi
+.SS "void lspmac_GetShortReplyCB (\fBpmac_cmd_queue_t\fP * cmd, int nreceived, unsigned char * buff)"
+.PP
+Receive a reply that does not require multiple buffers. \fBParameters:\fP
+.RS 4
+\fIcmd\fP Queue item this is a reply to 
+.br
+\fInreceived\fP Number of bytes received 
+.br
+\fIbuff\fP The buffer of bytes 
+.RE
+.PP
+
+.PP
+Definition at line 779 of file lspmac.c.
+.PP
+.nf
+783                               {
+784 
+785   char *sp;     // pointer to the command this is a reply to
+786 
+787   if( nreceived < 1400)
+788     buff[nreceived]=0;
+789 
+790   sp = (char *)(cmd->pcmd.bData);
+791 
+792   if( *buff == 0) {
+793     pthread_mutex_lock( &ncurses_mutex);
+794     wprintw( term_output, '%s\n', sp);
+795     pthread_mutex_unlock( &ncurses_mutex);
+796   } else {
+797     pthread_mutex_lock( &ncurses_mutex);
+798     wprintw( term_output, '%s: ', sp);
+799     pthread_mutex_unlock( &ncurses_mutex);
+800     cleanstr( buff);
+801   }
+802   wnoutrefresh( term_output);
+803   wnoutrefresh( term_input);
+804   doupdate();
+805 
+806   memset( cmd->pcmd.bData, 0, sizeof( cmd->pcmd.bData));
+807 }
+.fi
+.SS "void lspmac_init (int ivarsflag, int mvarsflag)"
+.PP
+Initialize this module. \fBParameters:\fP
+.RS 4
+\fIivarsflag\fP Set global flag to harvest i variables 
+.br
+\fImvarsflag\fP Set global flag to harvest m variables 
+.RE
+.PP
+
+.PP
+Definition at line 1782 of file lspmac.c.
+.PP
+.nf
+1785                    {
+1786   md2_status_t *p;
+1787 
+1788   // Set our global harvest flags
+1789   getivars = ivarsflag;
+1790   getmvars = mvarsflag;
+1791 
+1792   // All important status mutex
+1793   pthread_mutex_init( &md2_status_mutex, NULL);
+1794 
+1795   //
+1796   // Initialize the motor objects
+1797   //
+1798 
+1799   p = &md2_status;
+1800 
+1801   omega  = lspmac_motor_init( &(lspmac_motors[ 0]),  1, 0, 0, &p->omega_act_pos,     &p->omega_status_1,     &p->omega_status_2,     'Omega   #1 &1 X', 'omega',       lspmac_moveabs_queue);
+1802   alignx = lspmac_motor_init( &(lspmac_motors[ 1]),  2, 0, 1, &p->alignx_act_pos,    &p->alignx_status_1,    &p->alignx_status_2,    'Align X #2 &3 X', 'align.x',     lspmac_moveabs_queue);
+1803   aligny = lspmac_motor_init( &(lspmac_motors[ 2]),  3, 0, 2, &p->aligny_act_pos,    &p->aligny_status_1,    &p->aligny_status_2,    'Align Y #3 &3 Y', 'align.y',     lspmac_moveabs_queue);
+1804   alignz = lspmac_motor_init( &(lspmac_motors[ 3]),  4, 0, 3, &p->alignz_act_pos,    &p->alignz_status_1,    &p->alignz_status_2,    'Align Z #4 &3 Z', 'align.z',     lspmac_moveabs_queue);
+1805   anal   = lspmac_motor_init( &(lspmac_motors[ 4]),  5, 0, 4, &p->analyzer_act_pos,  &p->analyzer_status_1,  &p->analyzer_status_2,  'Anal    #5',      'lightPolar',  lspmac_moveabs_queue);
+1806   zoom   = lspmac_motor_init( &(lspmac_motors[ 5]),  6, 1, 0, &p->zoom_act_pos,      &p->zoom_status_1,      &p->zoom_status_2,      'Zoom    #6 &4 Z', 'zoom',        lspmac_movezoom_queue);
+1807   apery  = lspmac_motor_init( &(lspmac_motors[ 6]),  7, 1, 1, &p->aperturey_act_pos, &p->aperturey_status_1, &p->aperturey_status_2, 'Aper Y  #7 &5 Y', 'appy',        lspmac_moveabs_queue);
+1808   aperz  = lspmac_motor_init( &(lspmac_motors[ 7]),  8, 1, 2, &p->aperturez_act_pos, &p->aperturez_status_1, &p->aperturez_status_2, 'Aper Z  #8 &5 Z', 'appz',        lspmac_moveabs_queue);
+1809   capy   = lspmac_motor_init( &(lspmac_motors[ 8]),  9, 1, 3, &p->capy_act_pos,      &p->capy_status_1,      &p->capy_status_2,      'Cap Y   #9 &5 U', 'capy',        lspmac_moveabs_queue);
+1810   capz   = lspmac_motor_init( &(lspmac_motors[ 9]), 10, 1, 4, &p->capz_act_pos,      &p->capz_status_1,      &p->capz_status_2,      'Cap Z  #10 &5 V', 'capz',        lspmac_moveabs_queue);
+1811   scinz  = lspmac_motor_init( &(lspmac_motors[10]), 11, 2, 0, &p->scint_act_pos,     &p->scint_status_1,     &p->scint_status_2,     'Scin Z #11 &5 W', 'scint',       lspmac_moveabs_queue);
+1812   cenx   = lspmac_motor_init( &(lspmac_motors[11]), 17, 2, 1, &p->centerx_act_pos,   &p->centerx_status_1,   &p->centerx_status_2,   'Cen X  #17 &2 X', 'centering.x', lspmac_moveabs_queue);
+1813   ceny   = lspmac_motor_init( &(lspmac_motors[12]), 18, 2, 2, &p->centery_act_pos,   &p->centery_status_1,   &p->centery_status_2,   'Cen Y  #18 &2 Y', 'centering.y', lspmac_moveabs_queue);
+1814   kappa  = lspmac_motor_init( &(lspmac_motors[13]), 19, 2, 3, &p->kappa_act_pos,     &p->kappa_status_1,     &p->kappa_status_2,     'Kappa  #19 &7 X', 'kappa',       lspmac_moveabs_queue);
+1815   phi    = lspmac_motor_init( &(lspmac_motors[14]), 20, 2, 4, &p->phi_act_pos,       &p->phi_status_1,       &p->phi_status_2,       'Phi    #20 &7 Y', 'phi',         lspmac_moveabs_queue);
+1816 
+1817   fshut  = lspmac_fshut_init( &(lspmac_motors[15]));
+1818   flight = lspmac_dac_init( &(lspmac_motors[16]), &p->front_dac,   160.0, 'M1200', 'frontLight.intensity');
+1819   blight = lspmac_dac_init( &(lspmac_motors[17]), &p->back_dac,    160.0, 'M1201', 'backLight.intensity');
+1820   fscint = lspmac_dac_init( &(lspmac_motors[18]), &p->scint_piezo, 320.0, 'M1203', 'scint.focus');
+1821 
+1822   blight_ud = lspmac_bio_init( &(lspmac_motors[19]), 'backLight', 'M1101=%d', &(md2_status.acc11c_5), 0x02);
+1823 
+1824 
+1825 
+1826 
+1827   //
+1828   // Initialize several commands that get called, perhaps, alot
+1829   //
+1830   rr_cmd.RequestType = VR_UPLOAD;
+1831   rr_cmd.Request     = VR_PMAC_READREADY;
+1832   rr_cmd.wValue      = 0;
+1833   rr_cmd.wIndex      = 0;
+1834   rr_cmd.wLength     = htons(2);
+1835   memset( rr_cmd.bData, 0, sizeof(rr_cmd.bData));
+1836 
+1837   gb_cmd.RequestType = VR_UPLOAD;
+1838   gb_cmd.Request     = VR_PMAC_GETBUFFER;
+1839   gb_cmd.wValue      = 0;
+1840   gb_cmd.wIndex      = 0;
+1841   gb_cmd.wLength     = htons(1400);
+1842   memset( gb_cmd.bData, 0, sizeof(gb_cmd.bData));
+1843 
+1844   cr_cmd.RequestType = VR_UPLOAD;
+1845   cr_cmd.Request     = VR_CTRL_RESPONSE;
+1846   cr_cmd.wValue      = 0;
+1847   cr_cmd.wIndex      = 0;
+1848   cr_cmd.wLength     = htons(1400);
+1849   memset( cr_cmd.bData, 0, sizeof(cr_cmd.bData));
+1850 
+1851   //
+1852   // Initialize some mutexs and conditions
+1853   //
+1854 
+1855   pthread_mutex_init( &pmac_queue_mutex, NULL);
+1856   pthread_cond_init(  &pmac_queue_cond, NULL);
+1857 
+1858   lspmac_shutter_state = 0;                             // assume the shutter is now closed: not a big deal if we are wrong
+1859   pthread_mutex_init( &lspmac_shutter_mutex, NULL);
+1860   pthread_cond_init(  &lspmac_shutter_cond, NULL);
+1861   pmacfd.fd = -1;
+1862 
+1863   pthread_mutex_init( &lspmac_moving_mutex, NULL);
+1864   pthread_cond_init(  &lspmac_moving_cond, NULL);
+1865 
+1866 }
+.fi
+.SS "double lspmac_lut (int nlut, double * lut, double x)"
+.PP
+Look up table support for motor positions (think x=zoom, y=light intensity) use a lookup table to find the 'counts' to move the motor to the requested position The look up table is a simple one dimensional array with the x values as even indicies and the y values as odd indices. Returns: y value \fBParameters:\fP
+.RS 4
+\fInlut\fP number of entries in lookup table 
+.br
+\fIlut\fP The lookup table: even indicies are the x values, odd are the y's 
+.br
+\fIx\fP The x value we are looking up. 
+.RE
+.PP
+
+.PP
+Definition at line 1401 of file lspmac.c.
+.PP
+.nf
+1403                                                                   : even indicies are the x values, odd are the y's     */
+1404                   double x              /**< [in] The x value we are looking up.                                        */
+1405                   ) {
+1406   int i, foundone;
+1407   double m;
+1408   double y1, y2, x1, x2, y;
+1409 
+1410 
+1411   foundone = 0;
+1412   if( lut != NULL && nlut > 1) {
+1413 
+1414     for( i=0; i < 2*nlut; i += 2) {
+1415 
+1416       x1 = lut[i];
+1417       y1 = lut[i+1];
+1418       if( i < 2*nlut - 2) {
+1419         x2 = lut[i+2];
+1420         y2 = lut[i+3];
+1421       }
+1422 
+1423       //
+1424       // First one too big?  Use the y value of the first element
+1425       //
+1426       if( i == 0 && x1 > x) {
+1427         y = y1;
+1428         foundone = 1;
+1429         break;
+1430       }
+1431 
+1432       //
+1433       // Look for equality
+1434       //
+1435       if( x1 == x) {
+1436         y = y1;
+1437         foundone = 1;
+1438         break;
+1439       }
+1440 
+1441       //
+1442       // Maybe interpolate
+1443       //
+1444       if( (i < 2*nlut-2) && x < x2) {
+1445         m = (y2 - y1) / (x2 - x1);
+1446         y = m*(x - x1) + y1;
+1447         foundone = 1;
+1448         break;
+1449       }
+1450     }
+1451     if( foundone == 0) {
+1452       // must be bigger than the last entry
+1453       //
+1454       //
+1455       y = lut[2*(nlut-1) + 1];
+1456     }
+1457     return y;
+1458   }
+1459 }
+.fi
+.SS "\fBlspmac_motor_t\fP* lspmac_motor_init (\fBlspmac_motor_t\fP * d, int motor_number, int wy, int wx, int * posp, int * stat1p, int * stat2p, char * wtitle, char * name, void(*)(\fBlspmac_motor_t\fP *, double) moveAbs)"
+.PP
+Initialize a pmac stepper or servo motor. \fBParameters:\fP
+.RS 4
+\fId\fP An uninitialize motor object 
+.br
+\fImotor_number\fP The PMAC motor number 
+.br
+\fIwy\fP Curses status window row index 
+.br
+\fIwx\fP Curses status window column index 
+.br
+\fIposp\fP Pointer to position status 
+.br
+\fIstat1p\fP Pointer to 1st status word 
+.br
+\fIstat2p\fP Pointer to 2nd status word 
+.br
+\fIwtitle\fP Title for this motor (to display) 
+.br
+\fIname\fP Name of this motor (to match database) 
+.br
+\fImoveAbs\fP Method to use to move this motor 
+.RE
+.PP
+
+.PP
+Definition at line 1661 of file lspmac.c.
+.PP
+.nf
+1672                                     {
+1673   lspmac_nmotors++;
+1674 
+1675   pthread_mutex_init( &(d->mutex), NULL);
+1676   pthread_cond_init(  &(d->cond), NULL);
+1677 
+1678   d->name = strdup(name);
+1679   d->moveAbs = moveAbs;
+1680   d->read = lspmac_pmacmotor_read;
+1681   d->lut = NULL;
+1682   d->nlut = 0;
+1683   d->actual_pos_cnts_p = posp;
+1684   d->status1           = stat1p;
+1685   d->status2           = stat2p;
+1686   d->motor_num = motor_number;
+1687   d->dac_mvar          = NULL;
+1688   d->win = newwin( LS_DISPLAY_WINDOW_HEIGHT, LS_DISPLAY_WINDOW_WIDTH, wy*LS_DISPLAY_WINDOW_HEIGHT, wx*LS_DISPLAY_WINDOW_WIDTH);
+1689   box( d->win, 0, 0);
+1690   mvwprintw( d->win, 1, 1, '%s', wtitle);
+1691   wnoutrefresh( d->win);
+1692 
+1693   return d;
+1694 }
+.fi
+.SS "void lspmac_moveabs_bio_queue (\fBlspmac_motor_t\fP * mp, double requested_position)"
+.PP
+Move method for binary i/o motor objects. \fBParameters:\fP
+.RS 4
+\fImp\fP A binary i/o motor object 
+.br
+\fIrequested_position\fP a 1 or a 0 request to move 
+.RE
+.PP
+
+.PP
+Definition at line 1562 of file lspmac.c.
+.PP
+.nf
+1565                                 {
+1566   pthread_mutex_lock( &(mp->mutex));
+1567   mp->requested_position = requested_position;
+1568   mp->not_done    = 1;
+1569   mp->motion_seen = 0;
+1570   mp->requested_pos_cnts = requested_position;
+1571   mp->pq = lspmac_SockSendline_nr( mp->write_fmt, mp->requested_pos_cnts);
+1572   pthread_mutex_unlock( &(mp->mutex));
+1573 }
+.fi
+.SS "void lspmac_moveabs_fshut_queue (\fBlspmac_motor_t\fP * mp, double requested_position)"
+.PP
+Move method for the fast shutter. Slightly more complicated than a binary io as some flags need to be set up. \fBParameters:\fP
+.RS 4
+\fImp\fP The fast shutter motor instance 
+.br
+\fIrequested_position\fP 1 (open) or 0 (close), really 
+.RE
+.PP
+
+.PP
+Definition at line 1535 of file lspmac.c.
+.PP
+.nf
+1538                                   {
+1539   pthread_mutex_lock( &(mp->mutex));
+1540 
+1541   mp->requested_position = requested_position;
+1542   mp->not_done    = 1;
+1543   mp->motion_seen = 0;
+1544   mp->requested_pos_cnts = requested_position;
+1545   if( requested_position != 0) {
+1546     //
+1547     // ScanEnable=0, ManualEnable=1, ManualOn=1
+1548     //
+1549     mp->pq = lspmac_SockSendline_nr( 'M1124=0 M1125=1 M1126=1');
+1550   } else {
+1551     //
+1552     // ManualOn=0, ManualEnable=0, ScanEnable=1
+1553     //
+1554     mp->pq = lspmac_SockSendline_nr( 'M1126=0 M1125=0 M1124=1');
+1555   }
+1556 
+1557   pthread_mutex_unlock( &(mp->mutex));
+1558 }
+.fi
+.SS "void lspmac_moveabs_queue (\fBlspmac_motor_t\fP * mp, double requested_position)"
+.PP
+Move method for normal stepper and servo motor objects. \fBParameters:\fP
+.RS 4
+\fImp\fP The motor to move 
+.br
+\fIrequested_position\fP Where to move it 
+.RE
+.PP
+
+.PP
+Definition at line 1577 of file lspmac.c.
+.PP
+.nf
+1580                             {
+1581   char s[512];
+1582 
+1583   pthread_mutex_lock( &(mp->mutex));
+1584   mp->requested_position = requested_position;
+1585   if( mp->u2c != 0.0) {
+1586     mp->not_done    = 1;
+1587     mp->motion_seen = 0;
+1588     mp->requested_pos_cnts = mp->u2c * requested_position;
+1589     snprintf( s, sizeof(s)-1, '#%d j=%d', mp->motor_num, mp->requested_pos_cnts);
+1590     mp->pq = lspmac_SockSendline_nr( s);
+1591   }
+1592   pthread_mutex_unlock( &(mp->mutex));
+1593 }
+.fi
+.SS "void lspmac_moveabs_wait (\fBlspmac_motor_t\fP * mp)"
+.PP
+Wait for motor to finish moving. Assume motion already queued, now just wait \fBParameters:\fP
+.RS 4
+\fImp\fP The motor object to wait for 
+.RE
+.PP
+
+.PP
+Definition at line 1600 of file lspmac.c.
+.PP
+.nf
+1602                            {
+1603   struct timespec wt;
+1604   int return_code;
+1605 
+1606   pthread_mutex_lock( &pmac_queue_mutex);
+1607 
+1608   //
+1609   // wait for the command to be sent
+1610   //
+1611   while( mp->pq->time_sent.tv_sec==0)
+1612     pthread_cond_wait( &pmac_queue_cond, &pmac_queue_mutex);
+1613 
+1614   //
+1615   // set the timeout to be long enough after we sent the motion request to ensure that
+1616   // we will have read back the motor moving status but not so long that the timeout causes
+1617   // problems;
+1618   //
+1619   wt.tv_sec  = mp->pq->time_sent.tv_sec;
+1620   wt.tv_nsec = mp->pq->time_sent.tv_nsec + 500000000;
+1621 
+1622   pthread_mutex_unlock( &pmac_queue_mutex);
+1623 
+1624   if( wt.tv_nsec >= 1000000000) {
+1625     wt.tv_nsec -= 1000000000;
+1626     wt.tv_sec += 1;
+1627   }
+1628 
+1629   //
+1630   // wait for the motion to have started
+1631   // This will time out if the motion ends before we can read the status back
+1632   // hence the added complication of time stamp of the sent packet.
+1633   //
+1634 
+1635   return_code=0;
+1636 
+1637   pthread_mutex_lock( &(mp->mutex));
+1638   while( mp->motion_seen == 0 && return_code == 0)
+1639     return_code = pthread_cond_timedwait( &(mp->cond), &(mp->mutex), &wt);
+1640 
+1641   if( return_code == 0) {
+1642     //
+1643     // wait for the motion that we know has started to finish
+1644     //
+1645     while( mp->not_done)
+1646       pthread_cond_wait( &(mp->cond), &(mp->mutex));
+1647 
+1648   }
+1649 
+1650   //
+1651   // if return code was not 0 then we know we shouldn't wait for not_done flag.
+1652   // In this case the motion ended before we read the status that should the motor moving.
+1653   //
+1654   pthread_mutex_unlock( &(mp->mutex));
+1655 
+1656 }
+.fi
+.SS "void lspmac_movedac_queue (\fBlspmac_motor_t\fP * mp, double requested_position)"
+.PP
+Move method for dac motor objects (ie, lights). \fBParameters:\fP
+.RS 4
+\fImp\fP Our motor 
+.br
+\fIrequested_position\fP Desired x postion (look up and send y position) 
+.RE
+.PP
+
+.PP
+Definition at line 1464 of file lspmac.c.
+.PP
+.nf
+1467                             {
+1468   char s[512];
+1469   double y;
+1470 
+1471   pthread_mutex_lock( &(mp->mutex));
+1472 
+1473   mp->requested_position = requested_position;
+1474 
+1475   if( mp->nlut > 0 && mp->lut != NULL) {
+1476     y = lspmac_lut( mp->nlut, mp->lut, requested_position);
+1477 
+1478     mp->requested_pos_cnts = (int)y * mp->u2c;
+1479     mp->not_done    = 1;
+1480     mp->motion_seen = 0;
+1481 
+1482 
+1483     //
+1484     //  By convension requested_pos_cnts scales from 0 to 100
+1485     //  for the lights u2c converts this to 0 to 16,000
+1486     //  for the scintilator focus this is   0 to 32,000
+1487     //
+1488     snprintf( s, sizeof(s)-1, '%s=%d', mp->dac_mvar, (int)mp->requested_pos_cnts);
+1489     mp->pq = lspmac_SockSendline_nr( s);
+1490 
+1491   }
+1492 
+1493   pthread_mutex_unlock( &(mp->mutex));
+1494 }
+.fi
+.SS "void lspmac_movezoom_queue (\fBlspmac_motor_t\fP * mp, double requested_position)"
+.PP
+Move method for the zoom motor. \fBParameters:\fP
+.RS 4
+\fImp\fP the zoom motor 
+.br
+\fIrequested_position\fP our desired zoom 
+.RE
+.PP
+
+.PP
+Definition at line 1499 of file lspmac.c.
+.PP
+.nf
+1502                              {
+1503   char s[512];
+1504   double y;
+1505   pthread_mutex_lock( &(mp->mutex));
+1506 
+1507   mp->requested_position = requested_position;
+1508 
+1509   if( mp->nlut > 0 && mp->lut != NULL) {
+1510     y = lspmac_lut( mp->nlut, mp->lut, requested_position);
+1511 
+1512     mp->requested_pos_cnts = (int)y;
+1513     mp->not_done    = 1;
+1514     mp->motion_seen = 0;
+1515 
+1516 
+1517     snprintf( s, sizeof(s)-1, '#%d j=%d', mp->motor_num, mp->requested_pos_cnts);
+1518     mp->pq = lspmac_SockSendline_nr( s);
+1519 
+1520   }
+1521   pthread_mutex_unlock( &(mp->mutex));
+1522 
+1523   //
+1524   // the lights should 'move' with the zoom motor
+1525   //
+1526   lspmac_movedac_queue( flight, requested_position);
+1527   lspmac_movedac_queue( blight, requested_position);
+1528 }
+.fi
+.SS "void lspmac_next_state ()"
+.PP
+State machine logic. Given the current state, generate the next one 
+.PP
+Definition at line 1258 of file lspmac.c.
+.PP
+.nf
+1258                          {
+1259 
+1260   //
+1261   // Connect to the pmac and perhaps initialize it.
+1262   // OK, this is slightly more than just the state
+1263   // machine logic...
+1264   //
+1265   if( ls_pmac_state == LS_PMAC_STATE_DETACHED) {
+1266     //
+1267     // TODO (eventually)
+1268     // This ip address wont change in a single PMAC installation
+1269     // We'll need to audit the code if we decide to implement
+1270     // multiple PMACs so might as well wait til then.
+1271     //
+1272     lsConnect( '192.6.94.5');
+1273 
+1274     //
+1275     // If the connect was successful we can proceed with the initialization
+1276     //
+1277     if( ls_pmac_state != LS_PMAC_STATE_DETACHED) {
+1278       lspmac_SockFlush();
+1279       
+1280       //
+1281       // Harvest the I and M variables in case we need them
+1282       // one day.
+1283       //
+1284       if( getmvars) {
+1285         lspmac_GetAllMVars();
+1286         getmvars = 0;
+1287       }
+1288       
+1289       if( getivars) {
+1290         lspmac_GetAllIVars();
+1291         getivars = 0;
+1292       }
+1293     }
+1294   }
+1295 
+1296   //
+1297   // Check the command queue and perhaps go to the 'Send Command' state.
+1298   //
+1299   if( ls_pmac_state == LS_PMAC_STATE_IDLE && ethCmdOn != ethCmdOff)
+1300     ls_pmac_state = LS_PMAC_STATE_SC;
+1301 
+1302 
+1303   //
+1304   // Set the events flag
+1305   // to tell poll what we are waiting for.
+1306   //
+1307   switch( ls_pmac_state) {
+1308   case LS_PMAC_STATE_DETACHED:
+1309     //
+1310     // there shouldn't be a valid fd, so ignore the events
+1311     //
+1312     pmacfd.events = 0;
+1313     break;
+1314 
+1315   case LS_PMAC_STATE_IDLE:
+1316     if( ethCmdOn == ethCmdOff)
+1317       //
+1318       // Anytime we are idle we want to
+1319       // get the status of the PMAC
+1320       //
+1321       lspmac_get_status();
+1322     
+1323 
+1324 
+1325   //
+1326   // These state require that we listen for packets
+1327   //
+1328   case LS_PMAC_STATE_WACK_NFR:
+1329   case LS_PMAC_STATE_WACK:
+1330   case LS_PMAC_STATE_WACK_CC:
+1331   case LS_PMAC_STATE_WACK_RR:
+1332   case LS_PMAC_STATE_WCR:
+1333   case LS_PMAC_STATE_WGB:
+1334   case LS_PMAC_STATE_GMR:
+1335     pmacfd.events = POLLIN;
+1336     break;
+1337     
+1338   //
+1339   // These state require that we send packets out.
+1340   //
+1341   case LS_PMAC_STATE_SC:
+1342   case LS_PMAC_STATE_CR:
+1343   case LS_PMAC_STATE_RR:
+1344   case LS_PMAC_STATE_GB:
+1345     //
+1346     // Sad fact: PMAC will fail to process commands if we send them too quickly.
+1347     // We deal with that by waiting a tad before we let poll tell us the PMAC socket is ready to write.
+1348     //
+1349     gettimeofday( &now, NULL);
+1350     if(  ((now.tv_sec * 1000000. + now.tv_usec) - (pmac_time_sent.tv_sec * 1000000. + pmac_time_sent.tv_usec)) < PMAC_MIN_CMD_TIME) {
+1351       pmacfd.events = 0;
+1352     } else {
+1353       pmacfd.events = POLLOUT;
+1354     }
+1355     break;
+1356   }
+1357 }
+.fi
+.SS "void lspmac_pmacmotor_read (\fBlspmac_motor_t\fP * mp)"
+.PP
+Read the position and status of a normal PMAC motor. \fBParameters:\fP
+.RS 4
+\fImp\fP Our motor 
+.RE
+.PP
+
+.PP
+Definition at line 981 of file lspmac.c.
+.PP
+.nf
+983                              {
+984   char s[512], *sp;
+985 
+986   if( *mp->status2 & 0x000001) {
+987     if( mp->not_done) {
+988       pthread_mutex_lock( &(mp->mutex));
+989       mp->not_done = 0;
+990       pthread_cond_signal( &(mp->cond));
+991       pthread_mutex_unlock( &(mp->mutex));
+992     }
+993   } else if( mp->not_done == 0) {
+994     mp->not_done = 1;
+995   }
+996 
+997   if( (*mp->status1 & 0x020000) || (*mp->status1 & 0x000400)) {
+998     if( mp->motion_seen == 0) {
+999       pthread_mutex_lock( &(mp->mutex));
+1000       mp->motion_seen = 1;
+1001       pthread_cond_signal( &(mp->cond));
+1002       pthread_mutex_unlock( &(mp->mutex));
+1003     }
+1004   }
+1005 
+1006   mvwprintw( mp->win, 2, 1, '%*s', LS_DISPLAY_WINDOW_WIDTH-2, ' ');
+1007   mvwprintw( mp->win, 2, 1, '%*d cts', LS_DISPLAY_WINDOW_WIDTH-6, *mp->actual_pos_cnts_p);
+1008   mvwprintw( mp->win, 3, 1, '%*s', LS_DISPLAY_WINDOW_WIDTH-2, ' ');
+1009 
+1010   if( mp->u2c != 0.0) {
+1011     mp->position = *mp->actual_pos_cnts_p/mp->u2c;
+1012     snprintf( s, sizeof(s)-1, mp->format, 8, *mp->actual_pos_cnts_p/mp->u2c);
+1013   } else {
+1014     mp->position = 1.0* (*mp->actual_pos_cnts_p);
+1015     snprintf( s, sizeof(s)-1, mp->format, 8, 1.0* (*mp->actual_pos_cnts_p));
+1016   }
+1017   s[sizeof(s)-1] = 0;
+1018   mvwprintw( mp->win, 3, 1, '%*s', LS_DISPLAY_WINDOW_WIDTH-6, s);
+1019 
+1020   mvwprintw( mp->win, 4, 1, '%*u', LS_DISPLAY_WINDOW_WIDTH-2, *mp->status1);
+1021   mvwprintw( mp->win, 5, 1, '%*u', LS_DISPLAY_WINDOW_WIDTH-2, *mp->status2);
+1022   sp = '';
+1023   if( *mp->status2 & 0x000002)
+1024     sp = 'Following Warning';
+1025   else if( *mp->status2 & 0x000004)
+1026     sp = 'Following Error';
+1027   else if( *mp->status2 & 0x000020)
+1028     sp = 'I2T Amp Fault';
+1029   else if( *mp->status2 & 0x000008)
+1030     sp = 'Amp. Fault';
+1031   else if( *mp->status2 & 0x000800)
+1032     sp = 'Stopped on Limit';
+1033   else if( *mp->status1 & 0x040000)
+1034     sp = 'Open Loop';
+1035   else if( ~(*mp->status1) & 0x080000)
+1036     sp = 'Motor Disabled';
+1037   else if( *mp->status1 & 0x000400)
+1038     sp = 'Homing';
+1039   else if( (*mp->status1 & 0x600000) == 0x600000)
+1040     sp = 'Both Limits Tripped';
+1041   else if( *mp->status1 & 0x200000)
+1042     sp = 'Positive Limit';
+1043   else if( *mp->status1 & 0x400000)
+1044     sp = 'Negative Limit';
+1045   else if( ~(*mp->status2) & 0x000400)
+1046     sp = 'Not Homed';
+1047   else if( *mp->status2 & 0x000001)
+1048     sp = 'In Position';
+1049 
+1050   mvwprintw( mp->win, 6, 1, '%*s', LS_DISPLAY_WINDOW_WIDTH-2, sp);
+1051   wnoutrefresh( mp->win);
+1052 }
+.fi
+.SS "\fBpmac_cmd_queue_t\fP* lspmac_pop_queue ()"
+.PP
+Remove the oldest queue item. Used to send command to PMAC. Note that there is a separate reply index to ensure we've know to what command a reply is refering. Returns the item. 
+.PP
+Definition at line 438 of file lspmac.c.
+.PP
+.nf
+438                                      {
+439   pmac_cmd_queue_t *rtn;
+440 
+441   pthread_mutex_lock( &pmac_queue_mutex);
+442 
+443   if( ethCmdOn == ethCmdOff)
+444     rtn = NULL;
+445   else {
+446     rtn = &(ethCmdQueue[(ethCmdOff++) % PMAC_CMD_QUEUE_LENGTH]);
+447     clock_gettime( CLOCK_REALTIME, &(rtn->time_sent));
+448   }
+449   pthread_mutex_unlock( &pmac_queue_mutex);
+450   return rtn;
+451 }
+.fi
+.SS "\fBpmac_cmd_queue_t\fP* lspmac_pop_reply ()"
+.PP
+Remove the next command queue item that is waiting for a reply. We always need a reply to know we are done with a given command. Returns the item. 
+.PP
+Definition at line 458 of file lspmac.c.
+.PP
+.nf
+458                                      {
+459   pmac_cmd_queue_t *rtn;
+460 
+461   pthread_mutex_lock( &pmac_queue_mutex);
+462 
+463   if( ethCmdOn == ethCmdReply)
+464     rtn = NULL;
+465   else
+466     rtn = &(ethCmdQueue[(ethCmdReply++) % PMAC_CMD_QUEUE_LENGTH]);
+467 
+468   pthread_mutex_unlock( &pmac_queue_mutex);
+469   return rtn;
+470 }
+.fi
+.SS "\fBpmac_cmd_queue_t\fP* lspmac_push_queue (\fBpmac_cmd_queue_t\fP * cmd)"
+.PP
+Put a new command on the queue. Pointer is returned so caller can evaluate the time command was actually sent. \fBParameters:\fP
+.RS 4
+\fIcmd\fP Command to send to the PMAC 
+.RE
+.PP
+
+.PP
+Definition at line 414 of file lspmac.c.
+.PP
+.nf
+416                                       {
+417   pmac_cmd_queue_t *rtn;
+418 
+419   pthread_mutex_lock( &pmac_queue_mutex);
+420   rtn = &(ethCmdQueue[(ethCmdOn++) % PMAC_CMD_QUEUE_LENGTH]);
+421   memcpy( rtn, cmd, sizeof( pmac_cmd_queue_t));
+422   rtn->time_sent.tv_sec  = 0;
+423   rtn->time_sent.tv_nsec = 0;
+424   pthread_cond_signal( &pmac_queue_cond);
+425   pthread_mutex_unlock( &pmac_queue_mutex);
+426 
+427   return rtn;
+428 }
+.fi
+.SS "void lspmac_Reset ()"
+.PP
+Clear the queue and put the PMAC into a known state. 
+.PP
+Definition at line 541 of file lspmac.c.
+.PP
+.nf
+541                     {
+542   ls_pmac_state = LS_PMAC_STATE_IDLE;
+543 
+544   // clear queue
+545   ethCmdReply = ethCmdOn;
+546   ethCmdOff   = ethCmdOn;
+547 
+548   lspmac_SockFlush();
+549 }
+.fi
+.SS "void lspmac_run ()"
+.PP
+Start up the lspmac thread. 
+.PP
+Definition at line 1870 of file lspmac.c.
+.PP
+.nf
+1870                   {
+1871   pthread_create( &pmac_thread, NULL, lspmac_worker, NULL);
+1872 }
+.fi
+.SS "\fBpmac_cmd_queue_t\fP* lspmac_send_command (int rqType, int rq, int wValue, int wIndex, int wLength, unsigned char * data, void(*)(\fBpmac_cmd_queue_t\fP *, int, unsigned char *) responseCB, int no_reply)"
+.PP
+Compose a packet and send it to the PMAC. This is the meat of the PMAC communications routines. The queued command is returned. \fBParameters:\fP
+.RS 4
+\fIrqType\fP VR_UPLOAD or VR_DOWNLOAD 
+.br
+\fIrq\fP PMAC command (see PMAC User Manual 
+.br
+\fIwValue\fP Command argument 1 
+.br
+\fIwIndex\fP Command argument 2 
+.br
+\fIwLength\fP Length of data array 
+.br
+\fIdata\fP Data array (or NULL) 
+.br
+\fIresponseCB\fP Function to call when a response is read from the PMAC 
+.br
+\fIno_reply\fP Flag, non-zero means no reply is expected 
+.RE
+.PP
+
+.PP
+Definition at line 476 of file lspmac.c.
+.PP
+.nf
+486                                         {
+487   static pmac_cmd_queue_t cmd;
+488 
+489   cmd.pcmd.RequestType = rqType;
+490   cmd.pcmd.Request     = rq;
+491   cmd.pcmd.wValue      = htons(wValue);
+492   cmd.pcmd.wIndex      = htons(wIndex);
+493   cmd.pcmd.wLength     = htons(wLength);
+494   cmd.onResponse       = responseCB;
+495   cmd.no_reply         = no_reply;
+496 
+497   //
+498   // Setting the message buff bData requires a bit more care to avoid over filling it
+499   // or sending garbage in the unused bytes.
+500   //
+501 
+502   if( wLength > sizeof( cmd.pcmd.bData)) {
+503     //
+504     // Bad things happen if we do not catch this case.
+505     //
+506     pthread_mutex_lock( &ncurses_mutex);
+507     wprintw( term_output, 'Message Length %d longer than maximum of %ld, aborting\n', wLength, sizeof( cmd.pcmd.bData));
+508 
+509     wnoutrefresh( term_output);
+510     wnoutrefresh( term_input);
+511     doupdate();
+512     pthread_mutex_unlock( &ncurses_mutex);
+513     exit( -1);
+514   }
+515   if( data == NULL) {
+516     memset( cmd.pcmd.bData, 0, sizeof( cmd.pcmd.bData));
+517   } else {
+518     //
+519     // This could leave bData non-null terminated.  I do not know if this is a problem.
+520     //
+521     if( wLength > 0)
+522       memcpy( cmd.pcmd.bData, data, wLength);
+523     if( wLength < sizeof( cmd.pcmd.bData))
+524       memset( cmd.pcmd.bData + wLength, 0, sizeof( cmd.pcmd.bData) - wLength);
+525   }
+526 
+527   return lspmac_push_queue( &cmd);
+528 }
+.fi
+.SS "void lspmac_sendcmd_nocb (char * fmt,  ...)"
+.PP
+Send a command that does not need to deal with the reply. \fBParameters:\fP
+.RS 4
+\fIfmt\fP A printf style format string 
+.RE
+.PP
+
+.PP
+Definition at line 1238 of file lspmac.c.
+.PP
+.nf
+1241                            {
+1242   static char tmps[1024];
+1243   va_list arg_ptr;
+1244 
+1245   va_start( arg_ptr, fmt);
+1246   vsnprintf( tmps, sizeof(tmps)-1, fmt, arg_ptr);
+1247   tmps[sizeof(tmps)-1]=0;
+1248   va_end( arg_ptr);
+1249 
+1250   lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen(tmps), tmps, NULL, 0);
+1251 }
+.fi
+.SS "void lspmac_SendControlReplyPrintCB (\fBpmac_cmd_queue_t\fP * cmd, int nreceived, unsigned char * buff)"
+.PP
+Receive a reply to a control character Print a 'printable' version of the character to the terminal Followed by a hex dump of the response. \fBParameters:\fP
+.RS 4
+\fIcmd\fP Queue item this is a reply to 
+.br
+\fInreceived\fP Number of bytes received 
+.br
+\fIbuff\fP Buffer of bytes received 
+.RE
+.PP
+
+.PP
+Definition at line 813 of file lspmac.c.
+.PP
+.nf
+817                                       {
+818     pthread_mutex_lock( &ncurses_mutex);
+819     wprintw( term_output, 'control-%c: ', '@'+ ntohs(cmd->pcmd.wValue));
+820     pthread_mutex_unlock( &ncurses_mutex);
+821     hex_dump( nreceived, buff);
+822     pthread_mutex_lock( &ncurses_mutex);
+823     wnoutrefresh( term_output);
+824     wnoutrefresh( term_input);
+825     doupdate();
+826     pthread_mutex_unlock( &ncurses_mutex);
+827 }
+.fi
+.SS "void lspmac_Service (struct pollfd * evt)"
+.PP
+Service routine for packet coming from the PMAC. All communications is asynchronous so this is the only place incomming packets are handled \fBParameters:\fP
+.RS 4
+\fIevt\fP pollfd object returned by poll 
+.RE
+.PP
+
+.PP
+Definition at line 586 of file lspmac.c.
+.PP
+.nf
+588                       {
+589   static unsigned char *receiveBuffer = NULL;   // the buffer inwhich to stick our incomming characters
+590   static int receiveBufferSize = 0;             // size of receiveBuffer
+591   static int receiveBufferIn = 0;               // next location to write to in receiveBuffer
+592   pmac_cmd_queue_t *cmd;                        // maybe the command we are servicing
+593   ssize_t nsent, nread;                         // nbytes dealt with
+594   int i;                                        // loop counter
+595   int foundEOCR;                                // end of command response flag
+596 
+597   if( evt->revents & (POLLERR | POLLHUP | POLLNVAL)) {
+598     if( evt->fd != -1) {
+599       close( evt->fd);
+600       evt->fd = -1;
+601     }
+602     ls_pmac_state = LS_PMAC_STATE_DETACHED;
+603     return;
+604   }
+605 
+606 
+607   if( evt->revents & POLLOUT) {
+608 
+609     switch( ls_pmac_state) {
+610     case LS_PMAC_STATE_DETACHED:
+611       break;
+612     case LS_PMAC_STATE_IDLE:
+613       break;
+614 
+615     case LS_PMAC_STATE_SC:
+616       cmd = lspmac_pop_queue();
+617       if( cmd != NULL) {
+618         if( cmd->pcmd.Request == VR_PMAC_GETMEM) {
+619           nsent = send( evt->fd, cmd, pmac_cmd_size, 0);
+620           if( nsent != pmac_cmd_size) {
+621             pthread_mutex_lock( &ncurses_mutex);
+622             wprintw( term_output, '\nCould only send %d of %d bytes....Not good.', (int)nsent, (int)(pmac_cmd_size));
+623             wnoutrefresh( term_output);
+624             wnoutrefresh( term_input);
+625             doupdate();
+626             pthread_mutex_unlock( &ncurses_mutex);
+627           }
+628         } else {
+629           nsent = send( evt->fd, cmd, pmac_cmd_size + ntohs(cmd->pcmd.wLength), 0);
+630           gettimeofday( &pmac_time_sent, NULL);
+631           if( nsent != pmac_cmd_size + ntohs(cmd->pcmd.wLength)) {
+632             pthread_mutex_lock( &ncurses_mutex);
+633             wprintw( term_output, '\nCould only send %d of %d bytes....Not good.', (int)nsent, (int)(pmac_cmd_size + ntohs(cmd->pcmd.wLength)));
+634             wnoutrefresh( term_output);
+635             wnoutrefresh( term_input);
+636             doupdate();
+637             pthread_mutex_unlock( &ncurses_mutex);
+638           }
+639         }
+640       }
+641       if( cmd->pcmd.Request == VR_PMAC_SENDCTRLCHAR)
+642         ls_pmac_state = LS_PMAC_STATE_WACK_CC;
+643       else if( cmd->pcmd.Request == VR_PMAC_GETMEM)
+644         ls_pmac_state = LS_PMAC_STATE_GMR;
+645       else if( cmd->no_reply == 0)
+646         ls_pmac_state = LS_PMAC_STATE_WACK;
+647       else
+648         ls_pmac_state = LS_PMAC_STATE_WACK_NFR;
+649       break;
+650 
+651     case LS_PMAC_STATE_CR:
+652       nsent = send( evt->fd, &cr_cmd, pmac_cmd_size, 0);
+653       gettimeofday( &pmac_time_sent, NULL);
+654       ls_pmac_state = LS_PMAC_STATE_WCR;
+655       break;
+656 
+657     case LS_PMAC_STATE_RR:
+658       nsent = send( evt->fd, &rr_cmd, pmac_cmd_size, 0);
+659       gettimeofday( &pmac_time_sent, NULL);
+660       ls_pmac_state = LS_PMAC_STATE_WACK_RR;
+661       break;
+662 
+663     case LS_PMAC_STATE_GB:
+664       nsent = send( evt->fd, &gb_cmd, pmac_cmd_size, 0);
+665       gettimeofday( &pmac_time_sent, NULL);
+666       ls_pmac_state = LS_PMAC_STATE_WGB;
+667       break;
+668     }
+669   }
+670 
+671   if( evt->revents & POLLIN) {
+672 
+673     if( receiveBufferSize - receiveBufferIn < 1400) {
+674       unsigned char *newbuff;
+675 
+676       receiveBufferSize += 1400;
+677       newbuff = calloc( receiveBufferSize, sizeof( unsigned char));
+678       if( newbuff == NULL) {
+679         pthread_mutex_lock( &ncurses_mutex);
+680         wprintw( term_output, '\nOut of memory\n');
+681         wnoutrefresh( term_output);
+682         wnoutrefresh( term_input);
+683         doupdate();
+684         pthread_mutex_unlock( &ncurses_mutex);
+685         exit( -1);
+686       }
+687       memcpy( newbuff, receiveBuffer, receiveBufferIn);
+688       receiveBuffer = newbuff;
+689     }
+690 
+691     nread = read( evt->fd, receiveBuffer + receiveBufferIn, 1400);
+692 
+693     foundEOCR = 0;
+694     if( ls_pmac_state == LS_PMAC_STATE_GMR) {
+695       //
+696       // get memory returns binary stuff, don't try to parse it
+697       //
+698       receiveBufferIn += nread;
+699     } else {
+700       //
+701       // other commands end in 6 if OK, 7 if not
+702       //
+703       for( i=receiveBufferIn; i<receiveBufferIn+nread; i++) {
+704         if( receiveBuffer[i] == 7) {
+705           //
+706           // Error condition
+707           //
+708           lspmac_Error( &(receiveBuffer[i]));
+709           receiveBufferIn = 0;
+710           return;
+711         }
+712         if( receiveBuffer[i] == 6) {
+713           //
+714           // End of command response
+715           //
+716           foundEOCR = 1;
+717           receiveBuffer[i] = 0;
+718           break;
+719         }
+720       }
+721       receiveBufferIn = i;
+722     }
+723 
+724     cmd = NULL;
+725 
+726     switch( ls_pmac_state) {
+727     case LS_PMAC_STATE_WACK_NFR:
+728       receiveBuffer[--receiveBufferIn] = 0;
+729       cmd = lspmac_pop_reply();
+730       ls_pmac_state = LS_PMAC_STATE_IDLE;
+731       break;
+732     case LS_PMAC_STATE_WACK:
+733       receiveBuffer[--receiveBufferIn] = 0;
+734       ls_pmac_state = LS_PMAC_STATE_RR;
+735       break;
+736     case LS_PMAC_STATE_WACK_CC:
+737       receiveBuffer[--receiveBufferIn] = 0;
+738       ls_pmac_state = LS_PMAC_STATE_CR;
+739       break;
+740     case LS_PMAC_STATE_WACK_RR:
+741       receiveBufferIn -= 2;
+742       if( receiveBuffer[receiveBufferIn])
+743         ls_pmac_state = LS_PMAC_STATE_GB;
+744       else
+745         ls_pmac_state = LS_PMAC_STATE_RR;
+746       receiveBuffer[receiveBufferIn] = 0;
+747       break;
+748     case LS_PMAC_STATE_GMR:
+749       cmd = lspmac_pop_reply();
+750       ls_pmac_state = LS_PMAC_STATE_IDLE;
+751       break;
+752 
+753     case LS_PMAC_STATE_WCR:
+754       cmd = lspmac_pop_reply();
+755       ls_pmac_state = LS_PMAC_STATE_IDLE;
+756       break;
+757     case LS_PMAC_STATE_WGB:
+758       if( foundEOCR) {
+759         cmd = lspmac_pop_reply();
+760         ls_pmac_state = LS_PMAC_STATE_IDLE;
+761       } else {
+762         ls_pmac_state = LS_PMAC_STATE_RR;
+763       }
+764       break;
+765     }
+766 
+767 
+768     if( cmd != NULL && cmd->onResponse != NULL) {
+769       cmd->onResponse( cmd, receiveBufferIn, receiveBuffer);
+770       receiveBufferIn = 0;
+771     }
+772   }
+773 }
+.fi
+.SS "void lspmac_shutter_read (\fBlspmac_motor_t\fP * mp)"
+.PP
+Fast shutter read routine The shutter is mildly complicated in that we need to take into account the fact that the shutter can open and close again between status updates. This means that we need to rely on a PCL program running in the PMAC to monitor the shutter state and let us know that this has happened. \fBParameters:\fP
+.RS 4
+\fImp\fP The motor object associated with the fast shutter 
+.RE
+.PP
+
+.SS "void lspmac_SockFlush ()"
+.PP
+Reset the PMAC socket from the PMAC side. Puts the PMAC into a known communications state 
+.PP
+Definition at line 534 of file lspmac.c.
+.PP
+.nf
+534                         {
+535   lspmac_send_command( VR_DOWNLOAD, VR_PMAC_FLUSH, 0, 0, 0, NULL, NULL, 1);
+536 }
+.fi
+.SS "\fBpmac_cmd_queue_t\fP* lspmac_SockGetmem (int offset, int nbytes)"
+.PP
+Request a chunk of memory to be returned. Not currently used \fBParameters:\fP
+.RS 4
+\fIoffset\fP Offset in PMAC Double Buffer 
+.br
+\fInbytes\fP Number of bytes to request 
+.RE
+.PP
+
+.PP
+Definition at line 850 of file lspmac.c.
+.PP
+.nf
+853                                        {
+854   return lspmac_send_command( VR_UPLOAD,   VR_PMAC_GETMEM, offset, 0, nbytes, NULL, lspmac_GetmemReplyCB, 0);
+855 }
+.fi
+.SS "\fBpmac_cmd_queue_t\fP* lspmac_SockSendControlCharPrint (char c)"
+.PP
+Send a control character. \fBParameters:\fP
+.RS 4
+\fIc\fP The control character to send 
+.RE
+.PP
+
+.PP
+Definition at line 894 of file lspmac.c.
+.PP
+.nf
+896                                                     {
+897   return lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDCTRLCHAR, c, 0, 0, NULL, lspmac_SendControlReplyPrintCB, 0);
+898 }
+.fi
+.SS "\fBpmac_cmd_queue_t\fP* lspmac_SockSendline (char * fmt,  ...)"
+.PP
+Send a one line command. Uses printf style arguments. \fBParameters:\fP
+.RS 4
+\fIfmt\fP Printf style format string 
+.RE
+.PP
+
+.PP
+Definition at line 860 of file lspmac.c.
+.PP
+.nf
+863                                          {
+864   va_list arg_ptr;
+865   char payload[1400];
+866 
+867   va_start( arg_ptr, fmt);
+868   vsnprintf( payload, sizeof(payload)-1, fmt, arg_ptr);
+869   payload[ sizeof(payload)-1] = 0;
+870   va_end( arg_ptr);
+871 
+872   return lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( payload), payload, lspmac_GetShortReplyCB, 0);
+873 }
+.fi
+.SS "\fBpmac_cmd_queue_t\fP* lspmac_SockSendline_nr (char * fmt,  ...)"
+.PP
+Send a command and ignore the response. \fBParameters:\fP
+.RS 4
+\fIfmt\fP Printf style format string 
+.RE
+.PP
+
+.PP
+Definition at line 877 of file lspmac.c.
+.PP
+.nf
+880                                            {
+881   va_list arg_ptr;
+882   char s[512];
+883 
+884   va_start( arg_ptr, fmt);
+885   vsnprintf( s, sizeof(s)-1, fmt, arg_ptr);
+886   s[sizeof(s)-1] = 0;
+887   va_end( arg_ptr);
+888 
+889   return lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( s), s, NULL, 1);
+890 }
+.fi
+.SS "void* lspmac_worker (void * dummy)"
+.PP
+Our lspmac worker thread. \fBParameters:\fP
+.RS 4
+\fIdummy\fP Unused but required by pthread library 
+.RE
+.PP
+
+.PP
+Definition at line 1362 of file lspmac.c.
+.PP
+.nf
+1364                       {
+1365 
+1366   while( 1) {
+1367     int pollrtn;
+1368 
+1369     lspmac_next_state();
+1370 
+1371     if( pmacfd.fd == -1) {
+1372       sleep( 10);       // The pmac is not connected.  Should we warn someone?
+1373       //
+1374       // This just puts us into a holding pattern until the pmac becomes connected again
+1375       //
+1376       // TODO:
+1377       // Check PMAC initialization logic and our queues to ensure that it is sane to
+1378       // re-initialize things.  Probably bad things will happen.
+1379       //
+1380       continue;
+1381     }
+1382 
+1383     pollrtn = poll( &pmacfd, 1, 10);
+1384     if( pollrtn) {
+1385       lspmac_Service( &pmacfd);
+1386     }
+1387   }
+1388 }
+.fi
+.SH "Variable Documentation"
+.PP 
+.SS "\fBlspmac_motor_t\fP* \fBalignx\fP"
+.PP
+Alignment stage X. 
+.PP
+Definition at line 74 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBaligny\fP"
+.PP
+Alignment stage Y. 
+.PP
+Definition at line 75 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBalignz\fP"
+.PP
+Alignment stage X. 
+.PP
+Definition at line 76 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBanal\fP"
+.PP
+Polaroid analyzer motor. 
+.PP
+Definition at line 77 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBapery\fP"
+.PP
+Aperture Y. 
+.PP
+Definition at line 79 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBaperz\fP"
+.PP
+Aperture Z. 
+.PP
+Definition at line 80 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBblight\fP"
+.PP
+Back Light DAC. 
+.PP
+Definition at line 91 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBblight_ud\fP"
+.PP
+Back Light Up/Down actuator. 
+.PP
+Definition at line 94 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBcapy\fP"
+.PP
+Capillary Y. 
+.PP
+Definition at line 81 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBcapz\fP"
+.PP
+Capillary Z. 
+.PP
+Definition at line 82 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBcenx\fP"
+.PP
+Centering Table X. 
+.PP
+Definition at line 84 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBceny\fP"
+.PP
+Centering Table Y. 
+.PP
+Definition at line 85 of file lspmac.c.
+.SS "\fBpmac_cmd_t\fP \fBcr_cmd\fP\fC [static]\fP"
+.PP
+commands to send out 'readready', 'getbuffer', controlresponse (initialized in main) 
+.PP
+Definition at line 138 of file lspmac.c.
+.SS "unsigned char \fBdbmem\fP[64 *1024]\fC [static]\fP"
+.PP
+double buffered memory 
+.PP
+Definition at line 128 of file lspmac.c.
+.SS "int \fBdbmemIn\fP = 0\fC [static]\fP"
+.PP
+next location 
+.PP
+Definition at line 129 of file lspmac.c.
+.SS "unsigned int \fBethCmdOff\fP = 0\fC [static]\fP"
+.PP
+points to current command (or none if == ethCmdOn) 
+.PP
+Definition at line 141 of file lspmac.c.
+.SS "unsigned int \fBethCmdOn\fP = 0\fC [static]\fP"
+.PP
+points to next empty PMAC command queue position 
+.PP
+Definition at line 140 of file lspmac.c.
+.SS "\fBpmac_cmd_queue_t\fP \fBethCmdQueue\fP[PMAC_CMD_QUEUE_LENGTH]\fC [static]\fP"
+.PP
+PMAC command queue. 
+.PP
+Definition at line 139 of file lspmac.c.
+.SS "unsigned int \fBethCmdReply\fP = 0\fC [static]\fP"
+.PP
+Used like ethCmdOff only to deal with the pmac reply to a command. 
+.PP
+Definition at line 142 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBflight\fP"
+.PP
+Front Light DAC. 
+.PP
+Definition at line 90 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBfscint\fP"
+.PP
+Scintillator Piezo DAC. 
+.PP
+Definition at line 92 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBfshut\fP"
+.PP
+Fast shutter. 
+.PP
+Definition at line 89 of file lspmac.c.
+.SS "\fBpmac_cmd_t\fP \fBgb_cmd\fP\fC [static]\fP"
+.PP
+Definition at line 138 of file lspmac.c.
+.SS "int \fBgetivars\fP = 0\fC [static]\fP"
+.PP
+flag set at initialization to send i vars to db 
+.PP
+Definition at line 68 of file lspmac.c.
+.SS "int \fBgetmvars\fP = 0\fC [static]\fP"
+.PP
+flag set at initialization to send m vars to db 
+.PP
+Definition at line 69 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBkappa\fP"
+.PP
+Kappa. 
+.PP
+Definition at line 86 of file lspmac.c.
+.SS "int \fBlinesReceived\fP = 0\fC [static]\fP"
+.PP
+current number of lines received 
+.PP
+Definition at line 127 of file lspmac.c.
+.SS "int \fBls_pmac_state\fP = LS_PMAC_STATE_DETACHED\fC [static]\fP"
+.PP
+Current state of the PMAC communications state machine. 
+.PP
+Definition at line 52 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP \fBlspmac_motors\fP[32]"
+.PP
+All our motors. 
+.PP
+Definition at line 71 of file lspmac.c.
+.SS "pthread_cond_t \fBlspmac_moving_cond\fP"
+.PP
+Wait for motor(s) to finish moving condition. 
+.PP
+Definition at line 59 of file lspmac.c.
+.SS "int \fBlspmac_moving_flags\fP"
+.PP
+Flag used to implement motor moving condition. 
+.PP
+Definition at line 60 of file lspmac.c.
+.SS "pthread_mutex_t \fBlspmac_moving_mutex\fP"
+.PP
+Coordinate moving motors between threads. 
+.PP
+Definition at line 58 of file lspmac.c.
+.SS "int \fBlspmac_nmotors\fP = 0"
+.PP
+The number of motors we manage. 
+.PP
+Definition at line 72 of file lspmac.c.
+.SS "pthread_cond_t \fBlspmac_shutter_cond\fP"
+.PP
+Allows waiting for the shutter status to change. 
+.PP
+Definition at line 57 of file lspmac.c.
+.SS "\fBlspmac_shutter_has_opened\fP = md2_status.fs_has_opened"
+.PP
+Indicates that the shutter had opened, perhaps briefly even if the state did not change. 
+.PP
+Definition at line 55 of file lspmac.c.
+.SS "pthread_mutex_t \fBlspmac_shutter_mutex\fP"
+.PP
+Coordinates threads reading shutter status. 
+.PP
+Definition at line 56 of file lspmac.c.
+.SS "int \fBlspmac_shutter_state\fP"
+.PP
+State of the shutter, used to detect changes. 
+.PP
+Definition at line 54 of file lspmac.c.
+.SS "\fBmd2_status_t\fP \fBmd2_status\fP\fC [static]\fP"
+.PP
+Buffer for MD2 Status. 
+.PP
+Definition at line 276 of file lspmac.c.
+.SS "pthread_mutex_t \fBmd2_status_mutex\fP"
+.PP
+Synchronize reading/writting status buffer. 
+.PP
+Definition at line 277 of file lspmac.c.
+.SS "struct timeval pmac_time_sent \fBnow\fP\fC [static]\fP"
+.PP
+used to ensure we do not send commands to the pmac too often. Only needed for non-DB commands. 
+.PP
+Definition at line 134 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBomega\fP"
+.PP
+MD2 omega axis (the air bearing). 
+.PP
+Definition at line 73 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBphi\fP"
+.PP
+Phi (not data collection axis). 
+.PP
+Definition at line 87 of file lspmac.c.
+.SS "char* \fBpmac_error_strs\fP[]\fC [static]\fP"\fBInitial value:\fP
+.PP
+.nf
+ {
+  'ERR000: Unknown error',
+  'ERR001: Command not allowed during program execution',
+  'ERR002: Password error',
+  'ERR003: Data error or unrecognized command',
+  'ERR004: Illegal character',
+  'ERR005: Command not allowed unless buffer is open',
+  'ERR006: No room in buffer for command',
+  'ERR007: Buffer already in use',
+  'ERR008: MACRO auziliary communication error',
+  'ERR009: Program structure error (e.g. ENDIF without IF)',
+  'ERR010: Both overtravel limits set for a motor in the C.S.',
+  'ERR011: Previous move not completed',
+  'ERR012: A motor in the coordinate system is open-loop',
+  'ERR013: A motor in the coordinate system is not activated',
+  'ERR014: No motors in the coordinate system',
+  'ERR015: Not pointer to valid program buffer',
+  'ERR016: Running improperly structure program (e.g. missing ENDWHILE)',
+  'ERR017: Trying to resume after H or Q with motors out of stopped position',
+  'ERR018: Attempt to perform phase reference during move, move during phase reference, or enabling with phase clock error',
+  'ERR019: Illegal position-chage command while moves stored in CCBUFFER'
+}
+.fi
+.PP
+Decode the errors perhaps returned by the PMAC. 
+.PP
+Definition at line 145 of file lspmac.c.
+.SS "pthread_cond_t \fBpmac_queue_cond\fP\fC [static]\fP"
+.PP
+wait for a command to be sent to PMAC before continuing 
+.PP
+Definition at line 65 of file lspmac.c.
+.SS "pthread_mutex_t \fBpmac_queue_mutex\fP\fC [static]\fP"
+.PP
+manage access to the pmac command queue 
+.PP
+Definition at line 64 of file lspmac.c.
+.SS "pthread_t \fBpmac_thread\fP\fC [static]\fP"
+.PP
+our thread to manage access and communication to the pmac 
+.PP
+Definition at line 63 of file lspmac.c.
+.SS "struct pollfd \fBpmacfd\fP\fC [static]\fP"
+.PP
+our poll structure 
+.PP
+Definition at line 66 of file lspmac.c.
+.SS "\fBpmac_cmd_t\fP \fBrr_cmd\fP\fC [static]\fP"
+.PP
+Definition at line 138 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBscinz\fP"
+.PP
+Scintillator Z. 
+.PP
+Definition at line 83 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBzoom\fP"
+.PP
+Optical zoom. 
+.PP
+Definition at line 78 of file lspmac.c.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for LS-CAT PGPMAC from the source code.

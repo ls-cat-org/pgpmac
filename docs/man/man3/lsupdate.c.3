@@ -1,0 +1,183 @@
+.TH "lsupdate.c" 3 "12 Oct 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+lsupdate.c \- 
+.PP
+Brings this MD2 code and the database kvs table into agreement.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'pgpmac.h'\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBlsupdate_updateit\fP (int first_time)"
+.br
+.RI "\fIQuery the motors and perhaps tell the DB about it. \fP"
+.ti -1c
+.RI "void * \fBlsupdate_worker\fP (void *dummy)"
+.br
+.RI "\fIOur worker thread. \fP"
+.ti -1c
+.RI "void \fBlsupdate_init\fP ()"
+.br
+.RI "\fIInitialize this module. \fP"
+.ti -1c
+.RI "void \fBlsupdate_run\fP ()"
+.br
+.RI "\fIrun the update routines \fP"
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "static pthread_t \fBlsupdate_thread\fP"
+.br
+.RI "\fIour worker thread \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+Brings this MD2 code and the database kvs table into agreement. 
+
+\fBDate:\fP
+.RS 4
+2012 
+.RE
+.PP
+\fBAuthor:\fP
+.RS 4
+Keith Brister  All Rights Reserved 
+.RE
+.PP
+
+.PP
+Definition in file \fBlsupdate.c\fP.
+.SH "Function Documentation"
+.PP 
+.SS "void lsupdate_init ()"
+.PP
+Initialize this module. 
+.PP
+Definition at line 89 of file lsupdate.c.
+.PP
+.nf
+89                      {
+90 }
+.fi
+.SS "void lsupdate_run ()"
+.PP
+run the update routines 
+.PP
+Definition at line 94 of file lsupdate.c.
+.PP
+.nf
+94                     {
+95   //  pthread_create( &lsupdate_thread, NULL, lsupdate_worker, NULL);
+96 }
+.fi
+.SS "void lsupdate_updateit (int first_time)"
+.PP
+Query the motors and perhaps tell the DB about it. \fBParameters:\fP
+.RS 4
+\fIfirst_time\fP Flag: 1 means update everything, 0 means only send stuff that has changed 
+.RE
+.PP
+
+.PP
+Definition at line 15 of file lsupdate.c.
+.PP
+.nf
+16                                                               : 1 means update everything, 0 means only send stuff that has changed  */
+17                        ) {
+18   static char s[4096];
+19   static char s1[512];
+20   lspmac_motor_t *mp;
+21   int i;
+22   int needComma;
+23   int gotone;
+24 
+25   needComma = 0;
+26   gotone = 0;
+27   s[0] = 0;
+28   strcpy(s, 'select px.kvupdate('{');
+29 
+30   for( i=0; i<lspmac_nmotors; i++) {
+31     mp = &(lspmac_motors[i]);
+32 
+33     pthread_mutex_lock( &(mp->mutex));
+34     if( fabs( mp->position - mp->reported_position) < mp->update_resolution && first_time == 0) {
+35       pthread_mutex_unlock( &(mp->mutex));
+36     } else {
+37 
+38       gotone = 1;
+39       s1[0]=0;
+40 
+41       snprintf( s1, sizeof(s1)-1, mp->format, mp->position, sizeof( s1)-1);
+42       s1[sizeof(s1)-1] = 0;
+43     
+44       mp->reported_position = mp->position;
+45       pthread_mutex_unlock( &(mp->mutex));
+46 
+47       if( strlen(s1) + strlen(s) + 8 >= sizeof( s)-1) {
+48         // send off update now and reset s
+49         strcat( s, '}')');
+50         lspg_query_push( NULL, s);
+51         
+52         s[0] = 0;
+53         strcpy( s, 'select px.kvupdate('{');
+54         needComma = 0;
+55       }
+56 
+57       if( needComma)
+58         strcat( s, ',');
+59       else
+60         needComma=1;
+61 
+62       strcat( s, '\'');
+63       strcat( s, s1);
+64       strcat( s, '\'');
+65     }
+66   }
+67 
+68   if( gotone) {
+69     strcat( s, '}')');
+70     lspg_query_push( NULL, s);
+71   }
+72 }
+.fi
+.SS "void* lsupdate_worker (void * dummy)"
+.PP
+Our worker thread. \fBParameters:\fP
+.RS 4
+\fIdummy\fP Unused argument required by protocol 
+.RE
+.PP
+
+.PP
+Definition at line 76 of file lsupdate.c.
+.PP
+.nf
+78                         {    
+79   sleep(10);
+80   lsupdate_updateit( 1);
+81   while( 1) {
+82     usleep( 500000);
+83     lsupdate_updateit( 0);
+84   }    
+85 }
+.fi
+.SH "Variable Documentation"
+.PP 
+.SS "pthread_t \fBlsupdate_thread\fP\fC [static]\fP"
+.PP
+our worker thread 
+.PP
+Definition at line 10 of file lsupdate.c.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for LS-CAT PGPMAC from the source code.

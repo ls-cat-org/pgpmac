@@ -1,0 +1,353 @@
+.TH "pgpmac.c" 3 "12 Oct 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+pgpmac.c \- 
+.PP
+Main for the pgpmac project.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'pgpmac.h'\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBstdinService\fP (struct pollfd *evt)"
+.br
+.RI "\fIHandle keyboard input. \fP"
+.ti -1c
+.RI "void \fBpgpmac_printf\fP (char *fmt,...)"
+.br
+.RI "\fITerminal output routine ala printf. \fP"
+.ti -1c
+.RI "int \fBmain\fP (int argc, char **argv)"
+.br
+.RI "\fIOur main routine. \fP"
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "WINDOW * \fBterm_output\fP"
+.br
+.RI "\fIplace to print stuff out \fP"
+.ti -1c
+.RI "WINDOW * \fBterm_input\fP"
+.br
+.RI "\fIplace to put the cursor \fP"
+.ti -1c
+.RI "WINDOW * \fBterm_status\fP"
+.br
+.RI "\fIshutter, lamp, air, etc status \fP"
+.ti -1c
+.RI "WINDOW * \fBterm_status2\fP"
+.br
+.RI "\fIshutter, lamp, air, etc status \fP"
+.ti -1c
+.RI "pthread_mutex_t \fBncurses_mutex\fP"
+.br
+.RI "\fIallow more than one thread access to the screen \fP"
+.ti -1c
+.RI "static struct pollfd \fBstdinfda\fP"
+.br
+.RI "\fIHandle input from the keyboard. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+Main for the pgpmac project. 
+
+\fBDate:\fP
+.RS 4
+2012 
+.RE
+.PP
+\fBAuthor:\fP
+.RS 4
+Keith Brister  All Rights Reserved 
+.RE
+.PP
+
+.PP
+Definition in file \fBpgpmac.c\fP.
+.SH "Function Documentation"
+.PP 
+.SS "int main (int argc, char ** argv)"
+.PP
+Our main routine. \fBParameters:\fP
+.RS 4
+\fIargc\fP Number of arguments 
+.br
+\fIargv\fP Vector of argument strings 
+.RE
+.PP
+
+.PP
+Definition at line 340 of file pgpmac.c.
+.PP
+.nf
+343            {
+344   static nfds_t nfds;
+345 
+346   static struct pollfd fda[3], *fdp;    // input for poll: room for postgres, pmac, and stdin
+347   static int nfd = 0;                   // number of items in fda
+348   static int pollrtn = 0;
+349   static struct option long_options[] = {
+350     { 'i-vars', 0, NULL, 'i'},
+351     { 'm-vars', 0, NULL, 'm'},
+352     { NULL,     0, NULL, 0}
+353   };
+354   int c;
+355   int ivars, mvars;
+356   mvars=0;
+357   ivars=0;
+358 
+359   int i;                                // standard loop counter
+360 
+361   while( 1) {
+362     c=getopt_long( argc, argv, 'im', long_options, NULL);
+363     if( c == -1)
+364       break;
+365 
+366     switch( c) {
+367     case 'i':
+368       ivars=1;
+369       break;
+370 
+371     case 'm':
+372       mvars=1;
+373       break;
+374 
+375     }
+376   }
+377 
+378   stdinfda.fd = 0;
+379   stdinfda.events = POLLIN;
+380 
+381   initscr();                            // Start ncurses
+382   raw();                                // Line buffering disabled, control chars trapped
+383   keypad( stdscr, TRUE);                // Why is F1 nifty?
+384   refresh();
+385 
+386   pthread_mutex_init( &ncurses_mutex, NULL);    // don't lock this mutex yet because we are not multi-threaded until the '_run' functions
+387 
+388   //
+389   // Since the modules reference objects in other modules it is important
+390   // that everyone is initiallized before anyone runs
+391   //
+392   lspmac_init( ivars, mvars);
+393   lspg_init();
+394   lsupdate_init();
+395   md2cmds_init();
+396 
+397   term_status = newwin( LS_DISPLAY_WINDOW_HEIGHT, LS_DISPLAY_WINDOW_WIDTH, 3*LS_DISPLAY_WINDOW_HEIGHT, 0*LS_DISPLAY_WINDOW_WIDTH);
+398   box( term_status, 0, 0);
+399   wnoutrefresh( term_status);
+400                                                       
+401   term_status2 = newwin( LS_DISPLAY_WINDOW_HEIGHT, LS_DISPLAY_WINDOW_WIDTH, 3*LS_DISPLAY_WINDOW_HEIGHT, 1*LS_DISPLAY_WINDOW_WIDTH);
+402   box( term_status2, 0, 0);
+403   wnoutrefresh( term_status2);
+404                                                       
+405   term_output = newwin( 10, 5*LS_DISPLAY_WINDOW_WIDTH, 4*LS_DISPLAY_WINDOW_HEIGHT, 0);
+406   scrollok( term_output, 1);                          
+407   wnoutrefresh( term_output);                         
+408                                                       
+409   term_input  = newwin( 3, 5*LS_DISPLAY_WINDOW_WIDTH, 10+4*LS_DISPLAY_WINDOW_HEIGHT, 0);
+410   box( term_input, 0, 0);                             
+411   mvwprintw( term_input, 1, 1, 'PMAC> ');             
+412   nodelay( term_input, TRUE);                         
+413   keypad( term_input, TRUE);                          
+414   wnoutrefresh( term_input);                          
+415                                                       
+416   doupdate();                                         
+417 
+418   lspmac_run();
+419   lspg_run();
+420   lsupdate_run();
+421   md2cmds_run();
+422 
+423   while( 1) {
+424     //
+425     // Big loop
+426     //
+427 
+428     nfd = 0;
+429 
+430     //
+431     // keyboard
+432     //
+433     memcpy( &(fda[nfd++]), &stdinfda, sizeof( struct pollfd));
+434     
+435 
+436     if( nfd == 0) {
+437       //
+438       // No connectons yet.  Wait a bit and try again.
+439       //
+440       sleep( 10);
+441       //
+442       // go try to connect again
+443       //
+444       continue;
+445     }
+446 
+447 
+448     pollrtn = poll( fda, nfd, 10);
+449 
+450     for( i=0; pollrtn>0 && i<nfd; i++) {
+451       if( fda[i].revents) {
+452         pollrtn--;
+453         if( fda[i].fd == 0) {
+454           stdinService( &fda[i]);
+455         }
+456       }
+457     }
+458   }
+459 }
+.fi
+.SS "void pgpmac_printf (char * fmt,  ...)"
+.PP
+Terminal output routine ala printf. \fBParameters:\fP
+.RS 4
+\fIfmt\fP Printf style formating string 
+.RE
+.PP
+
+.PP
+Definition at line 317 of file pgpmac.c.
+.PP
+.nf
+320                      {
+321   va_list arg_ptr;
+322 
+323   pthread_mutex_lock( &ncurses_mutex);
+324 
+325   va_start( arg_ptr, fmt);
+326   vwprintw( term_output, fmt, arg_ptr);
+327   va_end( arg_ptr);
+328 
+329   wnoutrefresh( term_output);
+330   wnoutrefresh( term_input);
+331   doupdate();
+332 
+333   pthread_mutex_unlock( &ncurses_mutex);
+334 
+335 }
+.fi
+.SS "void stdinService (struct pollfd * evt)"
+.PP
+Handle keyboard input. \fBParameters:\fP
+.RS 4
+\fIevt\fP The pollfd object that caused this call 
+.RE
+.PP
+
+.PP
+Definition at line 245 of file pgpmac.c.
+.PP
+.nf
+247                     {
+248   static char cmds[1024];
+249   static char cntrlcmd[2];
+250   static char cmds_on = 0;
+251   int ch;
+252 
+253 
+254   for( ch=wgetch(term_input); ch != ERR; ch=wgetch(term_input)) {
+255     // wprintw( term_output, '%04x\n', ch);
+256     // wnoutrefresh( term_output);
+257 
+258     switch( ch) {
+259     case KEY_F(1):
+260       endwin();
+261       exit(0);
+262       break;
+263 
+264     case 0x0001:        // Control-A
+265     case 0x0002:        // Control-B
+266     case 0x0003:        // Control-C
+267     case 0x0004:        // Control-D
+268     case 0x0005:        // Control-E
+269     case 0x0006:        // Control-F
+270     case 0x0007:        // Control-G
+271     case 0x000b:        // Control-K
+272     case 0x000f:        // Control-O
+273     case 0x0010:        // Control-P
+274     case 0x0011:        // Control-Q
+275     case 0x0012:        // Control-R
+276     case 0x0013:        // Control-Q
+277     case 0x0016:        // Control-V
+278       cntrlcmd[0] = ch;
+279       cntrlcmd[1] = 0;
+280       lspmac_SockSendline( cntrlcmd);
+281       //      PmacSockSendControlCharPrint( ch);
+282       break;
+283 
+284     case KEY_BACKSPACE:
+285       cmds[cmds_on] = 0;
+286       cmds_on == 0 ? 0 : cmds_on--;
+287       break;
+288       
+289     case KEY_ENTER:
+290     case 0x000a:
+291       if( cmds_on > 0 && strlen( cmds) > 0) {
+292         lspmac_SockSendline( cmds);
+293       }
+294       memset( cmds, 0, sizeof(cmds));
+295       cmds_on = 0;
+296       break;
+297       
+298     default:
+299       if( cmds_on < sizeof( cmds)-1) {
+300         cmds[cmds_on++] = ch;
+301         cmds[cmds_on] = 0;
+302       }
+303       break;
+304     }
+305     
+306     mvwprintw( term_input, 1, 1, 'PMAC> %s', cmds);
+307     wclrtoeol( term_input);
+308     box( term_input, 0, 0);
+309     wnoutrefresh( term_input);
+310     doupdate();
+311 
+312   }
+313 }
+.fi
+.SH "Variable Documentation"
+.PP 
+.SS "pthread_mutex_t \fBncurses_mutex\fP"
+.PP
+allow more than one thread access to the screen 
+.PP
+Definition at line 233 of file pgpmac.c.
+.SS "struct pollfd \fBstdinfda\fP\fC [static]\fP"
+.PP
+Handle input from the keyboard. 
+.PP
+Definition at line 239 of file pgpmac.c.
+.SS "WINDOW* \fBterm_input\fP"
+.PP
+place to put the cursor 
+.PP
+Definition at line 229 of file pgpmac.c.
+.SS "WINDOW* \fBterm_output\fP"
+.PP
+place to print stuff out 
+.PP
+Definition at line 228 of file pgpmac.c.
+.SS "WINDOW* \fBterm_status\fP"
+.PP
+shutter, lamp, air, etc status 
+.PP
+Definition at line 230 of file pgpmac.c.
+.SS "WINDOW* \fBterm_status2\fP"
+.PP
+shutter, lamp, air, etc status 
+.PP
+Definition at line 231 of file pgpmac.c.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for LS-CAT PGPMAC from the source code.

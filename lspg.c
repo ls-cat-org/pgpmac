@@ -1,14 +1,12 @@
-//
-// lspg.c
-//
-// Postgresql support for the LS-CAT pgpmac project
-// (C) Copyright 2012 by Keith Brister, Northwestern University
-// All Rights Reserved
-//
+/*! \file lspg.c
+ *  \brief Postgresql support for the LS-CAT pgpmac project
+ *  \date 2012
+ *  \author Keith Brister
+ *  \copyright All Rights Reserved
+ *
+\details
 
-#include "pgpmac.h"
-
-/*
+<pre>
   Database state machine
 
 State		Description
@@ -21,9 +19,13 @@ State		Description
   2		Send a query to the server
   3		Continue flushing a command to the server
   4		Waiting for a reply
-  5		Continue waiting for a reply
-
+</pre>
 */
+
+
+
+#include "pgpmac.h"
+
 
 #define LS_PG_STATE_INIT	-4
 #define LS_PG_STATE_INIT_POLL	-3
@@ -34,34 +36,54 @@ State		Description
 #define LS_PG_STATE_SEND_FLUSH	3
 #define LS_PG_STATE_RECV	4
 
-static int ls_pg_state = LS_PG_STATE_INIT;
+static int ls_pg_state = LS_PG_STATE_INIT;	//!< State of the lspg state machine
 
-static pthread_t lspg_thread;		// our worker thread
-static pthread_mutex_t pg_queue_mutex;	// keep the queue from getting tangled
-static struct pollfd lspgfd;		// our poll info
+static pthread_t lspg_thread;		//!< our worker thread
+static pthread_mutex_t pg_queue_mutex;	//!< keep the queue from getting tangled
+static struct pollfd lspgfd;		//!< our poll info
 
 
-#define LS_PG_QUERY_STRING_LENGTH 1024
+/** Store each query along with it's callback function.
+ *  All calls are asynchronous
+ */
 typedef struct lspgQueryQueueStruct {
-  char qs[LS_PG_QUERY_STRING_LENGTH];				// our queries should all be pretty short as we'll just be calling functions: fixed length here simplifies memory management
-  void (*onResponse)( struct lspgQueryQueueStruct *qq, PGresult *pgr);		//
+  char qs[LS_PG_QUERY_STRING_LENGTH];						//!< our queries should all be pretty short as we'll just be calling functions: fixed length here simplifies memory management
+  void (*onResponse)( struct lspgQueryQueueStruct *qq, PGresult *pgr);		//!< Callback function for when a query returns a result
 } lspg_query_queue_t;
 
+/**
+ * Why such a long queue? you might ask.  A huge queue is used here to insure that we don't have to worry too much
+ * about over running it.  Typically we'll be adding a few queries at a time (for example, to initialize the motors)
+ * but not much more than that.  When we over run the queue we'll need to look deeply into the root cause as something
+ * has gone terribly wrong.
+ */
+
 #define LS_PG_QUERY_QUEUE_LENGTH 16318
-static lspg_query_queue_t lspg_query_queue[LS_PG_QUERY_QUEUE_LENGTH];
-static unsigned int lspg_query_queue_on    = 0;
-static unsigned int lspg_query_queue_off   = 0;
-static unsigned int lspg_query_queue_reply = 0;
+static lspg_query_queue_t lspg_query_queue[LS_PG_QUERY_QUEUE_LENGTH];	//!< Our query queue
+static unsigned int lspg_query_queue_on    = 0;				//!< Next position to add something to the queue
+static unsigned int lspg_query_queue_off   = 0;				//!< The last item still being used  (on == off means nothing in queue)
+static unsigned int lspg_query_queue_reply = 0;				/**< The current item being digested.  Normally off <= reply <= on.  Corner case of queue wrap arround
+									      works because we only increment and compare for equality.
+									*/
 
-static PGconn *q = NULL;
-static PostgresPollingStatusType lspg_connectPoll_response;
-static PostgresPollingStatusType lspg_resetPoll_response;
+static PGconn *q = NULL;						//!< Database connector
+static PostgresPollingStatusType lspg_connectPoll_response;		//!< Used to determine state while connecting
+static PostgresPollingStatusType lspg_resetPoll_response;		//!< Used to determine state while reconnecting
 
+lspg_nextshot_t lspg_nextshot;						//!< the nextshot object
+
+
+/** Return the next item in the postgresql queue
+ *
+ * If there is an item left in the queue then it is returned.  Otherwise, NULL is returned.
+ */
 lspg_query_queue_t *lspg_query_next() {
   lspg_query_queue_t *rtn;
   
   pthread_mutex_lock( &pg_queue_mutex);
+
   if( lspg_query_queue_off == lspg_query_queue_on)
+    // Queue is empty
     rtn = NULL;
   else
     rtn = &(lspg_query_queue[(lspg_query_queue_off++) % LS_PG_QUERY_QUEUE_LENGTH]); 
@@ -70,12 +92,14 @@ lspg_query_queue_t *lspg_query_next() {
   return rtn;
 }
 
+/** Remove the oldest item in the queue
+ *
+ * this is called only when there is nothing else to service
+ * the reply: this pop does not return anything.
+ *  We use the ...reply_peek function to return the next item in the reply queue
+ *
+ */
 void lspg_query_reply_next() {
-  //
-  // this is called only when there is nothing else to do to service
-  // the reply: this pop does not return anything.
-  //  We use the ...reply_peek function to return the next item in the reply queue
-  //
 
   pthread_mutex_lock( &pg_queue_mutex);
 
@@ -85,11 +109,12 @@ void lspg_query_reply_next() {
   pthread_mutex_unlock( &pg_queue_mutex);
 }
 
+/** Return the next item in the reply queue but don't pop it since we may need it more than once.
+ *  Call lspg_query_reply_next() when done.
+ */
 lspg_query_queue_t *lspg_query_reply_peek() {
   lspg_query_queue_t *rtn;
-  //
-  // Return the next item in the reply queue but don't pop it since we may need it more than once.
-  //
+
   pthread_mutex_lock( &pg_queue_mutex);
 
   if( lspg_query_queue_reply == lspg_query_queue_on)
@@ -101,11 +126,26 @@ lspg_query_queue_t *lspg_query_reply_peek() {
   return rtn;
 }
 
-void lspg_query_push( void (*cb)( lspg_query_queue_t *, PGresult *), char *fmt, ...) {
+/** Place a query on the queue
+ */
+void lspg_query_push(
+		     void (*cb)( lspg_query_queue_t *, PGresult *),	/**< [in] Our callback function that deals with the response	*/
+		     char *fmt,						/**< [in] Printf style function to generate the query		*/
+		     ...						/* Argument for the format string				*/
+		     ) {
   int idx;
   va_list arg_ptr;
 
   pthread_mutex_lock( &pg_queue_mutex);
+
+  //
+  // TODO
+  //
+  // Should really wait until there is enough room on the queue.
+  // Although the queue is big it is not infinite, so one day we'll over run it.
+  // Should really test to see if (on + 1) == off.  If so, then use pg_queue_cond to
+  // wait until some room has been cleared.
+  //
 
   idx = lspg_query_queue_on % LS_PG_QUERY_QUEUE_LENGTH;
 
@@ -122,8 +162,12 @@ void lspg_query_push( void (*cb)( lspg_query_queue_t *, PGresult *), char *fmt, 
 };
 
 
-
-void lspg_init_motors_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+/** Motor initialization callback
+ */
+void lspg_init_motors_cb(
+			 lspg_query_queue_t *qqp,		/**< [in] The query queue item used to call us		*/
+			 PGresult *pgr				/**< [in] The postgresql result object			*/
+			 ) {
   int i, j;
   uint32_t  motor_number, motor_number_column, max_speed_column, max_accel_column;
   uint32_t units_column;
@@ -168,18 +212,12 @@ void lspg_init_motors_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   }
 }
 
-lspg_nextshot_t lspg_nextshot;
-
-
-/*
-**       dsdir text, dspid text, dsowidth numeric, dsoscaxis text, dsexp numeric, skey int, sstart numeric, sfn text,
-**       dsphi numeric, dsomega numeric, dskappa numeric, dsdist numeric, dsnrg numeric, dshpid int,
-**       cx numeric, cy numeric, ax numeric, ay numeric, az numeric, active int, sindex int, stype text,
-**       dsowidth2 numeric, dsoscaxis2 text, dsexp2 numeric, sstart2 numeric, dsphi2 numeric, dsomega2 numeric, dskappa2 numeric, dsdist2 numeric, dsnrg2 numeric,
-**       cx2 numeric, cy2 numeric, ax2 numeric, ay2 numeric, az2 numeric, active2 int, sindex2 int, stype2 text);
-*/
-
-void lspg_zoom_lut_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+/** Zoom motor look up table callback
+ */
+void lspg_zoom_lut_cb(
+		      lspg_query_queue_t *qqp,		/**< [in] the queue item responsible for calling us	*/
+		      PGresult *pgr			/**< [in] The Postgresql result object			*/
+		      ) {
   int i;
   
   pthread_mutex_lock( &(zoom->mutex));
@@ -203,7 +241,13 @@ void lspg_zoom_lut_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
 
 }
 
-void lspg_flight_lut_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+/** Front Light Lookup table query callback
+ * Install the lookup table for the Front Light
+ */
+void lspg_flight_lut_cb(
+			lspg_query_queue_t *qqp,		/**< [in] Our query			*/
+			PGresult *pgr				/**< [in] Our result object		*/
+			) {
   int i;
   
   pthread_mutex_lock( &(flight->mutex));
@@ -227,7 +271,14 @@ void lspg_flight_lut_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
 
 }
 
-void lspg_blight_lut_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+
+/** Back Light Lookup Table Callback
+ *  Install the lookup table for the Back Light
+ */
+void lspg_blight_lut_cb(
+			lspg_query_queue_t *qqp,		/**< [in] Our query			*/
+			PGresult *pgr				/**< [in] The query's result		*/
+			) {
   int i;
   
   pthread_mutex_lock( &(blight->mutex));
@@ -251,7 +302,18 @@ void lspg_blight_lut_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
 
 }
 
-void lspg_nextshot_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+
+
+/** Next Shot Callback.
+ *  This is a long and tedious routine as there are a large
+ *  number of variables returned.
+ *  Suck it up.
+ *  Return with the global variable lspg_nextshot set.
+ */
+void lspg_nextshot_cb(
+		      lspg_query_queue_t *qqp,		/**< [in] Our nextshot query			*/
+		      PGresult *pgr			/**< [in] result of the query			*/
+		      ) {
   static int got_col_nums=0;
   static int
     dsdir_c, dspid_c, dsowidth_c, dsoscaxis_c, dsexp_c, skey_c, sstart_c, sfn_c, dsphi_c,
@@ -493,12 +555,16 @@ void lspg_nextshot_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
 
 }
 
+/** Initialize the nextshot variable, mutex, and condition
+ */
 void lspg_nextshot_init() {
   memset( &lspg_nextshot, 0, sizeof( lspg_nextshot));
   pthread_mutex_init( &(lspg_nextshot.mutex), NULL);
   pthread_cond_init( &(lspg_nextshot.cond), NULL);
 }
 
+/** Queue up a nextshot query
+ */
 void lspg_nextshot_call() {
   pthread_mutex_lock( &(lspg_nextshot.mutex));
   lspg_nextshot.new_value_ready = 0;
@@ -507,30 +573,44 @@ void lspg_nextshot_call() {
   lspg_query_push( lspg_nextshot_cb, "SELECT * FROM px.nextshot()");
 }
 
+/** Wait for the next shot query to get processed
+ */
 void lspg_nextshot_wait() {
   pthread_mutex_lock( &(lspg_nextshot.mutex));
   while( lspg_nextshot.new_value_ready == 0)
     pthread_cond_wait( &(lspg_nextshot.cond), &(lspg_nextshot.mutex));
 }
 
+/** Called when the next shot query has been processed
+ */
 void lspg_nextshot_done() {
   pthread_mutex_unlock( &(lspg_nextshot.mutex));
 }
 
+/** Object that implements detector / spindle timing
+ *  We use database locks for exposure control and
+ *  this implements the md2 portion of this handshake
+ */
 typedef struct lspg_wait_for_detector_struct {
   pthread_mutex_t mutex;
   pthread_cond_t cond;
   int new_value_ready;
 } lspg_wait_for_detector_t;
 
+/** Instance of the detector timing object
+ */
 static lspg_wait_for_detector_t lspg_wait_for_detector;
 
+/** initialize the detector timing object
+ */
 void lspg_wait_for_detector_init() {
   lspg_wait_for_detector.new_value_ready = 0;
   pthread_mutex_init( &(lspg_wait_for_detector.mutex), NULL);
   pthread_cond_init(  &(lspg_wait_for_detector.cond), NULL);
 }
 
+/** Callback for the wait for detector query
+ */
 void lspg_wait_for_detector_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   pthread_mutex_lock( &(lspg_wait_for_detector.mutex));
   lspg_wait_for_detector.new_value_ready = 1;
@@ -538,6 +618,8 @@ void lspg_wait_for_detector_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   pthread_mutex_unlock( &(lspg_wait_for_detector.mutex));
 }
 
+/** initiate the wait for detector query
+ */
 void lspg_wait_for_detector_call() {
   pthread_mutex_lock( &(lspg_wait_for_detector.mutex));
   lspg_wait_for_detector.new_value_ready = 0;
@@ -546,16 +628,24 @@ void lspg_wait_for_detector_call() {
   lspg_query_push( lspg_wait_for_detector_cb, "SELECT px.lock_detector_test_block()");
 }
 
+/** Pause the calling thread until the detector is ready
+ *  Called by the MD2 thread.
+ */
 void lspg_wait_for_detector_wait() {
   pthread_mutex_lock( &(lspg_wait_for_detector.mutex));
   while( lspg_wait_for_detector.new_value_ready == 0)
     pthread_cond_wait( &(lspg_wait_for_detector.cond), &(lspg_wait_for_detector.mutex));
 }
 
+/** Done waiting for the detector
+ */
 void lspg_wait_for_detector_done() {
   pthread_mutex_unlock( &(lspg_wait_for_detector.mutex));
 }
 
+/** Combined call to wait for the detector.
+ * 
+ */
 void lspg_wait_for_detector_all() {
   lspg_wait_for_detector_call();
   lspg_wait_for_detector_wait();
@@ -563,6 +653,9 @@ void lspg_wait_for_detector_all() {
 }
 
 
+/** Object used to impliment locking the diffractometer
+ *  Critical to exposure timing
+ */
 typedef struct lspg_lock_diffractometer_struct {
   pthread_mutex_t mutex;
   pthread_cond_t  cond;
@@ -570,12 +663,16 @@ typedef struct lspg_lock_diffractometer_struct {
 } lspg_lock_diffractometer_t;
 static lspg_lock_diffractometer_t lspg_lock_diffractometer;
 
+/** initialize the diffractometer locking object
+ */
 void lspg_lock_diffractometer_init() {
   lspg_lock_diffractometer.new_value_ready = 0;
   pthread_mutex_init( &(lspg_lock_diffractometer.mutex), NULL);
   pthread_cond_init(  &(lspg_lock_diffractometer.cond), NULL);
 }
 
+/** Callback routine for a lock diffractometer query
+ */
 void lspg_lock_diffractometer_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   pthread_mutex_lock( &(lspg_lock_diffractometer.mutex));
   lspg_lock_diffractometer.new_value_ready = 1;
@@ -583,6 +680,8 @@ void lspg_lock_diffractometer_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   pthread_mutex_unlock( &(lspg_lock_diffractometer.mutex));
 }
 
+/** Request that the database grab the diffractometer lock
+ */
 void lspg_lock_diffractometer_call() {
   pthread_mutex_lock( &(lspg_lock_diffractometer.mutex));
   lspg_lock_diffractometer.new_value_ready = 0;
@@ -591,22 +690,31 @@ void lspg_lock_diffractometer_call() {
   lspg_query_push( lspg_lock_diffractometer_cb, "SELECT px.lock_diffractomter()");
 }
 
+/** Wait for the diffractometer lock
+ */
 void lspg_lock_diffractometer_wait() {
   pthread_mutex_lock( &(lspg_lock_diffractometer.mutex));
   while( lspg_lock_diffractometer.new_value_ready == 0)
     pthread_cond_wait( &(lspg_lock_diffractometer.cond), &(lspg_lock_diffractometer.mutex));
 }
 
+/** Finish up the lock diffractometer call
+ */
 void lspg_lock_diffractometer_done() {
   pthread_mutex_unlock( &(lspg_lock_diffractometer.mutex));
 }
 
+/** Convience function that combines lock diffractometer calls
+ */
 void lspg_lock_diffractometer_all() {
   lspg_lock_diffractometer_call();
   lspg_lock_diffractometer_wait();
   lspg_lock_diffractometer_all();
 }
 
+/** lock detector object
+ *  Implements detector lock for exposure control
+ */
 typedef struct lspg_lock_detector_struct {
   pthread_mutex_t mutex;
   pthread_cond_t  cond;
@@ -614,12 +722,16 @@ typedef struct lspg_lock_detector_struct {
 } lspg_lock_detector_t;
 static lspg_lock_detector_t lspg_lock_detector;
 
+/** Initialize detector lock object
+ */
 void lspg_lock_detector_init() {
   lspg_lock_detector.new_value_ready = 0;
   pthread_mutex_init( &(lspg_lock_detector.mutex), NULL);
   pthread_cond_init(  &(lspg_lock_detector.cond),  NULL);
 }
 
+/** Callback for when the detector lock has be grabbed
+ */
 void lspg_lock_detector_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   pthread_mutex_lock( &(lspg_lock_detector.mutex));
   lspg_lock_detector.new_value_ready = 1;
@@ -627,6 +739,8 @@ void lspg_lock_detector_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   pthread_mutex_unlock( &(lspg_lock_detector.mutex));
 }
 
+/** Request (demand) a detector lock
+ */
 void lspg_lock_detector_call() {
   pthread_mutex_lock( &(lspg_lock_detector.mutex));
   lspg_lock_detector.new_value_ready = 0;
@@ -635,22 +749,30 @@ void lspg_lock_detector_call() {
   lspg_query_push( lspg_lock_detector_cb, "SELECT px.lock_detector()");
 }
 
+/** Wait for the detector lock
+ */
 void lspg_lock_detector_wait() {
   pthread_mutex_lock( &(lspg_lock_detector.mutex));
   while( lspg_lock_detector.new_value_ready == 0)
     pthread_cond_wait( &(lspg_lock_detector.cond), &(lspg_lock_detector.mutex));
 }
 
+/** Finish waiting.
+ */
 void lspg_lock_detector_done() {
   pthread_mutex_unlock( &(lspg_lock_detector.mutex));
 }
 
+/** Detector lock convinence function
+ */
 void lspg_lock_detector_all() {
   lspg_lock_detector_call();
   lspg_lock_detector_wait();
   lspg_lock_detector_done();
 }
 
+/** Data collection running object
+ */
 typedef struct lspg_seq_run_prep_struct {
   pthread_mutex_t mutex;
   pthread_cond_t  cond;
@@ -658,20 +780,38 @@ typedef struct lspg_seq_run_prep_struct {
 } lspg_seq_run_prep_t;
 static lspg_seq_run_prep_t lspg_seq_run_prep;
 
+/** Initialize the data collection object
+ */
 void lspg_seq_run_prep_init() {
   lspg_seq_run_prep.new_value_ready = 0;
   pthread_mutex_init( &(lspg_seq_run_prep.mutex), NULL);
   pthread_cond_init(  &(lspg_seq_run_prep.cond),  NULL);
 }
 
-void lspg_seq_run_prep_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+/** Callback for the seq_run_prep query
+ */
+void lspg_seq_run_prep_cb(
+			  lspg_query_queue_t *qqp,	/**< [in] The query item that generated this callback	*/
+			  PGresult *pgr			/**< [in] The result of the query			*/
+			  ) {
   pthread_mutex_lock( &(lspg_seq_run_prep.mutex));
   lspg_seq_run_prep.new_value_ready = 1;
   pthread_cond_signal( &(lspg_seq_run_prep.cond));
   pthread_mutex_unlock( &(lspg_seq_run_prep.mutex));
 }
 
-void lspg_seq_run_prep_call( long long skey, double kappa, double phi, double cx, double cy, double ax, double ay, double az) {
+/** queue up the seq_run_prep query
+ */
+void lspg_seq_run_prep_call(
+			    long long skey,		/**< [in] px.shots key for this image			*/
+			    double kappa,		/**< [in] current kappa postion				*/
+			    double phi,			/**< [in] current phi postition				*/
+			    double cx,			/**< [in] current center table x			*/
+			    double cy,			/**< [in] current center table y			*/
+			    double ax,			/**< [in] current alignment table x			*/
+			    double ay,			/**< [in] current alignment table y			*/
+			    double az			/**< [in] current alignment table z			*/
+			    ) {
   pthread_mutex_lock( &(lspg_seq_run_prep.mutex));
   lspg_seq_run_prep.new_value_ready = 0;
   pthread_mutex_unlock( &(lspg_seq_run_prep.mutex));
@@ -680,22 +820,39 @@ void lspg_seq_run_prep_call( long long skey, double kappa, double phi, double cx
 		   skey, kappa, phi, cx, cy, ax, ay, az);
 }
 
+/** Wait for seq run prep query to return
+ */
 void lspg_seq_run_prep_wait() {
   pthread_mutex_lock( &(lspg_seq_run_prep.mutex));
   while( lspg_seq_run_prep.new_value_ready == 0)
     pthread_cond_wait( &(lspg_seq_run_prep.cond), &(lspg_seq_run_prep.mutex));
 }
 
+/** Indicate we are done waiting
+ */
 void lspg_seq_run_prep_done() {
   pthread_mutex_unlock( &(lspg_seq_run_prep.mutex));
 }
 
-void lspg_seq_run_prep_all( long long skey, double kappa, double phi, double cx, double cy, double ax, double ay, double az) {
+/** Convinence function to call seq run prep
+ */
+void lspg_seq_run_prep_all(
+			    long long skey,		/**< [in] px.shots key for this image			*/
+			    double kappa,		/**< [in] current kappa postion				*/
+			    double phi,			/**< [in] current phi postition				*/
+			    double cx,			/**< [in] current center table x			*/
+			    double cy,			/**< [in] current center table y			*/
+			    double ax,			/**< [in] current alignment table x			*/
+			    double ay,			/**< [in] current alignment table y			*/
+			    double az			/**< [in] current alignment table z			*/
+			   ) {
   lspg_seq_run_prep_call( skey, kappa, phi, cx, cy, ax, ay, az);
   lspg_seq_run_prep_wait();
   lspg_seq_run_prep_done();
 }
 
+/** TODO: implement getcenter code
+ */
 void lspg_getcenter_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   int theZoom;
   double dxp, dyp, z, b;
@@ -703,7 +860,12 @@ void lspg_getcenter_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
 
 }
 
-void lspg_nextaction_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+/** Queue the next MD2 instruction
+ */
+void lspg_nextaction_cb(
+			lspg_query_queue_t *qqp,	/**< [in] The query that generated this result		*/
+			PGresult *pgr			/**< [in] The result					*/
+			) {
   char *action;
 
   if( PQntuples( pgr) <= 0)
@@ -728,7 +890,12 @@ void lspg_nextaction_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   }
 }
 
-void lspg_cmd_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+/** Send strings directly to PMAC queue
+ */
+void lspg_cmd_cb(
+		 lspg_query_queue_t *qqp,		/**< [in] Our query					*/
+		 PGresult *pgr				/**< [in] Our result					*/
+		 ) {
   //
   // Call back funciton assumes query results in zero or more commands to send to the PMAC
   //
@@ -751,6 +918,9 @@ void lspg_cmd_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   }
 }
 
+
+/** Flush psql output buffer (ie, send the query)
+ */
 void lspg_flush() {
   int err;
 
@@ -784,9 +954,11 @@ void lspg_flush() {
   }
 }
 
+/** send the next queued query to the DB server
+ */
 void lspg_send_next_query() {
   //
-  // Nomrally we should be in the "send" state
+  // Normally we should be in the "send" state
   // but we can also send if we are servicing
   // a reply
   //
@@ -839,6 +1011,8 @@ void lspg_send_next_query() {
   }
 }
 
+/** Receive a result of a query
+ */
 void lspg_receive() {
   PGresult *pgr;
   lspg_query_queue_t *qqp;
@@ -906,7 +1080,13 @@ void lspg_receive() {
   }
 }
 
-void lspg_sig_service( struct pollfd *evt) {
+/** Service a signal
+ *  Signals here are treated as file descriptors
+ *  and fits into our poll scheme
+ */
+void lspg_sig_service(
+		      struct pollfd *evt		/**< [in] The pollfd object that triggered this call	*/
+		      ) {
   struct signalfd_siginfo fdsi;
 
   //
@@ -924,7 +1104,11 @@ void lspg_sig_service( struct pollfd *evt) {
 
 }
 
-void lspg_pg_service( struct pollfd *evt) {
+/** I/O control to/from the postgresql server
+ */
+void lspg_pg_service(
+		     struct pollfd *evt			/**<[in] The pollfd object that we are responding to	*/
+		     ) {
   //
   // Currently just used to check for notifies
   // Other socket communication is done syncronously
@@ -1025,6 +1209,8 @@ void lspg_pg_service( struct pollfd *evt) {
 }
 
 
+/** Connect to the pg server
+ */
 void lspg_pg_connect() {
   PGresult *pgr;
   int wait_interval = 1;
@@ -1122,6 +1308,10 @@ void lspg_pg_connect() {
 
 
 
+/** Implements our state machine
+ *  Does not strictly only set the next state as it also calls some functions
+ *  that, perhaps, alters the state mid-function.
+ */
 void lspg_next_state() {
   //
   // connect to the database
@@ -1171,7 +1361,11 @@ void lspg_next_state() {
   }
 }
 
-void *lspg_worker( void *dummy) {
+/** The main loop for the lspg thread
+ */
+void *lspg_worker(
+		  void *dummy		/**< [in] Required by pthreads but unused		*/
+		  ) {
   static struct pollfd fda[2];	// 0=signal handler, 1=pg socket
   static int nfda = 0;
   static sigset_t our_sigset;
@@ -1252,6 +1446,8 @@ void *lspg_worker( void *dummy) {
 }
 
 
+/** Initiallize the lspg module
+ */
 void lspg_init() {
   pthread_mutex_init( &pg_queue_mutex, NULL);
   lspg_nextshot_init();
@@ -1260,6 +1456,8 @@ void lspg_init() {
   lspg_lock_detector_init();
 }
 
+/** Start 'er runnin'
+ */
 void lspg_run() {
   pthread_create( &lspg_thread, NULL, lspg_worker, NULL);
 }

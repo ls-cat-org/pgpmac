@@ -1,55 +1,97 @@
-//
-// pgpmac.c
-//
-// Some pmac defines, typedefs, functions suggested by Delta Tau
-// Accessory 54E User Manual, October 23, 2003 (C) 2003 by Delta Tau Data
-// Systems, Inc.  All rights reserved.
-//
-//
-// Original work Copyright (C) 2012 by Keith Brister, Northwestern University, All rights reserved.
-//
-//
-// TODO's:
-//
-//	Epics support could come by adapting the "e.c" code to work here directly
-//	or could come by making use of the existing kv pair mechanism already in place
-//	or, as is most likely, a combination of the two.
-//
-//	Ncurses support could include input lines for SQL queries and direct commands
-//	for supporting homing etc.  Perhaps the F keys could change modes or use of
-//	special mode changing text commands.  Output is not asynchronous.  Although this is
-//	unlikely to cause a problem I'd hate to have the program hang because terminal
-//	output is hung up.
-//
-//	Currently the effort has been to make no changes to the PMAC motion programs or PLC/PLCC
-//	programs to maintian 100% compatability with the MD2 VB code.
-//
-//	PG queries come back as text instead of binary.  We could reduce the numeric errors by
-//	using binary and things would run a tad faster, though it is unlikely anyone would
-//	notice or care about the speed.  We need to support the seqrun code from blumax.
-//
-//
-
-#include "pgpmac.h"
-
-WINDOW *term_output;			// place to print stuff out
-WINDOW *term_input;			// place to put the cursor
-WINDOW *term_status;			// shutter, lamp, air, etc status
-WINDOW *term_status2;			// shutter, lamp, air, etc status
-
-pthread_mutex_t ncurses_mutex;		// allow more than one thread access to the screen
-
-
-//
-// globals
-//
-static struct pollfd stdinfda;			// Handle input from the keyboard
-
-/*
-**
-** MD2 Motors and Coordinate Systems
-**
-
+/*! \file pgpmac.c
+ *  \brief Main for the pgpmac project.
+ *  \date 2012
+ *  \author Keith Brister
+ *  \copyright All Rights Reserved
+ *
+ * \mainpage The LS-CAT pgpmac Project
+ *
+ *
+ *  \details
+ * pgpmac.c
+ *
+ * Some pmac defines, typedefs, functions suggested by Delta Tau
+ * Accessory 54E User Manual, October 23, 2003 (C) 2003 by Delta Tau Data
+ * Systems, Inc.  All rights reserved.
+ *
+ *
+ * Original work Copyright (C) 2012 by Keith Brister, Northwestern University, All rights reserved.
+ *
+ * This project implements the MD2 communications required for
+ * operation at LS-CAT and is intended to replace Windows XP based
+ * .NET code provided by MAATEL.
+ *
+ * The need to do this is driven by a desire to make the system as
+ * effecient and fast as possible by combining various operations.  A
+ * proof-of-principle version of this code saw frame rates of
+ * 23/minute as opposed to the nominal 18/minute we normally quote for
+ * 1 second exposures.
+ *
+ * Additionally, as we rapidly approach EOL for Windows XP an
+ * alternative is urgently needed.
+ *
+ * <h3>Structure</h3>
+ *
+ * The project is roughly broken down as follows:
+ *
+ *  pgpmac.h		All includes and defines.  The only file included by the .c files in this project.
+ *
+ *  pgpmac.c		Main: parses command line and starts up the various threads
+ *
+ *  lspg.c		Handles communications with the controlling posgresql database
+ *
+ *  md2cmds.c		Provides the equivilant (mostly( of the LS-CAT BLUMax code.
+ *
+ *  pmac_md2_ls-cat.pmc Code for the PMAC: compile and install with pmac exectutive program.
+ *
+ *  pmac_md2.sql        Tables and procedures for the posgresql side of the project.
+ *
+ *
+ * <b>Notes:</b>
+ *<ul>
+ *	<li> The postgresql and the pmac communications interfaces are
+ *	asynchronous and rely heavyly on the unix "poll" routine. </li>
+ *
+ *	<li> The project is multithreaded and based on
+ *	"pthreads".</li>
+ *	
+ *	<li> Most threads maintain a queue of commands to simpify
+ *	communications with each other.</li>
+ *	
+ *	<li> Note that a MAATEL supported interface for a more recent
+ *	version of Windows may be available, however, a bit of effort
+ *	will be required to implement it at LS-CAT as the BLUMax code
+ *	will likely require some revisions.  This is still an option
+ *	should the present project become intractable.</li>
+ *
+ *	<li> An important constraint has been to run the MD2 either
+ *	from the windows .NET environment or from the pgpmac
+ *	environment.  A consequence is that the pmac "pmc" file has
+ *	been augmented to include new capabilities without destroying
+ *	the code that the .NET interface requires.</li>
+ *
+ *      <li> Epics support could come by adapting the "e.c" code to
+ *	work here directly or could come by making use of the existing
+ *	kv pair mechanism already in place or, as is most likely, a
+ *	combination of the two.</li>
+ *
+ *	<li> Ncurses support could include input lines for SQL queries
+ *	and direct commands for supporting homing etc.  Perhaps the F
+ *	keys could change modes or use of special mode changing text
+ *	commands.  Output is not asynchronous.  Although this is
+ *	unlikely to cause a problem I'd hate to have the program hang
+ *	because terminal output is hung up.</li>
+ *
+ *	<li> PG queries come back as text instead of binary.  We could
+ *	reduce the numeric errors by using binary and things would run
+ *	a tad faster, though it is unlikely anyone would notice or
+ *	care about the speed. </li>
+ *
+ *</ul>
+ *
+ * <h3>MD2 Motors and Coordinate Systems</h3>
+ *
+<pre>
   CS       Motor
 
   1		1	X = Omega
@@ -76,12 +118,13 @@ static struct pollfd stdinfda;			// Handle input from the keyboard
   7	       19	X = Kappa
 	       20	Y = Phi
 
-*/
+</pre>
 
-/*
 **
 ** MD2 Motion Programs
 **
+
+<pre>
 
 before calling, set
    M4XX = 1:  flag to indicate we are running program XX
@@ -177,14 +220,31 @@ Program		Description
 			Q30    = X Value
 			Q31    = Y Value
 			Q32    = Z Value
+</pre>
 */
 
+#include "pgpmac.h"
+
+WINDOW *term_output;			//!< place to print stuff out
+WINDOW *term_input;			//!< place to put the cursor
+WINDOW *term_status;			//!< shutter, lamp, air, etc status
+WINDOW *term_status2;			//!< shutter, lamp, air, etc status
+
+pthread_mutex_t ncurses_mutex;		//!< allow more than one thread access to the screen
+
+
+//
+// globals
+//
+static struct pollfd stdinfda;			//!< Handle input from the keyboard
 
 
 
-
-
-void stdinService( struct pollfd *evt) {
+/** Handle keyboard input
+ */
+void stdinService(
+		  struct pollfd *evt		/**< [in] The pollfd object that caused this call	*/
+		  ) {
   static char cmds[1024];
   static char cntrlcmd[2];
   static char cmds_on = 0;
@@ -252,7 +312,12 @@ void stdinService( struct pollfd *evt) {
   }
 }
 
-void pgpmac_printf( char *fmt, ...) {
+/** Terminal output routine ala printf
+ */
+void pgpmac_printf(
+		   char *fmt,		/**< [in]  Printf style formating string		*/
+		   ...			/*         Arguments required by fmt			*/
+		   ) {
   va_list arg_ptr;
 
   pthread_mutex_lock( &ncurses_mutex);
@@ -270,8 +335,12 @@ void pgpmac_printf( char *fmt, ...) {
 }
 
 
-
-int main( int argc, char **argv) {
+/** Our main routine
+ */
+int main(
+	 int argc,		/**< [in] Number of arguments			*/
+	 char **argv		/**< [in] Vector of argument strings		*/
+	 ) {
   static nfds_t nfds;
 
   static struct pollfd fda[3], *fdp;	// input for poll: room for postgres, pmac, and stdin

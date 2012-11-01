@@ -1,0 +1,284 @@
+.TH "lspmac_motor_struct" 3 "12 Oct 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+lspmac_motor_struct \- 
+.PP
+Motor information.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <pgpmac.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "pthread_mutex_t \fBmutex\fP"
+.br
+.RI "\fIcoordinate waiting for motor to be done \fP"
+.ti -1c
+.RI "pthread_cond_t \fBcond\fP"
+.br
+.ti -1c
+.RI "void(* \fBread\fP )(struct \fBlspmac_motor_struct\fP *)"
+.br
+.RI "\fIfunction to read the motor status and position \fP"
+.ti -1c
+.RI "int \fBnot_done\fP"
+.br
+.RI "\fIset to 1 when request is queued, zero after motion has toggled \fP"
+.ti -1c
+.RI "int \fBmotion_seen\fP"
+.br
+.RI "\fIset to 1 when motion has been verified to have started \fP"
+.ti -1c
+.RI "struct \fBlspmac_cmd_queue_struct\fP * \fBpq\fP"
+.br
+.RI "\fIthe queue item requesting motion. Used to check time request was made \fP"
+.ti -1c
+.RI "int \fBrequested_pos_cnts\fP"
+.br
+.RI "\fIrequested position \fP"
+.ti -1c
+.RI "int * \fBactual_pos_cnts_p\fP"
+.br
+.RI "\fIpointer to the md2_status structure to the actual position \fP"
+.ti -1c
+.RI "double \fBposition\fP"
+.br
+.RI "\fIscaled position \fP"
+.ti -1c
+.RI "double \fBreported_position\fP"
+.br
+.RI "\fIprevious position reported to the database \fP"
+.ti -1c
+.RI "double \fBrequested_position\fP"
+.br
+.RI "\fIThe position as requested by the user. \fP"
+.ti -1c
+.RI "double \fBupdate_resolution\fP"
+.br
+.RI "\fIChange needs to be at least this big to report as a new position to the database. \fP"
+.ti -1c
+.RI "int * \fBstatus1\fP"
+.br
+.RI "\fIFirst 24 bit PMAC motor status word. \fP"
+.ti -1c
+.RI "int * \fBstatus2\fP"
+.br
+.RI "\fISectond 24 bit PMAC motor status word. \fP"
+.ti -1c
+.RI "int \fBmotor_num\fP"
+.br
+.RI "\fIpmac motor number \fP"
+.ti -1c
+.RI "char * \fBdac_mvar\fP"
+.br
+.RI "\fIcontrolling mvariable as a string \fP"
+.ti -1c
+.RI "char * \fBname\fP"
+.br
+.RI "\fIName of motor as refered by ls database kvs table. \fP"
+.ti -1c
+.RI "char * \fBunits\fP"
+.br
+.RI "\fIstring to use as the units \fP"
+.ti -1c
+.RI "char * \fBformat\fP"
+.br
+.RI "\fIprintf format \fP"
+.ti -1c
+.RI "char * \fBwrite_fmt\fP"
+.br
+.RI "\fIFormat string to write requested position to PMAC used for binary io. \fP"
+.ti -1c
+.RI "int * \fBread_ptr\fP"
+.br
+.RI "\fIWith read_mask finds bit to read for binary i/o. \fP"
+.ti -1c
+.RI "int \fBread_mask\fP"
+.br
+.RI "\fIWIth read_ptr find bit to read for binary i/o. \fP"
+.ti -1c
+.RI "void(* \fBmoveAbs\fP )(struct \fBlspmac_motor_struct\fP *, double)"
+.br
+.RI "\fIfunction to move the motor \fP"
+.ti -1c
+.RI "double \fBu2c\fP"
+.br
+.RI "\fIconversion from counts to units: 0.0 means not loaded yet \fP"
+.ti -1c
+.RI "double * \fBlut\fP"
+.br
+.RI "\fIlookup table (instead of u2c) \fP"
+.ti -1c
+.RI "int \fBnlut\fP"
+.br
+.RI "\fIlength of lut \fP"
+.ti -1c
+.RI "double \fBmax_speed\fP"
+.br
+.RI "\fIour maximum speed (cts/msec) \fP"
+.ti -1c
+.RI "double \fBmax_accel\fP"
+.br
+.RI "\fIour maximum acceleration (cts/msec^2) \fP"
+.ti -1c
+.RI "WINDOW * \fBwin\fP"
+.br
+.RI "\fIour ncurses window \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+Motor information. 
+
+A catchall for motors and motor like objects. Not all members are used by all objects. 
+.PP
+Definition at line 69 of file pgpmac.h.
+.SH "Field Documentation"
+.PP 
+.SS "int* \fBlspmac_motor_struct::actual_pos_cnts_p\fP"
+.PP
+pointer to the md2_status structure to the actual position 
+.PP
+Definition at line 78 of file pgpmac.h.
+.SS "pthread_cond_t \fBlspmac_motor_struct::cond\fP"
+.PP
+Definition at line 71 of file pgpmac.h.
+.SS "char* \fBlspmac_motor_struct::dac_mvar\fP"
+.PP
+controlling mvariable as a string 
+.PP
+Definition at line 86 of file pgpmac.h.
+.SS "char* \fBlspmac_motor_struct::format\fP"
+.PP
+printf format 
+.PP
+Definition at line 89 of file pgpmac.h.
+.SS "double* \fBlspmac_motor_struct::lut\fP"
+.PP
+lookup table (instead of u2c) 
+.PP
+Definition at line 95 of file pgpmac.h.
+.SS "double \fBlspmac_motor_struct::max_accel\fP"
+.PP
+our maximum acceleration (cts/msec^2) 
+.PP
+Definition at line 98 of file pgpmac.h.
+.SS "double \fBlspmac_motor_struct::max_speed\fP"
+.PP
+our maximum speed (cts/msec) 
+.PP
+Definition at line 97 of file pgpmac.h.
+.SS "int \fBlspmac_motor_struct::motion_seen\fP"
+.PP
+set to 1 when motion has been verified to have started 
+.PP
+Definition at line 74 of file pgpmac.h.
+.SS "int \fBlspmac_motor_struct::motor_num\fP"
+.PP
+pmac motor number 
+.PP
+Definition at line 85 of file pgpmac.h.
+.SS "void(* \fBlspmac_motor_struct::moveAbs\fP)(struct \fBlspmac_motor_struct\fP *, double)"
+.PP
+function to move the motor 
+.SS "pthread_mutex_t \fBlspmac_motor_struct::mutex\fP"
+.PP
+coordinate waiting for motor to be done 
+.PP
+Definition at line 70 of file pgpmac.h.
+.SS "char* \fBlspmac_motor_struct::name\fP"
+.PP
+Name of motor as refered by ls database kvs table. 
+.PP
+Definition at line 87 of file pgpmac.h.
+.SS "int \fBlspmac_motor_struct::nlut\fP"
+.PP
+length of lut 
+.PP
+Definition at line 96 of file pgpmac.h.
+.SS "int \fBlspmac_motor_struct::not_done\fP"
+.PP
+set to 1 when request is queued, zero after motion has toggled 
+.PP
+Definition at line 73 of file pgpmac.h.
+.SS "double \fBlspmac_motor_struct::position\fP"
+.PP
+scaled position 
+.PP
+Definition at line 79 of file pgpmac.h.
+.SS "struct \fBlspmac_cmd_queue_struct\fP* \fBlspmac_motor_struct::pq\fP\fC [read]\fP"
+.PP
+the queue item requesting motion. Used to check time request was made 
+.PP
+Definition at line 75 of file pgpmac.h.
+.SS "void(* \fBlspmac_motor_struct::read\fP)(struct \fBlspmac_motor_struct\fP *)"
+.PP
+function to read the motor status and position 
+.SS "int \fBlspmac_motor_struct::read_mask\fP"
+.PP
+WIth read_ptr find bit to read for binary i/o. 
+.PP
+Definition at line 92 of file pgpmac.h.
+.SS "int* \fBlspmac_motor_struct::read_ptr\fP"
+.PP
+With read_mask finds bit to read for binary i/o. 
+.PP
+Definition at line 91 of file pgpmac.h.
+.SS "double \fBlspmac_motor_struct::reported_position\fP"
+.PP
+previous position reported to the database 
+.PP
+Definition at line 80 of file pgpmac.h.
+.SS "int \fBlspmac_motor_struct::requested_pos_cnts\fP"
+.PP
+requested position 
+.PP
+Definition at line 77 of file pgpmac.h.
+.SS "double \fBlspmac_motor_struct::requested_position\fP"
+.PP
+The position as requested by the user. 
+.PP
+Definition at line 81 of file pgpmac.h.
+.SS "int* \fBlspmac_motor_struct::status1\fP"
+.PP
+First 24 bit PMAC motor status word. 
+.PP
+Definition at line 83 of file pgpmac.h.
+.SS "int* \fBlspmac_motor_struct::status2\fP"
+.PP
+Sectond 24 bit PMAC motor status word. 
+.PP
+Definition at line 84 of file pgpmac.h.
+.SS "double \fBlspmac_motor_struct::u2c\fP"
+.PP
+conversion from counts to units: 0.0 means not loaded yet 
+.PP
+Definition at line 94 of file pgpmac.h.
+.SS "char* \fBlspmac_motor_struct::units\fP"
+.PP
+string to use as the units 
+.PP
+Definition at line 88 of file pgpmac.h.
+.SS "double \fBlspmac_motor_struct::update_resolution\fP"
+.PP
+Change needs to be at least this big to report as a new position to the database. 
+.PP
+Definition at line 82 of file pgpmac.h.
+.SS "WINDOW* \fBlspmac_motor_struct::win\fP"
+.PP
+our ncurses window 
+.PP
+Definition at line 99 of file pgpmac.h.
+.SS "char* \fBlspmac_motor_struct::write_fmt\fP"
+.PP
+Format string to write requested position to PMAC used for binary io. 
+.PP
+Definition at line 90 of file pgpmac.h.
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for LS-CAT PGPMAC from the source code.
