@@ -919,13 +919,18 @@ void lspmac_bio_read(
   pos = (*(mp->read_ptr) & mp->read_mask) == 0 ? 0 : 1;
   mp->position = pos;
 
-  if( mp->u2c != 0.0) {
-    mp->position = *mp->actual_pos_cnts_p/mp->u2c;
-    snprintf( s, sizeof(s)-1, mp->format, 8, pos/mp->u2c);
-  } else {
-    mp->position = 1.0* (*mp->actual_pos_cnts_p);
-    snprintf( s, sizeof(s)-1, mp->format, 8, 1.0* (pos));
-  }
+  // Not sure what kind of status makes sense to report
+  mp->statuss[0] = 0;
+
+
+  /*
+  pthread_mutex_lock( &ncurses_mutex);
+  wprintw( term_output, "    %d    %f\n", pos, mp->position);
+  wnoutrefresh( term_output);
+  wnoutrefresh( term_input);
+  doupdate();
+  pthread_mutex_unlock( &ncurses_mutex);
+  */
 
   pthread_mutex_unlock( &(mp->mutex));
 }
@@ -935,7 +940,24 @@ void lspmac_bio_read(
 void lspmac_dac_read(
 		     lspmac_motor_t *mp		/**< [in] The motor			*/
 		     ) {
-  // TODO: impliement
+  int pos;
+  pthread_mutex_lock( &(mp->mutex));
+  mp->actual_pos_cnts = *mp->actual_pos_cnts_p;
+  mp->position = mp->actual_pos_cnts / mp->u2c;
+
+  // Not sure what kind of status makes sense to report
+  mp->statuss[0] = 0;
+
+  /*
+  pthread_mutex_lock( &ncurses_mutex);
+  wprintw( term_output, "    %d    %f\n", pos, mp->position);
+  wnoutrefresh( term_output);
+  wnoutrefresh( term_input);
+  doupdate();
+  pthread_mutex_unlock( &ncurses_mutex);
+  */
+
+  pthread_mutex_unlock( &(mp->mutex));
 }
 
 /** Fast shutter read routine
@@ -946,7 +968,7 @@ void lspmac_dac_read(
  */
 void lspmac_shutter_read(
 			 lspmac_motor_t *mp	/**< [in] The motor object associated with the fast shutter	*/
-			 ) 
+			 ) {
   //
   // track the shutter state and signal if it has changed
   //
@@ -973,7 +995,132 @@ void lspmac_shutter_read(
     mp->position = 0;
   }
 
+  // Not sure what kind of status makes sense to report
+  mp->statuss[0] = 0;
+
   pthread_mutex_unlock( &lspmac_shutter_mutex);
+}
+
+/** Homing method for steppers and servos
+ */
+void lspmac_home1_queue(
+		       lspmac_motor_t *mp			/**< [in] motor we are concerned about		*/
+		       ) {
+  char openloops[32];
+  char *sp;
+  int i;
+
+  pthread_mutex_lock( &(mp->mutex));
+
+  
+  // We got here before the initialization routine finished
+  // TODO: arrange to retry or at least indicated we haven't run
+  //
+  if( (mp->lspg_initialized & 1) == 0) {
+    pthread_mutex_unlock( &(mp->mutex));
+    return;
+  }    
+
+
+  // Each of the motors should have this defined
+  // but let's not seg fault if home is missing
+  //
+  if( mp->home == NULL || *(mp->home) == NULL) {
+    //
+    // Note we are already initialized
+    // so if we are here there is something wrong.
+    // TODO: log this event
+    pthread_mutex_unlock( &(mp->mutex));
+    return;
+  }
+
+  // We've already been called.  Don't home again until
+  // we're finish with the last time.
+  //
+  if( mp->homing) {
+    pthread_mutex_unlock( &(mp->mutex));
+    return;
+  }    
+
+
+  //
+  // Don't go on if any other motors in this coordinate system are homing.
+  // It's possible to write the homing program to home all the motors in the coordinate
+  // system.
+  //
+  if( mp->coord_num > 0) {
+    for( i=0; i<lspmac_nmotors; i++) {
+      if( &(lspmac_motors[i]) == mp)
+	continue;
+      if( lspmac_motors[i].coord_num == mp->coord_num) {
+	if( lspmac_motors[i].homing) {
+	  pthread_mutex_unlock( &(mp->mutex));
+	  return;
+	}
+      }
+    }
+  }
+  mp->homing = 1;
+       
+  // This opens the control loop.
+  // The status routine should notice this and the fact that
+  // the homing flag is set and call on the home2 routine
+  //
+  // Only send the open loop command if we are not in
+  // open loop mode already.  This test might prevent a race condition
+  // where we've already moved the home2 routine (and queue the homing program motion)
+  // before the open loop command is dequeued and acted on.
+  //
+  if( ~(mp->status1) & 0x040000) {
+    snprintf( openloops, sizeof(openloops)-1, "#%d$*", mp->motor_num);
+    openloops[sizeof(openloops)-1] = 0;
+    lspmac_SockSendline( openloops);
+  }
+
+  pthread_mutex_unlock( &(mp->mutex));
+}
+
+/** Second stage of homing
+ */
+
+void lspmac_home2_queue(
+		       lspmac_motor_t *mp			/**< [in] motor we are concerned about		*/
+		       ) {
+
+  char **spp;
+
+  //
+  // At this point we are in open loop.
+  // Run the motor specific commands
+  //
+
+  pthread_mutex_lock( &(mp->mutex));
+  //
+  // We don't have any motors that have a null home text array so 
+  // there is currently no need to worry about this case other than
+  // not to seg fault
+  //
+  // Also, Only go on if the first homing phase has been started
+  //
+  if( mp->home == NULL || mp->homing != 1) {
+    pthread_mutex_unlock( &(mp->mutex));
+    return;
+  }
+
+  for( spp = mp->home; *spp != NULL; spp++) {
+
+    pthread_mutex_lock( &ncurses_mutex);
+    wprintw( term_output, "home2 is queuing '%s'\n", *spp);
+    wnoutrefresh( term_output);
+    doupdate();
+    pthread_mutex_unlock( &ncurses_mutex);
+
+    lspmac_SockSendline( *spp);
+  }
+
+  mp->homing = 2;
+  pthread_mutex_unlock( &(mp->mutex));
+  
 }
 
 /** Read the position and status of a normal PMAC motor
@@ -982,73 +1129,118 @@ void lspmac_pmacmotor_read(
 			   lspmac_motor_t *mp		/**< [in] Our motor		*/
 			   ) {
   char s[512], *sp;
+  int homing1, homing2;
 
-  if( *mp->status2 & 0x000001) {
+  pthread_mutex_lock( &(mp->mutex));
+
+  // Make local copies so we can inspect them in other threads
+  // without having to grab the status mutex
+  //
+  mp->status1 = *mp->status1_p;
+  mp->status2 = *mp->status2_p;
+  mp->actual_pos_cnts = *mp->actual_pos_cnts_p;
+
+  //
+  // See if we are done moving, ie, in position
+  //
+  if( mp->status2 & 0x000001) {
     if( mp->not_done) {
-      pthread_mutex_lock( &(mp->mutex));
       mp->not_done = 0;
       pthread_cond_signal( &(mp->cond));
-      pthread_mutex_unlock( &(mp->mutex));
     }
   } else if( mp->not_done == 0) {
     mp->not_done = 1;
   }
 
-  if( (*mp->status1 & 0x020000) || (*mp->status1 & 0x000400)) {
+  //
+  // See if homed or desired velocity zero
+  // TODO: What's going on here?  Does this logic do anything interesting?
+  //
+  if( mp->status1 & 0x020000 || mp->status1 & 0x000400) {
     if( mp->motion_seen == 0) {
-      pthread_mutex_lock( &(mp->mutex));
       mp->motion_seen = 1;
       pthread_cond_signal( &(mp->cond));
-      pthread_mutex_unlock( &(mp->mutex));
     }
   }
 
   mvwprintw( mp->win, 2, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, " ");
-  mvwprintw( mp->win, 2, 1, "%*d cts", LS_DISPLAY_WINDOW_WIDTH-6, *mp->actual_pos_cnts_p);
+  mvwprintw( mp->win, 2, 1, "%*d cts", LS_DISPLAY_WINDOW_WIDTH-6, mp->actual_pos_cnts);
   mvwprintw( mp->win, 3, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, " ");
 
   if( mp->u2c != 0.0) {
-    mp->position = *mp->actual_pos_cnts_p/mp->u2c;
-    snprintf( s, sizeof(s)-1, mp->format, 8, *mp->actual_pos_cnts_p/mp->u2c);
+    mp->position = mp->actual_pos_cnts/mp->u2c;
+    snprintf( s, sizeof(s)-1, mp->format, 8, mp->actual_pos_cnts/mp->u2c);
   } else {
-    mp->position = 1.0* (*mp->actual_pos_cnts_p);
-    snprintf( s, sizeof(s)-1, mp->format, 8, 1.0* (*mp->actual_pos_cnts_p));
+    mp->position = 1.0* (mp->actual_pos_cnts);
+    snprintf( s, sizeof(s)-1, mp->format, 8, 1.0* (mp->actual_pos_cnts));
   }
+
+  // set flag if we are not homed
+  homing1 = 0;
+  //                        ~(homed flag)
+  if( mp->homing == 0  && (~mp->status2 & 0x000400) != 0) {
+    homing1 = 1;
+  }
+
+  // set flag if we are homing and in open loop
+  homing2 = 0;
+  //                         open loop
+  if( mp->homing == 1 && (mp->status1 & 0x040000) != 0) {
+    homing2 = 1;
+  }
+  // maybe reset homing flag
+  //                        homed flag                       in position flag
+  if( mp->homing == 2 && (mp->status2 & 0x000400 != 0) && (mp->status2 & 0x000001 != 0))
+    mp->homing = 0;
+
+
   s[sizeof(s)-1] = 0;
   mvwprintw( mp->win, 3, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-6, s);
 
-  mvwprintw( mp->win, 4, 1, "%*u", LS_DISPLAY_WINDOW_WIDTH-2, *mp->status1);
-  mvwprintw( mp->win, 5, 1, "%*u", LS_DISPLAY_WINDOW_WIDTH-2, *mp->status2);
+  mvwprintw( mp->win, 4, 1, "%*x", LS_DISPLAY_WINDOW_WIDTH-2, mp->status1);
+  mvwprintw( mp->win, 5, 1, "%*x", LS_DISPLAY_WINDOW_WIDTH-2, mp->status2);
   sp = "";
-  if( *mp->status2 & 0x000002)
+  if( mp->status2 & 0x000002)
     sp = "Following Warning";
-  else if( *mp->status2 & 0x000004)
+  else if( mp->status2 & 0x000004)
     sp = "Following Error";
-  else if( *mp->status2 & 0x000020)
+  else if( mp->status2 & 0x000020)
     sp = "I2T Amp Fault";
-  else if( *mp->status2 & 0x000008)
+  else if( mp->status2 & 0x000008)
     sp = "Amp. Fault";
-  else if( *mp->status2 & 0x000800)
+  else if( mp->status2 & 0x000800)
     sp = "Stopped on Limit";
-  else if( *mp->status1 & 0x040000)
+  else if( mp->status1 & 0x040000)
     sp = "Open Loop";
-  else if( ~(*mp->status1) & 0x080000)
+  else if( ~(mp->status1) & 0x080000)
     sp = "Motor Disabled";
-  else if( *mp->status1 & 0x000400)
+  else if( mp->status1 & 0x000400)
     sp = "Homing";
-  else if( (*mp->status1 & 0x600000) == 0x600000)
+  else if( (mp->status1 & 0x600000) == 0x600000)
     sp = "Both Limits Tripped";
-  else if( *mp->status1 & 0x200000)
+  else if( mp->status1 & 0x200000)
     sp = "Positive Limit";
-  else if( *mp->status1 & 0x400000)
+  else if( mp->status1 & 0x400000)
     sp = "Negative Limit";
-  else if( ~(*mp->status2) & 0x000400)
+  else if( ~(mp->status2) & 0x000400)
     sp = "Not Homed";
-  else if( *mp->status2 & 0x000001)
+  else if( mp->status2 & 0x000001)
     sp = "In Position";
 
   mvwprintw( mp->win, 6, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, sp);
   wnoutrefresh( mp->win);
+  
+  strncpy( mp->statuss, sp, sizeof( mp->statuss)-1);
+  mp->statuss[sizeof(mp->statuss)-1] = 0;
+
+  pthread_mutex_unlock( &(mp->mutex));
+
+  if( homing1)
+    lspmac_home1_queue( mp);
+
+  if( homing2)
+    lspmac_home2_queue( mp);
+
 }
 
 /** Service routing for status upate
@@ -1061,10 +1253,15 @@ void lspmac_get_status_cb(
 			  ) {
   static int cnt = 0;
   static char s[256];
+  static struct timeval ts1, ts2;
 
   char *sp;
   int i, pos;
   lspmac_motor_t *mp;
+
+  if( cnt == 0) {
+    gettimeofday( &ts1, NULL);
+  }
 
   pthread_mutex_lock( &md2_status_mutex);
   memcpy( &md2_status, buff, sizeof(md2_status));
@@ -1082,11 +1279,12 @@ void lspmac_get_status_cb(
   pthread_mutex_unlock( &lspmac_moving_mutex);
 
 
-  pthread_mutex_lock( &ncurses_mutex);
 
   for( i=0; i<lspmac_nmotors; i++) {
     lspmac_motors[i].read(&(lspmac_motors[i]));
   }
+
+  pthread_mutex_lock( &ncurses_mutex);
 
   // acc11c_1
   // mask  bit
@@ -1172,6 +1370,20 @@ void lspmac_get_status_cb(
   wnoutrefresh( term_input);
   doupdate();
   pthread_mutex_unlock( &ncurses_mutex);
+
+  /*
+  if( ++cnt % 1000 == 0) {
+    gettimeofday( &ts2, NULL);
+
+    pthread_mutex_lock( &ncurses_mutex);
+    wprintw( term_output, "Refresh Rate: %0.1f Hz\n", 1000000.*(cnt)/(ts2.tv_sec*1000000 + ts2.tv_usec - ts1.tv_sec*1000000 - ts1.tv_usec));
+    wnoutrefresh( term_output);
+    doupdate();
+
+    pthread_mutex_unlock( &ncurses_mutex);
+    cnt = 0;
+  }
+  */
 }
 
 /** Request a status update from the PMAC
@@ -1252,10 +1464,38 @@ void lspmac_sendcmd_nocb(
 
 
 
+/** PMAC command with call back
+ */
+void lspmac_sendcmd(
+			void (*responseCB)(pmac_cmd_queue_t *, int, unsigned char *),		/**< [in] our callback routine                 */
+			char *fmt,								/**< [in] printf style format string           */
+			...									/*        Arguments specified by format string */
+			) {
+  static char tmps[1024];
+  va_list arg_ptr;
+
+  va_start( arg_ptr, fmt);
+  vsnprintf( tmps, sizeof(tmps)-1, fmt, arg_ptr);
+  tmps[sizeof(tmps)-1]=0;
+  va_end( arg_ptr);
+
+  lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen(tmps), tmps, responseCB, 0);
+}
+
+
 /** State machine logic.
  *  Given the current state, generate the next one
  */
 void lspmac_next_state() {
+
+  /*
+  pthread_mutex_lock( &ncurses_mutex);
+  wprintw( term_output, "State: %d\n", ls_pmac_state);
+  wnoutrefresh( term_output);
+  wnoutrefresh( term_input);
+  doupdate();
+  pthread_mutex_unlock( &ncurses_mutex);
+  */
 
   //
   // Connect to the pmac and perhaps initialize it.
@@ -1313,13 +1553,24 @@ void lspmac_next_state() {
     break;
 
   case LS_PMAC_STATE_IDLE:
-    if( ethCmdOn == ethCmdOff)
+    if( ethCmdOn == ethCmdOff) {
       //
       // Anytime we are idle we want to
       // get the status of the PMAC
       //
+
+      /*
+      pthread_mutex_lock( &ncurses_mutex);
+      wprintw( term_output, "get status request\n");
+      wnoutrefresh( term_output);
+      wnoutrefresh( term_input);
+      doupdate();
+      pthread_mutex_unlock( &ncurses_mutex);
+      */
+
       lspmac_get_status();
-    
+    }
+
 
 
   //
@@ -1572,6 +1823,7 @@ void lspmac_moveabs_bio_queue(
   pthread_mutex_unlock( &(mp->mutex));
 }
 
+
 /** Move method for normal stepper and servo motor objects
  */
 void lspmac_moveabs_queue(
@@ -1585,7 +1837,7 @@ void lspmac_moveabs_queue(
   if( mp->u2c != 0.0) {
     mp->not_done    = 1;
     mp->motion_seen = 0;
-    mp->requested_pos_cnts = mp->u2c * requested_position;
+    mp->requested_pos_cnts = mp->u2c * requested_position;  
     snprintf( s, sizeof(s)-1, "#%d j=%d", mp->motor_num, mp->requested_pos_cnts);
     mp->pq = lspmac_SockSendline_nr( s);
   }
@@ -1681,14 +1933,16 @@ lspmac_motor_t *lspmac_motor_init(
   d->lut = NULL;
   d->nlut = 0;
   d->actual_pos_cnts_p = posp;
-  d->status1           = stat1p;
-  d->status2           = stat2p;
+  d->status1_p           = stat1p;
+  d->status2_p           = stat2p;
   d->motor_num = motor_number;
   d->dac_mvar          = NULL;
   d->win = newwin( LS_DISPLAY_WINDOW_HEIGHT, LS_DISPLAY_WINDOW_WIDTH, wy*LS_DISPLAY_WINDOW_HEIGHT, wx*LS_DISPLAY_WINDOW_WIDTH);
   box( d->win, 0, 0);
   mvwprintw( d->win, 1, 1, "%s", wtitle);
   wnoutrefresh( d->win);
+  d->homing = 0;
+  d->lspg_initialized = 0;
 
   return d;
 }
@@ -1705,11 +1959,15 @@ lspmac_motor_t *lspmac_fshut_init(
   d->lut            = NULL;
   d->nlut           = 0;
   d->actual_pos_cnts_p = NULL;
-  d->status1           = NULL;
-  d->status2           = NULL;
+  d->status1_p         = NULL;
+  d->status2_p         = NULL;
   d->motor_num         = -1;
   d->dac_mvar          = NULL;
+  d->homing            = 0;
   d->win               = NULL;
+
+  d->lspg_initialized = 0;
+  return d;
 }
 
 
@@ -1734,16 +1992,20 @@ lspmac_motor_t *lspmac_bio_init(
   d->lut               = NULL;
   d->nlut              = 0;
   d->actual_pos_cnts_p = NULL;
-  d->status1           = NULL;
-  d->status2           = NULL;
+  d->status1_p         = NULL;
+  d->status2_p         = NULL;
   d->motor_num         = -1;
   d->dac_mvar          = NULL;
   d->win               = NULL;
   d->write_fmt         = strdup( write_fmt);
   d->read_ptr	       = read_ptr;
   d->read_mask         = read_mask;
+  d->homing            = 0;
   d->win               = NULL;
   d->u2c               = 1.0;
+
+  d->lspg_initialized = 0;
+  return d;
 }
 
 
@@ -1768,12 +2030,16 @@ lspmac_motor_t *lspmac_dac_init(
   d->lut      = NULL;
   d->nlut     = 0;
   d->actual_pos_cnts_p = posp;
-  d->status1           = NULL;
-  d->status2           = NULL;
+  d->status1_p         = NULL;
+  d->status2_p         = NULL;
   d->motor_num         = -1;
   d->dac_mvar          = strdup(mvar);
   d->u2c               = scale;
+  d->homing            = 0;
   d->win               = NULL;
+
+  d->lspg_initialized = 0;
+  return d;
 }
 
 

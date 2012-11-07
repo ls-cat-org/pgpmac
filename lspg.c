@@ -37,9 +37,11 @@ State		Description
 #define LS_PG_STATE_RECV	4
 
 static int ls_pg_state = LS_PG_STATE_INIT;	//!< State of the lspg state machine
+static struct timeval lspg_time_sent, now;	//!< used to ensure we do not inundate the db server with connection requests
 
 static pthread_t lspg_thread;		//!< our worker thread
-static pthread_mutex_t pg_queue_mutex;	//!< keep the queue from getting tangled
+static pthread_mutex_t lspg_queue_mutex;	//!< keep the queue from getting tangled
+static pthread_cond_t  lspg_queue_cond;	//!< keeps the queue from overflowing
 static struct pollfd lspgfd;		//!< our poll info
 
 
@@ -51,14 +53,11 @@ typedef struct lspgQueryQueueStruct {
   void (*onResponse)( struct lspgQueryQueueStruct *qq, PGresult *pgr);		//!< Callback function for when a query returns a result
 } lspg_query_queue_t;
 
-/**
- * Why such a long queue? you might ask.  A huge queue is used here to insure that we don't have to worry too much
- * about over running it.  Typically we'll be adding a few queries at a time (for example, to initialize the motors)
- * but not much more than that.  When we over run the queue we'll need to look deeply into the root cause as something
- * has gone terribly wrong.
+/** Queue length should be long enough that we do not ordinarly bump into the end
+ *  We should be safe as long as the thread the adds stuff to the queue is not
+ *  the one that removes it.  (And we can tolerate the adding thread being paused.)
  */
-
-#define LS_PG_QUERY_QUEUE_LENGTH 16318
+#define LS_PG_QUERY_QUEUE_LENGTH 256
 static lspg_query_queue_t lspg_query_queue[LS_PG_QUERY_QUEUE_LENGTH];	//!< Our query queue
 static unsigned int lspg_query_queue_on    = 0;				//!< Next position to add something to the queue
 static unsigned int lspg_query_queue_off   = 0;				//!< The last item still being used  (on == off means nothing in queue)
@@ -70,8 +69,8 @@ static PGconn *q = NULL;						//!< Database connector
 static PostgresPollingStatusType lspg_connectPoll_response;		//!< Used to determine state while connecting
 static PostgresPollingStatusType lspg_resetPoll_response;		//!< Used to determine state while reconnecting
 
-lspg_nextshot_t lspg_nextshot;						//!< the nextshot object
-
+lspg_nextshot_t  lspg_nextshot;						//!< the nextshot object
+lspg_getcenter_t lspg_getcenter;					//!< the getcenter object
 
 /** Return the next item in the postgresql queue
  *
@@ -80,14 +79,16 @@ lspg_nextshot_t lspg_nextshot;						//!< the nextshot object
 lspg_query_queue_t *lspg_query_next() {
   lspg_query_queue_t *rtn;
   
-  pthread_mutex_lock( &pg_queue_mutex);
+  pthread_mutex_lock( &lspg_queue_mutex);
 
   if( lspg_query_queue_off == lspg_query_queue_on)
     // Queue is empty
     rtn = NULL;
-  else
+  else {
     rtn = &(lspg_query_queue[(lspg_query_queue_off++) % LS_PG_QUERY_QUEUE_LENGTH]); 
-  pthread_mutex_unlock( &pg_queue_mutex);
+    pthread_cond_signal( &lspg_queue_cond);
+  }
+  pthread_mutex_unlock( &lspg_queue_mutex);
 
   return rtn;
 }
@@ -101,12 +102,12 @@ lspg_query_queue_t *lspg_query_next() {
  */
 void lspg_query_reply_next() {
 
-  pthread_mutex_lock( &pg_queue_mutex);
+  pthread_mutex_lock( &lspg_queue_mutex);
 
   if( lspg_query_queue_reply != lspg_query_queue_on)
     lspg_query_queue_reply++;
 
-  pthread_mutex_unlock( &pg_queue_mutex);
+  pthread_mutex_unlock( &lspg_queue_mutex);
 }
 
 /** Return the next item in the reply queue but don't pop it since we may need it more than once.
@@ -115,14 +116,14 @@ void lspg_query_reply_next() {
 lspg_query_queue_t *lspg_query_reply_peek() {
   lspg_query_queue_t *rtn;
 
-  pthread_mutex_lock( &pg_queue_mutex);
+  pthread_mutex_lock( &lspg_queue_mutex);
 
   if( lspg_query_queue_reply == lspg_query_queue_on)
     rtn = NULL;
   else
     rtn = &(lspg_query_queue[(lspg_query_queue_reply) % LS_PG_QUERY_QUEUE_LENGTH]);
 
-  pthread_mutex_unlock( &pg_queue_mutex);
+  pthread_mutex_unlock( &lspg_queue_mutex);
   return rtn;
 }
 
@@ -136,16 +137,14 @@ void lspg_query_push(
   int idx;
   va_list arg_ptr;
 
-  pthread_mutex_lock( &pg_queue_mutex);
+  pthread_mutex_lock( &lspg_queue_mutex);
 
   //
-  // TODO
+  // Pause the thread while we service the queue
   //
-  // Should really wait until there is enough room on the queue.
-  // Although the queue is big it is not infinite, so one day we'll over run it.
-  // Should really test to see if (on + 1) == off.  If so, then use pg_queue_cond to
-  // wait until some room has been cleared.
-  //
+  while( lspg_query_queue_on + 1 == lspg_query_queue_off) {
+    pthread_cond_wait( &lspg_queue_cond, &lspg_queue_mutex);
+  }
 
   idx = lspg_query_queue_on % LS_PG_QUERY_QUEUE_LENGTH;
 
@@ -158,9 +157,134 @@ void lspg_query_push(
   lspg_query_queue_on++;
 
   pthread_kill( lspg_thread, SIGUSR1);
-  pthread_mutex_unlock( &pg_queue_mutex);
+  pthread_mutex_unlock( &lspg_queue_mutex);
 };
 
+/** returns a null terminated list of strings parsed from postgresql array
+ */
+char **lspg_array2ptrs( char *a) {
+  char **rtn, *sp, *acums;
+  int i, n, inquote, havebackslash, rtni;;
+  int mxsz;
+  
+  inquote       = 0;
+  havebackslash = 0;
+
+  // Despense with the null input condition before we complicate the code below
+  if( a == NULL || a[0] == 0)
+    return NULL;
+
+  // Count the maximum number of strings
+  // Actual number will be less if there are quoted commas
+  //
+  n = 1;
+  for( i=0; a[i]; i++) {
+    if( a[i] == ',')
+      n++;
+  }
+  //
+  // The maximum size of any string is the length of a (+1)
+  //
+  mxsz = strlen(a) + 1;
+
+  // This is the accumulation string to make up the array elements
+  acums = (char *)calloc( mxsz, sizeof( char));
+  if( acums == NULL) {
+    // TODO: print or otherwise log this condition
+    // out of memory
+    exit( 1);
+  }
+  
+  //
+  // allocate storage for the pointer array and the null terminator
+  //
+  rtn = (char **)calloc( n+1, sizeof( char *));
+  if( rtn == NULL) {
+    // TODO: print or otherwise log this condition
+    // out of memory
+    exit( 1);
+  }
+  rtni = 0;
+  
+  pthread_mutex_lock( &ncurses_mutex);
+  wprintw( term_output, "lspg_array2ptrs: enter with %s\n", a);
+  wnoutrefresh( term_output);
+  doupdate();
+  pthread_mutex_unlock( &ncurses_mutex);
+
+
+  // Go through and create the individual strings
+  sp = acums;
+  *sp = 0;
+  if( a[0] != '{') {
+    // oh no!  This isn't an array after all!
+    // Zounds!
+    return NULL;
+  }
+  inquote = 0;
+  havebackslash = 0;
+  for( i=1; a[i] != 0; i++) {
+    switch( a[i]) {
+    case '"':
+      if( havebackslash) {
+	// a quoted quote.  Cool
+	//
+	*(sp++) = a[i];
+	*sp = 0;
+	havebackslash = 0;
+      } else {
+	// Toggle the flag
+	inquote = 1 - inquote;
+      }
+      break;
+
+    case '\\':
+      if( havebackslash) {
+	*(sp++) = a[i];
+	*sp = 0;
+	havebackslash = 0;
+      } else {
+	havebackslash = 1;
+      }
+      break;
+
+    case ',':
+      if( inquote || havebackslash) {
+	*(sp++) = a[i];
+	*sp = 0;
+	havebackslash = 0;
+      } else {
+	rtn[rtni++] = strdup( acums);
+	sp = acums;
+      }
+      break;
+      
+    case '}':
+      if( inquote || havebackslash) {
+	*(sp++) = a[i];
+	*sp = 0;
+	havebackslash = 0;
+      } else {
+	rtn[rtni++] = strdup( acums);
+	rtn[rtni]   = NULL;
+	return( rtn);
+      }
+      break;
+
+    default:
+      *(sp++) = a[i];
+      *sp = 0;
+      havebackslash = 0;
+    }
+  }
+  //
+  // Getting here means the final '}' was missing
+  // Probably we should throw an error or log it or something.
+  //
+  rtn[rtni++] = strdup( acums);
+  rtn[rtni]   = NULL;
+  return( rtn);
+}
 
 /** Motor initialization callback
  */
@@ -169,21 +293,27 @@ void lspg_init_motors_cb(
 			 PGresult *pgr				/**< [in] The postgresql result object			*/
 			 ) {
   int i, j;
-  uint32_t  motor_number, motor_number_column, max_speed_column, max_accel_column;
-  uint32_t units_column;
+  uint32_t  motor_number, motor_number_column, max_speed_column, max_accel_column, home_column;
+  uint32_t units_column, coord_column;
   uint32_t u2c_column;
   uint32_t format_column;
+  uint32_t update_resolution_column;
+  uint32_t update_format_column;
   char *sp;
   lspmac_motor_t *lsdp;
   
-  motor_number_column    = PQfnumber( pgr, "mm_motor");
-  units_column           = PQfnumber( pgr, "mm_unit");
-  u2c_column             = PQfnumber( pgr, "mm_u2c");
-  format_column          = PQfnumber( pgr, "mm_printf");
-  max_speed_column = PQfnumber( pgr, "mm_max_speed");
-  max_accel_column = PQfnumber( pgr, "mm_max_speed");
+  motor_number_column      = PQfnumber( pgr, "mm_motor");
+  coord_column		   = PQfnumber( pgr, "mm_coord");
+  units_column             = PQfnumber( pgr, "mm_unit");
+  u2c_column               = PQfnumber( pgr, "mm_u2c");
+  format_column            = PQfnumber( pgr, "mm_printf");
+  max_speed_column         = PQfnumber( pgr, "mm_max_speed");
+  max_accel_column         = PQfnumber( pgr, "mm_max_speed");
+  update_resolution_column = PQfnumber( pgr, "mm_update_resolution");
+  update_format_column     = PQfnumber( pgr, "mm_update_format");
+  home_column		   = PQfnumber( pgr, "mm_home");
 
-  if( motor_number_column == -1 || units_column == -1 || u2c_column == -1 || format_column == -1)
+  if( motor_number_column == -1 || units_column == -1 || u2c_column == -1 || format_column == -1 || home_column == -1)
     return;
 
   for( i=0; i<PQntuples( pgr); i++) {
@@ -193,22 +323,25 @@ void lspg_init_motors_cb(
     lsdp = NULL;
     for( j=0; j<lspmac_nmotors; j++) {
       if( lspmac_motors[j].motor_num == motor_number) {
-	lsdp = &(lspmac_motors[j]);
-	lsdp->units = strdup( PQgetvalue( pgr, i, units_column));
-	lsdp->format= strdup( PQgetvalue( pgr, i, format_column));
-	lsdp->u2c   = atof(PQgetvalue( pgr, i, u2c_column));
-	lsdp->max_speed = atof(PQgetvalue( pgr, i, max_speed_column));
-	lsdp->max_accel = atof(PQgetvalue( pgr, i, max_accel_column));
+	lsdp                    = &(lspmac_motors[j]);
+	lsdp->coord_num         = atoi( PQgetvalue( pgr, i, coord_column));
+	lsdp->units             = strdup( PQgetvalue( pgr, i, units_column));
+	lsdp->format            = strdup( PQgetvalue( pgr, i, format_column));
+	lsdp->u2c               = atof(PQgetvalue( pgr, i, u2c_column));
+	lsdp->max_speed         = atof(PQgetvalue( pgr, i, max_speed_column));
+	lsdp->max_accel         = atof(PQgetvalue( pgr, i, max_accel_column));
+	lsdp->update_resolution = atof(PQgetvalue( pgr, i, update_resolution_column));
+	lsdp->update_format     = strdup( PQgetvalue( pgr, i, update_format_column));
+	lsdp->home              = lspg_array2ptrs( PQgetvalue( pgr, i, home_column));
+	lsdp->lspg_initialized  = 1;
 	break;
       }
     }
     if( lsdp == NULL)
       continue;
-      
 
     if( fabs(lsdp->u2c) <= 1.0e-9)
       lsdp->u2c = 1.0;
-      
   }
 }
 
@@ -854,11 +987,100 @@ void lspg_seq_run_prep_all(
 /** TODO: implement getcenter code
  */
 void lspg_getcenter_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
-  int theZoom;
-  double dxp, dyp, z, b;
-  // Need camera pixel height and pixel width!
+  static int
+    zoom_c, dcx_c, dcy_c, dax_c, day_c, daz_c;
 
+  pthread_mutex_lock( &(lspg_getcenter.mutex));
+  
+  lspg_getcenter.no_rows_returned = PQntuples( pgr) <= 0;
+  if( lspg_getcenter.no_rows_returned) {
+    //
+    // No particular reason this path should ever be taken
+    // but if we don't get rows then we had better not move anything.
+    //
+    lspg_getcenter.new_value_ready = 1;
+    pthread_cond_signal( &(lspg_getcenter.cond));
+    pthread_mutex_unlock( &(lspg_getcenter.mutex));
+    return;
+  }
+
+  zoom_c = PQfnumber( pgr, "zoom");
+  dcx_c  = PQfnumber( pgr, "dcx");
+  dcy_c  = PQfnumber( pgr, "dcy");
+  dax_c  = PQfnumber( pgr, "dax");
+  day_c  = PQfnumber( pgr, "day");
+  daz_c  = PQfnumber( pgr, "daz");
+
+  lspg_getcenter.zoom_isnull = PQgetisnull( pgr, 0, zoom_c);
+  if( lspg_getcenter.zoom_isnull == 0)
+    lspg_getcenter.zoom = atoi( PQgetvalue( pgr, 0, zoom_c));
+
+  lspg_getcenter.dcx_isnull = PQgetisnull( pgr, 0, dcx_c);
+  if( lspg_getcenter.dcx_isnull == 0)
+    lspg_getcenter.dcx = atof( PQgetvalue( pgr, 0, dcx_c));
+
+  lspg_getcenter.dcy_isnull = PQgetisnull( pgr, 0, dcy_c);
+  if( lspg_getcenter.dcy_isnull == 0)
+    lspg_getcenter.dcy = atof( PQgetvalue( pgr, 0, dcy_c));
+
+  lspg_getcenter.dax_isnull = PQgetisnull( pgr, 0, dax_c);
+  if( lspg_getcenter.dax_isnull == 0)
+    lspg_getcenter.dax = atof( PQgetvalue( pgr, 0, dax_c));
+
+  lspg_getcenter.day_isnull = PQgetisnull( pgr, 0, day_c);
+  if( lspg_getcenter.day_isnull == 0)
+    lspg_getcenter.day = atof( PQgetvalue( pgr, 0, day_c));
+
+  lspg_getcenter.daz_isnull = PQgetisnull( pgr, 0, daz_c);
+  if( lspg_getcenter.daz_isnull == 0)
+    lspg_getcenter.daz = atof( PQgetvalue( pgr, 0, daz_c));
+
+  lspg_getcenter.new_value_ready = 1;
+
+  pthread_cond_signal( &(lspg_getcenter.cond));
+  pthread_mutex_unlock( &(lspg_getcenter.mutex));
 }
+
+/** Initialize getcenter object
+ */
+void lspg_getcenter_init() {
+  memset( &lspg_getcenter, 0, sizeof( lspg_getcenter));
+  pthread_mutex_init( &(lspg_getcenter.mutex), NULL);
+  pthread_cond_init( &(lspg_getcenter.cond), NULL);
+}
+
+/** Request a getcenter query
+ */
+void lspg_getcenter_call() {
+  pthread_mutex_lock( &lspg_getcenter.mutex);
+  lspg_getcenter.new_value_ready = 0;
+  pthread_mutex_unlock( &lspg_getcenter.mutex);
+
+  lspg_query_push( lspg_getcenter_cb, "SELECT * FROM px.getcenter2()");
+}
+
+/** Wait for a getcenter query to return
+ */
+void lspg_getcenter_wait() {
+  pthread_mutex_lock( &(lspg_getcenter.mutex));
+  while( lspg_getcenter.new_value_ready == 0)
+    pthread_cond_wait( &(lspg_getcenter.cond), &(lspg_getcenter.mutex));
+}
+
+/** Done with getcenter query
+ */
+void lspg_getcenter_done() {
+  pthread_mutex_unlock( &(lspg_getcenter.mutex));
+}
+
+/** Convenience function to complete synchronous getcenter query
+ */
+void lspg_getcenter_all() {
+  lspg_getcenter_call();
+  lspg_getcenter_wait();
+  lspg_getcenter_done();
+}
+
 
 /** Queue the next MD2 instruction
  */
@@ -882,11 +1104,12 @@ void lspg_nextaction_cb(
     pthread_cond_signal( &md2cmds_cond);
     pthread_mutex_unlock( &md2cmds_mutex);
   } else {
-    //
-    // TODO:
-    // We should probably report that we aren't going to act
-    // on the requested action.  That code would go here.
-    //
+    pthread_mutex_lock( &ncurses_mutex);
+    wprintw( term_output, "\nMD2 command '%s' ignored.  Already running '%s'\n", action, md2cmds_cmd);
+    wnoutrefresh( term_output);
+    wnoutrefresh( term_input);
+    doupdate();
+    pthread_mutex_unlock( &ncurses_mutex);
   }
 }
 
@@ -1222,6 +1445,18 @@ void lspg_pg_connect() {
 
   switch( ls_pg_state) {
   case LS_PG_STATE_INIT:
+
+    if( lspg_time_sent.tv_sec != 0) {
+      //
+      // Reality check: if it's less the about 10 seconds since the last failed attempt
+      // the just chill.
+      //
+      gettimeofday( &now, NULL);
+      if( now.tv_sec - lspg_time_sent.tv_sec < 10) {
+	return;
+      }
+    }
+
     q = PQconnectStart( "dbname=ls user=lsuser hostaddr=10.1.0.3");
     if( q == NULL) {
       pthread_mutex_lock( &ncurses_mutex);
@@ -1241,9 +1476,8 @@ void lspg_pg_connect() {
       wnoutrefresh( term_input);
       doupdate();
       pthread_mutex_unlock( &ncurses_mutex);
-      //
-      // TODO: save time of day so we can check that we are not retrying the connection too often
-      //
+
+      gettimeofday( &lspg_time_sent, NULL);
       return;
     }
     err = PQsetnonblocking( q, 1);
@@ -1449,8 +1683,10 @@ void *lspg_worker(
 /** Initiallize the lspg module
  */
 void lspg_init() {
-  pthread_mutex_init( &pg_queue_mutex, NULL);
+  pthread_mutex_init( &lspg_queue_mutex, NULL);
+  pthread_cond_init( &lspg_queue_cond, NULL);
   lspg_nextshot_init();
+  lspg_getcenter_init();
   lspg_wait_for_detector_init();
   lspg_lock_diffractometer_init();
   lspg_lock_detector_init();

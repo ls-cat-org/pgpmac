@@ -402,11 +402,11 @@ int main(
   box( term_status2, 0, 0);
   wnoutrefresh( term_status2);
 						      
-  term_output = newwin( 10, 5*LS_DISPLAY_WINDOW_WIDTH, 4*LS_DISPLAY_WINDOW_HEIGHT, 0);
+  term_output = newwin( 20, 5*LS_DISPLAY_WINDOW_WIDTH, 4*LS_DISPLAY_WINDOW_HEIGHT, 0);
   scrollok( term_output, 1);			      
   wnoutrefresh( term_output);			      
 						      
-  term_input  = newwin( 3, 5*LS_DISPLAY_WINDOW_WIDTH, 10+4*LS_DISPLAY_WINDOW_HEIGHT, 0);
+  term_input  = newwin( 3, 5*LS_DISPLAY_WINDOW_WIDTH, 20+4*LS_DISPLAY_WINDOW_HEIGHT, 0);
   box( term_input, 0, 0);			      
   mvwprintw( term_input, 1, 1, "PMAC> ");	      
   nodelay( term_input, TRUE);			      

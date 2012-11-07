@@ -410,10 +410,87 @@ void md2cmds_collect() {
   fclose( zzlog);
 }
 
-/** Spin 360 and make a video
- *  TODO: Implement
+/** Spin 360 and make a video (recenter first, maybe)
+ *  
  */
 void md2cmds_rotate() {
+  //
+  // BLUMax disables scintilator here.
+  //
+
+  //
+  // get the new center information
+  //
+  lspg_getcenter_call();
+
+  lspg_getcenter_wait();
+
+
+  // put up the back light
+  blight_ud->moveAbs( blight_ud, 1);
+
+  if( lspg_getcenter.no_rows_returned) {
+    //
+    // the other case is considered below
+    // Bottom line, zoom is always defined
+    //
+    zoom->moveAbs( zoom, 1);	// default zoom is 1
+  }
+
+
+  if( lspg_getcenter.no_rows_returned == 0) {
+    double cx, cy, ax, ay, az;
+
+    if( lspg_getcenter.zoom_isnull == 0) {
+      zoom->moveAbs( zoom, lspg_getcenter.zoom);
+    } else {
+      zoom->moveAbs( zoom, 1);
+    }
+
+    //
+    // OK, why not just implement a nice getter that does the locking transparently?  UGLY!
+    //
+    pthread_mutex_lock( &(cenx->mutex));
+    cx = cenx->position;
+    pthread_mutex_unlock( &(cenx->mutex));
+    if( lspg_getcenter.dcx_isnull == 0)
+      cx += lspg_getcenter.dcx;
+
+    pthread_mutex_lock( &(ceny->mutex));
+    cy = ceny->position;
+    pthread_mutex_unlock( &(ceny->mutex));
+    if( lspg_getcenter.dcy_isnull == 0)
+      cy  += lspg_getcenter.dcy;
+			  
+    pthread_mutex_lock( &(alignx->mutex));
+    ax = alignx->position;
+    pthread_mutex_unlock( &(alignx->mutex));
+    if( lspg_getcenter.dax_isnull == 0)
+      ax  += lspg_getcenter.dax;
+
+    pthread_mutex_lock( &(aligny->mutex));
+    ay = aligny->position;
+    pthread_mutex_unlock( &(aligny->mutex));
+    if( lspg_getcenter.day_isnull == 0)
+      ay  += lspg_getcenter.day;
+			  
+    pthread_mutex_lock( &(alignz->mutex));
+    az = alignz->position;
+    pthread_mutex_unlock( &(alignz->mutex));
+    if( lspg_getcenter.daz_isnull == 0)
+      az  += lspg_getcenter.daz;
+			  
+    md2cmds_mvcenter_move( cx, cy, ax, ay, az);
+    md2cmds_mvcenter_wait();
+  }
+  lspg_getcenter_done();
+
+  // Home omega
+  lspmac_SockSendline("M401=1 M1115=1 #1$ &1B1R");
+
+  
+  
+  
 }
 
 /** Move centering and alignment tables as requested

@@ -69,20 +69,29 @@ typedef struct lspmac_cmd_queue_struct {
 typedef struct lspmac_motor_struct {
   pthread_mutex_t mutex;	//!< coordinate waiting for motor to be done
   pthread_cond_t cond;		//!<
+  int lspg_initialized;		//!< bit flags: bit 0 = motor initialized by database, bit 1 = px.kvs value initialized
   void (*read)( struct lspmac_motor_struct *);	//!< function to read the motor status and position
   int not_done;			//!< set to 1 when request is queued, zero after motion has toggled
   int motion_seen;		//!< set to 1 when motion has been verified to have started
   struct lspmac_cmd_queue_struct *pq;	//!< the queue item requesting motion.  Used to check time request was made
 
+  char **home;			//!< pmac commands to home motor
+  int homing;			//!< Homing routine started
   int requested_pos_cnts;	//!< requested position
   int *actual_pos_cnts_p;	//!< pointer to the md2_status structure to the actual position
+  int actual_pos_cnts;		//!< local copy of actual counts so only our mutex is needed to read
   double position;		//!< scaled position
   double reported_position;	//!< previous position reported to the database
   double requested_position;	//!< The position as requested by the user
   double update_resolution;	//!< Change needs to be at least this big to report as a new position to the database
-  int *status1;			//!< First 24 bit PMAC motor status word
-  int *status2;			//!< Sectond 24 bit PMAC motor status word
+  char   *update_format;	//!< special format string to create text array for px.kvs update (lsupdate)
+  int *status1_p;		//!< First 24 bit PMAC motor status word
+  int status1;			//!< local copy of status1
+  int *status2_p;		//!< Sectond 24 bit PMAC motor status word
+  int status2;			//!< local copy of status2
+  char statuss[64];		//!< short text summarizing status
   int motor_num;		//!< pmac motor number
+  int coord_num;		//!< coordinate system this motor belongs to (0 if none)
   char *dac_mvar;		//!< controlling mvariable as a string
   char *name;			//!< Name of motor as refered by ls database kvs table
   char *units;			//!< string to use as the units
@@ -99,6 +108,39 @@ typedef struct lspmac_motor_struct {
   WINDOW *win;			//!< our ncurses window
 } lspmac_motor_t;
 
+
+/** Storage for getcenter query
+ *  Used for the md2 ROTATE command
+ *  that generates the centering movies
+ */
+
+typedef struct lspg_getcenter_struct {
+  pthread_mutex_t mutex;	//!< don't let the threads collide!
+  pthread_cond_t  cond;		//!< provides signaling for when the query is done
+  int new_value_ready;		//!< used with condition
+  int no_rows_returned;		//!< flag in case no centering information was forthcoming
+
+  int zoom;			//!< the next zoom level to go to before taking the next movie
+  int zoom_isnull;
+
+  double dcx;			//!< center x change
+  int dcx_isnull;
+
+  double dcy;			//!< center y change
+  int dcy_isnull;
+
+  double dax;			//!< alignment x change
+  int dax_isnull;
+
+  double day;			//!< alignment y change
+  int day_isnull;
+
+  double daz;			//!< alignment z change
+  int daz_isnull;
+  
+} lspg_getcenter_t;
+
+extern lspg_getcenter_t lspg_getcenter;
 
 /** Storage definition for nextshot query.
  *
@@ -258,7 +300,7 @@ extern lspmac_motor_t *flight;
 extern lspmac_motor_t *blight;
 extern lspmac_motor_t *fscint;
 
-extern lspmac_motor_t *blight_up;
+extern lspmac_motor_t *blight_ud;
 
 extern int lspmac_nmotors;
 

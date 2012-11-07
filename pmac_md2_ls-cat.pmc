@@ -4283,6 +4283,41 @@ CLOSE
 
 
 
+
+;
+; LS-CAT modification to kappa homing routing prog 19
+;
+#define HomeOffset119 22760
+
+Open Prog 119 Clear
+%100
+dwell0
+inc
+lin
+dwell0
+While (Nlim19 = 1)    ;  Si limite negative #21
+  dwell0
+  X HomeClear19
+  dwell0
+EndWhile
+dwell0
+I1924=$220001         ;  Devalidation des securites
+dwell0
+home 19
+hmz 19                ; BEWARE ! This is mandatory to take into account the fact that the Mini Kappa elbow can be moved of 180 degrees by the user !
+dwell0
+I1924=$200001         ;  Revalidation des securites
+dwell0
+X HomeOffset119       ; goto a measure zero point (Yikes! No real home marker!)
+dwell0
+hmz		      ; reset our homed zero point
+dwell0
+M419=0                        ;Clear the VB synchro. flag
+dwell0
+dwell0
+
+Close
+
 ;
 ; LS-CAT modification to omega scan prog 31
 ;
