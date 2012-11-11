@@ -51,11 +51,7 @@ void lsupdate_updateit() {
       s1[sizeof(s1)-1] = 0;
     
       if( mp->name != NULL && mp->status1_p != NULL && mp->status2_p != NULL && mp->actual_pos_cnts_p != NULL) {
-	pthread_mutex_lock( &ncurses_mutex);
-	wprintw( term_output, "%s status1: %0x  status2: %0x  cnts: %d\n", mp->name, mp->status1, mp->status2, mp->actual_pos_cnts);
-	wnoutrefresh( term_output);
-	doupdate();
-	pthread_mutex_unlock( &ncurses_mutex);
+	lslogging_log_message( "%s status1: %0x  status2: %0x  cnts: %d", mp->name, mp->status1, mp->status2, mp->actual_pos_cnts);
       }
 
       mp->reported_position = mp->position;
@@ -67,11 +63,7 @@ void lsupdate_updateit() {
 	strcat( s, "}'::text[])");
 	lspg_query_push( NULL, s);
 	
-	pthread_mutex_lock( &ncurses_mutex);
-	wprintw( term_output, "Update: %s\n", s);
-	wnoutrefresh( term_output);
-	doupdate();
-	pthread_mutex_unlock( &ncurses_mutex);
+	lslogging_log_message( "Update: %s", s);
 
 	s[0] = 0;
 	strcpy( s, "select px.kvupdate('{");
@@ -92,11 +84,7 @@ void lsupdate_updateit() {
     strcat( s, "}')");
     lspg_query_push( NULL, s);
 
-    pthread_mutex_lock( &ncurses_mutex);
-    wprintw( term_output, "Update: %s\n", s);
-    wnoutrefresh( term_output);
-    doupdate();
-    pthread_mutex_unlock( &ncurses_mutex);
+    lslogging_log_message( "Update: %s", s);
   }
 }
 

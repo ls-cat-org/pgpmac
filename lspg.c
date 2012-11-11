@@ -206,11 +206,7 @@ char **lspg_array2ptrs( char *a) {
   }
   rtni = 0;
   
-  pthread_mutex_lock( &ncurses_mutex);
-  wprintw( term_output, "lspg_array2ptrs: enter with %s\n", a);
-  wnoutrefresh( term_output);
-  doupdate();
-  pthread_mutex_unlock( &ncurses_mutex);
+  lslogging_log_message( "lspg_array2ptrs: enter with %s", a);
 
 
   // Go through and create the individual strings
@@ -294,7 +290,7 @@ void lspg_init_motors_cb(
 			 ) {
   int i, j;
   uint32_t  motor_number, motor_number_column, max_speed_column, max_accel_column, home_column;
-  uint32_t units_column, coord_column;
+  uint32_t units_column, coord_column, name_column;
   uint32_t u2c_column;
   uint32_t format_column;
   uint32_t update_resolution_column;
@@ -302,6 +298,10 @@ void lspg_init_motors_cb(
   char *sp;
   lspmac_motor_t *lsdp;
   
+  name_column              = PQfnumber( pgr, "mm_name");
+  if( name_column == -1)
+    return;
+
   motor_number_column      = PQfnumber( pgr, "mm_motor");
   coord_column		   = PQfnumber( pgr, "mm_coord");
   units_column             = PQfnumber( pgr, "mm_unit");
@@ -313,17 +313,13 @@ void lspg_init_motors_cb(
   update_format_column     = PQfnumber( pgr, "mm_update_format");
   home_column		   = PQfnumber( pgr, "mm_home");
 
-  if( motor_number_column == -1 || units_column == -1 || u2c_column == -1 || format_column == -1 || home_column == -1)
-    return;
-
   for( i=0; i<PQntuples( pgr); i++) {
-
-    motor_number = atoi(PQgetvalue( pgr, i, motor_number_column));
 
     lsdp = NULL;
     for( j=0; j<lspmac_nmotors; j++) {
-      if( lspmac_motors[j].motor_num == motor_number) {
+      if( strcmp(lspmac_motors[j].name, PQgetvalue( pgr, i, name_column)) == 0) {
 	lsdp                    = &(lspmac_motors[j]);
+	lsdp->motor_num         = atoi(PQgetvalue( pgr, i, motor_number_column));
 	lsdp->coord_num         = atoi( PQgetvalue( pgr, i, coord_column));
 	lsdp->units             = strdup( PQgetvalue( pgr, i, units_column));
 	lsdp->format            = strdup( PQgetvalue( pgr, i, format_column));
@@ -358,10 +354,7 @@ void lspg_zoom_lut_cb(
   zoom->nlut = PQntuples( pgr)/2;
   zoom->lut  = calloc( 2*zoom->nlut, sizeof(double));
   if( zoom->lut == NULL) {
-    wprintw( term_output, "\nOut of memmory (lspg_zoom_lut_cb)");
-    wnoutrefresh( term_output);
-    wnoutrefresh( term_output);
-    doupdate();
+    lslogging_log_message( "Out of memmory (lspg_zoom_lut_cb)");
     pthread_mutex_unlock( &(zoom->mutex));
     return;
   }
@@ -371,7 +364,27 @@ void lspg_zoom_lut_cb(
   }
 
   pthread_mutex_unlock( &(zoom->mutex));
+}
 
+void lspg_scint_lut_cb(
+			lspg_query_queue_t *qqp,		/**< [in] Our query			*/
+			PGresult *pgr				/**< [in] Our result object		*/
+			) {
+  int i;
+  pthread_mutex_lock( &(fscint->mutex));
+  
+  fscint->nlut = PQntuples( pgr)/2;
+  fscint->lut  = calloc( 2*fscint->nlut, sizeof( double));
+  if( fscint->lut == NULL) {
+    lslogging_log_message( "lspg_scint_lut_cb: Out of memory");
+    pthread_mutex_unlock( &(fscint->mutex));
+  }
+  
+  for( i=0; i<PQntuples( pgr); i++) {
+    fscint->lut[i] = strtod( PQgetvalue( pgr, i, 0), NULL);
+  }
+
+  pthread_mutex_unlock( &(fscint->mutex));
 }
 
 /** Front Light Lookup table query callback
@@ -388,10 +401,7 @@ void lspg_flight_lut_cb(
   flight->nlut = PQntuples( pgr)/2;
   flight->lut  = calloc( 2*flight->nlut, sizeof(double));
   if( flight->lut == NULL) {
-    wprintw( term_output, "\nOut of memmory (lspg_flight_lut_cb)");
-    wnoutrefresh( term_output);
-    wnoutrefresh( term_output);
-    doupdate();
+    lslogging_log_message( "Out of memmory (lspg_flight_lut_cb)");
     pthread_mutex_unlock( &(flight->mutex));
     return;
   }
@@ -419,10 +429,7 @@ void lspg_blight_lut_cb(
   blight->nlut = PQntuples( pgr)/2;
   blight->lut  = calloc( 2*blight->nlut, sizeof(double));
   if( blight->lut == NULL) {
-    wprintw( term_output, "\nOut of memmory (lspg_blight_lut_cb)");
-    wnoutrefresh( term_output);
-    wnoutrefresh( term_output);
-    doupdate();
+    lslogging_log_message( "Out of memmory (lspg_blight_lut_cb)");
     pthread_mutex_unlock( &(blight->mutex));
     return;
   }
@@ -1104,12 +1111,7 @@ void lspg_nextaction_cb(
     pthread_cond_signal( &md2cmds_cond);
     pthread_mutex_unlock( &md2cmds_mutex);
   } else {
-    pthread_mutex_lock( &ncurses_mutex);
-    wprintw( term_output, "\nMD2 command '%s' ignored.  Already running '%s'\n", action, md2cmds_cmd);
-    wnoutrefresh( term_output);
-    wnoutrefresh( term_input);
-    doupdate();
-    pthread_mutex_unlock( &ncurses_mutex);
+    lslogging_log_message( "MD2 command '%s' ignored.  Already running '%s'", action, md2cmds_cmd);
   }
 }
 
@@ -1152,12 +1154,7 @@ void lspg_flush() {
   case -1:
     // an error occured
 
-    pthread_mutex_lock( &ncurses_mutex);
-    wprintw( term_output, "\nflush failed: %s\n", PQerrorMessage( q));
-    wnoutrefresh( term_output);
-    wnoutrefresh( term_input);
-    doupdate();
-    pthread_mutex_unlock( &ncurses_mutex);
+    lslogging_log_message( "flush failed: %s", PQerrorMessage( q));
 
     ls_pg_state = LS_PG_STATE_IDLE;
     //
@@ -1204,24 +1201,14 @@ void lspg_send_next_query() {
     // It would only come up if we stupidly pushed an empty query string
     // or ran off the end of the queue
     //
-    pthread_mutex_lock( &ncurses_mutex);
-    wprintw( term_output, "\nPopped empty query string.  Probably bad things are going on.\n");
-    wnoutrefresh( term_output);
-    wnoutrefresh( term_input);
-    doupdate();
-    pthread_mutex_unlock( &ncurses_mutex);
+    lslogging_log_message( "Popped empty query string.  Probably bad things are going on.");
 
     lspg_query_reply_next();
     ls_pg_state = LS_PG_STATE_IDLE;
   } else {
     err = PQsendQuery( q, qqp->qs);
     if( err == 0) {
-      pthread_mutex_lock( &ncurses_mutex);
-      wprintw( term_output, "\nquery failed: %s\n", PQerrorMessage( q));
-      wnoutrefresh( term_output);
-      wnoutrefresh( term_input);
-      doupdate();
-      pthread_mutex_unlock( &ncurses_mutex);
+      lslogging_log_message( "query failed: %s\n", PQerrorMessage( q));
 
       //
       // Don't wait for a reply, just reset the connection
@@ -1243,12 +1230,7 @@ void lspg_receive() {
 
   err = PQconsumeInput( q);
   if( err != 1) {
-    pthread_mutex_lock( &ncurses_mutex);
-    wprintw( term_output, "\nconsume input failed: %s\n", PQerrorMessage( q));
-    wnoutrefresh( term_output);
-    wnoutrefresh( term_input);
-    doupdate();
-    pthread_mutex_unlock( &ncurses_mutex);
+    lslogging_log_message( "consume input failed: %s", PQerrorMessage( q));
     ls_pg_state == LS_PG_STATE_RESET;
     return;
   }
@@ -1280,12 +1262,7 @@ void lspg_receive() {
 	char *emess;
 	emess = PQresultErrorMessage( pgr);
 	if( emess != NULL && emess[0] != 0) {
-	  pthread_mutex_lock( &ncurses_mutex);
-	  wprintw( term_output, "\nError from query '%s':\n%s\n", qqp->qs, emess);
-	  wnoutrefresh( term_output);
-	  wnoutrefresh( term_input);
-	  doupdate();
-	  pthread_mutex_unlock( &ncurses_mutex);
+	  lslogging_log_message( "Error from query '%s':\n%s", qqp->qs, emess);
 	}
       } else {
 	//
@@ -1365,12 +1342,7 @@ void lspg_pg_service(
     if( ls_pg_state == LS_PG_STATE_IDLE) {
       err = PQconsumeInput( q);
       if( err != 1) {
-	pthread_mutex_lock( &ncurses_mutex);
-	wprintw( term_output, "\nconsume input failed: %s\n", PQerrorMessage( q));
-	wnoutrefresh( term_output);
-	wnoutrefresh( term_input);
-	doupdate();
-	pthread_mutex_unlock( &ncurses_mutex);
+	lslogging_log_message( "consume input failed: %s", PQerrorMessage( q));
 	ls_pg_state == LS_PG_STATE_RESET;
 	return;
       }
@@ -1459,35 +1431,20 @@ void lspg_pg_connect() {
 
     q = PQconnectStart( "dbname=ls user=lsuser hostaddr=10.1.0.3");
     if( q == NULL) {
-      pthread_mutex_lock( &ncurses_mutex);
-      wprintw( term_output, "Out of memory (lspg_pg_connect)\n");
-      wnoutrefresh( term_output);
-      wnoutrefresh( term_input);
-      doupdate();
-      pthread_mutex_unlock( &ncurses_mutex);
+      lslogging_log_message( "Out of memory (lspg_pg_connect)");
       exit( -1);
     }
 
     err = PQstatus( q);
     if( err == CONNECTION_BAD) {
-      pthread_mutex_lock( &ncurses_mutex);
-      wprintw( term_output, "Trouble connecting to database\n");
-      wnoutrefresh( term_output);
-      wnoutrefresh( term_input);
-      doupdate();
-      pthread_mutex_unlock( &ncurses_mutex);
+      lslogging_log_message( "Trouble connecting to database");
 
       gettimeofday( &lspg_time_sent, NULL);
       return;
     }
     err = PQsetnonblocking( q, 1);
     if( err != 0) {
-      pthread_mutex_lock( &ncurses_mutex);
-      wprintw( term_output, "Odd, could not set database connection to nonblocking\n");
-      wnoutrefresh( term_output);
-      wnoutrefresh( term_input);
-      doupdate();
-      pthread_mutex_unlock( &ncurses_mutex);
+      lslogging_log_message( "Odd, could not set database connection to nonblocking");
     }
 
     ls_pg_state = LS_PG_STATE_INIT_POLL;
@@ -1509,6 +1466,7 @@ void lspg_pg_connect() {
       lspg_query_push( lspg_zoom_lut_cb, "SELECT * FROM pmac.md2_zoom_lut()");
       lspg_query_push( lspg_flight_lut_cb, "SELECT * FROM pmac.md2_flight_lut()");
       lspg_query_push( lspg_blight_lut_cb, "SELECT * FROM pmac.md2_blight_lut()");
+      lspg_query_push( lspg_scint_lut_cb,      "SELECT * FROM pmac.md2_scint_lut()");
 
       ls_pg_state = LS_PG_STATE_IDLE;
     }
@@ -1620,12 +1578,7 @@ void *lspg_worker(
     char *es;
 
     es = strerror( errno);
-    pthread_mutex_lock( &ncurses_mutex);
-    wprintw( term_output, "Signalfd trouble: %s", es);
-    wnoutrefresh( term_output);
-    wnoutrefresh( term_input);
-    doupdate();
-    pthread_mutex_unlock( &ncurses_mutex);
+    lslogging_log_message( "Signalfd trouble: %s", es);
   }
   fda[0].events = POLLIN;
 

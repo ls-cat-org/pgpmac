@@ -84,28 +84,19 @@ void md2cmds_moveAbs(
   
   mtr = strtok_r( NULL, " ", &ptr);
   if( mtr == NULL) {
-    //
-    // Should generate error message
-    // about missing motor name
-    //
+    lslogging_log_message( "md2cmds moveAbs error: missing motor name");
     return;
   }
 
   pos = strtok_r( NULL, " ", &ptr);
   if( pos == NULL) {
-    //
-    // Should generate error message
-    // about missing position
-    //
+    lslogging_log_message( "md2cmds moveAbs error: missing position");
     return;
   }
 
   fpos = strtod( pos, &endptr);
   if( pos == endptr) {
-    //
-    // Should generate error message 
-    // about bad double conversion
-    //
+    lslogging_log_message( "md2cmds moveAbs error: Can't decipher '%s' as a number", pos);
     return;
   }
   

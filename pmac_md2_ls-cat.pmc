@@ -2296,7 +2296,7 @@ M511->Y:$41FE,0,16		; Pointeur sur M510
 #Define  HomeOffset19       730000   ; unused except for Stress Test (see prog 20)
 #define  HomeClear20        256000   ; 1 circle
 #Define  HomeOffset20       0        ; unused
-
+11
 
 #Define SampleChangerEnabled P200
 #Define SampleChangerIsRunning P201
@@ -4287,9 +4287,9 @@ CLOSE
 ;
 ; LS-CAT modification to kappa homing routing prog 19
 ;
-#define HomeOffset119 22760
+#Define  HomeOffset119      22760    ; cnts from limit switch to zero position
 
-Open Prog 119 Clear
+OPEN PROG 119 CLEAR
 %100
 dwell0
 inc
@@ -4306,17 +4306,18 @@ dwell0
 home 19
 hmz 19                ; BEWARE ! This is mandatory to take into account the fact that the Mini Kappa elbow can be moved of 180 degrees by the user !
 dwell0
-I1924=$200001         ;  Revalidation des securites
-dwell0
 X HomeOffset119       ; goto a measure zero point (Yikes! No real home marker!)
 dwell0
-hmz		      ; reset our homed zero point
+hmz 19
 dwell0
-M419=0                        ;Clear the VB synchro. flag
+I1924=$200001         ;  Revalidation des securites
+dwell0
+M419=0                ;Clear the VB synchro. flag
 dwell0
 dwell0
 
-Close
+CLOSE
+
 
 ;
 ; LS-CAT modification to omega scan prog 31
@@ -4490,4 +4491,6 @@ OPEN PROG 160 CLEAR
   DWELL0
   M7075 = (M7075 | Q100) ^ Q100		; Lower the running flag
 CLOSE
+
+
 

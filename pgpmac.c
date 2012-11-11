@@ -389,6 +389,7 @@ int main(
   // Since the modules reference objects in other modules it is important
   // that everyone is initiallized before anyone runs
   //
+  lslogging_init();
   lspmac_init( ivars, mvars);
   lspg_init();
   lsupdate_init();
@@ -415,6 +416,7 @@ int main(
 						      
   doupdate();					      
 
+  lslogging_run();
   lspmac_run();
   lspg_run();
   lsupdate_run();

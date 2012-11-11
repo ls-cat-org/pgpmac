@@ -301,6 +301,8 @@ extern lspmac_motor_t *blight;
 extern lspmac_motor_t *fscint;
 
 extern lspmac_motor_t *blight_ud;
+extern lspmac_motor_t *cryo;
+extern lspmac_motor_t *dryer;
 
 extern int lspmac_nmotors;
 

@@ -92,6 +92,8 @@ lspmac_motor_t *blight;				//!< Back Light DAC
 lspmac_motor_t *fscint;				//!< Scintillator Piezo DAC
 
 lspmac_motor_t *blight_ud;			//!< Back Light Up/Down actuator
+lspmac_motor_t *cryo;				//!< Move the cryostream towards or away from the crystal
+lspmac_motor_t *dryer;				//!< blow air on the scintilator to dry it off
 
 //! The PMAC (only) listens on this port
 #define PMACPORT 1025
@@ -277,6 +279,124 @@ static md2_status_t md2_status;		//!< Buffer for MD2 Status
 pthread_mutex_t md2_status_mutex;	//!< Synchronize reading/writting status buffer
 
 
+/** Look up table support for motor positions (think x=zoom, y=light intensity)
+ * use a lookup table to find the "counts" to move the motor to the requested position
+ * The look up table is a simple one dimensional array with the x values as even indicies
+ * and the y values as odd indices
+ *
+ * Returns: y value
+ *
+ */
+
+double lspmac_lut(
+		  int nlut,		/**< [in] number of entries in lookup table					*/
+		  double *lut,		/**< [in] The lookup table: even indicies are the x values, odd are the y's	*/
+		  double x		/**< [in] The x value we are looking up.					*/
+		  ) {
+  int i, foundone;
+  double m;
+  double y1, y2, x1, x2, y;
+
+  foundone = 0;
+  if( lut != NULL && nlut > 1) {
+    for( i=0; i < 2*nlut; i += 2) {
+      x1 = lut[i];
+      y1 = lut[i+1];
+      if( i < 2*nlut - 2) {
+	x2 = lut[i+2];
+	y2 = lut[i+3];
+      }
+
+      //
+      // First one too big?  Use the y value of the first element
+      //
+      if( i == 0 && x1 > x) {
+	y = y1;
+	foundone = 1;
+	break;
+      }
+
+      //
+      // Look for equality
+      //
+      if( x1 == x) {
+	y = y1;
+	foundone = 1;
+	break;
+      }
+
+      //
+      // Maybe interpolate
+      //
+      if( (i < 2*nlut-2) && x < x2) {
+	m = (y2 - y1) / (x2 - x1);
+	y = m*(x - x1) + y1;
+	foundone = 1;
+	break;
+      }
+    }
+    if( foundone == 0) {
+      // must be bigger than the last entry
+      //
+      //
+      y = lut[2*(nlut-1) + 1];
+    }
+    return y;
+  }
+  return 0.0;
+}
+
+double lspmac_rlut(
+		   int nlut,		/**< [in] number of entries in lookup table					*/
+		   double *lut,		/**< [in] our lookup table							*/
+		   double y		/**< [in] the y value for which we need an x					*/
+		   ) {
+  int i, foundone, up;
+  double m;
+  double y1, y2, x1, x2, x;
+
+  foundone = 0;
+  if( lut != NULL && nlut > 1) {
+
+    if( lut[1] < lut[2*nlut-1])
+      up = 1;
+    else
+      up = 0;
+
+    for( i=0; i < 2*nlut; i += 2) {
+      x1 = lut[i];
+      y1 = lut[i+1];
+      if( i < 2*nlut - 2) {
+	x2 = lut[i+2];
+	y2 = lut[i+3];
+      }
+      if( i==0 && ( up ? y1 > y : y1 < y)) {
+	x = x1;
+	foundone = 1;
+	break;
+      }
+      if( y1 == y) {
+	x = x1;
+	foundone = 1;
+	break;
+      }
+      if( (i < 2*nlut-2) && (up ? y < y2 : y > y2)) {
+	m = (x2 - x1) / (y2 - y1);
+	x = m * (y - y1) + x1;
+	foundone = 1;
+	break;
+      }
+    }
+    if( foundone == 0 ) {
+      x = lut[2*(nlut-1)];
+    }
+    return x;
+  }
+  return 0.0;
+}
+
+
+
 /** Prints a hex dump of the given data.
  *  Used to debug packet data.
  */
@@ -355,15 +475,7 @@ void lsConnect(
   err = getaddrinfo( ipaddr, NULL, &ai_hints, &ai_resultP);
   if( err != 0) {
 
-    pthread_mutex_lock( &ncurses_mutex);
-
-    wprintw( term_output, "Could not find address: %s\n", gai_strerror( err));
-
-    wnoutrefresh( term_output);
-    wnoutrefresh( term_input);
-    doupdate();
-
-    pthread_mutex_unlock( &ncurses_mutex);
+    lslogging_log_message( "Could not find address: %s", gai_strerror( err));
 
     return;
   }
@@ -375,26 +487,13 @@ void lsConnect(
 
   psock = socket( PF_INET, SOCK_STREAM, 0);
   if( psock == -1) {
-
-    pthread_mutex_lock( &ncurses_mutex);
-    wprintw( term_output, "Could not create socket\n");
-
-    wnoutrefresh( term_output);
-    wnoutrefresh( term_input);
-    doupdate();
-    pthread_mutex_unlock( &ncurses_mutex);
+    lslogging_log_message( "Could not create socket");
     return;
   }
 
   err = connect( psock, (const struct sockaddr *)addrP, sizeof( *addrP));
   if( err != 0) {
-    pthread_mutex_lock( &ncurses_mutex);
-    wprintw( term_output, "Could not connect socket: %s\n", strerror( errno));
-
-    wnoutrefresh( term_output);
-    wnoutrefresh( term_input);
-    doupdate();
-    pthread_mutex_unlock( &ncurses_mutex);
+    lslogging_log_message( "Could not connect socket: %s", strerror( errno));
     return;
   }
 
@@ -503,13 +602,7 @@ pmac_cmd_queue_t *lspmac_send_command(
     //
     // Bad things happen if we do not catch this case.
     //
-    pthread_mutex_lock( &ncurses_mutex);
-    wprintw( term_output, "Message Length %d longer than maximum of %ld, aborting\n", wLength, sizeof( cmd.pcmd.bData));
-
-    wnoutrefresh( term_output);
-    wnoutrefresh( term_input);
-    doupdate();
-    pthread_mutex_unlock( &ncurses_mutex);
+    lslogging_log_message( "Message Length %d longer than maximum of %ld, aborting", wLength, sizeof( cmd.pcmd.bData));
     exit( -1);
   }
   if( data == NULL) {
@@ -566,6 +659,8 @@ void lspmac_Error(
     buff[7] = 0;  // For null termination
     err = atoi( &(buff[4]));
     if( err > 0 && err < 20) {
+      lslogging_log_message( pmac_error_strs[err]);
+
       pthread_mutex_lock( &ncurses_mutex);
       wprintw( term_output, "\n%s\n", pmac_error_strs[err]);
       wnoutrefresh( term_output);
@@ -618,23 +713,13 @@ void lspmac_Service(
 	if( cmd->pcmd.Request == VR_PMAC_GETMEM) {
 	  nsent = send( evt->fd, cmd, pmac_cmd_size, 0);
 	  if( nsent != pmac_cmd_size) {
-	    pthread_mutex_lock( &ncurses_mutex);
-	    wprintw( term_output, "\nCould only send %d of %d bytes....Not good.", (int)nsent, (int)(pmac_cmd_size));
-	    wnoutrefresh( term_output);
-	    wnoutrefresh( term_input);
-	    doupdate();
-	    pthread_mutex_unlock( &ncurses_mutex);
+	    lslogging_log_message( "Could only send %d of %d bytes....Not good.", (int)nsent, (int)(pmac_cmd_size));
 	  }
 	} else {
 	  nsent = send( evt->fd, cmd, pmac_cmd_size + ntohs(cmd->pcmd.wLength), 0);
 	  gettimeofday( &pmac_time_sent, NULL);
 	  if( nsent != pmac_cmd_size + ntohs(cmd->pcmd.wLength)) {
-	    pthread_mutex_lock( &ncurses_mutex);
-	    wprintw( term_output, "\nCould only send %d of %d bytes....Not good.", (int)nsent, (int)(pmac_cmd_size + ntohs(cmd->pcmd.wLength)));
-	    wnoutrefresh( term_output);
-	    wnoutrefresh( term_input);
-	    doupdate();
-	    pthread_mutex_unlock( &ncurses_mutex);
+	    lslogging_log_message( "Could only send %d of %d bytes....Not good.", (int)nsent, (int)(pmac_cmd_size + ntohs(cmd->pcmd.wLength)));
 	  }
 	}
       }
@@ -676,12 +761,7 @@ void lspmac_Service(
       receiveBufferSize += 1400;
       newbuff = calloc( receiveBufferSize, sizeof( unsigned char));
       if( newbuff == NULL) {
-	pthread_mutex_lock( &ncurses_mutex);
-	wprintw( term_output, "\nOut of memory\n");
-	wnoutrefresh( term_output);
-	wnoutrefresh( term_input);
-	doupdate();
-	pthread_mutex_unlock( &ncurses_mutex);
+	lslogging_log_message( "Out of memory");
 	exit( -1);
       }
       memcpy( newbuff, receiveBuffer, receiveBufferIn);
@@ -869,6 +949,8 @@ pmac_cmd_queue_t *lspmac_SockSendline(
   payload[ sizeof(payload)-1] = 0;
   va_end( arg_ptr);
 
+  lslogging_log_message( payload);
+
   return lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( payload), payload, lspmac_GetShortReplyCB, 0);
 }
 
@@ -885,6 +967,8 @@ pmac_cmd_queue_t *lspmac_SockSendline_nr(
   vsnprintf( s, sizeof(s)-1, fmt, arg_ptr);
   s[sizeof(s)-1] = 0;
   va_end( arg_ptr);
+
+  lslogging_log_message( s);
 
   return lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( s), s, NULL, 1);
 }
@@ -943,19 +1027,19 @@ void lspmac_dac_read(
   int pos;
   pthread_mutex_lock( &(mp->mutex));
   mp->actual_pos_cnts = *mp->actual_pos_cnts_p;
-  mp->position = mp->actual_pos_cnts / mp->u2c;
+
+  if( mp->nlut >0 && mp->lut != NULL) {
+    mp->position = lspmac_rlut( mp->nlut, mp->lut, mp->actual_pos_cnts);
+  } else {
+    if( mp->u2c != 0.0) {
+      mp->position = mp->actual_pos_cnts / mp->u2c;
+    } else {
+      mp->position = mp->actual_pos_cnts;
+    }
+  }
 
   // Not sure what kind of status makes sense to report
   mp->statuss[0] = 0;
-
-  /*
-  pthread_mutex_lock( &ncurses_mutex);
-  wprintw( term_output, "    %d    %f\n", pos, mp->position);
-  wnoutrefresh( term_output);
-  wnoutrefresh( term_input);
-  doupdate();
-  pthread_mutex_unlock( &ncurses_mutex);
-  */
 
   pthread_mutex_unlock( &(mp->mutex));
 }
@@ -1133,9 +1217,41 @@ void lspmac_pmacmotor_read(
 
   pthread_mutex_lock( &(mp->mutex));
 
+  //
+  // if this time and last time were both "in position"
+  // and the position changed significantly then log the event
+  //
+  // On E omega has been observed to change by 0x10000 on its own
+  // with no real motion.
+  //
+  if( mp->status2 & 0x000001 && *mp->status2_p & 0x000001 && abs( mp->actual_pos_cnts - *mp->actual_pos_cnts_p) > 256) {
+    lslogging_log_message( "Instantaneous change: %s old status1: %0x, new status1: %0x, old status2: %0x, new status2: %0x, old cnts: %0x, new cnts: %0x",
+			   mp->name, mp->status1, *mp->status1_p, mp->status2, *mp->status2_p, mp->actual_pos_cnts, *mp->actual_pos_cnts_p);
+
+    //
+    // At this point we'll just log the event and return
+    // There is no reason to believe the change is real.
+    //
+    // There is a non-zero probability that the first value is the bad one and any value afterwards will be taken as
+    // wrong.  Homing (or moving) the motor should fix this.  There is a non-zero probably that it can happen
+    // two or more times in a row after moving.
+    //
+    // TODO: account for the case where mp->actual_pos_cnts is the bad value.
+    //
+    // TODO: Is this a problem when the motor is moving?  Can we detect it?
+    //
+    // TODO: Think of the correct change value here (currently 256) that works for all motors
+    // or have this value configurable
+    //
+    pthread_mutex_unlock( &(mp->mutex));
+    return;
+  }
+
+
   // Make local copies so we can inspect them in other threads
   // without having to grab the status mutex
   //
+
   mp->status1 = *mp->status1_p;
   mp->status2 = *mp->status2_p;
   mp->actual_pos_cnts = *mp->actual_pos_cnts_p;
@@ -1167,13 +1283,16 @@ void lspmac_pmacmotor_read(
   mvwprintw( mp->win, 2, 1, "%*d cts", LS_DISPLAY_WINDOW_WIDTH-6, mp->actual_pos_cnts);
   mvwprintw( mp->win, 3, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, " ");
 
-  if( mp->u2c != 0.0) {
-    mp->position = mp->actual_pos_cnts/mp->u2c;
-    snprintf( s, sizeof(s)-1, mp->format, 8, mp->actual_pos_cnts/mp->u2c);
+  if( mp->nlut >0 && mp->lut != NULL) {
+    mp->position = lspmac_rlut( mp->nlut, mp->lut, mp->actual_pos_cnts);
   } else {
-    mp->position = 1.0* (mp->actual_pos_cnts);
-    snprintf( s, sizeof(s)-1, mp->format, 8, 1.0* (mp->actual_pos_cnts));
+    if( mp->u2c != 0.0) {
+      mp->position = mp->actual_pos_cnts / mp->u2c;
+    } else {
+      mp->position = mp->actual_pos_cnts;
+    }
   }
+  snprintf( s, sizeof(s)-1, mp->format, 8, mp->position);
 
   // set flag if we are not homed
   homing1 = 0;
@@ -1362,9 +1481,9 @@ void lspmac_get_status_cb(
   else
     mvwprintw( term_status,  3, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Backlight Down");
 
-  mvwprintw( term_status, 4, 1, "Front: %*d", LS_DISPLAY_WINDOW_WIDTH-2-8, md2_status.front_dac);
-  mvwprintw( term_status, 5, 1, "Back: %*d", LS_DISPLAY_WINDOW_WIDTH-2-7, md2_status.back_dac);
-  mvwprintw( term_status, 6, 1, "Piezo: %*d", LS_DISPLAY_WINDOW_WIDTH-2-8, md2_status.scint_piezo);
+  mvwprintw( term_status, 4, 1, "Front: %*u", LS_DISPLAY_WINDOW_WIDTH-2-8, (int)flight->position);
+  mvwprintw( term_status, 5, 1, "Back: %*u", LS_DISPLAY_WINDOW_WIDTH-2-7,  (int)blight->position);
+  mvwprintw( term_status, 6, 1, "Piezo: %*u", LS_DISPLAY_WINDOW_WIDTH-2-8, (int)fscint->position);
   wnoutrefresh( term_status);
 
   wnoutrefresh( term_input);
@@ -1375,12 +1494,8 @@ void lspmac_get_status_cb(
   if( ++cnt % 1000 == 0) {
     gettimeofday( &ts2, NULL);
 
-    pthread_mutex_lock( &ncurses_mutex);
-    wprintw( term_output, "Refresh Rate: %0.1f Hz\n", 1000000.*(cnt)/(ts2.tv_sec*1000000 + ts2.tv_usec - ts1.tv_sec*1000000 - ts1.tv_usec));
-    wnoutrefresh( term_output);
-    doupdate();
+    lslogging_log_message( "Refresh Rate: %0.1f Hz", 1000000.*(cnt)/(ts2.tv_sec*1000000 + ts2.tv_usec - ts1.tv_sec*1000000 - ts1.tv_usec));
 
-    pthread_mutex_unlock( &ncurses_mutex);
     cnt = 0;
   }
   */
@@ -1488,14 +1603,6 @@ void lspmac_sendcmd(
  */
 void lspmac_next_state() {
 
-  /*
-  pthread_mutex_lock( &ncurses_mutex);
-  wprintw( term_output, "State: %d\n", ls_pmac_state);
-  wnoutrefresh( term_output);
-  wnoutrefresh( term_input);
-  doupdate();
-  pthread_mutex_unlock( &ncurses_mutex);
-  */
 
   //
   // Connect to the pmac and perhaps initialize it.
@@ -1558,15 +1665,6 @@ void lspmac_next_state() {
       // Anytime we are idle we want to
       // get the status of the PMAC
       //
-
-      /*
-      pthread_mutex_lock( &ncurses_mutex);
-      wprintw( term_output, "get status request\n");
-      wnoutrefresh( term_output);
-      wnoutrefresh( term_input);
-      doupdate();
-      pthread_mutex_unlock( &ncurses_mutex);
-      */
 
       lspmac_get_status();
     }
@@ -1640,74 +1738,6 @@ void *lspmac_worker(
 
 
 
-/** Look up table support for motor positions (think x=zoom, y=light intensity)
- * use a lookup table to find the "counts" to move the motor to the requested position
- * The look up table is a simple one dimensional array with the x values as even indicies
- * and the y values as odd indices
- *
- * Returns: y value
- *
- */
-
-double lspmac_lut(
-		  int nlut,		/**< [in] number of entries in lookup table					*/
-		  double *lut,		/**< [in] The lookup table: even indicies are the x values, odd are the y's	*/
-		  double x		/**< [in] The x value we are looking up.					*/
-		  ) {
-  int i, foundone;
-  double m;
-  double y1, y2, x1, x2, y;
-
-
-  foundone = 0;
-  if( lut != NULL && nlut > 1) {
-
-    for( i=0; i < 2*nlut; i += 2) {
-
-      x1 = lut[i];
-      y1 = lut[i+1];
-      if( i < 2*nlut - 2) {
-	x2 = lut[i+2];
-	y2 = lut[i+3];
-      }
-
-      //
-      // First one too big?  Use the y value of the first element
-      //
-      if( i == 0 && x1 > x) {
-	y = y1;
-	foundone = 1;
-	break;
-      }
-
-      //
-      // Look for equality
-      //
-      if( x1 == x) {
-	y = y1;
-	foundone = 1;
-	break;
-      }
-
-      //
-      // Maybe interpolate
-      //
-      if( (i < 2*nlut-2) && x < x2) {
-	m = (y2 - y1) / (x2 - x1);
-	y = m*(x - x1) + y1;
-	foundone = 1;
-	break;
-      }
-    }
-    if( foundone == 0) {
-      // must be bigger than the last entry
-      //
-      //
-      y = lut[2*(nlut-1) + 1];
-    }
-    return y;
-  }
-}
 
 
 /** Move method for dac motor objects (ie, lights)
@@ -1724,19 +1754,17 @@ void lspmac_movedac_queue(
   mp->requested_position = requested_position;
 
   if( mp->nlut > 0 && mp->lut != NULL) {
-    y = lspmac_lut( mp->nlut, mp->lut, requested_position);
-
-    mp->requested_pos_cnts = (int)y * mp->u2c;
+    mp->requested_pos_cnts = lspmac_lut( mp->nlut, mp->lut, requested_position);
     mp->not_done    = 1;
     mp->motion_seen = 0;
 
 
     //
-    //  By convension requested_pos_cnts scales from 0 to 100
+    //  By convention requested_pos_cnts scales from 0 to 100
     //  for the lights u2c converts this to 0 to 16,000
     //  for the scintilator focus this is   0 to 32,000
     //
-    snprintf( s, sizeof(s)-1, "%s=%d", mp->dac_mvar, (int)mp->requested_pos_cnts);
+    snprintf( s, sizeof(s)-1, "%s=%d", mp->dac_mvar, mp->requested_pos_cnts);
     mp->pq = lspmac_SockSendline_nr( s);
 
   }
@@ -1753,6 +1781,7 @@ void lspmac_movezoom_queue(
 			   ) {
   char s[512];
   double y;
+  int blud;
   pthread_mutex_lock( &(mp->mutex));
 
   mp->requested_position = requested_position;
@@ -1775,7 +1804,14 @@ void lspmac_movezoom_queue(
   // the lights should "move" with the zoom motor
   //
   lspmac_movedac_queue( flight, requested_position);
-  lspmac_movedac_queue( blight, requested_position);
+
+  pthread_mutex_lock( &(blight_ud->mutex));
+  blud = blight_ud->position;
+  pthread_mutex_unlock( &(blight_ud->mutex));
+
+  if( blud > 0) {
+    lspmac_movedac_queue( blight, requested_position);
+  }
 }
 
 /** Move method for the fast shutter
@@ -1821,6 +1857,16 @@ void lspmac_moveabs_bio_queue(
   mp->requested_pos_cnts = requested_position;
   mp->pq = lspmac_SockSendline_nr( mp->write_fmt, mp->requested_pos_cnts);
   pthread_mutex_unlock( &(mp->mutex));
+
+  if( mp == blight_ud) {
+    if( requested_position == 0) {
+      lspmac_movedac_queue( blight, 0);
+    } else {
+      pthread_mutex_lock( &(zoom->mutex));
+      lspmac_movedac_queue( blight, zoom->position);
+      pthread_mutex_unlock( &(zoom->mutex));
+    }
+  }
 }
 
 
@@ -2086,6 +2132,8 @@ void lspmac_init(
   fscint = lspmac_dac_init( &(lspmac_motors[18]), &p->scint_piezo, 320.0, "M1203", "scint.focus");
 
   blight_ud = lspmac_bio_init( &(lspmac_motors[19]), "backLight", "M1101=%d", &(md2_status.acc11c_5), 0x02);
+  cryo      = lspmac_bio_init( &(lspmac_motors[20]), "cryo",      "M1102=%d", &(md2_status.acc11c_1), 0x40);
+  dryer     = lspmac_bio_init( &(lspmac_motors[21]), "dryer",     "M1103=%d", &(md2_status.acc11c_5), 0x08);
 
 
 
