@@ -9,7 +9,7 @@ Brings this MD2 code and the database kvs table into agreement.
 \subsection*{Functions}
 \begin{DoxyCompactItemize}
 \item 
-void \hyperlink{lsupdate_8c_a99020a5401c80a8ec384ed0999dc4ef8}{lsupdate\_\-updateit} (int first\_\-time)
+void \hyperlink{lsupdate_8c_af28d93f773e70f701699b323563fa218}{lsupdate\_\-updateit} ()
 \begin{DoxyCompactList}\small\item\em Query the motors and perhaps tell the DB about it. \item\end{DoxyCompactList}\item 
 void $\ast$ \hyperlink{lsupdate_8c_ac4e85ea626b76b06d68c27db1c3e8b43}{lsupdate\_\-worker} (void $\ast$dummy)
 \begin{DoxyCompactList}\small\item\em Our worker thread. \item\end{DoxyCompactList}\item 
@@ -45,12 +45,12 @@ Definition in file \hyperlink{lsupdate_8c_source}{lsupdate.c}.
 
 Initialize this module. 
 
-Definition at line 89 of file lsupdate.c.
+Definition at line 108 of file lsupdate.c.
 
 
 \begin{DoxyCode}
-89                      {
-90 }
+108                      {
+109 }
 \end{DoxyCode}
 \hypertarget{lsupdate_8c_af219e9b2cc124f109aa4c2c2e16b5d07}{
 \index{lsupdate.c@{lsupdate.c}!lsupdate\_\-run@{lsupdate\_\-run}}
@@ -61,89 +61,106 @@ Definition at line 89 of file lsupdate.c.
 
 run the update routines 
 
-Definition at line 94 of file lsupdate.c.
+Definition at line 113 of file lsupdate.c.
 
 
 \begin{DoxyCode}
-94                     {
-95   //  pthread_create( &lsupdate_thread, NULL, lsupdate_worker, NULL);
-96 }
+113                     {
+114   pthread_create( &lsupdate_thread, NULL, lsupdate_worker, NULL);
+115 }
 \end{DoxyCode}
-\hypertarget{lsupdate_8c_a99020a5401c80a8ec384ed0999dc4ef8}{
+\hypertarget{lsupdate_8c_af28d93f773e70f701699b323563fa218}{
 \index{lsupdate.c@{lsupdate.c}!lsupdate\_\-updateit@{lsupdate\_\-updateit}}
 \index{lsupdate\_\-updateit@{lsupdate\_\-updateit}!lsupdate.c@{lsupdate.c}}
-\subsubsection[{lsupdate\_\-updateit}]{\setlength{\rightskip}{0pt plus 5cm}void lsupdate\_\-updateit (int {\em first\_\-time})}}
-\label{lsupdate_8c_a99020a5401c80a8ec384ed0999dc4ef8}
+\subsubsection[{lsupdate\_\-updateit}]{\setlength{\rightskip}{0pt plus 5cm}void lsupdate\_\-updateit ()}}
+\label{lsupdate_8c_af28d93f773e70f701699b323563fa218}
 
 
 Query the motors and perhaps tell the DB about it. 
-\begin{DoxyParams}{Parameters}
-\item[\mbox{$\leftarrow$} {\em first\_\-time}]Flag: 1 means update everything, 0 means only send stuff that has changed \end{DoxyParams}
-
 
 Definition at line 15 of file lsupdate.c.
 
 
 \begin{DoxyCode}
-16                                                               : 1 means update ev
-      erything, 0 means only send stuff that has changed  */
-17                        ) {
-18   static char s[4096];
-19   static char s1[512];
-20   lspmac_motor_t *mp;
-21   int i;
-22   int needComma;
-23   int gotone;
-24 
-25   needComma = 0;
-26   gotone = 0;
-27   s[0] = 0;
-28   strcpy(s, "select px.kvupdate('{");
-29 
-30   for( i=0; i<lspmac_nmotors; i++) {
-31     mp = &(lspmac_motors[i]);
-32 
-33     pthread_mutex_lock( &(mp->mutex));
-34     if( fabs( mp->position - mp->reported_position) < mp->update_resolution && fi
-      rst_time == 0) {
-35       pthread_mutex_unlock( &(mp->mutex));
-36     } else {
-37 
-38       gotone = 1;
-39       s1[0]=0;
-40 
-41       snprintf( s1, sizeof(s1)-1, mp->format, mp->position, sizeof( s1)-1);
-42       s1[sizeof(s1)-1] = 0;
-43     
-44       mp->reported_position = mp->position;
-45       pthread_mutex_unlock( &(mp->mutex));
+15                          {
+16   static char s[4096];
+17   static char s1[512];
+18   lspmac_motor_t *mp;
+19   int i;
+20   int needComma;
+21   int gotone;
+22 
+23   needComma = 0;
+24   gotone = 0;
+25   s[0] = 0;
+26   strcpy(s, "select px.kvupdate('{");
+27 
+28   for( i=0; i<lspmac_nmotors; i++) {
+29     mp = &(lspmac_motors[i]);
+30 
+31     pthread_mutex_lock( &(mp->mutex));
+32     //
+33     // Bit 0 of lspg_initialized is 0 if we've not yet initialized the motor valu
+      es via the DB
+34     // Bit 1 of lspg_initialized is 0 if we've not yet sent any update for this m
+      otor
+35     //
+36     // Never update if the database has not initialized the motor values
+37     // Then, always update if we've not done so yet
+38     // Then, only update if the current position has changed significantly
+39     //
+40     if( ((mp->lspg_initialized & 1) == 0) ||
+41         ((mp->lspg_initialized & 2) != 0) &&
+42         (fabs( mp->position - mp->reported_position) < mp->update_resolution)
+43         ) {
+44       pthread_mutex_unlock( &(mp->mutex));
+45     } else {
 46 
-47       if( strlen(s1) + strlen(s) + 8 >= sizeof( s)-1) {
-48         // send off update now and reset s
-49         strcat( s, "}')");
-50         lspg_query_push( NULL, s);
-51         
-52         s[0] = 0;
-53         strcpy( s, "select px.kvupdate('{");
-54         needComma = 0;
+47       gotone = 1;
+48       s1[0]=0;
+49 
+50       snprintf( s1, sizeof(s1)-1, mp->update_format, mp->position);
+51       s1[sizeof(s1)-1] = 0;
+52     
+53       if( mp->name != NULL && mp->status1_p != NULL && mp->status2_p != NULL && m
+      p->actual_pos_cnts_p != NULL) {
+54         lslogging_log_message( "%s status1: %0x  status2: %0x  cnts: %d", mp->
+      name, mp->status1, mp->status2, mp->actual_pos_cnts);
 55       }
 56 
-57       if( needComma)
-58         strcat( s, ",");
-59       else
-60         needComma=1;
-61 
-62       strcat( s, "\"");
-63       strcat( s, s1);
-64       strcat( s, "\"");
-65     }
-66   }
+57       mp->reported_position = mp->position;
+58       mp->lspg_initialized |= 2;
+59       pthread_mutex_unlock( &(mp->mutex));
+60 
+61       if( strlen(s1) + strlen(s) + 32 >= sizeof( s)-1) {
+62         // send off update now and reset s
+63         strcat( s, "}'::text[])");
+64         lspg_query_push( NULL, s);
+65         
+66         lslogging_log_message( "Update: %s", s);
 67 
-68   if( gotone) {
-69     strcat( s, "}')");
-70     lspg_query_push( NULL, s);
-71   }
-72 }
+68         s[0] = 0;
+69         strcpy( s, "select px.kvupdate('{");
+70         needComma = 0;
+71         gotone    = 0;
+72       }
+73 
+74       if( needComma)
+75         strcat( s, ",");
+76       else
+77         needComma=1;
+78 
+79       strcat( s, s1);
+80     }
+81   }
+82 
+83   if( gotone) {
+84     strcat( s, "}')");
+85     lspg_query_push( NULL, s);
+86 
+87     lslogging_log_message( "Update: %s", s);
+88   }
+89 }
 \end{DoxyCode}
 \hypertarget{lsupdate_8c_ac4e85ea626b76b06d68c27db1c3e8b43}{
 \index{lsupdate.c@{lsupdate.c}!lsupdate\_\-worker@{lsupdate\_\-worker}}
@@ -157,18 +174,20 @@ Our worker thread.
 \item[\mbox{$\leftarrow$} {\em dummy}]Unused argument required by protocol \end{DoxyParams}
 
 
-Definition at line 76 of file lsupdate.c.
+Definition at line 93 of file lsupdate.c.
 
 
 \begin{DoxyCode}
-78                         {    
-79   sleep(10);
-80   lsupdate_updateit( 1);
-81   while( 1) {
-82     usleep( 500000);
-83     lsupdate_updateit( 0);
-84   }    
-85 }
+95                         {
+96   static struct timespec naptime;
+97 
+98   naptime.tv_sec  = 0;
+99   naptime.tv_nsec = 500000000;
+100   while( 1) {
+101     lsupdate_updateit();
+102     nanosleep( &naptime, NULL);
+103   }    
+104 }
 \end{DoxyCode}
 
 

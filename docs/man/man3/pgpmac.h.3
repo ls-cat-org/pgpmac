@@ -1,4 +1,4 @@
-.TH "pgpmac.h" 3 "12 Oct 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "pgpmac.h" 3 "13 Nov 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -64,6 +64,10 @@ Headers for the entire pgpmac project.
 .br
 .RI "\fIMotor information. \fP"
 .ti -1c
+.RI "struct \fBlspg_getcenter_struct\fP"
+.br
+.RI "\fIStorage for getcenter query Used for the md2 ROTATE command that generates the centering movies. \fP"
+.ti -1c
 .RI "struct \fBlspg_nextshot_struct\fP"
 .br
 .RI "\fIStorage definition for nextshot query. \fP"
@@ -84,6 +88,10 @@ Headers for the entire pgpmac project.
 .br
 .RI "\fIFixed length postgresql query strings. Queries should all be function calls so this is not as weird as one might think. \fP"
 .ti -1c
+.RI "#define \fBLSEVENTS_EVENT_LENGTH\fP   32"
+.br
+.RI "\fIFixed length for event names: simplifies string handling. \fP"
+.ti -1c
 .RI "#define \fBMD2CMDS_CMD_LENGTH\fP   32"
 .br
 .in -1c
@@ -102,6 +110,10 @@ Headers for the entire pgpmac project.
 .RI "typedef struct \fBlspmac_motor_struct\fP \fBlspmac_motor_t\fP"
 .br
 .RI "\fIMotor information. \fP"
+.ti -1c
+.RI "typedef struct \fBlspg_getcenter_struct\fP \fBlspg_getcenter_t\fP"
+.br
+.RI "\fIStorage for getcenter query Used for the md2 ROTATE command that generates the centering movies. \fP"
 .ti -1c
 .RI "typedef struct \fBlspg_nextshot_struct\fP \fBlspg_nextshot_t\fP"
 .br
@@ -156,10 +168,38 @@ Headers for the entire pgpmac project.
 .RI "void \fBmd2cmds_run\fP ()"
 .br
 .RI "\fIStart up the thread. \fP"
+.ti -1c
+.RI "void \fBlsevents_init\fP ()"
+.br
+.ti -1c
+.RI "void \fBlsevents_run\fP ()"
+.br
+.ti -1c
+.RI "void \fBlsevents_send_event\fP (char *,...)"
+.br
+.ti -1c
+.RI "void \fBlsevents_add_listener\fP (char *, void(*cb)(char *))"
+.br
+.ti -1c
+.RI "void \fBlsevents_remove_listener\fP (char *, void(*cb)(char *))"
+.br
+.ti -1c
+.RI "void \fBlstimer_init\fP ()"
+.br
+.ti -1c
+.RI "void \fBlstimer_run\fP ()"
+.br
+.ti -1c
+.RI "void \fBlstimer_add_timer\fP (char *, int, unsigned long int, unsigned long int)"
+.br
 .in -1c
 .SS "Variables"
 
 .in +1c
+.ti -1c
+.RI "\fBlspg_getcenter_t\fP \fBlspg_getcenter\fP"
+.br
+.RI "\fIthe getcenter object \fP"
 .ti -1c
 .RI "\fBlspg_nextshot_t\fP \fBlspg_nextshot\fP"
 .br
@@ -245,8 +285,17 @@ Headers for the entire pgpmac project.
 .br
 .RI "\fIScintillator Piezo DAC. \fP"
 .ti -1c
-.RI "\fBlspmac_motor_t\fP * \fBblight_up\fP"
+.RI "\fBlspmac_motor_t\fP * \fBblight_ud\fP"
 .br
+.RI "\fIBack Light Up/Down actuator. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBcryo\fP"
+.br
+.RI "\fIMove the cryostream towards or away from the crystal. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBdryer\fP"
+.br
+.RI "\fIblow air on the scintilator to dry it off \fP"
 .ti -1c
 .RI "int \fBlspmac_nmotors\fP"
 .br
@@ -358,11 +407,19 @@ Definition at line 33 of file pgpmac.h.
 Fixed length postgresql query strings. Queries should all be function calls so this is not as weird as one might think. 
 .PP
 Definition at line 36 of file pgpmac.h.
+.SS "#define LSEVENTS_EVENT_LENGTH   32"
+.PP
+Fixed length for event names: simplifies string handling. 
+.PP
+Definition at line 39 of file pgpmac.h.
 .SS "#define MD2CMDS_CMD_LENGTH   32"
 .PP
-Definition at line 287 of file pgpmac.h.
+Definition at line 333 of file pgpmac.h.
 .SH "Typedef Documentation"
 .PP 
+.SS "typedef struct \fBlspg_getcenter_struct\fP  \fBlspg_getcenter_t\fP"
+.PP
+Storage for getcenter query Used for the md2 ROTATE command that generates the centering movies. 
 .SS "typedef struct \fBlspg_nextshot_struct\fP  \fBlspg_nextshot_t\fP"
 .PP
 Storage definition for nextshot query. The next shot query returns all the information needed to collect the next data frame. Since SQL allows for null fields independently from blank strings a separate integer is used as a flag for this case. This adds to the program complexity but allows for some important cases. Suck it up. definition of the next image to be taken (and the one after that, too!) 
@@ -377,31 +434,151 @@ PMAC command queue item. Command queue items are fixed length to simplify memory
 PMAC ethernet packet definition. Taken directly from the Delta Tau documentation. 
 .SH "Function Documentation"
 .PP 
+.SS "void lsevents_add_listener (char *, void(*)(char *) cb)"
+.PP
+Definition at line 61 of file lsevents.c.
+.PP
+.nf
+61                                                              {
+62   lsevents_listener_t *new;
+63 
+64   new = calloc( 1, sizeof( lsevents_listener_t));
+65   if( new == NULL) {
+66     lslogging_log_message( 'lsevents_add_listener: out of memory');
+67     exit( -1);
+68   }
+69 
+70   strncpy( new->event, event, LSEVENTS_EVENT_LENGTH);
+71   new->event[LSEVENTS_EVENT_LENGTH-1] = 0;
+72   new->cb   = cb;
+73   new->next = lsevents_listeners_p;
+74 
+75   pthread_mutex_lock( &lsevents_listener_mutex);
+76   lsevents_listeners_p = new;
+77   pthread_mutex_unlock( &lsevents_listener_mutex);
+78 
+79   lslogging_log_message( 'lsevents_add_listener: added listener for event %s', event);
+80 
+81 }
+.fi
+.SS "void lsevents_init ()"
+.PP
+Definition at line 163 of file lsevents.c.
+.PP
+.nf
+163                      {
+164   pthread_mutex_init( &lsevents_queue_mutex, NULL);
+165   pthread_cond_init(  &lsevents_queue_cond, NULL);
+166   pthread_mutex_init( &lsevents_listener_mutex, NULL);
+167 }
+.fi
+.SS "void lsevents_remove_listener (char *, void(*)(char *) cb)"
+.PP
+Definition at line 83 of file lsevents.c.
+.PP
+.nf
+83                                                                 {
+84   
+85   lsevents_listener_t *last, *current;
+86 
+87   //
+88   // Find the listener to remove
+89   // and unlink it from the list
+90   //
+91   pthread_mutex_lock( &lsevents_listener_mutex);
+92   last = NULL;
+93   for( current = lsevents_listeners_p; current != NULL; current = current->next) {
+94     if( strcmp( last->event, event) == 0 && last->cb == cb) {
+95       if( last == NULL) {
+96         lsevents_listeners_p = current->next;
+97       } else {
+98         last->next = current->next;
+99       }
+100       break;
+101     }
+102   }
+103   pthread_mutex_unlock( &lsevents_listener_mutex);
+104 
+105   //
+106   // Now remove it
+107   // TODO: use saner memory management where we allocate many listeners at a time
+108   // as an array and then just flag the ones that are used
+109   //
+110   if( current != NULL) {
+111     if( current->event != NULL)
+112       free( current->event);
+113     free(current);
+114   }
+115 }
+.fi
+.SS "void lsevents_run ()"
+.PP
+Definition at line 169 of file lsevents.c.
+.PP
+.nf
+169                     {
+170   pthread_create( &lsevents_thread, NULL, lsevents_worker, NULL);
+171 }
+.fi
+.SS "void lsevents_send_event (char *,  ...)"
+.PP
+Definition at line 33 of file lsevents.c.
+.PP
+.nf
+33                                           {
+34   char event[LSEVENTS_EVENT_LENGTH];
+35   char *sp;
+36   va_list arg_ptr;
+37 
+38   va_start( arg_ptr, fmt);
+39   vsnprintf( event, sizeof(event)-1, fmt, arg_ptr);
+40   event[sizeof(event)-1]=0;
+41   va_end( arg_ptr);
+42 
+43   lslogging_log_message( 'lsevents_send_event: %s', event);
+44 
+45   pthread_mutex_lock( &lsevents_queue_mutex);
+46 
+47   // maybe wait for room on the queue
+48   while( lsevents_queue_on + 1 == lsevents_queue_off)
+49     pthread_cond_wait( &lsevents_queue_cond, &lsevents_queue_mutex);
+50   
+51   sp = lsevents_queue[(lsevents_queue_on++) % LSEVENTS_QUEUE_LENGTH].event;
+52   strncpy( sp, event, LSEVENTS_EVENT_LENGTH);
+53   sp[LSEVENTS_EVENT_LENGTH - 1] = 0;
+54 
+55   pthread_cond_signal(  &lsevents_queue_cond);
+56   pthread_mutex_unlock( &lsevents_queue_mutex);
+57 
+58 }
+.fi
 .SS "void lspg_init ()"
 .PP
 Initiallize the lspg module. 
 .PP
-Definition at line 1451 of file lspg.c.
+Definition at line 1638 of file lspg.c.
 .PP
 .nf
-1451                  {
-1452   pthread_mutex_init( &pg_queue_mutex, NULL);
-1453   lspg_nextshot_init();
-1454   lspg_wait_for_detector_init();
-1455   lspg_lock_diffractometer_init();
-1456   lspg_lock_detector_init();
-1457 }
+1638                  {
+1639   pthread_mutex_init( &lspg_queue_mutex, NULL);
+1640   pthread_cond_init( &lspg_queue_cond, NULL);
+1641   lspg_nextshot_init();
+1642   lspg_getcenter_init();
+1643   lspg_wait_for_detector_init();
+1644   lspg_lock_diffractometer_init();
+1645   lspg_lock_detector_init();
+1646 }
 .fi
 .SS "void lspg_run ()"
 .PP
 Start 'er runnin'. 
 .PP
-Definition at line 1461 of file lspg.c.
+Definition at line 1650 of file lspg.c.
 .PP
 .nf
-1461                 {
-1462   pthread_create( &lspg_thread, NULL, lspg_worker, NULL);
-1463 }
+1650                 {
+1651   pthread_create( &lspg_thread, NULL, lspg_worker, NULL);
+1652 }
 .fi
 .SS "void lspg_seq_run_prep_all (long long skey, double kappa, double phi, double cx, double cy, double ax, double ay, double az)"
 .PP
@@ -426,166 +603,250 @@ Convinence function to call seq run prep. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 839 of file lspg.c.
+Definition at line 979 of file lspg.c.
 .PP
 .nf
-848                              {
-849   lspg_seq_run_prep_call( skey, kappa, phi, cx, cy, ax, ay, az);
-850   lspg_seq_run_prep_wait();
-851   lspg_seq_run_prep_done();
-852 }
+988                              {
+989   lspg_seq_run_prep_call( skey, kappa, phi, cx, cy, ax, ay, az);
+990   lspg_seq_run_prep_wait();
+991   lspg_seq_run_prep_done();
+992 }
 .fi
 .SS "void lspg_zoom_lut_call ()"
 .SS "void lspmac_init (int, int)"
 .PP
 Initialize this module. 
 .PP
-Definition at line 1782 of file lspmac.c.
+Definition at line 2100 of file lspmac.c.
 .PP
 .nf
-1785                    {
-1786   md2_status_t *p;
-1787 
-1788   // Set our global harvest flags
-1789   getivars = ivarsflag;
-1790   getmvars = mvarsflag;
-1791 
-1792   // All important status mutex
-1793   pthread_mutex_init( &md2_status_mutex, NULL);
-1794 
-1795   //
-1796   // Initialize the motor objects
-1797   //
-1798 
-1799   p = &md2_status;
-1800 
-1801   omega  = lspmac_motor_init( &(lspmac_motors[ 0]),  1, 0, 0, &p->omega_act_pos,     &p->omega_status_1,     &p->omega_status_2,     'Omega   #1 &1 X', 'omega',       lspmac_moveabs_queue);
-1802   alignx = lspmac_motor_init( &(lspmac_motors[ 1]),  2, 0, 1, &p->alignx_act_pos,    &p->alignx_status_1,    &p->alignx_status_2,    'Align X #2 &3 X', 'align.x',     lspmac_moveabs_queue);
-1803   aligny = lspmac_motor_init( &(lspmac_motors[ 2]),  3, 0, 2, &p->aligny_act_pos,    &p->aligny_status_1,    &p->aligny_status_2,    'Align Y #3 &3 Y', 'align.y',     lspmac_moveabs_queue);
-1804   alignz = lspmac_motor_init( &(lspmac_motors[ 3]),  4, 0, 3, &p->alignz_act_pos,    &p->alignz_status_1,    &p->alignz_status_2,    'Align Z #4 &3 Z', 'align.z',     lspmac_moveabs_queue);
-1805   anal   = lspmac_motor_init( &(lspmac_motors[ 4]),  5, 0, 4, &p->analyzer_act_pos,  &p->analyzer_status_1,  &p->analyzer_status_2,  'Anal    #5',      'lightPolar',  lspmac_moveabs_queue);
-1806   zoom   = lspmac_motor_init( &(lspmac_motors[ 5]),  6, 1, 0, &p->zoom_act_pos,      &p->zoom_status_1,      &p->zoom_status_2,      'Zoom    #6 &4 Z', 'zoom',        lspmac_movezoom_queue);
-1807   apery  = lspmac_motor_init( &(lspmac_motors[ 6]),  7, 1, 1, &p->aperturey_act_pos, &p->aperturey_status_1, &p->aperturey_status_2, 'Aper Y  #7 &5 Y', 'appy',        lspmac_moveabs_queue);
-1808   aperz  = lspmac_motor_init( &(lspmac_motors[ 7]),  8, 1, 2, &p->aperturez_act_pos, &p->aperturez_status_1, &p->aperturez_status_2, 'Aper Z  #8 &5 Z', 'appz',        lspmac_moveabs_queue);
-1809   capy   = lspmac_motor_init( &(lspmac_motors[ 8]),  9, 1, 3, &p->capy_act_pos,      &p->capy_status_1,      &p->capy_status_2,      'Cap Y   #9 &5 U', 'capy',        lspmac_moveabs_queue);
-1810   capz   = lspmac_motor_init( &(lspmac_motors[ 9]), 10, 1, 4, &p->capz_act_pos,      &p->capz_status_1,      &p->capz_status_2,      'Cap Z  #10 &5 V', 'capz',        lspmac_moveabs_queue);
-1811   scinz  = lspmac_motor_init( &(lspmac_motors[10]), 11, 2, 0, &p->scint_act_pos,     &p->scint_status_1,     &p->scint_status_2,     'Scin Z #11 &5 W', 'scint',       lspmac_moveabs_queue);
-1812   cenx   = lspmac_motor_init( &(lspmac_motors[11]), 17, 2, 1, &p->centerx_act_pos,   &p->centerx_status_1,   &p->centerx_status_2,   'Cen X  #17 &2 X', 'centering.x', lspmac_moveabs_queue);
-1813   ceny   = lspmac_motor_init( &(lspmac_motors[12]), 18, 2, 2, &p->centery_act_pos,   &p->centery_status_1,   &p->centery_status_2,   'Cen Y  #18 &2 Y', 'centering.y', lspmac_moveabs_queue);
-1814   kappa  = lspmac_motor_init( &(lspmac_motors[13]), 19, 2, 3, &p->kappa_act_pos,     &p->kappa_status_1,     &p->kappa_status_2,     'Kappa  #19 &7 X', 'kappa',       lspmac_moveabs_queue);
-1815   phi    = lspmac_motor_init( &(lspmac_motors[14]), 20, 2, 4, &p->phi_act_pos,       &p->phi_status_1,       &p->phi_status_2,       'Phi    #20 &7 Y', 'phi',         lspmac_moveabs_queue);
-1816 
-1817   fshut  = lspmac_fshut_init( &(lspmac_motors[15]));
-1818   flight = lspmac_dac_init( &(lspmac_motors[16]), &p->front_dac,   160.0, 'M1200', 'frontLight.intensity');
-1819   blight = lspmac_dac_init( &(lspmac_motors[17]), &p->back_dac,    160.0, 'M1201', 'backLight.intensity');
-1820   fscint = lspmac_dac_init( &(lspmac_motors[18]), &p->scint_piezo, 320.0, 'M1203', 'scint.focus');
-1821 
-1822   blight_ud = lspmac_bio_init( &(lspmac_motors[19]), 'backLight', 'M1101=%d', &(md2_status.acc11c_5), 0x02);
-1823 
-1824 
-1825 
-1826 
-1827   //
-1828   // Initialize several commands that get called, perhaps, alot
-1829   //
-1830   rr_cmd.RequestType = VR_UPLOAD;
-1831   rr_cmd.Request     = VR_PMAC_READREADY;
-1832   rr_cmd.wValue      = 0;
-1833   rr_cmd.wIndex      = 0;
-1834   rr_cmd.wLength     = htons(2);
-1835   memset( rr_cmd.bData, 0, sizeof(rr_cmd.bData));
-1836 
-1837   gb_cmd.RequestType = VR_UPLOAD;
-1838   gb_cmd.Request     = VR_PMAC_GETBUFFER;
-1839   gb_cmd.wValue      = 0;
-1840   gb_cmd.wIndex      = 0;
-1841   gb_cmd.wLength     = htons(1400);
-1842   memset( gb_cmd.bData, 0, sizeof(gb_cmd.bData));
-1843 
-1844   cr_cmd.RequestType = VR_UPLOAD;
-1845   cr_cmd.Request     = VR_CTRL_RESPONSE;
-1846   cr_cmd.wValue      = 0;
-1847   cr_cmd.wIndex      = 0;
-1848   cr_cmd.wLength     = htons(1400);
-1849   memset( cr_cmd.bData, 0, sizeof(cr_cmd.bData));
-1850 
-1851   //
-1852   // Initialize some mutexs and conditions
-1853   //
-1854 
-1855   pthread_mutex_init( &pmac_queue_mutex, NULL);
-1856   pthread_cond_init(  &pmac_queue_cond, NULL);
-1857 
-1858   lspmac_shutter_state = 0;                             // assume the shutter is now closed: not a big deal if we are wrong
-1859   pthread_mutex_init( &lspmac_shutter_mutex, NULL);
-1860   pthread_cond_init(  &lspmac_shutter_cond, NULL);
-1861   pmacfd.fd = -1;
-1862 
-1863   pthread_mutex_init( &lspmac_moving_mutex, NULL);
-1864   pthread_cond_init(  &lspmac_moving_cond, NULL);
-1865 
-1866 }
+2103                    {
+2104   md2_status_t *p;
+2105 
+2106   // Set our global harvest flags
+2107   getivars = ivarsflag;
+2108   getmvars = mvarsflag;
+2109 
+2110   // All important status mutex
+2111   pthread_mutex_init( &md2_status_mutex, NULL);
+2112 
+2113   //
+2114   // Initialize the motor objects
+2115   //
+2116 
+2117   p = &md2_status;
+2118 
+2119   omega  = lspmac_motor_init( &(lspmac_motors[ 0]),  1, 0, 0, &p->omega_act_pos,     &p->omega_status_1,     &p->omega_status_2,     'Omega   #1 &1 X', 'omega',       lspmac_moveabs_queue);
+2120   alignx = lspmac_motor_init( &(lspmac_motors[ 1]),  2, 0, 1, &p->alignx_act_pos,    &p->alignx_status_1,    &p->alignx_status_2,    'Align X #2 &3 X', 'align.x',     lspmac_moveabs_queue);
+2121   aligny = lspmac_motor_init( &(lspmac_motors[ 2]),  3, 0, 2, &p->aligny_act_pos,    &p->aligny_status_1,    &p->aligny_status_2,    'Align Y #3 &3 Y', 'align.y',     lspmac_moveabs_queue);
+2122   alignz = lspmac_motor_init( &(lspmac_motors[ 3]),  4, 0, 3, &p->alignz_act_pos,    &p->alignz_status_1,    &p->alignz_status_2,    'Align Z #4 &3 Z', 'align.z',     lspmac_moveabs_queue);
+2123   anal   = lspmac_motor_init( &(lspmac_motors[ 4]),  5, 0, 4, &p->analyzer_act_pos,  &p->analyzer_status_1,  &p->analyzer_status_2,  'Anal    #5',      'lightPolar',  lspmac_moveabs_queue);
+2124   zoom   = lspmac_motor_init( &(lspmac_motors[ 5]),  6, 1, 0, &p->zoom_act_pos,      &p->zoom_status_1,      &p->zoom_status_2,      'Zoom    #6 &4 Z', 'zoom',        lspmac_movezoom_queue);
+2125   apery  = lspmac_motor_init( &(lspmac_motors[ 6]),  7, 1, 1, &p->aperturey_act_pos, &p->aperturey_status_1, &p->aperturey_status_2, 'Aper Y  #7 &5 Y', 'appy',        lspmac_moveabs_queue);
+2126   aperz  = lspmac_motor_init( &(lspmac_motors[ 7]),  8, 1, 2, &p->aperturez_act_pos, &p->aperturez_status_1, &p->aperturez_status_2, 'Aper Z  #8 &5 Z', 'appz',        lspmac_moveabs_queue);
+2127   capy   = lspmac_motor_init( &(lspmac_motors[ 8]),  9, 1, 3, &p->capy_act_pos,      &p->capy_status_1,      &p->capy_status_2,      'Cap Y   #9 &5 U', 'capy',        lspmac_moveabs_queue);
+2128   capz   = lspmac_motor_init( &(lspmac_motors[ 9]), 10, 1, 4, &p->capz_act_pos,      &p->capz_status_1,      &p->capz_status_2,      'Cap Z  #10 &5 V', 'capz',        lspmac_moveabs_queue);
+2129   scinz  = lspmac_motor_init( &(lspmac_motors[10]), 11, 2, 0, &p->scint_act_pos,     &p->scint_status_1,     &p->scint_status_2,     'Scin Z #11 &5 W', 'scint',       lspmac_moveabs_queue);
+2130   cenx   = lspmac_motor_init( &(lspmac_motors[11]), 17, 2, 1, &p->centerx_act_pos,   &p->centerx_status_1,   &p->centerx_status_2,   'Cen X  #17 &2 X', 'centering.x', lspmac_moveabs_queue);
+2131   ceny   = lspmac_motor_init( &(lspmac_motors[12]), 18, 2, 2, &p->centery_act_pos,   &p->centery_status_1,   &p->centery_status_2,   'Cen Y  #18 &2 Y', 'centering.y', lspmac_moveabs_queue);
+2132   kappa  = lspmac_motor_init( &(lspmac_motors[13]), 19, 2, 3, &p->kappa_act_pos,     &p->kappa_status_1,     &p->kappa_status_2,     'Kappa  #19 &7 X', 'kappa',       lspmac_moveabs_queue);
+2133   phi    = lspmac_motor_init( &(lspmac_motors[14]), 20, 2, 4, &p->phi_act_pos,       &p->phi_status_1,       &p->phi_status_2,       'Phi    #20 &7 Y', 'phi',         lspmac_moveabs_queue);
+2134 
+2135   fshut  = lspmac_fshut_init( &(lspmac_motors[15]));
+2136   flight = lspmac_dac_init( &(lspmac_motors[16]), &p->front_dac,   160.0, 'M1200', 'frontLight.intensity');
+2137   blight = lspmac_dac_init( &(lspmac_motors[17]), &p->back_dac,    160.0, 'M1201', 'backLight.intensity');
+2138   fscint = lspmac_dac_init( &(lspmac_motors[18]), &p->scint_piezo, 320.0, 'M1203', 'scint.focus');
+2139 
+2140   blight_ud = lspmac_bio_init( &(lspmac_motors[19]), 'backLight', 'M1101=%d', &(md2_status.acc11c_5), 0x02);
+2141   cryo      = lspmac_bio_init( &(lspmac_motors[20]), 'cryo',      'M1102=%d', &(md2_status.acc11c_1), 0x40);
+2142   dryer     = lspmac_bio_init( &(lspmac_motors[21]), 'dryer',     'M1103=%d', &(md2_status.acc11c_5), 0x08);
+2143 
+2144 
+2145 
+2146 
+2147   //
+2148   // Initialize several commands that get called, perhaps, alot
+2149   //
+2150   rr_cmd.RequestType = VR_UPLOAD;
+2151   rr_cmd.Request     = VR_PMAC_READREADY;
+2152   rr_cmd.wValue      = 0;
+2153   rr_cmd.wIndex      = 0;
+2154   rr_cmd.wLength     = htons(2);
+2155   memset( rr_cmd.bData, 0, sizeof(rr_cmd.bData));
+2156 
+2157   gb_cmd.RequestType = VR_UPLOAD;
+2158   gb_cmd.Request     = VR_PMAC_GETBUFFER;
+2159   gb_cmd.wValue      = 0;
+2160   gb_cmd.wIndex      = 0;
+2161   gb_cmd.wLength     = htons(1400);
+2162   memset( gb_cmd.bData, 0, sizeof(gb_cmd.bData));
+2163 
+2164   cr_cmd.RequestType = VR_UPLOAD;
+2165   cr_cmd.Request     = VR_CTRL_RESPONSE;
+2166   cr_cmd.wValue      = 0;
+2167   cr_cmd.wIndex      = 0;
+2168   cr_cmd.wLength     = htons(1400);
+2169   memset( cr_cmd.bData, 0, sizeof(cr_cmd.bData));
+2170 
+2171   //
+2172   // Initialize some mutexs and conditions
+2173   //
+2174 
+2175   pthread_mutex_init( &pmac_queue_mutex, NULL);
+2176   pthread_cond_init(  &pmac_queue_cond, NULL);
+2177 
+2178   lspmac_shutter_state = 0;                             // assume the shutter is now closed: not a big deal if we are wrong
+2179   pthread_mutex_init( &lspmac_shutter_mutex, NULL);
+2180   pthread_cond_init(  &lspmac_shutter_cond, NULL);
+2181   pmacfd.fd = -1;
+2182 
+2183   pthread_mutex_init( &lspmac_moving_mutex, NULL);
+2184   pthread_cond_init(  &lspmac_moving_cond, NULL);
+2185 
+2186 }
 .fi
 .SS "void lspmac_run ()"
 .PP
 Start up the lspmac thread. 
 .PP
-Definition at line 1870 of file lspmac.c.
+Definition at line 2190 of file lspmac.c.
 .PP
 .nf
-1870                   {
-1871   pthread_create( &pmac_thread, NULL, lspmac_worker, NULL);
-1872 }
+2190                   {
+2191   pthread_create( &pmac_thread, NULL, lspmac_worker, NULL);
+2192 }
+.fi
+.SS "void lstimer_add_timer (char *, int, unsigned long int, unsigned long int)"
+.PP
+Definition at line 41 of file lstimer.c.
+.PP
+.nf
+41                                                                                                  {
+42   int i;
+43   struct timespec now;
+44 
+45   //
+46   // Time we were called.  Delay is based on call time, not queued time
+47   //
+48   clock_gettime( CLOCK_REALTIME, &now);
+49   
+50 
+51   pthread_mutex_lock( &lstimer_mutex);
+52 
+53   for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
+54     if( lstimer_list[i].shots == 0)
+55       break;
+56   }
+57 
+58   if( i == LSTIMER_LIST_LENGTH) {
+59     pthread_mutex_unlock( &lstimer_mutex);
+60     
+61     lslogging_log_message( 'lstimer_add_timer: out of timers for event: %s, shots: %d,  secs: %u, nsecs: %u',
+62                           event, shots, secs, nsecs);
+63     return;
+64   }
+65 
+66   strncpy( lstimer_list[i].event, event, LSEVENTS_EVENT_LENGTH - 1);
+67   lstimer_list[i].event[LSEVENTS_EVENT_LENGTH - 1] = 0;
+68   lstimer_list[i].shots        = shots;
+69   lstimer_list[i].delay_secs   = secs;
+70   lstimer_list[i].delay_nsecs  = nsecs;
+71 
+72   lstimer_list[i].next_secs    = secs + now.tv_sec + (now.tv_nsec + nsecs) / 1000000000;
+73   lstimer_list[i].next_nsecs   = (now.tv_nsec + nsecs) % 1000000000;
+74   lstimer_list[i].last_secs    = 0;
+75   lstimer_list[i].last_nsecs   = 0;
+76   
+77   lstimer_list[i].ncalls       = 0;
+78   lstimer_list[i].init_secs    = now.tv_sec;
+79   lstimer_list[i].init_nsecs   = now.tv_nsec;
+80 
+81   if( shots != 0) {
+82     lstimer_active_timers++;
+83     new_timer++;
+84   }
+85 
+86   pthread_cond_signal(  &lstimer_cond);
+87   pthread_mutex_unlock( &lstimer_mutex);
+88 }
+.fi
+.SS "void lstimer_init ()"
+.PP
+Definition at line 244 of file lstimer.c.
+.PP
+.nf
+244                     {
+245   int i;
+246 
+247   for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
+248     lstimer_list[i].shots = 0;
+249   }
+250 
+251 
+252   pthread_mutex_init( &lstimer_mutex, NULL);
+253   pthread_cond_init(  &lstimer_cond, NULL);
+254 }
+.fi
+.SS "void lstimer_run ()"
+.PP
+Definition at line 261 of file lstimer.c.
+.PP
+.nf
+261                    {
+262   pthread_create( &lstimer_thread, NULL, lstimer_worker, NULL);
+263   //  lsevents_add_listener( 'watchdog', lstimer_test_cb);
+264   //  lstimer_add_timer( 'watchdog', -1, 1, 0);
+265 }
 .fi
 .SS "void lsupdate_init ()"
 .PP
 Initialize this module. 
 .PP
-Definition at line 89 of file lsupdate.c.
+Definition at line 108 of file lsupdate.c.
 .PP
 .nf
-89                      {
-90 }
+108                      {
+109 }
 .fi
 .SS "void lsupdate_run ()"
 .PP
 run the update routines 
 .PP
-Definition at line 94 of file lsupdate.c.
+Definition at line 113 of file lsupdate.c.
 .PP
 .nf
-94                     {
-95   //  pthread_create( &lsupdate_thread, NULL, lsupdate_worker, NULL);
-96 }
+113                     {
+114   pthread_create( &lsupdate_thread, NULL, lsupdate_worker, NULL);
+115 }
 .fi
 .SS "void md2cmds_init ()"
 .PP
 Initialize the md2cmds module. 
 .PP
-Definition at line 461 of file md2cmds.c.
+Definition at line 529 of file md2cmds.c.
 .PP
 .nf
-461                     {
-462   memset( md2cmds_cmd, 0, sizeof( md2cmds_cmd));
-463 
-464   pthread_mutex_init( &md2cmds_mutex, NULL);
-465   pthread_cond_init( &md2cmds_cond, NULL);
-466 
-467   pthread_mutex_init( &md2cmds_pg_mutex, NULL);
-468   pthread_cond_init( &md2cmds_pg_cond, NULL);
-469 
-470 }
+529                     {
+530   memset( md2cmds_cmd, 0, sizeof( md2cmds_cmd));
+531 
+532   pthread_mutex_init( &md2cmds_mutex, NULL);
+533   pthread_cond_init( &md2cmds_cond, NULL);
+534 
+535   pthread_mutex_init( &md2cmds_pg_mutex, NULL);
+536   pthread_cond_init( &md2cmds_pg_cond, NULL);
+537 
+538 }
 .fi
 .SS "void md2cmds_run ()"
 .PP
 Start up the thread. 
 .PP
-Definition at line 474 of file md2cmds.c.
+Definition at line 542 of file md2cmds.c.
 .PP
 .nf
-474                    {
-475   pthread_create( &md2cmds_thread, NULL, md2cmds_worker, NULL);
-476 }
+542                    {
+543   pthread_create( &md2cmds_thread, NULL, md2cmds_worker, NULL);
+544 }
 .fi
 .SS "void pgpmac_printf (char * fmt,  ...)"
 .PP
@@ -654,7 +915,11 @@ Definition at line 80 of file lspmac.c.
 Back Light DAC. 
 .PP
 Definition at line 91 of file lspmac.c.
-.SS "\fBlspmac_motor_t\fP* \fBblight_up\fP"
+.SS "\fBlspmac_motor_t\fP* \fBblight_ud\fP"
+.PP
+Back Light Up/Down actuator. 
+.PP
+Definition at line 94 of file lspmac.c.
 .SS "\fBlspmac_motor_t\fP* \fBcapy\fP"
 .PP
 Capillary Y. 
@@ -675,6 +940,16 @@ Definition at line 84 of file lspmac.c.
 Centering Table Y. 
 .PP
 Definition at line 85 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBcryo\fP"
+.PP
+Move the cryostream towards or away from the crystal. 
+.PP
+Definition at line 95 of file lspmac.c.
+.SS "\fBlspmac_motor_t\fP* \fBdryer\fP"
+.PP
+blow air on the scintilator to dry it off 
+.PP
+Definition at line 96 of file lspmac.c.
 .SS "\fBlspmac_motor_t\fP* \fBflight\fP"
 .PP
 Front Light DAC. 
@@ -695,11 +970,16 @@ Definition at line 89 of file lspmac.c.
 Kappa. 
 .PP
 Definition at line 86 of file lspmac.c.
+.SS "\fBlspg_getcenter_t\fP \fBlspg_getcenter\fP"
+.PP
+the getcenter object 
+.PP
+Definition at line 73 of file lspg.c.
 .SS "\fBlspg_nextshot_t\fP \fBlspg_nextshot\fP"
 .PP
 the nextshot object 
 .PP
-Definition at line 73 of file lspg.c.
+Definition at line 72 of file lspg.c.
 .SS "\fBlspmac_motor_t\fP \fBlspmac_motors\fP[]"
 .PP
 All our motors. 
@@ -749,7 +1029,7 @@ Definition at line 54 of file lspmac.c.
 .PP
 Synchronize reading/writting status buffer. 
 .PP
-Definition at line 277 of file lspmac.c.
+Definition at line 279 of file lspmac.c.
 .SS "char \fBmd2cmds_cmd\fP[]"
 .PP
 our command; 

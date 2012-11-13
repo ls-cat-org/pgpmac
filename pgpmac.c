@@ -390,6 +390,8 @@ int main(
   // that everyone is initiallized before anyone runs
   //
   lslogging_init();
+  lsevents_init();
+  lstimer_init();
   lspmac_init( ivars, mvars);
   lspg_init();
   lsupdate_init();
@@ -417,6 +419,8 @@ int main(
   doupdate();					      
 
   lslogging_run();
+  lsevents_run();
+  lstimer_run();
   lspmac_run();
   lspg_run();
   lsupdate_run();

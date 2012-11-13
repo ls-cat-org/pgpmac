@@ -88,7 +88,7 @@ window.onload = initDynSections;
 <tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="md2cmds_8c.html#af4a069c2e8a1e3957d15487672b18d47">md2cmds_collect</a> ()</td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Collect some data.  <a href="#af4a069c2e8a1e3957d15487672b18d47"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="md2cmds_8c.html#ac9e84b4a527da535d21cca65dc4aa61a">md2cmds_rotate</a> ()</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Spin 360 and make a video TODO: Implement.  <a href="#ac9e84b4a527da535d21cca65dc4aa61a"></a><br/></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Spin 360 and make a video (recenter first, maybe).  <a href="#ac9e84b4a527da535d21cca65dc4aa61a"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="md2cmds_8c.html#a5a9d72c08597ffe45287622c40975e7f">md2cmds_center</a> ()</td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Move centering and alignment tables as requested TODO: Implement.  <a href="#a5a9d72c08597ffe45287622c40975e7f"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="md2cmds_8c.html#ae967e769d23555a631f615e630f25b00">md2cmds_worker</a> (void *dummy)</td></tr>
@@ -141,7 +141,7 @@ window.onload = initDynSections;
 <a name="l00032"></a>00032   <span class="keyword">static</span> <span class="keywordtype">char</span> tmp[64];
 <a name="l00033"></a>00033   <span class="keyword">static</span> <span class="keywordtype">int</span> first_time = 1;
 <a name="l00034"></a>00034   <span class="keyword">static</span> <span class="keyword">struct </span>timeval base;
-<a name="l00035"></a>00035   <span class="keyword">struct </span>timeval <a class="code" href="lspmac_8c.html#a4bed9053319d1d2cad5cc03d0549e17f" title="used to ensure we do not send commands to the pmac too often. Only needed for non-DB...">now</a>;
+<a name="l00035"></a>00035   <span class="keyword">struct </span>timeval <a class="code" href="lspg_8c.html#ad40ac52086f6b774928af45b09d54c6e" title="used to ensure we do not inundate the db server with connection requests">now</a>;
 <a name="l00036"></a>00036   <span class="keyword">struct </span>tm nows;
 <a name="l00037"></a>00037   <span class="keywordtype">double</span> diffs;
 <a name="l00038"></a>00038 
@@ -153,9 +153,9 @@ window.onload = initDynSections;
 <a name="l00044"></a>00044     snprintf( rtn, <span class="keyword">sizeof</span>(rtn)-1, <span class="stringliteral">&quot;%s.%06d&quot;</span>, tmp, base.tv_usec);
 <a name="l00045"></a>00045     rtn[<span class="keyword">sizeof</span>(rtn)-1]=0;
 <a name="l00046"></a>00046   } <span class="keywordflow">else</span> {
-<a name="l00047"></a>00047     gettimeofday( &amp;<a class="code" href="lspmac_8c.html#a4bed9053319d1d2cad5cc03d0549e17f" title="used to ensure we do not send commands to the pmac too often. Only needed for non-DB...">now</a>, NULL);
-<a name="l00048"></a>00048     diffs =  (<a class="code" href="lspmac_8c.html#a4bed9053319d1d2cad5cc03d0549e17f" title="used to ensure we do not send commands to the pmac too often. Only needed for non-DB...">now</a>.tv_sec - base.tv_sec);
-<a name="l00049"></a>00049     diffs += (<a class="code" href="lspmac_8c.html#a4bed9053319d1d2cad5cc03d0549e17f" title="used to ensure we do not send commands to the pmac too often. Only needed for non-DB...">now</a>.tv_usec - base.tv_usec)/1000000.;
+<a name="l00047"></a>00047     gettimeofday( &amp;<a class="code" href="lspg_8c.html#ad40ac52086f6b774928af45b09d54c6e" title="used to ensure we do not inundate the db server with connection requests">now</a>, NULL);
+<a name="l00048"></a>00048     diffs =  (<a class="code" href="lspg_8c.html#ad40ac52086f6b774928af45b09d54c6e" title="used to ensure we do not inundate the db server with connection requests">now</a>.tv_sec - base.tv_sec);
+<a name="l00049"></a>00049     diffs += (<a class="code" href="lspg_8c.html#ad40ac52086f6b774928af45b09d54c6e" title="used to ensure we do not inundate the db server with connection requests">now</a>.tv_usec - base.tv_usec)/1000000.;
 <a name="l00050"></a>00050     snprintf( rtn, <span class="keyword">sizeof</span>( rtn)-1, <span class="stringliteral">&quot;%0.6f&quot;</span>, diffs);
 <a name="l00051"></a>00051     rtn[<span class="keyword">sizeof</span>(rtn)-1]=0;
 <a name="l00052"></a>00052   }
@@ -183,10 +183,10 @@ window.onload = initDynSections;
 
 <p>Move centering and alignment tables as requested TODO: Implement. </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00422">422</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00490">490</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 
-<p><div class="fragment"><pre class="fragment"><a name="l00422"></a>00422                       {
-<a name="l00423"></a>00423 }
+<p><div class="fragment"><pre class="fragment"><a name="l00490"></a>00490                       {
+<a name="l00491"></a>00491 }
 </pre></div></p>
 
 </div>
@@ -208,206 +208,206 @@ window.onload = initDynSections;
 
 <p>Collect some data. </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00214">214</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00205">205</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 
-<p><div class="fragment"><pre class="fragment"><a name="l00214"></a>00214                        {
-<a name="l00215"></a>00215   <span class="keywordtype">long</span> <span class="keywordtype">long</span> skey;
-<a name="l00216"></a>00216   <span class="keywordtype">double</span> p170;  <span class="comment">// start cnts</span>
-<a name="l00217"></a>00217   <span class="keywordtype">double</span> p171;  <span class="comment">// end cnts</span>
-<a name="l00218"></a>00218   <span class="keywordtype">double</span> p173;  <span class="comment">// omega velocity cnts/msec</span>
-<a name="l00219"></a>00219   <span class="keywordtype">double</span> p175;  <span class="comment">// acceleration time (msec)</span>
-<a name="l00220"></a>00220   <span class="keywordtype">double</span> p180;  <span class="comment">// exposure time (msec)</span>
-<a name="l00221"></a>00221   FILE *zzlog;
-<a name="l00222"></a>00222   <span class="keyword">struct </span>timeval tt_base, tt_now;
-<a name="l00223"></a>00223   <span class="keywordtype">int</span> center_request;
+<p><div class="fragment"><pre class="fragment"><a name="l00205"></a>00205                        {
+<a name="l00206"></a>00206   <span class="keywordtype">long</span> <span class="keywordtype">long</span> skey;
+<a name="l00207"></a>00207   <span class="keywordtype">double</span> p170;  <span class="comment">// start cnts</span>
+<a name="l00208"></a>00208   <span class="keywordtype">double</span> p171;  <span class="comment">// end cnts</span>
+<a name="l00209"></a>00209   <span class="keywordtype">double</span> p173;  <span class="comment">// omega velocity cnts/msec</span>
+<a name="l00210"></a>00210   <span class="keywordtype">double</span> p175;  <span class="comment">// acceleration time (msec)</span>
+<a name="l00211"></a>00211   <span class="keywordtype">double</span> p180;  <span class="comment">// exposure time (msec)</span>
+<a name="l00212"></a>00212   FILE *zzlog;
+<a name="l00213"></a>00213   <span class="keyword">struct </span>timeval tt_base, tt_now;
+<a name="l00214"></a>00214   <span class="keywordtype">int</span> center_request;
+<a name="l00215"></a>00215 
+<a name="l00216"></a>00216   zzlog = fopen( <span class="stringliteral">&quot;/tmp/collect_log.txt&quot;</span>, <span class="stringliteral">&quot;w&quot;</span>);
+<a name="l00217"></a>00217   fprintf( zzlog, <span class="stringliteral">&quot;%s: Start md2cmds\n&quot;</span>, <a class="code" href="md2cmds_8c.html#a0b466dd608ba033b0b618c6dce8b2601" title="Return a time string for loggin Time is from the first call to this funciton.">logtime</a>());
+<a name="l00218"></a>00218   fflush( zzlog);
+<a name="l00219"></a>00219 
+<a name="l00220"></a>00220   <span class="comment">//</span>
+<a name="l00221"></a>00221   <span class="comment">// reset shutter has opened flag</span>
+<a name="l00222"></a>00222   <span class="comment">//</span>
+<a name="l00223"></a>00223   <a class="code" href="lspmac_8c.html#aaa442d9bc7a3cdee39adea0724f0e18c" title="Send a one line command.">lspmac_SockSendline</a>( <span class="stringliteral">&quot;P3001=0 P3002=0&quot;</span>);
 <a name="l00224"></a>00224 
-<a name="l00225"></a>00225   zzlog = fopen( <span class="stringliteral">&quot;/tmp/collect_log.txt&quot;</span>, <span class="stringliteral">&quot;w&quot;</span>);
-<a name="l00226"></a>00226   fprintf( zzlog, <span class="stringliteral">&quot;%s: Start md2cmds\n&quot;</span>, <a class="code" href="md2cmds_8c.html#a0b466dd608ba033b0b618c6dce8b2601" title="Return a time string for loggin Time is from the first call to this funciton.">logtime</a>());
-<a name="l00227"></a>00227   fflush( zzlog);
-<a name="l00228"></a>00228 
-<a name="l00229"></a>00229   <span class="comment">//</span>
-<a name="l00230"></a>00230   <span class="comment">// reset shutter has opened flag</span>
-<a name="l00231"></a>00231   <span class="comment">//</span>
-<a name="l00232"></a>00232   <a class="code" href="lspmac_8c.html#aaa442d9bc7a3cdee39adea0724f0e18c" title="Send a one line command.">lspmac_SockSendline</a>( <span class="stringliteral">&quot;P3001=0 P3002=0&quot;</span>);
-<a name="l00233"></a>00233 
+<a name="l00225"></a>00225 
+<a name="l00226"></a>00226   <span class="keywordflow">while</span>( 1) {
+<a name="l00227"></a>00227     fprintf( zzlog, <span class="stringliteral">&quot;%s: call lspg_nextshot_call\n&quot;</span>, <a class="code" href="md2cmds_8c.html#a0b466dd608ba033b0b618c6dce8b2601" title="Return a time string for loggin Time is from the first call to this funciton.">logtime</a>());
+<a name="l00228"></a>00228     fflush( zzlog);
+<a name="l00229"></a>00229     <a class="code" href="lspg_8c.html#af17ef79544ca5d78fd477010fe90d538" title="Queue up a nextshot query.">lspg_nextshot_call</a>();
+<a name="l00230"></a>00230 
+<a name="l00231"></a>00231     <span class="comment">//</span>
+<a name="l00232"></a>00232     <span class="comment">// This is where we&apos;d tell the md2 to move the organs into position</span>
+<a name="l00233"></a>00233     <span class="comment">//</span>
 <a name="l00234"></a>00234 
-<a name="l00235"></a>00235   <span class="keywordflow">while</span>( 1) {
-<a name="l00236"></a>00236     fprintf( zzlog, <span class="stringliteral">&quot;%s: call lspg_nextshot_call\n&quot;</span>, <a class="code" href="md2cmds_8c.html#a0b466dd608ba033b0b618c6dce8b2601" title="Return a time string for loggin Time is from the first call to this funciton.">logtime</a>());
-<a name="l00237"></a>00237     fflush( zzlog);
-<a name="l00238"></a>00238     <a class="code" href="lspg_8c.html#af17ef79544ca5d78fd477010fe90d538" title="Queue up a nextshot query.">lspg_nextshot_call</a>();
-<a name="l00239"></a>00239 
-<a name="l00240"></a>00240     <span class="comment">//</span>
-<a name="l00241"></a>00241     <span class="comment">// This is where we&apos;d tell the md2 to move the organs into position</span>
-<a name="l00242"></a>00242     <span class="comment">//</span>
-<a name="l00243"></a>00243 
-<a name="l00244"></a>00244     fprintf( zzlog, <span class="stringliteral">&quot;%s: call lspg_nextshot_wait\n&quot;</span>, <a class="code" href="md2cmds_8c.html#a0b466dd608ba033b0b618c6dce8b2601" title="Return a time string for loggin Time is from the first call to this funciton.">logtime</a>());
-<a name="l00245"></a>00245     fflush( zzlog);
+<a name="l00235"></a>00235     fprintf( zzlog, <span class="stringliteral">&quot;%s: call lspg_nextshot_wait\n&quot;</span>, <a class="code" href="md2cmds_8c.html#a0b466dd608ba033b0b618c6dce8b2601" title="Return a time string for loggin Time is from the first call to this funciton.">logtime</a>());
+<a name="l00236"></a>00236     fflush( zzlog);
+<a name="l00237"></a>00237 
+<a name="l00238"></a>00238     <a class="code" href="lspg_8c.html#a784a6de32a86fec9efb3ef3ae4b6e3ac" title="Wait for the next shot query to get processed.">lspg_nextshot_wait</a>();
+<a name="l00239"></a>00239     fprintf( zzlog, <span class="stringliteral">&quot;%s: returned from  lspg_nextshot_wait\n&quot;</span>, <a class="code" href="md2cmds_8c.html#a0b466dd608ba033b0b618c6dce8b2601" title="Return a time string for loggin Time is from the first call to this funciton.">logtime</a>());
+<a name="l00240"></a>00240     fflush( zzlog);
+<a name="l00241"></a>00241 
+<a name="l00242"></a>00242     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#abc9242805729f70b83df79706c394c71" title="flag indicating that no rows were returned.">no_rows_returned</a>) {
+<a name="l00243"></a>00243       <a class="code" href="lspg_8c.html#a50458a014041a4118452802dfb303960" title="Called when the next shot query has been processed.">lspg_nextshot_done</a>();
+<a name="l00244"></a>00244       <span class="keywordflow">break</span>;
+<a name="l00245"></a>00245     }
 <a name="l00246"></a>00246 
-<a name="l00247"></a>00247     <a class="code" href="lspg_8c.html#a784a6de32a86fec9efb3ef3ae4b6e3ac" title="Wait for the next shot query to get processed.">lspg_nextshot_wait</a>();
-<a name="l00248"></a>00248     fprintf( zzlog, <span class="stringliteral">&quot;%s: returned from  lspg_nextshot_wait\n&quot;</span>, <a class="code" href="md2cmds_8c.html#a0b466dd608ba033b0b618c6dce8b2601" title="Return a time string for loggin Time is from the first call to this funciton.">logtime</a>());
-<a name="l00249"></a>00249     fflush( zzlog);
-<a name="l00250"></a>00250 
-<a name="l00251"></a>00251     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#abc9242805729f70b83df79706c394c71" title="flag indicating that no rows were returned.">no_rows_returned</a>) {
-<a name="l00252"></a>00252       <a class="code" href="lspg_8c.html#a50458a014041a4118452802dfb303960" title="Called when the next shot query has been processed.">lspg_nextshot_done</a>();
-<a name="l00253"></a>00253       <span class="keywordflow">break</span>;
-<a name="l00254"></a>00254     }
-<a name="l00255"></a>00255 
-<a name="l00256"></a>00256     skey = <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#af64a4e3f17752b5f1f05fb15d6f48382" title="key identifying a particulary image">skey</a>;
-<a name="l00257"></a>00257     <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( NULL, <span class="stringliteral">&quot;SELECT px.shots_set_state(%lld, &apos;Preparing&apos;)&quot;</span>, skey);
+<a name="l00247"></a>00247     skey = <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#af64a4e3f17752b5f1f05fb15d6f48382" title="key identifying a particulary image">skey</a>;
+<a name="l00248"></a>00248     <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( NULL, <span class="stringliteral">&quot;SELECT px.shots_set_state(%lld, &apos;Preparing&apos;)&quot;</span>, skey);
+<a name="l00249"></a>00249 
+<a name="l00250"></a>00250     center_request = 0;
+<a name="l00251"></a>00251     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a1a94eefbad713976a3d9213695a6ca28" title="flag: 1=move to indicated center position, 0=don&amp;#39;t move center or alignment tables...">active</a>) {
+<a name="l00252"></a>00252       <span class="keywordflow">if</span>(
+<a name="l00253"></a>00253          (fabs( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#ad9eb2013fa6f295f72f0891fe98c863f" title="centering table x position">cx</a> - <a class="code" href="lspmac_8c.html#ac940d950d9efeaf3f0ae67e9bf331188" title="Centering Table X.">cenx</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>) &gt; 0.1) ||
+<a name="l00254"></a>00254          (fabs( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#ab7a7b37a17f06c4e9ebdcdf056946098" title="centering table y position">cy</a> - <a class="code" href="lspmac_8c.html#aaed18e738ba7bfb6c771a44f5d7ea827" title="Centering Table Y.">ceny</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>) &gt; 0.1) ||
+<a name="l00255"></a>00255          (fabs( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a7f57874223897ab7d9c7531a9522904d" title="alignment table x position">ax</a> - <a class="code" href="lspmac_8c.html#a6cb218bdccfe5a93471c161f15a15cab" title="Alignment stage X.">alignx</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>) &gt; 0.1) ||
+<a name="l00256"></a>00256          (fabs( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a9e20b9a0aeb41f7f7d653a1c60335bf1" title="alignment table y position">ay</a> - <a class="code" href="lspmac_8c.html#a737c246c3948e644a18d191a931e1acd" title="Alignment stage Y.">aligny</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>) &gt; 0.1) ||
+<a name="l00257"></a>00257          (fabs( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a66e678866ce79f6398b66d033ae45a17" title="alignment table z position">az</a> - <a class="code" href="lspmac_8c.html#ae7642b1da0f7c7f8448104c691d40a12" title="Alignment stage X.">alignz</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>) &gt; 0.1)) {
 <a name="l00258"></a>00258 
-<a name="l00259"></a>00259     center_request = 0;
-<a name="l00260"></a>00260     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a1a94eefbad713976a3d9213695a6ca28" title="flag: 1=move to indicated center position, 0=don&amp;#39;t move center or alignment tables...">active</a>) {
-<a name="l00261"></a>00261       <span class="keywordflow">if</span>(
-<a name="l00262"></a>00262          (fabs( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#ad9eb2013fa6f295f72f0891fe98c863f" title="centering table x position">cx</a> - <a class="code" href="lspmac_8c.html#ac940d950d9efeaf3f0ae67e9bf331188" title="Centering Table X.">cenx</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>) &gt; 0.1) ||
-<a name="l00263"></a>00263          (fabs( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#ab7a7b37a17f06c4e9ebdcdf056946098" title="centering table y position">cy</a> - <a class="code" href="lspmac_8c.html#aaed18e738ba7bfb6c771a44f5d7ea827" title="Centering Table Y.">ceny</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>) &gt; 0.1) ||
-<a name="l00264"></a>00264          (fabs( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a7f57874223897ab7d9c7531a9522904d" title="alignment table x position">ax</a> - <a class="code" href="lspmac_8c.html#a6cb218bdccfe5a93471c161f15a15cab" title="Alignment stage X.">alignx</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>) &gt; 0.1) ||
-<a name="l00265"></a>00265          (fabs( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a9e20b9a0aeb41f7f7d653a1c60335bf1" title="alignment table y position">ay</a> - <a class="code" href="lspmac_8c.html#a737c246c3948e644a18d191a931e1acd" title="Alignment stage Y.">aligny</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>) &gt; 0.1) ||
-<a name="l00266"></a>00266          (fabs( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a66e678866ce79f6398b66d033ae45a17" title="alignment table z position">az</a> - <a class="code" href="lspmac_8c.html#ae7642b1da0f7c7f8448104c691d40a12" title="Alignment stage X.">alignz</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>) &gt; 0.1)) {
-<a name="l00267"></a>00267 
-<a name="l00268"></a>00268         center_request = 1;
-<a name="l00269"></a>00269         <a class="code" href="md2cmds_8c.html#afc2d53af3d531cfaae116e7b57077347" title="Sets up a centering table and alignment table move Ensures that when we issue the...">md2cmds_mvcenter_prep</a>();
-<a name="l00270"></a>00270         <a class="code" href="md2cmds_8c.html#afdc46152b46ae4d37c73407b83016b78" title="Move the centering and alignment tables.">md2cmds_mvcenter_move</a>( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#ad9eb2013fa6f295f72f0891fe98c863f" title="centering table x position">cx</a>, <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#ab7a7b37a17f06c4e9ebdcdf056946098" title="centering table y position">cy</a>, <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a7f57874223897ab7d9c7531a9522904d" title="alignment table x position">ax</a>, <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a9e20b9a0aeb41f7f7d653a1c60335bf1" title="alignment table y position">ay</a>, <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a66e678866ce79f6398b66d033ae45a17" title="alignment table z position">az</a>);
-<a name="l00271"></a>00271       }
-<a name="l00272"></a>00272     }
-<a name="l00273"></a>00273 
-<a name="l00274"></a>00274     <span class="keywordflow">if</span>( !<a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a2d1f51cb1bb575a214344773136be878">dsphi_isnull</a>) {
-<a name="l00275"></a>00275       <a class="code" href="lspmac_8c.html#aa4ea5a4c387ef167702c58eaddcb4151" title="Move method for normal stepper and servo motor objects.">lspmac_moveabs_queue</a>( <a class="code" href="lspmac_8c.html#ac8070dc568ad974a3db42b51eca828cc" title="Phi (not data collection axis).">phi</a>, <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a64ebde597ca97a3b98145dc2d580c64f" title="dataset defined starting phi angle">dsphi</a>);
-<a name="l00276"></a>00276     }
-<a name="l00277"></a>00277   
-<a name="l00278"></a>00278     <span class="keywordflow">if</span>( !<a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a1686a72509cc1c3383ee95a790ddff14">dskappa_isnull</a>) {
-<a name="l00279"></a>00279       <a class="code" href="lspmac_8c.html#aa4ea5a4c387ef167702c58eaddcb4151" title="Move method for normal stepper and servo motor objects.">lspmac_moveabs_queue</a>( <a class="code" href="lspmac_8c.html#a0be79ccb7ebf3a665248fd856112b9fd" title="Kappa.">kappa</a>, <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a59355281e8eb935cd7bfac597fdc5289" title="dataset defined starting kappa angle">dskappa</a>);
-<a name="l00280"></a>00280     }
-<a name="l00281"></a>00281 
-<a name="l00282"></a>00282   
-<a name="l00283"></a>00283     <span class="comment">//</span>
-<a name="l00284"></a>00284     <span class="comment">// Wait for all those motors to stop</span>
-<a name="l00285"></a>00285     <span class="comment">//</span>
-<a name="l00286"></a>00286     <span class="keywordflow">if</span>( center_request) {
-<a name="l00287"></a>00287       <a class="code" href="md2cmds_8c.html#a9073a0af983da505daff01e954f0c430" title="Wait for the centering and alignment tables to stop moving.">md2cmds_mvcenter_wait</a>();
-<a name="l00288"></a>00288     }
-<a name="l00289"></a>00289 
-<a name="l00290"></a>00290     <span class="keywordflow">if</span>( !<a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a2d1f51cb1bb575a214344773136be878">dsphi_isnull</a>) {
-<a name="l00291"></a>00291       <a class="code" href="lspmac_8c.html#aae2282edace621ee65c682d03b7ccc36" title="Wait for motor to finish moving.">lspmac_moveabs_wait</a>( <a class="code" href="lspmac_8c.html#ac8070dc568ad974a3db42b51eca828cc" title="Phi (not data collection axis).">phi</a>);
-<a name="l00292"></a>00292     }
-<a name="l00293"></a>00293   
-<a name="l00294"></a>00294     <span class="keywordflow">if</span>( !<a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a1686a72509cc1c3383ee95a790ddff14">dskappa_isnull</a>) {
-<a name="l00295"></a>00295       <a class="code" href="lspmac_8c.html#aae2282edace621ee65c682d03b7ccc36" title="Wait for motor to finish moving.">lspmac_moveabs_wait</a>( <a class="code" href="lspmac_8c.html#a0be79ccb7ebf3a665248fd856112b9fd" title="Kappa.">kappa</a>);
-<a name="l00296"></a>00296     }
-<a name="l00297"></a>00297 
-<a name="l00298"></a>00298     <span class="comment">//</span>
-<a name="l00299"></a>00299     <span class="comment">// Calculate the parameters we&apos;ll need to run the scan</span>
+<a name="l00259"></a>00259         center_request = 1;
+<a name="l00260"></a>00260         <a class="code" href="md2cmds_8c.html#afc2d53af3d531cfaae116e7b57077347" title="Sets up a centering table and alignment table move Ensures that when we issue the...">md2cmds_mvcenter_prep</a>();
+<a name="l00261"></a>00261         <a class="code" href="md2cmds_8c.html#afdc46152b46ae4d37c73407b83016b78" title="Move the centering and alignment tables.">md2cmds_mvcenter_move</a>( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#ad9eb2013fa6f295f72f0891fe98c863f" title="centering table x position">cx</a>, <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#ab7a7b37a17f06c4e9ebdcdf056946098" title="centering table y position">cy</a>, <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a7f57874223897ab7d9c7531a9522904d" title="alignment table x position">ax</a>, <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a9e20b9a0aeb41f7f7d653a1c60335bf1" title="alignment table y position">ay</a>, <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a66e678866ce79f6398b66d033ae45a17" title="alignment table z position">az</a>);
+<a name="l00262"></a>00262       }
+<a name="l00263"></a>00263     }
+<a name="l00264"></a>00264 
+<a name="l00265"></a>00265     <span class="keywordflow">if</span>( !<a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a2d1f51cb1bb575a214344773136be878">dsphi_isnull</a>) {
+<a name="l00266"></a>00266       <a class="code" href="lspmac_8c.html#aa4ea5a4c387ef167702c58eaddcb4151" title="Move method for normal stepper and servo motor objects.">lspmac_moveabs_queue</a>( <a class="code" href="lspmac_8c.html#ac8070dc568ad974a3db42b51eca828cc" title="Phi (not data collection axis).">phi</a>, <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a64ebde597ca97a3b98145dc2d580c64f" title="dataset defined starting phi angle">dsphi</a>);
+<a name="l00267"></a>00267     }
+<a name="l00268"></a>00268   
+<a name="l00269"></a>00269     <span class="keywordflow">if</span>( !<a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a1686a72509cc1c3383ee95a790ddff14">dskappa_isnull</a>) {
+<a name="l00270"></a>00270       <a class="code" href="lspmac_8c.html#aa4ea5a4c387ef167702c58eaddcb4151" title="Move method for normal stepper and servo motor objects.">lspmac_moveabs_queue</a>( <a class="code" href="lspmac_8c.html#a0be79ccb7ebf3a665248fd856112b9fd" title="Kappa.">kappa</a>, <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a59355281e8eb935cd7bfac597fdc5289" title="dataset defined starting kappa angle">dskappa</a>);
+<a name="l00271"></a>00271     }
+<a name="l00272"></a>00272 
+<a name="l00273"></a>00273   
+<a name="l00274"></a>00274     <span class="comment">//</span>
+<a name="l00275"></a>00275     <span class="comment">// Wait for all those motors to stop</span>
+<a name="l00276"></a>00276     <span class="comment">//</span>
+<a name="l00277"></a>00277     <span class="keywordflow">if</span>( center_request) {
+<a name="l00278"></a>00278       <a class="code" href="md2cmds_8c.html#a9073a0af983da505daff01e954f0c430" title="Wait for the centering and alignment tables to stop moving.">md2cmds_mvcenter_wait</a>();
+<a name="l00279"></a>00279     }
+<a name="l00280"></a>00280 
+<a name="l00281"></a>00281     <span class="keywordflow">if</span>( !<a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a2d1f51cb1bb575a214344773136be878">dsphi_isnull</a>) {
+<a name="l00282"></a>00282       <a class="code" href="lspmac_8c.html#aae2282edace621ee65c682d03b7ccc36" title="Wait for motor to finish moving.">lspmac_moveabs_wait</a>( <a class="code" href="lspmac_8c.html#ac8070dc568ad974a3db42b51eca828cc" title="Phi (not data collection axis).">phi</a>);
+<a name="l00283"></a>00283     }
+<a name="l00284"></a>00284   
+<a name="l00285"></a>00285     <span class="keywordflow">if</span>( !<a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a1686a72509cc1c3383ee95a790ddff14">dskappa_isnull</a>) {
+<a name="l00286"></a>00286       <a class="code" href="lspmac_8c.html#aae2282edace621ee65c682d03b7ccc36" title="Wait for motor to finish moving.">lspmac_moveabs_wait</a>( <a class="code" href="lspmac_8c.html#a0be79ccb7ebf3a665248fd856112b9fd" title="Kappa.">kappa</a>);
+<a name="l00287"></a>00287     }
+<a name="l00288"></a>00288 
+<a name="l00289"></a>00289     <span class="comment">//</span>
+<a name="l00290"></a>00290     <span class="comment">// Calculate the parameters we&apos;ll need to run the scan</span>
+<a name="l00291"></a>00291     <span class="comment">//</span>
+<a name="l00292"></a>00292     p180 = <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a063e4c99201a763c2eb048acfc855efa" title="dataset defined exposure time">dsexp</a> * 1000.0;
+<a name="l00293"></a>00293     p170 = <a class="code" href="lspmac_8c.html#a8237e646ce032a840637a4ef7bff49b9" title="MD2 omega axis (the air bearing).">omega</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a61415627ab2dc0f438b190d117e532db" title="conversion from counts to units: 0.0 means not loaded yet">u2c</a> * <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a8dc11eaa094d59f61642c4abc226918f" title="starting angle">sstart</a>;
+<a name="l00294"></a>00294     <span class="comment">//    p171 = omega-&gt;u2c * ( lspg_nextshot.sstart + lspg_nextshot.dsowidth);</span>
+<a name="l00295"></a>00295     p171 = <a class="code" href="lspmac_8c.html#a8237e646ce032a840637a4ef7bff49b9" title="MD2 omega axis (the air bearing).">omega</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a61415627ab2dc0f438b190d117e532db" title="conversion from counts to units: 0.0 means not loaded yet">u2c</a> * <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#ad5a8f568a04aa6a13767933062b28f19" title="dataset defined oscillation width">dsowidth</a>;
+<a name="l00296"></a>00296     p173 = fabs(p180) &lt; 1.e-4 ? 0.0 : <a class="code" href="lspmac_8c.html#a8237e646ce032a840637a4ef7bff49b9" title="MD2 omega axis (the air bearing).">omega</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a61415627ab2dc0f438b190d117e532db" title="conversion from counts to units: 0.0 means not loaded yet">u2c</a> * <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#ad5a8f568a04aa6a13767933062b28f19" title="dataset defined oscillation width">dsowidth</a> / p180;
+<a name="l00297"></a>00297     p175 = p173/<a class="code" href="lspmac_8c.html#a8237e646ce032a840637a4ef7bff49b9" title="MD2 omega axis (the air bearing).">omega</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#afec8dc1d4b97ba9c1d6e4f7a088342e4" title="our maximum acceleration (cts/msec^2)">max_accel</a>;
+<a name="l00298"></a>00298 
+<a name="l00299"></a>00299 
 <a name="l00300"></a>00300     <span class="comment">//</span>
-<a name="l00301"></a>00301     p180 = <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a063e4c99201a763c2eb048acfc855efa" title="dataset defined exposure time">dsexp</a> * 1000.0;
-<a name="l00302"></a>00302     p170 = <a class="code" href="lspmac_8c.html#a8237e646ce032a840637a4ef7bff49b9" title="MD2 omega axis (the air bearing).">omega</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a61415627ab2dc0f438b190d117e532db" title="conversion from counts to units: 0.0 means not loaded yet">u2c</a> * <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a8dc11eaa094d59f61642c4abc226918f" title="starting angle">sstart</a>;
-<a name="l00303"></a>00303     <span class="comment">//    p171 = omega-&gt;u2c * ( lspg_nextshot.sstart + lspg_nextshot.dsowidth);</span>
-<a name="l00304"></a>00304     p171 = <a class="code" href="lspmac_8c.html#a8237e646ce032a840637a4ef7bff49b9" title="MD2 omega axis (the air bearing).">omega</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a61415627ab2dc0f438b190d117e532db" title="conversion from counts to units: 0.0 means not loaded yet">u2c</a> * <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#ad5a8f568a04aa6a13767933062b28f19" title="dataset defined oscillation width">dsowidth</a>;
-<a name="l00305"></a>00305     p173 = fabs(p180) &lt; 1.e-4 ? 0.0 : <a class="code" href="lspmac_8c.html#a8237e646ce032a840637a4ef7bff49b9" title="MD2 omega axis (the air bearing).">omega</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a61415627ab2dc0f438b190d117e532db" title="conversion from counts to units: 0.0 means not loaded yet">u2c</a> * <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#ad5a8f568a04aa6a13767933062b28f19" title="dataset defined oscillation width">dsowidth</a> / p180;
-<a name="l00306"></a>00306     p175 = p173/<a class="code" href="lspmac_8c.html#a8237e646ce032a840637a4ef7bff49b9" title="MD2 omega axis (the air bearing).">omega</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#afec8dc1d4b97ba9c1d6e4f7a088342e4" title="our maximum acceleration (cts/msec^2)">max_accel</a>;
+<a name="l00301"></a>00301     <span class="comment">// free up access to nextshot</span>
+<a name="l00302"></a>00302     <span class="comment">//</span>
+<a name="l00303"></a>00303     <a class="code" href="lspg_8c.html#a50458a014041a4118452802dfb303960" title="Called when the next shot query has been processed.">lspg_nextshot_done</a>();
+<a name="l00304"></a>00304 
+<a name="l00305"></a>00305     fprintf( zzlog, <span class="stringliteral">&quot;%s: finished with lspg_nextshot_done, calling lspg_seq_run_prep_all\n&quot;</span>, <a class="code" href="md2cmds_8c.html#a0b466dd608ba033b0b618c6dce8b2601" title="Return a time string for loggin Time is from the first call to this funciton.">logtime</a>());
+<a name="l00306"></a>00306     fflush( zzlog);
 <a name="l00307"></a>00307 
-<a name="l00308"></a>00308 
-<a name="l00309"></a>00309     <span class="comment">//</span>
-<a name="l00310"></a>00310     <span class="comment">// free up access to nextshot</span>
-<a name="l00311"></a>00311     <span class="comment">//</span>
-<a name="l00312"></a>00312     <a class="code" href="lspg_8c.html#a50458a014041a4118452802dfb303960" title="Called when the next shot query has been processed.">lspg_nextshot_done</a>();
-<a name="l00313"></a>00313 
-<a name="l00314"></a>00314     fprintf( zzlog, <span class="stringliteral">&quot;%s: finished with lspg_nextshot_done, calling lspg_seq_run_prep_all\n&quot;</span>, <a class="code" href="md2cmds_8c.html#a0b466dd608ba033b0b618c6dce8b2601" title="Return a time string for loggin Time is from the first call to this funciton.">logtime</a>());
-<a name="l00315"></a>00315     fflush( zzlog);
-<a name="l00316"></a>00316 
-<a name="l00317"></a>00317     <span class="comment">//</span>
-<a name="l00318"></a>00318     <span class="comment">// prepare the database and detector to expose</span>
-<a name="l00319"></a>00319     <span class="comment">// On exit we own the diffractometer lock and</span>
-<a name="l00320"></a>00320     <span class="comment">// have checked that all is OK with the detector</span>
-<a name="l00321"></a>00321     <span class="comment">//</span>
-<a name="l00322"></a>00322     <a class="code" href="lspg_8c.html#a4253474d4dd305aec0afdd5552b3ddd5" title="Convinence function to call seq run prep.">lspg_seq_run_prep_all</a>( skey,
-<a name="l00323"></a>00323                            <a class="code" href="lspmac_8c.html#a0be79ccb7ebf3a665248fd856112b9fd" title="Kappa.">kappa</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>,
-<a name="l00324"></a>00324                            <a class="code" href="lspmac_8c.html#ac8070dc568ad974a3db42b51eca828cc" title="Phi (not data collection axis).">phi</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>,
-<a name="l00325"></a>00325                            <a class="code" href="lspmac_8c.html#ac940d950d9efeaf3f0ae67e9bf331188" title="Centering Table X.">cenx</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>,
-<a name="l00326"></a>00326                            <a class="code" href="lspmac_8c.html#aaed18e738ba7bfb6c771a44f5d7ea827" title="Centering Table Y.">ceny</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>,
-<a name="l00327"></a>00327                            <a class="code" href="lspmac_8c.html#a6cb218bdccfe5a93471c161f15a15cab" title="Alignment stage X.">alignx</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>,
-<a name="l00328"></a>00328                            <a class="code" href="lspmac_8c.html#a737c246c3948e644a18d191a931e1acd" title="Alignment stage Y.">aligny</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>,
-<a name="l00329"></a>00329                            <a class="code" href="lspmac_8c.html#ae7642b1da0f7c7f8448104c691d40a12" title="Alignment stage X.">alignz</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>
-<a name="l00330"></a>00330                            );
-<a name="l00331"></a>00331 
-<a name="l00332"></a>00332     
-<a name="l00333"></a>00333     fprintf( zzlog, <span class="stringliteral">&quot;%s: finished with lspg_seq_run_prep_all\n&quot;</span>, <a class="code" href="md2cmds_8c.html#a0b466dd608ba033b0b618c6dce8b2601" title="Return a time string for loggin Time is from the first call to this funciton.">logtime</a>());
-<a name="l00334"></a>00334     fflush( zzlog);
+<a name="l00308"></a>00308     <span class="comment">//</span>
+<a name="l00309"></a>00309     <span class="comment">// prepare the database and detector to expose</span>
+<a name="l00310"></a>00310     <span class="comment">// On exit we own the diffractometer lock and</span>
+<a name="l00311"></a>00311     <span class="comment">// have checked that all is OK with the detector</span>
+<a name="l00312"></a>00312     <span class="comment">//</span>
+<a name="l00313"></a>00313     <a class="code" href="lspg_8c.html#a4253474d4dd305aec0afdd5552b3ddd5" title="Convinence function to call seq run prep.">lspg_seq_run_prep_all</a>( skey,
+<a name="l00314"></a>00314                            <a class="code" href="lspmac_8c.html#a0be79ccb7ebf3a665248fd856112b9fd" title="Kappa.">kappa</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>,
+<a name="l00315"></a>00315                            <a class="code" href="lspmac_8c.html#ac8070dc568ad974a3db42b51eca828cc" title="Phi (not data collection axis).">phi</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>,
+<a name="l00316"></a>00316                            <a class="code" href="lspmac_8c.html#ac940d950d9efeaf3f0ae67e9bf331188" title="Centering Table X.">cenx</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>,
+<a name="l00317"></a>00317                            <a class="code" href="lspmac_8c.html#aaed18e738ba7bfb6c771a44f5d7ea827" title="Centering Table Y.">ceny</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>,
+<a name="l00318"></a>00318                            <a class="code" href="lspmac_8c.html#a6cb218bdccfe5a93471c161f15a15cab" title="Alignment stage X.">alignx</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>,
+<a name="l00319"></a>00319                            <a class="code" href="lspmac_8c.html#a737c246c3948e644a18d191a931e1acd" title="Alignment stage Y.">aligny</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>,
+<a name="l00320"></a>00320                            <a class="code" href="lspmac_8c.html#ae7642b1da0f7c7f8448104c691d40a12" title="Alignment stage X.">alignz</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>
+<a name="l00321"></a>00321                            );
+<a name="l00322"></a>00322 
+<a name="l00323"></a>00323     
+<a name="l00324"></a>00324     fprintf( zzlog, <span class="stringliteral">&quot;%s: finished with lspg_seq_run_prep_all\n&quot;</span>, <a class="code" href="md2cmds_8c.html#a0b466dd608ba033b0b618c6dce8b2601" title="Return a time string for loggin Time is from the first call to this funciton.">logtime</a>());
+<a name="l00325"></a>00325     fflush( zzlog);
+<a name="l00326"></a>00326     <span class="comment">//</span>
+<a name="l00327"></a>00327     <span class="comment">// make sure our has opened flag is down</span>
+<a name="l00328"></a>00328     <span class="comment">// wait for the p3001=0 command to be noticed</span>
+<a name="l00329"></a>00329     <span class="comment">//</span>
+<a name="l00330"></a>00330     pthread_mutex_lock( &amp;<a class="code" href="lspmac_8c.html#a1b78a13c654409333569815e1c109d38" title="Coordinates threads reading shutter status.">lspmac_shutter_mutex</a>);
+<a name="l00331"></a>00331     <span class="keywordflow">if</span>( <a class="code" href="lspmac_8c.html#a396fbf06208de3ecbe1b0df549f1cd46" title="Indicates that the shutter had opened, perhaps briefly even if the state did not...">lspmac_shutter_has_opened</a> == 1)
+<a name="l00332"></a>00332       pthread_cond_wait( &amp;<a class="code" href="lspmac_8c.html#afbd51c2cefcee87afe994c9e9f372241" title="Allows waiting for the shutter status to change.">lspmac_shutter_cond</a>, &amp;<a class="code" href="lspmac_8c.html#a1b78a13c654409333569815e1c109d38" title="Coordinates threads reading shutter status.">lspmac_shutter_mutex</a>);
+<a name="l00333"></a>00333     pthread_mutex_unlock( &amp;<a class="code" href="lspmac_8c.html#a1b78a13c654409333569815e1c109d38" title="Coordinates threads reading shutter status.">lspmac_shutter_mutex</a>);
+<a name="l00334"></a>00334 
 <a name="l00335"></a>00335     <span class="comment">//</span>
-<a name="l00336"></a>00336     <span class="comment">// make sure our has opened flag is down</span>
-<a name="l00337"></a>00337     <span class="comment">// wait for the p3001=0 command to be noticed</span>
-<a name="l00338"></a>00338     <span class="comment">//</span>
-<a name="l00339"></a>00339     pthread_mutex_lock( &amp;<a class="code" href="lspmac_8c.html#a1b78a13c654409333569815e1c109d38" title="Coordinates threads reading shutter status.">lspmac_shutter_mutex</a>);
-<a name="l00340"></a>00340     <span class="keywordflow">if</span>( <a class="code" href="lspmac_8c.html#a2ce5781f7f314dda6e6e9888fa7ba284" title="Indicates that the shutter had opened, perhaps briefly even if the state did not...">lspmac_shutter_has_opened</a> == 1)
-<a name="l00341"></a>00341       pthread_cond_wait( &amp;<a class="code" href="lspmac_8c.html#afbd51c2cefcee87afe994c9e9f372241" title="Allows waiting for the shutter status to change.">lspmac_shutter_cond</a>, &amp;<a class="code" href="lspmac_8c.html#a1b78a13c654409333569815e1c109d38" title="Coordinates threads reading shutter status.">lspmac_shutter_mutex</a>);
-<a name="l00342"></a>00342     pthread_mutex_unlock( &amp;<a class="code" href="lspmac_8c.html#a1b78a13c654409333569815e1c109d38" title="Coordinates threads reading shutter status.">lspmac_shutter_mutex</a>);
-<a name="l00343"></a>00343 
-<a name="l00344"></a>00344     <span class="comment">//</span>
-<a name="l00345"></a>00345     <span class="comment">// Start the exposure</span>
-<a name="l00346"></a>00346     <span class="comment">//</span>
-<a name="l00347"></a>00347     <a class="code" href="lspmac_8c.html#aaa442d9bc7a3cdee39adea0724f0e18c" title="Send a one line command.">lspmac_SockSendline</a>( <span class="stringliteral">&quot;P170=%.1f P171=%.1f P173=%.1f P174=0 P175=%.1f P176=0 P177=1 P178=0 P180=%.1f M431=1 &amp;1B131R&quot;</span>,
-<a name="l00348"></a>00348                          p170,      p171,     p173,            p175,                          p180);
-<a name="l00349"></a>00349 
-<a name="l00350"></a>00350 
-<a name="l00351"></a>00351     fprintf( zzlog, <span class="stringliteral">&quot;%s: sent command to pmac\n&quot;</span>, <a class="code" href="md2cmds_8c.html#a0b466dd608ba033b0b618c6dce8b2601" title="Return a time string for loggin Time is from the first call to this funciton.">logtime</a>());
-<a name="l00352"></a>00352     fflush( zzlog);
-<a name="l00353"></a>00353 
-<a name="l00354"></a>00354     <span class="comment">//</span>
-<a name="l00355"></a>00355     <span class="comment">// wait for the shutter to open</span>
-<a name="l00356"></a>00356     <span class="comment">//</span>
-<a name="l00357"></a>00357     pthread_mutex_lock( &amp;<a class="code" href="lspmac_8c.html#a1b78a13c654409333569815e1c109d38" title="Coordinates threads reading shutter status.">lspmac_shutter_mutex</a>);
-<a name="l00358"></a>00358     <span class="keywordflow">if</span>( <a class="code" href="lspmac_8c.html#a2ce5781f7f314dda6e6e9888fa7ba284" title="Indicates that the shutter had opened, perhaps briefly even if the state did not...">lspmac_shutter_has_opened</a> == 0)
+<a name="l00336"></a>00336     <span class="comment">// Start the exposure</span>
+<a name="l00337"></a>00337     <span class="comment">//</span>
+<a name="l00338"></a>00338     <a class="code" href="lspmac_8c.html#aaa442d9bc7a3cdee39adea0724f0e18c" title="Send a one line command.">lspmac_SockSendline</a>( <span class="stringliteral">&quot;P170=%.1f P171=%.1f P173=%.1f P174=0 P175=%.1f P176=0 P177=1 P178=0 P180=%.1f M431=1 &amp;1B131R&quot;</span>,
+<a name="l00339"></a>00339                          p170,      p171,     p173,            p175,                          p180);
+<a name="l00340"></a>00340 
+<a name="l00341"></a>00341 
+<a name="l00342"></a>00342     fprintf( zzlog, <span class="stringliteral">&quot;%s: sent command to pmac\n&quot;</span>, <a class="code" href="md2cmds_8c.html#a0b466dd608ba033b0b618c6dce8b2601" title="Return a time string for loggin Time is from the first call to this funciton.">logtime</a>());
+<a name="l00343"></a>00343     fflush( zzlog);
+<a name="l00344"></a>00344 
+<a name="l00345"></a>00345     <span class="comment">//</span>
+<a name="l00346"></a>00346     <span class="comment">// wait for the shutter to open</span>
+<a name="l00347"></a>00347     <span class="comment">//</span>
+<a name="l00348"></a>00348     pthread_mutex_lock( &amp;<a class="code" href="lspmac_8c.html#a1b78a13c654409333569815e1c109d38" title="Coordinates threads reading shutter status.">lspmac_shutter_mutex</a>);
+<a name="l00349"></a>00349     <span class="keywordflow">if</span>( <a class="code" href="lspmac_8c.html#a396fbf06208de3ecbe1b0df549f1cd46" title="Indicates that the shutter had opened, perhaps briefly even if the state did not...">lspmac_shutter_has_opened</a> == 0)
+<a name="l00350"></a>00350       pthread_cond_wait( &amp;<a class="code" href="lspmac_8c.html#afbd51c2cefcee87afe994c9e9f372241" title="Allows waiting for the shutter status to change.">lspmac_shutter_cond</a>, &amp;<a class="code" href="lspmac_8c.html#a1b78a13c654409333569815e1c109d38" title="Coordinates threads reading shutter status.">lspmac_shutter_mutex</a>);
+<a name="l00351"></a>00351 
+<a name="l00352"></a>00352     fprintf( zzlog, <span class="stringliteral">&quot;%s: shutter has opened\n&quot;</span>, <a class="code" href="md2cmds_8c.html#a0b466dd608ba033b0b618c6dce8b2601" title="Return a time string for loggin Time is from the first call to this funciton.">logtime</a>());
+<a name="l00353"></a>00353     fflush( zzlog);
+<a name="l00354"></a>00354 
+<a name="l00355"></a>00355     <span class="comment">//</span>
+<a name="l00356"></a>00356     <span class="comment">// wait for the shutter to close</span>
+<a name="l00357"></a>00357     <span class="comment">//</span>
+<a name="l00358"></a>00358     <span class="keywordflow">if</span>( <a class="code" href="lspmac_8c.html#a112158e0cd50449a440ac55c7af7bea2" title="State of the shutter, used to detect changes.">lspmac_shutter_state</a> == 1)
 <a name="l00359"></a>00359       pthread_cond_wait( &amp;<a class="code" href="lspmac_8c.html#afbd51c2cefcee87afe994c9e9f372241" title="Allows waiting for the shutter status to change.">lspmac_shutter_cond</a>, &amp;<a class="code" href="lspmac_8c.html#a1b78a13c654409333569815e1c109d38" title="Coordinates threads reading shutter status.">lspmac_shutter_mutex</a>);
-<a name="l00360"></a>00360 
-<a name="l00361"></a>00361     fprintf( zzlog, <span class="stringliteral">&quot;%s: shutter has opened\n&quot;</span>, <a class="code" href="md2cmds_8c.html#a0b466dd608ba033b0b618c6dce8b2601" title="Return a time string for loggin Time is from the first call to this funciton.">logtime</a>());
-<a name="l00362"></a>00362     fflush( zzlog);
-<a name="l00363"></a>00363 
-<a name="l00364"></a>00364     <span class="comment">//</span>
-<a name="l00365"></a>00365     <span class="comment">// wait for the shutter to close</span>
-<a name="l00366"></a>00366     <span class="comment">//</span>
-<a name="l00367"></a>00367     <span class="keywordflow">if</span>( <a class="code" href="lspmac_8c.html#a112158e0cd50449a440ac55c7af7bea2" title="State of the shutter, used to detect changes.">lspmac_shutter_state</a> == 1)
-<a name="l00368"></a>00368       pthread_cond_wait( &amp;<a class="code" href="lspmac_8c.html#afbd51c2cefcee87afe994c9e9f372241" title="Allows waiting for the shutter status to change.">lspmac_shutter_cond</a>, &amp;<a class="code" href="lspmac_8c.html#a1b78a13c654409333569815e1c109d38" title="Coordinates threads reading shutter status.">lspmac_shutter_mutex</a>);
-<a name="l00369"></a>00369     pthread_mutex_unlock( &amp;<a class="code" href="lspmac_8c.html#a1b78a13c654409333569815e1c109d38" title="Coordinates threads reading shutter status.">lspmac_shutter_mutex</a>);
+<a name="l00360"></a>00360     pthread_mutex_unlock( &amp;<a class="code" href="lspmac_8c.html#a1b78a13c654409333569815e1c109d38" title="Coordinates threads reading shutter status.">lspmac_shutter_mutex</a>);
+<a name="l00361"></a>00361 
+<a name="l00362"></a>00362     fprintf( zzlog, <span class="stringliteral">&quot;%s: shutter now closed, unlocking diffractometer\n&quot;</span>, <a class="code" href="md2cmds_8c.html#a0b466dd608ba033b0b618c6dce8b2601" title="Return a time string for loggin Time is from the first call to this funciton.">logtime</a>());
+<a name="l00363"></a>00363     fflush( zzlog);
+<a name="l00364"></a>00364 
+<a name="l00365"></a>00365 
+<a name="l00366"></a>00366     <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( NULL, <span class="stringliteral">&quot;SELECT px.unlock_diffractometer()&quot;</span>);
+<a name="l00367"></a>00367 
+<a name="l00368"></a>00368     fprintf( zzlog, <span class="stringliteral">&quot;%s: unlocked diffractometer\n&quot;</span>, <a class="code" href="md2cmds_8c.html#a0b466dd608ba033b0b618c6dce8b2601" title="Return a time string for loggin Time is from the first call to this funciton.">logtime</a>());
+<a name="l00369"></a>00369     fflush( zzlog);
 <a name="l00370"></a>00370 
-<a name="l00371"></a>00371     fprintf( zzlog, <span class="stringliteral">&quot;%s: shutter now closed, unlocking diffractometer\n&quot;</span>, <a class="code" href="md2cmds_8c.html#a0b466dd608ba033b0b618c6dce8b2601" title="Return a time string for loggin Time is from the first call to this funciton.">logtime</a>());
-<a name="l00372"></a>00372     fflush( zzlog);
-<a name="l00373"></a>00373 
-<a name="l00374"></a>00374 
-<a name="l00375"></a>00375     <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( NULL, <span class="stringliteral">&quot;SELECT px.unlock_diffractometer()&quot;</span>);
-<a name="l00376"></a>00376 
-<a name="l00377"></a>00377     fprintf( zzlog, <span class="stringliteral">&quot;%s: unlocked diffractometer\n&quot;</span>, <a class="code" href="md2cmds_8c.html#a0b466dd608ba033b0b618c6dce8b2601" title="Return a time string for loggin Time is from the first call to this funciton.">logtime</a>());
-<a name="l00378"></a>00378     fflush( zzlog);
-<a name="l00379"></a>00379 
-<a name="l00380"></a>00380     <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( NULL, <span class="stringliteral">&quot;SELECT px.shots_set_state(%lld, &apos;Writing&apos;)&quot;</span>, skey);
+<a name="l00371"></a>00371     <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( NULL, <span class="stringliteral">&quot;SELECT px.shots_set_state(%lld, &apos;Writing&apos;)&quot;</span>, skey);
+<a name="l00372"></a>00372 
+<a name="l00373"></a>00373     <span class="comment">//</span>
+<a name="l00374"></a>00374     <span class="comment">// reset shutter has opened flag</span>
+<a name="l00375"></a>00375     <span class="comment">//</span>
+<a name="l00376"></a>00376     <a class="code" href="lspmac_8c.html#aaa442d9bc7a3cdee39adea0724f0e18c" title="Send a one line command.">lspmac_SockSendline</a>( <span class="stringliteral">&quot;P3001=0&quot;</span>);
+<a name="l00377"></a>00377     <span class="comment">//</span>
+<a name="l00378"></a>00378     <span class="comment">// TODO:</span>
+<a name="l00379"></a>00379     <span class="comment">// wait for omega to stop moving then position it for the next frame</span>
+<a name="l00380"></a>00380     <span class="comment">//</span>
 <a name="l00381"></a>00381 
-<a name="l00382"></a>00382     <span class="comment">//</span>
-<a name="l00383"></a>00383     <span class="comment">// reset shutter has opened flag</span>
-<a name="l00384"></a>00384     <span class="comment">//</span>
-<a name="l00385"></a>00385     <a class="code" href="lspmac_8c.html#aaa442d9bc7a3cdee39adea0724f0e18c" title="Send a one line command.">lspmac_SockSendline</a>( <span class="stringliteral">&quot;P3001=0&quot;</span>);
-<a name="l00386"></a>00386     <span class="comment">//</span>
-<a name="l00387"></a>00387     <span class="comment">// TODO:</span>
-<a name="l00388"></a>00388     <span class="comment">// wait for omega to stop moving then position it for the next frame</span>
-<a name="l00389"></a>00389     <span class="comment">//</span>
+<a name="l00382"></a>00382 
+<a name="l00383"></a>00383     <span class="keywordflow">if</span>( !<a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a1aa11ff4a4c8d69695786b4349e84e6b">active2_isnull</a> &amp;&amp; <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a2875aa18df587806a3d8c05220fd62b5" title="flag: 1 if next image should use the above centering parameters">active2</a>) {
+<a name="l00384"></a>00384       <span class="keywordflow">if</span>(
+<a name="l00385"></a>00385          (fabs( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a10d45763100bc59f9a5f68f1b48db6d3" title="next image centering table x position">cx2</a> - <a class="code" href="lspmac_8c.html#ac940d950d9efeaf3f0ae67e9bf331188" title="Centering Table X.">cenx</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>) &gt; 0.1) ||
+<a name="l00386"></a>00386          (fabs( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a3644e5c3f12af18a3b426d4d4d7e16a5" title="next image centering table y position">cy2</a> - <a class="code" href="lspmac_8c.html#aaed18e738ba7bfb6c771a44f5d7ea827" title="Centering Table Y.">ceny</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>) &gt; 0.1) ||
+<a name="l00387"></a>00387          (fabs( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#ab76bd38d2a098bc7eda82aff5dcb9c66" title="next image alignment x position">ax2</a> - <a class="code" href="lspmac_8c.html#a6cb218bdccfe5a93471c161f15a15cab" title="Alignment stage X.">alignx</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>) &gt; 0.1) ||
+<a name="l00388"></a>00388          (fabs( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#ad13759740204b42e379161f98815f3d0" title="next image alignment y position">ay2</a> - <a class="code" href="lspmac_8c.html#a737c246c3948e644a18d191a931e1acd" title="Alignment stage Y.">aligny</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>) &gt; 0.1) ||
+<a name="l00389"></a>00389          (fabs( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a94698a030fd5b2abf1f10a2ad33476a4" title="next image alignment z position">az2</a> - <a class="code" href="lspmac_8c.html#ae7642b1da0f7c7f8448104c691d40a12" title="Alignment stage X.">alignz</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>) &gt; 0.1)) {
 <a name="l00390"></a>00390 
-<a name="l00391"></a>00391 
-<a name="l00392"></a>00392     <span class="keywordflow">if</span>( !<a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a1aa11ff4a4c8d69695786b4349e84e6b">active2_isnull</a> &amp;&amp; <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a2875aa18df587806a3d8c05220fd62b5" title="flag: 1 if next image should use the above centering parameters">active2</a>) {
-<a name="l00393"></a>00393       <span class="keywordflow">if</span>(
-<a name="l00394"></a>00394          (fabs( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a10d45763100bc59f9a5f68f1b48db6d3" title="next image centering table x position">cx2</a> - <a class="code" href="lspmac_8c.html#ac940d950d9efeaf3f0ae67e9bf331188" title="Centering Table X.">cenx</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>) &gt; 0.1) ||
-<a name="l00395"></a>00395          (fabs( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a3644e5c3f12af18a3b426d4d4d7e16a5" title="next image centering table y position">cy2</a> - <a class="code" href="lspmac_8c.html#aaed18e738ba7bfb6c771a44f5d7ea827" title="Centering Table Y.">ceny</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>) &gt; 0.1) ||
-<a name="l00396"></a>00396          (fabs( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#ab76bd38d2a098bc7eda82aff5dcb9c66" title="next image alignment x position">ax2</a> - <a class="code" href="lspmac_8c.html#a6cb218bdccfe5a93471c161f15a15cab" title="Alignment stage X.">alignx</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>) &gt; 0.1) ||
-<a name="l00397"></a>00397          (fabs( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#ad13759740204b42e379161f98815f3d0" title="next image alignment y position">ay2</a> - <a class="code" href="lspmac_8c.html#a737c246c3948e644a18d191a931e1acd" title="Alignment stage Y.">aligny</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>) &gt; 0.1) ||
-<a name="l00398"></a>00398          (fabs( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a94698a030fd5b2abf1f10a2ad33476a4" title="next image alignment z position">az2</a> - <a class="code" href="lspmac_8c.html#ae7642b1da0f7c7f8448104c691d40a12" title="Alignment stage X.">alignz</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>) &gt; 0.1)) {
-<a name="l00399"></a>00399 
-<a name="l00400"></a>00400         center_request = 1;
-<a name="l00401"></a>00401         <a class="code" href="md2cmds_8c.html#afc2d53af3d531cfaae116e7b57077347" title="Sets up a centering table and alignment table move Ensures that when we issue the...">md2cmds_mvcenter_prep</a>();
-<a name="l00402"></a>00402         <a class="code" href="md2cmds_8c.html#afdc46152b46ae4d37c73407b83016b78" title="Move the centering and alignment tables.">md2cmds_mvcenter_move</a>( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#ad9eb2013fa6f295f72f0891fe98c863f" title="centering table x position">cx</a>, <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#ab7a7b37a17f06c4e9ebdcdf056946098" title="centering table y position">cy</a>, <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a7f57874223897ab7d9c7531a9522904d" title="alignment table x position">ax</a>, <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a9e20b9a0aeb41f7f7d653a1c60335bf1" title="alignment table y position">ay</a>, <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a66e678866ce79f6398b66d033ae45a17" title="alignment table z position">az</a>);
-<a name="l00403"></a>00403         <a class="code" href="md2cmds_8c.html#a9073a0af983da505daff01e954f0c430" title="Wait for the centering and alignment tables to stop moving.">md2cmds_mvcenter_wait</a>();
-<a name="l00404"></a>00404       }
-<a name="l00405"></a>00405     }
-<a name="l00406"></a>00406 
-<a name="l00407"></a>00407   }
-<a name="l00408"></a>00408   fprintf( zzlog, <span class="stringliteral">&quot;%s: done\n&quot;</span>, <a class="code" href="md2cmds_8c.html#a0b466dd608ba033b0b618c6dce8b2601" title="Return a time string for loggin Time is from the first call to this funciton.">logtime</a>());
-<a name="l00409"></a>00409   fflush( zzlog);
-<a name="l00410"></a>00410   fclose( zzlog);
-<a name="l00411"></a>00411 }
+<a name="l00391"></a>00391         center_request = 1;
+<a name="l00392"></a>00392         <a class="code" href="md2cmds_8c.html#afc2d53af3d531cfaae116e7b57077347" title="Sets up a centering table and alignment table move Ensures that when we issue the...">md2cmds_mvcenter_prep</a>();
+<a name="l00393"></a>00393         <a class="code" href="md2cmds_8c.html#afdc46152b46ae4d37c73407b83016b78" title="Move the centering and alignment tables.">md2cmds_mvcenter_move</a>( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#ad9eb2013fa6f295f72f0891fe98c863f" title="centering table x position">cx</a>, <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#ab7a7b37a17f06c4e9ebdcdf056946098" title="centering table y position">cy</a>, <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a7f57874223897ab7d9c7531a9522904d" title="alignment table x position">ax</a>, <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a9e20b9a0aeb41f7f7d653a1c60335bf1" title="alignment table y position">ay</a>, <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a66e678866ce79f6398b66d033ae45a17" title="alignment table z position">az</a>);
+<a name="l00394"></a>00394         <a class="code" href="md2cmds_8c.html#a9073a0af983da505daff01e954f0c430" title="Wait for the centering and alignment tables to stop moving.">md2cmds_mvcenter_wait</a>();
+<a name="l00395"></a>00395       }
+<a name="l00396"></a>00396     }
+<a name="l00397"></a>00397 
+<a name="l00398"></a>00398   }
+<a name="l00399"></a>00399   fprintf( zzlog, <span class="stringliteral">&quot;%s: done\n&quot;</span>, <a class="code" href="md2cmds_8c.html#a0b466dd608ba033b0b618c6dce8b2601" title="Return a time string for loggin Time is from the first call to this funciton.">logtime</a>());
+<a name="l00400"></a>00400   fflush( zzlog);
+<a name="l00401"></a>00401   fclose( zzlog);
+<a name="l00402"></a>00402 }
 </pre></div></p>
 
 </div>
@@ -429,18 +429,18 @@ window.onload = initDynSections;
 
 <p>Initialize the md2cmds module. </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00461">461</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00529">529</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 
-<p><div class="fragment"><pre class="fragment"><a name="l00461"></a>00461                     {
-<a name="l00462"></a>00462   memset( <a class="code" href="md2cmds_8c.html#a5f0fe1e2dfa92cf345b8c29134ab1ede" title="our command;">md2cmds_cmd</a>, 0, <span class="keyword">sizeof</span>( <a class="code" href="md2cmds_8c.html#a5f0fe1e2dfa92cf345b8c29134ab1ede" title="our command;">md2cmds_cmd</a>));
-<a name="l00463"></a>00463 
-<a name="l00464"></a>00464   pthread_mutex_init( &amp;<a class="code" href="md2cmds_8c.html#ad67304bb851dc6268b0cda2f40fc5aa8" title="mutex for the condition">md2cmds_mutex</a>, NULL);
-<a name="l00465"></a>00465   pthread_cond_init( &amp;<a class="code" href="md2cmds_8c.html#a08d5b18ec9478d753c46a3e28d1f2126" title="condition to signal when it&amp;#39;s time to run an md2 command">md2cmds_cond</a>, NULL);
-<a name="l00466"></a>00466 
-<a name="l00467"></a>00467   pthread_mutex_init( &amp;<a class="code" href="md2cmds_8c.html#a4d2c3ac81d4b13eb21f4ddcdda8c7308" title="message passing between md2cmds and pg">md2cmds_pg_mutex</a>, NULL);
-<a name="l00468"></a>00468   pthread_cond_init( &amp;<a class="code" href="md2cmds_8c.html#ab517a930528e2b7d0993e11087765b03" title="coordinate call and response">md2cmds_pg_cond</a>, NULL);
-<a name="l00469"></a>00469 
-<a name="l00470"></a>00470 }
+<p><div class="fragment"><pre class="fragment"><a name="l00529"></a>00529                     {
+<a name="l00530"></a>00530   memset( <a class="code" href="md2cmds_8c.html#a5f0fe1e2dfa92cf345b8c29134ab1ede" title="our command;">md2cmds_cmd</a>, 0, <span class="keyword">sizeof</span>( <a class="code" href="md2cmds_8c.html#a5f0fe1e2dfa92cf345b8c29134ab1ede" title="our command;">md2cmds_cmd</a>));
+<a name="l00531"></a>00531 
+<a name="l00532"></a>00532   pthread_mutex_init( &amp;<a class="code" href="md2cmds_8c.html#ad67304bb851dc6268b0cda2f40fc5aa8" title="mutex for the condition">md2cmds_mutex</a>, NULL);
+<a name="l00533"></a>00533   pthread_cond_init( &amp;<a class="code" href="md2cmds_8c.html#a08d5b18ec9478d753c46a3e28d1f2126" title="condition to signal when it&amp;#39;s time to run an md2 command">md2cmds_cond</a>, NULL);
+<a name="l00534"></a>00534 
+<a name="l00535"></a>00535   pthread_mutex_init( &amp;<a class="code" href="md2cmds_8c.html#a4d2c3ac81d4b13eb21f4ddcdda8c7308" title="message passing between md2cmds and pg">md2cmds_pg_mutex</a>, NULL);
+<a name="l00536"></a>00536   pthread_cond_init( &amp;<a class="code" href="md2cmds_8c.html#ab517a930528e2b7d0993e11087765b03" title="coordinate call and response">md2cmds_pg_cond</a>, NULL);
+<a name="l00537"></a>00537 
+<a name="l00538"></a>00538 }
 </pre></div></p>
 
 </div>
@@ -497,47 +497,38 @@ window.onload = initDynSections;
 <a name="l00084"></a>00084   
 <a name="l00085"></a>00085   mtr = strtok_r( NULL, <span class="stringliteral">&quot; &quot;</span>, &amp;ptr);
 <a name="l00086"></a>00086   <span class="keywordflow">if</span>( mtr == NULL) {
-<a name="l00087"></a>00087     <span class="comment">//</span>
-<a name="l00088"></a>00088     <span class="comment">// Should generate error message</span>
-<a name="l00089"></a>00089     <span class="comment">// about missing motor name</span>
-<a name="l00090"></a>00090     <span class="comment">//</span>
-<a name="l00091"></a>00091     <span class="keywordflow">return</span>;
-<a name="l00092"></a>00092   }
-<a name="l00093"></a>00093 
-<a name="l00094"></a>00094   pos = strtok_r( NULL, <span class="stringliteral">&quot; &quot;</span>, &amp;ptr);
-<a name="l00095"></a>00095   <span class="keywordflow">if</span>( pos == NULL) {
-<a name="l00096"></a>00096     <span class="comment">//</span>
-<a name="l00097"></a>00097     <span class="comment">// Should generate error message</span>
-<a name="l00098"></a>00098     <span class="comment">// about missing position</span>
-<a name="l00099"></a>00099     <span class="comment">//</span>
+<a name="l00087"></a>00087     <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b">lslogging_log_message</a>( <span class="stringliteral">&quot;md2cmds moveAbs error: missing motor name&quot;</span>);
+<a name="l00088"></a>00088     <span class="keywordflow">return</span>;
+<a name="l00089"></a>00089   }
+<a name="l00090"></a>00090 
+<a name="l00091"></a>00091   pos = strtok_r( NULL, <span class="stringliteral">&quot; &quot;</span>, &amp;ptr);
+<a name="l00092"></a>00092   <span class="keywordflow">if</span>( pos == NULL) {
+<a name="l00093"></a>00093     <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b">lslogging_log_message</a>( <span class="stringliteral">&quot;md2cmds moveAbs error: missing position&quot;</span>);
+<a name="l00094"></a>00094     <span class="keywordflow">return</span>;
+<a name="l00095"></a>00095   }
+<a name="l00096"></a>00096 
+<a name="l00097"></a>00097   fpos = strtod( pos, &amp;endptr);
+<a name="l00098"></a>00098   <span class="keywordflow">if</span>( pos == endptr) {
+<a name="l00099"></a>00099     <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b">lslogging_log_message</a>( <span class="stringliteral">&quot;md2cmds moveAbs error: Can&apos;t decipher &apos;%s&apos; as a number&quot;</span>, pos);
 <a name="l00100"></a>00100     <span class="keywordflow">return</span>;
 <a name="l00101"></a>00101   }
-<a name="l00102"></a>00102 
-<a name="l00103"></a>00103   fpos = strtod( pos, &amp;endptr);
-<a name="l00104"></a>00104   <span class="keywordflow">if</span>( pos == endptr) {
-<a name="l00105"></a>00105     <span class="comment">//</span>
-<a name="l00106"></a>00106     <span class="comment">// Should generate error message </span>
-<a name="l00107"></a>00107     <span class="comment">// about bad double conversion</span>
-<a name="l00108"></a>00108     <span class="comment">//</span>
-<a name="l00109"></a>00109     <span class="keywordflow">return</span>;
-<a name="l00110"></a>00110   }
-<a name="l00111"></a>00111   
-<a name="l00112"></a>00112   mp = NULL;
-<a name="l00113"></a>00113   <span class="keywordflow">for</span>( i=0; i&lt;<a class="code" href="lspmac_8c.html#a56260f012c50a591ee7f97e500f16994" title="The number of motors we manage.">lspmac_nmotors</a>; i++) {
-<a name="l00114"></a>00114     <span class="keywordflow">if</span>( strcmp( <a class="code" href="lspmac_8c.html#a9bffbf72495499b505543cd942f665da" title="All our motors.">lspmac_motors</a>[i].name, mtr) == 0) {
-<a name="l00115"></a>00115       mp = &amp;(<a class="code" href="lspmac_8c.html#a9bffbf72495499b505543cd942f665da" title="All our motors.">lspmac_motors</a>[i]);
-<a name="l00116"></a>00116       <span class="keywordflow">break</span>;
-<a name="l00117"></a>00117     }
-<a name="l00118"></a>00118   }
-<a name="l00119"></a>00119 
-<a name="l00120"></a>00120 
-<a name="l00121"></a>00121   <span class="keywordflow">if</span>( mp != NULL &amp;&amp; mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a20db3de86854b627815b3d940555ea75" title="function to move the motor">moveAbs</a> != NULL) {
-<a name="l00122"></a>00122     wprintw( <a class="code" href="pgpmac_8c.html#a65daf0f4a5bc6def23a9df98ff5ca57e" title="place to print stuff out">term_output</a>, <span class="stringliteral">&quot;Moving %s to %f\n&quot;</span>, mtr, fpos);
-<a name="l00123"></a>00123     wnoutrefresh( <a class="code" href="pgpmac_8c.html#a65daf0f4a5bc6def23a9df98ff5ca57e" title="place to print stuff out">term_output</a>);
-<a name="l00124"></a>00124     mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a20db3de86854b627815b3d940555ea75" title="function to move the motor">moveAbs</a>( mp, fpos);
-<a name="l00125"></a>00125   }
-<a name="l00126"></a>00126 
-<a name="l00127"></a>00127 }
+<a name="l00102"></a>00102   
+<a name="l00103"></a>00103   mp = NULL;
+<a name="l00104"></a>00104   <span class="keywordflow">for</span>( i=0; i&lt;<a class="code" href="lspmac_8c.html#a56260f012c50a591ee7f97e500f16994" title="The number of motors we manage.">lspmac_nmotors</a>; i++) {
+<a name="l00105"></a>00105     <span class="keywordflow">if</span>( strcmp( <a class="code" href="lspmac_8c.html#a9bffbf72495499b505543cd942f665da" title="All our motors.">lspmac_motors</a>[i].name, mtr) == 0) {
+<a name="l00106"></a>00106       mp = &amp;(<a class="code" href="lspmac_8c.html#a9bffbf72495499b505543cd942f665da" title="All our motors.">lspmac_motors</a>[i]);
+<a name="l00107"></a>00107       <span class="keywordflow">break</span>;
+<a name="l00108"></a>00108     }
+<a name="l00109"></a>00109   }
+<a name="l00110"></a>00110 
+<a name="l00111"></a>00111 
+<a name="l00112"></a>00112   <span class="keywordflow">if</span>( mp != NULL &amp;&amp; mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a20db3de86854b627815b3d940555ea75" title="function to move the motor">moveAbs</a> != NULL) {
+<a name="l00113"></a>00113     wprintw( <a class="code" href="pgpmac_8c.html#a65daf0f4a5bc6def23a9df98ff5ca57e" title="place to print stuff out">term_output</a>, <span class="stringliteral">&quot;Moving %s to %f\n&quot;</span>, mtr, fpos);
+<a name="l00114"></a>00114     wnoutrefresh( <a class="code" href="pgpmac_8c.html#a65daf0f4a5bc6def23a9df98ff5ca57e" title="place to print stuff out">term_output</a>);
+<a name="l00115"></a>00115     mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a20db3de86854b627815b3d940555ea75" title="function to move the motor">moveAbs</a>( mp, fpos);
+<a name="l00116"></a>00116   }
+<a name="l00117"></a>00117 
+<a name="l00118"></a>00118 }
 </pre></div></p>
 
 </div>
@@ -597,26 +588,26 @@ window.onload = initDynSections;
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00173">173</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00164">164</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 
-<p><div class="fragment"><pre class="fragment"><a name="l00179"></a>00179                              {
-<a name="l00180"></a>00180   <span class="comment">//</span>
-<a name="l00181"></a>00181   <span class="comment">// centering stage is coordinate system 2</span>
-<a name="l00182"></a>00182   <span class="comment">// alignment stage is coordinate system 3</span>
-<a name="l00183"></a>00183   <span class="comment">//</span>
-<a name="l00184"></a>00184   
-<a name="l00185"></a>00185   <span class="keywordtype">double</span> cx_cts, cy_cts, ax_cts, ay_cts, az_cts;
-<a name="l00186"></a>00186 
-<a name="l00187"></a>00187   cx_cts = <a class="code" href="lspmac_8c.html#ac940d950d9efeaf3f0ae67e9bf331188" title="Centering Table X.">cenx</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a61415627ab2dc0f438b190d117e532db" title="conversion from counts to units: 0.0 means not loaded yet">u2c</a>   * cx;
-<a name="l00188"></a>00188   cy_cts = <a class="code" href="lspmac_8c.html#aaed18e738ba7bfb6c771a44f5d7ea827" title="Centering Table Y.">ceny</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a61415627ab2dc0f438b190d117e532db" title="conversion from counts to units: 0.0 means not loaded yet">u2c</a>   * cy;
-<a name="l00189"></a>00189   ax_cts = <a class="code" href="lspmac_8c.html#a6cb218bdccfe5a93471c161f15a15cab" title="Alignment stage X.">alignx</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a61415627ab2dc0f438b190d117e532db" title="conversion from counts to units: 0.0 means not loaded yet">u2c</a> * ax;
-<a name="l00190"></a>00190   ay_cts = <a class="code" href="lspmac_8c.html#a737c246c3948e644a18d191a931e1acd" title="Alignment stage Y.">aligny</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a61415627ab2dc0f438b190d117e532db" title="conversion from counts to units: 0.0 means not loaded yet">u2c</a> * ay;
-<a name="l00191"></a>00191   az_cts = <a class="code" href="lspmac_8c.html#ae7642b1da0f7c7f8448104c691d40a12" title="Alignment stage X.">alignz</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a61415627ab2dc0f438b190d117e532db" title="conversion from counts to units: 0.0 means not loaded yet">u2c</a> * az;
-<a name="l00192"></a>00192 
-<a name="l00193"></a>00193   <a class="code" href="lspmac_8c.html#aaa442d9bc7a3cdee39adea0724f0e18c" title="Send a one line command.">lspmac_SockSendline</a>( <span class="stringliteral">&quot;M7075=(M7075 | 2) &amp;2 Q100=2 Q20=%.1f Q21=%.1f B150R&quot;</span>, cx_cts, cy_cts);
-<a name="l00194"></a>00194   <a class="code" href="lspmac_8c.html#aaa442d9bc7a3cdee39adea0724f0e18c" title="Send a one line command.">lspmac_SockSendline</a>( <span class="stringliteral">&quot;M7075=(M7075 | 4) &amp;3 Q100=4 Q30=%.1f Q31=%.1f Q32=%.1f B160R&quot;</span>, ax_cts, ay_cts, az_cts);
-<a name="l00195"></a>00195   
-<a name="l00196"></a>00196 }
+<p><div class="fragment"><pre class="fragment"><a name="l00170"></a>00170                              {
+<a name="l00171"></a>00171   <span class="comment">//</span>
+<a name="l00172"></a>00172   <span class="comment">// centering stage is coordinate system 2</span>
+<a name="l00173"></a>00173   <span class="comment">// alignment stage is coordinate system 3</span>
+<a name="l00174"></a>00174   <span class="comment">//</span>
+<a name="l00175"></a>00175   
+<a name="l00176"></a>00176   <span class="keywordtype">double</span> cx_cts, cy_cts, ax_cts, ay_cts, az_cts;
+<a name="l00177"></a>00177 
+<a name="l00178"></a>00178   cx_cts = <a class="code" href="lspmac_8c.html#ac940d950d9efeaf3f0ae67e9bf331188" title="Centering Table X.">cenx</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a61415627ab2dc0f438b190d117e532db" title="conversion from counts to units: 0.0 means not loaded yet">u2c</a>   * cx;
+<a name="l00179"></a>00179   cy_cts = <a class="code" href="lspmac_8c.html#aaed18e738ba7bfb6c771a44f5d7ea827" title="Centering Table Y.">ceny</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a61415627ab2dc0f438b190d117e532db" title="conversion from counts to units: 0.0 means not loaded yet">u2c</a>   * cy;
+<a name="l00180"></a>00180   ax_cts = <a class="code" href="lspmac_8c.html#a6cb218bdccfe5a93471c161f15a15cab" title="Alignment stage X.">alignx</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a61415627ab2dc0f438b190d117e532db" title="conversion from counts to units: 0.0 means not loaded yet">u2c</a> * ax;
+<a name="l00181"></a>00181   ay_cts = <a class="code" href="lspmac_8c.html#a737c246c3948e644a18d191a931e1acd" title="Alignment stage Y.">aligny</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a61415627ab2dc0f438b190d117e532db" title="conversion from counts to units: 0.0 means not loaded yet">u2c</a> * ay;
+<a name="l00182"></a>00182   az_cts = <a class="code" href="lspmac_8c.html#ae7642b1da0f7c7f8448104c691d40a12" title="Alignment stage X.">alignz</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a61415627ab2dc0f438b190d117e532db" title="conversion from counts to units: 0.0 means not loaded yet">u2c</a> * az;
+<a name="l00183"></a>00183 
+<a name="l00184"></a>00184   <a class="code" href="lspmac_8c.html#aaa442d9bc7a3cdee39adea0724f0e18c" title="Send a one line command.">lspmac_SockSendline</a>( <span class="stringliteral">&quot;M7075=(M7075 | 2) &amp;2 Q100=2 Q20=%.1f Q21=%.1f B150R&quot;</span>, cx_cts, cy_cts);
+<a name="l00185"></a>00185   <a class="code" href="lspmac_8c.html#aaa442d9bc7a3cdee39adea0724f0e18c" title="Send a one line command.">lspmac_SockSendline</a>( <span class="stringliteral">&quot;M7075=(M7075 | 4) &amp;3 Q100=4 Q30=%.1f Q31=%.1f Q32=%.1f B160R&quot;</span>, ax_cts, ay_cts, az_cts);
+<a name="l00186"></a>00186   
+<a name="l00187"></a>00187 }
 </pre></div></p>
 
 </div>
@@ -638,44 +629,44 @@ window.onload = initDynSections;
 
 <p>Sets up a centering table and alignment table move Ensures that when we issue the move command that we can detect that the move happened. </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00134">134</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00125">125</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 
-<p><div class="fragment"><pre class="fragment"><a name="l00134"></a>00134                              {
+<p><div class="fragment"><pre class="fragment"><a name="l00125"></a>00125                              {
+<a name="l00126"></a>00126   <span class="comment">//</span>
+<a name="l00127"></a>00127   <span class="comment">// Clears the motion flags for coordinate systems 2 and 3</span>
+<a name="l00128"></a>00128   <span class="comment">// Then sets them.</span>
+<a name="l00129"></a>00129   <span class="comment">// Each time we wait until we&apos;ve read back</span>
+<a name="l00130"></a>00130   <span class="comment">// the changed values</span>
+<a name="l00131"></a>00131   <span class="comment">//</span>
+<a name="l00132"></a>00132   <span class="comment">// This guarantees that when we are waiting for motion to stop that it did, in fact, start</span>
+<a name="l00133"></a>00133   <span class="comment">//</span>
+<a name="l00134"></a>00134 
 <a name="l00135"></a>00135   <span class="comment">//</span>
-<a name="l00136"></a>00136   <span class="comment">// Clears the motion flags for coordinate systems 2 and 3</span>
-<a name="l00137"></a>00137   <span class="comment">// Then sets them.</span>
-<a name="l00138"></a>00138   <span class="comment">// Each time we wait until we&apos;ve read back</span>
-<a name="l00139"></a>00139   <span class="comment">// the changed values</span>
+<a name="l00136"></a>00136   <span class="comment">// Clear the centering and alignment stage flags</span>
+<a name="l00137"></a>00137   <span class="comment">//</span>
+<a name="l00138"></a>00138   <a class="code" href="lspmac_8c.html#aaa442d9bc7a3cdee39adea0724f0e18c" title="Send a one line command.">lspmac_SockSendline</a>( <span class="stringliteral">&quot;M7075=(M7075 | 6) ^ 6&quot;</span>);
+<a name="l00139"></a>00139 
 <a name="l00140"></a>00140   <span class="comment">//</span>
-<a name="l00141"></a>00141   <span class="comment">// This guarantees that when we are waiting for motion to stop that it did, in fact, start</span>
+<a name="l00141"></a>00141   <span class="comment">// Make sure it propagates</span>
 <a name="l00142"></a>00142   <span class="comment">//</span>
-<a name="l00143"></a>00143 
-<a name="l00144"></a>00144   <span class="comment">//</span>
-<a name="l00145"></a>00145   <span class="comment">// Clear the centering and alignment stage flags</span>
-<a name="l00146"></a>00146   <span class="comment">//</span>
-<a name="l00147"></a>00147   <a class="code" href="lspmac_8c.html#aaa442d9bc7a3cdee39adea0724f0e18c" title="Send a one line command.">lspmac_SockSendline</a>( <span class="stringliteral">&quot;M7075=(M7075 | 6) ^ 6&quot;</span>);
-<a name="l00148"></a>00148 
-<a name="l00149"></a>00149   <span class="comment">//</span>
-<a name="l00150"></a>00150   <span class="comment">// Make sure it propagates</span>
-<a name="l00151"></a>00151   <span class="comment">//</span>
-<a name="l00152"></a>00152   pthread_mutex_lock( &amp;<a class="code" href="lspmac_8c.html#a85679cac947e199c88794f8e5a12bf5f" title="Coordinate moving motors between threads.">lspmac_moving_mutex</a>);
-<a name="l00153"></a>00153   <span class="keywordflow">while</span>( <a class="code" href="lspmac_8c.html#a7a32c617c183166308241e270959df56" title="Flag used to implement motor moving condition.">lspmac_moving_flags</a> &amp; 6)
-<a name="l00154"></a>00154     pthread_cond_wait( &amp;<a class="code" href="lspmac_8c.html#a57547d211906c981ef20257eba99f8df" title="Wait for motor(s) to finish moving condition.">lspmac_moving_cond</a>, &amp;<a class="code" href="lspmac_8c.html#a85679cac947e199c88794f8e5a12bf5f" title="Coordinate moving motors between threads.">lspmac_moving_mutex</a>);
-<a name="l00155"></a>00155   pthread_mutex_unlock( &amp;<a class="code" href="lspmac_8c.html#a85679cac947e199c88794f8e5a12bf5f" title="Coordinate moving motors between threads.">lspmac_moving_mutex</a>);
-<a name="l00156"></a>00156 
-<a name="l00157"></a>00157   <span class="comment">//</span>
-<a name="l00158"></a>00158   <span class="comment">// Set the centering and alignment stage flags</span>
-<a name="l00159"></a>00159   <span class="comment">//</span>
-<a name="l00160"></a>00160   <a class="code" href="lspmac_8c.html#aaa442d9bc7a3cdee39adea0724f0e18c" title="Send a one line command.">lspmac_SockSendline</a>( <span class="stringliteral">&quot;M7075=(M7075 | 6)&quot;</span>);
-<a name="l00161"></a>00161 
-<a name="l00162"></a>00162   <span class="comment">//</span>
-<a name="l00163"></a>00163   <span class="comment">// Make sure it propagates</span>
-<a name="l00164"></a>00164   <span class="comment">//</span>
-<a name="l00165"></a>00165   pthread_mutex_lock( &amp;<a class="code" href="lspmac_8c.html#a85679cac947e199c88794f8e5a12bf5f" title="Coordinate moving motors between threads.">lspmac_moving_mutex</a>);
-<a name="l00166"></a>00166   <span class="keywordflow">while</span>( (<a class="code" href="lspmac_8c.html#a7a32c617c183166308241e270959df56" title="Flag used to implement motor moving condition.">lspmac_moving_flags</a> &amp; 6) == 0)
-<a name="l00167"></a>00167     pthread_cond_wait( &amp;<a class="code" href="lspmac_8c.html#a57547d211906c981ef20257eba99f8df" title="Wait for motor(s) to finish moving condition.">lspmac_moving_cond</a>, &amp;<a class="code" href="lspmac_8c.html#a85679cac947e199c88794f8e5a12bf5f" title="Coordinate moving motors between threads.">lspmac_moving_mutex</a>);
-<a name="l00168"></a>00168   pthread_mutex_unlock( &amp;<a class="code" href="lspmac_8c.html#a85679cac947e199c88794f8e5a12bf5f" title="Coordinate moving motors between threads.">lspmac_moving_mutex</a>);
-<a name="l00169"></a>00169 }
+<a name="l00143"></a>00143   pthread_mutex_lock( &amp;<a class="code" href="lspmac_8c.html#a85679cac947e199c88794f8e5a12bf5f" title="Coordinate moving motors between threads.">lspmac_moving_mutex</a>);
+<a name="l00144"></a>00144   <span class="keywordflow">while</span>( <a class="code" href="lspmac_8c.html#a7a32c617c183166308241e270959df56" title="Flag used to implement motor moving condition.">lspmac_moving_flags</a> &amp; 6)
+<a name="l00145"></a>00145     pthread_cond_wait( &amp;<a class="code" href="lspmac_8c.html#a57547d211906c981ef20257eba99f8df" title="Wait for motor(s) to finish moving condition.">lspmac_moving_cond</a>, &amp;<a class="code" href="lspmac_8c.html#a85679cac947e199c88794f8e5a12bf5f" title="Coordinate moving motors between threads.">lspmac_moving_mutex</a>);
+<a name="l00146"></a>00146   pthread_mutex_unlock( &amp;<a class="code" href="lspmac_8c.html#a85679cac947e199c88794f8e5a12bf5f" title="Coordinate moving motors between threads.">lspmac_moving_mutex</a>);
+<a name="l00147"></a>00147 
+<a name="l00148"></a>00148   <span class="comment">//</span>
+<a name="l00149"></a>00149   <span class="comment">// Set the centering and alignment stage flags</span>
+<a name="l00150"></a>00150   <span class="comment">//</span>
+<a name="l00151"></a>00151   <a class="code" href="lspmac_8c.html#aaa442d9bc7a3cdee39adea0724f0e18c" title="Send a one line command.">lspmac_SockSendline</a>( <span class="stringliteral">&quot;M7075=(M7075 | 6)&quot;</span>);
+<a name="l00152"></a>00152 
+<a name="l00153"></a>00153   <span class="comment">//</span>
+<a name="l00154"></a>00154   <span class="comment">// Make sure it propagates</span>
+<a name="l00155"></a>00155   <span class="comment">//</span>
+<a name="l00156"></a>00156   pthread_mutex_lock( &amp;<a class="code" href="lspmac_8c.html#a85679cac947e199c88794f8e5a12bf5f" title="Coordinate moving motors between threads.">lspmac_moving_mutex</a>);
+<a name="l00157"></a>00157   <span class="keywordflow">while</span>( (<a class="code" href="lspmac_8c.html#a7a32c617c183166308241e270959df56" title="Flag used to implement motor moving condition.">lspmac_moving_flags</a> &amp; 6) == 0)
+<a name="l00158"></a>00158     pthread_cond_wait( &amp;<a class="code" href="lspmac_8c.html#a57547d211906c981ef20257eba99f8df" title="Wait for motor(s) to finish moving condition.">lspmac_moving_cond</a>, &amp;<a class="code" href="lspmac_8c.html#a85679cac947e199c88794f8e5a12bf5f" title="Coordinate moving motors between threads.">lspmac_moving_mutex</a>);
+<a name="l00159"></a>00159   pthread_mutex_unlock( &amp;<a class="code" href="lspmac_8c.html#a85679cac947e199c88794f8e5a12bf5f" title="Coordinate moving motors between threads.">lspmac_moving_mutex</a>);
+<a name="l00160"></a>00160 }
 </pre></div></p>
 
 </div>
@@ -697,18 +688,18 @@ window.onload = initDynSections;
 
 <p>Wait for the centering and alignment tables to stop moving. </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00200">200</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00191">191</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 
-<p><div class="fragment"><pre class="fragment"><a name="l00200"></a>00200                              {
-<a name="l00201"></a>00201   <span class="comment">//</span>
-<a name="l00202"></a>00202   <span class="comment">// Just wait until the motion flags are lowered</span>
-<a name="l00203"></a>00203   <span class="comment">//</span>
-<a name="l00204"></a>00204 
-<a name="l00205"></a>00205   pthread_mutex_lock( &amp;<a class="code" href="lspmac_8c.html#a85679cac947e199c88794f8e5a12bf5f" title="Coordinate moving motors between threads.">lspmac_moving_mutex</a>);
-<a name="l00206"></a>00206   <span class="keywordflow">while</span>( <a class="code" href="lspmac_8c.html#a7a32c617c183166308241e270959df56" title="Flag used to implement motor moving condition.">lspmac_moving_flags</a> &amp; 6)
-<a name="l00207"></a>00207     pthread_cond_wait( &amp;<a class="code" href="lspmac_8c.html#a57547d211906c981ef20257eba99f8df" title="Wait for motor(s) to finish moving condition.">lspmac_moving_cond</a>, &amp;<a class="code" href="lspmac_8c.html#a85679cac947e199c88794f8e5a12bf5f" title="Coordinate moving motors between threads.">lspmac_moving_mutex</a>);
-<a name="l00208"></a>00208   pthread_mutex_unlock( &amp;<a class="code" href="lspmac_8c.html#a85679cac947e199c88794f8e5a12bf5f" title="Coordinate moving motors between threads.">lspmac_moving_mutex</a>);
-<a name="l00209"></a>00209 }
+<p><div class="fragment"><pre class="fragment"><a name="l00191"></a>00191                              {
+<a name="l00192"></a>00192   <span class="comment">//</span>
+<a name="l00193"></a>00193   <span class="comment">// Just wait until the motion flags are lowered</span>
+<a name="l00194"></a>00194   <span class="comment">//</span>
+<a name="l00195"></a>00195 
+<a name="l00196"></a>00196   pthread_mutex_lock( &amp;<a class="code" href="lspmac_8c.html#a85679cac947e199c88794f8e5a12bf5f" title="Coordinate moving motors between threads.">lspmac_moving_mutex</a>);
+<a name="l00197"></a>00197   <span class="keywordflow">while</span>( <a class="code" href="lspmac_8c.html#a7a32c617c183166308241e270959df56" title="Flag used to implement motor moving condition.">lspmac_moving_flags</a> &amp; 6)
+<a name="l00198"></a>00198     pthread_cond_wait( &amp;<a class="code" href="lspmac_8c.html#a57547d211906c981ef20257eba99f8df" title="Wait for motor(s) to finish moving condition.">lspmac_moving_cond</a>, &amp;<a class="code" href="lspmac_8c.html#a85679cac947e199c88794f8e5a12bf5f" title="Coordinate moving motors between threads.">lspmac_moving_mutex</a>);
+<a name="l00199"></a>00199   pthread_mutex_unlock( &amp;<a class="code" href="lspmac_8c.html#a85679cac947e199c88794f8e5a12bf5f" title="Coordinate moving motors between threads.">lspmac_moving_mutex</a>);
+<a name="l00200"></a>00200 }
 </pre></div></p>
 
 </div>
@@ -728,12 +719,89 @@ window.onload = initDynSections;
 </div>
 <div class="memdoc">
 
-<p>Spin 360 and make a video TODO: Implement. </p>
+<p>Spin 360 and make a video (recenter first, maybe). </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00416">416</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00407">407</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 
-<p><div class="fragment"><pre class="fragment"><a name="l00416"></a>00416                       {
-<a name="l00417"></a>00417 }
+<p><div class="fragment"><pre class="fragment"><a name="l00407"></a>00407                       {
+<a name="l00408"></a>00408   <span class="comment">//</span>
+<a name="l00409"></a>00409   <span class="comment">// BLUMax disables scintilator here.</span>
+<a name="l00410"></a>00410   <span class="comment">//</span>
+<a name="l00411"></a>00411 
+<a name="l00412"></a>00412   <span class="comment">//</span>
+<a name="l00413"></a>00413   <span class="comment">// get the new center information</span>
+<a name="l00414"></a>00414   <span class="comment">//</span>
+<a name="l00415"></a>00415   <a class="code" href="lspg_8c.html#a6f7cd0a06f6a266ef65b3604cf33d6c4" title="Request a getcenter query.">lspg_getcenter_call</a>();
+<a name="l00416"></a>00416 
+<a name="l00417"></a>00417   <a class="code" href="lspg_8c.html#a3e0e4b3cb9fa03961ee0c104e0b06754" title="Wait for a getcenter query to return.">lspg_getcenter_wait</a>();
+<a name="l00418"></a>00418 
+<a name="l00419"></a>00419 
+<a name="l00420"></a>00420   <span class="comment">// put up the back light</span>
+<a name="l00421"></a>00421   <a class="code" href="lspmac_8c.html#af813a2eff0b7efa4c70633559054e84c" title="Back Light Up/Down actuator.">blight_ud</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a20db3de86854b627815b3d940555ea75" title="function to move the motor">moveAbs</a>( <a class="code" href="lspmac_8c.html#af813a2eff0b7efa4c70633559054e84c" title="Back Light Up/Down actuator.">blight_ud</a>, 1);
+<a name="l00422"></a>00422 
+<a name="l00423"></a>00423   <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a7ef8a09203117578c9b2ce4719519f36" title="the getcenter object">lspg_getcenter</a>.<a class="code" href="structlspg__getcenter__struct.html#aaeb0ccf4289b4fb306c2bc04ae85b237" title="flag in case no centering information was forthcoming">no_rows_returned</a>) {
+<a name="l00424"></a>00424     <span class="comment">//</span>
+<a name="l00425"></a>00425     <span class="comment">// the other case is considered below</span>
+<a name="l00426"></a>00426     <span class="comment">// Bottom line, zoom is always defined</span>
+<a name="l00427"></a>00427     <span class="comment">//</span>
+<a name="l00428"></a>00428     <a class="code" href="lspmac_8c.html#ad53a42cfaa04eff0336a44c8c9986333" title="Optical zoom.">zoom</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a20db3de86854b627815b3d940555ea75" title="function to move the motor">moveAbs</a>( <a class="code" href="lspmac_8c.html#ad53a42cfaa04eff0336a44c8c9986333" title="Optical zoom.">zoom</a>, 1);    <span class="comment">// default zoom is 1</span>
+<a name="l00429"></a>00429   }
+<a name="l00430"></a>00430 
+<a name="l00431"></a>00431 
+<a name="l00432"></a>00432   <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a7ef8a09203117578c9b2ce4719519f36" title="the getcenter object">lspg_getcenter</a>.<a class="code" href="structlspg__getcenter__struct.html#aaeb0ccf4289b4fb306c2bc04ae85b237" title="flag in case no centering information was forthcoming">no_rows_returned</a> == 0) {
+<a name="l00433"></a>00433     <span class="keywordtype">double</span> cx, cy, ax, ay, az;
+<a name="l00434"></a>00434 
+<a name="l00435"></a>00435     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a7ef8a09203117578c9b2ce4719519f36" title="the getcenter object">lspg_getcenter</a>.<a class="code" href="structlspg__getcenter__struct.html#a6ca85a8de29039188357b2814acd7803">zoom_isnull</a> == 0) {
+<a name="l00436"></a>00436       <a class="code" href="lspmac_8c.html#ad53a42cfaa04eff0336a44c8c9986333" title="Optical zoom.">zoom</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a20db3de86854b627815b3d940555ea75" title="function to move the motor">moveAbs</a>( <a class="code" href="lspmac_8c.html#ad53a42cfaa04eff0336a44c8c9986333" title="Optical zoom.">zoom</a>, <a class="code" href="lspg_8c.html#a7ef8a09203117578c9b2ce4719519f36" title="the getcenter object">lspg_getcenter</a>.<a class="code" href="structlspg__getcenter__struct.html#a63e640a925611d2404a1529aea30a853" title="the next zoom level to go to before taking the next movie">zoom</a>);
+<a name="l00437"></a>00437     } <span class="keywordflow">else</span> {
+<a name="l00438"></a>00438       <a class="code" href="lspmac_8c.html#ad53a42cfaa04eff0336a44c8c9986333" title="Optical zoom.">zoom</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a20db3de86854b627815b3d940555ea75" title="function to move the motor">moveAbs</a>( <a class="code" href="lspmac_8c.html#ad53a42cfaa04eff0336a44c8c9986333" title="Optical zoom.">zoom</a>, 1);
+<a name="l00439"></a>00439     }
+<a name="l00440"></a>00440 
+<a name="l00441"></a>00441     <span class="comment">//</span>
+<a name="l00442"></a>00442     <span class="comment">// OK, why not just implement a nice getter that does the locking transparently?  UGLY!</span>
+<a name="l00443"></a>00443     <span class="comment">//</span>
+<a name="l00444"></a>00444     pthread_mutex_lock( &amp;(<a class="code" href="lspmac_8c.html#ac940d950d9efeaf3f0ae67e9bf331188" title="Centering Table X.">cenx</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));
+<a name="l00445"></a>00445     cx = <a class="code" href="lspmac_8c.html#ac940d950d9efeaf3f0ae67e9bf331188" title="Centering Table X.">cenx</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>;
+<a name="l00446"></a>00446     pthread_mutex_unlock( &amp;(<a class="code" href="lspmac_8c.html#ac940d950d9efeaf3f0ae67e9bf331188" title="Centering Table X.">cenx</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));
+<a name="l00447"></a>00447     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a7ef8a09203117578c9b2ce4719519f36" title="the getcenter object">lspg_getcenter</a>.<a class="code" href="structlspg__getcenter__struct.html#aa404da85af654998f039c81a77626748">dcx_isnull</a> == 0)
+<a name="l00448"></a>00448       cx += <a class="code" href="lspg_8c.html#a7ef8a09203117578c9b2ce4719519f36" title="the getcenter object">lspg_getcenter</a>.<a class="code" href="structlspg__getcenter__struct.html#ade0534056296e9ed568404c538be9227" title="center x change">dcx</a>;
+<a name="l00449"></a>00449 
+<a name="l00450"></a>00450     pthread_mutex_lock( &amp;(<a class="code" href="lspmac_8c.html#aaed18e738ba7bfb6c771a44f5d7ea827" title="Centering Table Y.">ceny</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));
+<a name="l00451"></a>00451     cy = <a class="code" href="lspmac_8c.html#aaed18e738ba7bfb6c771a44f5d7ea827" title="Centering Table Y.">ceny</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>;
+<a name="l00452"></a>00452     pthread_mutex_unlock( &amp;(<a class="code" href="lspmac_8c.html#aaed18e738ba7bfb6c771a44f5d7ea827" title="Centering Table Y.">ceny</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));
+<a name="l00453"></a>00453     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a7ef8a09203117578c9b2ce4719519f36" title="the getcenter object">lspg_getcenter</a>.<a class="code" href="structlspg__getcenter__struct.html#a352c48c8d443c52f18ebd13019d01684">dcy_isnull</a> == 0)
+<a name="l00454"></a>00454       cy  += <a class="code" href="lspg_8c.html#a7ef8a09203117578c9b2ce4719519f36" title="the getcenter object">lspg_getcenter</a>.<a class="code" href="structlspg__getcenter__struct.html#a55b1a488b714e6a40d8e06a6e182bd0a" title="center y change">dcy</a>;
+<a name="l00455"></a>00455                           
+<a name="l00456"></a>00456     pthread_mutex_lock( &amp;(<a class="code" href="lspmac_8c.html#a6cb218bdccfe5a93471c161f15a15cab" title="Alignment stage X.">alignx</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));
+<a name="l00457"></a>00457     ax = <a class="code" href="lspmac_8c.html#a6cb218bdccfe5a93471c161f15a15cab" title="Alignment stage X.">alignx</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>;
+<a name="l00458"></a>00458     pthread_mutex_unlock( &amp;(<a class="code" href="lspmac_8c.html#a6cb218bdccfe5a93471c161f15a15cab" title="Alignment stage X.">alignx</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));
+<a name="l00459"></a>00459     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a7ef8a09203117578c9b2ce4719519f36" title="the getcenter object">lspg_getcenter</a>.<a class="code" href="structlspg__getcenter__struct.html#a621b489777d61e9db8b33b784b8d70f9">dax_isnull</a> == 0)
+<a name="l00460"></a>00460       ax  += <a class="code" href="lspg_8c.html#a7ef8a09203117578c9b2ce4719519f36" title="the getcenter object">lspg_getcenter</a>.<a class="code" href="structlspg__getcenter__struct.html#a17db52848c28852a470222ec93ae8886" title="alignment x change">dax</a>;
+<a name="l00461"></a>00461 
+<a name="l00462"></a>00462     pthread_mutex_lock( &amp;(<a class="code" href="lspmac_8c.html#a737c246c3948e644a18d191a931e1acd" title="Alignment stage Y.">aligny</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));
+<a name="l00463"></a>00463     ay = <a class="code" href="lspmac_8c.html#a737c246c3948e644a18d191a931e1acd" title="Alignment stage Y.">aligny</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>;
+<a name="l00464"></a>00464     pthread_mutex_unlock( &amp;(<a class="code" href="lspmac_8c.html#a737c246c3948e644a18d191a931e1acd" title="Alignment stage Y.">aligny</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));
+<a name="l00465"></a>00465     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a7ef8a09203117578c9b2ce4719519f36" title="the getcenter object">lspg_getcenter</a>.<a class="code" href="structlspg__getcenter__struct.html#a36f57a319288810caf365cca7827ff96">day_isnull</a> == 0)
+<a name="l00466"></a>00466       ay  += <a class="code" href="lspg_8c.html#a7ef8a09203117578c9b2ce4719519f36" title="the getcenter object">lspg_getcenter</a>.<a class="code" href="structlspg__getcenter__struct.html#a9ce0f29540f2ff47be9788565d19f1b8" title="alignment y change">day</a>;
+<a name="l00467"></a>00467                           
+<a name="l00468"></a>00468     pthread_mutex_lock( &amp;(<a class="code" href="lspmac_8c.html#ae7642b1da0f7c7f8448104c691d40a12" title="Alignment stage X.">alignz</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));
+<a name="l00469"></a>00469     az = <a class="code" href="lspmac_8c.html#ae7642b1da0f7c7f8448104c691d40a12" title="Alignment stage X.">alignz</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>;
+<a name="l00470"></a>00470     pthread_mutex_unlock( &amp;(<a class="code" href="lspmac_8c.html#ae7642b1da0f7c7f8448104c691d40a12" title="Alignment stage X.">alignz</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));
+<a name="l00471"></a>00471     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a7ef8a09203117578c9b2ce4719519f36" title="the getcenter object">lspg_getcenter</a>.<a class="code" href="structlspg__getcenter__struct.html#a36742b6bd0f4bf9356414930ba893617">daz_isnull</a> == 0)
+<a name="l00472"></a>00472       az  += <a class="code" href="lspg_8c.html#a7ef8a09203117578c9b2ce4719519f36" title="the getcenter object">lspg_getcenter</a>.<a class="code" href="structlspg__getcenter__struct.html#a1170bab2161f03ab29c39f79519ed9ae" title="alignment z change">daz</a>;
+<a name="l00473"></a>00473                           
+<a name="l00474"></a>00474     <a class="code" href="md2cmds_8c.html#afdc46152b46ae4d37c73407b83016b78" title="Move the centering and alignment tables.">md2cmds_mvcenter_move</a>( cx, cy, ax, ay, az);
+<a name="l00475"></a>00475     <a class="code" href="md2cmds_8c.html#a9073a0af983da505daff01e954f0c430" title="Wait for the centering and alignment tables to stop moving.">md2cmds_mvcenter_wait</a>();
+<a name="l00476"></a>00476   }
+<a name="l00477"></a>00477   <a class="code" href="lspg_8c.html#a7c678553b44c874d08ec9966ed7bb1c0" title="Done with getcenter query.">lspg_getcenter_done</a>();
+<a name="l00478"></a>00478 
+<a name="l00479"></a>00479   <span class="comment">// Home omega</span>
+<a name="l00480"></a>00480   <a class="code" href="lspmac_8c.html#aaa442d9bc7a3cdee39adea0724f0e18c" title="Send a one line command.">lspmac_SockSendline</a>(<span class="stringliteral">&quot;M401=1 M1115=1 #1$ &amp;1B1R&quot;</span>);
+<a name="l00481"></a>00481 
+<a name="l00482"></a>00482   
+<a name="l00483"></a>00483   
+<a name="l00484"></a>00484   
+<a name="l00485"></a>00485 }
 </pre></div></p>
 
 </div>
@@ -755,11 +823,11 @@ window.onload = initDynSections;
 
 <p>Start up the thread. </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00474">474</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00542">542</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 
-<p><div class="fragment"><pre class="fragment"><a name="l00474"></a>00474                    {
-<a name="l00475"></a>00475   pthread_create( &amp;<a class="code" href="md2cmds_8c.html#aa230921945149692de98fff15c01962f">md2cmds_thread</a>, NULL, <a class="code" href="md2cmds_8c.html#ae967e769d23555a631f615e630f25b00" title="Our worker thread.">md2cmds_worker</a>, NULL);
-<a name="l00476"></a>00476 }
+<p><div class="fragment"><pre class="fragment"><a name="l00542"></a>00542                    {
+<a name="l00543"></a>00543   pthread_create( &amp;<a class="code" href="md2cmds_8c.html#aa230921945149692de98fff15c01962f">md2cmds_thread</a>, NULL, <a class="code" href="md2cmds_8c.html#ae967e769d23555a631f615e630f25b00" title="Our worker thread.">md2cmds_worker</a>, NULL);
+<a name="l00544"></a>00544 }
 </pre></div></p>
 
 </div>
@@ -813,34 +881,34 @@ window.onload = initDynSections;
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00429">429</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00497">497</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 
-<p><div class="fragment"><pre class="fragment"><a name="l00431"></a>00431                        {
-<a name="l00432"></a>00432 
-<a name="l00433"></a>00433   pthread_mutex_lock( &amp;<a class="code" href="md2cmds_8c.html#ad67304bb851dc6268b0cda2f40fc5aa8" title="mutex for the condition">md2cmds_mutex</a>);
-<a name="l00434"></a>00434 
-<a name="l00435"></a>00435   <span class="keywordflow">while</span>( 1) {
-<a name="l00436"></a>00436     <span class="comment">//</span>
-<a name="l00437"></a>00437     <span class="comment">// wait for someone to give us a command (and tell us they did so)</span>
-<a name="l00438"></a>00438     <span class="comment">//</span>
-<a name="l00439"></a>00439     <span class="keywordflow">while</span>( <a class="code" href="md2cmds_8c.html#a5f0fe1e2dfa92cf345b8c29134ab1ede" title="our command;">md2cmds_cmd</a>[0] == 0)
-<a name="l00440"></a>00440       pthread_cond_wait( &amp;<a class="code" href="md2cmds_8c.html#a08d5b18ec9478d753c46a3e28d1f2126" title="condition to signal when it&amp;#39;s time to run an md2 command">md2cmds_cond</a>, &amp;<a class="code" href="md2cmds_8c.html#ad67304bb851dc6268b0cda2f40fc5aa8" title="mutex for the condition">md2cmds_mutex</a>);
-<a name="l00441"></a>00441 
-<a name="l00442"></a>00442     <span class="keywordflow">if</span>( strcmp( <a class="code" href="md2cmds_8c.html#a5f0fe1e2dfa92cf345b8c29134ab1ede" title="our command;">md2cmds_cmd</a>, <span class="stringliteral">&quot;transfer&quot;</span>) == 0) {
-<a name="l00443"></a>00443       <a class="code" href="md2cmds_8c.html#adba92015101973846ee66a33ea39addf" title="Transfer a sample TODO: Implement.">md2cmds_transfer</a>();
-<a name="l00444"></a>00444     } <span class="keywordflow">else</span> <span class="keywordflow">if</span>( strcmp( <a class="code" href="md2cmds_8c.html#a5f0fe1e2dfa92cf345b8c29134ab1ede" title="our command;">md2cmds_cmd</a>, <span class="stringliteral">&quot;collect&quot;</span>) == 0) {
-<a name="l00445"></a>00445       <a class="code" href="md2cmds_8c.html#af4a069c2e8a1e3957d15487672b18d47" title="Collect some data.">md2cmds_collect</a>();
-<a name="l00446"></a>00446     } <span class="keywordflow">else</span> <span class="keywordflow">if</span>( strcmp( <a class="code" href="md2cmds_8c.html#a5f0fe1e2dfa92cf345b8c29134ab1ede" title="our command;">md2cmds_cmd</a>, <span class="stringliteral">&quot;rotate&quot;</span>) == 0) {
-<a name="l00447"></a>00447       <a class="code" href="md2cmds_8c.html#ac9e84b4a527da535d21cca65dc4aa61a" title="Spin 360 and make a video TODO: Implement.">md2cmds_rotate</a>();
-<a name="l00448"></a>00448     } <span class="keywordflow">else</span> <span class="keywordflow">if</span>( strcmp( <a class="code" href="md2cmds_8c.html#a5f0fe1e2dfa92cf345b8c29134ab1ede" title="our command;">md2cmds_cmd</a>, <span class="stringliteral">&quot;center&quot;</span>) == 0) {
-<a name="l00449"></a>00449       <a class="code" href="md2cmds_8c.html#a5a9d72c08597ffe45287622c40975e7f" title="Move centering and alignment tables as requested TODO: Implement.">md2cmds_center</a>();
-<a name="l00450"></a>00450     } <span class="keywordflow">else</span> <span class="keywordflow">if</span>( strncmp( <a class="code" href="md2cmds_8c.html#a5f0fe1e2dfa92cf345b8c29134ab1ede" title="our command;">md2cmds_cmd</a>, <span class="stringliteral">&quot;moveAbs&quot;</span>, 7) == 0) {
-<a name="l00451"></a>00451       <a class="code" href="md2cmds_8c.html#a82542bd5f69f6975583bbd9dfadec0cb" title="Move a motor to the position requested.">md2cmds_moveAbs</a>( <a class="code" href="md2cmds_8c.html#a5f0fe1e2dfa92cf345b8c29134ab1ede" title="our command;">md2cmds_cmd</a>);
-<a name="l00452"></a>00452     }
-<a name="l00453"></a>00453 
-<a name="l00454"></a>00454     <a class="code" href="md2cmds_8c.html#a5f0fe1e2dfa92cf345b8c29134ab1ede" title="our command;">md2cmds_cmd</a>[0] = 0;
-<a name="l00455"></a>00455   }
-<a name="l00456"></a>00456 }
+<p><div class="fragment"><pre class="fragment"><a name="l00499"></a>00499                        {
+<a name="l00500"></a>00500 
+<a name="l00501"></a>00501   pthread_mutex_lock( &amp;<a class="code" href="md2cmds_8c.html#ad67304bb851dc6268b0cda2f40fc5aa8" title="mutex for the condition">md2cmds_mutex</a>);
+<a name="l00502"></a>00502 
+<a name="l00503"></a>00503   <span class="keywordflow">while</span>( 1) {
+<a name="l00504"></a>00504     <span class="comment">//</span>
+<a name="l00505"></a>00505     <span class="comment">// wait for someone to give us a command (and tell us they did so)</span>
+<a name="l00506"></a>00506     <span class="comment">//</span>
+<a name="l00507"></a>00507     <span class="keywordflow">while</span>( <a class="code" href="md2cmds_8c.html#a5f0fe1e2dfa92cf345b8c29134ab1ede" title="our command;">md2cmds_cmd</a>[0] == 0)
+<a name="l00508"></a>00508       pthread_cond_wait( &amp;<a class="code" href="md2cmds_8c.html#a08d5b18ec9478d753c46a3e28d1f2126" title="condition to signal when it&amp;#39;s time to run an md2 command">md2cmds_cond</a>, &amp;<a class="code" href="md2cmds_8c.html#ad67304bb851dc6268b0cda2f40fc5aa8" title="mutex for the condition">md2cmds_mutex</a>);
+<a name="l00509"></a>00509 
+<a name="l00510"></a>00510     <span class="keywordflow">if</span>( strcmp( <a class="code" href="md2cmds_8c.html#a5f0fe1e2dfa92cf345b8c29134ab1ede" title="our command;">md2cmds_cmd</a>, <span class="stringliteral">&quot;transfer&quot;</span>) == 0) {
+<a name="l00511"></a>00511       <a class="code" href="md2cmds_8c.html#adba92015101973846ee66a33ea39addf" title="Transfer a sample TODO: Implement.">md2cmds_transfer</a>();
+<a name="l00512"></a>00512     } <span class="keywordflow">else</span> <span class="keywordflow">if</span>( strcmp( <a class="code" href="md2cmds_8c.html#a5f0fe1e2dfa92cf345b8c29134ab1ede" title="our command;">md2cmds_cmd</a>, <span class="stringliteral">&quot;collect&quot;</span>) == 0) {
+<a name="l00513"></a>00513       <a class="code" href="md2cmds_8c.html#af4a069c2e8a1e3957d15487672b18d47" title="Collect some data.">md2cmds_collect</a>();
+<a name="l00514"></a>00514     } <span class="keywordflow">else</span> <span class="keywordflow">if</span>( strcmp( <a class="code" href="md2cmds_8c.html#a5f0fe1e2dfa92cf345b8c29134ab1ede" title="our command;">md2cmds_cmd</a>, <span class="stringliteral">&quot;rotate&quot;</span>) == 0) {
+<a name="l00515"></a>00515       <a class="code" href="md2cmds_8c.html#ac9e84b4a527da535d21cca65dc4aa61a" title="Spin 360 and make a video (recenter first, maybe).">md2cmds_rotate</a>();
+<a name="l00516"></a>00516     } <span class="keywordflow">else</span> <span class="keywordflow">if</span>( strcmp( <a class="code" href="md2cmds_8c.html#a5f0fe1e2dfa92cf345b8c29134ab1ede" title="our command;">md2cmds_cmd</a>, <span class="stringliteral">&quot;center&quot;</span>) == 0) {
+<a name="l00517"></a>00517       <a class="code" href="md2cmds_8c.html#a5a9d72c08597ffe45287622c40975e7f" title="Move centering and alignment tables as requested TODO: Implement.">md2cmds_center</a>();
+<a name="l00518"></a>00518     } <span class="keywordflow">else</span> <span class="keywordflow">if</span>( strncmp( <a class="code" href="md2cmds_8c.html#a5f0fe1e2dfa92cf345b8c29134ab1ede" title="our command;">md2cmds_cmd</a>, <span class="stringliteral">&quot;moveAbs&quot;</span>, 7) == 0) {
+<a name="l00519"></a>00519       <a class="code" href="md2cmds_8c.html#a82542bd5f69f6975583bbd9dfadec0cb" title="Move a motor to the position requested.">md2cmds_moveAbs</a>( <a class="code" href="md2cmds_8c.html#a5f0fe1e2dfa92cf345b8c29134ab1ede" title="our command;">md2cmds_cmd</a>);
+<a name="l00520"></a>00520     }
+<a name="l00521"></a>00521 
+<a name="l00522"></a>00522     <a class="code" href="md2cmds_8c.html#a5f0fe1e2dfa92cf345b8c29134ab1ede" title="our command;">md2cmds_cmd</a>[0] = 0;
+<a name="l00523"></a>00523   }
+<a name="l00524"></a>00524 }
 </pre></div></p>
 
 </div>
@@ -947,7 +1015,7 @@ window.onload = initDynSections;
 </div>
 </div>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on 12 Oct 2012 for LS-CAT PGPMAC by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on 13 Nov 2012 for LS-CAT PGPMAC by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

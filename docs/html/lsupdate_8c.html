@@ -73,8 +73,8 @@ window.onload = initDynSections;
 <p><a href="lsupdate_8c_source.html">Go to the source code of this file.</a></p>
 <table border="0" cellpadding="0" cellspacing="0">
 <tr><td colspan="2"><h2>Functions</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="lsupdate_8c.html#a99020a5401c80a8ec384ed0999dc4ef8">lsupdate_updateit</a> (int first_time)</td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Query the motors and perhaps tell the DB about it.  <a href="#a99020a5401c80a8ec384ed0999dc4ef8"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="lsupdate_8c.html#af28d93f773e70f701699b323563fa218">lsupdate_updateit</a> ()</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Query the motors and perhaps tell the DB about it.  <a href="#af28d93f773e70f701699b323563fa218"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="lsupdate_8c.html#ac4e85ea626b76b06d68c27db1c3e8b43">lsupdate_worker</a> (void *dummy)</td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Our worker thread.  <a href="#ac4e85ea626b76b06d68c27db1c3e8b43"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="lsupdate_8c.html#adf63440ffbc65024fef87ea6a11ea8b0">lsupdate_init</a> ()</td></tr>
@@ -109,10 +109,10 @@ window.onload = initDynSections;
 
 <p>Initialize this module. </p>
 
-<p>Definition at line <a class="el" href="lsupdate_8c_source.html#l00089">89</a> of file <a class="el" href="lsupdate_8c_source.html">lsupdate.c</a>.</p>
+<p>Definition at line <a class="el" href="lsupdate_8c_source.html#l00108">108</a> of file <a class="el" href="lsupdate_8c_source.html">lsupdate.c</a>.</p>
 
-<p><div class="fragment"><pre class="fragment"><a name="l00089"></a>00089                      {
-<a name="l00090"></a>00090 }
+<p><div class="fragment"><pre class="fragment"><a name="l00108"></a>00108                      {
+<a name="l00109"></a>00109 }
 </pre></div></p>
 
 </div>
@@ -134,24 +134,23 @@ window.onload = initDynSections;
 
 <p>run the update routines </p>
 
-<p>Definition at line <a class="el" href="lsupdate_8c_source.html#l00094">94</a> of file <a class="el" href="lsupdate_8c_source.html">lsupdate.c</a>.</p>
+<p>Definition at line <a class="el" href="lsupdate_8c_source.html#l00113">113</a> of file <a class="el" href="lsupdate_8c_source.html">lsupdate.c</a>.</p>
 
-<p><div class="fragment"><pre class="fragment"><a name="l00094"></a>00094                     {
-<a name="l00095"></a>00095   <span class="comment">//  pthread_create( &amp;lsupdate_thread, NULL, lsupdate_worker, NULL);</span>
-<a name="l00096"></a>00096 }
+<p><div class="fragment"><pre class="fragment"><a name="l00113"></a>00113                     {
+<a name="l00114"></a>00114   pthread_create( &amp;<a class="code" href="lsupdate_8c.html#a00578477e1b3791fc8aed17ebe60b606" title="our worker thread">lsupdate_thread</a>, NULL, <a class="code" href="lsupdate_8c.html#ac4e85ea626b76b06d68c27db1c3e8b43" title="Our worker thread.">lsupdate_worker</a>, NULL);
+<a name="l00115"></a>00115 }
 </pre></div></p>
 
 </div>
 </div>
-<a class="anchor" id="a99020a5401c80a8ec384ed0999dc4ef8"></a><!-- doxytag: member="lsupdate.c::lsupdate_updateit" ref="a99020a5401c80a8ec384ed0999dc4ef8" args="(int first_time)" -->
+<a class="anchor" id="af28d93f773e70f701699b323563fa218"></a><!-- doxytag: member="lsupdate.c::lsupdate_updateit" ref="af28d93f773e70f701699b323563fa218" args="()" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">void lsupdate_updateit </td>
           <td>(</td>
-          <td class="paramtype">int&nbsp;</td>
-          <td class="paramname"> <em>first_time</em></td>
+          <td class="paramname"></td>
           <td>&nbsp;)&nbsp;</td>
           <td></td>
         </tr>
@@ -160,72 +159,84 @@ window.onload = initDynSections;
 <div class="memdoc">
 
 <p>Query the motors and perhaps tell the DB about it. </p>
-<dl><dt><b>Parameters:</b></dt><dd>
-  <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"><tt>[in]</tt>&nbsp;</td><td valign="top"><em>first_time</em>&nbsp;</td><td>Flag: 1 means update everything, 0 means only send stuff that has changed </td></tr>
-  </table>
-  </dd>
-</dl>
 
 <p>Definition at line <a class="el" href="lsupdate_8c_source.html#l00015">15</a> of file <a class="el" href="lsupdate_8c_source.html">lsupdate.c</a>.</p>
 
-<p><div class="fragment"><pre class="fragment"><a name="l00016"></a>00016                                                               : 1 means update everything, 0 means only send stuff that has changed  */
-<a name="l00017"></a>00017                        ) {
-<a name="l00018"></a>00018   <span class="keyword">static</span> <span class="keywordtype">char</span> s[4096];
-<a name="l00019"></a>00019   <span class="keyword">static</span> <span class="keywordtype">char</span> s1[512];
-<a name="l00020"></a>00020   <a class="code" href="structlspmac__motor__struct.html" title="Motor information.">lspmac_motor_t</a> *mp;
-<a name="l00021"></a>00021   <span class="keywordtype">int</span> i;
-<a name="l00022"></a>00022   <span class="keywordtype">int</span> needComma;
-<a name="l00023"></a>00023   <span class="keywordtype">int</span> gotone;
-<a name="l00024"></a>00024 
-<a name="l00025"></a>00025   needComma = 0;
-<a name="l00026"></a>00026   gotone = 0;
-<a name="l00027"></a>00027   s[0] = 0;
-<a name="l00028"></a>00028   strcpy(s, <span class="stringliteral">&quot;select px.kvupdate(&apos;{&quot;</span>);
-<a name="l00029"></a>00029 
-<a name="l00030"></a>00030   <span class="keywordflow">for</span>( i=0; i&lt;<a class="code" href="lspmac_8c.html#a56260f012c50a591ee7f97e500f16994" title="The number of motors we manage.">lspmac_nmotors</a>; i++) {
-<a name="l00031"></a>00031     mp = &amp;(<a class="code" href="lspmac_8c.html#a9bffbf72495499b505543cd942f665da" title="All our motors.">lspmac_motors</a>[i]);
-<a name="l00032"></a>00032 
-<a name="l00033"></a>00033     pthread_mutex_lock( &amp;(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));
-<a name="l00034"></a>00034     <span class="keywordflow">if</span>( fabs( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a> - mp-&gt;<a class="code" href="structlspmac__motor__struct.html#ae5f1f605a0f587500e627332ad4e5e7e" title="previous position reported to the database">reported_position</a>) &lt; mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a18386126b724d9c7f72364db126f5b93" title="Change needs to be at least this big to report as a new position to the database...">update_resolution</a> &amp;&amp; first_time == 0) {
-<a name="l00035"></a>00035       pthread_mutex_unlock( &amp;(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));
-<a name="l00036"></a>00036     } <span class="keywordflow">else</span> {
-<a name="l00037"></a>00037 
-<a name="l00038"></a>00038       gotone = 1;
-<a name="l00039"></a>00039       s1[0]=0;
-<a name="l00040"></a>00040 
-<a name="l00041"></a>00041       snprintf( s1, <span class="keyword">sizeof</span>(s1)-1, mp-&gt;<a class="code" href="structlspmac__motor__struct.html#aba3d9d00271187128506bbbb1d77da19" title="printf format">format</a>, mp-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>, <span class="keyword">sizeof</span>( s1)-1);
-<a name="l00042"></a>00042       s1[<span class="keyword">sizeof</span>(s1)-1] = 0;
-<a name="l00043"></a>00043     
-<a name="l00044"></a>00044       mp-&gt;<a class="code" href="structlspmac__motor__struct.html#ae5f1f605a0f587500e627332ad4e5e7e" title="previous position reported to the database">reported_position</a> = mp-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>;
-<a name="l00045"></a>00045       pthread_mutex_unlock( &amp;(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));
+<p><div class="fragment"><pre class="fragment"><a name="l00015"></a>00015                          {
+<a name="l00016"></a>00016   <span class="keyword">static</span> <span class="keywordtype">char</span> s[4096];
+<a name="l00017"></a>00017   <span class="keyword">static</span> <span class="keywordtype">char</span> s1[512];
+<a name="l00018"></a>00018   <a class="code" href="structlspmac__motor__struct.html" title="Motor information.">lspmac_motor_t</a> *mp;
+<a name="l00019"></a>00019   <span class="keywordtype">int</span> i;
+<a name="l00020"></a>00020   <span class="keywordtype">int</span> needComma;
+<a name="l00021"></a>00021   <span class="keywordtype">int</span> gotone;
+<a name="l00022"></a>00022 
+<a name="l00023"></a>00023   needComma = 0;
+<a name="l00024"></a>00024   gotone = 0;
+<a name="l00025"></a>00025   s[0] = 0;
+<a name="l00026"></a>00026   strcpy(s, <span class="stringliteral">&quot;select px.kvupdate(&apos;{&quot;</span>);
+<a name="l00027"></a>00027 
+<a name="l00028"></a>00028   <span class="keywordflow">for</span>( i=0; i&lt;<a class="code" href="lspmac_8c.html#a56260f012c50a591ee7f97e500f16994" title="The number of motors we manage.">lspmac_nmotors</a>; i++) {
+<a name="l00029"></a>00029     mp = &amp;(<a class="code" href="lspmac_8c.html#a9bffbf72495499b505543cd942f665da" title="All our motors.">lspmac_motors</a>[i]);
+<a name="l00030"></a>00030 
+<a name="l00031"></a>00031     pthread_mutex_lock( &amp;(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));
+<a name="l00032"></a>00032     <span class="comment">//</span>
+<a name="l00033"></a>00033     <span class="comment">// Bit 0 of lspg_initialized is 0 if we&apos;ve not yet initialized the motor values via the DB</span>
+<a name="l00034"></a>00034     <span class="comment">// Bit 1 of lspg_initialized is 0 if we&apos;ve not yet sent any update for this motor</span>
+<a name="l00035"></a>00035     <span class="comment">//</span>
+<a name="l00036"></a>00036     <span class="comment">// Never update if the database has not initialized the motor values</span>
+<a name="l00037"></a>00037     <span class="comment">// Then, always update if we&apos;ve not done so yet</span>
+<a name="l00038"></a>00038     <span class="comment">// Then, only update if the current position has changed significantly</span>
+<a name="l00039"></a>00039     <span class="comment">//</span>
+<a name="l00040"></a>00040     <span class="keywordflow">if</span>( ((mp-&gt;<a class="code" href="structlspmac__motor__struct.html#af11e5f75c1cf88ed6842d04154d27a31" title="bit flags: bit 0 = motor initialized by database, bit 1 = px.kvs value initialized...">lspg_initialized</a> &amp; 1) == 0) ||
+<a name="l00041"></a>00041         ((mp-&gt;<a class="code" href="structlspmac__motor__struct.html#af11e5f75c1cf88ed6842d04154d27a31" title="bit flags: bit 0 = motor initialized by database, bit 1 = px.kvs value initialized...">lspg_initialized</a> &amp; 2) != 0) &amp;&amp;
+<a name="l00042"></a>00042         (fabs( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a> - mp-&gt;<a class="code" href="structlspmac__motor__struct.html#ae5f1f605a0f587500e627332ad4e5e7e" title="previous position reported to the database">reported_position</a>) &lt; mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a18386126b724d9c7f72364db126f5b93" title="Change needs to be at least this big to report as a new position to the database...">update_resolution</a>)
+<a name="l00043"></a>00043         ) {
+<a name="l00044"></a>00044       pthread_mutex_unlock( &amp;(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));
+<a name="l00045"></a>00045     } <span class="keywordflow">else</span> {
 <a name="l00046"></a>00046 
-<a name="l00047"></a>00047       <span class="keywordflow">if</span>( strlen(s1) + strlen(s) + 8 &gt;= <span class="keyword">sizeof</span>( s)-1) {
-<a name="l00048"></a>00048         <span class="comment">// send off update now and reset s</span>
-<a name="l00049"></a>00049         strcat( s, <span class="stringliteral">&quot;}&apos;)&quot;</span>);
-<a name="l00050"></a>00050         <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( NULL, s);
-<a name="l00051"></a>00051         
-<a name="l00052"></a>00052         s[0] = 0;
-<a name="l00053"></a>00053         strcpy( s, <span class="stringliteral">&quot;select px.kvupdate(&apos;{&quot;</span>);
-<a name="l00054"></a>00054         needComma = 0;
+<a name="l00047"></a>00047       gotone = 1;
+<a name="l00048"></a>00048       s1[0]=0;
+<a name="l00049"></a>00049 
+<a name="l00050"></a>00050       snprintf( s1, <span class="keyword">sizeof</span>(s1)-1, mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a514ee9ed48c7171157d579623f7de23f" title="special format string to create text array for px.kvs update (lsupdate)">update_format</a>, mp-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>);
+<a name="l00051"></a>00051       s1[<span class="keyword">sizeof</span>(s1)-1] = 0;
+<a name="l00052"></a>00052     
+<a name="l00053"></a>00053       <span class="keywordflow">if</span>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#aa90af2f6f1489f1befe1d0891e51575a" title="Name of motor as refered by ls database kvs table.">name</a> != NULL &amp;&amp; mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a56c41875faf19c643e97c10519e6eb8c" title="First 24 bit PMAC motor status word.">status1_p</a> != NULL &amp;&amp; mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a2b33ef6e12717459c1e9967cc6e659c6" title="Sectond 24 bit PMAC motor status word.">status2_p</a> != NULL &amp;&amp; mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a312047bb71def5cd2443fecd875eaea5" title="pointer to the md2_status structure to the actual position">actual_pos_cnts_p</a> != NULL) {
+<a name="l00054"></a>00054         <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b">lslogging_log_message</a>( <span class="stringliteral">&quot;%s status1: %0x  status2: %0x  cnts: %d&quot;</span>, mp-&gt;<a class="code" href="structlspmac__motor__struct.html#aa90af2f6f1489f1befe1d0891e51575a" title="Name of motor as refered by ls database kvs table.">name</a>, mp-&gt;<a class="code" href="structlspmac__motor__struct.html#acb52b612b9237e8eec0b97fb1e76a35d" title="local copy of status1">status1</a>, mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a6a412224c09268c1dc92de9c2a1a2512" title="local copy of status2">status2</a>, mp-&gt;<a class="code" href="structlspmac__motor__struct.html#ae5c7aea45b9637a1817be246688fd980" title="local copy of actual counts so only our mutex is needed to read">actual_pos_cnts</a>);
 <a name="l00055"></a>00055       }
 <a name="l00056"></a>00056 
-<a name="l00057"></a>00057       <span class="keywordflow">if</span>( needComma)
-<a name="l00058"></a>00058         strcat( s, <span class="stringliteral">&quot;,&quot;</span>);
-<a name="l00059"></a>00059       <span class="keywordflow">else</span>
-<a name="l00060"></a>00060         needComma=1;
-<a name="l00061"></a>00061 
-<a name="l00062"></a>00062       strcat( s, <span class="stringliteral">&quot;\&quot;&quot;</span>);
-<a name="l00063"></a>00063       strcat( s, s1);
-<a name="l00064"></a>00064       strcat( s, <span class="stringliteral">&quot;\&quot;&quot;</span>);
-<a name="l00065"></a>00065     }
-<a name="l00066"></a>00066   }
+<a name="l00057"></a>00057       mp-&gt;<a class="code" href="structlspmac__motor__struct.html#ae5f1f605a0f587500e627332ad4e5e7e" title="previous position reported to the database">reported_position</a> = mp-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>;
+<a name="l00058"></a>00058       mp-&gt;<a class="code" href="structlspmac__motor__struct.html#af11e5f75c1cf88ed6842d04154d27a31" title="bit flags: bit 0 = motor initialized by database, bit 1 = px.kvs value initialized...">lspg_initialized</a> |= 2;
+<a name="l00059"></a>00059       pthread_mutex_unlock( &amp;(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));
+<a name="l00060"></a>00060 
+<a name="l00061"></a>00061       <span class="keywordflow">if</span>( strlen(s1) + strlen(s) + 32 &gt;= <span class="keyword">sizeof</span>( s)-1) {
+<a name="l00062"></a>00062         <span class="comment">// send off update now and reset s</span>
+<a name="l00063"></a>00063         strcat( s, <span class="stringliteral">&quot;}&apos;::text[])&quot;</span>);
+<a name="l00064"></a>00064         <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( NULL, s);
+<a name="l00065"></a>00065         
+<a name="l00066"></a>00066         <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b">lslogging_log_message</a>( <span class="stringliteral">&quot;Update: %s&quot;</span>, s);
 <a name="l00067"></a>00067 
-<a name="l00068"></a>00068   <span class="keywordflow">if</span>( gotone) {
-<a name="l00069"></a>00069     strcat( s, <span class="stringliteral">&quot;}&apos;)&quot;</span>);
-<a name="l00070"></a>00070     <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( NULL, s);
-<a name="l00071"></a>00071   }
-<a name="l00072"></a>00072 }
+<a name="l00068"></a>00068         s[0] = 0;
+<a name="l00069"></a>00069         strcpy( s, <span class="stringliteral">&quot;select px.kvupdate(&apos;{&quot;</span>);
+<a name="l00070"></a>00070         needComma = 0;
+<a name="l00071"></a>00071         gotone    = 0;
+<a name="l00072"></a>00072       }
+<a name="l00073"></a>00073 
+<a name="l00074"></a>00074       <span class="keywordflow">if</span>( needComma)
+<a name="l00075"></a>00075         strcat( s, <span class="stringliteral">&quot;,&quot;</span>);
+<a name="l00076"></a>00076       <span class="keywordflow">else</span>
+<a name="l00077"></a>00077         needComma=1;
+<a name="l00078"></a>00078 
+<a name="l00079"></a>00079       strcat( s, s1);
+<a name="l00080"></a>00080     }
+<a name="l00081"></a>00081   }
+<a name="l00082"></a>00082 
+<a name="l00083"></a>00083   <span class="keywordflow">if</span>( gotone) {
+<a name="l00084"></a>00084     strcat( s, <span class="stringliteral">&quot;}&apos;)&quot;</span>);
+<a name="l00085"></a>00085     <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( NULL, s);
+<a name="l00086"></a>00086 
+<a name="l00087"></a>00087     <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b">lslogging_log_message</a>( <span class="stringliteral">&quot;Update: %s&quot;</span>, s);
+<a name="l00088"></a>00088   }
+<a name="l00089"></a>00089 }
 </pre></div></p>
 
 </div>
@@ -254,16 +265,18 @@ window.onload = initDynSections;
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lsupdate_8c_source.html#l00076">76</a> of file <a class="el" href="lsupdate_8c_source.html">lsupdate.c</a>.</p>
+<p>Definition at line <a class="el" href="lsupdate_8c_source.html#l00093">93</a> of file <a class="el" href="lsupdate_8c_source.html">lsupdate.c</a>.</p>
 
-<p><div class="fragment"><pre class="fragment"><a name="l00078"></a>00078                         {    
-<a name="l00079"></a>00079   sleep(10);
-<a name="l00080"></a>00080   <a class="code" href="lsupdate_8c.html#a99020a5401c80a8ec384ed0999dc4ef8" title="Query the motors and perhaps tell the DB about it.">lsupdate_updateit</a>( 1);
-<a name="l00081"></a>00081   <span class="keywordflow">while</span>( 1) {
-<a name="l00082"></a>00082     usleep( 500000);
-<a name="l00083"></a>00083     <a class="code" href="lsupdate_8c.html#a99020a5401c80a8ec384ed0999dc4ef8" title="Query the motors and perhaps tell the DB about it.">lsupdate_updateit</a>( 0);
-<a name="l00084"></a>00084   }    
-<a name="l00085"></a>00085 }
+<p><div class="fragment"><pre class="fragment"><a name="l00095"></a>00095                         {
+<a name="l00096"></a>00096   <span class="keyword">static</span> <span class="keyword">struct </span>timespec naptime;
+<a name="l00097"></a>00097 
+<a name="l00098"></a>00098   naptime.tv_sec  = 0;
+<a name="l00099"></a>00099   naptime.tv_nsec = 500000000;
+<a name="l00100"></a>00100   <span class="keywordflow">while</span>( 1) {
+<a name="l00101"></a>00101     <a class="code" href="lsupdate_8c.html#af28d93f773e70f701699b323563fa218" title="Query the motors and perhaps tell the DB about it.">lsupdate_updateit</a>();
+<a name="l00102"></a>00102     nanosleep( &amp;naptime, NULL);
+<a name="l00103"></a>00103   }    
+<a name="l00104"></a>00104 }
 </pre></div></p>
 
 </div>
@@ -287,7 +300,7 @@ window.onload = initDynSections;
 </div>
 </div>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on 12 Oct 2012 for LS-CAT PGPMAC by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on 13 Nov 2012 for LS-CAT PGPMAC by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

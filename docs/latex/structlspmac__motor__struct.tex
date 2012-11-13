@@ -14,6 +14,8 @@ pthread\_\-mutex\_\-t \hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2f
 \begin{DoxyCompactList}\small\item\em coordinate waiting for motor to be done \item\end{DoxyCompactList}\item 
 pthread\_\-cond\_\-t \hyperlink{structlspmac__motor__struct_aa0ea4108b8fed5b41ff91ca7266f3d84}{cond}
 \item 
+int \hyperlink{structlspmac__motor__struct_af11e5f75c1cf88ed6842d04154d27a31}{lspg\_\-initialized}
+\begin{DoxyCompactList}\small\item\em bit flags: bit 0 = motor initialized by database, bit 1 = px.kvs value initialized \item\end{DoxyCompactList}\item 
 void($\ast$ \hyperlink{structlspmac__motor__struct_ac62692eb939c04ca35e939d1c3acfe8f}{read} )(struct \hyperlink{structlspmac__motor__struct}{lspmac\_\-motor\_\-struct} $\ast$)
 \begin{DoxyCompactList}\small\item\em function to read the motor status and position \item\end{DoxyCompactList}\item 
 int \hyperlink{structlspmac__motor__struct_ab7bd8bff48953ce05c758598d75877ac}{not\_\-done}
@@ -22,10 +24,16 @@ int \hyperlink{structlspmac__motor__struct_a68c471836f52707fa8582f7860cf500f}{mo
 \begin{DoxyCompactList}\small\item\em set to 1 when motion has been verified to have started \item\end{DoxyCompactList}\item 
 struct \hyperlink{structlspmac__cmd__queue__struct}{lspmac\_\-cmd\_\-queue\_\-struct} $\ast$ \hyperlink{structlspmac__motor__struct_ae0a0c9264f49f51bf72168c3b62f8723}{pq}
 \begin{DoxyCompactList}\small\item\em the queue item requesting motion. Used to check time request was made \item\end{DoxyCompactList}\item 
+char $\ast$$\ast$ \hyperlink{structlspmac__motor__struct_a073246b8878d75615b0536301b343f3d}{home}
+\begin{DoxyCompactList}\small\item\em pmac commands to home motor \item\end{DoxyCompactList}\item 
+int \hyperlink{structlspmac__motor__struct_aa74108855693f94fc2ff76333c9fb6ac}{homing}
+\begin{DoxyCompactList}\small\item\em Homing routine started. \item\end{DoxyCompactList}\item 
 int \hyperlink{structlspmac__motor__struct_a6e8dc9c11dc52a439fe9837230f93ce2}{requested\_\-pos\_\-cnts}
 \begin{DoxyCompactList}\small\item\em requested position \item\end{DoxyCompactList}\item 
 int $\ast$ \hyperlink{structlspmac__motor__struct_a312047bb71def5cd2443fecd875eaea5}{actual\_\-pos\_\-cnts\_\-p}
 \begin{DoxyCompactList}\small\item\em pointer to the md2\_\-status structure to the actual position \item\end{DoxyCompactList}\item 
+int \hyperlink{structlspmac__motor__struct_ae5c7aea45b9637a1817be246688fd980}{actual\_\-pos\_\-cnts}
+\begin{DoxyCompactList}\small\item\em local copy of actual counts so only our mutex is needed to read \item\end{DoxyCompactList}\item 
 double \hyperlink{structlspmac__motor__struct_af8ffb3aed907d8664b65b37601954411}{position}
 \begin{DoxyCompactList}\small\item\em scaled position \item\end{DoxyCompactList}\item 
 double \hyperlink{structlspmac__motor__struct_ae5f1f605a0f587500e627332ad4e5e7e}{reported\_\-position}
@@ -34,12 +42,22 @@ double \hyperlink{structlspmac__motor__struct_af8cdc94c6e2478b12ce942d4cf1d7499}
 \begin{DoxyCompactList}\small\item\em The position as requested by the user. \item\end{DoxyCompactList}\item 
 double \hyperlink{structlspmac__motor__struct_a18386126b724d9c7f72364db126f5b93}{update\_\-resolution}
 \begin{DoxyCompactList}\small\item\em Change needs to be at least this big to report as a new position to the database. \item\end{DoxyCompactList}\item 
-int $\ast$ \hyperlink{structlspmac__motor__struct_a17e0953d269d53137c508e391cb16e47}{status1}
+char $\ast$ \hyperlink{structlspmac__motor__struct_a514ee9ed48c7171157d579623f7de23f}{update\_\-format}
+\begin{DoxyCompactList}\small\item\em special format string to create text array for px.kvs update (lsupdate) \item\end{DoxyCompactList}\item 
+int $\ast$ \hyperlink{structlspmac__motor__struct_a56c41875faf19c643e97c10519e6eb8c}{status1\_\-p}
 \begin{DoxyCompactList}\small\item\em First 24 bit PMAC motor status word. \item\end{DoxyCompactList}\item 
-int $\ast$ \hyperlink{structlspmac__motor__struct_ac16fec220714218334764a1038f3813a}{status2}
+int \hyperlink{structlspmac__motor__struct_acb52b612b9237e8eec0b97fb1e76a35d}{status1}
+\begin{DoxyCompactList}\small\item\em local copy of status1 \item\end{DoxyCompactList}\item 
+int $\ast$ \hyperlink{structlspmac__motor__struct_a2b33ef6e12717459c1e9967cc6e659c6}{status2\_\-p}
 \begin{DoxyCompactList}\small\item\em Sectond 24 bit PMAC motor status word. \item\end{DoxyCompactList}\item 
+int \hyperlink{structlspmac__motor__struct_a6a412224c09268c1dc92de9c2a1a2512}{status2}
+\begin{DoxyCompactList}\small\item\em local copy of status2 \item\end{DoxyCompactList}\item 
+char \hyperlink{structlspmac__motor__struct_ae4a6f54a98e7758d66228efebe8f3baa}{statuss} \mbox{[}64\mbox{]}
+\begin{DoxyCompactList}\small\item\em short text summarizing status \item\end{DoxyCompactList}\item 
 int \hyperlink{structlspmac__motor__struct_a45fae17618f0c0827e97060dc04f79cb}{motor\_\-num}
 \begin{DoxyCompactList}\small\item\em pmac motor number \item\end{DoxyCompactList}\item 
+int \hyperlink{structlspmac__motor__struct_a2093b0a3cd2f9500fd92e3c89bf46577}{coord\_\-num}
+\begin{DoxyCompactList}\small\item\em coordinate system this motor belongs to (0 if none) \item\end{DoxyCompactList}\item 
 char $\ast$ \hyperlink{structlspmac__motor__struct_a05dff021221abbc1bf656039fffb3275}{dac\_\-mvar}
 \begin{DoxyCompactList}\small\item\em controlling mvariable as a string \item\end{DoxyCompactList}\item 
 char $\ast$ \hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name}
@@ -73,10 +91,19 @@ WINDOW $\ast$ \hyperlink{structlspmac__motor__struct_a133775154b0e008f3a2fde6f53
 \subsection{Detailed Description}
 Motor information. A catchall for motors and motor like objects. Not all members are used by all objects. 
 
-Definition at line 69 of file pgpmac.h.
+Definition at line 71 of file pgpmac.h.
 
 \subsection{Field Documentation}
-\hypertarget{structlspmac__motor__struct_a312047bb71def5cd2443fecd875eaea5}{
+\hypertarget{structlspmac__motor__struct_ae5c7aea45b9637a1817be246688fd980}{
+\index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!actual\_\-pos\_\-cnts@{actual\_\-pos\_\-cnts}}
+\index{actual\_\-pos\_\-cnts@{actual\_\-pos\_\-cnts}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
+\subsubsection[{actual\_\-pos\_\-cnts}]{\setlength{\rightskip}{0pt plus 5cm}int {\bf lspmac\_\-motor\_\-struct::actual\_\-pos\_\-cnts}}}
+\label{structlspmac__motor__struct_ae5c7aea45b9637a1817be246688fd980}
+
+
+local copy of actual counts so only our mutex is needed to read 
+
+Definition at line 84 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a312047bb71def5cd2443fecd875eaea5}{
 \index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!actual\_\-pos\_\-cnts\_\-p@{actual\_\-pos\_\-cnts\_\-p}}
 \index{actual\_\-pos\_\-cnts\_\-p@{actual\_\-pos\_\-cnts\_\-p}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
 \subsubsection[{actual\_\-pos\_\-cnts\_\-p}]{\setlength{\rightskip}{0pt plus 5cm}int$\ast$ {\bf lspmac\_\-motor\_\-struct::actual\_\-pos\_\-cnts\_\-p}}}
@@ -85,14 +112,23 @@ Definition at line 69 of file pgpmac.h.
 
 pointer to the md2\_\-status structure to the actual position 
 
-Definition at line 78 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_aa0ea4108b8fed5b41ff91ca7266f3d84}{
+Definition at line 83 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_aa0ea4108b8fed5b41ff91ca7266f3d84}{
 \index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!cond@{cond}}
 \index{cond@{cond}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
 \subsubsection[{cond}]{\setlength{\rightskip}{0pt plus 5cm}pthread\_\-cond\_\-t {\bf lspmac\_\-motor\_\-struct::cond}}}
 \label{structlspmac__motor__struct_aa0ea4108b8fed5b41ff91ca7266f3d84}
 
 
-Definition at line 71 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a05dff021221abbc1bf656039fffb3275}{
+Definition at line 73 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a2093b0a3cd2f9500fd92e3c89bf46577}{
+\index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!coord\_\-num@{coord\_\-num}}
+\index{coord\_\-num@{coord\_\-num}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
+\subsubsection[{coord\_\-num}]{\setlength{\rightskip}{0pt plus 5cm}int {\bf lspmac\_\-motor\_\-struct::coord\_\-num}}}
+\label{structlspmac__motor__struct_a2093b0a3cd2f9500fd92e3c89bf46577}
+
+
+coordinate system this motor belongs to (0 if none) 
+
+Definition at line 96 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a05dff021221abbc1bf656039fffb3275}{
 \index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!dac\_\-mvar@{dac\_\-mvar}}
 \index{dac\_\-mvar@{dac\_\-mvar}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
 \subsubsection[{dac\_\-mvar}]{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ {\bf lspmac\_\-motor\_\-struct::dac\_\-mvar}}}
@@ -101,7 +137,7 @@ Definition at line 71 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_
 
 controlling mvariable as a string 
 
-Definition at line 86 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_aba3d9d00271187128506bbbb1d77da19}{
+Definition at line 97 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_aba3d9d00271187128506bbbb1d77da19}{
 \index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!format@{format}}
 \index{format@{format}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
 \subsubsection[{format}]{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ {\bf lspmac\_\-motor\_\-struct::format}}}
@@ -110,7 +146,34 @@ Definition at line 86 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_
 
 printf format 
 
-Definition at line 89 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a7b43671f7f3e06521f6cf91fb9ac707d}{
+Definition at line 100 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a073246b8878d75615b0536301b343f3d}{
+\index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!home@{home}}
+\index{home@{home}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
+\subsubsection[{home}]{\setlength{\rightskip}{0pt plus 5cm}char$\ast$$\ast$ {\bf lspmac\_\-motor\_\-struct::home}}}
+\label{structlspmac__motor__struct_a073246b8878d75615b0536301b343f3d}
+
+
+pmac commands to home motor 
+
+Definition at line 80 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_aa74108855693f94fc2ff76333c9fb6ac}{
+\index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!homing@{homing}}
+\index{homing@{homing}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
+\subsubsection[{homing}]{\setlength{\rightskip}{0pt plus 5cm}int {\bf lspmac\_\-motor\_\-struct::homing}}}
+\label{structlspmac__motor__struct_aa74108855693f94fc2ff76333c9fb6ac}
+
+
+Homing routine started. 
+
+Definition at line 81 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_af11e5f75c1cf88ed6842d04154d27a31}{
+\index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!lspg\_\-initialized@{lspg\_\-initialized}}
+\index{lspg\_\-initialized@{lspg\_\-initialized}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
+\subsubsection[{lspg\_\-initialized}]{\setlength{\rightskip}{0pt plus 5cm}int {\bf lspmac\_\-motor\_\-struct::lspg\_\-initialized}}}
+\label{structlspmac__motor__struct_af11e5f75c1cf88ed6842d04154d27a31}
+
+
+bit flags: bit 0 = motor initialized by database, bit 1 = px.kvs value initialized 
+
+Definition at line 74 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a7b43671f7f3e06521f6cf91fb9ac707d}{
 \index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!lut@{lut}}
 \index{lut@{lut}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
 \subsubsection[{lut}]{\setlength{\rightskip}{0pt plus 5cm}double$\ast$ {\bf lspmac\_\-motor\_\-struct::lut}}}
@@ -119,7 +182,7 @@ Definition at line 89 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_
 
 lookup table (instead of u2c) 
 
-Definition at line 95 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_afec8dc1d4b97ba9c1d6e4f7a088342e4}{
+Definition at line 106 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_afec8dc1d4b97ba9c1d6e4f7a088342e4}{
 \index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!max\_\-accel@{max\_\-accel}}
 \index{max\_\-accel@{max\_\-accel}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
 \subsubsection[{max\_\-accel}]{\setlength{\rightskip}{0pt plus 5cm}double {\bf lspmac\_\-motor\_\-struct::max\_\-accel}}}
@@ -128,7 +191,7 @@ Definition at line 95 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_
 
 our maximum acceleration (cts/msec$^\wedge$2) 
 
-Definition at line 98 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_af27159eeef80e4438446e01f24fae9d5}{
+Definition at line 109 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_af27159eeef80e4438446e01f24fae9d5}{
 \index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!max\_\-speed@{max\_\-speed}}
 \index{max\_\-speed@{max\_\-speed}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
 \subsubsection[{max\_\-speed}]{\setlength{\rightskip}{0pt plus 5cm}double {\bf lspmac\_\-motor\_\-struct::max\_\-speed}}}
@@ -137,7 +200,7 @@ Definition at line 98 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_
 
 our maximum speed (cts/msec) 
 
-Definition at line 97 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a68c471836f52707fa8582f7860cf500f}{
+Definition at line 108 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a68c471836f52707fa8582f7860cf500f}{
 \index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!motion\_\-seen@{motion\_\-seen}}
 \index{motion\_\-seen@{motion\_\-seen}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
 \subsubsection[{motion\_\-seen}]{\setlength{\rightskip}{0pt plus 5cm}int {\bf lspmac\_\-motor\_\-struct::motion\_\-seen}}}
@@ -146,7 +209,7 @@ Definition at line 97 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_
 
 set to 1 when motion has been verified to have started 
 
-Definition at line 74 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a45fae17618f0c0827e97060dc04f79cb}{
+Definition at line 77 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a45fae17618f0c0827e97060dc04f79cb}{
 \index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!motor\_\-num@{motor\_\-num}}
 \index{motor\_\-num@{motor\_\-num}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
 \subsubsection[{motor\_\-num}]{\setlength{\rightskip}{0pt plus 5cm}int {\bf lspmac\_\-motor\_\-struct::motor\_\-num}}}
@@ -155,7 +218,7 @@ Definition at line 74 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_
 
 pmac motor number 
 
-Definition at line 85 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a20db3de86854b627815b3d940555ea75}{
+Definition at line 95 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a20db3de86854b627815b3d940555ea75}{
 \index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!moveAbs@{moveAbs}}
 \index{moveAbs@{moveAbs}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
 \subsubsection[{moveAbs}]{\setlength{\rightskip}{0pt plus 5cm}void($\ast$ {\bf lspmac\_\-motor\_\-struct::moveAbs})(struct {\bf lspmac\_\-motor\_\-struct} $\ast$, double)}}
@@ -171,7 +234,7 @@ function to move the motor \hypertarget{structlspmac__motor__struct_a188c5b1e991
 
 coordinate waiting for motor to be done 
 
-Definition at line 70 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{
+Definition at line 72 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{
 \index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!name@{name}}
 \index{name@{name}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
 \subsubsection[{name}]{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ {\bf lspmac\_\-motor\_\-struct::name}}}
@@ -180,7 +243,7 @@ Definition at line 70 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_
 
 Name of motor as refered by ls database kvs table. 
 
-Definition at line 87 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a11cbc6f50c150ed446e9a901cf7cc12b}{
+Definition at line 98 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a11cbc6f50c150ed446e9a901cf7cc12b}{
 \index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!nlut@{nlut}}
 \index{nlut@{nlut}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
 \subsubsection[{nlut}]{\setlength{\rightskip}{0pt plus 5cm}int {\bf lspmac\_\-motor\_\-struct::nlut}}}
@@ -189,7 +252,7 @@ Definition at line 87 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_
 
 length of lut 
 
-Definition at line 96 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_ab7bd8bff48953ce05c758598d75877ac}{
+Definition at line 107 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_ab7bd8bff48953ce05c758598d75877ac}{
 \index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!not\_\-done@{not\_\-done}}
 \index{not\_\-done@{not\_\-done}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
 \subsubsection[{not\_\-done}]{\setlength{\rightskip}{0pt plus 5cm}int {\bf lspmac\_\-motor\_\-struct::not\_\-done}}}
@@ -198,7 +261,7 @@ Definition at line 96 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_
 
 set to 1 when request is queued, zero after motion has toggled 
 
-Definition at line 73 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_af8ffb3aed907d8664b65b37601954411}{
+Definition at line 76 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_af8ffb3aed907d8664b65b37601954411}{
 \index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!position@{position}}
 \index{position@{position}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
 \subsubsection[{position}]{\setlength{\rightskip}{0pt plus 5cm}double {\bf lspmac\_\-motor\_\-struct::position}}}
@@ -207,7 +270,7 @@ Definition at line 73 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_
 
 scaled position 
 
-Definition at line 79 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_ae0a0c9264f49f51bf72168c3b62f8723}{
+Definition at line 85 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_ae0a0c9264f49f51bf72168c3b62f8723}{
 \index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!pq@{pq}}
 \index{pq@{pq}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
 \subsubsection[{pq}]{\setlength{\rightskip}{0pt plus 5cm}struct {\bf lspmac\_\-cmd\_\-queue\_\-struct}$\ast$ {\bf lspmac\_\-motor\_\-struct::pq}\hspace{0.3cm}{\ttfamily  \mbox{[}read\mbox{]}}}}
@@ -216,7 +279,7 @@ Definition at line 79 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_
 
 the queue item requesting motion. Used to check time request was made 
 
-Definition at line 75 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_ac62692eb939c04ca35e939d1c3acfe8f}{
+Definition at line 78 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_ac62692eb939c04ca35e939d1c3acfe8f}{
 \index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!read@{read}}
 \index{read@{read}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
 \subsubsection[{read}]{\setlength{\rightskip}{0pt plus 5cm}void($\ast$ {\bf lspmac\_\-motor\_\-struct::read})(struct {\bf lspmac\_\-motor\_\-struct} $\ast$)}}
@@ -232,7 +295,7 @@ function to read the motor status and position \hypertarget{structlspmac__motor_
 
 WIth read\_\-ptr find bit to read for binary i/o. 
 
-Definition at line 92 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a844b28ccabab5048ca216db074fb9704}{
+Definition at line 103 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a844b28ccabab5048ca216db074fb9704}{
 \index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!read\_\-ptr@{read\_\-ptr}}
 \index{read\_\-ptr@{read\_\-ptr}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
 \subsubsection[{read\_\-ptr}]{\setlength{\rightskip}{0pt plus 5cm}int$\ast$ {\bf lspmac\_\-motor\_\-struct::read\_\-ptr}}}
@@ -241,7 +304,7 @@ Definition at line 92 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_
 
 With read\_\-mask finds bit to read for binary i/o. 
 
-Definition at line 91 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_ae5f1f605a0f587500e627332ad4e5e7e}{
+Definition at line 102 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_ae5f1f605a0f587500e627332ad4e5e7e}{
 \index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!reported\_\-position@{reported\_\-position}}
 \index{reported\_\-position@{reported\_\-position}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
 \subsubsection[{reported\_\-position}]{\setlength{\rightskip}{0pt plus 5cm}double {\bf lspmac\_\-motor\_\-struct::reported\_\-position}}}
@@ -250,7 +313,7 @@ Definition at line 91 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_
 
 previous position reported to the database 
 
-Definition at line 80 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a6e8dc9c11dc52a439fe9837230f93ce2}{
+Definition at line 86 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a6e8dc9c11dc52a439fe9837230f93ce2}{
 \index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!requested\_\-pos\_\-cnts@{requested\_\-pos\_\-cnts}}
 \index{requested\_\-pos\_\-cnts@{requested\_\-pos\_\-cnts}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
 \subsubsection[{requested\_\-pos\_\-cnts}]{\setlength{\rightskip}{0pt plus 5cm}int {\bf lspmac\_\-motor\_\-struct::requested\_\-pos\_\-cnts}}}
@@ -259,7 +322,7 @@ Definition at line 80 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_
 
 requested position 
 
-Definition at line 77 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_af8cdc94c6e2478b12ce942d4cf1d7499}{
+Definition at line 82 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_af8cdc94c6e2478b12ce942d4cf1d7499}{
 \index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!requested\_\-position@{requested\_\-position}}
 \index{requested\_\-position@{requested\_\-position}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
 \subsubsection[{requested\_\-position}]{\setlength{\rightskip}{0pt plus 5cm}double {\bf lspmac\_\-motor\_\-struct::requested\_\-position}}}
@@ -268,25 +331,52 @@ Definition at line 77 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_
 
 The position as requested by the user. 
 
-Definition at line 81 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a17e0953d269d53137c508e391cb16e47}{
+Definition at line 87 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_acb52b612b9237e8eec0b97fb1e76a35d}{
 \index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!status1@{status1}}
 \index{status1@{status1}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
-\subsubsection[{status1}]{\setlength{\rightskip}{0pt plus 5cm}int$\ast$ {\bf lspmac\_\-motor\_\-struct::status1}}}
-\label{structlspmac__motor__struct_a17e0953d269d53137c508e391cb16e47}
+\subsubsection[{status1}]{\setlength{\rightskip}{0pt plus 5cm}int {\bf lspmac\_\-motor\_\-struct::status1}}}
+\label{structlspmac__motor__struct_acb52b612b9237e8eec0b97fb1e76a35d}
+
+
+local copy of status1 
+
+Definition at line 91 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a56c41875faf19c643e97c10519e6eb8c}{
+\index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!status1\_\-p@{status1\_\-p}}
+\index{status1\_\-p@{status1\_\-p}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
+\subsubsection[{status1\_\-p}]{\setlength{\rightskip}{0pt plus 5cm}int$\ast$ {\bf lspmac\_\-motor\_\-struct::status1\_\-p}}}
+\label{structlspmac__motor__struct_a56c41875faf19c643e97c10519e6eb8c}
 
 
 First 24 bit PMAC motor status word. 
 
-Definition at line 83 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_ac16fec220714218334764a1038f3813a}{
+Definition at line 90 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a6a412224c09268c1dc92de9c2a1a2512}{
 \index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!status2@{status2}}
 \index{status2@{status2}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
-\subsubsection[{status2}]{\setlength{\rightskip}{0pt plus 5cm}int$\ast$ {\bf lspmac\_\-motor\_\-struct::status2}}}
-\label{structlspmac__motor__struct_ac16fec220714218334764a1038f3813a}
+\subsubsection[{status2}]{\setlength{\rightskip}{0pt plus 5cm}int {\bf lspmac\_\-motor\_\-struct::status2}}}
+\label{structlspmac__motor__struct_a6a412224c09268c1dc92de9c2a1a2512}
+
+
+local copy of status2 
+
+Definition at line 93 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a2b33ef6e12717459c1e9967cc6e659c6}{
+\index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!status2\_\-p@{status2\_\-p}}
+\index{status2\_\-p@{status2\_\-p}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
+\subsubsection[{status2\_\-p}]{\setlength{\rightskip}{0pt plus 5cm}int$\ast$ {\bf lspmac\_\-motor\_\-struct::status2\_\-p}}}
+\label{structlspmac__motor__struct_a2b33ef6e12717459c1e9967cc6e659c6}
 
 
 Sectond 24 bit PMAC motor status word. 
 
-Definition at line 84 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a61415627ab2dc0f438b190d117e532db}{
+Definition at line 92 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_ae4a6f54a98e7758d66228efebe8f3baa}{
+\index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!statuss@{statuss}}
+\index{statuss@{statuss}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
+\subsubsection[{statuss}]{\setlength{\rightskip}{0pt plus 5cm}char {\bf lspmac\_\-motor\_\-struct::statuss}\mbox{[}64\mbox{]}}}
+\label{structlspmac__motor__struct_ae4a6f54a98e7758d66228efebe8f3baa}
+
+
+short text summarizing status 
+
+Definition at line 94 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a61415627ab2dc0f438b190d117e532db}{
 \index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!u2c@{u2c}}
 \index{u2c@{u2c}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
 \subsubsection[{u2c}]{\setlength{\rightskip}{0pt plus 5cm}double {\bf lspmac\_\-motor\_\-struct::u2c}}}
@@ -295,7 +385,7 @@ Definition at line 84 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_
 
 conversion from counts to units: 0.0 means not loaded yet 
 
-Definition at line 94 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a82bceff2ae698b4b9618360b446aec08}{
+Definition at line 105 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a82bceff2ae698b4b9618360b446aec08}{
 \index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!units@{units}}
 \index{units@{units}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
 \subsubsection[{units}]{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ {\bf lspmac\_\-motor\_\-struct::units}}}
@@ -304,7 +394,16 @@ Definition at line 94 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_
 
 string to use as the units 
 
-Definition at line 88 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a18386126b724d9c7f72364db126f5b93}{
+Definition at line 99 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a514ee9ed48c7171157d579623f7de23f}{
+\index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!update\_\-format@{update\_\-format}}
+\index{update\_\-format@{update\_\-format}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
+\subsubsection[{update\_\-format}]{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ {\bf lspmac\_\-motor\_\-struct::update\_\-format}}}
+\label{structlspmac__motor__struct_a514ee9ed48c7171157d579623f7de23f}
+
+
+special format string to create text array for px.kvs update (lsupdate) 
+
+Definition at line 89 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a18386126b724d9c7f72364db126f5b93}{
 \index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!update\_\-resolution@{update\_\-resolution}}
 \index{update\_\-resolution@{update\_\-resolution}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
 \subsubsection[{update\_\-resolution}]{\setlength{\rightskip}{0pt plus 5cm}double {\bf lspmac\_\-motor\_\-struct::update\_\-resolution}}}
@@ -313,7 +412,7 @@ Definition at line 88 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_
 
 Change needs to be at least this big to report as a new position to the database. 
 
-Definition at line 82 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a133775154b0e008f3a2fde6f53bc0eff}{
+Definition at line 88 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a133775154b0e008f3a2fde6f53bc0eff}{
 \index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!win@{win}}
 \index{win@{win}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
 \subsubsection[{win}]{\setlength{\rightskip}{0pt plus 5cm}WINDOW$\ast$ {\bf lspmac\_\-motor\_\-struct::win}}}
@@ -322,7 +421,7 @@ Definition at line 82 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_
 
 our ncurses window 
 
-Definition at line 99 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a70291ddfe7994c0bec7fc2287cb6dd89}{
+Definition at line 110 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_a70291ddfe7994c0bec7fc2287cb6dd89}{
 \index{lspmac\_\-motor\_\-struct@{lspmac\_\-motor\_\-struct}!write\_\-fmt@{write\_\-fmt}}
 \index{write\_\-fmt@{write\_\-fmt}!lspmac_motor_struct@{lspmac\_\-motor\_\-struct}}
 \subsubsection[{write\_\-fmt}]{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ {\bf lspmac\_\-motor\_\-struct::write\_\-fmt}}}
@@ -331,7 +430,7 @@ Definition at line 99 of file pgpmac.h.\hypertarget{structlspmac__motor__struct_
 
 Format string to write requested position to PMAC used for binary io. 
 
-Definition at line 90 of file pgpmac.h.
+Definition at line 101 of file pgpmac.h.
 
 The documentation for this struct was generated from the following file:\begin{DoxyCompactItemize}
 \item 

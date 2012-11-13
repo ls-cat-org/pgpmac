@@ -35,6 +35,8 @@
 //! Fixed length postgresql query strings.  Queries should all be function calls so this is not as weird as one might think.
 #define LS_PG_QUERY_STRING_LENGTH 1024
 
+//! Fixed length for event names: simplifies string handling
+#define LSEVENTS_EVENT_LENGTH   32
 
 /** PMAC ethernet packet definition.
  *
@@ -344,3 +346,11 @@ extern void lspmac_run();
 extern void lspg_run();
 extern void lsupdate_run();
 extern void md2cmds_run();
+extern void lsevents_init();
+extern void lsevents_run();
+extern void lsevents_send_event( char *, ...);
+extern void lsevents_add_listener( char *, void (*cb)(char *));
+extern void lsevents_remove_listener( char *, void (*cb)(char *));
+extern void lstimer_init();
+extern void lstimer_run();
+extern void lstimer_add_timer( char *, int, unsigned long int, unsigned long int);

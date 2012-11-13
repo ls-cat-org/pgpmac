@@ -1224,7 +1224,7 @@ void lspmac_pmacmotor_read(
   // On E omega has been observed to change by 0x10000 on its own
   // with no real motion.
   //
-  if( mp->status2 & 0x000001 && *mp->status2_p & 0x000001 && abs( mp->actual_pos_cnts - *mp->actual_pos_cnts_p) > 256) {
+  if( mp->status2 & 1 && mp->status2 == *mp->status2_p && abs( mp->actual_pos_cnts - *mp->actual_pos_cnts_p) > 256) {
     lslogging_log_message( "Instantaneous change: %s old status1: %0x, new status1: %0x, old status2: %0x, new status2: %0x, old cnts: %0x, new cnts: %0x",
 			   mp->name, mp->status1, *mp->status1_p, mp->status2, *mp->status2_p, mp->actual_pos_cnts, *mp->actual_pos_cnts_p);
 
@@ -1247,6 +1247,12 @@ void lspmac_pmacmotor_read(
     return;
   }
 
+
+  // Send an event if inPosition has changed
+  //
+  if( (mp->status2 & 0x000001) != (*mp->status2_p & 0x000001)) {
+    lsevents_send_event( "%s %s", mp->name, (*mp->status2_p & 0x000001) ? "In Position" : "Moving");
+  }
 
   // Make local copies so we can inspect them in other threads
   // without having to grab the status mutex

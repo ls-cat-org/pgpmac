@@ -38,8 +38,8 @@ struct \hyperlink{structlspg__seq__run__prep__struct}{lspg\_\-seq\_\-run\_\-prep
 \item 
 \#define \hyperlink{lspg_8c_a373e668840b4795ff9a71bc3f744d209}{LS\_\-PG\_\-STATE\_\-RECV}~4
 \item 
-\#define \hyperlink{lspg_8c_a08fe83fe8226002ee8b80ce0a914fd11}{LS\_\-PG\_\-QUERY\_\-QUEUE\_\-LENGTH}~16318
-\begin{DoxyCompactList}\small\item\em Why such a long queue? you might ask. \item\end{DoxyCompactList}\end{DoxyCompactItemize}
+\#define \hyperlink{lspg_8c_a08fe83fe8226002ee8b80ce0a914fd11}{LS\_\-PG\_\-QUERY\_\-QUEUE\_\-LENGTH}~256
+\begin{DoxyCompactList}\small\item\em Queue length should be long enough that we do not ordinarly bump into the end We should be safe as long as the thread the adds stuff to the queue is not the one that removes it. \item\end{DoxyCompactList}\end{DoxyCompactItemize}
 \subsection*{Typedefs}
 \begin{DoxyCompactItemize}
 \item 
@@ -64,10 +64,14 @@ void \hyperlink{lspg_8c_a3847589e641f7e16a0cd68ef30e37cca}{lspg\_\-query\_\-repl
 \begin{DoxyCompactList}\small\item\em Return the next item in the reply queue but don't pop it since we may need it more than once. \item\end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_\-query\_\-push} (void($\ast$cb)(\hyperlink{structlspgQueryQueueStruct}{lspg\_\-query\_\-queue\_\-t} $\ast$, PGresult $\ast$), char $\ast$fmt,...)
 \begin{DoxyCompactList}\small\item\em Place a query on the queue. \item\end{DoxyCompactList}\item 
+char $\ast$$\ast$ \hyperlink{lspg_8c_a46f23ae999129d6fd5712d7975b99aed}{lspg\_\-array2ptrs} (char $\ast$a)
+\begin{DoxyCompactList}\small\item\em returns a null terminated list of strings parsed from postgresql array \item\end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_a329a7fdfa5025a403ea2779e178fd3ed}{lspg\_\-init\_\-motors\_\-cb} (\hyperlink{structlspgQueryQueueStruct}{lspg\_\-query\_\-queue\_\-t} $\ast$qqp, PGresult $\ast$pgr)
 \begin{DoxyCompactList}\small\item\em Motor initialization callback. \item\end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_af34559ab5624e1e68085dbcd9410c692}{lspg\_\-zoom\_\-lut\_\-cb} (\hyperlink{structlspgQueryQueueStruct}{lspg\_\-query\_\-queue\_\-t} $\ast$qqp, PGresult $\ast$pgr)
 \begin{DoxyCompactList}\small\item\em Zoom motor look up table callback. \item\end{DoxyCompactList}\item 
+void \hyperlink{lspg_8c_a71db585552ea3f58a1c9ab3fbe62bb79}{lspg\_\-scint\_\-lut\_\-cb} (\hyperlink{structlspgQueryQueueStruct}{lspg\_\-query\_\-queue\_\-t} $\ast$qqp, PGresult $\ast$pgr)
+\item 
 void \hyperlink{lspg_8c_ac5d5d512350a9ba346635e2415d7c3d5}{lspg\_\-flight\_\-lut\_\-cb} (\hyperlink{structlspgQueryQueueStruct}{lspg\_\-query\_\-queue\_\-t} $\ast$qqp, PGresult $\ast$pgr)
 \begin{DoxyCompactList}\small\item\em Front Light Lookup table query callback Install the lookup table for the Front Light. \item\end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_a6f5fa5727f2876f8b9370110a92afa50}{lspg\_\-blight\_\-lut\_\-cb} (\hyperlink{structlspgQueryQueueStruct}{lspg\_\-query\_\-queue\_\-t} $\ast$qqp, PGresult $\ast$pgr)
@@ -132,6 +136,16 @@ void \hyperlink{lspg_8c_a4253474d4dd305aec0afdd5552b3ddd5}{lspg\_\-seq\_\-run\_\
 \begin{DoxyCompactList}\small\item\em Convinence function to call seq run prep. \item\end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_a8184824f2b71b1d35141d7922ca69cd7}{lspg\_\-getcenter\_\-cb} (\hyperlink{structlspgQueryQueueStruct}{lspg\_\-query\_\-queue\_\-t} $\ast$qqp, PGresult $\ast$pgr)
 \begin{DoxyCompactList}\small\item\em TODO: implement getcenter code. \item\end{DoxyCompactList}\item 
+void \hyperlink{lspg_8c_ad31db17587a02302ac4e40fb7d260b1b}{lspg\_\-getcenter\_\-init} ()
+\begin{DoxyCompactList}\small\item\em Initialize getcenter object. \item\end{DoxyCompactList}\item 
+void \hyperlink{lspg_8c_a6f7cd0a06f6a266ef65b3604cf33d6c4}{lspg\_\-getcenter\_\-call} ()
+\begin{DoxyCompactList}\small\item\em Request a getcenter query. \item\end{DoxyCompactList}\item 
+void \hyperlink{lspg_8c_a3e0e4b3cb9fa03961ee0c104e0b06754}{lspg\_\-getcenter\_\-wait} ()
+\begin{DoxyCompactList}\small\item\em Wait for a getcenter query to return. \item\end{DoxyCompactList}\item 
+void \hyperlink{lspg_8c_a7c678553b44c874d08ec9966ed7bb1c0}{lspg\_\-getcenter\_\-done} ()
+\begin{DoxyCompactList}\small\item\em Done with getcenter query. \item\end{DoxyCompactList}\item 
+void \hyperlink{lspg_8c_a523b492d9cd4970853eabee2d3c31578}{lspg\_\-getcenter\_\-all} ()
+\begin{DoxyCompactList}\small\item\em Convenience function to complete synchronous getcenter query. \item\end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_aeda8dad89b03d7d61cc994dd63ee5db6}{lspg\_\-nextaction\_\-cb} (\hyperlink{structlspgQueryQueueStruct}{lspg\_\-query\_\-queue\_\-t} $\ast$qqp, PGresult $\ast$pgr)
 \begin{DoxyCompactList}\small\item\em Queue the next MD2 instruction. \item\end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_a1e11f525ca0f9ac9ab71f9fbe983c42b}{lspg\_\-cmd\_\-cb} (\hyperlink{structlspgQueryQueueStruct}{lspg\_\-query\_\-queue\_\-t} $\ast$qqp, PGresult $\ast$pgr)
@@ -161,10 +175,14 @@ void \hyperlink{lspg_8c_a1adfdb5ca9fdb5060849d726bf540117}{lspg\_\-run} ()
 \item 
 static int \hyperlink{lspg_8c_a4937baac0cc78ea306d58b5f027867f1}{ls\_\-pg\_\-state} = LS\_\-PG\_\-STATE\_\-INIT
 \begin{DoxyCompactList}\small\item\em State of the lspg state machine. \item\end{DoxyCompactList}\item 
+static struct timeval lspg\_\-time\_\-sent \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}
+\begin{DoxyCompactList}\small\item\em used to ensure we do not inundate the db server with connection requests \item\end{DoxyCompactList}\item 
 static pthread\_\-t \hyperlink{lspg_8c_a04eb0cda0d5e5afeae7c393b51689765}{lspg\_\-thread}
 \begin{DoxyCompactList}\small\item\em our worker thread \item\end{DoxyCompactList}\item 
-static pthread\_\-mutex\_\-t \hyperlink{lspg_8c_a3d49c5147ca0e5634c382ef71c4ae24e}{pg\_\-queue\_\-mutex}
+static pthread\_\-mutex\_\-t \hyperlink{lspg_8c_aed46a94106c583796e3a8ca0e89aa8e4}{lspg\_\-queue\_\-mutex}
 \begin{DoxyCompactList}\small\item\em keep the queue from getting tangled \item\end{DoxyCompactList}\item 
+static pthread\_\-cond\_\-t \hyperlink{lspg_8c_a61a308b6a37afd645beb422653b95baa}{lspg\_\-queue\_\-cond}
+\begin{DoxyCompactList}\small\item\em keeps the queue from overflowing \item\end{DoxyCompactList}\item 
 static struct pollfd \hyperlink{lspg_8c_af3f897b8ffa020ca54289bc5b28cb64d}{lspgfd}
 \begin{DoxyCompactList}\small\item\em our poll info \item\end{DoxyCompactList}\item 
 static \hyperlink{structlspgQueryQueueStruct}{lspg\_\-query\_\-queue\_\-t} \hyperlink{lspg_8c_a357d9d98f0b8c9625ccebcebfcdce955}{lspg\_\-query\_\-queue} \mbox{[}LS\_\-PG\_\-QUERY\_\-QUEUE\_\-LENGTH\mbox{]}
@@ -183,6 +201,8 @@ static PostgresPollingStatusType \hyperlink{lspg_8c_a06c5a937e41a6c706a247777642
 \begin{DoxyCompactList}\small\item\em Used to determine state while reconnecting. \item\end{DoxyCompactList}\item 
 \hyperlink{structlspg__nextshot__struct}{lspg\_\-nextshot\_\-t} \hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_\-nextshot}
 \begin{DoxyCompactList}\small\item\em the nextshot object \item\end{DoxyCompactList}\item 
+\hyperlink{structlspg__getcenter__struct}{lspg\_\-getcenter\_\-t} \hyperlink{lspg_8c_a7ef8a09203117578c9b2ce4719519f36}{lspg\_\-getcenter}
+\begin{DoxyCompactList}\small\item\em the getcenter object \item\end{DoxyCompactList}\item 
 static \hyperlink{structlspg__wait__for__detector__struct}{lspg\_\-wait\_\-for\_\-detector\_\-t} \hyperlink{lspg_8c_a0dfc8d0410cd2d7f7da7a70d3ef88e58}{lspg\_\-wait\_\-for\_\-detector}
 \begin{DoxyCompactList}\small\item\em Instance of the detector timing object. \item\end{DoxyCompactList}\item 
 static \hyperlink{structlspg__lock__diffractometer__struct}{lspg\_\-lock\_\-diffractometer\_\-t} \hyperlink{lspg_8c_aaae7ce3ecd7d54a9e46c41d7a742a454}{lspg\_\-lock\_\-diffractometer}
@@ -227,13 +247,13 @@ Definition in file \hyperlink{lspg_8c_source}{lspg.c}.
 \hypertarget{lspg_8c_a08fe83fe8226002ee8b80ce0a914fd11}{
 \index{lspg.c@{lspg.c}!LS\_\-PG\_\-QUERY\_\-QUEUE\_\-LENGTH@{LS\_\-PG\_\-QUERY\_\-QUEUE\_\-LENGTH}}
 \index{LS\_\-PG\_\-QUERY\_\-QUEUE\_\-LENGTH@{LS\_\-PG\_\-QUERY\_\-QUEUE\_\-LENGTH}!lspg.c@{lspg.c}}
-\subsubsection[{LS\_\-PG\_\-QUERY\_\-QUEUE\_\-LENGTH}]{\setlength{\rightskip}{0pt plus 5cm}\#define LS\_\-PG\_\-QUERY\_\-QUEUE\_\-LENGTH~16318}}
+\subsubsection[{LS\_\-PG\_\-QUERY\_\-QUEUE\_\-LENGTH}]{\setlength{\rightskip}{0pt plus 5cm}\#define LS\_\-PG\_\-QUERY\_\-QUEUE\_\-LENGTH~256}}
 \label{lspg_8c_a08fe83fe8226002ee8b80ce0a914fd11}
 
 
-Why such a long queue? you might ask. A huge queue is used here to insure that we don't have to worry too much about over running it. Typically we'll be adding a few queries at a time (for example, to initialize the motors) but not much more than that. When we over run the queue we'll need to look deeply into the root cause as something has gone terribly wrong. 
+Queue length should be long enough that we do not ordinarly bump into the end We should be safe as long as the thread the adds stuff to the queue is not the one that removes it. (And we can tolerate the adding thread being paused.) 
 
-Definition at line 61 of file lspg.c.\hypertarget{lspg_8c_aaf1dd8ba4dafb91c296554c4cbf312e3}{
+Definition at line 60 of file lspg.c.\hypertarget{lspg_8c_aaf1dd8ba4dafb91c296554c4cbf312e3}{
 \index{lspg.c@{lspg.c}!LS\_\-PG\_\-STATE\_\-IDLE@{LS\_\-PG\_\-STATE\_\-IDLE}}
 \index{LS\_\-PG\_\-STATE\_\-IDLE@{LS\_\-PG\_\-STATE\_\-IDLE}!lspg.c@{lspg.c}}
 \subsubsection[{LS\_\-PG\_\-STATE\_\-IDLE}]{\setlength{\rightskip}{0pt plus 5cm}\#define LS\_\-PG\_\-STATE\_\-IDLE~1}}
@@ -330,6 +350,139 @@ Data collection running object. \hypertarget{lspg_8c_a6f273a499bf316de95df3816a9
 Object that implements detector / spindle timing We use database locks for exposure control and this implements the md2 portion of this handshake. 
 
 \subsection{Function Documentation}
+\hypertarget{lspg_8c_a46f23ae999129d6fd5712d7975b99aed}{
+\index{lspg.c@{lspg.c}!lspg\_\-array2ptrs@{lspg\_\-array2ptrs}}
+\index{lspg\_\-array2ptrs@{lspg\_\-array2ptrs}!lspg.c@{lspg.c}}
+\subsubsection[{lspg\_\-array2ptrs}]{\setlength{\rightskip}{0pt plus 5cm}char$\ast$$\ast$ lspg\_\-array2ptrs (char $\ast$ {\em a})}}
+\label{lspg_8c_a46f23ae999129d6fd5712d7975b99aed}
+
+
+returns a null terminated list of strings parsed from postgresql array 
+
+Definition at line 165 of file lspg.c.
+
+
+\begin{DoxyCode}
+165                                  {
+166   char **rtn, *sp, *acums;
+167   int i, n, inquote, havebackslash, rtni;;
+168   int mxsz;
+169   
+170   inquote       = 0;
+171   havebackslash = 0;
+172 
+173   // Despense with the null input condition before we complicate the code below
+174   if( a == NULL || a[0] == 0)
+175     return NULL;
+176 
+177   // Count the maximum number of strings
+178   // Actual number will be less if there are quoted commas
+179   //
+180   n = 1;
+181   for( i=0; a[i]; i++) {
+182     if( a[i] == ',')
+183       n++;
+184   }
+185   //
+186   // The maximum size of any string is the length of a (+1)
+187   //
+188   mxsz = strlen(a) + 1;
+189 
+190   // This is the accumulation string to make up the array elements
+191   acums = (char *)calloc( mxsz, sizeof( char));
+192   if( acums == NULL) {
+193     // TODO: print or otherwise log this condition
+194     // out of memory
+195     exit( 1);
+196   }
+197   
+198   //
+199   // allocate storage for the pointer array and the null terminator
+200   //
+201   rtn = (char **)calloc( n+1, sizeof( char *));
+202   if( rtn == NULL) {
+203     // TODO: print or otherwise log this condition
+204     // out of memory
+205     exit( 1);
+206   }
+207   rtni = 0;
+208   
+209   lslogging_log_message( "lspg_array2ptrs: enter with %s", a);
+210 
+211 
+212   // Go through and create the individual strings
+213   sp = acums;
+214   *sp = 0;
+215   if( a[0] != '{') {
+216     // oh no!  This isn't an array after all!
+217     // Zounds!
+218     return NULL;
+219   }
+220   inquote = 0;
+221   havebackslash = 0;
+222   for( i=1; a[i] != 0; i++) {
+223     switch( a[i]) {
+224     case '"':
+225       if( havebackslash) {
+226         // a quoted quote.  Cool
+227         //
+228         *(sp++) = a[i];
+229         *sp = 0;
+230         havebackslash = 0;
+231       } else {
+232         // Toggle the flag
+233         inquote = 1 - inquote;
+234       }
+235       break;
+236 
+237     case '\\':
+238       if( havebackslash) {
+239         *(sp++) = a[i];
+240         *sp = 0;
+241         havebackslash = 0;
+242       } else {
+243         havebackslash = 1;
+244       }
+245       break;
+246 
+247     case ',':
+248       if( inquote || havebackslash) {
+249         *(sp++) = a[i];
+250         *sp = 0;
+251         havebackslash = 0;
+252       } else {
+253         rtn[rtni++] = strdup( acums);
+254         sp = acums;
+255       }
+256       break;
+257       
+258     case '}':
+259       if( inquote || havebackslash) {
+260         *(sp++) = a[i];
+261         *sp = 0;
+262         havebackslash = 0;
+263       } else {
+264         rtn[rtni++] = strdup( acums);
+265         rtn[rtni]   = NULL;
+266         return( rtn);
+267       }
+268       break;
+269 
+270     default:
+271       *(sp++) = a[i];
+272       *sp = 0;
+273       havebackslash = 0;
+274     }
+275   }
+276   //
+277   // Getting here means the final '}' was missing
+278   // Probably we should throw an error or log it or something.
+279   //
+280   rtn[rtni++] = strdup( acums);
+281   rtn[rtni]   = NULL;
+282   return( rtn);
+283 }
+\end{DoxyCode}
 \hypertarget{lspg_8c_a6f5fa5727f2876f8b9370110a92afa50}{
 \index{lspg.c@{lspg.c}!lspg\_\-blight\_\-lut\_\-cb@{lspg\_\-blight\_\-lut\_\-cb}}
 \index{lspg\_\-blight\_\-lut\_\-cb@{lspg\_\-blight\_\-lut\_\-cb}!lspg.c@{lspg.c}}
@@ -342,33 +495,30 @@ Back Light Lookup Table Callback Install the lookup table for the Back Light.
 \item[\mbox{$\leftarrow$} {\em qqp}]Our query \item[\mbox{$\leftarrow$} {\em pgr}]The query's result \end{DoxyParams}
 
 
-Definition at line 278 of file lspg.c.
+Definition at line 421 of file lspg.c.
 
 
 \begin{DoxyCode}
-281                           {
-282   int i;
-283   
-284   pthread_mutex_lock( &(blight->mutex));
-285 
-286   blight->nlut = PQntuples( pgr)/2;
-287   blight->lut  = calloc( 2*blight->nlut, sizeof(double));
-288   if( blight->lut == NULL) {
-289     wprintw( term_output, "\nOut of memmory (lspg_blight_lut_cb)");
-290     wnoutrefresh( term_output);
-291     wnoutrefresh( term_output);
-292     doupdate();
-293     pthread_mutex_unlock( &(blight->mutex));
-294     return;
-295   }
-296   
-297   for( i=0; i<PQntuples( pgr); i++) {
-298     blight->lut[i] = strtod( PQgetvalue( pgr, i, 0), NULL);
-299   }
-300 
-301   pthread_mutex_unlock( &(blight->mutex));
-302 
-303 }
+424                           {
+425   int i;
+426   
+427   pthread_mutex_lock( &(blight->mutex));
+428 
+429   blight->nlut = PQntuples( pgr)/2;
+430   blight->lut  = calloc( 2*blight->nlut, sizeof(double));
+431   if( blight->lut == NULL) {
+432     lslogging_log_message( "Out of memmory (lspg_blight_lut_cb)");
+433     pthread_mutex_unlock( &(blight->mutex));
+434     return;
+435   }
+436   
+437   for( i=0; i<PQntuples( pgr); i++) {
+438     blight->lut[i] = strtod( PQgetvalue( pgr, i, 0), NULL);
+439   }
+440 
+441   pthread_mutex_unlock( &(blight->mutex));
+442 
+443 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_a1e11f525ca0f9ac9ab71f9fbe983c42b}{
 \index{lspg.c@{lspg.c}!lspg\_\-cmd\_\-cb@{lspg\_\-cmd\_\-cb}}
@@ -382,33 +532,33 @@ Send strings directly to PMAC queue.
 \item[\mbox{$\leftarrow$} {\em qqp}]Our query \item[\mbox{$\leftarrow$} {\em pgr}]Our result \end{DoxyParams}
 
 
-Definition at line 895 of file lspg.c.
+Definition at line 1120 of file lspg.c.
 
 
 \begin{DoxyCode}
-898                    {
-899   //
-900   // Call back funciton assumes query results in zero or more commands to send to
+1123                    {
+1124   //
+1125   // Call back funciton assumes query results in zero or more commands to send to
        the PMAC
-901   //
-902   int i;
-903   char *sp;
-904   
-905   for( i=0; i<PQntuples( pgr); i++) {
-906     sp = PQgetvalue( pgr, i, 0);
-907     if( sp != NULL && *sp != 0) {
-908       lspmac_SockSendline( sp);
-909       //
-910       // Keep asking for more until
-911       // there are no commands left
-912       // 
-913       // This should solve a potential problem where
-914       // more than one command is put on the queue for a given notify.
-915       //
-916       lspg_query_push( lspg_cmd_cb, "select pmac.md2_queue_next()");
-917     }
-918   }
-919 }
+1126   //
+1127   int i;
+1128   char *sp;
+1129   
+1130   for( i=0; i<PQntuples( pgr); i++) {
+1131     sp = PQgetvalue( pgr, i, 0);
+1132     if( sp != NULL && *sp != 0) {
+1133       lspmac_SockSendline( sp);
+1134       //
+1135       // Keep asking for more until
+1136       // there are no commands left
+1137       // 
+1138       // This should solve a potential problem where
+1139       // more than one command is put on the queue for a given notify.
+1140       //
+1141       lspg_query_push( lspg_cmd_cb, "select pmac.md2_queue_next()");
+1142     }
+1143   }
+1144 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_ac5d5d512350a9ba346635e2415d7c3d5}{
 \index{lspg.c@{lspg.c}!lspg\_\-flight\_\-lut\_\-cb@{lspg\_\-flight\_\-lut\_\-cb}}
@@ -422,33 +572,30 @@ Front Light Lookup table query callback Install the lookup table for the Front L
 \item[\mbox{$\leftarrow$} {\em qqp}]Our query \item[\mbox{$\leftarrow$} {\em pgr}]Our result object \end{DoxyParams}
 
 
-Definition at line 247 of file lspg.c.
+Definition at line 393 of file lspg.c.
 
 
 \begin{DoxyCode}
-250                           {
-251   int i;
-252   
-253   pthread_mutex_lock( &(flight->mutex));
-254 
-255   flight->nlut = PQntuples( pgr)/2;
-256   flight->lut  = calloc( 2*flight->nlut, sizeof(double));
-257   if( flight->lut == NULL) {
-258     wprintw( term_output, "\nOut of memmory (lspg_flight_lut_cb)");
-259     wnoutrefresh( term_output);
-260     wnoutrefresh( term_output);
-261     doupdate();
-262     pthread_mutex_unlock( &(flight->mutex));
-263     return;
-264   }
-265   
-266   for( i=0; i<PQntuples( pgr); i++) {
-267     flight->lut[i] = strtod( PQgetvalue( pgr, i, 0), NULL);
-268   }
-269 
-270   pthread_mutex_unlock( &(flight->mutex));
-271 
-272 }
+396                           {
+397   int i;
+398   
+399   pthread_mutex_lock( &(flight->mutex));
+400 
+401   flight->nlut = PQntuples( pgr)/2;
+402   flight->lut  = calloc( 2*flight->nlut, sizeof(double));
+403   if( flight->lut == NULL) {
+404     lslogging_log_message( "Out of memmory (lspg_flight_lut_cb)");
+405     pthread_mutex_unlock( &(flight->mutex));
+406     return;
+407   }
+408   
+409   for( i=0; i<PQntuples( pgr); i++) {
+410     flight->lut[i] = strtod( PQgetvalue( pgr, i, 0), NULL);
+411   }
+412 
+413   pthread_mutex_unlock( &(flight->mutex));
+414 
+415 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_af6485ac1749c5de3008dd0e0badaa09c}{
 \index{lspg.c@{lspg.c}!lspg\_\-flush@{lspg\_\-flush}}
@@ -459,43 +606,78 @@ Definition at line 247 of file lspg.c.
 
 Flush psql output buffer (ie, send the query). 
 
-Definition at line 924 of file lspg.c.
+Definition at line 1149 of file lspg.c.
 
 
 \begin{DoxyCode}
-924                   {
-925   int err;
-926 
-927   err = PQflush( q);
-928   switch( err) {
-929   case -1:
-930     // an error occured
-931 
-932     pthread_mutex_lock( &ncurses_mutex);
-933     wprintw( term_output, "\nflush failed: %s\n", PQerrorMessage( q));
-934     wnoutrefresh( term_output);
-935     wnoutrefresh( term_input);
-936     doupdate();
-937     pthread_mutex_unlock( &ncurses_mutex);
-938 
-939     ls_pg_state = LS_PG_STATE_IDLE;
-940     //
-941     // We should probably reset the connection and start from scratch.  Probably 
+1149                   {
+1150   int err;
+1151 
+1152   err = PQflush( q);
+1153   switch( err) {
+1154   case -1:
+1155     // an error occured
+1156 
+1157     lslogging_log_message( "flush failed: %s", PQerrorMessage( q));
+1158 
+1159     ls_pg_state = LS_PG_STATE_IDLE;
+1160     //
+1161     // We should probably reset the connection and start from scratch.  Probably 
       the connection died.
-942     //
-943     break;
-944           
-945   case 0:
-946     // goodness and joy.
-947     ls_pg_state = LS_PG_STATE_RECV;
-948     break;
-949 
-950   case 1:
-951     // more sending to do
-952     ls_pg_state = LS_PG_STATE_SEND_FLUSH;
-953     break;
-954   }
-955 }
+1162     //
+1163     break;
+1164           
+1165   case 0:
+1166     // goodness and joy.
+1167     ls_pg_state = LS_PG_STATE_RECV;
+1168     break;
+1169 
+1170   case 1:
+1171     // more sending to do
+1172     ls_pg_state = LS_PG_STATE_SEND_FLUSH;
+1173     break;
+1174   }
+1175 }
+\end{DoxyCode}
+\hypertarget{lspg_8c_a523b492d9cd4970853eabee2d3c31578}{
+\index{lspg.c@{lspg.c}!lspg\_\-getcenter\_\-all@{lspg\_\-getcenter\_\-all}}
+\index{lspg\_\-getcenter\_\-all@{lspg\_\-getcenter\_\-all}!lspg.c@{lspg.c}}
+\subsubsection[{lspg\_\-getcenter\_\-all}]{\setlength{\rightskip}{0pt plus 5cm}void lspg\_\-getcenter\_\-all ()}}
+\label{lspg_8c_a523b492d9cd4970853eabee2d3c31578}
+
+
+Convenience function to complete synchronous getcenter query. 
+
+Definition at line 1085 of file lspg.c.
+
+
+\begin{DoxyCode}
+1085                           {
+1086   lspg_getcenter_call();
+1087   lspg_getcenter_wait();
+1088   lspg_getcenter_done();
+1089 }
+\end{DoxyCode}
+\hypertarget{lspg_8c_a6f7cd0a06f6a266ef65b3604cf33d6c4}{
+\index{lspg.c@{lspg.c}!lspg\_\-getcenter\_\-call@{lspg\_\-getcenter\_\-call}}
+\index{lspg\_\-getcenter\_\-call@{lspg\_\-getcenter\_\-call}!lspg.c@{lspg.c}}
+\subsubsection[{lspg\_\-getcenter\_\-call}]{\setlength{\rightskip}{0pt plus 5cm}void lspg\_\-getcenter\_\-call ()}}
+\label{lspg_8c_a6f7cd0a06f6a266ef65b3604cf33d6c4}
+
+
+Request a getcenter query. 
+
+Definition at line 1061 of file lspg.c.
+
+
+\begin{DoxyCode}
+1061                            {
+1062   pthread_mutex_lock( &lspg_getcenter.mutex);
+1063   lspg_getcenter.new_value_ready = 0;
+1064   pthread_mutex_unlock( &lspg_getcenter.mutex);
+1065 
+1066   lspg_query_push( lspg_getcenter_cb, "SELECT * FROM px.getcenter2()");
+1067 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_a8184824f2b71b1d35141d7922ca69cd7}{
 \index{lspg.c@{lspg.c}!lspg\_\-getcenter\_\-cb@{lspg\_\-getcenter\_\-cb}}
@@ -506,16 +688,119 @@ Definition at line 924 of file lspg.c.
 
 TODO: implement getcenter code. 
 
-Definition at line 856 of file lspg.c.
+Definition at line 996 of file lspg.c.
 
 
 \begin{DoxyCode}
-856                                                                 {
-857   int theZoom;
-858   double dxp, dyp, z, b;
-859   // Need camera pixel height and pixel width!
-860 
-861 }
+996                                                                 {
+997   static int
+998     zoom_c, dcx_c, dcy_c, dax_c, day_c, daz_c;
+999 
+1000   pthread_mutex_lock( &(lspg_getcenter.mutex));
+1001   
+1002   lspg_getcenter.no_rows_returned = PQntuples( pgr) <= 0;
+1003   if( lspg_getcenter.no_rows_returned) {
+1004     //
+1005     // No particular reason this path should ever be taken
+1006     // but if we don't get rows then we had better not move anything.
+1007     //
+1008     lspg_getcenter.new_value_ready = 1;
+1009     pthread_cond_signal( &(lspg_getcenter.cond));
+1010     pthread_mutex_unlock( &(lspg_getcenter.mutex));
+1011     return;
+1012   }
+1013 
+1014   zoom_c = PQfnumber( pgr, "zoom");
+1015   dcx_c  = PQfnumber( pgr, "dcx");
+1016   dcy_c  = PQfnumber( pgr, "dcy");
+1017   dax_c  = PQfnumber( pgr, "dax");
+1018   day_c  = PQfnumber( pgr, "day");
+1019   daz_c  = PQfnumber( pgr, "daz");
+1020 
+1021   lspg_getcenter.zoom_isnull = PQgetisnull( pgr, 0, zoom_c);
+1022   if( lspg_getcenter.zoom_isnull == 0)
+1023     lspg_getcenter.zoom = atoi( PQgetvalue( pgr, 0, zoom_c));
+1024 
+1025   lspg_getcenter.dcx_isnull = PQgetisnull( pgr, 0, dcx_c);
+1026   if( lspg_getcenter.dcx_isnull == 0)
+1027     lspg_getcenter.dcx = atof( PQgetvalue( pgr, 0, dcx_c));
+1028 
+1029   lspg_getcenter.dcy_isnull = PQgetisnull( pgr, 0, dcy_c);
+1030   if( lspg_getcenter.dcy_isnull == 0)
+1031     lspg_getcenter.dcy = atof( PQgetvalue( pgr, 0, dcy_c));
+1032 
+1033   lspg_getcenter.dax_isnull = PQgetisnull( pgr, 0, dax_c);
+1034   if( lspg_getcenter.dax_isnull == 0)
+1035     lspg_getcenter.dax = atof( PQgetvalue( pgr, 0, dax_c));
+1036 
+1037   lspg_getcenter.day_isnull = PQgetisnull( pgr, 0, day_c);
+1038   if( lspg_getcenter.day_isnull == 0)
+1039     lspg_getcenter.day = atof( PQgetvalue( pgr, 0, day_c));
+1040 
+1041   lspg_getcenter.daz_isnull = PQgetisnull( pgr, 0, daz_c);
+1042   if( lspg_getcenter.daz_isnull == 0)
+1043     lspg_getcenter.daz = atof( PQgetvalue( pgr, 0, daz_c));
+1044 
+1045   lspg_getcenter.new_value_ready = 1;
+1046 
+1047   pthread_cond_signal( &(lspg_getcenter.cond));
+1048   pthread_mutex_unlock( &(lspg_getcenter.mutex));
+1049 }
+\end{DoxyCode}
+\hypertarget{lspg_8c_a7c678553b44c874d08ec9966ed7bb1c0}{
+\index{lspg.c@{lspg.c}!lspg\_\-getcenter\_\-done@{lspg\_\-getcenter\_\-done}}
+\index{lspg\_\-getcenter\_\-done@{lspg\_\-getcenter\_\-done}!lspg.c@{lspg.c}}
+\subsubsection[{lspg\_\-getcenter\_\-done}]{\setlength{\rightskip}{0pt plus 5cm}void lspg\_\-getcenter\_\-done ()}}
+\label{lspg_8c_a7c678553b44c874d08ec9966ed7bb1c0}
+
+
+Done with getcenter query. 
+
+Definition at line 1079 of file lspg.c.
+
+
+\begin{DoxyCode}
+1079                            {
+1080   pthread_mutex_unlock( &(lspg_getcenter.mutex));
+1081 }
+\end{DoxyCode}
+\hypertarget{lspg_8c_ad31db17587a02302ac4e40fb7d260b1b}{
+\index{lspg.c@{lspg.c}!lspg\_\-getcenter\_\-init@{lspg\_\-getcenter\_\-init}}
+\index{lspg\_\-getcenter\_\-init@{lspg\_\-getcenter\_\-init}!lspg.c@{lspg.c}}
+\subsubsection[{lspg\_\-getcenter\_\-init}]{\setlength{\rightskip}{0pt plus 5cm}void lspg\_\-getcenter\_\-init ()}}
+\label{lspg_8c_ad31db17587a02302ac4e40fb7d260b1b}
+
+
+Initialize getcenter object. 
+
+Definition at line 1053 of file lspg.c.
+
+
+\begin{DoxyCode}
+1053                            {
+1054   memset( &lspg_getcenter, 0, sizeof( lspg_getcenter));
+1055   pthread_mutex_init( &(lspg_getcenter.mutex), NULL);
+1056   pthread_cond_init( &(lspg_getcenter.cond), NULL);
+1057 }
+\end{DoxyCode}
+\hypertarget{lspg_8c_a3e0e4b3cb9fa03961ee0c104e0b06754}{
+\index{lspg.c@{lspg.c}!lspg\_\-getcenter\_\-wait@{lspg\_\-getcenter\_\-wait}}
+\index{lspg\_\-getcenter\_\-wait@{lspg\_\-getcenter\_\-wait}!lspg.c@{lspg.c}}
+\subsubsection[{lspg\_\-getcenter\_\-wait}]{\setlength{\rightskip}{0pt plus 5cm}void lspg\_\-getcenter\_\-wait ()}}
+\label{lspg_8c_a3e0e4b3cb9fa03961ee0c104e0b06754}
+
+
+Wait for a getcenter query to return. 
+
+Definition at line 1071 of file lspg.c.
+
+
+\begin{DoxyCode}
+1071                            {
+1072   pthread_mutex_lock( &(lspg_getcenter.mutex));
+1073   while( lspg_getcenter.new_value_ready == 0)
+1074     pthread_cond_wait( &(lspg_getcenter.cond), &(lspg_getcenter.mutex));
+1075 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_a8a77972df14166e05c94ed0792baa09b}{
 \index{lspg.c@{lspg.c}!lspg\_\-init@{lspg\_\-init}}
@@ -526,17 +811,19 @@ Definition at line 856 of file lspg.c.
 
 Initiallize the lspg module. 
 
-Definition at line 1451 of file lspg.c.
+Definition at line 1638 of file lspg.c.
 
 
 \begin{DoxyCode}
-1451                  {
-1452   pthread_mutex_init( &pg_queue_mutex, NULL);
-1453   lspg_nextshot_init();
-1454   lspg_wait_for_detector_init();
-1455   lspg_lock_diffractometer_init();
-1456   lspg_lock_detector_init();
-1457 }
+1638                  {
+1639   pthread_mutex_init( &lspg_queue_mutex, NULL);
+1640   pthread_cond_init( &lspg_queue_cond, NULL);
+1641   lspg_nextshot_init();
+1642   lspg_getcenter_init();
+1643   lspg_wait_for_detector_init();
+1644   lspg_lock_diffractometer_init();
+1645   lspg_lock_detector_init();
+1646 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_a329a7fdfa5025a403ea2779e178fd3ed}{
 \index{lspg.c@{lspg.c}!lspg\_\-init\_\-motors\_\-cb@{lspg\_\-init\_\-motors\_\-cb}}
@@ -550,56 +837,69 @@ Motor initialization callback.
 \item[\mbox{$\leftarrow$} {\em qqp}]The query queue item used to call us \item[\mbox{$\leftarrow$} {\em pgr}]The postgresql result object \end{DoxyParams}
 
 
-Definition at line 167 of file lspg.c.
+Definition at line 287 of file lspg.c.
 
 
 \begin{DoxyCode}
-170                            {
-171   int i, j;
-172   uint32_t  motor_number, motor_number_column, max_speed_column, max_accel_column
-      ;
-173   uint32_t units_column;
-174   uint32_t u2c_column;
-175   uint32_t format_column;
-176   char *sp;
-177   lspmac_motor_t *lsdp;
-178   
-179   motor_number_column    = PQfnumber( pgr, "mm_motor");
-180   units_column           = PQfnumber( pgr, "mm_unit");
-181   u2c_column             = PQfnumber( pgr, "mm_u2c");
-182   format_column          = PQfnumber( pgr, "mm_printf");
-183   max_speed_column = PQfnumber( pgr, "mm_max_speed");
-184   max_accel_column = PQfnumber( pgr, "mm_max_speed");
-185 
-186   if( motor_number_column == -1 || units_column == -1 || u2c_column == -1 || form
-      at_column == -1)
-187     return;
-188 
-189   for( i=0; i<PQntuples( pgr); i++) {
-190 
-191     motor_number = atoi(PQgetvalue( pgr, i, motor_number_column));
-192 
-193     lsdp = NULL;
-194     for( j=0; j<lspmac_nmotors; j++) {
-195       if( lspmac_motors[j].motor_num == motor_number) {
-196         lsdp = &(lspmac_motors[j]);
-197         lsdp->units = strdup( PQgetvalue( pgr, i, units_column));
-198         lsdp->format= strdup( PQgetvalue( pgr, i, format_column));
-199         lsdp->u2c   = atof(PQgetvalue( pgr, i, u2c_column));
-200         lsdp->max_speed = atof(PQgetvalue( pgr, i, max_speed_column));
-201         lsdp->max_accel = atof(PQgetvalue( pgr, i, max_accel_column));
-202         break;
-203       }
-204     }
-205     if( lsdp == NULL)
-206       continue;
-207       
-208 
-209     if( fabs(lsdp->u2c) <= 1.0e-9)
-210       lsdp->u2c = 1.0;
-211       
-212   }
-213 }
+290                            {
+291   int i, j;
+292   uint32_t  motor_number, motor_number_column, max_speed_column, max_accel_column
+      , home_column;
+293   uint32_t units_column, coord_column, name_column;
+294   uint32_t u2c_column;
+295   uint32_t format_column;
+296   uint32_t update_resolution_column;
+297   uint32_t update_format_column;
+298   char *sp;
+299   lspmac_motor_t *lsdp;
+300   
+301   name_column              = PQfnumber( pgr, "mm_name");
+302   if( name_column == -1)
+303     return;
+304 
+305   motor_number_column      = PQfnumber( pgr, "mm_motor");
+306   coord_column             = PQfnumber( pgr, "mm_coord");
+307   units_column             = PQfnumber( pgr, "mm_unit");
+308   u2c_column               = PQfnumber( pgr, "mm_u2c");
+309   format_column            = PQfnumber( pgr, "mm_printf");
+310   max_speed_column         = PQfnumber( pgr, "mm_max_speed");
+311   max_accel_column         = PQfnumber( pgr, "mm_max_speed");
+312   update_resolution_column = PQfnumber( pgr, "mm_update_resolution");
+313   update_format_column     = PQfnumber( pgr, "mm_update_format");
+314   home_column              = PQfnumber( pgr, "mm_home");
+315 
+316   for( i=0; i<PQntuples( pgr); i++) {
+317 
+318     lsdp = NULL;
+319     for( j=0; j<lspmac_nmotors; j++) {
+320       if( strcmp(lspmac_motors[j].name, PQgetvalue( pgr, i, name_column)) == 0) {
+      
+321         lsdp                    = &(lspmac_motors[j]);
+322         lsdp->motor_num         = atoi(PQgetvalue( pgr, i, motor_number_column));
+      
+323         lsdp->coord_num         = atoi( PQgetvalue( pgr, i, coord_column));
+324         lsdp->units             = strdup( PQgetvalue( pgr, i, units_column));
+325         lsdp->format            = strdup( PQgetvalue( pgr, i, format_column));
+326         lsdp->u2c               = atof(PQgetvalue( pgr, i, u2c_column));
+327         lsdp->max_speed         = atof(PQgetvalue( pgr, i, max_speed_column));
+328         lsdp->max_accel         = atof(PQgetvalue( pgr, i, max_accel_column));
+329         lsdp->update_resolution = atof(PQgetvalue( pgr, i, update_resolution_colu
+      mn));
+330         lsdp->update_format     = strdup( PQgetvalue( pgr, i, update_format_colum
+      n));
+331         lsdp->home              = lspg_array2ptrs( PQgetvalue( pgr, i, home_colum
+      n));
+332         lsdp->lspg_initialized  = 1;
+333         break;
+334       }
+335     }
+336     if( lsdp == NULL)
+337       continue;
+338 
+339     if( fabs(lsdp->u2c) <= 1.0e-9)
+340       lsdp->u2c = 1.0;
+341   }
+342 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_aff93d2f5ac31aa249a0bef40a3837c84}{
 \index{lspg.c@{lspg.c}!lspg\_\-lock\_\-detector\_\-all@{lspg\_\-lock\_\-detector\_\-all}}
@@ -610,15 +910,15 @@ Definition at line 167 of file lspg.c.
 
 Detector lock convinence function. 
 
-Definition at line 768 of file lspg.c.
+Definition at line 908 of file lspg.c.
 
 
 \begin{DoxyCode}
-768                               {
-769   lspg_lock_detector_call();
-770   lspg_lock_detector_wait();
-771   lspg_lock_detector_done();
-772 }
+908                               {
+909   lspg_lock_detector_call();
+910   lspg_lock_detector_wait();
+911   lspg_lock_detector_done();
+912 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_a5f71a20cc297684b2afe28e7bd8e8383}{
 \index{lspg.c@{lspg.c}!lspg\_\-lock\_\-detector\_\-call@{lspg\_\-lock\_\-detector\_\-call}}
@@ -629,17 +929,17 @@ Definition at line 768 of file lspg.c.
 
 Request (demand) a detector lock. 
 
-Definition at line 744 of file lspg.c.
+Definition at line 884 of file lspg.c.
 
 
 \begin{DoxyCode}
-744                                {
-745   pthread_mutex_lock( &(lspg_lock_detector.mutex));
-746   lspg_lock_detector.new_value_ready = 0;
-747   pthread_mutex_unlock( &(lspg_lock_detector.mutex));
-748 
-749   lspg_query_push( lspg_lock_detector_cb, "SELECT px.lock_detector()");
-750 }
+884                                {
+885   pthread_mutex_lock( &(lspg_lock_detector.mutex));
+886   lspg_lock_detector.new_value_ready = 0;
+887   pthread_mutex_unlock( &(lspg_lock_detector.mutex));
+888 
+889   lspg_query_push( lspg_lock_detector_cb, "SELECT px.lock_detector()");
+890 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_aa760191c2b443170cebbcbf5ea5345f3}{
 \index{lspg.c@{lspg.c}!lspg\_\-lock\_\-detector\_\-cb@{lspg\_\-lock\_\-detector\_\-cb}}
@@ -650,16 +950,16 @@ Definition at line 744 of file lspg.c.
 
 Callback for when the detector lock has be grabbed. 
 
-Definition at line 735 of file lspg.c.
+Definition at line 875 of file lspg.c.
 
 
 \begin{DoxyCode}
-735                                                                     {
-736   pthread_mutex_lock( &(lspg_lock_detector.mutex));
-737   lspg_lock_detector.new_value_ready = 1;
-738   pthread_cond_signal( &(lspg_lock_detector.cond));
-739   pthread_mutex_unlock( &(lspg_lock_detector.mutex));
-740 }
+875                                                                     {
+876   pthread_mutex_lock( &(lspg_lock_detector.mutex));
+877   lspg_lock_detector.new_value_ready = 1;
+878   pthread_cond_signal( &(lspg_lock_detector.cond));
+879   pthread_mutex_unlock( &(lspg_lock_detector.mutex));
+880 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_a1b567040693ff6e2932a2477045d75fa}{
 \index{lspg.c@{lspg.c}!lspg\_\-lock\_\-detector\_\-done@{lspg\_\-lock\_\-detector\_\-done}}
@@ -670,13 +970,13 @@ Definition at line 735 of file lspg.c.
 
 Finish waiting. 
 
-Definition at line 762 of file lspg.c.
+Definition at line 902 of file lspg.c.
 
 
 \begin{DoxyCode}
-762                                {
-763   pthread_mutex_unlock( &(lspg_lock_detector.mutex));
-764 }
+902                                {
+903   pthread_mutex_unlock( &(lspg_lock_detector.mutex));
+904 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_a0e9bbf847dadfe0d10830d67824d9be8}{
 \index{lspg.c@{lspg.c}!lspg\_\-lock\_\-detector\_\-init@{lspg\_\-lock\_\-detector\_\-init}}
@@ -687,15 +987,15 @@ Definition at line 762 of file lspg.c.
 
 Initialize detector lock object. 
 
-Definition at line 727 of file lspg.c.
+Definition at line 867 of file lspg.c.
 
 
 \begin{DoxyCode}
-727                                {
-728   lspg_lock_detector.new_value_ready = 0;
-729   pthread_mutex_init( &(lspg_lock_detector.mutex), NULL);
-730   pthread_cond_init(  &(lspg_lock_detector.cond),  NULL);
-731 }
+867                                {
+868   lspg_lock_detector.new_value_ready = 0;
+869   pthread_mutex_init( &(lspg_lock_detector.mutex), NULL);
+870   pthread_cond_init(  &(lspg_lock_detector.cond),  NULL);
+871 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_ad3d9c56bd3ca6bcc43db30872cc441cc}{
 \index{lspg.c@{lspg.c}!lspg\_\-lock\_\-detector\_\-wait@{lspg\_\-lock\_\-detector\_\-wait}}
@@ -706,15 +1006,15 @@ Definition at line 727 of file lspg.c.
 
 Wait for the detector lock. 
 
-Definition at line 754 of file lspg.c.
+Definition at line 894 of file lspg.c.
 
 
 \begin{DoxyCode}
-754                                {
-755   pthread_mutex_lock( &(lspg_lock_detector.mutex));
-756   while( lspg_lock_detector.new_value_ready == 0)
-757     pthread_cond_wait( &(lspg_lock_detector.cond), &(lspg_lock_detector.mutex));
-758 }
+894                                {
+895   pthread_mutex_lock( &(lspg_lock_detector.mutex));
+896   while( lspg_lock_detector.new_value_ready == 0)
+897     pthread_cond_wait( &(lspg_lock_detector.cond), &(lspg_lock_detector.mutex));
+898 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_a88b33e75c42197740b157a51ea726f21}{
 \index{lspg.c@{lspg.c}!lspg\_\-lock\_\-diffractometer\_\-all@{lspg\_\-lock\_\-diffractometer\_\-all}}
@@ -725,15 +1025,15 @@ Definition at line 754 of file lspg.c.
 
 Convience function that combines lock diffractometer calls. 
 
-Definition at line 709 of file lspg.c.
+Definition at line 849 of file lspg.c.
 
 
 \begin{DoxyCode}
-709                                     {
-710   lspg_lock_diffractometer_call();
-711   lspg_lock_diffractometer_wait();
-712   lspg_lock_diffractometer_all();
-713 }
+849                                     {
+850   lspg_lock_diffractometer_call();
+851   lspg_lock_diffractometer_wait();
+852   lspg_lock_diffractometer_all();
+853 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_ac5ebeb38e8e9926a52f024fe76201175}{
 \index{lspg.c@{lspg.c}!lspg\_\-lock\_\-diffractometer\_\-call@{lspg\_\-lock\_\-diffractometer\_\-call}}
@@ -744,18 +1044,18 @@ Definition at line 709 of file lspg.c.
 
 Request that the database grab the diffractometer lock. 
 
-Definition at line 685 of file lspg.c.
+Definition at line 825 of file lspg.c.
 
 
 \begin{DoxyCode}
-685                                      {
-686   pthread_mutex_lock( &(lspg_lock_diffractometer.mutex));
-687   lspg_lock_diffractometer.new_value_ready = 0;
-688   pthread_mutex_unlock( &(lspg_lock_diffractometer.mutex));
-689 
-690   lspg_query_push( lspg_lock_diffractometer_cb, "SELECT px.lock_diffractomter()")
+825                                      {
+826   pthread_mutex_lock( &(lspg_lock_diffractometer.mutex));
+827   lspg_lock_diffractometer.new_value_ready = 0;
+828   pthread_mutex_unlock( &(lspg_lock_diffractometer.mutex));
+829 
+830   lspg_query_push( lspg_lock_diffractometer_cb, "SELECT px.lock_diffractomter()")
       ;
-691 }
+831 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_aad4f378f37c0030634dafa0d9445d916}{
 \index{lspg.c@{lspg.c}!lspg\_\-lock\_\-diffractometer\_\-cb@{lspg\_\-lock\_\-diffractometer\_\-cb}}
@@ -766,16 +1066,16 @@ Definition at line 685 of file lspg.c.
 
 Callback routine for a lock diffractometer query. 
 
-Definition at line 676 of file lspg.c.
+Definition at line 816 of file lspg.c.
 
 
 \begin{DoxyCode}
-676                                                                           {
-677   pthread_mutex_lock( &(lspg_lock_diffractometer.mutex));
-678   lspg_lock_diffractometer.new_value_ready = 1;
-679   pthread_cond_signal( &(lspg_lock_diffractometer.cond));
-680   pthread_mutex_unlock( &(lspg_lock_diffractometer.mutex));
-681 }
+816                                                                           {
+817   pthread_mutex_lock( &(lspg_lock_diffractometer.mutex));
+818   lspg_lock_diffractometer.new_value_ready = 1;
+819   pthread_cond_signal( &(lspg_lock_diffractometer.cond));
+820   pthread_mutex_unlock( &(lspg_lock_diffractometer.mutex));
+821 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_a75aaf0b3fe33530062226c69a33ce821}{
 \index{lspg.c@{lspg.c}!lspg\_\-lock\_\-diffractometer\_\-done@{lspg\_\-lock\_\-diffractometer\_\-done}}
@@ -786,13 +1086,13 @@ Definition at line 676 of file lspg.c.
 
 Finish up the lock diffractometer call. 
 
-Definition at line 703 of file lspg.c.
+Definition at line 843 of file lspg.c.
 
 
 \begin{DoxyCode}
-703                                      {
-704   pthread_mutex_unlock( &(lspg_lock_diffractometer.mutex));
-705 }
+843                                      {
+844   pthread_mutex_unlock( &(lspg_lock_diffractometer.mutex));
+845 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_a39bb94f8e0d47702b2b920a3dee61ebc}{
 \index{lspg.c@{lspg.c}!lspg\_\-lock\_\-diffractometer\_\-init@{lspg\_\-lock\_\-diffractometer\_\-init}}
@@ -803,15 +1103,15 @@ Definition at line 703 of file lspg.c.
 
 initialize the diffractometer locking object 
 
-Definition at line 668 of file lspg.c.
+Definition at line 808 of file lspg.c.
 
 
 \begin{DoxyCode}
-668                                      {
-669   lspg_lock_diffractometer.new_value_ready = 0;
-670   pthread_mutex_init( &(lspg_lock_diffractometer.mutex), NULL);
-671   pthread_cond_init(  &(lspg_lock_diffractometer.cond), NULL);
-672 }
+808                                      {
+809   lspg_lock_diffractometer.new_value_ready = 0;
+810   pthread_mutex_init( &(lspg_lock_diffractometer.mutex), NULL);
+811   pthread_cond_init(  &(lspg_lock_diffractometer.cond), NULL);
+812 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_a8445e1dec753f2c517b87fcb9c5b5943}{
 \index{lspg.c@{lspg.c}!lspg\_\-lock\_\-diffractometer\_\-wait@{lspg\_\-lock\_\-diffractometer\_\-wait}}
@@ -822,16 +1122,16 @@ Definition at line 668 of file lspg.c.
 
 Wait for the diffractometer lock. 
 
-Definition at line 695 of file lspg.c.
+Definition at line 835 of file lspg.c.
 
 
 \begin{DoxyCode}
-695                                      {
-696   pthread_mutex_lock( &(lspg_lock_diffractometer.mutex));
-697   while( lspg_lock_diffractometer.new_value_ready == 0)
-698     pthread_cond_wait( &(lspg_lock_diffractometer.cond), &(
+835                                      {
+836   pthread_mutex_lock( &(lspg_lock_diffractometer.mutex));
+837   while( lspg_lock_diffractometer.new_value_ready == 0)
+838     pthread_cond_wait( &(lspg_lock_diffractometer.cond), &(
       lspg_lock_diffractometer.mutex));
-699 }
+839 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_ab52a8c8245bf6561f40c0f224fc07ff4}{
 \index{lspg.c@{lspg.c}!lspg\_\-next\_\-state@{lspg\_\-next\_\-state}}
@@ -842,59 +1142,59 @@ Definition at line 695 of file lspg.c.
 
 Implements our state machine Does not strictly only set the next state as it also calls some functions that, perhaps, alters the state mid-\/function. 
 
-Definition at line 1315 of file lspg.c.
+Definition at line 1507 of file lspg.c.
 
 
 \begin{DoxyCode}
-1315                        {
-1316   //
-1317   // connect to the database
-1318   //
-1319   if( q == NULL ||
-1320       ls_pg_state == LS_PG_STATE_INIT ||
-1321       ls_pg_state == LS_PG_STATE_RESET ||
-1322       ls_pg_state == LS_PG_STATE_INIT_POLL ||
-1323       ls_pg_state == LS_PG_STATE_RESET_POLL)
-1324     lspg_pg_connect( lspgfd);
-1325 
-1326 
-1327   if( ls_pg_state == LS_PG_STATE_IDLE && lspg_query_queue_on != 
+1507                        {
+1508   //
+1509   // connect to the database
+1510   //
+1511   if( q == NULL ||
+1512       ls_pg_state == LS_PG_STATE_INIT ||
+1513       ls_pg_state == LS_PG_STATE_RESET ||
+1514       ls_pg_state == LS_PG_STATE_INIT_POLL ||
+1515       ls_pg_state == LS_PG_STATE_RESET_POLL)
+1516     lspg_pg_connect( lspgfd);
+1517 
+1518 
+1519   if( ls_pg_state == LS_PG_STATE_IDLE && lspg_query_queue_on != 
       lspg_query_queue_off)
-1328     ls_pg_state = LS_PG_STATE_SEND;
-1329 
-1330   switch( ls_pg_state) {
-1331   case LS_PG_STATE_INIT_POLL:
-1332     if( lspg_connectPoll_response == PGRES_POLLING_WRITING)
-1333       lspgfd.events = POLLOUT;
-1334     else if( lspg_connectPoll_response == PGRES_POLLING_READING)
-1335       lspgfd.events = POLLIN;
-1336     else
-1337       lspgfd.events = 0;
-1338     break;
-1339       
-1340   case LS_PG_STATE_RESET_POLL:
-1341     if( lspg_resetPoll_response == PGRES_POLLING_WRITING)
-1342       lspgfd.events = POLLOUT;
-1343     else if( lspg_resetPoll_response == PGRES_POLLING_READING)
-1344       lspgfd.events = POLLIN;
-1345     else
-1346       lspgfd.events = 0;
-1347     break;
-1348 
-1349   case LS_PG_STATE_IDLE:
-1350   case LS_PG_STATE_RECV:
-1351     lspgfd.events = POLLIN;
-1352     break;
-1353 
-1354   case LS_PG_STATE_SEND:
-1355   case LS_PG_STATE_SEND_FLUSH:
-1356     lspgfd.events = POLLOUT;
-1357     break;
-1358 
-1359   default:
-1360     lspgfd.events = 0;
-1361   }
-1362 }
+1520     ls_pg_state = LS_PG_STATE_SEND;
+1521 
+1522   switch( ls_pg_state) {
+1523   case LS_PG_STATE_INIT_POLL:
+1524     if( lspg_connectPoll_response == PGRES_POLLING_WRITING)
+1525       lspgfd.events = POLLOUT;
+1526     else if( lspg_connectPoll_response == PGRES_POLLING_READING)
+1527       lspgfd.events = POLLIN;
+1528     else
+1529       lspgfd.events = 0;
+1530     break;
+1531       
+1532   case LS_PG_STATE_RESET_POLL:
+1533     if( lspg_resetPoll_response == PGRES_POLLING_WRITING)
+1534       lspgfd.events = POLLOUT;
+1535     else if( lspg_resetPoll_response == PGRES_POLLING_READING)
+1536       lspgfd.events = POLLIN;
+1537     else
+1538       lspgfd.events = 0;
+1539     break;
+1540 
+1541   case LS_PG_STATE_IDLE:
+1542   case LS_PG_STATE_RECV:
+1543     lspgfd.events = POLLIN;
+1544     break;
+1545 
+1546   case LS_PG_STATE_SEND:
+1547   case LS_PG_STATE_SEND_FLUSH:
+1548     lspgfd.events = POLLOUT;
+1549     break;
+1550 
+1551   default:
+1552     lspgfd.events = 0;
+1553   }
+1554 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_aeda8dad89b03d7d61cc994dd63ee5db6}{
 \index{lspg.c@{lspg.c}!lspg\_\-nextaction\_\-cb@{lspg\_\-nextaction\_\-cb}}
@@ -908,35 +1208,32 @@ Queue the next MD2 instruction.
 \item[\mbox{$\leftarrow$} {\em qqp}]The query that generated this result \item[\mbox{$\leftarrow$} {\em pgr}]The result \end{DoxyParams}
 
 
-Definition at line 865 of file lspg.c.
+Definition at line 1094 of file lspg.c.
 
 
 \begin{DoxyCode}
-868                           {
-869   char *action;
-870 
-871   if( PQntuples( pgr) <= 0)
-872     return;             // Note: nextaction should always return at least "noActi
+1097                           {
+1098   char *action;
+1099 
+1100   if( PQntuples( pgr) <= 0)
+1101     return;             // Note: nextaction should always return at least "noActi
       on", so this branch should never be taken
-873 
-874   action = PQgetvalue( pgr, 0, 0);      // next action only returns one row
-875 
-876   if( strcmp( action, "noAction") == 0)
-877     return;
-878   
-879   if( pthread_mutex_trylock( &md2cmds_mutex) == 0) {
-880     strncpy( md2cmds_cmd, action, MD2CMDS_CMD_LENGTH-1);
-881     md2cmds_cmd[MD2CMDS_CMD_LENGTH-1] = 0;
-882     pthread_cond_signal( &md2cmds_cond);
-883     pthread_mutex_unlock( &md2cmds_mutex);
-884   } else {
-885     //
-886     // TODO:
-887     // We should probably report that we aren't going to act
-888     // on the requested action.  That code would go here.
-889     //
-890   }
-891 }
+1102 
+1103   action = PQgetvalue( pgr, 0, 0);      // next action only returns one row
+1104 
+1105   if( strcmp( action, "noAction") == 0)
+1106     return;
+1107   
+1108   if( pthread_mutex_trylock( &md2cmds_mutex) == 0) {
+1109     strncpy( md2cmds_cmd, action, MD2CMDS_CMD_LENGTH-1);
+1110     md2cmds_cmd[MD2CMDS_CMD_LENGTH-1] = 0;
+1111     pthread_cond_signal( &md2cmds_cond);
+1112     pthread_mutex_unlock( &md2cmds_mutex);
+1113   } else {
+1114     lslogging_log_message( "MD2 command '%s' ignored.  Already running '%s'", act
+      ion, md2cmds_cmd);
+1115   }
+1116 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_af17ef79544ca5d78fd477010fe90d538}{
 \index{lspg.c@{lspg.c}!lspg\_\-nextshot\_\-call@{lspg\_\-nextshot\_\-call}}
@@ -947,17 +1244,17 @@ Definition at line 865 of file lspg.c.
 
 Queue up a nextshot query. 
 
-Definition at line 568 of file lspg.c.
+Definition at line 708 of file lspg.c.
 
 
 \begin{DoxyCode}
-568                           {
-569   pthread_mutex_lock( &(lspg_nextshot.mutex));
-570   lspg_nextshot.new_value_ready = 0;
-571   pthread_mutex_unlock( &(lspg_nextshot.mutex));
-572   
-573   lspg_query_push( lspg_nextshot_cb, "SELECT * FROM px.nextshot()");
-574 }
+708                           {
+709   pthread_mutex_lock( &(lspg_nextshot.mutex));
+710   lspg_nextshot.new_value_ready = 0;
+711   pthread_mutex_unlock( &(lspg_nextshot.mutex));
+712   
+713   lspg_query_push( lspg_nextshot_cb, "SELECT * FROM px.nextshot()");
+714 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_a9e92a204f606761d368ac7e06ef0f09c}{
 \index{lspg.c@{lspg.c}!lspg\_\-nextshot\_\-cb@{lspg\_\-nextshot\_\-cb}}
@@ -971,254 +1268,254 @@ Next Shot Callback. This is a long and tedious routine as there are a large numb
 \item[\mbox{$\leftarrow$} {\em qqp}]Our nextshot query \item[\mbox{$\leftarrow$} {\em pgr}]result of the query \end{DoxyParams}
 
 
-Definition at line 313 of file lspg.c.
+Definition at line 453 of file lspg.c.
 
 
 \begin{DoxyCode}
-316                         {
-317   static int got_col_nums=0;
-318   static int
-319     dsdir_c, dspid_c, dsowidth_c, dsoscaxis_c, dsexp_c, skey_c, sstart_c, sfn_c, 
+456                         {
+457   static int got_col_nums=0;
+458   static int
+459     dsdir_c, dspid_c, dsowidth_c, dsoscaxis_c, dsexp_c, skey_c, sstart_c, sfn_c, 
       dsphi_c,
-320     dsomega_c, dskappa_c, dsdist_c, dsnrg_c, dshpid_c, cx_c, cy_c, ax_c, ay_c, az
+460     dsomega_c, dskappa_c, dsdist_c, dsnrg_c, dshpid_c, cx_c, cy_c, ax_c, ay_c, az
       _c,
-321     active_c, sindex_c, stype_c,
-322     dsowidth2_c, dsoscaxis2_c, dsexp2_c, sstart2_c, dsphi2_c, dsomega2_c, dskappa
+461     active_c, sindex_c, stype_c,
+462     dsowidth2_c, dsoscaxis2_c, dsexp2_c, sstart2_c, dsphi2_c, dsomega2_c, dskappa
       2_c, dsdist2_c, dsnrg2_c,
-323     cx2_c, cy2_c, ax2_c, ay2_c, az2_c, active2_c, sindex2_c, stype2_c;
-324   
-325   pthread_mutex_lock( &(lspg_nextshot.mutex));
-326 
-327   lspg_nextshot.no_rows_returned = PQntuples( pgr) <= 0;
-328   if( lspg_nextshot.no_rows_returned) {
-329     lspg_nextshot.new_value_ready = 1;
-330     pthread_cond_signal( &(lspg_nextshot.cond));
-331     pthread_mutex_unlock( &(lspg_nextshot.mutex));
-332     return;                     // I guess there was no shot after all
-333   }
-334 
-335   if( got_col_nums == 0) {
-336     dsdir_c      = PQfnumber( pgr, "dsdir");
-337     dspid_c      = PQfnumber( pgr, "dspid");
-338     dsowidth_c   = PQfnumber( pgr, "dsowidth");
-339     dsoscaxis_c  = PQfnumber( pgr, "dsoscaxis");
-340     dsexp_c      = PQfnumber( pgr, "dsexp");
-341     skey_c       = PQfnumber( pgr, "skey");
-342     sstart_c     = PQfnumber( pgr, "sstart");
-343     sfn_c        = PQfnumber( pgr, "sfn");
-344     dsphi_c      = PQfnumber( pgr, "dsphi");
-345     dsomega_c    = PQfnumber( pgr, "dsomega");
-346     dskappa_c    = PQfnumber( pgr, "dskappa");
-347     dsdist_c     = PQfnumber( pgr, "dsdist");
-348     dsnrg_c      = PQfnumber( pgr, "dsnrg");
-349     dshpid_c     = PQfnumber( pgr, "dshpid");
-350     cx_c         = PQfnumber( pgr, "cx");
-351     cy_c         = PQfnumber( pgr, "cy");
-352     ax_c         = PQfnumber( pgr, "ax");
-353     ay_c         = PQfnumber( pgr, "ay");
-354     az_c         = PQfnumber( pgr, "az");
-355     active_c     = PQfnumber( pgr, "active");
-356     sindex_c     = PQfnumber( pgr, "sindex");
-357     stype_c      = PQfnumber( pgr, "stype");
-358     dsowidth2_c  = PQfnumber( pgr, "dsowidth2");
-359     dsoscaxis2_c = PQfnumber( pgr, "dsoscaxis2");
-360     dsexp2_c     = PQfnumber( pgr, "dsexp2");
-361     sstart2_c    = PQfnumber( pgr, "sstart2");
-362     dsphi2_c     = PQfnumber( pgr, "dsphi2");
-363     dsomega2_c   = PQfnumber( pgr, "dsomega2");
-364     dskappa2_c   = PQfnumber( pgr, "dskappa2");
-365     dsdist2_c    = PQfnumber( pgr, "dsdist2");
-366     dsnrg2_c     = PQfnumber( pgr, "dsnrg2");
-367     cx2_c        = PQfnumber( pgr, "cx2");
-368     cy2_c        = PQfnumber( pgr, "cy2");
-369     ax2_c        = PQfnumber( pgr, "ax2");
-370     ay2_c        = PQfnumber( pgr, "ay2");
-371     az2_c        = PQfnumber( pgr, "az2");
-372     active2_c    = PQfnumber( pgr, "active2");
-373     sindex2_c    = PQfnumber( pgr, "sindex2");
-374     stype2_c     = PQfnumber( pgr, "stype2");
-375     
-376     got_col_nums = 1;
-377   }
-378 
-379 
-380   //
-381   // NULL string values come back as empty strings
-382   // Mark the null flag but allocate the empty string anyway
-383   //
-384 
-385   lspg_nextshot.dsdir_isnull = PQgetisnull( pgr, 0, dsdir_c);
-386   if( lspg_nextshot.dsdir != NULL)
-387     free( lspg_nextshot.dsdir);
-388   lspg_nextshot.dsdir = strdup( PQgetvalue( pgr, 0, dsdir_c));
-389 
-390   lspg_nextshot.dspid_isnull = PQgetisnull( pgr, 0, dspid_c);
-391   if( lspg_nextshot.dspid != NULL)
-392     free( lspg_nextshot.dspid);
-393   lspg_nextshot.dspid = strdup( PQgetvalue( pgr, 0, dspid_c));
-394 
-395   lspg_nextshot.dsoscaxis_isnull = PQgetisnull( pgr, 0, dsoscaxis_c);
-396   if( lspg_nextshot.dsoscaxis != NULL)
-397     free( lspg_nextshot.dsoscaxis);
-398   lspg_nextshot.dsoscaxis = strdup( PQgetvalue( pgr, 0, dsoscaxis_c));
-399 
-400   lspg_nextshot.dsoscaxis2_isnull = PQgetisnull( pgr, 0, dsoscaxis2_c);
-401   if( lspg_nextshot.dsoscaxis2 != NULL)
-402     free( lspg_nextshot.dsoscaxis2);
-403   lspg_nextshot.dsoscaxis2 = strdup( PQgetvalue( pgr, 0, dsoscaxis2_c));
-404 
-405   lspg_nextshot.sfn_isnull = PQgetisnull(pgr, 0, sfn_c);
-406   if( lspg_nextshot.sfn != NULL)
-407     free( lspg_nextshot.sfn);
-408   lspg_nextshot.sfn = strdup( PQgetvalue( pgr, 0, sfn_c));
-409 
-410   lspg_nextshot.stype_isnull = PQgetisnull( pgr, 0, stype_c);
-411   if( lspg_nextshot.stype != NULL)
-412     free( lspg_nextshot.stype);
-413   lspg_nextshot.stype = strdup( PQgetvalue( pgr, 0, stype_c));
-414 
-415   lspg_nextshot.stype2_isnull = PQgetisnull( pgr, 0, stype2_c);
-416   if( lspg_nextshot.stype2 != NULL)
-417     free( lspg_nextshot.stype2);
-418   lspg_nextshot.stype2 = strdup( PQgetvalue( pgr, 0, stype2_c));
-419 
-420   //
-421   // Probably shouldn't try to convert null number values
-422   //
-423   lspg_nextshot.dsowidth_isnull = PQgetisnull( pgr, 0, dsowidth_c);
-424   if( lspg_nextshot.dsowidth_isnull == 0)
-425     lspg_nextshot.dsowidth = atof( PQgetvalue( pgr,0, dsowidth_c));
-426 
-427   lspg_nextshot.dsexp_isnull = PQgetisnull( pgr, 0, dsexp_c);
-428   if( lspg_nextshot.dsexp_isnull == 0)
-429     lspg_nextshot.dsexp    = atof( PQgetvalue( pgr,0, dsexp_c));
-430 
-431   lspg_nextshot.sstart_isnull = PQgetisnull( pgr, 0, sstart_c);
-432   if( lspg_nextshot.sstart_isnull == 0)
-433     lspg_nextshot.sstart   = atof( PQgetvalue( pgr,0, sstart_c));
-434 
-435   lspg_nextshot.dsphi_isnull = PQgetisnull( pgr, 0, dsphi_c);
-436   if( lspg_nextshot.dsphi_isnull == 0)
-437     lspg_nextshot.dsphi    = atof( PQgetvalue( pgr,0, dsphi_c));
-438 
-439   lspg_nextshot.dsomega_isnull = PQgetisnull( pgr, 0, dsomega_c);
-440   if( lspg_nextshot.dsomega_isnull == 0)
-441     lspg_nextshot.dsomega  = atof( PQgetvalue( pgr,0, dsomega_c));
-442 
-443   lspg_nextshot.dskappa_isnull = PQgetisnull( pgr, 0, dskappa_c);
-444   if( lspg_nextshot.dskappa_isnull == 0)
-445     lspg_nextshot.dskappa  = atof( PQgetvalue( pgr,0, dskappa_c));
-446 
-447   lspg_nextshot.dsdist_isnull = PQgetisnull( pgr, 0, dsdist_c);
-448   if( lspg_nextshot.dsdist_isnull == 0)
-449     lspg_nextshot.dsdist   = atof( PQgetvalue( pgr,0, dsdist_c));
-450 
-451   lspg_nextshot.dsnrg_isnull = PQgetisnull( pgr, 0, dsnrg_c);
-452   if( lspg_nextshot.dsnrg_isnull == 0)
-453     lspg_nextshot.dsnrg    = atof( PQgetvalue( pgr,0, dsnrg_c));
-454 
-455   lspg_nextshot.cx_isnull = PQgetisnull( pgr, 0, cx_c);
-456   if( lspg_nextshot.cx_isnull == 0)
-457     lspg_nextshot.cx       = atof( PQgetvalue( pgr,0, cx_c));
-458 
-459   lspg_nextshot.cy_isnull = PQgetisnull( pgr, 0, cy_c);
-460   if( lspg_nextshot.cy_isnull == 0)
-461     lspg_nextshot.cy       = atof( PQgetvalue( pgr,0, cy_c));
-462 
-463   lspg_nextshot.ax_isnull = PQgetisnull( pgr, 0, ax_c);
-464   if( lspg_nextshot.ax_isnull == 0)
-465     lspg_nextshot.ax       = atof( PQgetvalue( pgr,0, ax_c));
+463     cx2_c, cy2_c, ax2_c, ay2_c, az2_c, active2_c, sindex2_c, stype2_c;
+464   
+465   pthread_mutex_lock( &(lspg_nextshot.mutex));
 466 
-467   lspg_nextshot.ay_isnull = PQgetisnull( pgr, 0, ay_c);
-468   if( lspg_nextshot.ay_isnull == 0)
-469     lspg_nextshot.ay       = atof( PQgetvalue( pgr,0, ay_c));
-470 
-471   lspg_nextshot.az_isnull = PQgetisnull( pgr, 0, az_c);
-472   if( lspg_nextshot.az_isnull == 0)
-473     lspg_nextshot.az       = atof( PQgetvalue( pgr,0, az_c));
-474   
-475   lspg_nextshot.active_isnull = PQgetisnull( pgr, 0, active_c);
-476   if( lspg_nextshot.active_isnull == 0)
-477     lspg_nextshot.active = atoi( PQgetvalue( pgr, 0, active_c));
-478 
-479   lspg_nextshot.sindex_isnull = PQgetisnull( pgr, 0, sindex_c);
-480   if( lspg_nextshot.sindex_isnull == 0)
-481     lspg_nextshot.sindex = atoi( PQgetvalue( pgr, 0, sindex_c));
-482 
-483   lspg_nextshot.dshpid_isnull = PQgetisnull( pgr, 0, dshpid_c);
-484   if( lspg_nextshot.dshpid_isnull == 0)
-485     lspg_nextshot.dshpid = atoi( PQgetvalue( pgr, 0, dshpid_c));
-486   
-487   lspg_nextshot.skey_isnull = PQgetisnull( pgr, 0, skey_c);
-488   if( lspg_nextshot.skey_isnull == 0)
-489     lspg_nextshot.skey   = atoll( PQgetvalue( pgr, 0, skey_c));
-490 
-491   lspg_nextshot.dsowidth2_isnull = PQgetisnull( pgr, 0, dsowidth2_c);
-492   if( lspg_nextshot.dsowidth2_isnull == 0)
-493     lspg_nextshot.dsowidth2 = atof( PQgetvalue( pgr,0, dsowidth2_c));
-494 
-495   lspg_nextshot.dsexp2_isnull = PQgetisnull( pgr, 0, dsexp2_c);
-496   if( lspg_nextshot.dsexp2_isnull == 0)
-497     lspg_nextshot.dsexp2    = atof( PQgetvalue( pgr,0, dsexp2_c));
-498 
-499   lspg_nextshot.sstart2_isnull = PQgetisnull( pgr, 0, sstart2_c);
-500   if( lspg_nextshot.sstart2_isnull == 0)
-501     lspg_nextshot.sstart2   = atof( PQgetvalue( pgr,0, sstart2_c));
-502 
-503   lspg_nextshot.dsphi2_isnull = PQgetisnull( pgr, 0, dsphi2_c);
-504   if( lspg_nextshot.dsphi2_isnull == 0)
-505     lspg_nextshot.dsphi2    = atof( PQgetvalue( pgr,0, dsphi2_c));
-506 
-507   lspg_nextshot.dsomega2_isnull = PQgetisnull( pgr, 0, dsomega2_c);
-508   if( lspg_nextshot.dsomega2_isnull == 0)
-509     lspg_nextshot.dsomega2  = atof( PQgetvalue( pgr,0, dsomega2_c));
-510 
-511   lspg_nextshot.dskappa2_isnull = PQgetisnull( pgr, 0, dskappa2_c);
-512   if( lspg_nextshot.dskappa2_isnull == 0)
-513     lspg_nextshot.dskappa2  = atof( PQgetvalue( pgr,0, dskappa2_c));
-514 
-515   lspg_nextshot.dsdist2_isnull = PQgetisnull( pgr, 0, dsdist2_c);
-516   if( lspg_nextshot.dsdist2_isnull == 0)
-517     lspg_nextshot.dsdist2   = atof( PQgetvalue( pgr,0, dsdist2_c));
+467   lspg_nextshot.no_rows_returned = PQntuples( pgr) <= 0;
+468   if( lspg_nextshot.no_rows_returned) {
+469     lspg_nextshot.new_value_ready = 1;
+470     pthread_cond_signal( &(lspg_nextshot.cond));
+471     pthread_mutex_unlock( &(lspg_nextshot.mutex));
+472     return;                     // I guess there was no shot after all
+473   }
+474 
+475   if( got_col_nums == 0) {
+476     dsdir_c      = PQfnumber( pgr, "dsdir");
+477     dspid_c      = PQfnumber( pgr, "dspid");
+478     dsowidth_c   = PQfnumber( pgr, "dsowidth");
+479     dsoscaxis_c  = PQfnumber( pgr, "dsoscaxis");
+480     dsexp_c      = PQfnumber( pgr, "dsexp");
+481     skey_c       = PQfnumber( pgr, "skey");
+482     sstart_c     = PQfnumber( pgr, "sstart");
+483     sfn_c        = PQfnumber( pgr, "sfn");
+484     dsphi_c      = PQfnumber( pgr, "dsphi");
+485     dsomega_c    = PQfnumber( pgr, "dsomega");
+486     dskappa_c    = PQfnumber( pgr, "dskappa");
+487     dsdist_c     = PQfnumber( pgr, "dsdist");
+488     dsnrg_c      = PQfnumber( pgr, "dsnrg");
+489     dshpid_c     = PQfnumber( pgr, "dshpid");
+490     cx_c         = PQfnumber( pgr, "cx");
+491     cy_c         = PQfnumber( pgr, "cy");
+492     ax_c         = PQfnumber( pgr, "ax");
+493     ay_c         = PQfnumber( pgr, "ay");
+494     az_c         = PQfnumber( pgr, "az");
+495     active_c     = PQfnumber( pgr, "active");
+496     sindex_c     = PQfnumber( pgr, "sindex");
+497     stype_c      = PQfnumber( pgr, "stype");
+498     dsowidth2_c  = PQfnumber( pgr, "dsowidth2");
+499     dsoscaxis2_c = PQfnumber( pgr, "dsoscaxis2");
+500     dsexp2_c     = PQfnumber( pgr, "dsexp2");
+501     sstart2_c    = PQfnumber( pgr, "sstart2");
+502     dsphi2_c     = PQfnumber( pgr, "dsphi2");
+503     dsomega2_c   = PQfnumber( pgr, "dsomega2");
+504     dskappa2_c   = PQfnumber( pgr, "dskappa2");
+505     dsdist2_c    = PQfnumber( pgr, "dsdist2");
+506     dsnrg2_c     = PQfnumber( pgr, "dsnrg2");
+507     cx2_c        = PQfnumber( pgr, "cx2");
+508     cy2_c        = PQfnumber( pgr, "cy2");
+509     ax2_c        = PQfnumber( pgr, "ax2");
+510     ay2_c        = PQfnumber( pgr, "ay2");
+511     az2_c        = PQfnumber( pgr, "az2");
+512     active2_c    = PQfnumber( pgr, "active2");
+513     sindex2_c    = PQfnumber( pgr, "sindex2");
+514     stype2_c     = PQfnumber( pgr, "stype2");
+515     
+516     got_col_nums = 1;
+517   }
 518 
-519   lspg_nextshot.dsnrg2_isnull = PQgetisnull( pgr, 0, dsnrg2_c);
-520   if( lspg_nextshot.dsnrg2_isnull == 0)
-521     lspg_nextshot.dsnrg2    = atof( PQgetvalue( pgr,0, dsnrg2_c));
-522 
-523   lspg_nextshot.cx2_isnull = PQgetisnull( pgr, 0, cx2_c);
-524   if( lspg_nextshot.cx2_isnull == 0)
-525     lspg_nextshot.cx2       = atof( PQgetvalue( pgr,0, cx2_c));
-526 
-527   lspg_nextshot.cy2_isnull = PQgetisnull( pgr, 0, cy2_c);
-528   if( lspg_nextshot.cy2_isnull == 0)
-529     lspg_nextshot.cy2       = atof( PQgetvalue( pgr,0, cy2_c));
-530 
-531   lspg_nextshot.ax2_isnull = PQgetisnull( pgr, 0, ax2_c);
-532   if( lspg_nextshot.ax2_isnull == 0)
-533     lspg_nextshot.ax2       = atof( PQgetvalue( pgr,0, ax2_c));
+519 
+520   //
+521   // NULL string values come back as empty strings
+522   // Mark the null flag but allocate the empty string anyway
+523   //
+524 
+525   lspg_nextshot.dsdir_isnull = PQgetisnull( pgr, 0, dsdir_c);
+526   if( lspg_nextshot.dsdir != NULL)
+527     free( lspg_nextshot.dsdir);
+528   lspg_nextshot.dsdir = strdup( PQgetvalue( pgr, 0, dsdir_c));
+529 
+530   lspg_nextshot.dspid_isnull = PQgetisnull( pgr, 0, dspid_c);
+531   if( lspg_nextshot.dspid != NULL)
+532     free( lspg_nextshot.dspid);
+533   lspg_nextshot.dspid = strdup( PQgetvalue( pgr, 0, dspid_c));
 534 
-535   lspg_nextshot.ay2_isnull = PQgetisnull( pgr, 0, ay2_c);
-536   if( lspg_nextshot.ay2_isnull == 0)
-537     lspg_nextshot.ay2       = atof( PQgetvalue( pgr,0, ay2_c));
-538 
-539   lspg_nextshot.az2_isnull = PQgetisnull( pgr, 0, az2_c);
-540   if( lspg_nextshot.az2_isnull == 0)
-541     lspg_nextshot.az2       = atof( PQgetvalue( pgr,0, az2_c));
-542   
-543   lspg_nextshot.active2_isnull = PQgetisnull( pgr, 0, active2_c);
-544   if( lspg_nextshot.active2_isnull == 0)
-545     lspg_nextshot.active2 = atoi( PQgetvalue( pgr, 0, active2_c));
-546 
-547   lspg_nextshot.sindex2_isnull = PQgetisnull( pgr, 0, sindex2_c);
-548   if( lspg_nextshot.sindex2_isnull == 0)
-549     lspg_nextshot.sindex2 = atoi( PQgetvalue( pgr, 0, sindex2_c));
-550 
-551   lspg_nextshot.new_value_ready = 1;
-552 
-553   pthread_cond_signal( &(lspg_nextshot.cond));
-554   pthread_mutex_unlock( &(lspg_nextshot.mutex));
-555 
-556 }
+535   lspg_nextshot.dsoscaxis_isnull = PQgetisnull( pgr, 0, dsoscaxis_c);
+536   if( lspg_nextshot.dsoscaxis != NULL)
+537     free( lspg_nextshot.dsoscaxis);
+538   lspg_nextshot.dsoscaxis = strdup( PQgetvalue( pgr, 0, dsoscaxis_c));
+539 
+540   lspg_nextshot.dsoscaxis2_isnull = PQgetisnull( pgr, 0, dsoscaxis2_c);
+541   if( lspg_nextshot.dsoscaxis2 != NULL)
+542     free( lspg_nextshot.dsoscaxis2);
+543   lspg_nextshot.dsoscaxis2 = strdup( PQgetvalue( pgr, 0, dsoscaxis2_c));
+544 
+545   lspg_nextshot.sfn_isnull = PQgetisnull(pgr, 0, sfn_c);
+546   if( lspg_nextshot.sfn != NULL)
+547     free( lspg_nextshot.sfn);
+548   lspg_nextshot.sfn = strdup( PQgetvalue( pgr, 0, sfn_c));
+549 
+550   lspg_nextshot.stype_isnull = PQgetisnull( pgr, 0, stype_c);
+551   if( lspg_nextshot.stype != NULL)
+552     free( lspg_nextshot.stype);
+553   lspg_nextshot.stype = strdup( PQgetvalue( pgr, 0, stype_c));
+554 
+555   lspg_nextshot.stype2_isnull = PQgetisnull( pgr, 0, stype2_c);
+556   if( lspg_nextshot.stype2 != NULL)
+557     free( lspg_nextshot.stype2);
+558   lspg_nextshot.stype2 = strdup( PQgetvalue( pgr, 0, stype2_c));
+559 
+560   //
+561   // Probably shouldn't try to convert null number values
+562   //
+563   lspg_nextshot.dsowidth_isnull = PQgetisnull( pgr, 0, dsowidth_c);
+564   if( lspg_nextshot.dsowidth_isnull == 0)
+565     lspg_nextshot.dsowidth = atof( PQgetvalue( pgr,0, dsowidth_c));
+566 
+567   lspg_nextshot.dsexp_isnull = PQgetisnull( pgr, 0, dsexp_c);
+568   if( lspg_nextshot.dsexp_isnull == 0)
+569     lspg_nextshot.dsexp    = atof( PQgetvalue( pgr,0, dsexp_c));
+570 
+571   lspg_nextshot.sstart_isnull = PQgetisnull( pgr, 0, sstart_c);
+572   if( lspg_nextshot.sstart_isnull == 0)
+573     lspg_nextshot.sstart   = atof( PQgetvalue( pgr,0, sstart_c));
+574 
+575   lspg_nextshot.dsphi_isnull = PQgetisnull( pgr, 0, dsphi_c);
+576   if( lspg_nextshot.dsphi_isnull == 0)
+577     lspg_nextshot.dsphi    = atof( PQgetvalue( pgr,0, dsphi_c));
+578 
+579   lspg_nextshot.dsomega_isnull = PQgetisnull( pgr, 0, dsomega_c);
+580   if( lspg_nextshot.dsomega_isnull == 0)
+581     lspg_nextshot.dsomega  = atof( PQgetvalue( pgr,0, dsomega_c));
+582 
+583   lspg_nextshot.dskappa_isnull = PQgetisnull( pgr, 0, dskappa_c);
+584   if( lspg_nextshot.dskappa_isnull == 0)
+585     lspg_nextshot.dskappa  = atof( PQgetvalue( pgr,0, dskappa_c));
+586 
+587   lspg_nextshot.dsdist_isnull = PQgetisnull( pgr, 0, dsdist_c);
+588   if( lspg_nextshot.dsdist_isnull == 0)
+589     lspg_nextshot.dsdist   = atof( PQgetvalue( pgr,0, dsdist_c));
+590 
+591   lspg_nextshot.dsnrg_isnull = PQgetisnull( pgr, 0, dsnrg_c);
+592   if( lspg_nextshot.dsnrg_isnull == 0)
+593     lspg_nextshot.dsnrg    = atof( PQgetvalue( pgr,0, dsnrg_c));
+594 
+595   lspg_nextshot.cx_isnull = PQgetisnull( pgr, 0, cx_c);
+596   if( lspg_nextshot.cx_isnull == 0)
+597     lspg_nextshot.cx       = atof( PQgetvalue( pgr,0, cx_c));
+598 
+599   lspg_nextshot.cy_isnull = PQgetisnull( pgr, 0, cy_c);
+600   if( lspg_nextshot.cy_isnull == 0)
+601     lspg_nextshot.cy       = atof( PQgetvalue( pgr,0, cy_c));
+602 
+603   lspg_nextshot.ax_isnull = PQgetisnull( pgr, 0, ax_c);
+604   if( lspg_nextshot.ax_isnull == 0)
+605     lspg_nextshot.ax       = atof( PQgetvalue( pgr,0, ax_c));
+606 
+607   lspg_nextshot.ay_isnull = PQgetisnull( pgr, 0, ay_c);
+608   if( lspg_nextshot.ay_isnull == 0)
+609     lspg_nextshot.ay       = atof( PQgetvalue( pgr,0, ay_c));
+610 
+611   lspg_nextshot.az_isnull = PQgetisnull( pgr, 0, az_c);
+612   if( lspg_nextshot.az_isnull == 0)
+613     lspg_nextshot.az       = atof( PQgetvalue( pgr,0, az_c));
+614   
+615   lspg_nextshot.active_isnull = PQgetisnull( pgr, 0, active_c);
+616   if( lspg_nextshot.active_isnull == 0)
+617     lspg_nextshot.active = atoi( PQgetvalue( pgr, 0, active_c));
+618 
+619   lspg_nextshot.sindex_isnull = PQgetisnull( pgr, 0, sindex_c);
+620   if( lspg_nextshot.sindex_isnull == 0)
+621     lspg_nextshot.sindex = atoi( PQgetvalue( pgr, 0, sindex_c));
+622 
+623   lspg_nextshot.dshpid_isnull = PQgetisnull( pgr, 0, dshpid_c);
+624   if( lspg_nextshot.dshpid_isnull == 0)
+625     lspg_nextshot.dshpid = atoi( PQgetvalue( pgr, 0, dshpid_c));
+626   
+627   lspg_nextshot.skey_isnull = PQgetisnull( pgr, 0, skey_c);
+628   if( lspg_nextshot.skey_isnull == 0)
+629     lspg_nextshot.skey   = atoll( PQgetvalue( pgr, 0, skey_c));
+630 
+631   lspg_nextshot.dsowidth2_isnull = PQgetisnull( pgr, 0, dsowidth2_c);
+632   if( lspg_nextshot.dsowidth2_isnull == 0)
+633     lspg_nextshot.dsowidth2 = atof( PQgetvalue( pgr,0, dsowidth2_c));
+634 
+635   lspg_nextshot.dsexp2_isnull = PQgetisnull( pgr, 0, dsexp2_c);
+636   if( lspg_nextshot.dsexp2_isnull == 0)
+637     lspg_nextshot.dsexp2    = atof( PQgetvalue( pgr,0, dsexp2_c));
+638 
+639   lspg_nextshot.sstart2_isnull = PQgetisnull( pgr, 0, sstart2_c);
+640   if( lspg_nextshot.sstart2_isnull == 0)
+641     lspg_nextshot.sstart2   = atof( PQgetvalue( pgr,0, sstart2_c));
+642 
+643   lspg_nextshot.dsphi2_isnull = PQgetisnull( pgr, 0, dsphi2_c);
+644   if( lspg_nextshot.dsphi2_isnull == 0)
+645     lspg_nextshot.dsphi2    = atof( PQgetvalue( pgr,0, dsphi2_c));
+646 
+647   lspg_nextshot.dsomega2_isnull = PQgetisnull( pgr, 0, dsomega2_c);
+648   if( lspg_nextshot.dsomega2_isnull == 0)
+649     lspg_nextshot.dsomega2  = atof( PQgetvalue( pgr,0, dsomega2_c));
+650 
+651   lspg_nextshot.dskappa2_isnull = PQgetisnull( pgr, 0, dskappa2_c);
+652   if( lspg_nextshot.dskappa2_isnull == 0)
+653     lspg_nextshot.dskappa2  = atof( PQgetvalue( pgr,0, dskappa2_c));
+654 
+655   lspg_nextshot.dsdist2_isnull = PQgetisnull( pgr, 0, dsdist2_c);
+656   if( lspg_nextshot.dsdist2_isnull == 0)
+657     lspg_nextshot.dsdist2   = atof( PQgetvalue( pgr,0, dsdist2_c));
+658 
+659   lspg_nextshot.dsnrg2_isnull = PQgetisnull( pgr, 0, dsnrg2_c);
+660   if( lspg_nextshot.dsnrg2_isnull == 0)
+661     lspg_nextshot.dsnrg2    = atof( PQgetvalue( pgr,0, dsnrg2_c));
+662 
+663   lspg_nextshot.cx2_isnull = PQgetisnull( pgr, 0, cx2_c);
+664   if( lspg_nextshot.cx2_isnull == 0)
+665     lspg_nextshot.cx2       = atof( PQgetvalue( pgr,0, cx2_c));
+666 
+667   lspg_nextshot.cy2_isnull = PQgetisnull( pgr, 0, cy2_c);
+668   if( lspg_nextshot.cy2_isnull == 0)
+669     lspg_nextshot.cy2       = atof( PQgetvalue( pgr,0, cy2_c));
+670 
+671   lspg_nextshot.ax2_isnull = PQgetisnull( pgr, 0, ax2_c);
+672   if( lspg_nextshot.ax2_isnull == 0)
+673     lspg_nextshot.ax2       = atof( PQgetvalue( pgr,0, ax2_c));
+674 
+675   lspg_nextshot.ay2_isnull = PQgetisnull( pgr, 0, ay2_c);
+676   if( lspg_nextshot.ay2_isnull == 0)
+677     lspg_nextshot.ay2       = atof( PQgetvalue( pgr,0, ay2_c));
+678 
+679   lspg_nextshot.az2_isnull = PQgetisnull( pgr, 0, az2_c);
+680   if( lspg_nextshot.az2_isnull == 0)
+681     lspg_nextshot.az2       = atof( PQgetvalue( pgr,0, az2_c));
+682   
+683   lspg_nextshot.active2_isnull = PQgetisnull( pgr, 0, active2_c);
+684   if( lspg_nextshot.active2_isnull == 0)
+685     lspg_nextshot.active2 = atoi( PQgetvalue( pgr, 0, active2_c));
+686 
+687   lspg_nextshot.sindex2_isnull = PQgetisnull( pgr, 0, sindex2_c);
+688   if( lspg_nextshot.sindex2_isnull == 0)
+689     lspg_nextshot.sindex2 = atoi( PQgetvalue( pgr, 0, sindex2_c));
+690 
+691   lspg_nextshot.new_value_ready = 1;
+692 
+693   pthread_cond_signal( &(lspg_nextshot.cond));
+694   pthread_mutex_unlock( &(lspg_nextshot.mutex));
+695 
+696 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_a50458a014041a4118452802dfb303960}{
 \index{lspg.c@{lspg.c}!lspg\_\-nextshot\_\-done@{lspg\_\-nextshot\_\-done}}
@@ -1229,13 +1526,13 @@ Definition at line 313 of file lspg.c.
 
 Called when the next shot query has been processed. 
 
-Definition at line 586 of file lspg.c.
+Definition at line 726 of file lspg.c.
 
 
 \begin{DoxyCode}
-586                           {
-587   pthread_mutex_unlock( &(lspg_nextshot.mutex));
-588 }
+726                           {
+727   pthread_mutex_unlock( &(lspg_nextshot.mutex));
+728 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_aff91db7d60e6c832684c023813e36dbf}{
 \index{lspg.c@{lspg.c}!lspg\_\-nextshot\_\-init@{lspg\_\-nextshot\_\-init}}
@@ -1246,15 +1543,15 @@ Definition at line 586 of file lspg.c.
 
 Initialize the nextshot variable, mutex, and condition. 
 
-Definition at line 560 of file lspg.c.
+Definition at line 700 of file lspg.c.
 
 
 \begin{DoxyCode}
-560                           {
-561   memset( &lspg_nextshot, 0, sizeof( lspg_nextshot));
-562   pthread_mutex_init( &(lspg_nextshot.mutex), NULL);
-563   pthread_cond_init( &(lspg_nextshot.cond), NULL);
-564 }
+700                           {
+701   memset( &lspg_nextshot, 0, sizeof( lspg_nextshot));
+702   pthread_mutex_init( &(lspg_nextshot.mutex), NULL);
+703   pthread_cond_init( &(lspg_nextshot.cond), NULL);
+704 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_a784a6de32a86fec9efb3ef3ae4b6e3ac}{
 \index{lspg.c@{lspg.c}!lspg\_\-nextshot\_\-wait@{lspg\_\-nextshot\_\-wait}}
@@ -1265,15 +1562,15 @@ Definition at line 560 of file lspg.c.
 
 Wait for the next shot query to get processed. 
 
-Definition at line 578 of file lspg.c.
+Definition at line 718 of file lspg.c.
 
 
 \begin{DoxyCode}
-578                           {
-579   pthread_mutex_lock( &(lspg_nextshot.mutex));
-580   while( lspg_nextshot.new_value_ready == 0)
-581     pthread_cond_wait( &(lspg_nextshot.cond), &(lspg_nextshot.mutex));
-582 }
+718                           {
+719   pthread_mutex_lock( &(lspg_nextshot.mutex));
+720   while( lspg_nextshot.new_value_ready == 0)
+721     pthread_cond_wait( &(lspg_nextshot.cond), &(lspg_nextshot.mutex));
+722 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_a581c18be0368425665a40b4b7f7d9714}{
 \index{lspg.c@{lspg.c}!lspg\_\-pg\_\-connect@{lspg\_\-pg\_\-connect}}
@@ -1284,110 +1581,108 @@ Definition at line 578 of file lspg.c.
 
 Connect to the pg server. 
 
-Definition at line 1214 of file lspg.c.
+Definition at line 1409 of file lspg.c.
 
 
 \begin{DoxyCode}
-1214                        {
-1215   PGresult *pgr;
-1216   int wait_interval = 1;
-1217   int connection_init = 0;
-1218   int i, err;
-1219 
-1220   if( q == NULL)
-1221     ls_pg_state = LS_PG_STATE_INIT;
-1222 
-1223   switch( ls_pg_state) {
-1224   case LS_PG_STATE_INIT:
-1225     q = PQconnectStart( "dbname=ls user=lsuser hostaddr=10.1.0.3");
-1226     if( q == NULL) {
-1227       pthread_mutex_lock( &ncurses_mutex);
-1228       wprintw( term_output, "Out of memory (lspg_pg_connect)\n");
-1229       wnoutrefresh( term_output);
-1230       wnoutrefresh( term_input);
-1231       doupdate();
-1232       pthread_mutex_unlock( &ncurses_mutex);
-1233       exit( -1);
-1234     }
-1235 
-1236     err = PQstatus( q);
-1237     if( err == CONNECTION_BAD) {
-1238       pthread_mutex_lock( &ncurses_mutex);
-1239       wprintw( term_output, "Trouble connecting to database\n");
-1240       wnoutrefresh( term_output);
-1241       wnoutrefresh( term_input);
-1242       doupdate();
-1243       pthread_mutex_unlock( &ncurses_mutex);
-1244       //
-1245       // TODO: save time of day so we can check that we are not retrying the conn
-      ection too often
-1246       //
-1247       return;
-1248     }
-1249     err = PQsetnonblocking( q, 1);
-1250     if( err != 0) {
-1251       pthread_mutex_lock( &ncurses_mutex);
-1252       wprintw( term_output, "Odd, could not set database connection to nonblockin
-      g\n");
-1253       wnoutrefresh( term_output);
-1254       wnoutrefresh( term_input);
-1255       doupdate();
-1256       pthread_mutex_unlock( &ncurses_mutex);
-1257     }
-1258 
-1259     ls_pg_state = LS_PG_STATE_INIT_POLL;
-1260     lspg_connectPoll_response = PGRES_POLLING_WRITING;
-1261     //
-1262     // set up the connection for poll
-1263     //
-1264     lspgfd.fd = PQsocket( q);
-1265     break;
-1266 
-1267   case LS_PG_STATE_INIT_POLL:
-1268     if( lspg_connectPoll_response == PGRES_POLLING_FAILED) {
-1269       PQfinish( q);
-1270       q = NULL;
-1271       ls_pg_state = LS_PG_STATE_INIT;
-1272     } else if( lspg_connectPoll_response == PGRES_POLLING_OK) {
-1273       lspg_query_push( lspg_init_motors_cb, "select * from pmac.md2_getmotors()")
+1409                        {
+1410   PGresult *pgr;
+1411   int wait_interval = 1;
+1412   int connection_init = 0;
+1413   int i, err;
+1414 
+1415   if( q == NULL)
+1416     ls_pg_state = LS_PG_STATE_INIT;
+1417 
+1418   switch( ls_pg_state) {
+1419   case LS_PG_STATE_INIT:
+1420 
+1421     if( lspg_time_sent.tv_sec != 0) {
+1422       //
+1423       // Reality check: if it's less the about 10 seconds since the last failed a
+      ttempt
+1424       // the just chill.
+1425       //
+1426       gettimeofday( &now, NULL);
+1427       if( now.tv_sec - lspg_time_sent.tv_sec < 10) {
+1428         return;
+1429       }
+1430     }
+1431 
+1432     q = PQconnectStart( "dbname=ls user=lsuser hostaddr=10.1.0.3");
+1433     if( q == NULL) {
+1434       lslogging_log_message( "Out of memory (lspg_pg_connect)");
+1435       exit( -1);
+1436     }
+1437 
+1438     err = PQstatus( q);
+1439     if( err == CONNECTION_BAD) {
+1440       lslogging_log_message( "Trouble connecting to database");
+1441 
+1442       gettimeofday( &lspg_time_sent, NULL);
+1443       return;
+1444     }
+1445     err = PQsetnonblocking( q, 1);
+1446     if( err != 0) {
+1447       lslogging_log_message( "Odd, could not set database connection to nonblocki
+      ng");
+1448     }
+1449 
+1450     ls_pg_state = LS_PG_STATE_INIT_POLL;
+1451     lspg_connectPoll_response = PGRES_POLLING_WRITING;
+1452     //
+1453     // set up the connection for poll
+1454     //
+1455     lspgfd.fd = PQsocket( q);
+1456     break;
+1457 
+1458   case LS_PG_STATE_INIT_POLL:
+1459     if( lspg_connectPoll_response == PGRES_POLLING_FAILED) {
+1460       PQfinish( q);
+1461       q = NULL;
+1462       ls_pg_state = LS_PG_STATE_INIT;
+1463     } else if( lspg_connectPoll_response == PGRES_POLLING_OK) {
+1464       lspg_query_push( lspg_init_motors_cb, "select * from pmac.md2_getmotors()")
       ;
-1274       lspg_query_push( NULL, "select pmac.md2_init()");
-1275       lspg_query_push( lspg_zoom_lut_cb, "SELECT * FROM pmac.md2_zoom_lut()");
-1276       lspg_query_push( lspg_flight_lut_cb, "SELECT * FROM pmac.md2_flight_lut()")
+1465       lspg_query_push( NULL, "select pmac.md2_init()");
+1466       lspg_query_push( lspg_zoom_lut_cb, "SELECT * FROM pmac.md2_zoom_lut()");
+1467       lspg_query_push( lspg_flight_lut_cb, "SELECT * FROM pmac.md2_flight_lut()")
       ;
-1277       lspg_query_push( lspg_blight_lut_cb, "SELECT * FROM pmac.md2_blight_lut()")
+1468       lspg_query_push( lspg_blight_lut_cb, "SELECT * FROM pmac.md2_blight_lut()")
       ;
-1278 
-1279       ls_pg_state = LS_PG_STATE_IDLE;
-1280     }
-1281     break;
-1282 
-1283   case LS_PG_STATE_RESET:
-1284     err = PQresetStart( q);
-1285     if( err == 0) {
-1286       PQfinish( q);
-1287       q = NULL;
-1288       ls_pg_state = LS_PG_STATE_INIT;
-1289     } else {
-1290       ls_pg_state = LS_PG_STATE_RESET_POLL;
-1291       lspg_resetPoll_response = PGRES_POLLING_WRITING;
-1292     }
-1293     break;
-1294 
-1295   case LS_PG_STATE_RESET_POLL:
-1296     if( lspg_resetPoll_response == PGRES_POLLING_FAILED) {
-1297       PQfinish( q);
-1298       q = NULL;
-1299       ls_pg_state = LS_PG_STATE_INIT;
-1300     } else if( lspg_resetPoll_response == PGRES_POLLING_OK) {
-1301       lspg_query_push( lspg_init_motors_cb, "select * from pmac.md2_getmotors()")
+1469       lspg_query_push( lspg_scint_lut_cb,      "SELECT * FROM pmac.md2_scint_lut(
+      )");
+1470 
+1471       ls_pg_state = LS_PG_STATE_IDLE;
+1472     }
+1473     break;
+1474 
+1475   case LS_PG_STATE_RESET:
+1476     err = PQresetStart( q);
+1477     if( err == 0) {
+1478       PQfinish( q);
+1479       q = NULL;
+1480       ls_pg_state = LS_PG_STATE_INIT;
+1481     } else {
+1482       ls_pg_state = LS_PG_STATE_RESET_POLL;
+1483       lspg_resetPoll_response = PGRES_POLLING_WRITING;
+1484     }
+1485     break;
+1486 
+1487   case LS_PG_STATE_RESET_POLL:
+1488     if( lspg_resetPoll_response == PGRES_POLLING_FAILED) {
+1489       PQfinish( q);
+1490       q = NULL;
+1491       ls_pg_state = LS_PG_STATE_INIT;
+1492     } else if( lspg_resetPoll_response == PGRES_POLLING_OK) {
+1493       lspg_query_push( lspg_init_motors_cb, "select * from pmac.md2_getmotors()")
       ;
-1302       lspg_query_push( NULL, "select pmac.md2_init()");
-1303       ls_pg_state = LS_PG_STATE_IDLE;
-1304     }
-1305     break;
-1306   }
-1307 }
+1494       lspg_query_push( NULL, "select pmac.md2_init()");
+1495       ls_pg_state = LS_PG_STATE_IDLE;
+1496     }
+1497     break;
+1498   }
+1499 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_aa8d1fed4b461c2139a21826d524777d5}{
 \index{lspg.c@{lspg.c}!lspg\_\-pg\_\-service@{lspg\_\-pg\_\-service}}
@@ -1401,111 +1696,105 @@ I/O control to/from the postgresql server.
 \item[\mbox{$\leftarrow$} {\em evt}]The pollfd object that we are responding to \end{DoxyParams}
 
 
-Definition at line 1109 of file lspg.c.
+Definition at line 1309 of file lspg.c.
 
 
 \begin{DoxyCode}
-1111                        {
-1112   //
-1113   // Currently just used to check for notifies
-1114   // Other socket communication is done syncronously
-1115   // Reconsider this if we start using the pmac gather functions
-1116   // since we'll want to be servicing those sockets ASAP
-1117   //
-1118 
-1119   if( evt->revents & POLLIN) {
-1120     int err;
-1121 
-1122     if( ls_pg_state == LS_PG_STATE_INIT_POLL) {
-1123       lspg_connectPoll_response = PQconnectPoll( q);
-1124       if( lspg_connectPoll_response == PGRES_POLLING_FAILED) {
-1125         ls_pg_state = LS_PG_STATE_RESET;
-1126       }
-1127       return;
-1128     }
-1129 
-1130     if( ls_pg_state == LS_PG_STATE_RESET_POLL) {
-1131       lspg_resetPoll_response = PQresetPoll( q);
-1132       if( lspg_resetPoll_response == PGRES_POLLING_FAILED) {
-1133         ls_pg_state = LS_PG_STATE_RESET;
-1134       }
-1135       return;
-1136     }
-1137 
-1138 
-1139     //
-1140     // if in IDLE or RECV we need to call consumeInput first
-1141     //
-1142     if( ls_pg_state == LS_PG_STATE_IDLE) {
-1143       err = PQconsumeInput( q);
-1144       if( err != 1) {
-1145         pthread_mutex_lock( &ncurses_mutex);
-1146         wprintw( term_output, "\nconsume input failed: %s\n", PQerrorMessage( q))
-      ;
-1147         wnoutrefresh( term_output);
-1148         wnoutrefresh( term_input);
-1149         doupdate();
-1150         pthread_mutex_unlock( &ncurses_mutex);
-1151         ls_pg_state == LS_PG_STATE_RESET;
-1152         return;
-1153       }
-1154     }      
-1155 
-1156     if( ls_pg_state == LS_PG_STATE_RECV) {
-1157       lspg_receive();
-1158     }
-1159 
-1160     //
-1161     // Check for notifies regardless of our state
-1162     // Push as many requests as we have notifies.
-1163     //
-1164     {
-1165       PGnotify *pgn;
-1166 
-1167       while( 1) {
-1168         pgn = PQnotifies( q);
-1169         if( pgn == NULL)
-1170           break;
-1171         
-1172         if( strstr( pgn->relname, "_pmac") != NULL) {
-1173           lspg_query_push( lspg_cmd_cb, "SELECT pmac.md2_queue_next()");
-1174         } else {
-1175           lspg_query_push( lspg_nextaction_cb, "SELECT action FROM px.nextaction(
+1311                        {
+1312   //
+1313   // Currently just used to check for notifies
+1314   // Other socket communication is done syncronously
+1315   // Reconsider this if we start using the pmac gather functions
+1316   // since we'll want to be servicing those sockets ASAP
+1317   //
+1318 
+1319   if( evt->revents & POLLIN) {
+1320     int err;
+1321 
+1322     if( ls_pg_state == LS_PG_STATE_INIT_POLL) {
+1323       lspg_connectPoll_response = PQconnectPoll( q);
+1324       if( lspg_connectPoll_response == PGRES_POLLING_FAILED) {
+1325         ls_pg_state = LS_PG_STATE_RESET;
+1326       }
+1327       return;
+1328     }
+1329 
+1330     if( ls_pg_state == LS_PG_STATE_RESET_POLL) {
+1331       lspg_resetPoll_response = PQresetPoll( q);
+1332       if( lspg_resetPoll_response == PGRES_POLLING_FAILED) {
+1333         ls_pg_state = LS_PG_STATE_RESET;
+1334       }
+1335       return;
+1336     }
+1337 
+1338 
+1339     //
+1340     // if in IDLE or RECV we need to call consumeInput first
+1341     //
+1342     if( ls_pg_state == LS_PG_STATE_IDLE) {
+1343       err = PQconsumeInput( q);
+1344       if( err != 1) {
+1345         lslogging_log_message( "consume input failed: %s", PQerrorMessage( q));
+1346         ls_pg_state == LS_PG_STATE_RESET;
+1347         return;
+1348       }
+1349     }      
+1350 
+1351     if( ls_pg_state == LS_PG_STATE_RECV) {
+1352       lspg_receive();
+1353     }
+1354 
+1355     //
+1356     // Check for notifies regardless of our state
+1357     // Push as many requests as we have notifies.
+1358     //
+1359     {
+1360       PGnotify *pgn;
+1361 
+1362       while( 1) {
+1363         pgn = PQnotifies( q);
+1364         if( pgn == NULL)
+1365           break;
+1366         
+1367         if( strstr( pgn->relname, "_pmac") != NULL) {
+1368           lspg_query_push( lspg_cmd_cb, "SELECT pmac.md2_queue_next()");
+1369         } else {
+1370           lspg_query_push( lspg_nextaction_cb, "SELECT action FROM px.nextaction(
       )");
-1176         }
-1177         PQfreemem( pgn);
-1178       }
-1179     }
-1180   }
-1181 
-1182   if( evt->revents & POLLOUT) {
-1183 
-1184     if( ls_pg_state == LS_PG_STATE_INIT_POLL) {
-1185       lspg_connectPoll_response = PQconnectPoll( q);
-1186       if( lspg_connectPoll_response == PGRES_POLLING_FAILED) {
-1187         ls_pg_state = LS_PG_STATE_RESET;
-1188       }
-1189       return;
-1190     }
-1191 
-1192     if( ls_pg_state == LS_PG_STATE_RESET_POLL) {
-1193       lspg_resetPoll_response = PQresetPoll( q);
-1194       if( lspg_resetPoll_response == PGRES_POLLING_FAILED) {
-1195         ls_pg_state = LS_PG_STATE_RESET;
-1196       }
-1197       return;
-1198     }
-1199 
-1200 
-1201     if( ls_pg_state == LS_PG_STATE_SEND) {
-1202       lspg_send_next_query();
-1203     }
-1204 
-1205     if( ls_pg_state == LS_PG_STATE_SEND_FLUSH) {
-1206       lspg_flush();
-1207     }
-1208   }
-1209 }
+1371         }
+1372         PQfreemem( pgn);
+1373       }
+1374     }
+1375   }
+1376 
+1377   if( evt->revents & POLLOUT) {
+1378 
+1379     if( ls_pg_state == LS_PG_STATE_INIT_POLL) {
+1380       lspg_connectPoll_response = PQconnectPoll( q);
+1381       if( lspg_connectPoll_response == PGRES_POLLING_FAILED) {
+1382         ls_pg_state = LS_PG_STATE_RESET;
+1383       }
+1384       return;
+1385     }
+1386 
+1387     if( ls_pg_state == LS_PG_STATE_RESET_POLL) {
+1388       lspg_resetPoll_response = PQresetPoll( q);
+1389       if( lspg_resetPoll_response == PGRES_POLLING_FAILED) {
+1390         ls_pg_state = LS_PG_STATE_RESET;
+1391       }
+1392       return;
+1393     }
+1394 
+1395 
+1396     if( ls_pg_state == LS_PG_STATE_SEND) {
+1397       lspg_send_next_query();
+1398     }
+1399 
+1400     if( ls_pg_state == LS_PG_STATE_SEND_FLUSH) {
+1401       lspg_flush();
+1402     }
+1403   }
+1404 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_ad5f3ec8f197cc330c83dba70f310533c}{
 \index{lspg.c@{lspg.c}!lspg\_\-query\_\-next@{lspg\_\-query\_\-next}}
@@ -1516,25 +1805,27 @@ Definition at line 1109 of file lspg.c.
 
 Return the next item in the postgresql queue. If there is an item left in the queue then it is returned. Otherwise, NULL is returned. 
 
-Definition at line 80 of file lspg.c.
+Definition at line 79 of file lspg.c.
 
 
 \begin{DoxyCode}
-80                                       {
-81   lspg_query_queue_t *rtn;
-82   
-83   pthread_mutex_lock( &pg_queue_mutex);
-84 
-85   if( lspg_query_queue_off == lspg_query_queue_on)
-86     // Queue is empty
-87     rtn = NULL;
-88   else
-89     rtn = &(lspg_query_queue[(lspg_query_queue_off++) % LS_PG_QUERY_QUEUE_LENGTH]
+79                                       {
+80   lspg_query_queue_t *rtn;
+81   
+82   pthread_mutex_lock( &lspg_queue_mutex);
+83 
+84   if( lspg_query_queue_off == lspg_query_queue_on)
+85     // Queue is empty
+86     rtn = NULL;
+87   else {
+88     rtn = &(lspg_query_queue[(lspg_query_queue_off++) % LS_PG_QUERY_QUEUE_LENGTH]
       ); 
-90   pthread_mutex_unlock( &pg_queue_mutex);
-91 
-92   return rtn;
-93 }
+89     pthread_cond_signal( &lspg_queue_cond);
+90   }
+91   pthread_mutex_unlock( &lspg_queue_mutex);
+92 
+93   return rtn;
+94 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{
 \index{lspg.c@{lspg.c}!lspg\_\-query\_\-push@{lspg\_\-query\_\-push}}
@@ -1548,40 +1839,37 @@ Place a query on the queue.
 \item[\mbox{$\leftarrow$} {\em cb}]Our callback function that deals with the response \item[\mbox{$\leftarrow$} {\em fmt}]Printf style function to generate the query \end{DoxyParams}
 
 
-Definition at line 131 of file lspg.c.
+Definition at line 132 of file lspg.c.
 
 
 \begin{DoxyCode}
-135                        {
-136   int idx;
-137   va_list arg_ptr;
-138 
-139   pthread_mutex_lock( &pg_queue_mutex);
-140 
-141   //
-142   // TODO
-143   //
-144   // Should really wait until there is enough room on the queue.
-145   // Although the queue is big it is not infinite, so one day we'll over run it.
-146   // Should really test to see if (on + 1) == off.  If so, then use pg_queue_cond
-       to
-147   // wait until some room has been cleared.
-148   //
-149 
-150   idx = lspg_query_queue_on % LS_PG_QUERY_QUEUE_LENGTH;
-151 
-152   va_start( arg_ptr, fmt);
-153   vsnprintf( lspg_query_queue[idx].qs, LS_PG_QUERY_STRING_LENGTH-1, fmt, arg_ptr)
+136                        {
+137   int idx;
+138   va_list arg_ptr;
+139 
+140   pthread_mutex_lock( &lspg_queue_mutex);
+141 
+142   //
+143   // Pause the thread while we service the queue
+144   //
+145   while( lspg_query_queue_on + 1 == lspg_query_queue_off) {
+146     pthread_cond_wait( &lspg_queue_cond, &lspg_queue_mutex);
+147   }
+148 
+149   idx = lspg_query_queue_on % LS_PG_QUERY_QUEUE_LENGTH;
+150 
+151   va_start( arg_ptr, fmt);
+152   vsnprintf( lspg_query_queue[idx].qs, LS_PG_QUERY_STRING_LENGTH-1, fmt, arg_ptr)
       ;
-154   va_end( arg_ptr);
-155 
-156   lspg_query_queue[idx].qs[LS_PG_QUERY_STRING_LENGTH - 1] = 0;
-157   lspg_query_queue[idx].onResponse = cb;
-158   lspg_query_queue_on++;
-159 
-160   pthread_kill( lspg_thread, SIGUSR1);
-161   pthread_mutex_unlock( &pg_queue_mutex);
-162 };
+153   va_end( arg_ptr);
+154 
+155   lspg_query_queue[idx].qs[LS_PG_QUERY_STRING_LENGTH - 1] = 0;
+156   lspg_query_queue[idx].onResponse = cb;
+157   lspg_query_queue_on++;
+158 
+159   pthread_kill( lspg_thread, SIGUSR1);
+160   pthread_mutex_unlock( &lspg_queue_mutex);
+161 };
 \end{DoxyCode}
 \hypertarget{lspg_8c_a3847589e641f7e16a0cd68ef30e37cca}{
 \index{lspg.c@{lspg.c}!lspg\_\-query\_\-reply\_\-next@{lspg\_\-query\_\-reply\_\-next}}
@@ -1592,19 +1880,19 @@ Definition at line 131 of file lspg.c.
 
 Remove the oldest item in the queue. this is called only when there is nothing else to service the reply: this pop does not return anything. We use the ...reply\_\-peek function to return the next item in the reply queue 
 
-Definition at line 102 of file lspg.c.
+Definition at line 103 of file lspg.c.
 
 
 \begin{DoxyCode}
-102                              {
-103 
-104   pthread_mutex_lock( &pg_queue_mutex);
-105 
-106   if( lspg_query_queue_reply != lspg_query_queue_on)
-107     lspg_query_queue_reply++;
-108 
-109   pthread_mutex_unlock( &pg_queue_mutex);
-110 }
+103                              {
+104 
+105   pthread_mutex_lock( &lspg_queue_mutex);
+106 
+107   if( lspg_query_queue_reply != lspg_query_queue_on)
+108     lspg_query_queue_reply++;
+109 
+110   pthread_mutex_unlock( &lspg_queue_mutex);
+111 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_ae6bf4f54117bedf903360883bb32699f}{
 \index{lspg.c@{lspg.c}!lspg\_\-query\_\-reply\_\-peek@{lspg\_\-query\_\-reply\_\-peek}}
@@ -1615,24 +1903,24 @@ Definition at line 102 of file lspg.c.
 
 Return the next item in the reply queue but don't pop it since we may need it more than once. Call \hyperlink{lspg_8c_a3847589e641f7e16a0cd68ef30e37cca}{lspg\_\-query\_\-reply\_\-next()} when done. 
 
-Definition at line 115 of file lspg.c.
+Definition at line 116 of file lspg.c.
 
 
 \begin{DoxyCode}
-115                                             {
-116   lspg_query_queue_t *rtn;
-117 
-118   pthread_mutex_lock( &pg_queue_mutex);
-119 
-120   if( lspg_query_queue_reply == lspg_query_queue_on)
-121     rtn = NULL;
-122   else
-123     rtn = &(lspg_query_queue[(lspg_query_queue_reply) % LS_PG_QUERY_QUEUE_LENGTH]
+116                                             {
+117   lspg_query_queue_t *rtn;
+118 
+119   pthread_mutex_lock( &lspg_queue_mutex);
+120 
+121   if( lspg_query_queue_reply == lspg_query_queue_on)
+122     rtn = NULL;
+123   else
+124     rtn = &(lspg_query_queue[(lspg_query_queue_reply) % LS_PG_QUERY_QUEUE_LENGTH]
       );
-124 
-125   pthread_mutex_unlock( &pg_queue_mutex);
-126   return rtn;
-127 }
+125 
+126   pthread_mutex_unlock( &lspg_queue_mutex);
+127   return rtn;
+128 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_a038c5af23469b789fc1c55d21cb43029}{
 \index{lspg.c@{lspg.c}!lspg\_\-receive@{lspg\_\-receive}}
@@ -1643,80 +1931,69 @@ Definition at line 115 of file lspg.c.
 
 Receive a result of a query. 
 
-Definition at line 1016 of file lspg.c.
+Definition at line 1226 of file lspg.c.
 
 
 \begin{DoxyCode}
-1016                     {
-1017   PGresult *pgr;
-1018   lspg_query_queue_t *qqp;
-1019   int err;
-1020 
-1021   err = PQconsumeInput( q);
-1022   if( err != 1) {
-1023     pthread_mutex_lock( &ncurses_mutex);
-1024     wprintw( term_output, "\nconsume input failed: %s\n", PQerrorMessage( q));
-1025     wnoutrefresh( term_output);
-1026     wnoutrefresh( term_input);
-1027     doupdate();
-1028     pthread_mutex_unlock( &ncurses_mutex);
-1029     ls_pg_state == LS_PG_STATE_RESET;
-1030     return;
-1031   }
-1032 
-1033   //
-1034   // We must call PQgetResult until it returns NULL before sending the next query
+1226                     {
+1227   PGresult *pgr;
+1228   lspg_query_queue_t *qqp;
+1229   int err;
+1230 
+1231   err = PQconsumeInput( q);
+1232   if( err != 1) {
+1233     lslogging_log_message( "consume input failed: %s", PQerrorMessage( q));
+1234     ls_pg_state == LS_PG_STATE_RESET;
+1235     return;
+1236   }
+1237 
+1238   //
+1239   // We must call PQgetResult until it returns NULL before sending the next query
       
-1035   // This implies that only one query can ever be active at a time and our queue
-1036   // management should be simple
-1037   //
-1038   // We should be in the LS_PG_STATE_RECV here
-1039   //
-1040 
-1041   while( !PQisBusy( q)) {
-1042     pgr = PQgetResult( q);
-1043     if( pgr == NULL) {
-1044       lspg_query_reply_next();
-1045       //
-1046       // we are now done reading the response from the database
-1047       //
-1048       ls_pg_state = LS_PG_STATE_IDLE;
-1049       break;
-1050     } else {
-1051       ExecStatusType es;
-1052 
-1053       qqp = lspg_query_reply_peek();
-1054       es = PQresultStatus( pgr);
-1055 
-1056       if( es != PGRES_COMMAND_OK && es != PGRES_TUPLES_OK) {
-1057         char *emess;
-1058         emess = PQresultErrorMessage( pgr);
-1059         if( emess != NULL && emess[0] != 0) {
-1060           pthread_mutex_lock( &ncurses_mutex);
-1061           wprintw( term_output, "\nError from query '%s':\n%s\n", qqp->qs, emess)
-      ;
-1062           wnoutrefresh( term_output);
-1063           wnoutrefresh( term_input);
-1064           doupdate();
-1065           pthread_mutex_unlock( &ncurses_mutex);
-1066         }
-1067       } else {
-1068         //
-1069         // Deal with the response
-1070         //
-1071         // If the response is likely to take awhile we should probably
-1072         // add a new state and put something in the main look to run the onRespon
+1240   // This implies that only one query can ever be active at a time and our queue
+1241   // management should be simple
+1242   //
+1243   // We should be in the LS_PG_STATE_RECV here
+1244   //
+1245 
+1246   while( !PQisBusy( q)) {
+1247     pgr = PQgetResult( q);
+1248     if( pgr == NULL) {
+1249       lspg_query_reply_next();
+1250       //
+1251       // we are now done reading the response from the database
+1252       //
+1253       ls_pg_state = LS_PG_STATE_IDLE;
+1254       break;
+1255     } else {
+1256       ExecStatusType es;
+1257 
+1258       qqp = lspg_query_reply_peek();
+1259       es = PQresultStatus( pgr);
+1260 
+1261       if( es != PGRES_COMMAND_OK && es != PGRES_TUPLES_OK) {
+1262         char *emess;
+1263         emess = PQresultErrorMessage( pgr);
+1264         if( emess != NULL && emess[0] != 0) {
+1265           lslogging_log_message( "Error from query '%s':\n%s", qqp->qs, emess);
+1266         }
+1267       } else {
+1268         //
+1269         // Deal with the response
+1270         //
+1271         // If the response is likely to take awhile we should probably
+1272         // add a new state and put something in the main look to run the onRespon
       se
-1073         // routine in the main loop.  For now, though, we only expect very brief 
+1273         // routine in the main loop.  For now, though, we only expect very brief 
       onResponse routines
-1074         //
-1075         if( qqp != NULL && qqp->onResponse != NULL)
-1076           qqp->onResponse( qqp, pgr);
-1077       }
-1078       PQclear( pgr);
-1079     }
-1080   }
-1081 }
+1274         //
+1275         if( qqp != NULL && qqp->onResponse != NULL)
+1276           qqp->onResponse( qqp, pgr);
+1277       }
+1278       PQclear( pgr);
+1279     }
+1280   }
+1281 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_a1adfdb5ca9fdb5060849d726bf540117}{
 \index{lspg.c@{lspg.c}!lspg\_\-run@{lspg\_\-run}}
@@ -1727,13 +2004,45 @@ Definition at line 1016 of file lspg.c.
 
 Start 'er runnin'. 
 
-Definition at line 1461 of file lspg.c.
+Definition at line 1650 of file lspg.c.
 
 
 \begin{DoxyCode}
-1461                 {
-1462   pthread_create( &lspg_thread, NULL, lspg_worker, NULL);
-1463 }
+1650                 {
+1651   pthread_create( &lspg_thread, NULL, lspg_worker, NULL);
+1652 }
+\end{DoxyCode}
+\hypertarget{lspg_8c_a71db585552ea3f58a1c9ab3fbe62bb79}{
+\index{lspg.c@{lspg.c}!lspg\_\-scint\_\-lut\_\-cb@{lspg\_\-scint\_\-lut\_\-cb}}
+\index{lspg\_\-scint\_\-lut\_\-cb@{lspg\_\-scint\_\-lut\_\-cb}!lspg.c@{lspg.c}}
+\subsubsection[{lspg\_\-scint\_\-lut\_\-cb}]{\setlength{\rightskip}{0pt plus 5cm}void lspg\_\-scint\_\-lut\_\-cb ({\bf lspg\_\-query\_\-queue\_\-t} $\ast$ {\em qqp}, \/  PGresult $\ast$ {\em pgr})}}
+\label{lspg_8c_a71db585552ea3f58a1c9ab3fbe62bb79}
+
+\begin{DoxyParams}{Parameters}
+\item[\mbox{$\leftarrow$} {\em qqp}]Our query \item[\mbox{$\leftarrow$} {\em pgr}]Our result object \end{DoxyParams}
+
+
+Definition at line 369 of file lspg.c.
+
+
+\begin{DoxyCode}
+372                           {
+373   int i;
+374   pthread_mutex_lock( &(fscint->mutex));
+375   
+376   fscint->nlut = PQntuples( pgr)/2;
+377   fscint->lut  = calloc( 2*fscint->nlut, sizeof( double));
+378   if( fscint->lut == NULL) {
+379     lslogging_log_message( "lspg_scint_lut_cb: Out of memory");
+380     pthread_mutex_unlock( &(fscint->mutex));
+381   }
+382   
+383   for( i=0; i<PQntuples( pgr); i++) {
+384     fscint->lut[i] = strtod( PQgetvalue( pgr, i, 0), NULL);
+385   }
+386 
+387   pthread_mutex_unlock( &(fscint->mutex));
+388 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_a714b15e117ffe7bfce4f2f2ce4725b0a}{
 \index{lspg.c@{lspg.c}!lspg\_\-send\_\-next\_\-query@{lspg\_\-send\_\-next\_\-query}}
@@ -1744,65 +2053,55 @@ Definition at line 1461 of file lspg.c.
 
 send the next queued query to the DB server 
 
-Definition at line 959 of file lspg.c.
+Definition at line 1179 of file lspg.c.
 
 
 \begin{DoxyCode}
-959                             {
-960   //
-961   // Normally we should be in the "send" state
-962   // but we can also send if we are servicing
-963   // a reply
-964   //
-965 
-966   lspg_query_queue_t *qqp;
-967   int err;
-968 
-969   qqp = lspg_query_next();
-970   if( qqp == NULL) {
-971     //
-972     // A send without a query?  Should never happen.
-973     // But at least we shouldn't segfault if it does.
-974     //
-975     return;
-976   }
-977 
-978   if( qqp->qs[0] == 0) {
-979     //
-980     // Do we really have to check this case?
-981     // It would only come up if we stupidly pushed an empty query string
-982     // or ran off the end of the queue
-983     //
-984     pthread_mutex_lock( &ncurses_mutex);
-985     wprintw( term_output, "\nPopped empty query string.  Probably bad things are 
-      going on.\n");
-986     wnoutrefresh( term_output);
-987     wnoutrefresh( term_input);
-988     doupdate();
-989     pthread_mutex_unlock( &ncurses_mutex);
-990 
-991     lspg_query_reply_next();
-992     ls_pg_state = LS_PG_STATE_IDLE;
-993   } else {
-994     err = PQsendQuery( q, qqp->qs);
-995     if( err == 0) {
-996       pthread_mutex_lock( &ncurses_mutex);
-997       wprintw( term_output, "\nquery failed: %s\n", PQerrorMessage( q));
-998       wnoutrefresh( term_output);
-999       wnoutrefresh( term_input);
-1000       doupdate();
-1001       pthread_mutex_unlock( &ncurses_mutex);
-1002 
-1003       //
-1004       // Don't wait for a reply, just reset the connection
-1005       //
-1006       lspg_query_reply_next();
-1007       ls_pg_state == LS_PG_STATE_RESET;
-1008     } else {
-1009       ls_pg_state = LS_PG_STATE_SEND_FLUSH;
-1010     }
-1011   }
-1012 }
+1179                             {
+1180   //
+1181   // Normally we should be in the "send" state
+1182   // but we can also send if we are servicing
+1183   // a reply
+1184   //
+1185 
+1186   lspg_query_queue_t *qqp;
+1187   int err;
+1188 
+1189   qqp = lspg_query_next();
+1190   if( qqp == NULL) {
+1191     //
+1192     // A send without a query?  Should never happen.
+1193     // But at least we shouldn't segfault if it does.
+1194     //
+1195     return;
+1196   }
+1197 
+1198   if( qqp->qs[0] == 0) {
+1199     //
+1200     // Do we really have to check this case?
+1201     // It would only come up if we stupidly pushed an empty query string
+1202     // or ran off the end of the queue
+1203     //
+1204     lslogging_log_message( "Popped empty query string.  Probably bad things are g
+      oing on.");
+1205 
+1206     lspg_query_reply_next();
+1207     ls_pg_state = LS_PG_STATE_IDLE;
+1208   } else {
+1209     err = PQsendQuery( q, qqp->qs);
+1210     if( err == 0) {
+1211       lslogging_log_message( "query failed: %s\n", PQerrorMessage( q));
+1212 
+1213       //
+1214       // Don't wait for a reply, just reset the connection
+1215       //
+1216       lspg_query_reply_next();
+1217       ls_pg_state == LS_PG_STATE_RESET;
+1218     } else {
+1219       ls_pg_state = LS_PG_STATE_SEND_FLUSH;
+1220     }
+1221   }
+1222 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_a4253474d4dd305aec0afdd5552b3ddd5}{
 \index{lspg.c@{lspg.c}!lspg\_\-seq\_\-run\_\-prep\_\-all@{lspg\_\-seq\_\-run\_\-prep\_\-all}}
@@ -1816,15 +2115,15 @@ Convinence function to call seq run prep.
 \item[\mbox{$\leftarrow$} {\em skey}]px.shots key for this image \item[\mbox{$\leftarrow$} {\em kappa}]current kappa postion \item[\mbox{$\leftarrow$} {\em phi}]current phi postition \item[\mbox{$\leftarrow$} {\em cx}]current center table x \item[\mbox{$\leftarrow$} {\em cy}]current center table y \item[\mbox{$\leftarrow$} {\em ax}]current alignment table x \item[\mbox{$\leftarrow$} {\em ay}]current alignment table y \item[\mbox{$\leftarrow$} {\em az}]current alignment table z \end{DoxyParams}
 
 
-Definition at line 839 of file lspg.c.
+Definition at line 979 of file lspg.c.
 
 
 \begin{DoxyCode}
-848                              {
-849   lspg_seq_run_prep_call( skey, kappa, phi, cx, cy, ax, ay, az);
-850   lspg_seq_run_prep_wait();
-851   lspg_seq_run_prep_done();
-852 }
+988                              {
+989   lspg_seq_run_prep_call( skey, kappa, phi, cx, cy, ax, ay, az);
+990   lspg_seq_run_prep_wait();
+991   lspg_seq_run_prep_done();
+992 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_af7d6efd861b152a371442791deb42bd3}{
 \index{lspg.c@{lspg.c}!lspg\_\-seq\_\-run\_\-prep\_\-call@{lspg\_\-seq\_\-run\_\-prep\_\-call}}
@@ -1838,19 +2137,19 @@ queue up the seq\_\-run\_\-prep query
 \item[\mbox{$\leftarrow$} {\em skey}]px.shots key for this image \item[\mbox{$\leftarrow$} {\em kappa}]current kappa postion \item[\mbox{$\leftarrow$} {\em phi}]current phi postition \item[\mbox{$\leftarrow$} {\em cx}]current center table x \item[\mbox{$\leftarrow$} {\em cy}]current center table y \item[\mbox{$\leftarrow$} {\em ax}]current alignment table x \item[\mbox{$\leftarrow$} {\em ay}]current alignment table y \item[\mbox{$\leftarrow$} {\em az}]current alignment table z \end{DoxyParams}
 
 
-Definition at line 805 of file lspg.c.
+Definition at line 945 of file lspg.c.
 
 
 \begin{DoxyCode}
-814                               {
-815   pthread_mutex_lock( &(lspg_seq_run_prep.mutex));
-816   lspg_seq_run_prep.new_value_ready = 0;
-817   pthread_mutex_unlock( &(lspg_seq_run_prep.mutex));
-818 
-819   lspg_query_push( lspg_seq_run_prep_cb, "SELECT px.seq_run_prep( %lld, %.3f, %.3
+954                               {
+955   pthread_mutex_lock( &(lspg_seq_run_prep.mutex));
+956   lspg_seq_run_prep.new_value_ready = 0;
+957   pthread_mutex_unlock( &(lspg_seq_run_prep.mutex));
+958 
+959   lspg_query_push( lspg_seq_run_prep_cb, "SELECT px.seq_run_prep( %lld, %.3f, %.3
       f, %.3f, %.3f, %.3f, %.3f, %.3f)",
-820                    skey, kappa, phi, cx, cy, ax, ay, az);
-821 }
+960                    skey, kappa, phi, cx, cy, ax, ay, az);
+961 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_a11cda12050dc9a86188e15e2155a6013}{
 \index{lspg.c@{lspg.c}!lspg\_\-seq\_\-run\_\-prep\_\-cb@{lspg\_\-seq\_\-run\_\-prep\_\-cb}}
@@ -1864,16 +2163,16 @@ Callback for the seq\_\-run\_\-prep query.
 \item[\mbox{$\leftarrow$} {\em qqp}]The query item that generated this callback \item[\mbox{$\leftarrow$} {\em pgr}]The result of the query \end{DoxyParams}
 
 
-Definition at line 793 of file lspg.c.
+Definition at line 933 of file lspg.c.
 
 
 \begin{DoxyCode}
-796                             {
-797   pthread_mutex_lock( &(lspg_seq_run_prep.mutex));
-798   lspg_seq_run_prep.new_value_ready = 1;
-799   pthread_cond_signal( &(lspg_seq_run_prep.cond));
-800   pthread_mutex_unlock( &(lspg_seq_run_prep.mutex));
-801 }
+936                             {
+937   pthread_mutex_lock( &(lspg_seq_run_prep.mutex));
+938   lspg_seq_run_prep.new_value_ready = 1;
+939   pthread_cond_signal( &(lspg_seq_run_prep.cond));
+940   pthread_mutex_unlock( &(lspg_seq_run_prep.mutex));
+941 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_a472b09ddf716c80207f97e2bb5d37d66}{
 \index{lspg.c@{lspg.c}!lspg\_\-seq\_\-run\_\-prep\_\-done@{lspg\_\-seq\_\-run\_\-prep\_\-done}}
@@ -1884,13 +2183,13 @@ Definition at line 793 of file lspg.c.
 
 Indicate we are done waiting. 
 
-Definition at line 833 of file lspg.c.
+Definition at line 973 of file lspg.c.
 
 
 \begin{DoxyCode}
-833                               {
-834   pthread_mutex_unlock( &(lspg_seq_run_prep.mutex));
-835 }
+973                               {
+974   pthread_mutex_unlock( &(lspg_seq_run_prep.mutex));
+975 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_a31823ecb2b44d4a6674f804059a27bce}{
 \index{lspg.c@{lspg.c}!lspg\_\-seq\_\-run\_\-prep\_\-init@{lspg\_\-seq\_\-run\_\-prep\_\-init}}
@@ -1901,15 +2200,15 @@ Definition at line 833 of file lspg.c.
 
 Initialize the data collection object. 
 
-Definition at line 785 of file lspg.c.
+Definition at line 925 of file lspg.c.
 
 
 \begin{DoxyCode}
-785                               {
-786   lspg_seq_run_prep.new_value_ready = 0;
-787   pthread_mutex_init( &(lspg_seq_run_prep.mutex), NULL);
-788   pthread_cond_init(  &(lspg_seq_run_prep.cond),  NULL);
-789 }
+925                               {
+926   lspg_seq_run_prep.new_value_ready = 0;
+927   pthread_mutex_init( &(lspg_seq_run_prep.mutex), NULL);
+928   pthread_cond_init(  &(lspg_seq_run_prep.cond),  NULL);
+929 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_ac0b01f501322432a8fa37f31898c3499}{
 \index{lspg.c@{lspg.c}!lspg\_\-seq\_\-run\_\-prep\_\-wait@{lspg\_\-seq\_\-run\_\-prep\_\-wait}}
@@ -1920,15 +2219,15 @@ Definition at line 785 of file lspg.c.
 
 Wait for seq run prep query to return. 
 
-Definition at line 825 of file lspg.c.
+Definition at line 965 of file lspg.c.
 
 
 \begin{DoxyCode}
-825                               {
-826   pthread_mutex_lock( &(lspg_seq_run_prep.mutex));
-827   while( lspg_seq_run_prep.new_value_ready == 0)
-828     pthread_cond_wait( &(lspg_seq_run_prep.cond), &(lspg_seq_run_prep.mutex));
-829 }
+965                               {
+966   pthread_mutex_lock( &(lspg_seq_run_prep.mutex));
+967   while( lspg_seq_run_prep.new_value_ready == 0)
+968     pthread_cond_wait( &(lspg_seq_run_prep.cond), &(lspg_seq_run_prep.mutex));
+969 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_a049f4422994aa2eb2b841ffb2937f895}{
 \index{lspg.c@{lspg.c}!lspg\_\-sig\_\-service@{lspg\_\-sig\_\-service}}
@@ -1942,27 +2241,27 @@ Service a signal Signals here are treated as file descriptors and fits into our 
 \item[\mbox{$\leftarrow$} {\em evt}]The pollfd object that triggered this call \end{DoxyParams}
 
 
-Definition at line 1087 of file lspg.c.
+Definition at line 1287 of file lspg.c.
 
 
 \begin{DoxyCode}
-1089                         {
-1090   struct signalfd_siginfo fdsi;
-1091 
-1092   //
-1093   // Really, we don't care about the signal,
-1094   // it's just used to drop out of the poll
-1095   // function when there is something for us
-1096   // to do that didn't invovle something coming
-1097   // from our postgresql server.
-1098   //
-1099   // This is accompished by the query_push function
-1100   // to notify us that a new query is ready.
-1101   //
-1102 
-1103   read( evt->fd, &fdsi, sizeof( struct signalfd_siginfo));
-1104 
-1105 }
+1289                         {
+1290   struct signalfd_siginfo fdsi;
+1291 
+1292   //
+1293   // Really, we don't care about the signal,
+1294   // it's just used to drop out of the poll
+1295   // function when there is something for us
+1296   // to do that didn't invovle something coming
+1297   // from our postgresql server.
+1298   //
+1299   // This is accompished by the query_push function
+1300   // to notify us that a new query is ready.
+1301   //
+1302 
+1303   read( evt->fd, &fdsi, sizeof( struct signalfd_siginfo));
+1304 
+1305 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_ab9780e15924a50b2a5545e10806000b3}{
 \index{lspg.c@{lspg.c}!lspg\_\-wait\_\-for\_\-detector\_\-all@{lspg\_\-wait\_\-for\_\-detector\_\-all}}
@@ -1973,15 +2272,15 @@ Definition at line 1087 of file lspg.c.
 
 Combined call to wait for the detector. 
 
-Definition at line 649 of file lspg.c.
+Definition at line 789 of file lspg.c.
 
 
 \begin{DoxyCode}
-649                                   {
-650   lspg_wait_for_detector_call();
-651   lspg_wait_for_detector_wait();
-652   lspg_wait_for_detector_done();
-653 }
+789                                   {
+790   lspg_wait_for_detector_call();
+791   lspg_wait_for_detector_wait();
+792   lspg_wait_for_detector_done();
+793 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_a4b5222b859a44eae616804a1e990b86d}{
 \index{lspg.c@{lspg.c}!lspg\_\-wait\_\-for\_\-detector\_\-call@{lspg\_\-wait\_\-for\_\-detector\_\-call}}
@@ -1992,18 +2291,18 @@ Definition at line 649 of file lspg.c.
 
 initiate the wait for detector query 
 
-Definition at line 623 of file lspg.c.
+Definition at line 763 of file lspg.c.
 
 
 \begin{DoxyCode}
-623                                    {
-624   pthread_mutex_lock( &(lspg_wait_for_detector.mutex));
-625   lspg_wait_for_detector.new_value_ready = 0;
-626   pthread_mutex_unlock( &(lspg_wait_for_detector.mutex));
-627   
-628   lspg_query_push( lspg_wait_for_detector_cb, "SELECT px.lock_detector_test_block
+763                                    {
+764   pthread_mutex_lock( &(lspg_wait_for_detector.mutex));
+765   lspg_wait_for_detector.new_value_ready = 0;
+766   pthread_mutex_unlock( &(lspg_wait_for_detector.mutex));
+767   
+768   lspg_query_push( lspg_wait_for_detector_cb, "SELECT px.lock_detector_test_block
       ()");
-629 }
+769 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_a5747c519d1aa4c310010a862cae8a823}{
 \index{lspg.c@{lspg.c}!lspg\_\-wait\_\-for\_\-detector\_\-cb@{lspg\_\-wait\_\-for\_\-detector\_\-cb}}
@@ -2014,16 +2313,16 @@ Definition at line 623 of file lspg.c.
 
 Callback for the wait for detector query. 
 
-Definition at line 614 of file lspg.c.
+Definition at line 754 of file lspg.c.
 
 
 \begin{DoxyCode}
-614                                                                         {
-615   pthread_mutex_lock( &(lspg_wait_for_detector.mutex));
-616   lspg_wait_for_detector.new_value_ready = 1;
-617   pthread_cond_signal(  &(lspg_wait_for_detector.cond));
-618   pthread_mutex_unlock( &(lspg_wait_for_detector.mutex));
-619 }
+754                                                                         {
+755   pthread_mutex_lock( &(lspg_wait_for_detector.mutex));
+756   lspg_wait_for_detector.new_value_ready = 1;
+757   pthread_cond_signal(  &(lspg_wait_for_detector.cond));
+758   pthread_mutex_unlock( &(lspg_wait_for_detector.mutex));
+759 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_abb3645dee7c4514b650ab02f27570a69}{
 \index{lspg.c@{lspg.c}!lspg\_\-wait\_\-for\_\-detector\_\-done@{lspg\_\-wait\_\-for\_\-detector\_\-done}}
@@ -2034,13 +2333,13 @@ Definition at line 614 of file lspg.c.
 
 Done waiting for the detector. 
 
-Definition at line 642 of file lspg.c.
+Definition at line 782 of file lspg.c.
 
 
 \begin{DoxyCode}
-642                                    {
-643   pthread_mutex_unlock( &(lspg_wait_for_detector.mutex));
-644 }
+782                                    {
+783   pthread_mutex_unlock( &(lspg_wait_for_detector.mutex));
+784 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_a3517f8fbed91c998f6036284f9bd0c48}{
 \index{lspg.c@{lspg.c}!lspg\_\-wait\_\-for\_\-detector\_\-init@{lspg\_\-wait\_\-for\_\-detector\_\-init}}
@@ -2051,15 +2350,15 @@ Definition at line 642 of file lspg.c.
 
 initialize the detector timing object 
 
-Definition at line 606 of file lspg.c.
+Definition at line 746 of file lspg.c.
 
 
 \begin{DoxyCode}
-606                                    {
-607   lspg_wait_for_detector.new_value_ready = 0;
-608   pthread_mutex_init( &(lspg_wait_for_detector.mutex), NULL);
-609   pthread_cond_init(  &(lspg_wait_for_detector.cond), NULL);
-610 }
+746                                    {
+747   lspg_wait_for_detector.new_value_ready = 0;
+748   pthread_mutex_init( &(lspg_wait_for_detector.mutex), NULL);
+749   pthread_cond_init(  &(lspg_wait_for_detector.cond), NULL);
+750 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_af094e01be121ce8e14abb679abd17e19}{
 \index{lspg.c@{lspg.c}!lspg\_\-wait\_\-for\_\-detector\_\-wait@{lspg\_\-wait\_\-for\_\-detector\_\-wait}}
@@ -2070,16 +2369,16 @@ Definition at line 606 of file lspg.c.
 
 Pause the calling thread until the detector is ready Called by the MD2 thread. 
 
-Definition at line 634 of file lspg.c.
+Definition at line 774 of file lspg.c.
 
 
 \begin{DoxyCode}
-634                                    {
-635   pthread_mutex_lock( &(lspg_wait_for_detector.mutex));
-636   while( lspg_wait_for_detector.new_value_ready == 0)
-637     pthread_cond_wait( &(lspg_wait_for_detector.cond), &(lspg_wait_for_detector.
+774                                    {
+775   pthread_mutex_lock( &(lspg_wait_for_detector.mutex));
+776   while( lspg_wait_for_detector.new_value_ready == 0)
+777     pthread_cond_wait( &(lspg_wait_for_detector.cond), &(lspg_wait_for_detector.
       mutex));
-638 }
+778 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_aaf4fadd2943fa3a2ecb5d840e84d68fa}{
 \index{lspg.c@{lspg.c}!lspg\_\-worker@{lspg\_\-worker}}
@@ -2093,90 +2392,85 @@ The main loop for the lspg thread.
 \item[\mbox{$\leftarrow$} {\em dummy}]Required by pthreads but unused \end{DoxyParams}
 
 
-Definition at line 1366 of file lspg.c.
+Definition at line 1558 of file lspg.c.
 
 
 \begin{DoxyCode}
-1368                     {
-1369   static struct pollfd fda[2];  // 0=signal handler, 1=pg socket
-1370   static int nfda = 0;
-1371   static sigset_t our_sigset;
-1372   int sigfd;
-1373 
-1374   sigemptyset( &our_sigset);
-1375   sigaddset( &our_sigset, SIGUSR1);
-1376 
-1377 
-1378   //
-1379   // block ordinary signal mechanism
-1380   //
-1381   sigprocmask(SIG_BLOCK, &our_sigset, NULL);
-1382 
-1383     
-1384   fda[0].fd = signalfd( -1, &our_sigset, SFD_NONBLOCK);
-1385   if( fda[0].fd == -1) {
-1386     char *es;
-1387 
-1388     es = strerror( errno);
-1389     pthread_mutex_lock( &ncurses_mutex);
-1390     wprintw( term_output, "Signalfd trouble: %s", es);
-1391     wnoutrefresh( term_output);
-1392     wnoutrefresh( term_input);
-1393     doupdate();
-1394     pthread_mutex_unlock( &ncurses_mutex);
-1395   }
-1396   fda[0].events = POLLIN;
-1397 
-1398   //
-1399   //  make sure file descriptor is not legal until it's been conneceted
-1400   //
-1401   lspgfd.fd   = -1;
-1402 
-1403 
-1404   while( 1) {
-1405     int pollrtn;
-1406     int poll_timeout_ms;
-1407 
-1408     lspg_next_state();
-1409 
-1410     if( lspgfd.fd == -1) {
-1411       //
-1412       // Here a connection to the database is not established.
-1413       // Periodicaly try again.  Should possibly arrange to reconnect
-1414       // to signalfd but that's unlikely to be nessesary.
-1415       //
-1416       nfda = 1;
-1417       poll_timeout_ms = 10000;
-1418       fda[1].revents = 0;
-1419     } else {
-1420       //
-1421       // Arrange to peacfully do nothing until either the pg server sends us some
+1560                     {
+1561   static struct pollfd fda[2];  // 0=signal handler, 1=pg socket
+1562   static int nfda = 0;
+1563   static sigset_t our_sigset;
+1564   int sigfd;
+1565 
+1566   sigemptyset( &our_sigset);
+1567   sigaddset( &our_sigset, SIGUSR1);
+1568 
+1569 
+1570   //
+1571   // block ordinary signal mechanism
+1572   //
+1573   sigprocmask(SIG_BLOCK, &our_sigset, NULL);
+1574 
+1575     
+1576   fda[0].fd = signalfd( -1, &our_sigset, SFD_NONBLOCK);
+1577   if( fda[0].fd == -1) {
+1578     char *es;
+1579 
+1580     es = strerror( errno);
+1581     lslogging_log_message( "Signalfd trouble: %s", es);
+1582   }
+1583   fda[0].events = POLLIN;
+1584 
+1585   //
+1586   //  make sure file descriptor is not legal until it's been conneceted
+1587   //
+1588   lspgfd.fd   = -1;
+1589 
+1590 
+1591   while( 1) {
+1592     int pollrtn;
+1593     int poll_timeout_ms;
+1594 
+1595     lspg_next_state();
+1596 
+1597     if( lspgfd.fd == -1) {
+1598       //
+1599       // Here a connection to the database is not established.
+1600       // Periodicaly try again.  Should possibly arrange to reconnect
+1601       // to signalfd but that's unlikely to be nessesary.
+1602       //
+1603       nfda = 1;
+1604       poll_timeout_ms = 10000;
+1605       fda[1].revents = 0;
+1606     } else {
+1607       //
+1608       // Arrange to peacfully do nothing until either the pg server sends us some
       thing
-1422       // or someone pushs something onto our queue
-1423       //
-1424       nfda = 2;
-1425       fda[1].fd      = lspgfd.fd;
-1426       fda[1].events  = lspgfd.events;
-1427       fda[1].revents = 0;
-1428       poll_timeout_ms = -1;
-1429     }
-1430 
-1431     pollrtn = poll( fda, nfda, poll_timeout_ms);
-1432 
-1433     if( pollrtn && fda[0].revents) {
-1434       lspg_sig_service( &(fda[0]));
-1435       pollrtn--;
-1436     } 
-1437     if( pollrtn && fda[1].revents) {
-1438       lspg_pg_service( &(fda[1]));
-1439       pollrtn--;
-1440     } 
-1441 
-1442 
-1443 
-1444 
-1445   }
-1446 }
+1609       // or someone pushs something onto our queue
+1610       //
+1611       nfda = 2;
+1612       fda[1].fd      = lspgfd.fd;
+1613       fda[1].events  = lspgfd.events;
+1614       fda[1].revents = 0;
+1615       poll_timeout_ms = -1;
+1616     }
+1617 
+1618     pollrtn = poll( fda, nfda, poll_timeout_ms);
+1619 
+1620     if( pollrtn && fda[0].revents) {
+1621       lspg_sig_service( &(fda[0]));
+1622       pollrtn--;
+1623     } 
+1624     if( pollrtn && fda[1].revents) {
+1625       lspg_pg_service( &(fda[1]));
+1626       pollrtn--;
+1627     } 
+1628 
+1629 
+1630 
+1631 
+1632   }
+1633 }
 \end{DoxyCode}
 \hypertarget{lspg_8c_af34559ab5624e1e68085dbcd9410c692}{
 \index{lspg.c@{lspg.c}!lspg\_\-zoom\_\-lut\_\-cb@{lspg\_\-zoom\_\-lut\_\-cb}}
@@ -2190,33 +2484,29 @@ Zoom motor look up table callback.
 \item[\mbox{$\leftarrow$} {\em qqp}]the queue item responsible for calling us \item[\mbox{$\leftarrow$} {\em pgr}]The Postgresql result object \end{DoxyParams}
 
 
-Definition at line 217 of file lspg.c.
+Definition at line 346 of file lspg.c.
 
 
 \begin{DoxyCode}
-220                         {
-221   int i;
-222   
-223   pthread_mutex_lock( &(zoom->mutex));
-224 
-225   zoom->nlut = PQntuples( pgr)/2;
-226   zoom->lut  = calloc( 2*zoom->nlut, sizeof(double));
-227   if( zoom->lut == NULL) {
-228     wprintw( term_output, "\nOut of memmory (lspg_zoom_lut_cb)");
-229     wnoutrefresh( term_output);
-230     wnoutrefresh( term_output);
-231     doupdate();
-232     pthread_mutex_unlock( &(zoom->mutex));
-233     return;
-234   }
-235   
-236   for( i=0; i<PQntuples( pgr); i++) {
-237     zoom->lut[i] = strtod( PQgetvalue( pgr, i, 0), NULL);
-238   }
-239 
-240   pthread_mutex_unlock( &(zoom->mutex));
-241 
-242 }
+349                         {
+350   int i;
+351   
+352   pthread_mutex_lock( &(zoom->mutex));
+353 
+354   zoom->nlut = PQntuples( pgr)/2;
+355   zoom->lut  = calloc( 2*zoom->nlut, sizeof(double));
+356   if( zoom->lut == NULL) {
+357     lslogging_log_message( "Out of memmory (lspg_zoom_lut_cb)");
+358     pthread_mutex_unlock( &(zoom->mutex));
+359     return;
+360   }
+361   
+362   for( i=0; i<PQntuples( pgr); i++) {
+363     zoom->lut[i] = strtod( PQgetvalue( pgr, i, 0), NULL);
+364   }
+365 
+366   pthread_mutex_unlock( &(zoom->mutex));
+367 }
 \end{DoxyCode}
 
 
@@ -2239,21 +2529,30 @@ Definition at line 39 of file lspg.c.\hypertarget{lspg_8c_a69ae04978986e6413ca7c
 
 Used to determine state while connecting. 
 
-Definition at line 70 of file lspg.c.\hypertarget{lspg_8c_adbf3b3652c6531c3d194320d1abc1c80}{
+Definition at line 69 of file lspg.c.\hypertarget{lspg_8c_a7ef8a09203117578c9b2ce4719519f36}{
+\index{lspg.c@{lspg.c}!lspg\_\-getcenter@{lspg\_\-getcenter}}
+\index{lspg\_\-getcenter@{lspg\_\-getcenter}!lspg.c@{lspg.c}}
+\subsubsection[{lspg\_\-getcenter}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lspg\_\-getcenter\_\-t} {\bf lspg\_\-getcenter}}}
+\label{lspg_8c_a7ef8a09203117578c9b2ce4719519f36}
+
+
+the getcenter object 
+
+Definition at line 73 of file lspg.c.\hypertarget{lspg_8c_adbf3b3652c6531c3d194320d1abc1c80}{
 \index{lspg.c@{lspg.c}!lspg\_\-lock\_\-detector@{lspg\_\-lock\_\-detector}}
 \index{lspg\_\-lock\_\-detector@{lspg\_\-lock\_\-detector}!lspg.c@{lspg.c}}
 \subsubsection[{lspg\_\-lock\_\-detector}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lspg\_\-lock\_\-detector\_\-t} {\bf lspg\_\-lock\_\-detector}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
 \label{lspg_8c_adbf3b3652c6531c3d194320d1abc1c80}
 
 
-Definition at line 723 of file lspg.c.\hypertarget{lspg_8c_aaae7ce3ecd7d54a9e46c41d7a742a454}{
+Definition at line 863 of file lspg.c.\hypertarget{lspg_8c_aaae7ce3ecd7d54a9e46c41d7a742a454}{
 \index{lspg.c@{lspg.c}!lspg\_\-lock\_\-diffractometer@{lspg\_\-lock\_\-diffractometer}}
 \index{lspg\_\-lock\_\-diffractometer@{lspg\_\-lock\_\-diffractometer}!lspg.c@{lspg.c}}
 \subsubsection[{lspg\_\-lock\_\-diffractometer}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lspg\_\-lock\_\-diffractometer\_\-t} {\bf lspg\_\-lock\_\-diffractometer}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
 \label{lspg_8c_aaae7ce3ecd7d54a9e46c41d7a742a454}
 
 
-Definition at line 664 of file lspg.c.\hypertarget{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{
+Definition at line 804 of file lspg.c.\hypertarget{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{
 \index{lspg.c@{lspg.c}!lspg\_\-nextshot@{lspg\_\-nextshot}}
 \index{lspg\_\-nextshot@{lspg\_\-nextshot}!lspg.c@{lspg.c}}
 \subsubsection[{lspg\_\-nextshot}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lspg\_\-nextshot\_\-t} {\bf lspg\_\-nextshot}}}
@@ -2262,7 +2561,7 @@ Definition at line 664 of file lspg.c.\hypertarget{lspg_8c_ad8d8e2f578ca79189a80
 
 the nextshot object 
 
-Definition at line 73 of file lspg.c.\hypertarget{lspg_8c_a357d9d98f0b8c9625ccebcebfcdce955}{
+Definition at line 72 of file lspg.c.\hypertarget{lspg_8c_a357d9d98f0b8c9625ccebcebfcdce955}{
 \index{lspg.c@{lspg.c}!lspg\_\-query\_\-queue@{lspg\_\-query\_\-queue}}
 \index{lspg\_\-query\_\-queue@{lspg\_\-query\_\-queue}!lspg.c@{lspg.c}}
 \subsubsection[{lspg\_\-query\_\-queue}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lspg\_\-query\_\-queue\_\-t} {\bf lspg\_\-query\_\-queue}\mbox{[}LS\_\-PG\_\-QUERY\_\-QUEUE\_\-LENGTH\mbox{]}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
@@ -2271,7 +2570,7 @@ Definition at line 73 of file lspg.c.\hypertarget{lspg_8c_a357d9d98f0b8c9625cceb
 
 Our query queue. 
 
-Definition at line 62 of file lspg.c.\hypertarget{lspg_8c_aca86bb77d6cecfae9251743f4171bafb}{
+Definition at line 61 of file lspg.c.\hypertarget{lspg_8c_aca86bb77d6cecfae9251743f4171bafb}{
 \index{lspg.c@{lspg.c}!lspg\_\-query\_\-queue\_\-off@{lspg\_\-query\_\-queue\_\-off}}
 \index{lspg\_\-query\_\-queue\_\-off@{lspg\_\-query\_\-queue\_\-off}!lspg.c@{lspg.c}}
 \subsubsection[{lspg\_\-query\_\-queue\_\-off}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int {\bf lspg\_\-query\_\-queue\_\-off} = 0\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
@@ -2280,7 +2579,7 @@ Definition at line 62 of file lspg.c.\hypertarget{lspg_8c_aca86bb77d6cecfae92517
 
 The last item still being used (on == off means nothing in queue). 
 
-Definition at line 64 of file lspg.c.\hypertarget{lspg_8c_a3cbe7f3161b3c1838ebc56a3bbcfd8a6}{
+Definition at line 63 of file lspg.c.\hypertarget{lspg_8c_a3cbe7f3161b3c1838ebc56a3bbcfd8a6}{
 \index{lspg.c@{lspg.c}!lspg\_\-query\_\-queue\_\-on@{lspg\_\-query\_\-queue\_\-on}}
 \index{lspg\_\-query\_\-queue\_\-on@{lspg\_\-query\_\-queue\_\-on}!lspg.c@{lspg.c}}
 \subsubsection[{lspg\_\-query\_\-queue\_\-on}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int {\bf lspg\_\-query\_\-queue\_\-on} = 0\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
@@ -2289,7 +2588,7 @@ Definition at line 64 of file lspg.c.\hypertarget{lspg_8c_a3cbe7f3161b3c1838ebc5
 
 Next position to add something to the queue. 
 
-Definition at line 63 of file lspg.c.\hypertarget{lspg_8c_a2603b071afdbff7c0924b13de2454264}{
+Definition at line 62 of file lspg.c.\hypertarget{lspg_8c_a2603b071afdbff7c0924b13de2454264}{
 \index{lspg.c@{lspg.c}!lspg\_\-query\_\-queue\_\-reply@{lspg\_\-query\_\-queue\_\-reply}}
 \index{lspg\_\-query\_\-queue\_\-reply@{lspg\_\-query\_\-queue\_\-reply}!lspg.c@{lspg.c}}
 \subsubsection[{lspg\_\-query\_\-queue\_\-reply}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int {\bf lspg\_\-query\_\-queue\_\-reply} = 0\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
@@ -2298,7 +2597,25 @@ Definition at line 63 of file lspg.c.\hypertarget{lspg_8c_a2603b071afdbff7c0924b
 
 The current item being digested. Normally off $<$= reply $<$= on. Corner case of queue wrap arround works because we only increment and compare for equality. 
 
-Definition at line 65 of file lspg.c.\hypertarget{lspg_8c_a06c5a937e41a6c706a247777642ec1fb}{
+Definition at line 64 of file lspg.c.\hypertarget{lspg_8c_a61a308b6a37afd645beb422653b95baa}{
+\index{lspg.c@{lspg.c}!lspg\_\-queue\_\-cond@{lspg\_\-queue\_\-cond}}
+\index{lspg\_\-queue\_\-cond@{lspg\_\-queue\_\-cond}!lspg.c@{lspg.c}}
+\subsubsection[{lspg\_\-queue\_\-cond}]{\setlength{\rightskip}{0pt plus 5cm}pthread\_\-cond\_\-t {\bf lspg\_\-queue\_\-cond}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
+\label{lspg_8c_a61a308b6a37afd645beb422653b95baa}
+
+
+keeps the queue from overflowing 
+
+Definition at line 44 of file lspg.c.\hypertarget{lspg_8c_aed46a94106c583796e3a8ca0e89aa8e4}{
+\index{lspg.c@{lspg.c}!lspg\_\-queue\_\-mutex@{lspg\_\-queue\_\-mutex}}
+\index{lspg\_\-queue\_\-mutex@{lspg\_\-queue\_\-mutex}!lspg.c@{lspg.c}}
+\subsubsection[{lspg\_\-queue\_\-mutex}]{\setlength{\rightskip}{0pt plus 5cm}pthread\_\-mutex\_\-t {\bf lspg\_\-queue\_\-mutex}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
+\label{lspg_8c_aed46a94106c583796e3a8ca0e89aa8e4}
+
+
+keep the queue from getting tangled 
+
+Definition at line 43 of file lspg.c.\hypertarget{lspg_8c_a06c5a937e41a6c706a247777642ec1fb}{
 \index{lspg.c@{lspg.c}!lspg\_\-resetPoll\_\-response@{lspg\_\-resetPoll\_\-response}}
 \index{lspg\_\-resetPoll\_\-response@{lspg\_\-resetPoll\_\-response}!lspg.c@{lspg.c}}
 \subsubsection[{lspg\_\-resetPoll\_\-response}]{\setlength{\rightskip}{0pt plus 5cm}PostgresPollingStatusType {\bf lspg\_\-resetPoll\_\-response}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
@@ -2307,14 +2624,14 @@ Definition at line 65 of file lspg.c.\hypertarget{lspg_8c_a06c5a937e41a6c706a247
 
 Used to determine state while reconnecting. 
 
-Definition at line 71 of file lspg.c.\hypertarget{lspg_8c_a1b0d9fc30bcea6905b075d2362149172}{
+Definition at line 70 of file lspg.c.\hypertarget{lspg_8c_a1b0d9fc30bcea6905b075d2362149172}{
 \index{lspg.c@{lspg.c}!lspg\_\-seq\_\-run\_\-prep@{lspg\_\-seq\_\-run\_\-prep}}
 \index{lspg\_\-seq\_\-run\_\-prep@{lspg\_\-seq\_\-run\_\-prep}!lspg.c@{lspg.c}}
 \subsubsection[{lspg\_\-seq\_\-run\_\-prep}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lspg\_\-seq\_\-run\_\-prep\_\-t} {\bf lspg\_\-seq\_\-run\_\-prep}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
 \label{lspg_8c_a1b0d9fc30bcea6905b075d2362149172}
 
 
-Definition at line 781 of file lspg.c.\hypertarget{lspg_8c_a04eb0cda0d5e5afeae7c393b51689765}{
+Definition at line 921 of file lspg.c.\hypertarget{lspg_8c_a04eb0cda0d5e5afeae7c393b51689765}{
 \index{lspg.c@{lspg.c}!lspg\_\-thread@{lspg\_\-thread}}
 \index{lspg\_\-thread@{lspg\_\-thread}!lspg.c@{lspg.c}}
 \subsubsection[{lspg\_\-thread}]{\setlength{\rightskip}{0pt plus 5cm}pthread\_\-t {\bf lspg\_\-thread}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
@@ -2323,7 +2640,7 @@ Definition at line 781 of file lspg.c.\hypertarget{lspg_8c_a04eb0cda0d5e5afeae7c
 
 our worker thread 
 
-Definition at line 41 of file lspg.c.\hypertarget{lspg_8c_a0dfc8d0410cd2d7f7da7a70d3ef88e58}{
+Definition at line 42 of file lspg.c.\hypertarget{lspg_8c_a0dfc8d0410cd2d7f7da7a70d3ef88e58}{
 \index{lspg.c@{lspg.c}!lspg\_\-wait\_\-for\_\-detector@{lspg\_\-wait\_\-for\_\-detector}}
 \index{lspg\_\-wait\_\-for\_\-detector@{lspg\_\-wait\_\-for\_\-detector}!lspg.c@{lspg.c}}
 \subsubsection[{lspg\_\-wait\_\-for\_\-detector}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lspg\_\-wait\_\-for\_\-detector\_\-t} {\bf lspg\_\-wait\_\-for\_\-detector}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
@@ -2332,7 +2649,7 @@ Definition at line 41 of file lspg.c.\hypertarget{lspg_8c_a0dfc8d0410cd2d7f7da7a
 
 Instance of the detector timing object. 
 
-Definition at line 602 of file lspg.c.\hypertarget{lspg_8c_af3f897b8ffa020ca54289bc5b28cb64d}{
+Definition at line 742 of file lspg.c.\hypertarget{lspg_8c_af3f897b8ffa020ca54289bc5b28cb64d}{
 \index{lspg.c@{lspg.c}!lspgfd@{lspgfd}}
 \index{lspgfd@{lspgfd}!lspg.c@{lspg.c}}
 \subsubsection[{lspgfd}]{\setlength{\rightskip}{0pt plus 5cm}struct pollfd {\bf lspgfd}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
@@ -2341,16 +2658,16 @@ Definition at line 602 of file lspg.c.\hypertarget{lspg_8c_af3f897b8ffa020ca5428
 
 our poll info 
 
-Definition at line 43 of file lspg.c.\hypertarget{lspg_8c_a3d49c5147ca0e5634c382ef71c4ae24e}{
-\index{lspg.c@{lspg.c}!pg\_\-queue\_\-mutex@{pg\_\-queue\_\-mutex}}
-\index{pg\_\-queue\_\-mutex@{pg\_\-queue\_\-mutex}!lspg.c@{lspg.c}}
-\subsubsection[{pg\_\-queue\_\-mutex}]{\setlength{\rightskip}{0pt plus 5cm}pthread\_\-mutex\_\-t {\bf pg\_\-queue\_\-mutex}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
-\label{lspg_8c_a3d49c5147ca0e5634c382ef71c4ae24e}
+Definition at line 45 of file lspg.c.\hypertarget{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{
+\index{lspg.c@{lspg.c}!now@{now}}
+\index{now@{now}!lspg.c@{lspg.c}}
+\subsubsection[{now}]{\setlength{\rightskip}{0pt plus 5cm}struct timeval lspg\_\-time\_\-sent {\bf now}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
+\label{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}
 
 
-keep the queue from getting tangled 
+used to ensure we do not inundate the db server with connection requests 
 
-Definition at line 42 of file lspg.c.\hypertarget{lspg_8c_a9012783dbbadf652a81649a289697cf3}{
+Definition at line 40 of file lspg.c.\hypertarget{lspg_8c_a9012783dbbadf652a81649a289697cf3}{
 \index{lspg.c@{lspg.c}!q@{q}}
 \index{q@{q}!lspg.c@{lspg.c}}
 \subsubsection[{q}]{\setlength{\rightskip}{0pt plus 5cm}PGconn$\ast$ {\bf q} = NULL\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
@@ -2359,4 +2676,4 @@ Definition at line 42 of file lspg.c.\hypertarget{lspg_8c_a9012783dbbadf652a8164
 
 Database connector. 
 
-Definition at line 69 of file lspg.c.
+Definition at line 68 of file lspg.c.

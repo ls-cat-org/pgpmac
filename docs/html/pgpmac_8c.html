@@ -185,74 +185,80 @@ window.onload = initDynSections;
 <a name="l00389"></a>00389   <span class="comment">// Since the modules reference objects in other modules it is important</span>
 <a name="l00390"></a>00390   <span class="comment">// that everyone is initiallized before anyone runs</span>
 <a name="l00391"></a>00391   <span class="comment">//</span>
-<a name="l00392"></a>00392   <a class="code" href="lspmac_8c.html#a236945579e57dbb30c0b64f5b9184e9d" title="Initialize this module.">lspmac_init</a>( ivars, mvars);
-<a name="l00393"></a>00393   <a class="code" href="lspg_8c.html#a8a77972df14166e05c94ed0792baa09b" title="Initiallize the lspg module.">lspg_init</a>();
-<a name="l00394"></a>00394   <a class="code" href="lsupdate_8c.html#adf63440ffbc65024fef87ea6a11ea8b0" title="Initialize this module.">lsupdate_init</a>();
-<a name="l00395"></a>00395   <a class="code" href="md2cmds_8c.html#a0851b1baecda6a67993efde41d77b1c1" title="Initialize the md2cmds module.">md2cmds_init</a>();
-<a name="l00396"></a>00396 
-<a name="l00397"></a>00397   <a class="code" href="pgpmac_8c.html#ae746a6903fb8a4ea216def88eccedc3c" title="shutter, lamp, air, etc status">term_status</a> = newwin( <a class="code" href="pgpmac_8h.html#a3bae94e8e4e4347dd5f87b6bda058de6" title="Number of status box rows.">LS_DISPLAY_WINDOW_HEIGHT</a>, <a class="code" href="pgpmac_8h.html#a1f96754f00a1f82414cebc66f75ded78" title="Number of status box columns.">LS_DISPLAY_WINDOW_WIDTH</a>, 3*<a class="code" href="pgpmac_8h.html#a3bae94e8e4e4347dd5f87b6bda058de6" title="Number of status box rows.">LS_DISPLAY_WINDOW_HEIGHT</a>, 0*<a class="code" href="pgpmac_8h.html#a1f96754f00a1f82414cebc66f75ded78" title="Number of status box columns.">LS_DISPLAY_WINDOW_WIDTH</a>);
-<a name="l00398"></a>00398   box( <a class="code" href="pgpmac_8c.html#ae746a6903fb8a4ea216def88eccedc3c" title="shutter, lamp, air, etc status">term_status</a>, 0, 0);
-<a name="l00399"></a>00399   wnoutrefresh( <a class="code" href="pgpmac_8c.html#ae746a6903fb8a4ea216def88eccedc3c" title="shutter, lamp, air, etc status">term_status</a>);
-<a name="l00400"></a>00400                                                       
-<a name="l00401"></a>00401   <a class="code" href="pgpmac_8c.html#ae2d7da3afeb756716e6e4ee9cab78f8a" title="shutter, lamp, air, etc status">term_status2</a> = newwin( <a class="code" href="pgpmac_8h.html#a3bae94e8e4e4347dd5f87b6bda058de6" title="Number of status box rows.">LS_DISPLAY_WINDOW_HEIGHT</a>, <a class="code" href="pgpmac_8h.html#a1f96754f00a1f82414cebc66f75ded78" title="Number of status box columns.">LS_DISPLAY_WINDOW_WIDTH</a>, 3*<a class="code" href="pgpmac_8h.html#a3bae94e8e4e4347dd5f87b6bda058de6" title="Number of status box rows.">LS_DISPLAY_WINDOW_HEIGHT</a>, 1*<a class="code" href="pgpmac_8h.html#a1f96754f00a1f82414cebc66f75ded78" title="Number of status box columns.">LS_DISPLAY_WINDOW_WIDTH</a>);
-<a name="l00402"></a>00402   box( <a class="code" href="pgpmac_8c.html#ae2d7da3afeb756716e6e4ee9cab78f8a" title="shutter, lamp, air, etc status">term_status2</a>, 0, 0);
-<a name="l00403"></a>00403   wnoutrefresh( <a class="code" href="pgpmac_8c.html#ae2d7da3afeb756716e6e4ee9cab78f8a" title="shutter, lamp, air, etc status">term_status2</a>);
-<a name="l00404"></a>00404                                                       
-<a name="l00405"></a>00405   <a class="code" href="pgpmac_8c.html#a65daf0f4a5bc6def23a9df98ff5ca57e" title="place to print stuff out">term_output</a> = newwin( 10, 5*<a class="code" href="pgpmac_8h.html#a1f96754f00a1f82414cebc66f75ded78" title="Number of status box columns.">LS_DISPLAY_WINDOW_WIDTH</a>, 4*<a class="code" href="pgpmac_8h.html#a3bae94e8e4e4347dd5f87b6bda058de6" title="Number of status box rows.">LS_DISPLAY_WINDOW_HEIGHT</a>, 0);
-<a name="l00406"></a>00406   scrollok( <a class="code" href="pgpmac_8c.html#a65daf0f4a5bc6def23a9df98ff5ca57e" title="place to print stuff out">term_output</a>, 1);                          
-<a name="l00407"></a>00407   wnoutrefresh( <a class="code" href="pgpmac_8c.html#a65daf0f4a5bc6def23a9df98ff5ca57e" title="place to print stuff out">term_output</a>);                         
-<a name="l00408"></a>00408                                                       
-<a name="l00409"></a>00409   <a class="code" href="pgpmac_8c.html#ab0487111dbe3c05d0bd835eb2fb9a3f7" title="place to put the cursor">term_input</a>  = newwin( 3, 5*<a class="code" href="pgpmac_8h.html#a1f96754f00a1f82414cebc66f75ded78" title="Number of status box columns.">LS_DISPLAY_WINDOW_WIDTH</a>, 10+4*<a class="code" href="pgpmac_8h.html#a3bae94e8e4e4347dd5f87b6bda058de6" title="Number of status box rows.">LS_DISPLAY_WINDOW_HEIGHT</a>, 0);
-<a name="l00410"></a>00410   box( <a class="code" href="pgpmac_8c.html#ab0487111dbe3c05d0bd835eb2fb9a3f7" title="place to put the cursor">term_input</a>, 0, 0);                             
-<a name="l00411"></a>00411   mvwprintw( <a class="code" href="pgpmac_8c.html#ab0487111dbe3c05d0bd835eb2fb9a3f7" title="place to put the cursor">term_input</a>, 1, 1, <span class="stringliteral">&quot;PMAC&gt; &quot;</span>);             
-<a name="l00412"></a>00412   nodelay( <a class="code" href="pgpmac_8c.html#ab0487111dbe3c05d0bd835eb2fb9a3f7" title="place to put the cursor">term_input</a>, TRUE);                         
-<a name="l00413"></a>00413   keypad( <a class="code" href="pgpmac_8c.html#ab0487111dbe3c05d0bd835eb2fb9a3f7" title="place to put the cursor">term_input</a>, TRUE);                          
-<a name="l00414"></a>00414   wnoutrefresh( <a class="code" href="pgpmac_8c.html#ab0487111dbe3c05d0bd835eb2fb9a3f7" title="place to put the cursor">term_input</a>);                          
-<a name="l00415"></a>00415                                                       
-<a name="l00416"></a>00416   doupdate();                                         
-<a name="l00417"></a>00417 
-<a name="l00418"></a>00418   <a class="code" href="lspmac_8c.html#a3a7fb93fb3fb9c4454613f30bfb0b1ee" title="Start up the lspmac thread.">lspmac_run</a>();
-<a name="l00419"></a>00419   <a class="code" href="lspg_8c.html#a1adfdb5ca9fdb5060849d726bf540117" title="Start &amp;#39;er runnin&amp;#39;.">lspg_run</a>();
-<a name="l00420"></a>00420   <a class="code" href="lsupdate_8c.html#af219e9b2cc124f109aa4c2c2e16b5d07" title="run the update routines">lsupdate_run</a>();
-<a name="l00421"></a>00421   <a class="code" href="md2cmds_8c.html#aa62da7d423952334d41c7d282f45233d" title="Start up the thread.">md2cmds_run</a>();
-<a name="l00422"></a>00422 
-<a name="l00423"></a>00423   <span class="keywordflow">while</span>( 1) {
-<a name="l00424"></a>00424     <span class="comment">//</span>
-<a name="l00425"></a>00425     <span class="comment">// Big loop</span>
-<a name="l00426"></a>00426     <span class="comment">//</span>
-<a name="l00427"></a>00427 
-<a name="l00428"></a>00428     nfd = 0;
-<a name="l00429"></a>00429 
+<a name="l00392"></a>00392   <a class="code" href="lslogging_8c.html#a3418b9ab57811d28632794236e056408">lslogging_init</a>();
+<a name="l00393"></a>00393   <a class="code" href="lsevents_8c.html#af19a77187e7406fc87d36bd26e672e6d">lsevents_init</a>();
+<a name="l00394"></a>00394   <a class="code" href="lstimer_8c.html#a8cd37a8fb0f061456456a5d79bdd5189">lstimer_init</a>();
+<a name="l00395"></a>00395   <a class="code" href="lspmac_8c.html#a236945579e57dbb30c0b64f5b9184e9d" title="Initialize this module.">lspmac_init</a>( ivars, mvars);
+<a name="l00396"></a>00396   <a class="code" href="lspg_8c.html#a8a77972df14166e05c94ed0792baa09b" title="Initiallize the lspg module.">lspg_init</a>();
+<a name="l00397"></a>00397   <a class="code" href="lsupdate_8c.html#adf63440ffbc65024fef87ea6a11ea8b0" title="Initialize this module.">lsupdate_init</a>();
+<a name="l00398"></a>00398   <a class="code" href="md2cmds_8c.html#a0851b1baecda6a67993efde41d77b1c1" title="Initialize the md2cmds module.">md2cmds_init</a>();
+<a name="l00399"></a>00399 
+<a name="l00400"></a>00400   <a class="code" href="pgpmac_8c.html#ae746a6903fb8a4ea216def88eccedc3c" title="shutter, lamp, air, etc status">term_status</a> = newwin( <a class="code" href="pgpmac_8h.html#a3bae94e8e4e4347dd5f87b6bda058de6" title="Number of status box rows.">LS_DISPLAY_WINDOW_HEIGHT</a>, <a class="code" href="pgpmac_8h.html#a1f96754f00a1f82414cebc66f75ded78" title="Number of status box columns.">LS_DISPLAY_WINDOW_WIDTH</a>, 3*<a class="code" href="pgpmac_8h.html#a3bae94e8e4e4347dd5f87b6bda058de6" title="Number of status box rows.">LS_DISPLAY_WINDOW_HEIGHT</a>, 0*<a class="code" href="pgpmac_8h.html#a1f96754f00a1f82414cebc66f75ded78" title="Number of status box columns.">LS_DISPLAY_WINDOW_WIDTH</a>);
+<a name="l00401"></a>00401   box( <a class="code" href="pgpmac_8c.html#ae746a6903fb8a4ea216def88eccedc3c" title="shutter, lamp, air, etc status">term_status</a>, 0, 0);
+<a name="l00402"></a>00402   wnoutrefresh( <a class="code" href="pgpmac_8c.html#ae746a6903fb8a4ea216def88eccedc3c" title="shutter, lamp, air, etc status">term_status</a>);
+<a name="l00403"></a>00403                                                       
+<a name="l00404"></a>00404   <a class="code" href="pgpmac_8c.html#ae2d7da3afeb756716e6e4ee9cab78f8a" title="shutter, lamp, air, etc status">term_status2</a> = newwin( <a class="code" href="pgpmac_8h.html#a3bae94e8e4e4347dd5f87b6bda058de6" title="Number of status box rows.">LS_DISPLAY_WINDOW_HEIGHT</a>, <a class="code" href="pgpmac_8h.html#a1f96754f00a1f82414cebc66f75ded78" title="Number of status box columns.">LS_DISPLAY_WINDOW_WIDTH</a>, 3*<a class="code" href="pgpmac_8h.html#a3bae94e8e4e4347dd5f87b6bda058de6" title="Number of status box rows.">LS_DISPLAY_WINDOW_HEIGHT</a>, 1*<a class="code" href="pgpmac_8h.html#a1f96754f00a1f82414cebc66f75ded78" title="Number of status box columns.">LS_DISPLAY_WINDOW_WIDTH</a>);
+<a name="l00405"></a>00405   box( <a class="code" href="pgpmac_8c.html#ae2d7da3afeb756716e6e4ee9cab78f8a" title="shutter, lamp, air, etc status">term_status2</a>, 0, 0);
+<a name="l00406"></a>00406   wnoutrefresh( <a class="code" href="pgpmac_8c.html#ae2d7da3afeb756716e6e4ee9cab78f8a" title="shutter, lamp, air, etc status">term_status2</a>);
+<a name="l00407"></a>00407                                                       
+<a name="l00408"></a>00408   <a class="code" href="pgpmac_8c.html#a65daf0f4a5bc6def23a9df98ff5ca57e" title="place to print stuff out">term_output</a> = newwin( 20, 5*<a class="code" href="pgpmac_8h.html#a1f96754f00a1f82414cebc66f75ded78" title="Number of status box columns.">LS_DISPLAY_WINDOW_WIDTH</a>, 4*<a class="code" href="pgpmac_8h.html#a3bae94e8e4e4347dd5f87b6bda058de6" title="Number of status box rows.">LS_DISPLAY_WINDOW_HEIGHT</a>, 0);
+<a name="l00409"></a>00409   scrollok( <a class="code" href="pgpmac_8c.html#a65daf0f4a5bc6def23a9df98ff5ca57e" title="place to print stuff out">term_output</a>, 1);                          
+<a name="l00410"></a>00410   wnoutrefresh( <a class="code" href="pgpmac_8c.html#a65daf0f4a5bc6def23a9df98ff5ca57e" title="place to print stuff out">term_output</a>);                         
+<a name="l00411"></a>00411                                                       
+<a name="l00412"></a>00412   <a class="code" href="pgpmac_8c.html#ab0487111dbe3c05d0bd835eb2fb9a3f7" title="place to put the cursor">term_input</a>  = newwin( 3, 5*<a class="code" href="pgpmac_8h.html#a1f96754f00a1f82414cebc66f75ded78" title="Number of status box columns.">LS_DISPLAY_WINDOW_WIDTH</a>, 20+4*<a class="code" href="pgpmac_8h.html#a3bae94e8e4e4347dd5f87b6bda058de6" title="Number of status box rows.">LS_DISPLAY_WINDOW_HEIGHT</a>, 0);
+<a name="l00413"></a>00413   box( <a class="code" href="pgpmac_8c.html#ab0487111dbe3c05d0bd835eb2fb9a3f7" title="place to put the cursor">term_input</a>, 0, 0);                             
+<a name="l00414"></a>00414   mvwprintw( <a class="code" href="pgpmac_8c.html#ab0487111dbe3c05d0bd835eb2fb9a3f7" title="place to put the cursor">term_input</a>, 1, 1, <span class="stringliteral">&quot;PMAC&gt; &quot;</span>);             
+<a name="l00415"></a>00415   nodelay( <a class="code" href="pgpmac_8c.html#ab0487111dbe3c05d0bd835eb2fb9a3f7" title="place to put the cursor">term_input</a>, TRUE);                         
+<a name="l00416"></a>00416   keypad( <a class="code" href="pgpmac_8c.html#ab0487111dbe3c05d0bd835eb2fb9a3f7" title="place to put the cursor">term_input</a>, TRUE);                          
+<a name="l00417"></a>00417   wnoutrefresh( <a class="code" href="pgpmac_8c.html#ab0487111dbe3c05d0bd835eb2fb9a3f7" title="place to put the cursor">term_input</a>);                          
+<a name="l00418"></a>00418                                                       
+<a name="l00419"></a>00419   doupdate();                                         
+<a name="l00420"></a>00420 
+<a name="l00421"></a>00421   <a class="code" href="lslogging_8c.html#ad9f65252584e65957f461b809d59e3a2">lslogging_run</a>();
+<a name="l00422"></a>00422   <a class="code" href="lsevents_8c.html#a4ddde538b603e3d4580ae9356bf9b89d">lsevents_run</a>();
+<a name="l00423"></a>00423   <a class="code" href="lstimer_8c.html#a0b918acc1a4bf737cb62b5a70f8b553a">lstimer_run</a>();
+<a name="l00424"></a>00424   <a class="code" href="lspmac_8c.html#a3a7fb93fb3fb9c4454613f30bfb0b1ee" title="Start up the lspmac thread.">lspmac_run</a>();
+<a name="l00425"></a>00425   <a class="code" href="lspg_8c.html#a1adfdb5ca9fdb5060849d726bf540117" title="Start &amp;#39;er runnin&amp;#39;.">lspg_run</a>();
+<a name="l00426"></a>00426   <a class="code" href="lsupdate_8c.html#af219e9b2cc124f109aa4c2c2e16b5d07" title="run the update routines">lsupdate_run</a>();
+<a name="l00427"></a>00427   <a class="code" href="md2cmds_8c.html#aa62da7d423952334d41c7d282f45233d" title="Start up the thread.">md2cmds_run</a>();
+<a name="l00428"></a>00428 
+<a name="l00429"></a>00429   <span class="keywordflow">while</span>( 1) {
 <a name="l00430"></a>00430     <span class="comment">//</span>
-<a name="l00431"></a>00431     <span class="comment">// keyboard</span>
+<a name="l00431"></a>00431     <span class="comment">// Big loop</span>
 <a name="l00432"></a>00432     <span class="comment">//</span>
-<a name="l00433"></a>00433     memcpy( &amp;(fda[nfd++]), &amp;<a class="code" href="pgpmac_8c.html#a6dc08e82e698d914ccb09077dd33668a" title="Handle input from the keyboard.">stdinfda</a>, <span class="keyword">sizeof</span>( <span class="keyword">struct</span> pollfd));
-<a name="l00434"></a>00434     
+<a name="l00433"></a>00433 
+<a name="l00434"></a>00434     nfd = 0;
 <a name="l00435"></a>00435 
-<a name="l00436"></a>00436     <span class="keywordflow">if</span>( nfd == 0) {
-<a name="l00437"></a>00437       <span class="comment">//</span>
-<a name="l00438"></a>00438       <span class="comment">// No connectons yet.  Wait a bit and try again.</span>
-<a name="l00439"></a>00439       <span class="comment">//</span>
-<a name="l00440"></a>00440       sleep( 10);
-<a name="l00441"></a>00441       <span class="comment">//</span>
-<a name="l00442"></a>00442       <span class="comment">// go try to connect again</span>
+<a name="l00436"></a>00436     <span class="comment">//</span>
+<a name="l00437"></a>00437     <span class="comment">// keyboard</span>
+<a name="l00438"></a>00438     <span class="comment">//</span>
+<a name="l00439"></a>00439     memcpy( &amp;(fda[nfd++]), &amp;<a class="code" href="pgpmac_8c.html#a6dc08e82e698d914ccb09077dd33668a" title="Handle input from the keyboard.">stdinfda</a>, <span class="keyword">sizeof</span>( <span class="keyword">struct</span> pollfd));
+<a name="l00440"></a>00440     
+<a name="l00441"></a>00441 
+<a name="l00442"></a>00442     <span class="keywordflow">if</span>( nfd == 0) {
 <a name="l00443"></a>00443       <span class="comment">//</span>
-<a name="l00444"></a>00444       <span class="keywordflow">continue</span>;
-<a name="l00445"></a>00445     }
-<a name="l00446"></a>00446 
-<a name="l00447"></a>00447 
-<a name="l00448"></a>00448     pollrtn = poll( fda, nfd, 10);
-<a name="l00449"></a>00449 
-<a name="l00450"></a>00450     <span class="keywordflow">for</span>( i=0; pollrtn&gt;0 &amp;&amp; i&lt;nfd; i++) {
-<a name="l00451"></a>00451       <span class="keywordflow">if</span>( fda[i].revents) {
-<a name="l00452"></a>00452         pollrtn--;
-<a name="l00453"></a>00453         <span class="keywordflow">if</span>( fda[i].fd == 0) {
-<a name="l00454"></a>00454           <a class="code" href="pgpmac_8c.html#a9127a8f722451b5996ffbc6966f4aa95" title="Handle keyboard input.">stdinService</a>( &amp;fda[i]);
-<a name="l00455"></a>00455         }
-<a name="l00456"></a>00456       }
-<a name="l00457"></a>00457     }
-<a name="l00458"></a>00458   }
-<a name="l00459"></a>00459 }
+<a name="l00444"></a>00444       <span class="comment">// No connectons yet.  Wait a bit and try again.</span>
+<a name="l00445"></a>00445       <span class="comment">//</span>
+<a name="l00446"></a>00446       sleep( 10);
+<a name="l00447"></a>00447       <span class="comment">//</span>
+<a name="l00448"></a>00448       <span class="comment">// go try to connect again</span>
+<a name="l00449"></a>00449       <span class="comment">//</span>
+<a name="l00450"></a>00450       <span class="keywordflow">continue</span>;
+<a name="l00451"></a>00451     }
+<a name="l00452"></a>00452 
+<a name="l00453"></a>00453 
+<a name="l00454"></a>00454     pollrtn = poll( fda, nfd, 10);
+<a name="l00455"></a>00455 
+<a name="l00456"></a>00456     <span class="keywordflow">for</span>( i=0; pollrtn&gt;0 &amp;&amp; i&lt;nfd; i++) {
+<a name="l00457"></a>00457       <span class="keywordflow">if</span>( fda[i].revents) {
+<a name="l00458"></a>00458         pollrtn--;
+<a name="l00459"></a>00459         <span class="keywordflow">if</span>( fda[i].fd == 0) {
+<a name="l00460"></a>00460           <a class="code" href="pgpmac_8c.html#a9127a8f722451b5996ffbc6966f4aa95" title="Handle keyboard input.">stdinService</a>( &amp;fda[i]);
+<a name="l00461"></a>00461         }
+<a name="l00462"></a>00462       }
+<a name="l00463"></a>00463     }
+<a name="l00464"></a>00464   }
+<a name="l00465"></a>00465 }
 </pre></div></p>
 
 </div>
@@ -513,7 +519,7 @@ window.onload = initDynSections;
 </div>
 </div>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on 12 Oct 2012 for LS-CAT PGPMAC by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on 13 Nov 2012 for LS-CAT PGPMAC by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

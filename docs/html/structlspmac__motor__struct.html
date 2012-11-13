@@ -75,6 +75,8 @@ window.onload = initDynSections;
 <tr><td class="memItemLeft" align="right" valign="top">pthread_mutex_t&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907">mutex</a></td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">coordinate waiting for motor to be done  <a href="#a188c5b1e991750ce2ffd53e0192e0907"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">pthread_cond_t&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlspmac__motor__struct.html#aa0ea4108b8fed5b41ff91ca7266f3d84">cond</a></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlspmac__motor__struct.html#af11e5f75c1cf88ed6842d04154d27a31">lspg_initialized</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">bit flags: bit 0 = motor initialized by database, bit 1 = px.kvs value initialized  <a href="#af11e5f75c1cf88ed6842d04154d27a31"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void(*&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlspmac__motor__struct.html#ac62692eb939c04ca35e939d1c3acfe8f">read</a> )(struct <a class="el" href="structlspmac__motor__struct.html">lspmac_motor_struct</a> *)</td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">function to read the motor status and position  <a href="#ac62692eb939c04ca35e939d1c3acfe8f"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlspmac__motor__struct.html#ab7bd8bff48953ce05c758598d75877ac">not_done</a></td></tr>
@@ -83,10 +85,16 @@ window.onload = initDynSections;
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">set to 1 when motion has been verified to have started  <a href="#a68c471836f52707fa8582f7860cf500f"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">struct <a class="el" href="structlspmac__cmd__queue__struct.html">lspmac_cmd_queue_struct</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlspmac__motor__struct.html#ae0a0c9264f49f51bf72168c3b62f8723">pq</a></td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">the queue item requesting motion. Used to check time request was made  <a href="#ae0a0c9264f49f51bf72168c3b62f8723"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">char **&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlspmac__motor__struct.html#a073246b8878d75615b0536301b343f3d">home</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">pmac commands to home motor  <a href="#a073246b8878d75615b0536301b343f3d"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlspmac__motor__struct.html#aa74108855693f94fc2ff76333c9fb6ac">homing</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Homing routine started.  <a href="#aa74108855693f94fc2ff76333c9fb6ac"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlspmac__motor__struct.html#a6e8dc9c11dc52a439fe9837230f93ce2">requested_pos_cnts</a></td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">requested position  <a href="#a6e8dc9c11dc52a439fe9837230f93ce2"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">int *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlspmac__motor__struct.html#a312047bb71def5cd2443fecd875eaea5">actual_pos_cnts_p</a></td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">pointer to the md2_status structure to the actual position  <a href="#a312047bb71def5cd2443fecd875eaea5"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlspmac__motor__struct.html#ae5c7aea45b9637a1817be246688fd980">actual_pos_cnts</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">local copy of actual counts so only our mutex is needed to read  <a href="#ae5c7aea45b9637a1817be246688fd980"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">double&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411">position</a></td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">scaled position  <a href="#af8ffb3aed907d8664b65b37601954411"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">double&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlspmac__motor__struct.html#ae5f1f605a0f587500e627332ad4e5e7e">reported_position</a></td></tr>
@@ -95,12 +103,22 @@ window.onload = initDynSections;
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">The position as requested by the user.  <a href="#af8cdc94c6e2478b12ce942d4cf1d7499"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">double&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlspmac__motor__struct.html#a18386126b724d9c7f72364db126f5b93">update_resolution</a></td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Change needs to be at least this big to report as a new position to the database.  <a href="#a18386126b724d9c7f72364db126f5b93"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">int *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlspmac__motor__struct.html#a17e0953d269d53137c508e391cb16e47">status1</a></td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">First 24 bit PMAC motor status word.  <a href="#a17e0953d269d53137c508e391cb16e47"></a><br/></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">int *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlspmac__motor__struct.html#ac16fec220714218334764a1038f3813a">status2</a></td></tr>
-<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Sectond 24 bit PMAC motor status word.  <a href="#ac16fec220714218334764a1038f3813a"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">char *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlspmac__motor__struct.html#a514ee9ed48c7171157d579623f7de23f">update_format</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">special format string to create text array for px.kvs update (lsupdate)  <a href="#a514ee9ed48c7171157d579623f7de23f"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">int *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlspmac__motor__struct.html#a56c41875faf19c643e97c10519e6eb8c">status1_p</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">First 24 bit PMAC motor status word.  <a href="#a56c41875faf19c643e97c10519e6eb8c"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlspmac__motor__struct.html#acb52b612b9237e8eec0b97fb1e76a35d">status1</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">local copy of status1  <a href="#acb52b612b9237e8eec0b97fb1e76a35d"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">int *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlspmac__motor__struct.html#a2b33ef6e12717459c1e9967cc6e659c6">status2_p</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Sectond 24 bit PMAC motor status word.  <a href="#a2b33ef6e12717459c1e9967cc6e659c6"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlspmac__motor__struct.html#a6a412224c09268c1dc92de9c2a1a2512">status2</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">local copy of status2  <a href="#a6a412224c09268c1dc92de9c2a1a2512"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">char&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlspmac__motor__struct.html#ae4a6f54a98e7758d66228efebe8f3baa">statuss</a> [64]</td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">short text summarizing status  <a href="#ae4a6f54a98e7758d66228efebe8f3baa"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlspmac__motor__struct.html#a45fae17618f0c0827e97060dc04f79cb">motor_num</a></td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">pmac motor number  <a href="#a45fae17618f0c0827e97060dc04f79cb"></a><br/></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlspmac__motor__struct.html#a2093b0a3cd2f9500fd92e3c89bf46577">coord_num</a></td></tr>
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">coordinate system this motor belongs to (0 if none)  <a href="#a2093b0a3cd2f9500fd92e3c89bf46577"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">char *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlspmac__motor__struct.html#a05dff021221abbc1bf656039fffb3275">dac_mvar</a></td></tr>
 <tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">controlling mvariable as a string  <a href="#a05dff021221abbc1bf656039fffb3275"></a><br/></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">char *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlspmac__motor__struct.html#aa90af2f6f1489f1befe1d0891e51575a">name</a></td></tr>
@@ -134,8 +152,25 @@ window.onload = initDynSections;
 <p>Motor information. </p>
 <p>A catchall for motors and motor like objects. Not all members are used by all objects. </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00069">69</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00071">71</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 <hr/><h2>Field Documentation</h2>
+<a class="anchor" id="ae5c7aea45b9637a1817be246688fd980"></a><!-- doxytag: member="lspmac_motor_struct::actual_pos_cnts" ref="ae5c7aea45b9637a1817be246688fd980" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int <a class="el" href="structlspmac__motor__struct.html#ae5c7aea45b9637a1817be246688fd980">lspmac_motor_struct::actual_pos_cnts</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>local copy of actual counts so only our mutex is needed to read </p>
+
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00084">84</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+
+</div>
+</div>
 <a class="anchor" id="a312047bb71def5cd2443fecd875eaea5"></a><!-- doxytag: member="lspmac_motor_struct::actual_pos_cnts_p" ref="a312047bb71def5cd2443fecd875eaea5" args="" -->
 <div class="memitem">
 <div class="memproto">
@@ -149,7 +184,7 @@ window.onload = initDynSections;
 
 <p>pointer to the md2_status structure to the actual position </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00078">78</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00083">83</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -164,7 +199,24 @@ window.onload = initDynSections;
 </div>
 <div class="memdoc">
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00071">71</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00073">73</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a2093b0a3cd2f9500fd92e3c89bf46577"></a><!-- doxytag: member="lspmac_motor_struct::coord_num" ref="a2093b0a3cd2f9500fd92e3c89bf46577" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int <a class="el" href="structlspmac__motor__struct.html#a2093b0a3cd2f9500fd92e3c89bf46577">lspmac_motor_struct::coord_num</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>coordinate system this motor belongs to (0 if none) </p>
+
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00096">96</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -181,7 +233,7 @@ window.onload = initDynSections;
 
 <p>controlling mvariable as a string </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00086">86</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00097">97</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -198,7 +250,58 @@ window.onload = initDynSections;
 
 <p>printf format </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00089">89</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00100">100</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a073246b8878d75615b0536301b343f3d"></a><!-- doxytag: member="lspmac_motor_struct::home" ref="a073246b8878d75615b0536301b343f3d" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">char** <a class="el" href="structlspmac__motor__struct.html#a073246b8878d75615b0536301b343f3d">lspmac_motor_struct::home</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>pmac commands to home motor </p>
+
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00080">80</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="aa74108855693f94fc2ff76333c9fb6ac"></a><!-- doxytag: member="lspmac_motor_struct::homing" ref="aa74108855693f94fc2ff76333c9fb6ac" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int <a class="el" href="structlspmac__motor__struct.html#aa74108855693f94fc2ff76333c9fb6ac">lspmac_motor_struct::homing</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>Homing routine started. </p>
+
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00081">81</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="af11e5f75c1cf88ed6842d04154d27a31"></a><!-- doxytag: member="lspmac_motor_struct::lspg_initialized" ref="af11e5f75c1cf88ed6842d04154d27a31" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int <a class="el" href="structlspmac__motor__struct.html#af11e5f75c1cf88ed6842d04154d27a31">lspmac_motor_struct::lspg_initialized</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>bit flags: bit 0 = motor initialized by database, bit 1 = px.kvs value initialized </p>
+
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00074">74</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -215,7 +318,7 @@ window.onload = initDynSections;
 
 <p>lookup table (instead of u2c) </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00095">95</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00106">106</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -232,7 +335,7 @@ window.onload = initDynSections;
 
 <p>our maximum acceleration (cts/msec^2) </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00098">98</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00109">109</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -249,7 +352,7 @@ window.onload = initDynSections;
 
 <p>our maximum speed (cts/msec) </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00097">97</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00108">108</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -266,7 +369,7 @@ window.onload = initDynSections;
 
 <p>set to 1 when motion has been verified to have started </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00074">74</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00077">77</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -283,7 +386,7 @@ window.onload = initDynSections;
 
 <p>pmac motor number </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00085">85</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00095">95</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -315,7 +418,7 @@ window.onload = initDynSections;
 
 <p>coordinate waiting for motor to be done </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00070">70</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00072">72</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -332,7 +435,7 @@ window.onload = initDynSections;
 
 <p>Name of motor as refered by ls database kvs table. </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00087">87</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00098">98</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -349,7 +452,7 @@ window.onload = initDynSections;
 
 <p>length of lut </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00096">96</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00107">107</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -366,7 +469,7 @@ window.onload = initDynSections;
 
 <p>set to 1 when request is queued, zero after motion has toggled </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00073">73</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00076">76</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -383,7 +486,7 @@ window.onload = initDynSections;
 
 <p>scaled position </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00079">79</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00085">85</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -400,7 +503,7 @@ window.onload = initDynSections;
 
 <p>the queue item requesting motion. Used to check time request was made </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00075">75</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00078">78</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -432,7 +535,7 @@ window.onload = initDynSections;
 
 <p>WIth read_ptr find bit to read for binary i/o. </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00092">92</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00103">103</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -449,7 +552,7 @@ window.onload = initDynSections;
 
 <p>With read_mask finds bit to read for binary i/o. </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00091">91</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00102">102</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -466,7 +569,7 @@ window.onload = initDynSections;
 
 <p>previous position reported to the database </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00080">80</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00086">86</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -483,7 +586,7 @@ window.onload = initDynSections;
 
 <p>requested position </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00077">77</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00082">82</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -500,16 +603,33 @@ window.onload = initDynSections;
 
 <p>The position as requested by the user. </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00081">81</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00087">87</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="a17e0953d269d53137c508e391cb16e47"></a><!-- doxytag: member="lspmac_motor_struct::status1" ref="a17e0953d269d53137c508e391cb16e47" args="" -->
+<a class="anchor" id="acb52b612b9237e8eec0b97fb1e76a35d"></a><!-- doxytag: member="lspmac_motor_struct::status1" ref="acb52b612b9237e8eec0b97fb1e76a35d" args="" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int* <a class="el" href="structlspmac__motor__struct.html#a17e0953d269d53137c508e391cb16e47">lspmac_motor_struct::status1</a></td>
+          <td class="memname">int <a class="el" href="structlspmac__motor__struct.html#acb52b612b9237e8eec0b97fb1e76a35d">lspmac_motor_struct::status1</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>local copy of status1 </p>
+
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00091">91</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a56c41875faf19c643e97c10519e6eb8c"></a><!-- doxytag: member="lspmac_motor_struct::status1_p" ref="a56c41875faf19c643e97c10519e6eb8c" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int* <a class="el" href="structlspmac__motor__struct.html#a56c41875faf19c643e97c10519e6eb8c">lspmac_motor_struct::status1_p</a></td>
         </tr>
       </table>
 </div>
@@ -517,16 +637,33 @@ window.onload = initDynSections;
 
 <p>First 24 bit PMAC motor status word. </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00083">83</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00090">90</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="ac16fec220714218334764a1038f3813a"></a><!-- doxytag: member="lspmac_motor_struct::status2" ref="ac16fec220714218334764a1038f3813a" args="" -->
+<a class="anchor" id="a6a412224c09268c1dc92de9c2a1a2512"></a><!-- doxytag: member="lspmac_motor_struct::status2" ref="a6a412224c09268c1dc92de9c2a1a2512" args="" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">int* <a class="el" href="structlspmac__motor__struct.html#ac16fec220714218334764a1038f3813a">lspmac_motor_struct::status2</a></td>
+          <td class="memname">int <a class="el" href="structlspmac__motor__struct.html#a6a412224c09268c1dc92de9c2a1a2512">lspmac_motor_struct::status2</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>local copy of status2 </p>
+
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00093">93</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a2b33ef6e12717459c1e9967cc6e659c6"></a><!-- doxytag: member="lspmac_motor_struct::status2_p" ref="a2b33ef6e12717459c1e9967cc6e659c6" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int* <a class="el" href="structlspmac__motor__struct.html#a2b33ef6e12717459c1e9967cc6e659c6">lspmac_motor_struct::status2_p</a></td>
         </tr>
       </table>
 </div>
@@ -534,7 +671,24 @@ window.onload = initDynSections;
 
 <p>Sectond 24 bit PMAC motor status word. </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00084">84</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00092">92</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="ae4a6f54a98e7758d66228efebe8f3baa"></a><!-- doxytag: member="lspmac_motor_struct::statuss" ref="ae4a6f54a98e7758d66228efebe8f3baa" args="[64]" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">char <a class="el" href="structlspmac__motor__struct.html#ae4a6f54a98e7758d66228efebe8f3baa">lspmac_motor_struct::statuss</a>[64]</td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>short text summarizing status </p>
+
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00094">94</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -551,7 +705,7 @@ window.onload = initDynSections;
 
 <p>conversion from counts to units: 0.0 means not loaded yet </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00094">94</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00105">105</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -568,7 +722,24 @@ window.onload = initDynSections;
 
 <p>string to use as the units </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00088">88</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00099">99</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a514ee9ed48c7171157d579623f7de23f"></a><!-- doxytag: member="lspmac_motor_struct::update_format" ref="a514ee9ed48c7171157d579623f7de23f" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">char* <a class="el" href="structlspmac__motor__struct.html#a514ee9ed48c7171157d579623f7de23f">lspmac_motor_struct::update_format</a></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>special format string to create text array for px.kvs update (lsupdate) </p>
+
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00089">89</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -585,7 +756,7 @@ window.onload = initDynSections;
 
 <p>Change needs to be at least this big to report as a new position to the database. </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00082">82</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00088">88</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -602,7 +773,7 @@ window.onload = initDynSections;
 
 <p>our ncurses window </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00099">99</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00110">110</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -619,7 +790,7 @@ window.onload = initDynSections;
 
 <p>Format string to write requested position to PMAC used for binary io. </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00090">90</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00101">101</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -627,7 +798,7 @@ window.onload = initDynSections;
 <li><a class="el" href="pgpmac_8h_source.html">pgpmac.h</a></li>
 </ul>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on 12 Oct 2012 for LS-CAT PGPMAC by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on 13 Nov 2012 for LS-CAT PGPMAC by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>
