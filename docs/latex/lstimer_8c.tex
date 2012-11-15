@@ -1,62 +1,61 @@
-\hypertarget{lstimer_8c}{
-\section{lstimer.c File Reference}
-\label{lstimer_8c}\index{lstimer.c@{lstimer.c}}
+\hypertarget{lstimer_8c}{\section{lstimer.\-c File Reference}
+\label{lstimer_8c}\index{lstimer.\-c@{lstimer.\-c}}
 }
 
 
 Support for delayed and periodic events.  
-{\ttfamily \#include \char`\"{}pgpmac.h\char`\"{}}\par
+
+
+{\ttfamily \#include \char`\"{}pgpmac.\-h\char`\"{}}\\*
 \subsection*{Data Structures}
 \begin{DoxyCompactItemize}
 \item 
-struct \hyperlink{structlstimer__list__struct}{lstimer\_\-list\_\-struct}
-\end{DoxyCompactItemize}
-\subsection*{Defines}
+struct \hyperlink{structlstimer__list__struct}{lstimer\-\_\-list\-\_\-struct}
+\begin{DoxyCompactList}\small\item\em Everything we need to know about a timer. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Macros}
 \begin{DoxyCompactItemize}
 \item 
-\#define \hyperlink{lstimer_8c_af020a0f708e86162a32d2ca6373c96bb}{LSTIMER\_\-LIST\_\-LENGTH}~256
-\item 
-\#define \hyperlink{lstimer_8c_a602d98fa617eb9f4ab49e4b9c7f5d4d9}{LSTIMER\_\-RESOLUTION\_\-NSECS}~100000
-\end{DoxyCompactItemize}
+\#define \hyperlink{lstimer_8c_af020a0f708e86162a32d2ca6373c96bb}{L\-S\-T\-I\-M\-E\-R\-\_\-\-L\-I\-S\-T\-\_\-\-L\-E\-N\-G\-T\-H}~256
+\begin{DoxyCompactList}\small\item\em We'll allow this many timers. This should be way more than enough. \end{DoxyCompactList}\item 
+\#define \hyperlink{lstimer_8c_a602d98fa617eb9f4ab49e4b9c7f5d4d9}{L\-S\-T\-I\-M\-E\-R\-\_\-\-R\-E\-S\-O\-L\-U\-T\-I\-O\-N\-\_\-\-N\-S\-E\-C\-S}~100000
+\begin{DoxyCompactList}\small\item\em times within this amount in the future are considered \char`\"{}now\char`\"{} and the events should be called \end{DoxyCompactList}\end{DoxyCompactItemize}
 \subsection*{Typedefs}
 \begin{DoxyCompactItemize}
 \item 
-typedef struct \hyperlink{structlstimer__list__struct}{lstimer\_\-list\_\-struct} \hyperlink{lstimer_8c_abae36af84be0a2f4529aa0424edc6fbf}{lstimer\_\-list\_\-t}
-\end{DoxyCompactItemize}
+typedef struct \hyperlink{structlstimer__list__struct}{lstimer\-\_\-list\-\_\-struct} \hyperlink{lstimer_8c_abae36af84be0a2f4529aa0424edc6fbf}{lstimer\-\_\-list\-\_\-t}
+\begin{DoxyCompactList}\small\item\em Everything we need to know about a timer. \end{DoxyCompactList}\end{DoxyCompactItemize}
 \subsection*{Functions}
 \begin{DoxyCompactItemize}
 \item 
-void \hyperlink{lstimer_8c_a14f35a979ca0537d8180d90cbc56c577}{lstimer\_\-add\_\-timer} (char $\ast$event, int shots, unsigned long int secs, unsigned long int nsecs)
+void \hyperlink{lstimer_8c_a14f35a979ca0537d8180d90cbc56c577}{lstimer\-\_\-add\-\_\-timer} (char $\ast$event, int shots, unsigned long int secs, unsigned long int nsecs)
 \item 
-static void \hyperlink{lstimer_8c_a7796321359df34cb827ffa51bbc44e9c}{service\_\-timers} ()
-\item 
-static void \hyperlink{lstimer_8c_afa91bbd2fdb257d80ad65a5ce8abb845}{handler} (int sig, siginfo\_\-t $\ast$si, void $\ast$dummy)
-\item 
-static void $\ast$ \hyperlink{lstimer_8c_ab8b409bb2a7ff78da22d988cfb3b537a}{lstimer\_\-worker} (void $\ast$dummy)
-\item 
-void \hyperlink{lstimer_8c_a8cd37a8fb0f061456456a5d79bdd5189}{lstimer\_\-init} ()
-\item 
-void \hyperlink{lstimer_8c_a2416e6248e5eb1314c06439507699287}{lstimer\_\-test\_\-cb} (char $\ast$zz)
-\item 
-void \hyperlink{lstimer_8c_a0b918acc1a4bf737cb62b5a70f8b553a}{lstimer\_\-run} ()
-\end{DoxyCompactItemize}
+static void \hyperlink{lstimer_8c_a7796321359df34cb827ffa51bbc44e9c}{service\-\_\-timers} ()
+\begin{DoxyCompactList}\small\item\em Send events that are past due, due, or just about to be due. \end{DoxyCompactList}\item 
+static void \hyperlink{lstimer_8c_afa91bbd2fdb257d80ad65a5ce8abb845}{handler} (int sig, siginfo\-\_\-t $\ast$si, void $\ast$dummy)
+\begin{DoxyCompactList}\small\item\em Service the signal. \end{DoxyCompactList}\item 
+static void $\ast$ \hyperlink{lstimer_8c_ab8b409bb2a7ff78da22d988cfb3b537a}{lstimer\-\_\-worker} (void $\ast$dummy)
+\begin{DoxyCompactList}\small\item\em Our worker. \end{DoxyCompactList}\item 
+void \hyperlink{lstimer_8c_a8cd37a8fb0f061456456a5d79bdd5189}{lstimer\-\_\-init} ()
+\begin{DoxyCompactList}\small\item\em Initialize the timer list and pthread stuff. \end{DoxyCompactList}\item 
+void \hyperlink{lstimer_8c_a0b918acc1a4bf737cb62b5a70f8b553a}{lstimer\-\_\-run} ()
+\begin{DoxyCompactList}\small\item\em Start up our thread. \end{DoxyCompactList}\end{DoxyCompactItemize}
 \subsection*{Variables}
 \begin{DoxyCompactItemize}
 \item 
-static int \hyperlink{lstimer_8c_a1a47dadbec1776920ab83409234c1833}{lstimer\_\-active\_\-timers} = 0
-\begin{DoxyCompactList}\small\item\em count of the number timers we are tracking \item\end{DoxyCompactList}\item 
-static \hyperlink{structlstimer__list__struct}{lstimer\_\-list\_\-t} \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_\-list} \mbox{[}LSTIMER\_\-LIST\_\-LENGTH\mbox{]}
-\item 
-static pthread\_\-t \hyperlink{lstimer_8c_a76660e8720b08f4adee2be9f44b5f419}{lstimer\_\-thread}
-\begin{DoxyCompactList}\small\item\em the timer thread \item\end{DoxyCompactList}\item 
-static pthread\_\-mutex\_\-t \hyperlink{lstimer_8c_a170993cbed9b9ec8bc64b6642a3ed581}{lstimer\_\-mutex}
-\begin{DoxyCompactList}\small\item\em protect the timer list \item\end{DoxyCompactList}\item 
-static pthread\_\-cond\_\-t \hyperlink{lstimer_8c_a96b7516e4a15c4b879de82a569cd5f0a}{lstimer\_\-cond}
-\begin{DoxyCompactList}\small\item\em allows us to be idle when there is nothing to do \item\end{DoxyCompactList}\item 
-static timer\_\-t \hyperlink{lstimer_8c_a3394b0c23c3c962dc15cb88499f4358c}{lstimer\_\-timerid}
-\begin{DoxyCompactList}\small\item\em our real time timer \item\end{DoxyCompactList}\item 
-static int \hyperlink{lstimer_8c_a5a3c6ef3507448d284d91958878d3f75}{new\_\-timer} = 0
-\begin{DoxyCompactList}\small\item\em indicate that a new timer exists and a call to service\_\-timers is required \item\end{DoxyCompactList}\end{DoxyCompactItemize}
+static int \hyperlink{lstimer_8c_a1a47dadbec1776920ab83409234c1833}{lstimer\-\_\-active\-\_\-timers} = 0
+\begin{DoxyCompactList}\small\item\em count of the number timers we are tracking \end{DoxyCompactList}\item 
+static \hyperlink{lstimer_8c_abae36af84be0a2f4529aa0424edc6fbf}{lstimer\-\_\-list\-\_\-t} \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\-\_\-list} \mbox{[}\hyperlink{lstimer_8c_af020a0f708e86162a32d2ca6373c96bb}{L\-S\-T\-I\-M\-E\-R\-\_\-\-L\-I\-S\-T\-\_\-\-L\-E\-N\-G\-T\-H}\mbox{]}
+\begin{DoxyCompactList}\small\item\em Our timer list. \end{DoxyCompactList}\item 
+static pthread\-\_\-t \hyperlink{lstimer_8c_a76660e8720b08f4adee2be9f44b5f419}{lstimer\-\_\-thread}
+\begin{DoxyCompactList}\small\item\em the timer thread \end{DoxyCompactList}\item 
+static pthread\-\_\-mutex\-\_\-t \hyperlink{lstimer_8c_a170993cbed9b9ec8bc64b6642a3ed581}{lstimer\-\_\-mutex}
+\begin{DoxyCompactList}\small\item\em protect the timer list \end{DoxyCompactList}\item 
+static pthread\-\_\-cond\-\_\-t \hyperlink{lstimer_8c_a96b7516e4a15c4b879de82a569cd5f0a}{lstimer\-\_\-cond}
+\begin{DoxyCompactList}\small\item\em allows us to be idle when there is nothing to do \end{DoxyCompactList}\item 
+static timer\-\_\-t \hyperlink{lstimer_8c_a3394b0c23c3c962dc15cb88499f4358c}{lstimer\-\_\-timerid}
+\begin{DoxyCompactList}\small\item\em our real time timer \end{DoxyCompactList}\item 
+static int \hyperlink{lstimer_8c_a5a3c6ef3507448d284d91958878d3f75}{new\-\_\-timer} = 0
+\begin{DoxyCompactList}\small\item\em indicate that a new timer exists and a call to service\-\_\-timers is required \end{DoxyCompactList}\end{DoxyCompactItemize}
 
 
 \subsection{Detailed Description}
@@ -64,411 +63,471 @@ Support for delayed and periodic events. \begin{DoxyDate}{Date}
 2012 
 \end{DoxyDate}
 \begin{DoxyAuthor}{Author}
-Keith Brister  All Rights Reserved 
+Keith Brister 
 \end{DoxyAuthor}
+\begin{DoxyCopyright}{Copyright}
+All Rights Reserved 
+\end{DoxyCopyright}
 
 
-Definition in file \hyperlink{lstimer_8c_source}{lstimer.c}.
-
-\subsection{Define Documentation}
-\hypertarget{lstimer_8c_af020a0f708e86162a32d2ca6373c96bb}{
-\index{lstimer.c@{lstimer.c}!LSTIMER\_\-LIST\_\-LENGTH@{LSTIMER\_\-LIST\_\-LENGTH}}
-\index{LSTIMER\_\-LIST\_\-LENGTH@{LSTIMER\_\-LIST\_\-LENGTH}!lstimer.c@{lstimer.c}}
-\subsubsection[{LSTIMER\_\-LIST\_\-LENGTH}]{\setlength{\rightskip}{0pt plus 5cm}\#define LSTIMER\_\-LIST\_\-LENGTH~256}}
-\label{lstimer_8c_af020a0f708e86162a32d2ca6373c96bb}
+Definition in file \hyperlink{lstimer_8c_source}{lstimer.\-c}.
 
 
-Definition at line 10 of file lstimer.c.\hypertarget{lstimer_8c_a602d98fa617eb9f4ab49e4b9c7f5d4d9}{
-\index{lstimer.c@{lstimer.c}!LSTIMER\_\-RESOLUTION\_\-NSECS@{LSTIMER\_\-RESOLUTION\_\-NSECS}}
-\index{LSTIMER\_\-RESOLUTION\_\-NSECS@{LSTIMER\_\-RESOLUTION\_\-NSECS}!lstimer.c@{lstimer.c}}
-\subsubsection[{LSTIMER\_\-RESOLUTION\_\-NSECS}]{\setlength{\rightskip}{0pt plus 5cm}\#define LSTIMER\_\-RESOLUTION\_\-NSECS~100000}}
-\label{lstimer_8c_a602d98fa617eb9f4ab49e4b9c7f5d4d9}
+
+\subsection{Macro Definition Documentation}
+\hypertarget{lstimer_8c_af020a0f708e86162a32d2ca6373c96bb}{\index{lstimer.\-c@{lstimer.\-c}!L\-S\-T\-I\-M\-E\-R\-\_\-\-L\-I\-S\-T\-\_\-\-L\-E\-N\-G\-T\-H@{L\-S\-T\-I\-M\-E\-R\-\_\-\-L\-I\-S\-T\-\_\-\-L\-E\-N\-G\-T\-H}}
+\index{L\-S\-T\-I\-M\-E\-R\-\_\-\-L\-I\-S\-T\-\_\-\-L\-E\-N\-G\-T\-H@{L\-S\-T\-I\-M\-E\-R\-\_\-\-L\-I\-S\-T\-\_\-\-L\-E\-N\-G\-T\-H}!lstimer.c@{lstimer.\-c}}
+\subsubsection[{L\-S\-T\-I\-M\-E\-R\-\_\-\-L\-I\-S\-T\-\_\-\-L\-E\-N\-G\-T\-H}]{\setlength{\rightskip}{0pt plus 5cm}\#define L\-S\-T\-I\-M\-E\-R\-\_\-\-L\-I\-S\-T\-\_\-\-L\-E\-N\-G\-T\-H~256}}\label{lstimer_8c_af020a0f708e86162a32d2ca6373c96bb}
 
 
-Definition at line 15 of file lstimer.c.
+We'll allow this many timers. This should be way more than enough. 
+
+
+
+Definition at line 11 of file lstimer.\-c.
+
+\hypertarget{lstimer_8c_a602d98fa617eb9f4ab49e4b9c7f5d4d9}{\index{lstimer.\-c@{lstimer.\-c}!L\-S\-T\-I\-M\-E\-R\-\_\-\-R\-E\-S\-O\-L\-U\-T\-I\-O\-N\-\_\-\-N\-S\-E\-C\-S@{L\-S\-T\-I\-M\-E\-R\-\_\-\-R\-E\-S\-O\-L\-U\-T\-I\-O\-N\-\_\-\-N\-S\-E\-C\-S}}
+\index{L\-S\-T\-I\-M\-E\-R\-\_\-\-R\-E\-S\-O\-L\-U\-T\-I\-O\-N\-\_\-\-N\-S\-E\-C\-S@{L\-S\-T\-I\-M\-E\-R\-\_\-\-R\-E\-S\-O\-L\-U\-T\-I\-O\-N\-\_\-\-N\-S\-E\-C\-S}!lstimer.c@{lstimer.\-c}}
+\subsubsection[{L\-S\-T\-I\-M\-E\-R\-\_\-\-R\-E\-S\-O\-L\-U\-T\-I\-O\-N\-\_\-\-N\-S\-E\-C\-S}]{\setlength{\rightskip}{0pt plus 5cm}\#define L\-S\-T\-I\-M\-E\-R\-\_\-\-R\-E\-S\-O\-L\-U\-T\-I\-O\-N\-\_\-\-N\-S\-E\-C\-S~100000}}\label{lstimer_8c_a602d98fa617eb9f4ab49e4b9c7f5d4d9}
+
+
+times within this amount in the future are considered \char`\"{}now\char`\"{} and the events should be called 
+
+
+
+Definition at line 16 of file lstimer.\-c.
+
+
 
 \subsection{Typedef Documentation}
-\hypertarget{lstimer_8c_abae36af84be0a2f4529aa0424edc6fbf}{
-\index{lstimer.c@{lstimer.c}!lstimer\_\-list\_\-t@{lstimer\_\-list\_\-t}}
-\index{lstimer\_\-list\_\-t@{lstimer\_\-list\_\-t}!lstimer.c@{lstimer.c}}
-\subsubsection[{lstimer\_\-list\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf lstimer\_\-list\_\-struct}  {\bf lstimer\_\-list\_\-t}}}
-\label{lstimer_8c_abae36af84be0a2f4529aa0424edc6fbf}
+\hypertarget{lstimer_8c_abae36af84be0a2f4529aa0424edc6fbf}{\index{lstimer.\-c@{lstimer.\-c}!lstimer\-\_\-list\-\_\-t@{lstimer\-\_\-list\-\_\-t}}
+\index{lstimer\-\_\-list\-\_\-t@{lstimer\-\_\-list\-\_\-t}!lstimer.c@{lstimer.\-c}}
+\subsubsection[{lstimer\-\_\-list\-\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf lstimer\-\_\-list\-\_\-struct}  {\bf lstimer\-\_\-list\-\_\-t}}}\label{lstimer_8c_abae36af84be0a2f4529aa0424edc6fbf}
+
+
+Everything we need to know about a timer. 
+
 
 
 \subsection{Function Documentation}
-\hypertarget{lstimer_8c_afa91bbd2fdb257d80ad65a5ce8abb845}{
-\index{lstimer.c@{lstimer.c}!handler@{handler}}
-\index{handler@{handler}!lstimer.c@{lstimer.c}}
-\subsubsection[{handler}]{\setlength{\rightskip}{0pt plus 5cm}static void handler (int {\em sig}, \/  siginfo\_\-t $\ast$ {\em si}, \/  void $\ast$ {\em dummy})\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
-\label{lstimer_8c_afa91bbd2fdb257d80ad65a5ce8abb845}
+\hypertarget{lstimer_8c_afa91bbd2fdb257d80ad65a5ce8abb845}{\index{lstimer.\-c@{lstimer.\-c}!handler@{handler}}
+\index{handler@{handler}!lstimer.c@{lstimer.\-c}}
+\subsubsection[{handler}]{\setlength{\rightskip}{0pt plus 5cm}static void handler (
+\begin{DoxyParamCaption}
+\item[{int}]{sig, }
+\item[{siginfo\-\_\-t $\ast$}]{si, }
+\item[{void $\ast$}]{dummy}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [static]}}}\label{lstimer_8c_afa91bbd2fdb257d80ad65a5ce8abb845}
 
 
-Definition at line 161 of file lstimer.c.
+Service the signal. 
+
+
+
+Definition at line 168 of file lstimer.\-c.
 
 
 \begin{DoxyCode}
-161                                                           {
-162 
-163   pthread_mutex_lock( &lstimer_mutex);
-164   service_timers();
-165   pthread_mutex_unlock( &lstimer_mutex);
-166 }
+                                                          \{
+  pthread\_mutex\_lock( &\hyperlink{lstimer_8c_a170993cbed9b9ec8bc64b6642a3ed581}{lstimer\_mutex});
+  \hyperlink{lstimer_8c_a7796321359df34cb827ffa51bbc44e9c}{service\_timers}();
+  pthread\_mutex\_unlock( &\hyperlink{lstimer_8c_a170993cbed9b9ec8bc64b6642a3ed581}{lstimer\_mutex});
+\}
 \end{DoxyCode}
-\hypertarget{lstimer_8c_a14f35a979ca0537d8180d90cbc56c577}{
-\index{lstimer.c@{lstimer.c}!lstimer\_\-add\_\-timer@{lstimer\_\-add\_\-timer}}
-\index{lstimer\_\-add\_\-timer@{lstimer\_\-add\_\-timer}!lstimer.c@{lstimer.c}}
-\subsubsection[{lstimer\_\-add\_\-timer}]{\setlength{\rightskip}{0pt plus 5cm}void lstimer\_\-add\_\-timer (char $\ast$ {\em event}, \/  int {\em shots}, \/  unsigned long int {\em secs}, \/  unsigned long int {\em nsecs})}}
-\label{lstimer_8c_a14f35a979ca0537d8180d90cbc56c577}
+\hypertarget{lstimer_8c_a14f35a979ca0537d8180d90cbc56c577}{\index{lstimer.\-c@{lstimer.\-c}!lstimer\-\_\-add\-\_\-timer@{lstimer\-\_\-add\-\_\-timer}}
+\index{lstimer\-\_\-add\-\_\-timer@{lstimer\-\_\-add\-\_\-timer}!lstimer.c@{lstimer.\-c}}
+\subsubsection[{lstimer\-\_\-add\-\_\-timer}]{\setlength{\rightskip}{0pt plus 5cm}void lstimer\-\_\-add\-\_\-timer (
+\begin{DoxyParamCaption}
+\item[{char $\ast$}]{event, }
+\item[{int}]{shots, }
+\item[{unsigned long int}]{secs, }
+\item[{unsigned long int}]{nsecs}
+\end{DoxyParamCaption}
+)}}\label{lstimer_8c_a14f35a979ca0537d8180d90cbc56c577}
 
 
-Definition at line 41 of file lstimer.c.
+Definition at line 44 of file lstimer.\-c.
 
 
 \begin{DoxyCode}
-41                                                                                  
-                      {
-42   int i;
-43   struct timespec now;
-44 
-45   //
-46   // Time we were called.  Delay is based on call time, not queued time
-47   //
-48   clock_gettime( CLOCK_REALTIME, &now);
-49   
-50 
-51   pthread_mutex_lock( &lstimer_mutex);
-52 
-53   for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
-54     if( lstimer_list[i].shots == 0)
-55       break;
-56   }
-57 
-58   if( i == LSTIMER_LIST_LENGTH) {
-59     pthread_mutex_unlock( &lstimer_mutex);
-60     
-61     lslogging_log_message( "lstimer_add_timer: out of timers for event: %s, shots
-      : %d,  secs: %u, nsecs: %u",
-62                           event, shots, secs, nsecs);
-63     return;
-64   }
-65 
-66   strncpy( lstimer_list[i].event, event, LSEVENTS_EVENT_LENGTH - 1);
-67   lstimer_list[i].event[LSEVENTS_EVENT_LENGTH - 1] = 0;
-68   lstimer_list[i].shots        = shots;
-69   lstimer_list[i].delay_secs   = secs;
-70   lstimer_list[i].delay_nsecs  = nsecs;
-71 
-72   lstimer_list[i].next_secs    = secs + now.tv_sec + (now.tv_nsec + nsecs) / 1000
-      000000;
-73   lstimer_list[i].next_nsecs   = (now.tv_nsec + nsecs) % 1000000000;
-74   lstimer_list[i].last_secs    = 0;
-75   lstimer_list[i].last_nsecs   = 0;
-76   
-77   lstimer_list[i].ncalls       = 0;
-78   lstimer_list[i].init_secs    = now.tv_sec;
-79   lstimer_list[i].init_nsecs   = now.tv_nsec;
-80 
-81   if( shots != 0) {
-82     lstimer_active_timers++;
-83     new_timer++;
-84   }
-85 
-86   pthread_cond_signal(  &lstimer_cond);
-87   pthread_mutex_unlock( &lstimer_mutex);
-88 }
+                                                                               
+                        \{
+  \textcolor{keywordtype}{int} i;
+  \textcolor{keyword}{struct }timespec \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now};
+
+
+  \textcolor{comment}{// Time we were called.  Delay is based on call time, not queued time}
+  \textcolor{comment}{//}
+  clock\_gettime( CLOCK\_REALTIME, &\hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now});
+  
+
+  pthread\_mutex\_lock( &\hyperlink{lstimer_8c_a170993cbed9b9ec8bc64b6642a3ed581}{lstimer\_mutex});
+
+  \textcolor{keywordflow}{for}( i=0; i<\hyperlink{lstimer_8c_af020a0f708e86162a32d2ca6373c96bb}{LSTIMER\_LIST\_LENGTH}; i++) \{
+    \textcolor{keywordflow}{if}( \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].shots == 0)
+      \textcolor{keywordflow}{break};
+  \}
+
+  \textcolor{keywordflow}{if}( i == LSTIMER\_LIST\_LENGTH) \{
+    pthread\_mutex\_unlock( &\hyperlink{lstimer_8c_a170993cbed9b9ec8bc64b6642a3ed581}{lstimer\_mutex});
+    
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lstimer\_add\_timer: out of
+       timers for event: %s, shots: %d,  secs: %u, nsecs: %u"},
+                          event, shots, secs, nsecs);
+    \textcolor{keywordflow}{return};
+  \}
+
+  strncpy( \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].event, event, \hyperlink{pgpmac_8h_ab61d790b5572f116e091babfda53627b}{LSEVENTS\_EVENT\_LENGTH}
+       - 1);
+  \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_a54d564e392315b2730278bb925803184}{event}[\hyperlink{pgpmac_8h_ab61d790b5572f116e091babfda53627b}{LSEVENTS\_EVENT\_LENGTH}
+       - 1] = 0;
+  \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_ac7ab4cd1f3065156f95b49e66bf05283}{shots}        = shots;
+  \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_a237da48d81b7e039c54901296aeee18e}{delay\_secs}   = secs;
+  \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_acb0c6a1600c4168e5dfb2d477a685b29}{delay\_nsecs}  = nsecs;
+
+  \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_af0dcaad37472462c9f27d54ed0ceb75d}{next\_secs}    = secs + \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_sec + (
+      \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_nsec + nsecs) / 1000000000;
+  \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_ab115115d5be7933f98a094b46b6583bb}{next\_nsecs}   = (\hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_nsec + nsecs)
+       % 1000000000;
+  \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_ab0ac2907735701cb24ec9af95a1cc787}{last\_secs}    = 0;
+  \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_a19acf5aa7f57aa7ce60537c3d3d6a6af}{last\_nsecs}   = 0;
+  
+  \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_aa56c5b8ce7fa0ae93132cb9908195836}{ncalls}       = 0;
+  \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_a1222c76d49b149725467aa698abb7fb1}{init\_secs}    = \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_sec;
+  \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_ad5bb7fa7d669b7ebbe34d8ed2bdb257a}{init\_nsecs}   = \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_nsec;
+
+  \textcolor{keywordflow}{if}( shots != 0) \{
+    \hyperlink{lstimer_8c_a1a47dadbec1776920ab83409234c1833}{lstimer\_active\_timers}++;
+    \hyperlink{lstimer_8c_a5a3c6ef3507448d284d91958878d3f75}{new\_timer}++;
+  \}
+
+  pthread\_cond\_signal(  &\hyperlink{lstimer_8c_a96b7516e4a15c4b879de82a569cd5f0a}{lstimer\_cond});
+  pthread\_mutex\_unlock( &\hyperlink{lstimer_8c_a170993cbed9b9ec8bc64b6642a3ed581}{lstimer\_mutex});
+\}
 \end{DoxyCode}
-\hypertarget{lstimer_8c_a8cd37a8fb0f061456456a5d79bdd5189}{
-\index{lstimer.c@{lstimer.c}!lstimer\_\-init@{lstimer\_\-init}}
-\index{lstimer\_\-init@{lstimer\_\-init}!lstimer.c@{lstimer.c}}
-\subsubsection[{lstimer\_\-init}]{\setlength{\rightskip}{0pt plus 5cm}void lstimer\_\-init ()}}
-\label{lstimer_8c_a8cd37a8fb0f061456456a5d79bdd5189}
+\hypertarget{lstimer_8c_a8cd37a8fb0f061456456a5d79bdd5189}{\index{lstimer.\-c@{lstimer.\-c}!lstimer\-\_\-init@{lstimer\-\_\-init}}
+\index{lstimer\-\_\-init@{lstimer\-\_\-init}!lstimer.c@{lstimer.\-c}}
+\subsubsection[{lstimer\-\_\-init}]{\setlength{\rightskip}{0pt plus 5cm}void lstimer\-\_\-init (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{lstimer_8c_a8cd37a8fb0f061456456a5d79bdd5189}
 
 
-Definition at line 244 of file lstimer.c.
+Initialize the timer list and pthread stuff. 
+
+
+
+Definition at line 256 of file lstimer.\-c.
 
 
 \begin{DoxyCode}
-244                     {
-245   int i;
-246 
-247   for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
-248     lstimer_list[i].shots = 0;
-249   }
-250 
-251 
-252   pthread_mutex_init( &lstimer_mutex, NULL);
-253   pthread_cond_init(  &lstimer_cond, NULL);
-254 }
+                    \{
+  \textcolor{keywordtype}{int} i;
+
+  \textcolor{keywordflow}{for}( i=0; i<\hyperlink{lstimer_8c_af020a0f708e86162a32d2ca6373c96bb}{LSTIMER\_LIST\_LENGTH}; i++) \{
+    \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_ac7ab4cd1f3065156f95b49e66bf05283}{shots} = 0;
+  \}
+
+
+  pthread\_mutex\_init( &\hyperlink{lstimer_8c_a170993cbed9b9ec8bc64b6642a3ed581}{lstimer\_mutex}, NULL);
+  pthread\_cond\_init(  &\hyperlink{lstimer_8c_a96b7516e4a15c4b879de82a569cd5f0a}{lstimer\_cond}, NULL);
+\}
 \end{DoxyCode}
-\hypertarget{lstimer_8c_a0b918acc1a4bf737cb62b5a70f8b553a}{
-\index{lstimer.c@{lstimer.c}!lstimer\_\-run@{lstimer\_\-run}}
-\index{lstimer\_\-run@{lstimer\_\-run}!lstimer.c@{lstimer.c}}
-\subsubsection[{lstimer\_\-run}]{\setlength{\rightskip}{0pt plus 5cm}void lstimer\_\-run ()}}
-\label{lstimer_8c_a0b918acc1a4bf737cb62b5a70f8b553a}
+\hypertarget{lstimer_8c_a0b918acc1a4bf737cb62b5a70f8b553a}{\index{lstimer.\-c@{lstimer.\-c}!lstimer\-\_\-run@{lstimer\-\_\-run}}
+\index{lstimer\-\_\-run@{lstimer\-\_\-run}!lstimer.c@{lstimer.\-c}}
+\subsubsection[{lstimer\-\_\-run}]{\setlength{\rightskip}{0pt plus 5cm}void lstimer\-\_\-run (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{lstimer_8c_a0b918acc1a4bf737cb62b5a70f8b553a}
 
 
-Definition at line 261 of file lstimer.c.
+Start up our thread. 
+
+
+
+Definition at line 270 of file lstimer.\-c.
 
 
 \begin{DoxyCode}
-261                    {
-262   pthread_create( &lstimer_thread, NULL, lstimer_worker, NULL);
-263   //  lsevents_add_listener( "watchdog", lstimer_test_cb);
-264   //  lstimer_add_timer( "watchdog", -1, 1, 0);
-265 }
+                   \{
+  pthread\_create( &\hyperlink{lstimer_8c_a76660e8720b08f4adee2be9f44b5f419}{lstimer\_thread}, NULL, \hyperlink{lstimer_8c_ab8b409bb2a7ff78da22d988cfb3b537a}{lstimer\_worker}
+      , NULL);
+\}
 \end{DoxyCode}
-\hypertarget{lstimer_8c_a2416e6248e5eb1314c06439507699287}{
-\index{lstimer.c@{lstimer.c}!lstimer\_\-test\_\-cb@{lstimer\_\-test\_\-cb}}
-\index{lstimer\_\-test\_\-cb@{lstimer\_\-test\_\-cb}!lstimer.c@{lstimer.c}}
-\subsubsection[{lstimer\_\-test\_\-cb}]{\setlength{\rightskip}{0pt plus 5cm}void lstimer\_\-test\_\-cb (char $\ast$ {\em zz})}}
-\label{lstimer_8c_a2416e6248e5eb1314c06439507699287}
+\hypertarget{lstimer_8c_ab8b409bb2a7ff78da22d988cfb3b537a}{\index{lstimer.\-c@{lstimer.\-c}!lstimer\-\_\-worker@{lstimer\-\_\-worker}}
+\index{lstimer\-\_\-worker@{lstimer\-\_\-worker}!lstimer.c@{lstimer.\-c}}
+\subsubsection[{lstimer\-\_\-worker}]{\setlength{\rightskip}{0pt plus 5cm}static void$\ast$ lstimer\-\_\-worker (
+\begin{DoxyParamCaption}
+\item[{void $\ast$}]{dummy}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [static]}}}\label{lstimer_8c_ab8b409bb2a7ff78da22d988cfb3b537a}
 
 
-Definition at line 256 of file lstimer.c.
+Our worker. 
+
+The main loop runs when a new timer is added. The service routine deals with maintenance. 
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em dummy} & required by protocol \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 178 of file lstimer.\-c.
 
 
 \begin{DoxyCode}
-256                                 {
-257   lslogging_log_message( "lstimer_test_cb");
-258 }
+                       \{
+  \textcolor{keywordtype}{int}
+    i,
+    known\_timers;
+
+  \textcolor{keyword}{struct }timespec \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now};
+
+  \textcolor{keyword}{struct }sigevent  sev;
+  \textcolor{keyword}{struct }sigaction sa;
+  sigset\_t mask;
+
+  \textcolor{comment}{// See example at
+       http://www.kernel.org/doc/man-pages/online/pages/man2/timer\_create.2.html}
+  \textcolor{comment}{//}
+
+  \textcolor{comment}{// Set up hander}
+  \textcolor{comment}{//}
+  sa.sa\_flags = SA\_SIGINFO;
+  sa.sa\_sigaction = \hyperlink{lstimer_8c_afa91bbd2fdb257d80ad65a5ce8abb845}{handler};
+  sigemptyset(&sa.sa\_mask);
+  \textcolor{keywordflow}{if} (sigaction(SIGRTMIN, &sa, NULL) == -1) \{
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lstimer\_worker: sigaction
+       failed"});
+    exit( -1);
+  \}
+
+  \textcolor{comment}{// Create the timer}
+  \textcolor{comment}{//}
+  sev.sigev\_notify = SIGEV\_SIGNAL;
+  sev.sigev\_signo  = SIGRTMIN;
+  sev.sigev\_value.sival\_ptr = &\hyperlink{lstimer_8c_a3394b0c23c3c962dc15cb88499f4358c}{lstimer\_timerid};
+  timer\_create( CLOCK\_REALTIME, &sev, &\hyperlink{lstimer_8c_a3394b0c23c3c962dc15cb88499f4358c}{lstimer\_timerid});
+
+
+  \textcolor{comment}{// Block timer signal for now since we really }
+  \textcolor{comment}{// want to be sure we do not own a lock on the timer mutex}
+  \textcolor{comment}{// while servicing the signal}
+  \textcolor{comment}{//}
+  sigemptyset( &mask);
+  sigaddset( &mask, SIGRTMIN);
+  
+  known\_timers = 0;
+
+  \textcolor{keywordflow}{while}( 1) \{
+    pthread\_mutex\_lock( &\hyperlink{lstimer_8c_a170993cbed9b9ec8bc64b6642a3ed581}{lstimer\_mutex});
+
+    \textcolor{keywordflow}{while}( \hyperlink{lstimer_8c_a5a3c6ef3507448d284d91958878d3f75}{new\_timer} == 0)
+      pthread\_cond\_wait( &\hyperlink{lstimer_8c_a96b7516e4a15c4b879de82a569cd5f0a}{lstimer\_cond}, &\hyperlink{lstimer_8c_a170993cbed9b9ec8bc64b6642a3ed581}{lstimer\_mutex}
+      );
+
+    \textcolor{comment}{// ignore signals so we don't service the signal while we are already in
+       the}
+    \textcolor{comment}{// service routine}
+    \textcolor{comment}{//}
+    sigprocmask( SIG\_SETMASK, &mask, NULL);
+    
+
+    \textcolor{comment}{//}
+    \textcolor{comment}{// Setting up the timer interval is in the handler}
+    \textcolor{comment}{// so just call it}
+    \textcolor{comment}{//}
+    \hyperlink{lstimer_8c_a7796321359df34cb827ffa51bbc44e9c}{service\_timers}();
+
+    \textcolor{comment}{//}
+    \textcolor{comment}{// Reset our flag}
+    \textcolor{comment}{//}
+    \hyperlink{lstimer_8c_a5a3c6ef3507448d284d91958878d3f75}{new\_timer} = 0;
+
+    pthread\_mutex\_unlock( &\hyperlink{lstimer_8c_a170993cbed9b9ec8bc64b6642a3ed581}{lstimer\_mutex});
+
+
+    \textcolor{comment}{// Let the signals rain down}
+    \textcolor{comment}{//}
+    sigprocmask( SIG\_UNBLOCK, &mask, NULL);
+  \}
+\}
 \end{DoxyCode}
-\hypertarget{lstimer_8c_ab8b409bb2a7ff78da22d988cfb3b537a}{
-\index{lstimer.c@{lstimer.c}!lstimer\_\-worker@{lstimer\_\-worker}}
-\index{lstimer\_\-worker@{lstimer\_\-worker}!lstimer.c@{lstimer.c}}
-\subsubsection[{lstimer\_\-worker}]{\setlength{\rightskip}{0pt plus 5cm}static void$\ast$ lstimer\_\-worker (void $\ast$ {\em dummy})\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
-\label{lstimer_8c_ab8b409bb2a7ff78da22d988cfb3b537a}
-
-\begin{DoxyParams}{Parameters}
-\item[\mbox{$\leftarrow$} {\em dummy}]required by protocol \end{DoxyParams}
-
-
-Definition at line 168 of file lstimer.c.
+\hypertarget{lstimer_8c_a7796321359df34cb827ffa51bbc44e9c}{\index{lstimer.\-c@{lstimer.\-c}!service\-\_\-timers@{service\-\_\-timers}}
+\index{service\-\_\-timers@{service\-\_\-timers}!lstimer.c@{lstimer.\-c}}
+\subsubsection[{service\-\_\-timers}]{\setlength{\rightskip}{0pt plus 5cm}static void service\-\_\-timers (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [static]}}}\label{lstimer_8c_a7796321359df34cb827ffa51bbc44e9c}
 
 
-\begin{DoxyCode}
-170                        {
-171   int
-172     i,
-173     known_timers;
-174 
-175   struct timespec now;
-176 
-177   struct sigevent  sev;
-178   struct sigaction sa;
-179   sigset_t mask;
-180 
-181   // See example at http://www.kernel.org/doc/man-pages/online/pages/man2/timer_c
-      reate.2.html
-182   //
-183 
-184   // Set up hander
-185   //
-186   sa.sa_flags = SA_SIGINFO;
-187   sa.sa_sigaction = handler;
-188   sigemptyset(&sa.sa_mask);
-189   if (sigaction(SIGRTMIN, &sa, NULL) == -1) {
-190     lslogging_log_message( "lstimer_worker: sigaction failed");
-191     exit( -1);
-192   }
-193 
-194   // Create the timer
-195   //
-196   sev.sigev_notify = SIGEV_SIGNAL;
-197   sev.sigev_signo  = SIGRTMIN;
-198   sev.sigev_value.sival_ptr = &lstimer_timerid;
-199   timer_create( CLOCK_REALTIME, &sev, &lstimer_timerid);
-200 
-201 
-202   // Block timer signal for now since we really 
-203   // want to be sure we do not own a lock on the timer mutex
-204   // while servicing the signal
-205   //
-206   sigemptyset( &mask);
-207   sigaddset( &mask, SIGRTMIN);
-208   
-209   known_timers = 0;
-210 
-211   while( 1) {
-212     pthread_mutex_lock( &lstimer_mutex);
-213 
-214     while( new_timer == 0)
-215       pthread_cond_wait( &lstimer_cond, &lstimer_mutex);
-216 
-217     // ignore signals so we don't service the signal while we are already in the
-218     // service routine
-219     //
-220     sigprocmask( SIG_SETMASK, &mask, NULL);
-221     
-222 
-223     //
-224     // Setting up the timer interval is in the handler
-225     // so just call it
-226     //
-227     service_timers();
-228 
-229     //
-230     // Reset our flag
-231     //
-232     new_timer = 0;
-233 
-234     pthread_mutex_unlock( &lstimer_mutex);
-235 
-236 
-237     // Let the signals rain down
-238     //
-239     sigprocmask( SIG_UNBLOCK, &mask, NULL);
-240   }
-241 }
-\end{DoxyCode}
-\hypertarget{lstimer_8c_a7796321359df34cb827ffa51bbc44e9c}{
-\index{lstimer.c@{lstimer.c}!service\_\-timers@{service\_\-timers}}
-\index{service\_\-timers@{service\_\-timers}!lstimer.c@{lstimer.c}}
-\subsubsection[{service\_\-timers}]{\setlength{\rightskip}{0pt plus 5cm}static void service\_\-timers ()\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
-\label{lstimer_8c_a7796321359df34cb827ffa51bbc44e9c}
+Send events that are past due, due, or just about to be due. 
 
 
-Definition at line 91 of file lstimer.c.
+
+Definition at line 96 of file lstimer.\-c.
 
 
 \begin{DoxyCode}
-91                              {
-92   int
-93     i,
-94     found_active;
-95 
-96   lstimer_list_t *p;
-97   struct timespec now, then, soonest;
-98   struct itimerspec its;
-99 
-100   //
-101   // Did I remind you not to let this thread own the lstimer mutex outside of thi
-      s
-102   // service routine when SIGRTMIN is active?
-103   //
-104 
-105   // Call with lstimer_mutex locked
-106 
-107   clock_gettime( CLOCK_REALTIME, &now);
-108   //
-109   // Project a tad into the future
-110   then.tv_sec  = now.tv_sec + (now.tv_nsec + LSTIMER_RESOLUTION_NSECS) / 10000000
-      00;
-111   then.tv_nsec = (now.tv_nsec + LSTIMER_RESOLUTION_NSECS) % 1000000000;
-112 
-113   found_active = 0;
-114   for( i=0; i<lstimer_active_timers; i++) {
-115     p = &(lstimer_list[i]);
-116     if( p->shots != 0) {
-117       found_active++;
-118       if(  p->next_secs < then.tv_sec || (p->next_secs == then.tv_sec && p->
-      next_nsecs <= then.tv_nsec)) {
-119         lsevents_send_event( p->event);
-120         //
-121         // After sending the event, compute the next time we need to do this
-122         //
-123         p->last_secs  = now.tv_sec;
-124         p->last_nsecs = now.tv_nsec;
-125         p->ncalls++;
-126         //
-127         // Decrement non-infinite loops
-128         if( p->shots != -1)
-129           p->shots--;
-130         if( p->shots == 0) {
-131           //
-132           // Take this timer out of the mix
-133           lstimer_active_timers--;
-134         } else {
-135           p->next_secs  = p->init_secs + (p->ncalls+1) * p->delay_secs + (p->
-      init_nsecs + (p->ncalls+1)*p->delay_nsecs)/1000000000;
-136           p->next_nsecs = (p->init_nsecs + (p->ncalls+1)*p->delay_nsecs) % 100000
-      0000;
-137         }
-138       }
-139 
-140       if( found_active == 1) {
-141         soonest.tv_sec  = p->next_secs;
-142         soonest.tv_nsec = p->next_nsecs;
-143       } else {
-144         if( soonest.tv_sec > p->next_secs || (soonest.tv_sec == p->next_secs && s
-      oonest.tv_nsec > p->next_nsecs)) {
-145           soonest.tv_sec  = p->next_secs;
-146           soonest.tv_nsec = p->next_nsecs;
-147         }
-148       }
-149     }
-150   }
-151 
-152   if( soonest.tv_sec != 0) {
-153     its.it_value.tv_sec     = soonest.tv_sec;
-154     its.it_value.tv_nsec    = soonest.tv_nsec;
-155     its.it_interval.tv_sec  = 0;
-156     its.it_interval.tv_nsec = 0;
-157     timer_settime( lstimer_timerid, TIMER_ABSTIME, &its, NULL);
-158   }
-159 }
+                             \{
+  \textcolor{keywordtype}{int}
+    i,
+    found\_active;
+
+  \hyperlink{structlstimer__list__struct}{lstimer\_list\_t} *p;
+  \textcolor{keyword}{struct }timespec \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}, then, soonest;
+  \textcolor{keyword}{struct }itimerspec its;
+
+  \textcolor{comment}{//}
+  \textcolor{comment}{// Did I remind you not to let this thread own the lstimer mutex outside of
+       this}
+  \textcolor{comment}{// service routine when SIGRTMIN is active?}
+  \textcolor{comment}{//}
+
+  \textcolor{comment}{// Call with lstimer\_mutex locked}
+
+  clock\_gettime( CLOCK\_REALTIME, &\hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now});
+  \textcolor{comment}{//}
+  \textcolor{comment}{// Project a tad into the future}
+  then.tv\_sec  = \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_sec + (\hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_nsec + \hyperlink{lstimer_8c_a602d98fa617eb9f4ab49e4b9c7f5d4d9}{LSTIMER\_RESOLUTION\_NSECS}
+      ) / 1000000000;
+  then.tv\_nsec = (\hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_nsec + \hyperlink{lstimer_8c_a602d98fa617eb9f4ab49e4b9c7f5d4d9}{LSTIMER\_RESOLUTION\_NSECS}
+      ) % 1000000000;
+
+  found\_active = 0;
+  \textcolor{keywordflow}{for}( i=0; i<\hyperlink{lstimer_8c_a1a47dadbec1776920ab83409234c1833}{lstimer\_active\_timers}; i++) \{
+    p = &(\hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i]);
+    \textcolor{keywordflow}{if}( p->\hyperlink{structlstimer__list__struct_ac7ab4cd1f3065156f95b49e66bf05283}{shots} != 0) \{
+      found\_active++;
+      \textcolor{keywordflow}{if}(  p->\hyperlink{structlstimer__list__struct_af0dcaad37472462c9f27d54ed0ceb75d}{next\_secs} < then.tv\_sec || (p->\hyperlink{structlstimer__list__struct_af0dcaad37472462c9f27d54ed0ceb75d}{next\_secs} == 
+      then.tv\_sec && p->\hyperlink{structlstimer__list__struct_ab115115d5be7933f98a094b46b6583bb}{next\_nsecs} <= then.tv\_nsec)) \{
+        \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( p->\hyperlink{structlstimer__list__struct_a54d564e392315b2730278bb925803184}{event});
+        \textcolor{comment}{//}
+        \textcolor{comment}{// After sending the event, compute the next time we need to do this}
+        \textcolor{comment}{//}
+        p->\hyperlink{structlstimer__list__struct_ab0ac2907735701cb24ec9af95a1cc787}{last\_secs}  = \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_sec;
+        p->\hyperlink{structlstimer__list__struct_a19acf5aa7f57aa7ce60537c3d3d6a6af}{last\_nsecs} = \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_nsec;
+        p->\hyperlink{structlstimer__list__struct_aa56c5b8ce7fa0ae93132cb9908195836}{ncalls}++;
+        \textcolor{comment}{//}
+        \textcolor{comment}{// Decrement non-infinite loops}
+        \textcolor{keywordflow}{if}( p->\hyperlink{structlstimer__list__struct_ac7ab4cd1f3065156f95b49e66bf05283}{shots} != -1)
+          p->\hyperlink{structlstimer__list__struct_ac7ab4cd1f3065156f95b49e66bf05283}{shots}--;
+        \textcolor{keywordflow}{if}( p->\hyperlink{structlstimer__list__struct_ac7ab4cd1f3065156f95b49e66bf05283}{shots} == 0) \{
+          \textcolor{comment}{//}
+          \textcolor{comment}{// Take this timer out of the mix}
+          lstimer\_active\_timers--;
+        \} \textcolor{keywordflow}{else} \{
+          p->\hyperlink{structlstimer__list__struct_af0dcaad37472462c9f27d54ed0ceb75d}{next\_secs}  = p->\hyperlink{structlstimer__list__struct_a1222c76d49b149725467aa698abb7fb1}{init\_secs} + (p->\hyperlink{structlstimer__list__struct_aa56c5b8ce7fa0ae93132cb9908195836}{ncalls}+1) 
+      * p->\hyperlink{structlstimer__list__struct_a237da48d81b7e039c54901296aeee18e}{delay\_secs} + (p->\hyperlink{structlstimer__list__struct_ad5bb7fa7d669b7ebbe34d8ed2bdb257a}{init\_nsecs} + (p->\hyperlink{structlstimer__list__struct_aa56c5b8ce7fa0ae93132cb9908195836}{ncalls}+1)*p->
+      \hyperlink{structlstimer__list__struct_acb0c6a1600c4168e5dfb2d477a685b29}{delay\_nsecs})/1000000000;
+          p->\hyperlink{structlstimer__list__struct_ab115115d5be7933f98a094b46b6583bb}{next\_nsecs} = (p->\hyperlink{structlstimer__list__struct_ad5bb7fa7d669b7ebbe34d8ed2bdb257a}{init\_nsecs} + (p->\hyperlink{structlstimer__list__struct_aa56c5b8ce7fa0ae93132cb9908195836}{ncalls}
+      +1)*p->\hyperlink{structlstimer__list__struct_acb0c6a1600c4168e5dfb2d477a685b29}{delay\_nsecs}) % 1000000000;
+        \}
+      \}
+
+      \textcolor{keywordflow}{if}( found\_active == 1) \{
+        soonest.tv\_sec  = p->\hyperlink{structlstimer__list__struct_af0dcaad37472462c9f27d54ed0ceb75d}{next\_secs};
+        soonest.tv\_nsec = p->\hyperlink{structlstimer__list__struct_ab115115d5be7933f98a094b46b6583bb}{next\_nsecs};
+      \} \textcolor{keywordflow}{else} \{
+        \textcolor{keywordflow}{if}( soonest.tv\_sec > p->\hyperlink{structlstimer__list__struct_af0dcaad37472462c9f27d54ed0ceb75d}{next\_secs} || (soonest.tv\_sec == p->
+      \hyperlink{structlstimer__list__struct_af0dcaad37472462c9f27d54ed0ceb75d}{next\_secs} && soonest.tv\_nsec > p->\hyperlink{structlstimer__list__struct_ab115115d5be7933f98a094b46b6583bb}{next\_nsecs})) \{
+          soonest.tv\_sec  = p->\hyperlink{structlstimer__list__struct_af0dcaad37472462c9f27d54ed0ceb75d}{next\_secs};
+          soonest.tv\_nsec = p->\hyperlink{structlstimer__list__struct_ab115115d5be7933f98a094b46b6583bb}{next\_nsecs};
+        \}
+      \}
+    \}
+  \}
+
+  \textcolor{keywordflow}{if}( soonest.tv\_sec != 0) \{
+    its.it\_value.tv\_sec     = soonest.tv\_sec;
+    its.it\_value.tv\_nsec    = soonest.tv\_nsec;
+    its.it\_interval.tv\_sec  = 0;
+    its.it\_interval.tv\_nsec = 0;
+    timer\_settime( \hyperlink{lstimer_8c_a3394b0c23c3c962dc15cb88499f4358c}{lstimer\_timerid}, TIMER\_ABSTIME, &its, NULL);
+  \}
+\}
 \end{DoxyCode}
 
 
 \subsection{Variable Documentation}
-\hypertarget{lstimer_8c_a1a47dadbec1776920ab83409234c1833}{
-\index{lstimer.c@{lstimer.c}!lstimer\_\-active\_\-timers@{lstimer\_\-active\_\-timers}}
-\index{lstimer\_\-active\_\-timers@{lstimer\_\-active\_\-timers}!lstimer.c@{lstimer.c}}
-\subsubsection[{lstimer\_\-active\_\-timers}]{\setlength{\rightskip}{0pt plus 5cm}int {\bf lstimer\_\-active\_\-timers} = 0\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
-\label{lstimer_8c_a1a47dadbec1776920ab83409234c1833}
+\hypertarget{lstimer_8c_a1a47dadbec1776920ab83409234c1833}{\index{lstimer.\-c@{lstimer.\-c}!lstimer\-\_\-active\-\_\-timers@{lstimer\-\_\-active\-\_\-timers}}
+\index{lstimer\-\_\-active\-\_\-timers@{lstimer\-\_\-active\-\_\-timers}!lstimer.c@{lstimer.\-c}}
+\subsubsection[{lstimer\-\_\-active\-\_\-timers}]{\setlength{\rightskip}{0pt plus 5cm}int lstimer\-\_\-active\-\_\-timers = 0\hspace{0.3cm}{\ttfamily [static]}}}\label{lstimer_8c_a1a47dadbec1776920ab83409234c1833}
 
 
 count of the number timers we are tracking 
 
-Definition at line 17 of file lstimer.c.\hypertarget{lstimer_8c_a96b7516e4a15c4b879de82a569cd5f0a}{
-\index{lstimer.c@{lstimer.c}!lstimer\_\-cond@{lstimer\_\-cond}}
-\index{lstimer\_\-cond@{lstimer\_\-cond}!lstimer.c@{lstimer.c}}
-\subsubsection[{lstimer\_\-cond}]{\setlength{\rightskip}{0pt plus 5cm}pthread\_\-cond\_\-t {\bf lstimer\_\-cond}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
-\label{lstimer_8c_a96b7516e4a15c4b879de82a569cd5f0a}
+
+
+Definition at line 18 of file lstimer.\-c.
+
+\hypertarget{lstimer_8c_a96b7516e4a15c4b879de82a569cd5f0a}{\index{lstimer.\-c@{lstimer.\-c}!lstimer\-\_\-cond@{lstimer\-\_\-cond}}
+\index{lstimer\-\_\-cond@{lstimer\-\_\-cond}!lstimer.c@{lstimer.\-c}}
+\subsubsection[{lstimer\-\_\-cond}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-cond\-\_\-t lstimer\-\_\-cond\hspace{0.3cm}{\ttfamily [static]}}}\label{lstimer_8c_a96b7516e4a15c4b879de82a569cd5f0a}
 
 
 allows us to be idle when there is nothing to do 
 
-Definition at line 37 of file lstimer.c.\hypertarget{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{
-\index{lstimer.c@{lstimer.c}!lstimer\_\-list@{lstimer\_\-list}}
-\index{lstimer\_\-list@{lstimer\_\-list}!lstimer.c@{lstimer.c}}
-\subsubsection[{lstimer\_\-list}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lstimer\_\-list\_\-t} {\bf lstimer\_\-list}\mbox{[}LSTIMER\_\-LIST\_\-LENGTH\mbox{]}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
-\label{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}
 
 
-Definition at line 33 of file lstimer.c.\hypertarget{lstimer_8c_a170993cbed9b9ec8bc64b6642a3ed581}{
-\index{lstimer.c@{lstimer.c}!lstimer\_\-mutex@{lstimer\_\-mutex}}
-\index{lstimer\_\-mutex@{lstimer\_\-mutex}!lstimer.c@{lstimer.c}}
-\subsubsection[{lstimer\_\-mutex}]{\setlength{\rightskip}{0pt plus 5cm}pthread\_\-mutex\_\-t {\bf lstimer\_\-mutex}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
-\label{lstimer_8c_a170993cbed9b9ec8bc64b6642a3ed581}
+Definition at line 40 of file lstimer.\-c.
+
+\hypertarget{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{\index{lstimer.\-c@{lstimer.\-c}!lstimer\-\_\-list@{lstimer\-\_\-list}}
+\index{lstimer\-\_\-list@{lstimer\-\_\-list}!lstimer.c@{lstimer.\-c}}
+\subsubsection[{lstimer\-\_\-list}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lstimer\-\_\-list\-\_\-t} lstimer\-\_\-list\mbox{[}{\bf L\-S\-T\-I\-M\-E\-R\-\_\-\-L\-I\-S\-T\-\_\-\-L\-E\-N\-G\-T\-H}\mbox{]}\hspace{0.3cm}{\ttfamily [static]}}}\label{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}
+
+
+Our timer list. 
+
+
+
+Definition at line 36 of file lstimer.\-c.
+
+\hypertarget{lstimer_8c_a170993cbed9b9ec8bc64b6642a3ed581}{\index{lstimer.\-c@{lstimer.\-c}!lstimer\-\_\-mutex@{lstimer\-\_\-mutex}}
+\index{lstimer\-\_\-mutex@{lstimer\-\_\-mutex}!lstimer.c@{lstimer.\-c}}
+\subsubsection[{lstimer\-\_\-mutex}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-mutex\-\_\-t lstimer\-\_\-mutex\hspace{0.3cm}{\ttfamily [static]}}}\label{lstimer_8c_a170993cbed9b9ec8bc64b6642a3ed581}
 
 
 protect the timer list 
 
-Definition at line 36 of file lstimer.c.\hypertarget{lstimer_8c_a76660e8720b08f4adee2be9f44b5f419}{
-\index{lstimer.c@{lstimer.c}!lstimer\_\-thread@{lstimer\_\-thread}}
-\index{lstimer\_\-thread@{lstimer\_\-thread}!lstimer.c@{lstimer.c}}
-\subsubsection[{lstimer\_\-thread}]{\setlength{\rightskip}{0pt plus 5cm}pthread\_\-t {\bf lstimer\_\-thread}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
-\label{lstimer_8c_a76660e8720b08f4adee2be9f44b5f419}
+
+
+Definition at line 39 of file lstimer.\-c.
+
+\hypertarget{lstimer_8c_a76660e8720b08f4adee2be9f44b5f419}{\index{lstimer.\-c@{lstimer.\-c}!lstimer\-\_\-thread@{lstimer\-\_\-thread}}
+\index{lstimer\-\_\-thread@{lstimer\-\_\-thread}!lstimer.c@{lstimer.\-c}}
+\subsubsection[{lstimer\-\_\-thread}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-t lstimer\-\_\-thread\hspace{0.3cm}{\ttfamily [static]}}}\label{lstimer_8c_a76660e8720b08f4adee2be9f44b5f419}
 
 
 the timer thread 
 
-Definition at line 35 of file lstimer.c.\hypertarget{lstimer_8c_a3394b0c23c3c962dc15cb88499f4358c}{
-\index{lstimer.c@{lstimer.c}!lstimer\_\-timerid@{lstimer\_\-timerid}}
-\index{lstimer\_\-timerid@{lstimer\_\-timerid}!lstimer.c@{lstimer.c}}
-\subsubsection[{lstimer\_\-timerid}]{\setlength{\rightskip}{0pt plus 5cm}timer\_\-t {\bf lstimer\_\-timerid}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
-\label{lstimer_8c_a3394b0c23c3c962dc15cb88499f4358c}
+
+
+Definition at line 38 of file lstimer.\-c.
+
+\hypertarget{lstimer_8c_a3394b0c23c3c962dc15cb88499f4358c}{\index{lstimer.\-c@{lstimer.\-c}!lstimer\-\_\-timerid@{lstimer\-\_\-timerid}}
+\index{lstimer\-\_\-timerid@{lstimer\-\_\-timerid}!lstimer.c@{lstimer.\-c}}
+\subsubsection[{lstimer\-\_\-timerid}]{\setlength{\rightskip}{0pt plus 5cm}timer\-\_\-t lstimer\-\_\-timerid\hspace{0.3cm}{\ttfamily [static]}}}\label{lstimer_8c_a3394b0c23c3c962dc15cb88499f4358c}
 
 
 our real time timer 
 
-Definition at line 38 of file lstimer.c.\hypertarget{lstimer_8c_a5a3c6ef3507448d284d91958878d3f75}{
-\index{lstimer.c@{lstimer.c}!new\_\-timer@{new\_\-timer}}
-\index{new\_\-timer@{new\_\-timer}!lstimer.c@{lstimer.c}}
-\subsubsection[{new\_\-timer}]{\setlength{\rightskip}{0pt plus 5cm}int {\bf new\_\-timer} = 0\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
-\label{lstimer_8c_a5a3c6ef3507448d284d91958878d3f75}
 
 
-indicate that a new timer exists and a call to service\_\-timers is required 
+Definition at line 41 of file lstimer.\-c.
 
-Definition at line 39 of file lstimer.c.
+\hypertarget{lstimer_8c_a5a3c6ef3507448d284d91958878d3f75}{\index{lstimer.\-c@{lstimer.\-c}!new\-\_\-timer@{new\-\_\-timer}}
+\index{new\-\_\-timer@{new\-\_\-timer}!lstimer.c@{lstimer.\-c}}
+\subsubsection[{new\-\_\-timer}]{\setlength{\rightskip}{0pt plus 5cm}int new\-\_\-timer = 0\hspace{0.3cm}{\ttfamily [static]}}}\label{lstimer_8c_a5a3c6ef3507448d284d91958878d3f75}
+
+
+indicate that a new timer exists and a call to service\-\_\-timers is required 
+
+
+
+Definition at line 42 of file lstimer.\-c.
+

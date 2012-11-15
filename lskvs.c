@@ -7,13 +7,13 @@
  */
 
 
-//
-// Storage for the key value pairs
-//
-// the k's and v's are strings and to keep the memory management less crazy
-// we'll calloc some space for these strings and only free and re-calloc if we need
-// more space later.  Only the values are ever going to be resized.
-//
+
+/** Storage for the key value pairs
+ *
+ * the k's and v's are strings and to keep the memory management less crazy
+ * we'll calloc some space for these strings and only free and re-calloc if we need
+ * more space later.  Only the values are ever going to be resized.
+ */
 typedef struct lskvs_kvs_struct {
   struct lskvs_kvs_struct *next;	//!< the next kvpair
   pthread_rwlock_t l;			//!< our lock
@@ -26,18 +26,21 @@ static lskvs_kvs_t *lskvs_kvs = NULL;	//!< our list (or at least the start of it
 static pthread_rwlock_t lskvs_rwlock;	//!< needed to protect the list
 
 
-//
-// Set the value of a kv pair
-// Create the pair if the key does not exsist.
-//
-// If more than one thread tries to create the same key at the same time
-// it is possible for the list to contain multiple versions.  Not good.  But
-// also not possible if only one thread has the job of create the pairs in the first
-// place.  Alternatively just grab the write lock at the beginning 
-// and hold it until the end.  The advantage of having only one thread calling lskvs_set
-// is that it wont slow down the other threads that just want to read things.
-// In any case, we'll likely never see so much action for any of this to make a differene.
-//
+
+/** Set the value of a kv pair
+ * Create the pair if the key does not exsist.
+ *
+ * If more than one thread tries to create the same key at the same time
+ * it is possible for the list to contain multiple versions.  Not good.  But
+ * also not possible if only one thread has the job of create the pairs in the first
+ * place.  Alternatively just grab the write lock at the beginning 
+ * and hold it until the end.  The advantage of having only one thread calling lskvs_set
+ * is that it wont slow down the other threads that just want to read things.
+ * In any case, we'll likely never see so much action for any of this to make a differene.
+ *
+ * \param k The name of the key
+ * \param v The value to assign to the key
+ */
 void lskvs_set( char *k, char *v) {
   lskvs_kvs_t
     *root,
@@ -150,9 +153,17 @@ lskvs_kvs_t *lskvs_get(
 }
 
 
+/** Initialize lskvs objects
+ */
 void lskvs_init() {
   pthread_rwlock_init( &lskvs_rwlock, NULL);
 }
 
+/** Run things.
+ *  Really, there is nothing to run.  There is no need for a worker thread here
+ *  but this has been added so we can add lskvs just like any other module to the pgpmac
+ *  project.  Maybe one day we'll need to add a thread and this little routine can be
+ *  celebrated as being far sighted, ahead of its time.
+ */
 void lskvs_run() {
 }

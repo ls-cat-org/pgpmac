@@ -33,19 +33,27 @@
  * <h3>Structure</h3>
  *
  * The project is roughly broken down as follows:
+ * <pre>
+ *  lsevents.c		Simple event queue
  *
- *  pgpmac.h		All includes and defines.  The only file included by the .c files in this project.
+ *  lskvs.c		Receive key value pair updates from the px.kvs table in our database
  *
- *  pgpmac.c		Main: parses command line and starts up the various threads
+ *  lslogging.c		A logging utility to simplify debugging
  *
  *  lspg.c		Handles communications with the controlling posgresql database
  *
- *  md2cmds.c		Provides the equivilant (mostly( of the LS-CAT BLUMax code.
+ *  lsupdate.c		Periodically update the px.kvs table with new positions.
+ *
+ *  md2cmds.c		Provides the equivilant (mostly) of the LS-CAT BLUMax code.
+ *
+ *  pgpmac.c		Main: parses command line and starts up the various threads
+ *
+ *  pgpmac.h		All includes and defines.  The only file included by the .c files in this project.
  *
  *  pmac_md2_ls-cat.pmc Code for the PMAC: compile and install with pmac exectutive program.
  *
  *  pmac_md2.sql        Tables and procedures for the posgresql side of the project.
- *
+ * </pre>
  *
  * <b>Notes:</b>
  *<ul>

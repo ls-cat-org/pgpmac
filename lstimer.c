@@ -7,15 +7,18 @@
  */
 
 
+//! We'll allow this many timers. This should be way more than enough.
 #define LSTIMER_LIST_LENGTH 256
 
-// times within this amount in the future are considered "now"
-// and the events should be called
-//
+/** times within this amount in the future are considered "now"
+ * and the events should be called
+ */
 #define LSTIMER_RESOLUTION_NSECS 100000
 
 static int lstimer_active_timers = 0;	//!< count of the number timers we are tracking
 
+/** Everything we need to know about a timer.
+ */
 typedef struct lstimer_list_struct {
   int shots;				//!< run this many times: -1 means reload forever, 0 means we are done with this timer and it may be reused
   unsigned long int ncalls;		//!< track how many times we triggered a callback (like an unsigned long int is really needed)
@@ -23,14 +26,14 @@ typedef struct lstimer_list_struct {
   unsigned long int next_secs;		//!< epoch (seconds) of next alarm
   unsigned long int next_nsecs;		//!< nano seconds of next alarm
   unsigned long int delay_secs;		//!< number of seconds for a periodic delay
-  unsigned long int delay_nsecs;		//!< nano seconds of delay
+  unsigned long int delay_nsecs;	//!< nano seconds of delay
   unsigned long int last_secs;		//!< the last time this timer was triggered
   unsigned long int last_nsecs;		//!< the last time this timer was triggered
   unsigned long int init_secs;		//!< our initialization time
   unsigned long int init_nsecs;		//!< our initialization time
 } lstimer_list_t;
 
-static lstimer_list_t lstimer_list[LSTIMER_LIST_LENGTH];
+static lstimer_list_t lstimer_list[LSTIMER_LIST_LENGTH];	//!< Our timer list
 
 static pthread_t lstimer_thread;	//!< the timer thread
 static pthread_mutex_t lstimer_mutex;	//!< protect the timer list
@@ -42,7 +45,7 @@ void lstimer_add_timer( char *event, int shots, unsigned long int secs, unsigned
   int i;
   struct timespec now;
 
-  //
+
   // Time we were called.  Delay is based on call time, not queued time
   //
   clock_gettime( CLOCK_REALTIME, &now);
@@ -88,6 +91,8 @@ void lstimer_add_timer( char *event, int shots, unsigned long int secs, unsigned
 }
 
 
+/** Send events that are past due, due, or just about to be due.
+ */
 static void service_timers() {
   int
     i,
@@ -158,13 +163,18 @@ static void service_timers() {
   }
 }
 
+/** Service the signal
+ */
 static void handler( int sig, siginfo_t *si, void *dummy) {
-
   pthread_mutex_lock( &lstimer_mutex);
   service_timers();
   pthread_mutex_unlock( &lstimer_mutex);
 }
 
+/** Our worker.
+ *  The main loop runs when a new timer is added.
+ *  The service routine deals with maintenance.
+ */
 static void *lstimer_worker(
 		     void *dummy		//!< [in] required by protocol
 		     ) {
@@ -241,6 +251,8 @@ static void *lstimer_worker(
 }
 
 
+/** Initialize the timer list and pthread stuff.
+ */
 void lstimer_init() {
   int i;
 
@@ -253,13 +265,8 @@ void lstimer_init() {
   pthread_cond_init(  &lstimer_cond, NULL);
 }
 
-void lstimer_test_cb( char *zz) {
-  lslogging_log_message( "lstimer_test_cb");
-}
-
-
+/** Start up our thread.
+ */
 void lstimer_run() {
   pthread_create( &lstimer_thread, NULL, lstimer_worker, NULL);
-  //  lsevents_add_listener( "watchdog", lstimer_test_cb);
-  //  lstimer_add_timer( "watchdog", -1, 1, 0);
 }

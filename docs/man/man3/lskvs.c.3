@@ -1,15 +1,15 @@
-.TH "lskvs.c" 3 "14 Nov 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lskvs.c" 3 "Wed Nov 14 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 lskvs.c \- 
 .PP
-Support for the remote access client key value pairs.  
+Support for the remote access client key value pairs\&.  
 
 .SH SYNOPSIS
 .br
 .PP
-\fC#include 'pgpmac.h'\fP
+\fC#include 'pgpmac\&.h'\fP
 .br
 
 .SS "Data Structures"
@@ -18,6 +18,7 @@ Support for the remote access client key value pairs.
 .ti -1c
 .RI "struct \fBlskvs_kvs_struct\fP"
 .br
+.RI "\fIStorage for the key value pairs\&. \fP"
 .in -1c
 .SS "Typedefs"
 
@@ -25,6 +26,7 @@ Support for the remote access client key value pairs.
 .ti -1c
 .RI "typedef struct \fBlskvs_kvs_struct\fP \fBlskvs_kvs_t\fP"
 .br
+.RI "\fIStorage for the key value pairs\&. \fP"
 .in -1c
 .SS "Functions"
 
@@ -32,16 +34,19 @@ Support for the remote access client key value pairs.
 .ti -1c
 .RI "void \fBlskvs_set\fP (char *k, char *v)"
 .br
+.RI "\fISet the value of a kv pair Create the pair if the key does not exsist\&. \fP"
 .ti -1c
 .RI "\fBlskvs_kvs_t\fP * \fBlskvs_get\fP (char *k)"
 .br
-.RI "\fIFind the kv pair object Return with a pointer to the structure or NULL if not found. \fP"
+.RI "\fIFind the kv pair object Return with a pointer to the structure or NULL if not found\&. \fP"
 .ti -1c
 .RI "void \fBlskvs_init\fP ()"
 .br
+.RI "\fIInitialize lskvs objects\&. \fP"
 .ti -1c
 .RI "void \fBlskvs_run\fP ()"
 .br
+.RI "\fIRun things\&. \fP"
 .in -1c
 .SS "Variables"
 
@@ -57,7 +62,7 @@ Support for the remote access client key value pairs.
 .in -1c
 .SH "Detailed Description"
 .PP 
-Support for the remote access client key value pairs. 
+Support for the remote access client key value pairs\&. 
 
 \fBDate:\fP
 .RS 4
@@ -66,169 +71,198 @@ Support for the remote access client key value pairs.
 .PP
 \fBAuthor:\fP
 .RS 4
-Keith Brister  All Rights Reserved 
+Keith Brister 
+.RE
+.PP
+\fBCopyright:\fP
+.RS 4
+All Rights Reserved 
 .RE
 .PP
 
 .PP
-Definition in file \fBlskvs.c\fP.
+Definition in file \fBlskvs\&.c\fP\&.
 .SH "Typedef Documentation"
 .PP 
 .SS "typedef struct \fBlskvs_kvs_struct\fP  \fBlskvs_kvs_t\fP"
+
+.PP
+Storage for the key value pairs\&. the k's and v's are strings and to keep the memory management less crazy we'll calloc some space for these strings and only free and re-calloc if we need more space later\&. Only the values are ever going to be resized\&. 
 .SH "Function Documentation"
 .PP 
-.SS "\fBlskvs_kvs_t\fP* lskvs_get (char * k)"
+.SS "\fBlskvs_kvs_t\fP* lskvs_get (char *k)"
+
 .PP
-Find the kv pair object Return with a pointer to the structure or NULL if not found. \fBParameters:\fP
+Find the kv pair object Return with a pointer to the structure or NULL if not found\&. \fBParameters:\fP
 .RS 4
 \fIk\fP key name to search for 
 .RE
 .PP
 
 .PP
-Definition at line 134 of file lskvs.c.
+Definition at line 137 of file lskvs\&.c\&.
 .PP
 .nf
-136                          {
-137   lskvs_kvs_t
-138     *rtn;
-139 
-140   pthread_rwlock_rdlock( &lskvs_rwlock);
-141   rtn = lskvs_kvs;
-142   pthread_rwlock_unlock( &lskvs_rwlock);
-143 
-144   while(rtn != NULL) {
-145     if( strcmp( rtn->k, k) == 0)
-146       break;
-147     rtn = rtn->next;
-148   }
-149   return rtn;
-150 }
+                         {
+  lskvs_kvs_t
+    *rtn;
+
+  pthread_rwlock_rdlock( &lskvs_rwlock);
+  rtn = lskvs_kvs;
+  pthread_rwlock_unlock( &lskvs_rwlock);
+
+  while(rtn != NULL) {
+    if( strcmp( rtn->k, k) == 0)
+      break;
+    rtn = rtn->next;
+  }
+  return rtn;
+}
 .fi
 .SS "void lskvs_init ()"
+
 .PP
-Definition at line 153 of file lskvs.c.
+Initialize lskvs objects\&. 
+.PP
+Definition at line 158 of file lskvs\&.c\&.
 .PP
 .nf
-153                   {
-154   pthread_rwlock_init( &lskvs_rwlock, NULL);
-155 }
+                  {
+  pthread_rwlock_init( &lskvs_rwlock, NULL);
+}
 .fi
 .SS "void lskvs_run ()"
+
 .PP
-Definition at line 157 of file lskvs.c.
+Run things\&. Really, there is nothing to run\&. There is no need for a worker thread here but this has been added so we can add lskvs just like any other module to the pgpmac project\&. Maybe one day we'll need to add a thread and this little routine can be celebrated as being far sighted, ahead of its time\&. 
+.PP
+Definition at line 168 of file lskvs\&.c\&.
 .PP
 .nf
-157                  {
-158 }
+                 {
+}
 .fi
-.SS "void lskvs_set (char * k, char * v)"
+.SS "void lskvs_set (char *k, char *v)"
+
 .PP
-Definition at line 41 of file lskvs.c.
+Set the value of a kv pair Create the pair if the key does not exsist\&. If more than one thread tries to create the same key at the same time it is possible for the list to contain multiple versions\&. Not good\&. But also not possible if only one thread has the job of create the pairs in the first place\&. Alternatively just grab the write lock at the beginning and hold it until the end\&. The advantage of having only one thread calling lskvs_set is that it wont slow down the other threads that just want to read things\&. In any case, we'll likely never see so much action for any of this to make a differene\&.
+.PP
+\fBParameters:\fP
+.RS 4
+\fIk\fP The name of the key 
+.br
+\fIv\fP The value to assign to the key 
+.RE
+.PP
+
+.PP
+Definition at line 44 of file lskvs\&.c\&.
 .PP
 .nf
-41                                   {
-42   lskvs_kvs_t
-43     *root,
-44     *p;
-45 
-46   lslogging_log_message( 'lskvs_set:  k: '%s', v: '%s'', k, v);
-47 
-48   // Don't bother with empty keys
-49   //
-50   if( k == NULL || *k == 0)
-51     return;
-52 
-53   pthread_rwlock_rdlock( &lskvs_rwlock);
-54   root = lskvs_kvs;
-55   pthread_rwlock_unlock( &lskvs_rwlock);
-56 
-57   for( p=root; p != NULL; p = p->next) {
-58     if( strcmp( p->k, k) == 0) {
-59       break;
-60     }
-61   }
-62 
-63   if( p == NULL) {
-64     //
-65     // Add a new list item
-66     //
-67     p = calloc( 1, sizeof( *p));
-68     if( p == NULL) {
-69       lslogging_log_message( 'lskvs_set: out of memory for kv struct (%d bytes', sizeof( *p));
-70       exit( -1);
-71     }
-72 
-73 
-74     p->k = calloc( strlen(k)+1, sizeof( *k));
-75     if( p->k == NULL) {
-76       lslogging_log_message( 'lskvs_set: out of memory for k (%d bytes)', strlen( k)+1);
-77       exit( -1);
-78     }
-79     strcpy( p->k, k);
-80     p->k[strlen(k)] = 0;
-81 
-82     // leave a little room to grow
-83     //
-84     if( v == NULL || *v == 0)
-85       p->vl = 32;
-86     else
-87       p->vl = strlen(v) + 32;
-88 
-89     p->v = calloc( p->vl, sizeof( *v));
-90     if( p->v == NULL) {
-91       lslogging_log_message( 'lskvs_set: out of memory for v (%d bytes)', p->vl);
-92       exit( -1);
-93     }
-94     
-95     if( v == NULL || *v == 0)
-96       *(p->v) = 0;
-97     else
-98       strcpy( p->v, v);
-99 
-100     p->v[p->vl-1] = 0;
-101     
-102     pthread_rwlock_init( &p->l, NULL);
-103 
-104     pthread_rwlock_wrlock( &lskvs_rwlock);
-105     p->next   = lskvs_kvs;
-106     lskvs_kvs = p;
-107     pthread_rwlock_unlock( &lskvs_rwlock);
-108   } else {
-109     //
-110     // Just update the value
-111     // Assume the database only sent us an update because
-112     // the old and new values are different
-113     //
-114     pthread_rwlock_wrlock( &(p->l));
-115     if( strlen( v) > p->vl-1) {
-116       free( p->v);
-117       
-118       p->vl = strlen(v) + 32;
-119       p->v = calloc( p->vl, 1);
-120       if( p->v == NULL) {
-121         lslogging_log_message( 'lskvs_set: out of memory for re-calloc of v (%d bytes)', p->vl);
-122         exit( -1);
-123       }
-124     }
-125     strcpy( p->v, v);
-126     p->v[p->vl-1] = 0;
-127     pthread_rwlock_unlock( &(p->l));
-128   }
-129 }
+                                  {
+  lskvs_kvs_t
+    *root,
+    *p;
+
+  lslogging_log_message( 'lskvs_set:  k: '%s', v: '%s'', k, v);
+
+  // Don't bother with empty keys
+  //
+  if( k == NULL || *k == 0)
+    return;
+
+  pthread_rwlock_rdlock( &lskvs_rwlock);
+  root = lskvs_kvs;
+  pthread_rwlock_unlock( &lskvs_rwlock);
+
+  for( p=root; p != NULL; p = p->next) {
+    if( strcmp( p->k, k) == 0) {
+      break;
+    }
+  }
+
+  if( p == NULL) {
+    //
+    // Add a new list item
+    //
+    p = calloc( 1, sizeof( *p));
+    if( p == NULL) {
+      lslogging_log_message( 'lskvs_set: out of memory for kv struct (%d bytes', sizeof( *p));
+      exit( -1);
+    }
+
+
+    p->k = calloc( strlen(k)+1, sizeof( *k));
+    if( p->k == NULL) {
+      lslogging_log_message( 'lskvs_set: out of memory for k (%d bytes)', strlen( k)+1);
+      exit( -1);
+    }
+    strcpy( p->k, k);
+    p->k[strlen(k)] = 0;
+
+    // leave a little room to grow
+    //
+    if( v == NULL || *v == 0)
+      p->vl = 32;
+    else
+      p->vl = strlen(v) + 32;
+
+    p->v = calloc( p->vl, sizeof( *v));
+    if( p->v == NULL) {
+      lslogging_log_message( 'lskvs_set: out of memory for v (%d bytes)', p->vl);
+      exit( -1);
+    }
+    
+    if( v == NULL || *v == 0)
+      *(p->v) = 0;
+    else
+      strcpy( p->v, v);
+
+    p->v[p->vl-1] = 0;
+    
+    pthread_rwlock_init( &p->l, NULL);
+
+    pthread_rwlock_wrlock( &lskvs_rwlock);
+    p->next   = lskvs_kvs;
+    lskvs_kvs = p;
+    pthread_rwlock_unlock( &lskvs_rwlock);
+  } else {
+    //
+    // Just update the value
+    // Assume the database only sent us an update because
+    // the old and new values are different
+    //
+    pthread_rwlock_wrlock( &(p->l));
+    if( strlen( v) > p->vl-1) {
+      free( p->v);
+      
+      p->vl = strlen(v) + 32;
+      p->v = calloc( p->vl, 1);
+      if( p->v == NULL) {
+        lslogging_log_message( 'lskvs_set: out of memory for re-calloc of v (%d bytes)', p->vl);
+        exit( -1);
+      }
+    }
+    strcpy( p->v, v);
+    p->v[p->vl-1] = 0;
+    pthread_rwlock_unlock( &(p->l));
+  }
+}
 .fi
 .SH "Variable Documentation"
 .PP 
-.SS "\fBlskvs_kvs_t\fP* \fBlskvs_kvs\fP = NULL\fC [static]\fP"
+.SS "\fBlskvs_kvs_t\fP* lskvs_kvs = NULL\fC [static]\fP"
+
 .PP
 our list (or at least the start of it 
 .PP
-Definition at line 25 of file lskvs.c.
-.SS "pthread_rwlock_t \fBlskvs_rwlock\fP\fC [static]\fP"
+Definition at line 25 of file lskvs\&.c\&.
+.SS "pthread_rwlock_t lskvs_rwlock\fC [static]\fP"
+
 .PP
 needed to protect the list 
 .PP
-Definition at line 26 of file lskvs.c.
+Definition at line 26 of file lskvs\&.c\&.
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for LS-CAT PGPMAC from the source code.
+Generated automatically by Doxygen for LS-CAT PGPMAC from the source code\&.

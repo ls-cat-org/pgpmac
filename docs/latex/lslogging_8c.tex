@@ -1,58 +1,60 @@
-\hypertarget{lslogging_8c}{
-\section{lslogging.c File Reference}
-\label{lslogging_8c}\index{lslogging.c@{lslogging.c}}
+\hypertarget{lslogging_8c}{\section{lslogging.\-c File Reference}
+\label{lslogging_8c}\index{lslogging.\-c@{lslogging.\-c}}
 }
 
 
 Logs messages to a file.  
-{\ttfamily \#include \char`\"{}pgpmac.h\char`\"{}}\par
+
+
+{\ttfamily \#include \char`\"{}pgpmac.\-h\char`\"{}}\\*
 \subsection*{Data Structures}
 \begin{DoxyCompactItemize}
 \item 
-struct \hyperlink{structlslogging__queue__struct}{lslogging\_\-queue\_\-struct}
-\end{DoxyCompactItemize}
-\subsection*{Defines}
+struct \hyperlink{structlslogging__queue__struct}{lslogging\-\_\-queue\-\_\-struct}
+\begin{DoxyCompactList}\small\item\em Our log object\-: time and message. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Macros}
 \begin{DoxyCompactItemize}
 \item 
-\#define \hyperlink{lslogging_8c_ade1e95a32a49f0fd1b3e635c4d15ccd3}{LSLOGGING\_\-FILE\_\-NAME}~\char`\"{}/tmp/pgpmac.log\char`\"{}
-\item 
-\#define \hyperlink{lslogging_8c_a0526e4aa12fbaf357fe315d6b3209c54}{LSLOGGING\_\-MSG\_\-LENGTH}~256
-\item 
-\#define \hyperlink{lslogging_8c_a5b1cb610bee26b000a2d64caa7d77a8d}{LSLOGGING\_\-QUEUE\_\-LENGTH}~256
-\end{DoxyCompactItemize}
+\#define \hyperlink{lslogging_8c_ade1e95a32a49f0fd1b3e635c4d15ccd3}{L\-S\-L\-O\-G\-G\-I\-N\-G\-\_\-\-F\-I\-L\-E\-\_\-\-N\-A\-M\-E}~\char`\"{}/tmp/pgpmac.\-log\char`\"{}
+\begin{DoxyCompactList}\small\item\em Full name of the log file. \end{DoxyCompactList}\item 
+\#define \hyperlink{lslogging_8c_a0526e4aa12fbaf357fe315d6b3209c54}{L\-S\-L\-O\-G\-G\-I\-N\-G\-\_\-\-M\-S\-G\-\_\-\-L\-E\-N\-G\-T\-H}~256
+\begin{DoxyCompactList}\small\item\em Fixed maximum length messages to keep some form of sanity. \end{DoxyCompactList}\item 
+\#define \hyperlink{lslogging_8c_a5b1cb610bee26b000a2d64caa7d77a8d}{L\-S\-L\-O\-G\-G\-I\-N\-G\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H}~256
+\begin{DoxyCompactList}\small\item\em Modest length queue. \end{DoxyCompactList}\end{DoxyCompactItemize}
 \subsection*{Typedefs}
 \begin{DoxyCompactItemize}
 \item 
-typedef struct \hyperlink{structlslogging__queue__struct}{lslogging\_\-queue\_\-struct} \hyperlink{lslogging_8c_a953a02b9db989cbb60724b06bd33b038}{lslogging\_\-queue\_\-t}
-\end{DoxyCompactItemize}
+typedef struct \\*
+\hyperlink{structlslogging__queue__struct}{lslogging\-\_\-queue\-\_\-struct} \hyperlink{lslogging_8c_a953a02b9db989cbb60724b06bd33b038}{lslogging\-\_\-queue\-\_\-t}
+\begin{DoxyCompactList}\small\item\em Our log object\-: time and message. \end{DoxyCompactList}\end{DoxyCompactItemize}
 \subsection*{Functions}
 \begin{DoxyCompactItemize}
 \item 
-void \hyperlink{lslogging_8c_a3418b9ab57811d28632794236e056408}{lslogging\_\-init} ()
-\item 
-void \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_\-log\_\-message} (char $\ast$fmt,...)
-\item 
-void $\ast$ \hyperlink{lslogging_8c_a33ec49aea69b5e4b1b551a34e7bacfca}{lslogging\_\-worker} (void $\ast$dummy)
-\item 
-void \hyperlink{lslogging_8c_ad9f65252584e65957f461b809d59e3a2}{lslogging\_\-run} ()
-\end{DoxyCompactItemize}
+void \hyperlink{lslogging_8c_a3418b9ab57811d28632794236e056408}{lslogging\-\_\-init} ()
+\begin{DoxyCompactList}\small\item\em Initialize the lslogging objects. \end{DoxyCompactList}\item 
+void \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\-\_\-log\-\_\-message} (char $\ast$fmt,...)
+\begin{DoxyCompactList}\small\item\em The routine everyone will be talking about. \end{DoxyCompactList}\item 
+void $\ast$ \hyperlink{lslogging_8c_a33ec49aea69b5e4b1b551a34e7bacfca}{lslogging\-\_\-worker} (void $\ast$dummy)
+\begin{DoxyCompactList}\small\item\em Service the queue, write to the file. \end{DoxyCompactList}\item 
+void \hyperlink{lslogging_8c_ad9f65252584e65957f461b809d59e3a2}{lslogging\-\_\-run} ()
+\begin{DoxyCompactList}\small\item\em Start up the worker thread. \end{DoxyCompactList}\end{DoxyCompactItemize}
 \subsection*{Variables}
 \begin{DoxyCompactItemize}
 \item 
-static pthread\_\-t \hyperlink{lslogging_8c_ad7629be92d1bec1c621b5cc0800f497f}{lslogging\_\-thread}
-\item 
-static pthread\_\-mutex\_\-t \hyperlink{lslogging_8c_a4a97ffe8731ae437f014ada051301be3}{lslogging\_\-mutex}
-\item 
-static pthread\_\-cond\_\-t \hyperlink{lslogging_8c_afa5f05c4337683edc3c88ab56aa5ea6f}{lslogging\_\-cond}
-\item 
-static FILE $\ast$ \hyperlink{lslogging_8c_a5709d6eb68a8eebf78ba58bb78da0649}{lslogging\_\-file}
-\item 
-static \hyperlink{structlslogging__queue__struct}{lslogging\_\-queue\_\-t} \hyperlink{lslogging_8c_af98f94aec3e4501328da1b71f706c652}{lslogging\_\-queue} \mbox{[}LSLOGGING\_\-QUEUE\_\-LENGTH\mbox{]}
-\item 
-static unsigned int \hyperlink{lslogging_8c_a1f6e69ade57a17755e6b74a6286505df}{lslogging\_\-on} = 0
-\begin{DoxyCompactList}\small\item\em next location to add to the queue \item\end{DoxyCompactList}\item 
-static unsigned int \hyperlink{lslogging_8c_a6c571e94580b7fc9ab72e01fbc5d23c7}{lslogging\_\-off} = 0
-\begin{DoxyCompactList}\small\item\em next location to remove from the queue \item\end{DoxyCompactList}\end{DoxyCompactItemize}
+static pthread\-\_\-t \hyperlink{lslogging_8c_ad7629be92d1bec1c621b5cc0800f497f}{lslogging\-\_\-thread}
+\begin{DoxyCompactList}\small\item\em our thread \end{DoxyCompactList}\item 
+static pthread\-\_\-mutex\-\_\-t \hyperlink{lslogging_8c_a4a97ffe8731ae437f014ada051301be3}{lslogging\-\_\-mutex}
+\begin{DoxyCompactList}\small\item\em mutex to keep the various threads from adding to the queue at the exact same time \end{DoxyCompactList}\item 
+static pthread\-\_\-cond\-\_\-t \hyperlink{lslogging_8c_afa5f05c4337683edc3c88ab56aa5ea6f}{lslogging\-\_\-cond}
+\begin{DoxyCompactList}\small\item\em We'll spend most of our time waiting for this condition's signal. \end{DoxyCompactList}\item 
+static F\-I\-L\-E $\ast$ \hyperlink{lslogging_8c_a5709d6eb68a8eebf78ba58bb78da0649}{lslogging\-\_\-file}
+\begin{DoxyCompactList}\small\item\em our log file object \end{DoxyCompactList}\item 
+static \hyperlink{lslogging_8c_a953a02b9db989cbb60724b06bd33b038}{lslogging\-\_\-queue\-\_\-t} \hyperlink{lslogging_8c_af98f94aec3e4501328da1b71f706c652}{lslogging\-\_\-queue} \mbox{[}\hyperlink{lslogging_8c_a5b1cb610bee26b000a2d64caa7d77a8d}{L\-S\-L\-O\-G\-G\-I\-N\-G\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H}\mbox{]}
+\begin{DoxyCompactList}\small\item\em Our entire queue. Right here. Every message we'll ever write. \end{DoxyCompactList}\item 
+static unsigned int \hyperlink{lslogging_8c_a1f6e69ade57a17755e6b74a6286505df}{lslogging\-\_\-on} = 0
+\begin{DoxyCompactList}\small\item\em next location to add to the queue \end{DoxyCompactList}\item 
+static unsigned int \hyperlink{lslogging_8c_a6c571e94580b7fc9ab72e01fbc5d23c7}{lslogging\-\_\-off} = 0
+\begin{DoxyCompactList}\small\item\em next location to remove from the queue \end{DoxyCompactList}\end{DoxyCompactItemize}
 
 
 \subsection{Detailed Description}
@@ -60,212 +62,294 @@ Logs messages to a file. \begin{DoxyDate}{Date}
 2012 
 \end{DoxyDate}
 \begin{DoxyAuthor}{Author}
-Keith Brister  All Rights Reserved 
+Keith Brister 
 \end{DoxyAuthor}
+\begin{DoxyCopyright}{Copyright}
+All Rights Reserved 
+\end{DoxyCopyright}
 
 
-Definition in file \hyperlink{lslogging_8c_source}{lslogging.c}.
-
-\subsection{Define Documentation}
-\hypertarget{lslogging_8c_ade1e95a32a49f0fd1b3e635c4d15ccd3}{
-\index{lslogging.c@{lslogging.c}!LSLOGGING\_\-FILE\_\-NAME@{LSLOGGING\_\-FILE\_\-NAME}}
-\index{LSLOGGING\_\-FILE\_\-NAME@{LSLOGGING\_\-FILE\_\-NAME}!lslogging.c@{lslogging.c}}
-\subsubsection[{LSLOGGING\_\-FILE\_\-NAME}]{\setlength{\rightskip}{0pt plus 5cm}\#define LSLOGGING\_\-FILE\_\-NAME~\char`\"{}/tmp/pgpmac.log\char`\"{}}}
-\label{lslogging_8c_ade1e95a32a49f0fd1b3e635c4d15ccd3}
+Definition in file \hyperlink{lslogging_8c_source}{lslogging.\-c}.
 
 
-Definition at line 15 of file lslogging.c.\hypertarget{lslogging_8c_a0526e4aa12fbaf357fe315d6b3209c54}{
-\index{lslogging.c@{lslogging.c}!LSLOGGING\_\-MSG\_\-LENGTH@{LSLOGGING\_\-MSG\_\-LENGTH}}
-\index{LSLOGGING\_\-MSG\_\-LENGTH@{LSLOGGING\_\-MSG\_\-LENGTH}!lslogging.c@{lslogging.c}}
-\subsubsection[{LSLOGGING\_\-MSG\_\-LENGTH}]{\setlength{\rightskip}{0pt plus 5cm}\#define LSLOGGING\_\-MSG\_\-LENGTH~256}}
-\label{lslogging_8c_a0526e4aa12fbaf357fe315d6b3209c54}
+
+\subsection{Macro Definition Documentation}
+\hypertarget{lslogging_8c_ade1e95a32a49f0fd1b3e635c4d15ccd3}{\index{lslogging.\-c@{lslogging.\-c}!L\-S\-L\-O\-G\-G\-I\-N\-G\-\_\-\-F\-I\-L\-E\-\_\-\-N\-A\-M\-E@{L\-S\-L\-O\-G\-G\-I\-N\-G\-\_\-\-F\-I\-L\-E\-\_\-\-N\-A\-M\-E}}
+\index{L\-S\-L\-O\-G\-G\-I\-N\-G\-\_\-\-F\-I\-L\-E\-\_\-\-N\-A\-M\-E@{L\-S\-L\-O\-G\-G\-I\-N\-G\-\_\-\-F\-I\-L\-E\-\_\-\-N\-A\-M\-E}!lslogging.c@{lslogging.\-c}}
+\subsubsection[{L\-S\-L\-O\-G\-G\-I\-N\-G\-\_\-\-F\-I\-L\-E\-\_\-\-N\-A\-M\-E}]{\setlength{\rightskip}{0pt plus 5cm}\#define L\-S\-L\-O\-G\-G\-I\-N\-G\-\_\-\-F\-I\-L\-E\-\_\-\-N\-A\-M\-E~\char`\"{}/tmp/pgpmac.\-log\char`\"{}}}\label{lslogging_8c_ade1e95a32a49f0fd1b3e635c4d15ccd3}
 
 
-Definition at line 18 of file lslogging.c.\hypertarget{lslogging_8c_a5b1cb610bee26b000a2d64caa7d77a8d}{
-\index{lslogging.c@{lslogging.c}!LSLOGGING\_\-QUEUE\_\-LENGTH@{LSLOGGING\_\-QUEUE\_\-LENGTH}}
-\index{LSLOGGING\_\-QUEUE\_\-LENGTH@{LSLOGGING\_\-QUEUE\_\-LENGTH}!lslogging.c@{lslogging.c}}
-\subsubsection[{LSLOGGING\_\-QUEUE\_\-LENGTH}]{\setlength{\rightskip}{0pt plus 5cm}\#define LSLOGGING\_\-QUEUE\_\-LENGTH~256}}
-\label{lslogging_8c_a5b1cb610bee26b000a2d64caa7d77a8d}
+Full name of the log file. 
+
+Probably should be in /var/log/pgpmac. 
+
+Definition at line 16 of file lslogging.\-c.
+
+\hypertarget{lslogging_8c_a0526e4aa12fbaf357fe315d6b3209c54}{\index{lslogging.\-c@{lslogging.\-c}!L\-S\-L\-O\-G\-G\-I\-N\-G\-\_\-\-M\-S\-G\-\_\-\-L\-E\-N\-G\-T\-H@{L\-S\-L\-O\-G\-G\-I\-N\-G\-\_\-\-M\-S\-G\-\_\-\-L\-E\-N\-G\-T\-H}}
+\index{L\-S\-L\-O\-G\-G\-I\-N\-G\-\_\-\-M\-S\-G\-\_\-\-L\-E\-N\-G\-T\-H@{L\-S\-L\-O\-G\-G\-I\-N\-G\-\_\-\-M\-S\-G\-\_\-\-L\-E\-N\-G\-T\-H}!lslogging.c@{lslogging.\-c}}
+\subsubsection[{L\-S\-L\-O\-G\-G\-I\-N\-G\-\_\-\-M\-S\-G\-\_\-\-L\-E\-N\-G\-T\-H}]{\setlength{\rightskip}{0pt plus 5cm}\#define L\-S\-L\-O\-G\-G\-I\-N\-G\-\_\-\-M\-S\-G\-\_\-\-L\-E\-N\-G\-T\-H~256}}\label{lslogging_8c_a0526e4aa12fbaf357fe315d6b3209c54}
 
 
-Definition at line 24 of file lslogging.c.
+Fixed maximum length messages to keep some form of sanity. 
+
+
+
+Definition at line 20 of file lslogging.\-c.
+
+\hypertarget{lslogging_8c_a5b1cb610bee26b000a2d64caa7d77a8d}{\index{lslogging.\-c@{lslogging.\-c}!L\-S\-L\-O\-G\-G\-I\-N\-G\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H@{L\-S\-L\-O\-G\-G\-I\-N\-G\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H}}
+\index{L\-S\-L\-O\-G\-G\-I\-N\-G\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H@{L\-S\-L\-O\-G\-G\-I\-N\-G\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H}!lslogging.c@{lslogging.\-c}}
+\subsubsection[{L\-S\-L\-O\-G\-G\-I\-N\-G\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H}]{\setlength{\rightskip}{0pt plus 5cm}\#define L\-S\-L\-O\-G\-G\-I\-N\-G\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H~256}}\label{lslogging_8c_a5b1cb610bee26b000a2d64caa7d77a8d}
+
+
+Modest length queue. 
+
+
+
+Definition at line 30 of file lslogging.\-c.
+
+
 
 \subsection{Typedef Documentation}
-\hypertarget{lslogging_8c_a953a02b9db989cbb60724b06bd33b038}{
-\index{lslogging.c@{lslogging.c}!lslogging\_\-queue\_\-t@{lslogging\_\-queue\_\-t}}
-\index{lslogging\_\-queue\_\-t@{lslogging\_\-queue\_\-t}!lslogging.c@{lslogging.c}}
-\subsubsection[{lslogging\_\-queue\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf lslogging\_\-queue\_\-struct}  {\bf lslogging\_\-queue\_\-t}}}
-\label{lslogging_8c_a953a02b9db989cbb60724b06bd33b038}
+\hypertarget{lslogging_8c_a953a02b9db989cbb60724b06bd33b038}{\index{lslogging.\-c@{lslogging.\-c}!lslogging\-\_\-queue\-\_\-t@{lslogging\-\_\-queue\-\_\-t}}
+\index{lslogging\-\_\-queue\-\_\-t@{lslogging\-\_\-queue\-\_\-t}!lslogging.c@{lslogging.\-c}}
+\subsubsection[{lslogging\-\_\-queue\-\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf lslogging\-\_\-queue\-\_\-struct}  {\bf lslogging\-\_\-queue\-\_\-t}}}\label{lslogging_8c_a953a02b9db989cbb60724b06bd33b038}
+
+
+Our log object\-: time and message. 
+
 
 
 \subsection{Function Documentation}
-\hypertarget{lslogging_8c_a3418b9ab57811d28632794236e056408}{
-\index{lslogging.c@{lslogging.c}!lslogging\_\-init@{lslogging\_\-init}}
-\index{lslogging\_\-init@{lslogging\_\-init}!lslogging.c@{lslogging.c}}
-\subsubsection[{lslogging\_\-init}]{\setlength{\rightskip}{0pt plus 5cm}void lslogging\_\-init ()}}
-\label{lslogging_8c_a3418b9ab57811d28632794236e056408}
+\hypertarget{lslogging_8c_a3418b9ab57811d28632794236e056408}{\index{lslogging.\-c@{lslogging.\-c}!lslogging\-\_\-init@{lslogging\-\_\-init}}
+\index{lslogging\-\_\-init@{lslogging\-\_\-init}!lslogging.c@{lslogging.\-c}}
+\subsubsection[{lslogging\-\_\-init}]{\setlength{\rightskip}{0pt plus 5cm}void lslogging\-\_\-init (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{lslogging_8c_a3418b9ab57811d28632794236e056408}
 
 
-Definition at line 30 of file lslogging.c.
+Initialize the lslogging objects. 
 
 
-\begin{DoxyCode}
-30                       {
-31   pthread_mutex_init( &lslogging_mutex, NULL);
-32   pthread_cond_init(  &lslogging_cond, NULL);
-33 
-34   lslogging_file = fopen( LSLOGGING_FILE_NAME, "w");
-35 }
-\end{DoxyCode}
-\hypertarget{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{
-\index{lslogging.c@{lslogging.c}!lslogging\_\-log\_\-message@{lslogging\_\-log\_\-message}}
-\index{lslogging\_\-log\_\-message@{lslogging\_\-log\_\-message}!lslogging.c@{lslogging.c}}
-\subsubsection[{lslogging\_\-log\_\-message}]{\setlength{\rightskip}{0pt plus 5cm}void lslogging\_\-log\_\-message (char $\ast$ {\em fmt}, \/   {\em ...})}}
-\label{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}
 
-
-Definition at line 37 of file lslogging.c.
+Definition at line 37 of file lslogging.\-c.
 
 
 \begin{DoxyCode}
-37                                             {
-38   char msg[LSLOGGING_MSG_LENGTH];
-39   struct timespec theTime;
-40   va_list arg_ptr;
-41 
-42   clock_gettime( CLOCK_REALTIME, &theTime);
-43 
-44   va_start( arg_ptr, fmt);
-45   vsnprintf( msg, sizeof(msg)-1, fmt, arg_ptr);
-46   va_end( arg_ptr);
-47   msg[sizeof(msg)-1]=0;
-48 
-49   pthread_mutex_lock( &lslogging_mutex);
-50   
-51   strncpy( lslogging_queue[lslogging_on].lmsg, msg, LSLOGGING_MSG_LENGTH - 1);
-52   lslogging_queue[lslogging_on].lmsg[LSLOGGING_MSG_LENGTH-1] = 0;
-53   
-54   memcpy( &(lslogging_queue[lslogging_on].ltime), &theTime, sizeof(theTime));
-55 
-56   lslogging_on++;
-57   lslogging_on %= LSLOGGING_QUEUE_LENGTH;
-58 
-59   pthread_cond_signal(  &lslogging_cond);
-60   pthread_mutex_unlock( &lslogging_mutex);
-61   
-62 }
+                      \{
+  pthread\_mutex\_init( &\hyperlink{lslogging_8c_a4a97ffe8731ae437f014ada051301be3}{lslogging\_mutex}, NULL);
+  pthread\_cond\_init(  &\hyperlink{lslogging_8c_afa5f05c4337683edc3c88ab56aa5ea6f}{lslogging\_cond}, NULL);
+
+  \hyperlink{lslogging_8c_a5709d6eb68a8eebf78ba58bb78da0649}{lslogging\_file} = fopen( \hyperlink{lslogging_8c_ade1e95a32a49f0fd1b3e635c4d15ccd3}{LSLOGGING\_FILE\_NAME},
+       \textcolor{stringliteral}{"w"});
+\}
 \end{DoxyCode}
-\hypertarget{lslogging_8c_ad9f65252584e65957f461b809d59e3a2}{
-\index{lslogging.c@{lslogging.c}!lslogging\_\-run@{lslogging\_\-run}}
-\index{lslogging\_\-run@{lslogging\_\-run}!lslogging.c@{lslogging.c}}
-\subsubsection[{lslogging\_\-run}]{\setlength{\rightskip}{0pt plus 5cm}void lslogging\_\-run ()}}
-\label{lslogging_8c_ad9f65252584e65957f461b809d59e3a2}
+\hypertarget{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{\index{lslogging.\-c@{lslogging.\-c}!lslogging\-\_\-log\-\_\-message@{lslogging\-\_\-log\-\_\-message}}
+\index{lslogging\-\_\-log\-\_\-message@{lslogging\-\_\-log\-\_\-message}!lslogging.c@{lslogging.\-c}}
+\subsubsection[{lslogging\-\_\-log\-\_\-message}]{\setlength{\rightskip}{0pt plus 5cm}void lslogging\-\_\-log\-\_\-message (
+\begin{DoxyParamCaption}
+\item[{char $\ast$}]{fmt, }
+\item[{}]{...}
+\end{DoxyParamCaption}
+)}}\label{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}
 
 
-Definition at line 92 of file lslogging.c.
+The routine everyone will be talking about. 
 
-
-\begin{DoxyCode}
-92                      {
-93   pthread_create( &lslogging_thread, NULL, &lslogging_worker, NULL);
-94   lslogging_log_message( "Start up");
-95 }
-\end{DoxyCode}
-\hypertarget{lslogging_8c_a33ec49aea69b5e4b1b551a34e7bacfca}{
-\index{lslogging.c@{lslogging.c}!lslogging\_\-worker@{lslogging\_\-worker}}
-\index{lslogging\_\-worker@{lslogging\_\-worker}!lslogging.c@{lslogging.c}}
-\subsubsection[{lslogging\_\-worker}]{\setlength{\rightskip}{0pt plus 5cm}void$\ast$ lslogging\_\-worker (void $\ast$ {\em dummy})}}
-\label{lslogging_8c_a33ec49aea69b5e4b1b551a34e7bacfca}
 
 \begin{DoxyParams}{Parameters}
-\item[\mbox{$\leftarrow$} {\em dummy}]Required by protocol but unused \end{DoxyParams}
+{\em fmt} & A printf style formating string. \\
+\hline
+{\em ...} & The arguments specified by fmt \\
+\hline
+\end{DoxyParams}
 
 
-Definition at line 64 of file lslogging.c.
+Definition at line 48 of file lslogging.\-c.
 
 
 \begin{DoxyCode}
-66                         {
-67 
-68 
-69   struct tm coarsetime;
-70   char tstr[64];
-71   unsigned int msecs;
-72 
-73   pthread_mutex_lock( &lslogging_mutex);
-74 
-75   while( 1) {
-76     while( lslogging_on == lslogging_off) {
-77       pthread_cond_wait( &lslogging_cond, &lslogging_mutex);
-78     }
-79     
-80     localtime_r( &(lslogging_queue[lslogging_off].ltime.tv_sec), &coarsetime);
-81     strftime( tstr, sizeof(tstr)-1, "%Y-%m-%d %H:%M:%S", &coarsetime);
-82     tstr[sizeof(tstr)-1] = 0;
-83     msecs = lslogging_queue[lslogging_off].ltime.tv_nsec / 1000000;
-84     fprintf( lslogging_file, "%s.%.03u  %s\n", tstr, msecs, lslogging_queue[
-      lslogging_off].lmsg);
-85     fflush( lslogging_file);
-86 
-87     lslogging_off++;
-88     lslogging_off %= LSLOGGING_QUEUE_LENGTH;
-89   }
-90 }
+                                            \{
+  \textcolor{keywordtype}{char} msg[\hyperlink{lslogging_8c_a0526e4aa12fbaf357fe315d6b3209c54}{LSLOGGING\_MSG\_LENGTH}];
+  \textcolor{keyword}{struct }timespec theTime;
+  va\_list arg\_ptr;
+
+  clock\_gettime( CLOCK\_REALTIME, &theTime);
+
+  va\_start( arg\_ptr, fmt);
+  vsnprintf( msg, \textcolor{keyword}{sizeof}(msg)-1, fmt, arg\_ptr);
+  va\_end( arg\_ptr);
+  msg[\textcolor{keyword}{sizeof}(msg)-1]=0;
+
+  pthread\_mutex\_lock( &\hyperlink{lslogging_8c_a4a97ffe8731ae437f014ada051301be3}{lslogging\_mutex});
+  
+  strncpy( \hyperlink{lslogging_8c_af98f94aec3e4501328da1b71f706c652}{lslogging\_queue}[\hyperlink{lslogging_8c_a1f6e69ade57a17755e6b74a6286505df}{lslogging\_on}].lmsg, msg, 
+      \hyperlink{lslogging_8c_a0526e4aa12fbaf357fe315d6b3209c54}{LSLOGGING\_MSG\_LENGTH} - 1);
+  \hyperlink{lslogging_8c_af98f94aec3e4501328da1b71f706c652}{lslogging\_queue}[\hyperlink{lslogging_8c_a1f6e69ade57a17755e6b74a6286505df}{lslogging\_on}].\hyperlink{structlslogging__queue__struct_a5e83db0116b1289a84683ce48626d99d}{lmsg}[
+      \hyperlink{lslogging_8c_a0526e4aa12fbaf357fe315d6b3209c54}{LSLOGGING\_MSG\_LENGTH}-1] = 0;
+  
+  memcpy( &(\hyperlink{lslogging_8c_af98f94aec3e4501328da1b71f706c652}{lslogging\_queue}[(\hyperlink{lslogging_8c_a1f6e69ade57a17755e6b74a6286505df}{lslogging\_on}++) % 
+      \hyperlink{lslogging_8c_a5b1cb610bee26b000a2d64caa7d77a8d}{LSLOGGING\_QUEUE\_LENGTH}].ltime), &theTime, \textcolor{keyword}{sizeof}(theTime)
+      );
+
+  pthread\_cond\_signal(  &\hyperlink{lslogging_8c_afa5f05c4337683edc3c88ab56aa5ea6f}{lslogging\_cond});
+  pthread\_mutex\_unlock( &\hyperlink{lslogging_8c_a4a97ffe8731ae437f014ada051301be3}{lslogging\_mutex});
+  
+\}
+\end{DoxyCode}
+\hypertarget{lslogging_8c_ad9f65252584e65957f461b809d59e3a2}{\index{lslogging.\-c@{lslogging.\-c}!lslogging\-\_\-run@{lslogging\-\_\-run}}
+\index{lslogging\-\_\-run@{lslogging\-\_\-run}!lslogging.c@{lslogging.\-c}}
+\subsubsection[{lslogging\-\_\-run}]{\setlength{\rightskip}{0pt plus 5cm}void lslogging\-\_\-run (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{lslogging_8c_ad9f65252584e65957f461b809d59e3a2}
+
+
+Start up the worker thread. 
+
+
+
+Definition at line 103 of file lslogging.\-c.
+
+
+\begin{DoxyCode}
+                     \{
+  pthread\_create( &\hyperlink{lslogging_8c_ad7629be92d1bec1c621b5cc0800f497f}{lslogging\_thread}, NULL, &\hyperlink{lslogging_8c_a33ec49aea69b5e4b1b551a34e7bacfca}{lslogging\_worker}
+      , NULL);
+  \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"Start up"});
+\}
+\end{DoxyCode}
+\hypertarget{lslogging_8c_a33ec49aea69b5e4b1b551a34e7bacfca}{\index{lslogging.\-c@{lslogging.\-c}!lslogging\-\_\-worker@{lslogging\-\_\-worker}}
+\index{lslogging\-\_\-worker@{lslogging\-\_\-worker}!lslogging.c@{lslogging.\-c}}
+\subsubsection[{lslogging\-\_\-worker}]{\setlength{\rightskip}{0pt plus 5cm}void$\ast$ lslogging\-\_\-worker (
+\begin{DoxyParamCaption}
+\item[{void $\ast$}]{dummy}
+\end{DoxyParamCaption}
+)}}\label{lslogging_8c_a33ec49aea69b5e4b1b551a34e7bacfca}
+
+
+Service the queue, write to the file. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em dummy} & Required by protocol but unused \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 74 of file lslogging.\-c.
+
+
+\begin{DoxyCode}
+                        \{
+
+
+  \textcolor{keyword}{struct }tm coarsetime;
+  \textcolor{keywordtype}{char} tstr[64];
+  \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int} msecs;
+
+  pthread\_mutex\_lock( &\hyperlink{lslogging_8c_a4a97ffe8731ae437f014ada051301be3}{lslogging\_mutex});
+
+  \textcolor{keywordflow}{while}( 1) \{
+    \textcolor{keywordflow}{while}( \hyperlink{lslogging_8c_a1f6e69ade57a17755e6b74a6286505df}{lslogging\_on} == \hyperlink{lslogging_8c_a6c571e94580b7fc9ab72e01fbc5d23c7}{lslogging\_off}) \{
+      pthread\_cond\_wait( &\hyperlink{lslogging_8c_afa5f05c4337683edc3c88ab56aa5ea6f}{lslogging\_cond}, &\hyperlink{lslogging_8c_a4a97ffe8731ae437f014ada051301be3}{lslogging\_mutex}
+      );
+    \}
+    
+    localtime\_r( &(\hyperlink{lslogging_8c_af98f94aec3e4501328da1b71f706c652}{lslogging\_queue}[\hyperlink{lslogging_8c_a6c571e94580b7fc9ab72e01fbc5d23c7}{lslogging\_off}].
+      ltime.tv\_sec), &coarsetime);
+    strftime( tstr, \textcolor{keyword}{sizeof}(tstr)-1, \textcolor{stringliteral}{"%Y-%m-%d %H:%M:%S"}, &coarsetime);
+    tstr[\textcolor{keyword}{sizeof}(tstr)-1] = 0;
+    msecs = \hyperlink{lslogging_8c_af98f94aec3e4501328da1b71f706c652}{lslogging\_queue}[\hyperlink{lslogging_8c_a6c571e94580b7fc9ab72e01fbc5d23c7}{lslogging\_off} % 
+      \hyperlink{lslogging_8c_a5b1cb610bee26b000a2d64caa7d77a8d}{LSLOGGING\_QUEUE\_LENGTH}].\hyperlink{structlslogging__queue__struct_aa8211878c89f3c98757c3433115453eb}{ltime}.tv\_nsec / 1000000;
+    fprintf( \hyperlink{lslogging_8c_a5709d6eb68a8eebf78ba58bb78da0649}{lslogging\_file}, \textcolor{stringliteral}{"%s.%.03u  %s\(\backslash\)n"}, tstr, msecs, 
+      \hyperlink{lslogging_8c_af98f94aec3e4501328da1b71f706c652}{lslogging\_queue}[\hyperlink{lslogging_8c_a6c571e94580b7fc9ab72e01fbc5d23c7}{lslogging\_off} % 
+      \hyperlink{lslogging_8c_a5b1cb610bee26b000a2d64caa7d77a8d}{LSLOGGING\_QUEUE\_LENGTH}].lmsg);
+    fflush( \hyperlink{lslogging_8c_a5709d6eb68a8eebf78ba58bb78da0649}{lslogging\_file});
+
+    \hyperlink{lslogging_8c_a6c571e94580b7fc9ab72e01fbc5d23c7}{lslogging\_off}++;
+  \}
+\}
 \end{DoxyCode}
 
 
 \subsection{Variable Documentation}
-\hypertarget{lslogging_8c_afa5f05c4337683edc3c88ab56aa5ea6f}{
-\index{lslogging.c@{lslogging.c}!lslogging\_\-cond@{lslogging\_\-cond}}
-\index{lslogging\_\-cond@{lslogging\_\-cond}!lslogging.c@{lslogging.c}}
-\subsubsection[{lslogging\_\-cond}]{\setlength{\rightskip}{0pt plus 5cm}pthread\_\-cond\_\-t {\bf lslogging\_\-cond}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
-\label{lslogging_8c_afa5f05c4337683edc3c88ab56aa5ea6f}
+\hypertarget{lslogging_8c_afa5f05c4337683edc3c88ab56aa5ea6f}{\index{lslogging.\-c@{lslogging.\-c}!lslogging\-\_\-cond@{lslogging\-\_\-cond}}
+\index{lslogging\-\_\-cond@{lslogging\-\_\-cond}!lslogging.c@{lslogging.\-c}}
+\subsubsection[{lslogging\-\_\-cond}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-cond\-\_\-t lslogging\-\_\-cond\hspace{0.3cm}{\ttfamily [static]}}}\label{lslogging_8c_afa5f05c4337683edc3c88ab56aa5ea6f}
 
 
-Definition at line 12 of file lslogging.c.\hypertarget{lslogging_8c_a5709d6eb68a8eebf78ba58bb78da0649}{
-\index{lslogging.c@{lslogging.c}!lslogging\_\-file@{lslogging\_\-file}}
-\index{lslogging\_\-file@{lslogging\_\-file}!lslogging.c@{lslogging.c}}
-\subsubsection[{lslogging\_\-file}]{\setlength{\rightskip}{0pt plus 5cm}FILE$\ast$ {\bf lslogging\_\-file}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
-\label{lslogging_8c_a5709d6eb68a8eebf78ba58bb78da0649}
+We'll spend most of our time waiting for this condition's signal. 
 
 
-Definition at line 16 of file lslogging.c.\hypertarget{lslogging_8c_a4a97ffe8731ae437f014ada051301be3}{
-\index{lslogging.c@{lslogging.c}!lslogging\_\-mutex@{lslogging\_\-mutex}}
-\index{lslogging\_\-mutex@{lslogging\_\-mutex}!lslogging.c@{lslogging.c}}
-\subsubsection[{lslogging\_\-mutex}]{\setlength{\rightskip}{0pt plus 5cm}pthread\_\-mutex\_\-t {\bf lslogging\_\-mutex}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
-\label{lslogging_8c_a4a97ffe8731ae437f014ada051301be3}
+
+Definition at line 12 of file lslogging.\-c.
+
+\hypertarget{lslogging_8c_a5709d6eb68a8eebf78ba58bb78da0649}{\index{lslogging.\-c@{lslogging.\-c}!lslogging\-\_\-file@{lslogging\-\_\-file}}
+\index{lslogging\-\_\-file@{lslogging\-\_\-file}!lslogging.c@{lslogging.\-c}}
+\subsubsection[{lslogging\-\_\-file}]{\setlength{\rightskip}{0pt plus 5cm}F\-I\-L\-E$\ast$ lslogging\-\_\-file\hspace{0.3cm}{\ttfamily [static]}}}\label{lslogging_8c_a5709d6eb68a8eebf78ba58bb78da0649}
 
 
-Definition at line 11 of file lslogging.c.\hypertarget{lslogging_8c_a6c571e94580b7fc9ab72e01fbc5d23c7}{
-\index{lslogging.c@{lslogging.c}!lslogging\_\-off@{lslogging\_\-off}}
-\index{lslogging\_\-off@{lslogging\_\-off}!lslogging.c@{lslogging.c}}
-\subsubsection[{lslogging\_\-off}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int {\bf lslogging\_\-off} = 0\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
-\label{lslogging_8c_a6c571e94580b7fc9ab72e01fbc5d23c7}
+our log file object 
+
+
+
+Definition at line 17 of file lslogging.\-c.
+
+\hypertarget{lslogging_8c_a4a97ffe8731ae437f014ada051301be3}{\index{lslogging.\-c@{lslogging.\-c}!lslogging\-\_\-mutex@{lslogging\-\_\-mutex}}
+\index{lslogging\-\_\-mutex@{lslogging\-\_\-mutex}!lslogging.c@{lslogging.\-c}}
+\subsubsection[{lslogging\-\_\-mutex}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-mutex\-\_\-t lslogging\-\_\-mutex\hspace{0.3cm}{\ttfamily [static]}}}\label{lslogging_8c_a4a97ffe8731ae437f014ada051301be3}
+
+
+mutex to keep the various threads from adding to the queue at the exact same time 
+
+
+
+Definition at line 11 of file lslogging.\-c.
+
+\hypertarget{lslogging_8c_a6c571e94580b7fc9ab72e01fbc5d23c7}{\index{lslogging.\-c@{lslogging.\-c}!lslogging\-\_\-off@{lslogging\-\_\-off}}
+\index{lslogging\-\_\-off@{lslogging\-\_\-off}!lslogging.c@{lslogging.\-c}}
+\subsubsection[{lslogging\-\_\-off}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int lslogging\-\_\-off = 0\hspace{0.3cm}{\ttfamily [static]}}}\label{lslogging_8c_a6c571e94580b7fc9ab72e01fbc5d23c7}
 
 
 next location to remove from the queue 
 
-Definition at line 28 of file lslogging.c.\hypertarget{lslogging_8c_a1f6e69ade57a17755e6b74a6286505df}{
-\index{lslogging.c@{lslogging.c}!lslogging\_\-on@{lslogging\_\-on}}
-\index{lslogging\_\-on@{lslogging\_\-on}!lslogging.c@{lslogging.c}}
-\subsubsection[{lslogging\_\-on}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int {\bf lslogging\_\-on} = 0\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
-\label{lslogging_8c_a1f6e69ade57a17755e6b74a6286505df}
+
+
+Definition at line 34 of file lslogging.\-c.
+
+\hypertarget{lslogging_8c_a1f6e69ade57a17755e6b74a6286505df}{\index{lslogging.\-c@{lslogging.\-c}!lslogging\-\_\-on@{lslogging\-\_\-on}}
+\index{lslogging\-\_\-on@{lslogging\-\_\-on}!lslogging.c@{lslogging.\-c}}
+\subsubsection[{lslogging\-\_\-on}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int lslogging\-\_\-on = 0\hspace{0.3cm}{\ttfamily [static]}}}\label{lslogging_8c_a1f6e69ade57a17755e6b74a6286505df}
 
 
 next location to add to the queue 
 
-Definition at line 27 of file lslogging.c.\hypertarget{lslogging_8c_af98f94aec3e4501328da1b71f706c652}{
-\index{lslogging.c@{lslogging.c}!lslogging\_\-queue@{lslogging\_\-queue}}
-\index{lslogging\_\-queue@{lslogging\_\-queue}!lslogging.c@{lslogging.c}}
-\subsubsection[{lslogging\_\-queue}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lslogging\_\-queue\_\-t} {\bf lslogging\_\-queue}\mbox{[}LSLOGGING\_\-QUEUE\_\-LENGTH\mbox{]}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
-\label{lslogging_8c_af98f94aec3e4501328da1b71f706c652}
 
 
-Definition at line 25 of file lslogging.c.\hypertarget{lslogging_8c_ad7629be92d1bec1c621b5cc0800f497f}{
-\index{lslogging.c@{lslogging.c}!lslogging\_\-thread@{lslogging\_\-thread}}
-\index{lslogging\_\-thread@{lslogging\_\-thread}!lslogging.c@{lslogging.c}}
-\subsubsection[{lslogging\_\-thread}]{\setlength{\rightskip}{0pt plus 5cm}pthread\_\-t {\bf lslogging\_\-thread}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
-\label{lslogging_8c_ad7629be92d1bec1c621b5cc0800f497f}
+Definition at line 33 of file lslogging.\-c.
+
+\hypertarget{lslogging_8c_af98f94aec3e4501328da1b71f706c652}{\index{lslogging.\-c@{lslogging.\-c}!lslogging\-\_\-queue@{lslogging\-\_\-queue}}
+\index{lslogging\-\_\-queue@{lslogging\-\_\-queue}!lslogging.c@{lslogging.\-c}}
+\subsubsection[{lslogging\-\_\-queue}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lslogging\-\_\-queue\-\_\-t} lslogging\-\_\-queue\mbox{[}{\bf L\-S\-L\-O\-G\-G\-I\-N\-G\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H}\mbox{]}\hspace{0.3cm}{\ttfamily [static]}}}\label{lslogging_8c_af98f94aec3e4501328da1b71f706c652}
 
 
-Definition at line 10 of file lslogging.c.
+Our entire queue. Right here. Every message we'll ever write. 
+
+
+
+Definition at line 31 of file lslogging.\-c.
+
+\hypertarget{lslogging_8c_ad7629be92d1bec1c621b5cc0800f497f}{\index{lslogging.\-c@{lslogging.\-c}!lslogging\-\_\-thread@{lslogging\-\_\-thread}}
+\index{lslogging\-\_\-thread@{lslogging\-\_\-thread}!lslogging.c@{lslogging.\-c}}
+\subsubsection[{lslogging\-\_\-thread}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-t lslogging\-\_\-thread\hspace{0.3cm}{\ttfamily [static]}}}\label{lslogging_8c_ad7629be92d1bec1c621b5cc0800f497f}
+
+
+our thread 
+
+
+
+Definition at line 10 of file lslogging.\-c.
+

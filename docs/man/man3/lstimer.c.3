@@ -1,15 +1,15 @@
-.TH "lstimer.c" 3 "14 Nov 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lstimer.c" 3 "Wed Nov 14 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 lstimer.c \- 
 .PP
-Support for delayed and periodic events.  
+Support for delayed and periodic events\&.  
 
 .SH SYNOPSIS
 .br
 .PP
-\fC#include 'pgpmac.h'\fP
+\fC#include 'pgpmac\&.h'\fP
 .br
 
 .SS "Data Structures"
@@ -18,16 +18,19 @@ Support for delayed and periodic events.
 .ti -1c
 .RI "struct \fBlstimer_list_struct\fP"
 .br
+.RI "\fIEverything we need to know about a timer\&. \fP"
 .in -1c
-.SS "Defines"
+.SS "Macros"
 
 .in +1c
 .ti -1c
 .RI "#define \fBLSTIMER_LIST_LENGTH\fP   256"
 .br
+.RI "\fIWe'll allow this many timers\&. This should be way more than enough\&. \fP"
 .ti -1c
 .RI "#define \fBLSTIMER_RESOLUTION_NSECS\fP   100000"
 .br
+.RI "\fItimes within this amount in the future are considered 'now' and the events should be called \fP"
 .in -1c
 .SS "Typedefs"
 
@@ -35,6 +38,7 @@ Support for delayed and periodic events.
 .ti -1c
 .RI "typedef struct \fBlstimer_list_struct\fP \fBlstimer_list_t\fP"
 .br
+.RI "\fIEverything we need to know about a timer\&. \fP"
 .in -1c
 .SS "Functions"
 
@@ -45,21 +49,23 @@ Support for delayed and periodic events.
 .ti -1c
 .RI "static void \fBservice_timers\fP ()"
 .br
+.RI "\fISend events that are past due, due, or just about to be due\&. \fP"
 .ti -1c
 .RI "static void \fBhandler\fP (int sig, siginfo_t *si, void *dummy)"
 .br
+.RI "\fIService the signal\&. \fP"
 .ti -1c
 .RI "static void * \fBlstimer_worker\fP (void *dummy)"
 .br
+.RI "\fIOur worker\&. \fP"
 .ti -1c
 .RI "void \fBlstimer_init\fP ()"
 .br
-.ti -1c
-.RI "void \fBlstimer_test_cb\fP (char *zz)"
-.br
+.RI "\fIInitialize the timer list and pthread stuff\&. \fP"
 .ti -1c
 .RI "void \fBlstimer_run\fP ()"
 .br
+.RI "\fIStart up our thread\&. \fP"
 .in -1c
 .SS "Variables"
 
@@ -69,8 +75,9 @@ Support for delayed and periodic events.
 .br
 .RI "\fIcount of the number timers we are tracking \fP"
 .ti -1c
-.RI "static \fBlstimer_list_t\fP \fBlstimer_list\fP [LSTIMER_LIST_LENGTH]"
+.RI "static \fBlstimer_list_t\fP \fBlstimer_list\fP [\fBLSTIMER_LIST_LENGTH\fP]"
 .br
+.RI "\fIOur timer list\&. \fP"
 .ti -1c
 .RI "static pthread_t \fBlstimer_thread\fP"
 .br
@@ -94,7 +101,7 @@ Support for delayed and periodic events.
 .in -1c
 .SH "Detailed Description"
 .PP 
-Support for delayed and periodic events. 
+Support for delayed and periodic events\&. 
 
 \fBDate:\fP
 .RS 4
@@ -103,321 +110,348 @@ Support for delayed and periodic events.
 .PP
 \fBAuthor:\fP
 .RS 4
-Keith Brister  All Rights Reserved 
+Keith Brister 
+.RE
+.PP
+\fBCopyright:\fP
+.RS 4
+All Rights Reserved 
 .RE
 .PP
 
 .PP
-Definition in file \fBlstimer.c\fP.
-.SH "Define Documentation"
+Definition in file \fBlstimer\&.c\fP\&.
+.SH "Macro Definition Documentation"
 .PP 
 .SS "#define LSTIMER_LIST_LENGTH   256"
+
 .PP
-Definition at line 10 of file lstimer.c.
+We'll allow this many timers\&. This should be way more than enough\&. 
+.PP
+Definition at line 11 of file lstimer\&.c\&.
 .SS "#define LSTIMER_RESOLUTION_NSECS   100000"
+
 .PP
-Definition at line 15 of file lstimer.c.
+times within this amount in the future are considered 'now' and the events should be called 
+.PP
+Definition at line 16 of file lstimer\&.c\&.
 .SH "Typedef Documentation"
 .PP 
 .SS "typedef struct \fBlstimer_list_struct\fP  \fBlstimer_list_t\fP"
+
+.PP
+Everything we need to know about a timer\&. 
 .SH "Function Documentation"
 .PP 
-.SS "static void handler (int sig, siginfo_t * si, void * dummy)\fC [static]\fP"
+.SS "static void handler (intsig, siginfo_t *si, void *dummy)\fC [static]\fP"
+
 .PP
-Definition at line 161 of file lstimer.c.
+Service the signal\&. 
+.PP
+Definition at line 168 of file lstimer\&.c\&.
 .PP
 .nf
-161                                                           {
-162 
-163   pthread_mutex_lock( &lstimer_mutex);
-164   service_timers();
-165   pthread_mutex_unlock( &lstimer_mutex);
-166 }
+                                                          {
+  pthread_mutex_lock( &lstimer_mutex);
+  service_timers();
+  pthread_mutex_unlock( &lstimer_mutex);
+}
 .fi
-.SS "void lstimer_add_timer (char * event, int shots, unsigned long int secs, unsigned long int nsecs)"
+.SS "void lstimer_add_timer (char *event, intshots, unsigned long intsecs, unsigned long intnsecs)"
+
 .PP
-Definition at line 41 of file lstimer.c.
+Definition at line 44 of file lstimer\&.c\&.
 .PP
 .nf
-41                                                                                                  {
-42   int i;
-43   struct timespec now;
-44 
-45   //
-46   // Time we were called.  Delay is based on call time, not queued time
-47   //
-48   clock_gettime( CLOCK_REALTIME, &now);
-49   
-50 
-51   pthread_mutex_lock( &lstimer_mutex);
-52 
-53   for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
-54     if( lstimer_list[i].shots == 0)
-55       break;
-56   }
-57 
-58   if( i == LSTIMER_LIST_LENGTH) {
-59     pthread_mutex_unlock( &lstimer_mutex);
-60     
-61     lslogging_log_message( 'lstimer_add_timer: out of timers for event: %s, shots: %d,  secs: %u, nsecs: %u',
-62                           event, shots, secs, nsecs);
-63     return;
-64   }
-65 
-66   strncpy( lstimer_list[i].event, event, LSEVENTS_EVENT_LENGTH - 1);
-67   lstimer_list[i].event[LSEVENTS_EVENT_LENGTH - 1] = 0;
-68   lstimer_list[i].shots        = shots;
-69   lstimer_list[i].delay_secs   = secs;
-70   lstimer_list[i].delay_nsecs  = nsecs;
-71 
-72   lstimer_list[i].next_secs    = secs + now.tv_sec + (now.tv_nsec + nsecs) / 1000000000;
-73   lstimer_list[i].next_nsecs   = (now.tv_nsec + nsecs) % 1000000000;
-74   lstimer_list[i].last_secs    = 0;
-75   lstimer_list[i].last_nsecs   = 0;
-76   
-77   lstimer_list[i].ncalls       = 0;
-78   lstimer_list[i].init_secs    = now.tv_sec;
-79   lstimer_list[i].init_nsecs   = now.tv_nsec;
-80 
-81   if( shots != 0) {
-82     lstimer_active_timers++;
-83     new_timer++;
-84   }
-85 
-86   pthread_cond_signal(  &lstimer_cond);
-87   pthread_mutex_unlock( &lstimer_mutex);
-88 }
+                                                                                                 {
+  int i;
+  struct timespec now;
+
+
+  // Time we were called\&.  Delay is based on call time, not queued time
+  //
+  clock_gettime( CLOCK_REALTIME, &now);
+  
+
+  pthread_mutex_lock( &lstimer_mutex);
+
+  for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
+    if( lstimer_list[i]\&.shots == 0)
+      break;
+  }
+
+  if( i == LSTIMER_LIST_LENGTH) {
+    pthread_mutex_unlock( &lstimer_mutex);
+    
+    lslogging_log_message( 'lstimer_add_timer: out of timers for event: %s, shots: %d,  secs: %u, nsecs: %u',
+                          event, shots, secs, nsecs);
+    return;
+  }
+
+  strncpy( lstimer_list[i]\&.event, event, LSEVENTS_EVENT_LENGTH - 1);
+  lstimer_list[i]\&.event[LSEVENTS_EVENT_LENGTH - 1] = 0;
+  lstimer_list[i]\&.shots        = shots;
+  lstimer_list[i]\&.delay_secs   = secs;
+  lstimer_list[i]\&.delay_nsecs  = nsecs;
+
+  lstimer_list[i]\&.next_secs    = secs + now\&.tv_sec + (now\&.tv_nsec + nsecs) / 1000000000;
+  lstimer_list[i]\&.next_nsecs   = (now\&.tv_nsec + nsecs) % 1000000000;
+  lstimer_list[i]\&.last_secs    = 0;
+  lstimer_list[i]\&.last_nsecs   = 0;
+  
+  lstimer_list[i]\&.ncalls       = 0;
+  lstimer_list[i]\&.init_secs    = now\&.tv_sec;
+  lstimer_list[i]\&.init_nsecs   = now\&.tv_nsec;
+
+  if( shots != 0) {
+    lstimer_active_timers++;
+    new_timer++;
+  }
+
+  pthread_cond_signal(  &lstimer_cond);
+  pthread_mutex_unlock( &lstimer_mutex);
+}
 .fi
 .SS "void lstimer_init ()"
+
 .PP
-Definition at line 244 of file lstimer.c.
+Initialize the timer list and pthread stuff\&. 
+.PP
+Definition at line 256 of file lstimer\&.c\&.
 .PP
 .nf
-244                     {
-245   int i;
-246 
-247   for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
-248     lstimer_list[i].shots = 0;
-249   }
-250 
-251 
-252   pthread_mutex_init( &lstimer_mutex, NULL);
-253   pthread_cond_init(  &lstimer_cond, NULL);
-254 }
+                    {
+  int i;
+
+  for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
+    lstimer_list[i]\&.shots = 0;
+  }
+
+
+  pthread_mutex_init( &lstimer_mutex, NULL);
+  pthread_cond_init(  &lstimer_cond, NULL);
+}
 .fi
 .SS "void lstimer_run ()"
+
 .PP
-Definition at line 261 of file lstimer.c.
+Start up our thread\&. 
 .PP
-.nf
-261                    {
-262   pthread_create( &lstimer_thread, NULL, lstimer_worker, NULL);
-263   //  lsevents_add_listener( 'watchdog', lstimer_test_cb);
-264   //  lstimer_add_timer( 'watchdog', -1, 1, 0);
-265 }
-.fi
-.SS "void lstimer_test_cb (char * zz)"
-.PP
-Definition at line 256 of file lstimer.c.
+Definition at line 270 of file lstimer\&.c\&.
 .PP
 .nf
-256                                 {
-257   lslogging_log_message( 'lstimer_test_cb');
-258 }
+                   {
+  pthread_create( &lstimer_thread, NULL, lstimer_worker, NULL);
+}
 .fi
-.SS "static void* lstimer_worker (void * dummy)\fC [static]\fP"\fBParameters:\fP
+.SS "static void* lstimer_worker (void *dummy)\fC [static]\fP"
+
+.PP
+Our worker\&. The main loop runs when a new timer is added\&. The service routine deals with maintenance\&. \fBParameters:\fP
 .RS 4
 \fIdummy\fP required by protocol 
 .RE
 .PP
 
 .PP
-Definition at line 168 of file lstimer.c.
+Definition at line 178 of file lstimer\&.c\&.
 .PP
 .nf
-170                        {
-171   int
-172     i,
-173     known_timers;
-174 
-175   struct timespec now;
-176 
-177   struct sigevent  sev;
-178   struct sigaction sa;
-179   sigset_t mask;
-180 
-181   // See example at http://www.kernel.org/doc/man-pages/online/pages/man2/timer_create.2.html
-182   //
-183 
-184   // Set up hander
-185   //
-186   sa.sa_flags = SA_SIGINFO;
-187   sa.sa_sigaction = handler;
-188   sigemptyset(&sa.sa_mask);
-189   if (sigaction(SIGRTMIN, &sa, NULL) == -1) {
-190     lslogging_log_message( 'lstimer_worker: sigaction failed');
-191     exit( -1);
-192   }
-193 
-194   // Create the timer
-195   //
-196   sev.sigev_notify = SIGEV_SIGNAL;
-197   sev.sigev_signo  = SIGRTMIN;
-198   sev.sigev_value.sival_ptr = &lstimer_timerid;
-199   timer_create( CLOCK_REALTIME, &sev, &lstimer_timerid);
-200 
-201 
-202   // Block timer signal for now since we really 
-203   // want to be sure we do not own a lock on the timer mutex
-204   // while servicing the signal
-205   //
-206   sigemptyset( &mask);
-207   sigaddset( &mask, SIGRTMIN);
-208   
-209   known_timers = 0;
-210 
-211   while( 1) {
-212     pthread_mutex_lock( &lstimer_mutex);
-213 
-214     while( new_timer == 0)
-215       pthread_cond_wait( &lstimer_cond, &lstimer_mutex);
-216 
-217     // ignore signals so we don't service the signal while we are already in the
-218     // service routine
-219     //
-220     sigprocmask( SIG_SETMASK, &mask, NULL);
-221     
-222 
-223     //
-224     // Setting up the timer interval is in the handler
-225     // so just call it
-226     //
-227     service_timers();
-228 
-229     //
-230     // Reset our flag
-231     //
-232     new_timer = 0;
-233 
-234     pthread_mutex_unlock( &lstimer_mutex);
-235 
-236 
-237     // Let the signals rain down
-238     //
-239     sigprocmask( SIG_UNBLOCK, &mask, NULL);
-240   }
-241 }
+                       {
+  int
+    i,
+    known_timers;
+
+  struct timespec now;
+
+  struct sigevent  sev;
+  struct sigaction sa;
+  sigset_t mask;
+
+  // See example at http://www\&.kernel\&.org/doc/man-pages/online/pages/man2/timer_create\&.2\&.html
+  //
+
+  // Set up hander
+  //
+  sa\&.sa_flags = SA_SIGINFO;
+  sa\&.sa_sigaction = handler;
+  sigemptyset(&sa\&.sa_mask);
+  if (sigaction(SIGRTMIN, &sa, NULL) == -1) {
+    lslogging_log_message( 'lstimer_worker: sigaction failed');
+    exit( -1);
+  }
+
+  // Create the timer
+  //
+  sev\&.sigev_notify = SIGEV_SIGNAL;
+  sev\&.sigev_signo  = SIGRTMIN;
+  sev\&.sigev_value\&.sival_ptr = &lstimer_timerid;
+  timer_create( CLOCK_REALTIME, &sev, &lstimer_timerid);
+
+
+  // Block timer signal for now since we really 
+  // want to be sure we do not own a lock on the timer mutex
+  // while servicing the signal
+  //
+  sigemptyset( &mask);
+  sigaddset( &mask, SIGRTMIN);
+  
+  known_timers = 0;
+
+  while( 1) {
+    pthread_mutex_lock( &lstimer_mutex);
+
+    while( new_timer == 0)
+      pthread_cond_wait( &lstimer_cond, &lstimer_mutex);
+
+    // ignore signals so we don't service the signal while we are already in the
+    // service routine
+    //
+    sigprocmask( SIG_SETMASK, &mask, NULL);
+    
+
+    //
+    // Setting up the timer interval is in the handler
+    // so just call it
+    //
+    service_timers();
+
+    //
+    // Reset our flag
+    //
+    new_timer = 0;
+
+    pthread_mutex_unlock( &lstimer_mutex);
+
+
+    // Let the signals rain down
+    //
+    sigprocmask( SIG_UNBLOCK, &mask, NULL);
+  }
+}
 .fi
 .SS "static void service_timers ()\fC [static]\fP"
+
 .PP
-Definition at line 91 of file lstimer.c.
+Send events that are past due, due, or just about to be due\&. 
+.PP
+Definition at line 96 of file lstimer\&.c\&.
 .PP
 .nf
-91                              {
-92   int
-93     i,
-94     found_active;
-95 
-96   lstimer_list_t *p;
-97   struct timespec now, then, soonest;
-98   struct itimerspec its;
-99 
-100   //
-101   // Did I remind you not to let this thread own the lstimer mutex outside of this
-102   // service routine when SIGRTMIN is active?
-103   //
-104 
-105   // Call with lstimer_mutex locked
-106 
-107   clock_gettime( CLOCK_REALTIME, &now);
-108   //
-109   // Project a tad into the future
-110   then.tv_sec  = now.tv_sec + (now.tv_nsec + LSTIMER_RESOLUTION_NSECS) / 1000000000;
-111   then.tv_nsec = (now.tv_nsec + LSTIMER_RESOLUTION_NSECS) % 1000000000;
-112 
-113   found_active = 0;
-114   for( i=0; i<lstimer_active_timers; i++) {
-115     p = &(lstimer_list[i]);
-116     if( p->shots != 0) {
-117       found_active++;
-118       if(  p->next_secs < then.tv_sec || (p->next_secs == then.tv_sec && p->next_nsecs <= then.tv_nsec)) {
-119         lsevents_send_event( p->event);
-120         //
-121         // After sending the event, compute the next time we need to do this
-122         //
-123         p->last_secs  = now.tv_sec;
-124         p->last_nsecs = now.tv_nsec;
-125         p->ncalls++;
-126         //
-127         // Decrement non-infinite loops
-128         if( p->shots != -1)
-129           p->shots--;
-130         if( p->shots == 0) {
-131           //
-132           // Take this timer out of the mix
-133           lstimer_active_timers--;
-134         } else {
-135           p->next_secs  = p->init_secs + (p->ncalls+1) * p->delay_secs + (p->init_nsecs + (p->ncalls+1)*p->delay_nsecs)/1000000000;
-136           p->next_nsecs = (p->init_nsecs + (p->ncalls+1)*p->delay_nsecs) % 1000000000;
-137         }
-138       }
-139 
-140       if( found_active == 1) {
-141         soonest.tv_sec  = p->next_secs;
-142         soonest.tv_nsec = p->next_nsecs;
-143       } else {
-144         if( soonest.tv_sec > p->next_secs || (soonest.tv_sec == p->next_secs && soonest.tv_nsec > p->next_nsecs)) {
-145           soonest.tv_sec  = p->next_secs;
-146           soonest.tv_nsec = p->next_nsecs;
-147         }
-148       }
-149     }
-150   }
-151 
-152   if( soonest.tv_sec != 0) {
-153     its.it_value.tv_sec     = soonest.tv_sec;
-154     its.it_value.tv_nsec    = soonest.tv_nsec;
-155     its.it_interval.tv_sec  = 0;
-156     its.it_interval.tv_nsec = 0;
-157     timer_settime( lstimer_timerid, TIMER_ABSTIME, &its, NULL);
-158   }
-159 }
+                             {
+  int
+    i,
+    found_active;
+
+  lstimer_list_t *p;
+  struct timespec now, then, soonest;
+  struct itimerspec its;
+
+  //
+  // Did I remind you not to let this thread own the lstimer mutex outside of this
+  // service routine when SIGRTMIN is active?
+  //
+
+  // Call with lstimer_mutex locked
+
+  clock_gettime( CLOCK_REALTIME, &now);
+  //
+  // Project a tad into the future
+  then\&.tv_sec  = now\&.tv_sec + (now\&.tv_nsec + LSTIMER_RESOLUTION_NSECS) / 1000000000;
+  then\&.tv_nsec = (now\&.tv_nsec + LSTIMER_RESOLUTION_NSECS) % 1000000000;
+
+  found_active = 0;
+  for( i=0; i<lstimer_active_timers; i++) {
+    p = &(lstimer_list[i]);
+    if( p->shots != 0) {
+      found_active++;
+      if(  p->next_secs < then\&.tv_sec || (p->next_secs == then\&.tv_sec && p->next_nsecs <= then\&.tv_nsec)) {
+        lsevents_send_event( p->event);
+        //
+        // After sending the event, compute the next time we need to do this
+        //
+        p->last_secs  = now\&.tv_sec;
+        p->last_nsecs = now\&.tv_nsec;
+        p->ncalls++;
+        //
+        // Decrement non-infinite loops
+        if( p->shots != -1)
+          p->shots--;
+        if( p->shots == 0) {
+          //
+          // Take this timer out of the mix
+          lstimer_active_timers--;
+        } else {
+          p->next_secs  = p->init_secs + (p->ncalls+1) * p->delay_secs + (p->init_nsecs + (p->ncalls+1)*p->delay_nsecs)/1000000000;
+          p->next_nsecs = (p->init_nsecs + (p->ncalls+1)*p->delay_nsecs) % 1000000000;
+        }
+      }
+
+      if( found_active == 1) {
+        soonest\&.tv_sec  = p->next_secs;
+        soonest\&.tv_nsec = p->next_nsecs;
+      } else {
+        if( soonest\&.tv_sec > p->next_secs || (soonest\&.tv_sec == p->next_secs && soonest\&.tv_nsec > p->next_nsecs)) {
+          soonest\&.tv_sec  = p->next_secs;
+          soonest\&.tv_nsec = p->next_nsecs;
+        }
+      }
+    }
+  }
+
+  if( soonest\&.tv_sec != 0) {
+    its\&.it_value\&.tv_sec     = soonest\&.tv_sec;
+    its\&.it_value\&.tv_nsec    = soonest\&.tv_nsec;
+    its\&.it_interval\&.tv_sec  = 0;
+    its\&.it_interval\&.tv_nsec = 0;
+    timer_settime( lstimer_timerid, TIMER_ABSTIME, &its, NULL);
+  }
+}
 .fi
 .SH "Variable Documentation"
 .PP 
-.SS "int \fBlstimer_active_timers\fP = 0\fC [static]\fP"
+.SS "int lstimer_active_timers = 0\fC [static]\fP"
+
 .PP
 count of the number timers we are tracking 
 .PP
-Definition at line 17 of file lstimer.c.
-.SS "pthread_cond_t \fBlstimer_cond\fP\fC [static]\fP"
+Definition at line 18 of file lstimer\&.c\&.
+.SS "pthread_cond_t lstimer_cond\fC [static]\fP"
+
 .PP
 allows us to be idle when there is nothing to do 
 .PP
-Definition at line 37 of file lstimer.c.
-.SS "\fBlstimer_list_t\fP \fBlstimer_list\fP[LSTIMER_LIST_LENGTH]\fC [static]\fP"
+Definition at line 40 of file lstimer\&.c\&.
+.SS "\fBlstimer_list_t\fP lstimer_list[\fBLSTIMER_LIST_LENGTH\fP]\fC [static]\fP"
+
 .PP
-Definition at line 33 of file lstimer.c.
-.SS "pthread_mutex_t \fBlstimer_mutex\fP\fC [static]\fP"
+Our timer list\&. 
+.PP
+Definition at line 36 of file lstimer\&.c\&.
+.SS "pthread_mutex_t lstimer_mutex\fC [static]\fP"
+
 .PP
 protect the timer list 
 .PP
-Definition at line 36 of file lstimer.c.
-.SS "pthread_t \fBlstimer_thread\fP\fC [static]\fP"
+Definition at line 39 of file lstimer\&.c\&.
+.SS "pthread_t lstimer_thread\fC [static]\fP"
+
 .PP
 the timer thread 
 .PP
-Definition at line 35 of file lstimer.c.
-.SS "timer_t \fBlstimer_timerid\fP\fC [static]\fP"
+Definition at line 38 of file lstimer\&.c\&.
+.SS "timer_t lstimer_timerid\fC [static]\fP"
+
 .PP
 our real time timer 
 .PP
-Definition at line 38 of file lstimer.c.
-.SS "int \fBnew_timer\fP = 0\fC [static]\fP"
+Definition at line 41 of file lstimer\&.c\&.
+.SS "int new_timer = 0\fC [static]\fP"
+
 .PP
 indicate that a new timer exists and a call to service_timers is required 
 .PP
-Definition at line 39 of file lstimer.c.
+Definition at line 42 of file lstimer\&.c\&.
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for LS-CAT PGPMAC from the source code.
+Generated automatically by Doxygen for LS-CAT PGPMAC from the source code\&.

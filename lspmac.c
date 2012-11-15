@@ -425,7 +425,7 @@ void hex_dump(
   pthread_mutex_unlock( &ncurses_mutex);
 }
 
-/** Replace \r with \n in null terminated string and print result to terminal.
+/** Replace \\r with \\n in null terminated string and print result to terminal.
  * Needed to turn PMAC messages into something printable.
  */
 
@@ -909,12 +909,12 @@ void lspmac_SendControlReplyPrintCB(
 
 /** Service a reply to the getmem command.
  *  Not currently used.
+ * \param cmd Queue item this is a reply to
+ * \param nreceived Number of bytes received
+ * \param buff Buffer of bytes recieved
  *  
  */
-void lspmac_GetmemReplyCB(
-			  pmac_cmd_queue_t *cmd,		/**< [in] Queue item this is a reply to		*/
-			  int nreceived,			/**< [in] Number of bytes received		*/
-			  unsigned char *buff) {		/**< [in] Buffer of bytes received		*/
+void lspmac_GetmemReplyCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) {
 
   memcpy( &(dbmem[ntohs(cmd->pcmd.wValue)]), buff, nreceived);
 

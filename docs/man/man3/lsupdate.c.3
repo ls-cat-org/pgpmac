@@ -1,15 +1,15 @@
-.TH "lsupdate.c" 3 "14 Nov 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lsupdate.c" 3 "Wed Nov 14 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
 lsupdate.c \- 
 .PP
-Brings this MD2 code and the database kvs table into agreement.  
+Brings this MD2 code and the database kvs table into agreement\&.  
 
 .SH SYNOPSIS
 .br
 .PP
-\fC#include 'pgpmac.h'\fP
+\fC#include 'pgpmac\&.h'\fP
 .br
 
 .SS "Functions"
@@ -18,15 +18,15 @@ Brings this MD2 code and the database kvs table into agreement.
 .ti -1c
 .RI "void \fBlsupdate_updateit\fP ()"
 .br
-.RI "\fIQuery the motors and perhaps tell the DB about it. \fP"
+.RI "\fIQuery the motors and perhaps tell the DB about it\&. \fP"
 .ti -1c
 .RI "void * \fBlsupdate_worker\fP (void *dummy)"
 .br
-.RI "\fIOur worker thread. \fP"
+.RI "\fIOur worker thread\&. \fP"
 .ti -1c
 .RI "void \fBlsupdate_init\fP ()"
 .br
-.RI "\fIInitialize this module. \fP"
+.RI "\fIInitialize this module\&. \fP"
 .ti -1c
 .RI "void \fBlsupdate_run\fP ()"
 .br
@@ -42,7 +42,7 @@ Brings this MD2 code and the database kvs table into agreement.
 .in -1c
 .SH "Detailed Description"
 .PP 
-Brings this MD2 code and the database kvs table into agreement. 
+Brings this MD2 code and the database kvs table into agreement\&. 
 
 \fBDate:\fP
 .RS 4
@@ -51,148 +51,158 @@ Brings this MD2 code and the database kvs table into agreement.
 .PP
 \fBAuthor:\fP
 .RS 4
-Keith Brister  All Rights Reserved 
+Keith Brister 
+.RE
+.PP
+\fBCopyright:\fP
+.RS 4
+All Rights Reserved 
 .RE
 .PP
 
 .PP
-Definition in file \fBlsupdate.c\fP.
+Definition in file \fBlsupdate\&.c\fP\&.
 .SH "Function Documentation"
 .PP 
 .SS "void lsupdate_init ()"
+
 .PP
-Initialize this module. 
+Initialize this module\&. 
 .PP
-Definition at line 108 of file lsupdate.c.
+Definition at line 108 of file lsupdate\&.c\&.
 .PP
 .nf
-108                      {
-109 }
+                     {
+}
 .fi
 .SS "void lsupdate_run ()"
+
 .PP
 run the update routines 
 .PP
-Definition at line 113 of file lsupdate.c.
+Definition at line 113 of file lsupdate\&.c\&.
 .PP
 .nf
-113                     {
-114   pthread_create( &lsupdate_thread, NULL, lsupdate_worker, NULL);
-115 }
+                    {
+  pthread_create( &lsupdate_thread, NULL, lsupdate_worker, NULL);
+}
 .fi
 .SS "void lsupdate_updateit ()"
+
 .PP
-Query the motors and perhaps tell the DB about it. 
+Query the motors and perhaps tell the DB about it\&. 
 .PP
-Definition at line 15 of file lsupdate.c.
+Definition at line 15 of file lsupdate\&.c\&.
 .PP
 .nf
-15                          {
-16   static char s[4096];
-17   static char s1[512];
-18   lspmac_motor_t *mp;
-19   int i;
-20   int needComma;
-21   int gotone;
-22 
-23   needComma = 0;
-24   gotone = 0;
-25   s[0] = 0;
-26   strcpy(s, 'select px.kvupdate('{');
-27 
-28   for( i=0; i<lspmac_nmotors; i++) {
-29     mp = &(lspmac_motors[i]);
-30 
-31     pthread_mutex_lock( &(mp->mutex));
-32     //
-33     // Bit 0 of lspg_initialized is 0 if we've not yet initialized the motor values via the DB
-34     // Bit 1 of lspg_initialized is 0 if we've not yet sent any update for this motor
-35     //
-36     // Never update if the database has not initialized the motor values
-37     // Then, always update if we've not done so yet
-38     // Then, only update if the current position has changed significantly
-39     //
-40     if( ((mp->lspg_initialized & 1) == 0) ||
-41         ((mp->lspg_initialized & 2) != 0) &&
-42         (fabs( mp->position - mp->reported_position) < mp->update_resolution)
-43         ) {
-44       pthread_mutex_unlock( &(mp->mutex));
-45     } else {
-46 
-47       gotone = 1;
-48       s1[0]=0;
-49 
-50       snprintf( s1, sizeof(s1)-1, mp->update_format, mp->position);
-51       s1[sizeof(s1)-1] = 0;
-52     
-53       if( mp->name != NULL && mp->status1_p != NULL && mp->status2_p != NULL && mp->actual_pos_cnts_p != NULL) {
-54         lslogging_log_message( '%s status1: %0x  status2: %0x  cnts: %d', mp->name, mp->status1, mp->status2, mp->actual_pos_cnts);
-55       }
-56 
-57       mp->reported_position = mp->position;
-58       mp->lspg_initialized |= 2;
-59       pthread_mutex_unlock( &(mp->mutex));
-60 
-61       if( strlen(s1) + strlen(s) + 32 >= sizeof( s)-1) {
-62         // send off update now and reset s
-63         strcat( s, '}'::text[])');
-64         lspg_query_push( NULL, s);
-65         
-66         lslogging_log_message( 'Update: %s', s);
-67 
-68         s[0] = 0;
-69         strcpy( s, 'select px.kvupdate('{');
-70         needComma = 0;
-71         gotone    = 0;
-72       }
-73 
-74       if( needComma)
-75         strcat( s, ',');
-76       else
-77         needComma=1;
-78 
-79       strcat( s, s1);
-80     }
-81   }
-82 
-83   if( gotone) {
-84     strcat( s, '}')');
-85     lspg_query_push( NULL, s);
-86 
-87     lslogging_log_message( 'Update: %s', s);
-88   }
-89 }
+                         {
+  static char s[4096];
+  static char s1[512];
+  lspmac_motor_t *mp;
+  int i;
+  int needComma;
+  int gotone;
+
+  needComma = 0;
+  gotone = 0;
+  s[0] = 0;
+  strcpy(s, 'select px\&.kvupdate('{');
+
+  for( i=0; i<lspmac_nmotors; i++) {
+    mp = &(lspmac_motors[i]);
+
+    pthread_mutex_lock( &(mp->mutex));
+    //
+    // Bit 0 of lspg_initialized is 0 if we've not yet initialized the motor values via the DB
+    // Bit 1 of lspg_initialized is 0 if we've not yet sent any update for this motor
+    //
+    // Never update if the database has not initialized the motor values
+    // Then, always update if we've not done so yet
+    // Then, only update if the current position has changed significantly
+    //
+    if( ((mp->lspg_initialized & 1) == 0) ||
+        ((mp->lspg_initialized & 2) != 0) &&
+        (fabs( mp->position - mp->reported_position) < mp->update_resolution)
+        ) {
+      pthread_mutex_unlock( &(mp->mutex));
+    } else {
+
+      gotone = 1;
+      s1[0]=0;
+
+      snprintf( s1, sizeof(s1)-1, mp->update_format, mp->position);
+      s1[sizeof(s1)-1] = 0;
+    
+      if( mp->name != NULL && mp->status1_p != NULL && mp->status2_p != NULL && mp->actual_pos_cnts_p != NULL) {
+        lslogging_log_message( '%s status1: %0x  status2: %0x  cnts: %d', mp->name, mp->status1, mp->status2, mp->actual_pos_cnts);
+      }
+
+      mp->reported_position = mp->position;
+      mp->lspg_initialized |= 2;
+      pthread_mutex_unlock( &(mp->mutex));
+
+      if( strlen(s1) + strlen(s) + 32 >= sizeof( s)-1) {
+        // send off update now and reset s
+        strcat( s, '}'::text[])');
+        lspg_query_push( NULL, s);
+        
+        lslogging_log_message( 'Update: %s', s);
+
+        s[0] = 0;
+        strcpy( s, 'select px\&.kvupdate('{');
+        needComma = 0;
+        gotone    = 0;
+      }
+
+      if( needComma)
+        strcat( s, ',');
+      else
+        needComma=1;
+
+      strcat( s, s1);
+    }
+  }
+
+  if( gotone) {
+    strcat( s, '}')');
+    lspg_query_push( NULL, s);
+
+    lslogging_log_message( 'Update: %s', s);
+  }
+}
 .fi
-.SS "void* lsupdate_worker (void * dummy)"
+.SS "void* lsupdate_worker (void *dummy)"
+
 .PP
-Our worker thread. \fBParameters:\fP
+Our worker thread\&. \fBParameters:\fP
 .RS 4
 \fIdummy\fP Unused argument required by protocol 
 .RE
 .PP
 
 .PP
-Definition at line 93 of file lsupdate.c.
+Definition at line 93 of file lsupdate\&.c\&.
 .PP
 .nf
-95                         {
-96   static struct timespec naptime;
-97 
-98   naptime.tv_sec  = 0;
-99   naptime.tv_nsec = 500000000;
-100   while( 1) {
-101     lsupdate_updateit();
-102     nanosleep( &naptime, NULL);
-103   }    
-104 }
+                        {
+  static struct timespec naptime;
+
+  naptime\&.tv_sec  = 0;
+  naptime\&.tv_nsec = 500000000;
+  while( 1) {
+    lsupdate_updateit();
+    nanosleep( &naptime, NULL);
+  }    
+}
 .fi
 .SH "Variable Documentation"
 .PP 
-.SS "pthread_t \fBlsupdate_thread\fP\fC [static]\fP"
+.SS "pthread_t lsupdate_thread\fC [static]\fP"
+
 .PP
 our worker thread 
 .PP
-Definition at line 10 of file lsupdate.c.
+Definition at line 10 of file lsupdate\&.c\&.
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for LS-CAT PGPMAC from the source code.
+Generated automatically by Doxygen for LS-CAT PGPMAC from the source code\&.

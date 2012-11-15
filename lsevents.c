@@ -9,27 +9,38 @@
 
 #define LSEVENTS_QUEUE_LENGTH 256
 
+/** Storage definition for the events.
+ *  Just a string for now.  Perhaps one day
+ *  we'll succumb to the temptation to add an argument
+ *  or two.
+ */
 typedef struct lsevents_queue_struct {
   char event[LSEVENTS_EVENT_LENGTH];	//!< name of the event
 } lsevents_queue_t;
 
-static lsevents_queue_t lsevents_queue[LSEVENTS_QUEUE_LENGTH];
-static unsigned int lsevents_queue_on  = 0;
-static unsigned int lsevents_queue_off = 0;
+static lsevents_queue_t lsevents_queue[LSEVENTS_QUEUE_LENGTH];		//!< simple list of events
+static unsigned int lsevents_queue_on  = 0;				//!< next queue location to write
+static unsigned int lsevents_queue_off = 0;				//!< next queue location to read
 
+/** Linked list of event listeners.
+ */
 typedef struct lsevents_listener_struct {
   struct lsevents_listener_struct *next;	//!< Next listener
   char event[LSEVENTS_EVENT_LENGTH];		//!< name of the event we are listening for
   void (*cb)( char *);				//!< call back function
 } lsevents_listener_t;
 
-static lsevents_listener_t *lsevents_listeners_p = NULL;
+static lsevents_listener_t *lsevents_listeners_p = NULL;	//!< Pointer to the first item in the link list of listeners
 
 static pthread_t       lsevents_thread;			//!< thread to run the event queue
 static pthread_mutex_t lsevents_listener_mutex;		//!< mutex to protect the listener linked list
 static pthread_mutex_t lsevents_queue_mutex;		//!< mutex to protect the event queue
 static pthread_cond_t  lsevents_queue_cond;		//!< condition to pause the queue if needed
 
+/** Call the callback routines for the given event.
+ * \param fmt a printf style formating string
+ * \param ... list of arguments specified by the format string
+ */
 void lsevents_send_event( char *fmt, ...) {
   char event[LSEVENTS_EVENT_LENGTH];
   char *sp;
@@ -58,6 +69,10 @@ void lsevents_send_event( char *fmt, ...) {
 }
 
 
+/** Add a callback routine to listen for a specific event
+ *  \param event the name of the event to listen for
+ *  \param cb the routine to call
+ */
 void lsevents_add_listener( char *event, void (*cb)(char *)) {
   lsevents_listener_t *new;
 
@@ -70,9 +85,9 @@ void lsevents_add_listener( char *event, void (*cb)(char *)) {
   strncpy( new->event, event, LSEVENTS_EVENT_LENGTH);
   new->event[LSEVENTS_EVENT_LENGTH-1] = 0;
   new->cb   = cb;
-  new->next = lsevents_listeners_p;
 
   pthread_mutex_lock( &lsevents_listener_mutex);
+  new->next = lsevents_listeners_p;
   lsevents_listeners_p = new;
   pthread_mutex_unlock( &lsevents_listener_mutex);
 
@@ -80,6 +95,10 @@ void lsevents_add_listener( char *event, void (*cb)(char *)) {
 
 }
 
+/** Remove a listener previously added with lsevents_add_listener
+ *  \param event The name of the event
+ *  \param cb The callback routine to remove
+ */
 void lsevents_remove_listener (char *event, void (*cb)(char *)) {
   
   lsevents_listener_t *last, *current;
@@ -114,6 +133,9 @@ void lsevents_remove_listener (char *event, void (*cb)(char *)) {
   }
 }
 
+/** Our worker
+ *  \param dummy Unused but needed by pthreads to be happy
+ */
 void *lsevents_worker(
 		     void *dummy
 		     ) {
@@ -160,12 +182,16 @@ void *lsevents_worker(
   return NULL;
 }
 
+/** Initialize this module
+ */
 void lsevents_init() {
   pthread_mutex_init( &lsevents_queue_mutex, NULL);
   pthread_cond_init(  &lsevents_queue_cond, NULL);
   pthread_mutex_init( &lsevents_listener_mutex, NULL);
 }
 
+/** Start up the thread and get out of the way.
+ */
 void lsevents_run() {
   pthread_create( &lsevents_thread, NULL, lsevents_worker, NULL);
 }
