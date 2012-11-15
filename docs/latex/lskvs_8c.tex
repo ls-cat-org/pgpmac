@@ -1,0 +1,246 @@
+\hypertarget{lskvs_8c}{
+\section{lskvs.c File Reference}
+\label{lskvs_8c}\index{lskvs.c@{lskvs.c}}
+}
+
+
+Support for the remote access client key value pairs.  
+{\ttfamily \#include \char`\"{}pgpmac.h\char`\"{}}\par
+\subsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct \hyperlink{structlskvs__kvs__struct}{lskvs\_\-kvs\_\-struct}
+\end{DoxyCompactItemize}
+\subsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+typedef struct \hyperlink{structlskvs__kvs__struct}{lskvs\_\-kvs\_\-struct} \hyperlink{lskvs_8c_a54bd386f945edb8a0311a20199e8f793}{lskvs\_\-kvs\_\-t}
+\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \hyperlink{lskvs_8c_ab04e99f92c761522972c4d80d85f4830}{lskvs\_\-set} (char $\ast$k, char $\ast$v)
+\item 
+\hyperlink{structlskvs__kvs__struct}{lskvs\_\-kvs\_\-t} $\ast$ \hyperlink{lskvs_8c_a3bc37cbeae347da068124d23ba3c1905}{lskvs\_\-get} (char $\ast$k)
+\begin{DoxyCompactList}\small\item\em Find the kv pair object Return with a pointer to the structure or NULL if not found. \item\end{DoxyCompactList}\item 
+void \hyperlink{lskvs_8c_ae4c780cd3a394259ca74d447bdae3537}{lskvs\_\-init} ()
+\item 
+void \hyperlink{lskvs_8c_ab67e0bf3edaa2cea837fe68814e025f5}{lskvs\_\-run} ()
+\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+static \hyperlink{structlskvs__kvs__struct}{lskvs\_\-kvs\_\-t} $\ast$ \hyperlink{lskvs_8c_a14ca7cca8246dcfc266ad30d56701c0a}{lskvs\_\-kvs} = NULL
+\begin{DoxyCompactList}\small\item\em our list (or at least the start of it \item\end{DoxyCompactList}\item 
+static pthread\_\-rwlock\_\-t \hyperlink{lskvs_8c_ad329bf890bd9eef896815dd53a323c2f}{lskvs\_\-rwlock}
+\begin{DoxyCompactList}\small\item\em needed to protect the list \item\end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Support for the remote access client key value pairs. \begin{DoxyDate}{Date}
+2012 
+\end{DoxyDate}
+\begin{DoxyAuthor}{Author}
+Keith Brister  All Rights Reserved 
+\end{DoxyAuthor}
+
+
+Definition in file \hyperlink{lskvs_8c_source}{lskvs.c}.
+
+\subsection{Typedef Documentation}
+\hypertarget{lskvs_8c_a54bd386f945edb8a0311a20199e8f793}{
+\index{lskvs.c@{lskvs.c}!lskvs\_\-kvs\_\-t@{lskvs\_\-kvs\_\-t}}
+\index{lskvs\_\-kvs\_\-t@{lskvs\_\-kvs\_\-t}!lskvs.c@{lskvs.c}}
+\subsubsection[{lskvs\_\-kvs\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf lskvs\_\-kvs\_\-struct}  {\bf lskvs\_\-kvs\_\-t}}}
+\label{lskvs_8c_a54bd386f945edb8a0311a20199e8f793}
+
+
+\subsection{Function Documentation}
+\hypertarget{lskvs_8c_a3bc37cbeae347da068124d23ba3c1905}{
+\index{lskvs.c@{lskvs.c}!lskvs\_\-get@{lskvs\_\-get}}
+\index{lskvs\_\-get@{lskvs\_\-get}!lskvs.c@{lskvs.c}}
+\subsubsection[{lskvs\_\-get}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lskvs\_\-kvs\_\-t}$\ast$ lskvs\_\-get (char $\ast$ {\em k})}}
+\label{lskvs_8c_a3bc37cbeae347da068124d23ba3c1905}
+
+
+Find the kv pair object Return with a pointer to the structure or NULL if not found. 
+\begin{DoxyParams}{Parameters}
+\item[\mbox{$\leftarrow$} {\em k}]key name to search for \end{DoxyParams}
+
+
+Definition at line 134 of file lskvs.c.
+
+
+\begin{DoxyCode}
+136                          {
+137   lskvs_kvs_t
+138     *rtn;
+139 
+140   pthread_rwlock_rdlock( &lskvs_rwlock);
+141   rtn = lskvs_kvs;
+142   pthread_rwlock_unlock( &lskvs_rwlock);
+143 
+144   while(rtn != NULL) {
+145     if( strcmp( rtn->k, k) == 0)
+146       break;
+147     rtn = rtn->next;
+148   }
+149   return rtn;
+150 }
+\end{DoxyCode}
+\hypertarget{lskvs_8c_ae4c780cd3a394259ca74d447bdae3537}{
+\index{lskvs.c@{lskvs.c}!lskvs\_\-init@{lskvs\_\-init}}
+\index{lskvs\_\-init@{lskvs\_\-init}!lskvs.c@{lskvs.c}}
+\subsubsection[{lskvs\_\-init}]{\setlength{\rightskip}{0pt plus 5cm}void lskvs\_\-init ()}}
+\label{lskvs_8c_ae4c780cd3a394259ca74d447bdae3537}
+
+
+Definition at line 153 of file lskvs.c.
+
+
+\begin{DoxyCode}
+153                   {
+154   pthread_rwlock_init( &lskvs_rwlock, NULL);
+155 }
+\end{DoxyCode}
+\hypertarget{lskvs_8c_ab67e0bf3edaa2cea837fe68814e025f5}{
+\index{lskvs.c@{lskvs.c}!lskvs\_\-run@{lskvs\_\-run}}
+\index{lskvs\_\-run@{lskvs\_\-run}!lskvs.c@{lskvs.c}}
+\subsubsection[{lskvs\_\-run}]{\setlength{\rightskip}{0pt plus 5cm}void lskvs\_\-run ()}}
+\label{lskvs_8c_ab67e0bf3edaa2cea837fe68814e025f5}
+
+
+Definition at line 157 of file lskvs.c.
+
+
+\begin{DoxyCode}
+157                  {
+158 }
+\end{DoxyCode}
+\hypertarget{lskvs_8c_ab04e99f92c761522972c4d80d85f4830}{
+\index{lskvs.c@{lskvs.c}!lskvs\_\-set@{lskvs\_\-set}}
+\index{lskvs\_\-set@{lskvs\_\-set}!lskvs.c@{lskvs.c}}
+\subsubsection[{lskvs\_\-set}]{\setlength{\rightskip}{0pt plus 5cm}void lskvs\_\-set (char $\ast$ {\em k}, \/  char $\ast$ {\em v})}}
+\label{lskvs_8c_ab04e99f92c761522972c4d80d85f4830}
+
+
+Definition at line 41 of file lskvs.c.
+
+
+\begin{DoxyCode}
+41                                   {
+42   lskvs_kvs_t
+43     *root,
+44     *p;
+45 
+46   lslogging_log_message( "lskvs_set:  k: '%s', v: '%s'", k, v);
+47 
+48   // Don't bother with empty keys
+49   //
+50   if( k == NULL || *k == 0)
+51     return;
+52 
+53   pthread_rwlock_rdlock( &lskvs_rwlock);
+54   root = lskvs_kvs;
+55   pthread_rwlock_unlock( &lskvs_rwlock);
+56 
+57   for( p=root; p != NULL; p = p->next) {
+58     if( strcmp( p->k, k) == 0) {
+59       break;
+60     }
+61   }
+62 
+63   if( p == NULL) {
+64     //
+65     // Add a new list item
+66     //
+67     p = calloc( 1, sizeof( *p));
+68     if( p == NULL) {
+69       lslogging_log_message( "lskvs_set: out of memory for kv struct (%d bytes", 
+      sizeof( *p));
+70       exit( -1);
+71     }
+72 
+73 
+74     p->k = calloc( strlen(k)+1, sizeof( *k));
+75     if( p->k == NULL) {
+76       lslogging_log_message( "lskvs_set: out of memory for k (%d bytes)", strlen(
+       k)+1);
+77       exit( -1);
+78     }
+79     strcpy( p->k, k);
+80     p->k[strlen(k)] = 0;
+81 
+82     // leave a little room to grow
+83     //
+84     if( v == NULL || *v == 0)
+85       p->vl = 32;
+86     else
+87       p->vl = strlen(v) + 32;
+88 
+89     p->v = calloc( p->vl, sizeof( *v));
+90     if( p->v == NULL) {
+91       lslogging_log_message( "lskvs_set: out of memory for v (%d bytes)", p->vl);
+      
+92       exit( -1);
+93     }
+94     
+95     if( v == NULL || *v == 0)
+96       *(p->v) = 0;
+97     else
+98       strcpy( p->v, v);
+99 
+100     p->v[p->vl-1] = 0;
+101     
+102     pthread_rwlock_init( &p->l, NULL);
+103 
+104     pthread_rwlock_wrlock( &lskvs_rwlock);
+105     p->next   = lskvs_kvs;
+106     lskvs_kvs = p;
+107     pthread_rwlock_unlock( &lskvs_rwlock);
+108   } else {
+109     //
+110     // Just update the value
+111     // Assume the database only sent us an update because
+112     // the old and new values are different
+113     //
+114     pthread_rwlock_wrlock( &(p->l));
+115     if( strlen( v) > p->vl-1) {
+116       free( p->v);
+117       
+118       p->vl = strlen(v) + 32;
+119       p->v = calloc( p->vl, 1);
+120       if( p->v == NULL) {
+121         lslogging_log_message( "lskvs_set: out of memory for re-calloc of v (%d b
+      ytes)", p->vl);
+122         exit( -1);
+123       }
+124     }
+125     strcpy( p->v, v);
+126     p->v[p->vl-1] = 0;
+127     pthread_rwlock_unlock( &(p->l));
+128   }
+129 }
+\end{DoxyCode}
+
+
+\subsection{Variable Documentation}
+\hypertarget{lskvs_8c_a14ca7cca8246dcfc266ad30d56701c0a}{
+\index{lskvs.c@{lskvs.c}!lskvs\_\-kvs@{lskvs\_\-kvs}}
+\index{lskvs\_\-kvs@{lskvs\_\-kvs}!lskvs.c@{lskvs.c}}
+\subsubsection[{lskvs\_\-kvs}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lskvs\_\-kvs\_\-t}$\ast$ {\bf lskvs\_\-kvs} = NULL\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
+\label{lskvs_8c_a14ca7cca8246dcfc266ad30d56701c0a}
+
+
+our list (or at least the start of it 
+
+Definition at line 25 of file lskvs.c.\hypertarget{lskvs_8c_ad329bf890bd9eef896815dd53a323c2f}{
+\index{lskvs.c@{lskvs.c}!lskvs\_\-rwlock@{lskvs\_\-rwlock}}
+\index{lskvs\_\-rwlock@{lskvs\_\-rwlock}!lskvs.c@{lskvs.c}}
+\subsubsection[{lskvs\_\-rwlock}]{\setlength{\rightskip}{0pt plus 5cm}pthread\_\-rwlock\_\-t {\bf lskvs\_\-rwlock}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
+\label{lskvs_8c_ad329bf890bd9eef896815dd53a323c2f}
+
+
+needed to protect the list 
+
+Definition at line 26 of file lskvs.c.

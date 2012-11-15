@@ -1,0 +1,372 @@
+\hypertarget{lsevents_8c}{
+\section{lsevents.c File Reference}
+\label{lsevents_8c}\index{lsevents.c@{lsevents.c}}
+}
+
+
+event subsystem for inter-\/pgpmac communication  
+{\ttfamily \#include \char`\"{}pgpmac.h\char`\"{}}\par
+\subsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct \hyperlink{structlsevents__queue__struct}{lsevents\_\-queue\_\-struct}
+\item 
+struct \hyperlink{structlsevents__listener__struct}{lsevents\_\-listener\_\-struct}
+\end{DoxyCompactItemize}
+\subsection*{Defines}
+\begin{DoxyCompactItemize}
+\item 
+\#define \hyperlink{lsevents_8c_a75469307c70790f04b9b2bfcb1473a48}{LSEVENTS\_\-QUEUE\_\-LENGTH}~256
+\end{DoxyCompactItemize}
+\subsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+typedef struct \hyperlink{structlsevents__queue__struct}{lsevents\_\-queue\_\-struct} \hyperlink{lsevents_8c_a82bd12b9e91198e33f44262d324616c4}{lsevents\_\-queue\_\-t}
+\item 
+typedef struct \hyperlink{structlsevents__listener__struct}{lsevents\_\-listener\_\-struct} \hyperlink{lsevents_8c_a8be5b9ff7269a3b057e354536cf9b0aa}{lsevents\_\-listener\_\-t}
+\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_\-send\_\-event} (char $\ast$fmt,...)
+\item 
+void \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_\-add\_\-listener} (char $\ast$event, void($\ast$cb)(char $\ast$))
+\item 
+void \hyperlink{lsevents_8c_ab9c425de8de28f0089ad51676873f7e0}{lsevents\_\-remove\_\-listener} (char $\ast$event, void($\ast$cb)(char $\ast$))
+\item 
+void $\ast$ \hyperlink{lsevents_8c_a48e8f9dee00710bbe293b4bbded37a39}{lsevents\_\-worker} (void $\ast$dummy)
+\item 
+void \hyperlink{lsevents_8c_af19a77187e7406fc87d36bd26e672e6d}{lsevents\_\-init} ()
+\item 
+void \hyperlink{lsevents_8c_a4ddde538b603e3d4580ae9356bf9b89d}{lsevents\_\-run} ()
+\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+static \hyperlink{structlsevents__queue__struct}{lsevents\_\-queue\_\-t} \hyperlink{lsevents_8c_ad1ff5e895b4016113c8414d9a5daa2f2}{lsevents\_\-queue} \mbox{[}LSEVENTS\_\-QUEUE\_\-LENGTH\mbox{]}
+\item 
+static unsigned int \hyperlink{lsevents_8c_a3bccf603d56d5b2f4a92fad341d37e2c}{lsevents\_\-queue\_\-on} = 0
+\item 
+static unsigned int \hyperlink{lsevents_8c_a50ad47e12cc4fc2d88659230b2fd44ff}{lsevents\_\-queue\_\-off} = 0
+\item 
+static \hyperlink{structlsevents__listener__struct}{lsevents\_\-listener\_\-t} $\ast$ \hyperlink{lsevents_8c_a300dc3edfa8546d75e9f8bab8fa06c5c}{lsevents\_\-listeners\_\-p} = NULL
+\item 
+static pthread\_\-t \hyperlink{lsevents_8c_a314640d7c3cb4fa90823ab2418fbac9b}{lsevents\_\-thread}
+\begin{DoxyCompactList}\small\item\em thread to run the event queue \item\end{DoxyCompactList}\item 
+static pthread\_\-mutex\_\-t \hyperlink{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{lsevents\_\-listener\_\-mutex}
+\begin{DoxyCompactList}\small\item\em mutex to protect the listener linked list \item\end{DoxyCompactList}\item 
+static pthread\_\-mutex\_\-t \hyperlink{lsevents_8c_ab46f4ebda5e926a213faedac1a545ec1}{lsevents\_\-queue\_\-mutex}
+\begin{DoxyCompactList}\small\item\em mutex to protect the event queue \item\end{DoxyCompactList}\item 
+static pthread\_\-cond\_\-t \hyperlink{lsevents_8c_a8079d9fb8c35db3ca5f83be5aeb2a747}{lsevents\_\-queue\_\-cond}
+\begin{DoxyCompactList}\small\item\em condition to pause the queue if needed \item\end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+event subsystem for inter-\/pgpmac communication \begin{DoxyDate}{Date}
+2012 
+\end{DoxyDate}
+\begin{DoxyAuthor}{Author}
+Keith Brister  All Rights Reserved 
+\end{DoxyAuthor}
+
+
+Definition in file \hyperlink{lsevents_8c_source}{lsevents.c}.
+
+\subsection{Define Documentation}
+\hypertarget{lsevents_8c_a75469307c70790f04b9b2bfcb1473a48}{
+\index{lsevents.c@{lsevents.c}!LSEVENTS\_\-QUEUE\_\-LENGTH@{LSEVENTS\_\-QUEUE\_\-LENGTH}}
+\index{LSEVENTS\_\-QUEUE\_\-LENGTH@{LSEVENTS\_\-QUEUE\_\-LENGTH}!lsevents.c@{lsevents.c}}
+\subsubsection[{LSEVENTS\_\-QUEUE\_\-LENGTH}]{\setlength{\rightskip}{0pt plus 5cm}\#define LSEVENTS\_\-QUEUE\_\-LENGTH~256}}
+\label{lsevents_8c_a75469307c70790f04b9b2bfcb1473a48}
+
+
+Definition at line 10 of file lsevents.c.
+
+\subsection{Typedef Documentation}
+\hypertarget{lsevents_8c_a8be5b9ff7269a3b057e354536cf9b0aa}{
+\index{lsevents.c@{lsevents.c}!lsevents\_\-listener\_\-t@{lsevents\_\-listener\_\-t}}
+\index{lsevents\_\-listener\_\-t@{lsevents\_\-listener\_\-t}!lsevents.c@{lsevents.c}}
+\subsubsection[{lsevents\_\-listener\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf lsevents\_\-listener\_\-struct}  {\bf lsevents\_\-listener\_\-t}}}
+\label{lsevents_8c_a8be5b9ff7269a3b057e354536cf9b0aa}
+\hypertarget{lsevents_8c_a82bd12b9e91198e33f44262d324616c4}{
+\index{lsevents.c@{lsevents.c}!lsevents\_\-queue\_\-t@{lsevents\_\-queue\_\-t}}
+\index{lsevents\_\-queue\_\-t@{lsevents\_\-queue\_\-t}!lsevents.c@{lsevents.c}}
+\subsubsection[{lsevents\_\-queue\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf lsevents\_\-queue\_\-struct}  {\bf lsevents\_\-queue\_\-t}}}
+\label{lsevents_8c_a82bd12b9e91198e33f44262d324616c4}
+
+
+\subsection{Function Documentation}
+\hypertarget{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{
+\index{lsevents.c@{lsevents.c}!lsevents\_\-add\_\-listener@{lsevents\_\-add\_\-listener}}
+\index{lsevents\_\-add\_\-listener@{lsevents\_\-add\_\-listener}!lsevents.c@{lsevents.c}}
+\subsubsection[{lsevents\_\-add\_\-listener}]{\setlength{\rightskip}{0pt plus 5cm}void lsevents\_\-add\_\-listener (char $\ast$ {\em event}, \/  void($\ast$)(char $\ast$) {\em cb})}}
+\label{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}
+
+
+Definition at line 61 of file lsevents.c.
+
+
+\begin{DoxyCode}
+61                                                              {
+62   lsevents_listener_t *new;
+63 
+64   new = calloc( 1, sizeof( lsevents_listener_t));
+65   if( new == NULL) {
+66     lslogging_log_message( "lsevents_add_listener: out of memory");
+67     exit( -1);
+68   }
+69 
+70   strncpy( new->event, event, LSEVENTS_EVENT_LENGTH);
+71   new->event[LSEVENTS_EVENT_LENGTH-1] = 0;
+72   new->cb   = cb;
+73   new->next = lsevents_listeners_p;
+74 
+75   pthread_mutex_lock( &lsevents_listener_mutex);
+76   lsevents_listeners_p = new;
+77   pthread_mutex_unlock( &lsevents_listener_mutex);
+78 
+79   lslogging_log_message( "lsevents_add_listener: added listener for event %s", ev
+      ent);
+80 
+81 }
+\end{DoxyCode}
+\hypertarget{lsevents_8c_af19a77187e7406fc87d36bd26e672e6d}{
+\index{lsevents.c@{lsevents.c}!lsevents\_\-init@{lsevents\_\-init}}
+\index{lsevents\_\-init@{lsevents\_\-init}!lsevents.c@{lsevents.c}}
+\subsubsection[{lsevents\_\-init}]{\setlength{\rightskip}{0pt plus 5cm}void lsevents\_\-init ()}}
+\label{lsevents_8c_af19a77187e7406fc87d36bd26e672e6d}
+
+
+Definition at line 163 of file lsevents.c.
+
+
+\begin{DoxyCode}
+163                      {
+164   pthread_mutex_init( &lsevents_queue_mutex, NULL);
+165   pthread_cond_init(  &lsevents_queue_cond, NULL);
+166   pthread_mutex_init( &lsevents_listener_mutex, NULL);
+167 }
+\end{DoxyCode}
+\hypertarget{lsevents_8c_ab9c425de8de28f0089ad51676873f7e0}{
+\index{lsevents.c@{lsevents.c}!lsevents\_\-remove\_\-listener@{lsevents\_\-remove\_\-listener}}
+\index{lsevents\_\-remove\_\-listener@{lsevents\_\-remove\_\-listener}!lsevents.c@{lsevents.c}}
+\subsubsection[{lsevents\_\-remove\_\-listener}]{\setlength{\rightskip}{0pt plus 5cm}void lsevents\_\-remove\_\-listener (char $\ast$ {\em event}, \/  void($\ast$)(char $\ast$) {\em cb})}}
+\label{lsevents_8c_ab9c425de8de28f0089ad51676873f7e0}
+
+
+Definition at line 83 of file lsevents.c.
+
+
+\begin{DoxyCode}
+83                                                                 {
+84   
+85   lsevents_listener_t *last, *current;
+86 
+87   //
+88   // Find the listener to remove
+89   // and unlink it from the list
+90   //
+91   pthread_mutex_lock( &lsevents_listener_mutex);
+92   last = NULL;
+93   for( current = lsevents_listeners_p; current != NULL; current = current->next) 
+      {
+94     if( strcmp( last->event, event) == 0 && last->cb == cb) {
+95       if( last == NULL) {
+96         lsevents_listeners_p = current->next;
+97       } else {
+98         last->next = current->next;
+99       }
+100       break;
+101     }
+102   }
+103   pthread_mutex_unlock( &lsevents_listener_mutex);
+104 
+105   //
+106   // Now remove it
+107   // TODO: use saner memory management where we allocate many listeners at a time
+      
+108   // as an array and then just flag the ones that are used
+109   //
+110   if( current != NULL) {
+111     if( current->event != NULL)
+112       free( current->event);
+113     free(current);
+114   }
+115 }
+\end{DoxyCode}
+\hypertarget{lsevents_8c_a4ddde538b603e3d4580ae9356bf9b89d}{
+\index{lsevents.c@{lsevents.c}!lsevents\_\-run@{lsevents\_\-run}}
+\index{lsevents\_\-run@{lsevents\_\-run}!lsevents.c@{lsevents.c}}
+\subsubsection[{lsevents\_\-run}]{\setlength{\rightskip}{0pt plus 5cm}void lsevents\_\-run ()}}
+\label{lsevents_8c_a4ddde538b603e3d4580ae9356bf9b89d}
+
+
+Definition at line 169 of file lsevents.c.
+
+
+\begin{DoxyCode}
+169                     {
+170   pthread_create( &lsevents_thread, NULL, lsevents_worker, NULL);
+171 }
+\end{DoxyCode}
+\hypertarget{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{
+\index{lsevents.c@{lsevents.c}!lsevents\_\-send\_\-event@{lsevents\_\-send\_\-event}}
+\index{lsevents\_\-send\_\-event@{lsevents\_\-send\_\-event}!lsevents.c@{lsevents.c}}
+\subsubsection[{lsevents\_\-send\_\-event}]{\setlength{\rightskip}{0pt plus 5cm}void lsevents\_\-send\_\-event (char $\ast$ {\em fmt}, \/   {\em ...})}}
+\label{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}
+
+
+Definition at line 33 of file lsevents.c.
+
+
+\begin{DoxyCode}
+33                                           {
+34   char event[LSEVENTS_EVENT_LENGTH];
+35   char *sp;
+36   va_list arg_ptr;
+37 
+38   va_start( arg_ptr, fmt);
+39   vsnprintf( event, sizeof(event)-1, fmt, arg_ptr);
+40   event[sizeof(event)-1]=0;
+41   va_end( arg_ptr);
+42 
+43   lslogging_log_message( "lsevents_send_event: %s", event);
+44 
+45   pthread_mutex_lock( &lsevents_queue_mutex);
+46 
+47   // maybe wait for room on the queue
+48   while( lsevents_queue_on + 1 == lsevents_queue_off)
+49     pthread_cond_wait( &lsevents_queue_cond, &lsevents_queue_mutex);
+50   
+51   sp = lsevents_queue[(lsevents_queue_on++) % LSEVENTS_QUEUE_LENGTH].event;
+52   strncpy( sp, event, LSEVENTS_EVENT_LENGTH);
+53   sp[LSEVENTS_EVENT_LENGTH - 1] = 0;
+54 
+55   pthread_cond_signal(  &lsevents_queue_cond);
+56   pthread_mutex_unlock( &lsevents_queue_mutex);
+57 
+58 }
+\end{DoxyCode}
+\hypertarget{lsevents_8c_a48e8f9dee00710bbe293b4bbded37a39}{
+\index{lsevents.c@{lsevents.c}!lsevents\_\-worker@{lsevents\_\-worker}}
+\index{lsevents\_\-worker@{lsevents\_\-worker}!lsevents.c@{lsevents.c}}
+\subsubsection[{lsevents\_\-worker}]{\setlength{\rightskip}{0pt plus 5cm}void$\ast$ lsevents\_\-worker (void $\ast$ {\em dummy})}}
+\label{lsevents_8c_a48e8f9dee00710bbe293b4bbded37a39}
+
+
+Definition at line 117 of file lsevents.c.
+
+
+\begin{DoxyCode}
+119                        {
+120   
+121   char event[LSEVENTS_EVENT_LENGTH];
+122   lsevents_queue_t *ep;
+123   lsevents_listener_t *p;
+124 
+125   while( 1) {
+126     pthread_mutex_lock( &lsevents_queue_mutex);
+127 
+128     //
+129     // wait for someone to send an event
+130     //
+131     while( lsevents_queue_off == lsevents_queue_on)
+132       pthread_cond_wait( &lsevents_queue_cond, &lsevents_queue_mutex);
+133 
+134     //
+135     // copy event string since the value in the queue may change when
+136     // we unlock the mutex
+137     //
+138     ep = &(lsevents_queue[(lsevents_queue_off++) % LSEVENTS_QUEUE_LENGTH]);
+139     strncpy( event, ep->event, LSEVENTS_EVENT_LENGTH);
+140     event[LSEVENTS_EVENT_LENGTH-1] = 0;
+141 
+142     //
+143     // let the send event process know there is room on the queue again
+144     //
+145     pthread_cond_signal(  &lsevents_queue_cond);
+146     pthread_mutex_unlock( &lsevents_queue_mutex);
+147 
+148     //
+149     // Find the callbacks and, well, call them back
+150     //
+151     pthread_mutex_lock( &lsevents_listener_mutex);
+152     for( p = lsevents_listeners_p; p != NULL; p = p->next) {
+153       if( strcmp( event, p->event) == 0) {
+154         p->cb( p->event);
+155       }
+156     }
+157 
+158     pthread_mutex_unlock( &lsevents_listener_mutex);
+159   }
+160   return NULL;
+161 }
+\end{DoxyCode}
+
+
+\subsection{Variable Documentation}
+\hypertarget{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{
+\index{lsevents.c@{lsevents.c}!lsevents\_\-listener\_\-mutex@{lsevents\_\-listener\_\-mutex}}
+\index{lsevents\_\-listener\_\-mutex@{lsevents\_\-listener\_\-mutex}!lsevents.c@{lsevents.c}}
+\subsubsection[{lsevents\_\-listener\_\-mutex}]{\setlength{\rightskip}{0pt plus 5cm}pthread\_\-mutex\_\-t {\bf lsevents\_\-listener\_\-mutex}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
+\label{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}
+
+
+mutex to protect the listener linked list 
+
+Definition at line 29 of file lsevents.c.\hypertarget{lsevents_8c_a300dc3edfa8546d75e9f8bab8fa06c5c}{
+\index{lsevents.c@{lsevents.c}!lsevents\_\-listeners\_\-p@{lsevents\_\-listeners\_\-p}}
+\index{lsevents\_\-listeners\_\-p@{lsevents\_\-listeners\_\-p}!lsevents.c@{lsevents.c}}
+\subsubsection[{lsevents\_\-listeners\_\-p}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lsevents\_\-listener\_\-t}$\ast$ {\bf lsevents\_\-listeners\_\-p} = NULL\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
+\label{lsevents_8c_a300dc3edfa8546d75e9f8bab8fa06c5c}
+
+
+Definition at line 26 of file lsevents.c.\hypertarget{lsevents_8c_ad1ff5e895b4016113c8414d9a5daa2f2}{
+\index{lsevents.c@{lsevents.c}!lsevents\_\-queue@{lsevents\_\-queue}}
+\index{lsevents\_\-queue@{lsevents\_\-queue}!lsevents.c@{lsevents.c}}
+\subsubsection[{lsevents\_\-queue}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lsevents\_\-queue\_\-t} {\bf lsevents\_\-queue}\mbox{[}LSEVENTS\_\-QUEUE\_\-LENGTH\mbox{]}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
+\label{lsevents_8c_ad1ff5e895b4016113c8414d9a5daa2f2}
+
+
+Definition at line 16 of file lsevents.c.\hypertarget{lsevents_8c_a8079d9fb8c35db3ca5f83be5aeb2a747}{
+\index{lsevents.c@{lsevents.c}!lsevents\_\-queue\_\-cond@{lsevents\_\-queue\_\-cond}}
+\index{lsevents\_\-queue\_\-cond@{lsevents\_\-queue\_\-cond}!lsevents.c@{lsevents.c}}
+\subsubsection[{lsevents\_\-queue\_\-cond}]{\setlength{\rightskip}{0pt plus 5cm}pthread\_\-cond\_\-t {\bf lsevents\_\-queue\_\-cond}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
+\label{lsevents_8c_a8079d9fb8c35db3ca5f83be5aeb2a747}
+
+
+condition to pause the queue if needed 
+
+Definition at line 31 of file lsevents.c.\hypertarget{lsevents_8c_ab46f4ebda5e926a213faedac1a545ec1}{
+\index{lsevents.c@{lsevents.c}!lsevents\_\-queue\_\-mutex@{lsevents\_\-queue\_\-mutex}}
+\index{lsevents\_\-queue\_\-mutex@{lsevents\_\-queue\_\-mutex}!lsevents.c@{lsevents.c}}
+\subsubsection[{lsevents\_\-queue\_\-mutex}]{\setlength{\rightskip}{0pt plus 5cm}pthread\_\-mutex\_\-t {\bf lsevents\_\-queue\_\-mutex}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
+\label{lsevents_8c_ab46f4ebda5e926a213faedac1a545ec1}
+
+
+mutex to protect the event queue 
+
+Definition at line 30 of file lsevents.c.\hypertarget{lsevents_8c_a50ad47e12cc4fc2d88659230b2fd44ff}{
+\index{lsevents.c@{lsevents.c}!lsevents\_\-queue\_\-off@{lsevents\_\-queue\_\-off}}
+\index{lsevents\_\-queue\_\-off@{lsevents\_\-queue\_\-off}!lsevents.c@{lsevents.c}}
+\subsubsection[{lsevents\_\-queue\_\-off}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int {\bf lsevents\_\-queue\_\-off} = 0\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
+\label{lsevents_8c_a50ad47e12cc4fc2d88659230b2fd44ff}
+
+
+Definition at line 18 of file lsevents.c.\hypertarget{lsevents_8c_a3bccf603d56d5b2f4a92fad341d37e2c}{
+\index{lsevents.c@{lsevents.c}!lsevents\_\-queue\_\-on@{lsevents\_\-queue\_\-on}}
+\index{lsevents\_\-queue\_\-on@{lsevents\_\-queue\_\-on}!lsevents.c@{lsevents.c}}
+\subsubsection[{lsevents\_\-queue\_\-on}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int {\bf lsevents\_\-queue\_\-on} = 0\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
+\label{lsevents_8c_a3bccf603d56d5b2f4a92fad341d37e2c}
+
+
+Definition at line 17 of file lsevents.c.\hypertarget{lsevents_8c_a314640d7c3cb4fa90823ab2418fbac9b}{
+\index{lsevents.c@{lsevents.c}!lsevents\_\-thread@{lsevents\_\-thread}}
+\index{lsevents\_\-thread@{lsevents\_\-thread}!lsevents.c@{lsevents.c}}
+\subsubsection[{lsevents\_\-thread}]{\setlength{\rightskip}{0pt plus 5cm}pthread\_\-t {\bf lsevents\_\-thread}\hspace{0.3cm}{\ttfamily  \mbox{[}static\mbox{]}}}}
+\label{lsevents_8c_a314640d7c3cb4fa90823ab2418fbac9b}
+
+
+thread to run the event queue 
+
+Definition at line 28 of file lsevents.c.

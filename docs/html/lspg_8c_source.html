@@ -1025,517 +1025,532 @@ window.onload = initDynSections;
 <a name="l01115"></a>01115   }
 <a name="l01116"></a>01116 }
 <a name="l01117"></a>01117 
-<a name="l01120"></a><a class="code" href="lspg_8c.html#a1e11f525ca0f9ac9ab71f9fbe983c42b">01120</a> <span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#a1e11f525ca0f9ac9ab71f9fbe983c42b" title="Send strings directly to PMAC queue.">lspg_cmd_cb</a>(
+<a name="l01120"></a><a class="code" href="lspg_8c.html#a6de3621552c9265950a0df573429c519">01120</a> <span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#a6de3621552c9265950a0df573429c519" title="retrieve kv pairs with new values">lspg_kvs_cb</a>(
 <a name="l01121"></a>01121                  <a class="code" href="structlspgQueryQueueStruct.html" title="Store each query along with it&amp;#39;s callback function.">lspg_query_queue_t</a> *qqp,               
 <a name="l01122"></a>01122                  PGresult *pgr                          
 <a name="l01123"></a>01123                  ) {
-<a name="l01124"></a>01124   <span class="comment">//</span>
-<a name="l01125"></a>01125   <span class="comment">// Call back funciton assumes query results in zero or more commands to send to the PMAC</span>
-<a name="l01126"></a>01126   <span class="comment">//</span>
-<a name="l01127"></a>01127   <span class="keywordtype">int</span> i;
-<a name="l01128"></a>01128   <span class="keywordtype">char</span> *sp;
-<a name="l01129"></a>01129   
-<a name="l01130"></a>01130   <span class="keywordflow">for</span>( i=0; i&lt;PQntuples( pgr); i++) {
-<a name="l01131"></a>01131     sp = PQgetvalue( pgr, i, 0);
-<a name="l01132"></a>01132     <span class="keywordflow">if</span>( sp != NULL &amp;&amp; *sp != 0) {
-<a name="l01133"></a>01133       <a class="code" href="lspmac_8c.html#aaa442d9bc7a3cdee39adea0724f0e18c" title="Send a one line command.">lspmac_SockSendline</a>( sp);
-<a name="l01134"></a>01134       <span class="comment">//</span>
-<a name="l01135"></a>01135       <span class="comment">// Keep asking for more until</span>
-<a name="l01136"></a>01136       <span class="comment">// there are no commands left</span>
-<a name="l01137"></a>01137       <span class="comment">// </span>
-<a name="l01138"></a>01138       <span class="comment">// This should solve a potential problem where</span>
-<a name="l01139"></a>01139       <span class="comment">// more than one command is put on the queue for a given notify.</span>
-<a name="l01140"></a>01140       <span class="comment">//</span>
-<a name="l01141"></a>01141       <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#a1e11f525ca0f9ac9ab71f9fbe983c42b" title="Send strings directly to PMAC queue.">lspg_cmd_cb</a>, <span class="stringliteral">&quot;select pmac.md2_queue_next()&quot;</span>);
-<a name="l01142"></a>01142     }
-<a name="l01143"></a>01143   }
-<a name="l01144"></a>01144 }
-<a name="l01145"></a>01145 
-<a name="l01146"></a>01146 
-<a name="l01149"></a><a class="code" href="lspg_8c.html#af6485ac1749c5de3008dd0e0badaa09c">01149</a> <span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#af6485ac1749c5de3008dd0e0badaa09c" title="Flush psql output buffer (ie, send the query).">lspg_flush</a>() {
-<a name="l01150"></a>01150   <span class="keywordtype">int</span> err;
-<a name="l01151"></a>01151 
-<a name="l01152"></a>01152   err = PQflush( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
-<a name="l01153"></a>01153   <span class="keywordflow">switch</span>( err) {
-<a name="l01154"></a>01154   <span class="keywordflow">case</span> -1:
-<a name="l01155"></a>01155     <span class="comment">// an error occured</span>
-<a name="l01156"></a>01156 
-<a name="l01157"></a>01157     <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b">lslogging_log_message</a>( <span class="stringliteral">&quot;flush failed: %s&quot;</span>, PQerrorMessage( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>));
-<a name="l01158"></a>01158 
-<a name="l01159"></a>01159     <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>;
-<a name="l01160"></a>01160     <span class="comment">//</span>
-<a name="l01161"></a>01161     <span class="comment">// We should probably reset the connection and start from scratch.  Probably the connection died.</span>
-<a name="l01162"></a>01162     <span class="comment">//</span>
-<a name="l01163"></a>01163     <span class="keywordflow">break</span>;
-<a name="l01164"></a>01164           
-<a name="l01165"></a>01165   <span class="keywordflow">case</span> 0:
-<a name="l01166"></a>01166     <span class="comment">// goodness and joy.</span>
-<a name="l01167"></a>01167     <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#a373e668840b4795ff9a71bc3f744d209">LS_PG_STATE_RECV</a>;
-<a name="l01168"></a>01168     <span class="keywordflow">break</span>;
-<a name="l01169"></a>01169 
-<a name="l01170"></a>01170   <span class="keywordflow">case</span> 1:
-<a name="l01171"></a>01171     <span class="comment">// more sending to do</span>
-<a name="l01172"></a>01172     <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#a88a7e80c12fb0449c4b0857a0c7deb21">LS_PG_STATE_SEND_FLUSH</a>;
-<a name="l01173"></a>01173     <span class="keywordflow">break</span>;
-<a name="l01174"></a>01174   }
-<a name="l01175"></a>01175 }
-<a name="l01176"></a>01176 
-<a name="l01179"></a><a class="code" href="lspg_8c.html#a714b15e117ffe7bfce4f2f2ce4725b0a">01179</a> <span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#a714b15e117ffe7bfce4f2f2ce4725b0a" title="send the next queued query to the DB server">lspg_send_next_query</a>() {
-<a name="l01180"></a>01180   <span class="comment">//</span>
-<a name="l01181"></a>01181   <span class="comment">// Normally we should be in the &quot;send&quot; state</span>
-<a name="l01182"></a>01182   <span class="comment">// but we can also send if we are servicing</span>
-<a name="l01183"></a>01183   <span class="comment">// a reply</span>
-<a name="l01184"></a>01184   <span class="comment">//</span>
-<a name="l01185"></a>01185 
-<a name="l01186"></a>01186   <a class="code" href="structlspgQueryQueueStruct.html" title="Store each query along with it&amp;#39;s callback function.">lspg_query_queue_t</a> *qqp;
-<a name="l01187"></a>01187   <span class="keywordtype">int</span> err;
-<a name="l01188"></a>01188 
-<a name="l01189"></a>01189   qqp = <a class="code" href="lspg_8c.html#ad5f3ec8f197cc330c83dba70f310533c" title="Return the next item in the postgresql queue.">lspg_query_next</a>();
-<a name="l01190"></a>01190   <span class="keywordflow">if</span>( qqp == NULL) {
-<a name="l01191"></a>01191     <span class="comment">//</span>
-<a name="l01192"></a>01192     <span class="comment">// A send without a query?  Should never happen.</span>
-<a name="l01193"></a>01193     <span class="comment">// But at least we shouldn&apos;t segfault if it does.</span>
-<a name="l01194"></a>01194     <span class="comment">//</span>
-<a name="l01195"></a>01195     <span class="keywordflow">return</span>;
-<a name="l01196"></a>01196   }
-<a name="l01197"></a>01197 
-<a name="l01198"></a>01198   <span class="keywordflow">if</span>( qqp-&gt;<a class="code" href="structlspgQueryQueueStruct.html#abf8c9c581b38a5e3e269eda69e47de15" title="our queries should all be pretty short as we&amp;#39;ll just be calling functions: fixed...">qs</a>[0] == 0) {
-<a name="l01199"></a>01199     <span class="comment">//</span>
-<a name="l01200"></a>01200     <span class="comment">// Do we really have to check this case?</span>
-<a name="l01201"></a>01201     <span class="comment">// It would only come up if we stupidly pushed an empty query string</span>
-<a name="l01202"></a>01202     <span class="comment">// or ran off the end of the queue</span>
-<a name="l01203"></a>01203     <span class="comment">//</span>
-<a name="l01204"></a>01204     <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b">lslogging_log_message</a>( <span class="stringliteral">&quot;Popped empty query string.  Probably bad things are going on.&quot;</span>);
+<a name="l01124"></a>01124   <span class="keywordtype">int</span> i;
+<a name="l01125"></a>01125 
+<a name="l01126"></a>01126   <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b">lslogging_log_message</a>( <span class="stringliteral">&quot;lspg_kvs_cb: %d tuples&quot;</span>, PQntuples(pgr));
+<a name="l01127"></a>01127 
+<a name="l01128"></a>01128   <span class="comment">// Even i is key  (the name)</span>
+<a name="l01129"></a>01129   <span class="comment">// Odd  i is value</span>
+<a name="l01130"></a>01130   <span class="comment">//</span>
+<a name="l01131"></a>01131   <span class="keywordflow">for</span>( i=0; i&lt;PQntuples(pgr)/2; i++) {
+<a name="l01132"></a>01132     <a class="code" href="lskvs_8c.html#ab04e99f92c761522972c4d80d85f4830">lskvs_set</a>( PQgetvalue( pgr, 2*i, 0), PQgetvalue( pgr, 2*i+1, 0));
+<a name="l01133"></a>01133   }
+<a name="l01134"></a>01134 }
+<a name="l01137"></a><a class="code" href="lspg_8c.html#a1e11f525ca0f9ac9ab71f9fbe983c42b">01137</a> <span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#a1e11f525ca0f9ac9ab71f9fbe983c42b" title="Send strings directly to PMAC queue.">lspg_cmd_cb</a>(
+<a name="l01138"></a>01138                  <a class="code" href="structlspgQueryQueueStruct.html" title="Store each query along with it&amp;#39;s callback function.">lspg_query_queue_t</a> *qqp,               
+<a name="l01139"></a>01139                  PGresult *pgr                          
+<a name="l01140"></a>01140                  ) {
+<a name="l01141"></a>01141   <span class="comment">//</span>
+<a name="l01142"></a>01142   <span class="comment">// Call back funciton assumes query results in zero or more commands to send to the PMAC</span>
+<a name="l01143"></a>01143   <span class="comment">//</span>
+<a name="l01144"></a>01144   <span class="keywordtype">int</span> i;
+<a name="l01145"></a>01145   <span class="keywordtype">char</span> *sp;
+<a name="l01146"></a>01146   
+<a name="l01147"></a>01147   <span class="keywordflow">for</span>( i=0; i&lt;PQntuples( pgr); i++) {
+<a name="l01148"></a>01148     sp = PQgetvalue( pgr, i, 0);
+<a name="l01149"></a>01149     <span class="keywordflow">if</span>( sp != NULL &amp;&amp; *sp != 0) {
+<a name="l01150"></a>01150       <a class="code" href="lspmac_8c.html#aaa442d9bc7a3cdee39adea0724f0e18c" title="Send a one line command.">lspmac_SockSendline</a>( sp);
+<a name="l01151"></a>01151       <span class="comment">//</span>
+<a name="l01152"></a>01152       <span class="comment">// Keep asking for more until</span>
+<a name="l01153"></a>01153       <span class="comment">// there are no commands left</span>
+<a name="l01154"></a>01154       <span class="comment">// </span>
+<a name="l01155"></a>01155       <span class="comment">// This should solve a potential problem where</span>
+<a name="l01156"></a>01156       <span class="comment">// more than one command is put on the queue for a given notify.</span>
+<a name="l01157"></a>01157       <span class="comment">//</span>
+<a name="l01158"></a>01158       <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#a1e11f525ca0f9ac9ab71f9fbe983c42b" title="Send strings directly to PMAC queue.">lspg_cmd_cb</a>, <span class="stringliteral">&quot;select pmac.md2_queue_next()&quot;</span>);
+<a name="l01159"></a>01159     }
+<a name="l01160"></a>01160   }
+<a name="l01161"></a>01161 }
+<a name="l01162"></a>01162 
+<a name="l01163"></a>01163 
+<a name="l01166"></a><a class="code" href="lspg_8c.html#af6485ac1749c5de3008dd0e0badaa09c">01166</a> <span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#af6485ac1749c5de3008dd0e0badaa09c" title="Flush psql output buffer (ie, send the query).">lspg_flush</a>() {
+<a name="l01167"></a>01167   <span class="keywordtype">int</span> err;
+<a name="l01168"></a>01168 
+<a name="l01169"></a>01169   err = PQflush( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
+<a name="l01170"></a>01170   <span class="keywordflow">switch</span>( err) {
+<a name="l01171"></a>01171   <span class="keywordflow">case</span> -1:
+<a name="l01172"></a>01172     <span class="comment">// an error occured</span>
+<a name="l01173"></a>01173 
+<a name="l01174"></a>01174     <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b">lslogging_log_message</a>( <span class="stringliteral">&quot;flush failed: %s&quot;</span>, PQerrorMessage( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>));
+<a name="l01175"></a>01175 
+<a name="l01176"></a>01176     <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>;
+<a name="l01177"></a>01177     <span class="comment">//</span>
+<a name="l01178"></a>01178     <span class="comment">// We should probably reset the connection and start from scratch.  Probably the connection died.</span>
+<a name="l01179"></a>01179     <span class="comment">//</span>
+<a name="l01180"></a>01180     <span class="keywordflow">break</span>;
+<a name="l01181"></a>01181           
+<a name="l01182"></a>01182   <span class="keywordflow">case</span> 0:
+<a name="l01183"></a>01183     <span class="comment">// goodness and joy.</span>
+<a name="l01184"></a>01184     <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#a373e668840b4795ff9a71bc3f744d209">LS_PG_STATE_RECV</a>;
+<a name="l01185"></a>01185     <span class="keywordflow">break</span>;
+<a name="l01186"></a>01186 
+<a name="l01187"></a>01187   <span class="keywordflow">case</span> 1:
+<a name="l01188"></a>01188     <span class="comment">// more sending to do</span>
+<a name="l01189"></a>01189     <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#a88a7e80c12fb0449c4b0857a0c7deb21">LS_PG_STATE_SEND_FLUSH</a>;
+<a name="l01190"></a>01190     <span class="keywordflow">break</span>;
+<a name="l01191"></a>01191   }
+<a name="l01192"></a>01192 }
+<a name="l01193"></a>01193 
+<a name="l01196"></a><a class="code" href="lspg_8c.html#a714b15e117ffe7bfce4f2f2ce4725b0a">01196</a> <span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#a714b15e117ffe7bfce4f2f2ce4725b0a" title="send the next queued query to the DB server">lspg_send_next_query</a>() {
+<a name="l01197"></a>01197   <span class="comment">//</span>
+<a name="l01198"></a>01198   <span class="comment">// Normally we should be in the &quot;send&quot; state</span>
+<a name="l01199"></a>01199   <span class="comment">// but we can also send if we are servicing</span>
+<a name="l01200"></a>01200   <span class="comment">// a reply</span>
+<a name="l01201"></a>01201   <span class="comment">//</span>
+<a name="l01202"></a>01202 
+<a name="l01203"></a>01203   <a class="code" href="structlspgQueryQueueStruct.html" title="Store each query along with it&amp;#39;s callback function.">lspg_query_queue_t</a> *qqp;
+<a name="l01204"></a>01204   <span class="keywordtype">int</span> err;
 <a name="l01205"></a>01205 
-<a name="l01206"></a>01206     <a class="code" href="lspg_8c.html#a3847589e641f7e16a0cd68ef30e37cca" title="Remove the oldest item in the queue.">lspg_query_reply_next</a>();
-<a name="l01207"></a>01207     <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>;
-<a name="l01208"></a>01208   } <span class="keywordflow">else</span> {
-<a name="l01209"></a>01209     err = PQsendQuery( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>, qqp-&gt;<a class="code" href="structlspgQueryQueueStruct.html#abf8c9c581b38a5e3e269eda69e47de15" title="our queries should all be pretty short as we&amp;#39;ll just be calling functions: fixed...">qs</a>);
-<a name="l01210"></a>01210     <span class="keywordflow">if</span>( err == 0) {
-<a name="l01211"></a>01211       <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b">lslogging_log_message</a>( <span class="stringliteral">&quot;query failed: %s\n&quot;</span>, PQerrorMessage( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>));
-<a name="l01212"></a>01212 
-<a name="l01213"></a>01213       <span class="comment">//</span>
-<a name="l01214"></a>01214       <span class="comment">// Don&apos;t wait for a reply, just reset the connection</span>
-<a name="l01215"></a>01215       <span class="comment">//</span>
-<a name="l01216"></a>01216       <a class="code" href="lspg_8c.html#a3847589e641f7e16a0cd68ef30e37cca" title="Remove the oldest item in the queue.">lspg_query_reply_next</a>();
-<a name="l01217"></a>01217       <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;
-<a name="l01218"></a>01218     } <span class="keywordflow">else</span> {
-<a name="l01219"></a>01219       <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#a88a7e80c12fb0449c4b0857a0c7deb21">LS_PG_STATE_SEND_FLUSH</a>;
-<a name="l01220"></a>01220     }
-<a name="l01221"></a>01221   }
-<a name="l01222"></a>01222 }
-<a name="l01223"></a>01223 
-<a name="l01226"></a><a class="code" href="lspg_8c.html#a038c5af23469b789fc1c55d21cb43029">01226</a> <span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#a038c5af23469b789fc1c55d21cb43029" title="Receive a result of a query.">lspg_receive</a>() {
-<a name="l01227"></a>01227   PGresult *pgr;
-<a name="l01228"></a>01228   <a class="code" href="structlspgQueryQueueStruct.html" title="Store each query along with it&amp;#39;s callback function.">lspg_query_queue_t</a> *qqp;
-<a name="l01229"></a>01229   <span class="keywordtype">int</span> err;
-<a name="l01230"></a>01230 
-<a name="l01231"></a>01231   err = PQconsumeInput( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
-<a name="l01232"></a>01232   <span class="keywordflow">if</span>( err != 1) {
-<a name="l01233"></a>01233     <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b">lslogging_log_message</a>( <span class="stringliteral">&quot;consume input failed: %s&quot;</span>, PQerrorMessage( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>));
-<a name="l01234"></a>01234     <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;
-<a name="l01235"></a>01235     <span class="keywordflow">return</span>;
-<a name="l01236"></a>01236   }
-<a name="l01237"></a>01237 
-<a name="l01238"></a>01238   <span class="comment">//</span>
-<a name="l01239"></a>01239   <span class="comment">// We must call PQgetResult until it returns NULL before sending the next query</span>
-<a name="l01240"></a>01240   <span class="comment">// This implies that only one query can ever be active at a time and our queue</span>
-<a name="l01241"></a>01241   <span class="comment">// management should be simple</span>
-<a name="l01242"></a>01242   <span class="comment">//</span>
-<a name="l01243"></a>01243   <span class="comment">// We should be in the LS_PG_STATE_RECV here</span>
-<a name="l01244"></a>01244   <span class="comment">//</span>
-<a name="l01245"></a>01245 
-<a name="l01246"></a>01246   <span class="keywordflow">while</span>( !PQisBusy( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>)) {
-<a name="l01247"></a>01247     pgr = PQgetResult( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
-<a name="l01248"></a>01248     <span class="keywordflow">if</span>( pgr == NULL) {
-<a name="l01249"></a>01249       <a class="code" href="lspg_8c.html#a3847589e641f7e16a0cd68ef30e37cca" title="Remove the oldest item in the queue.">lspg_query_reply_next</a>();
-<a name="l01250"></a>01250       <span class="comment">//</span>
-<a name="l01251"></a>01251       <span class="comment">// we are now done reading the response from the database</span>
-<a name="l01252"></a>01252       <span class="comment">//</span>
-<a name="l01253"></a>01253       <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>;
-<a name="l01254"></a>01254       <span class="keywordflow">break</span>;
-<a name="l01255"></a>01255     } <span class="keywordflow">else</span> {
-<a name="l01256"></a>01256       ExecStatusType es;
-<a name="l01257"></a>01257 
-<a name="l01258"></a>01258       qqp = <a class="code" href="lspg_8c.html#ae6bf4f54117bedf903360883bb32699f" title="Return the next item in the reply queue but don&amp;#39;t pop it since we may need it...">lspg_query_reply_peek</a>();
-<a name="l01259"></a>01259       es = PQresultStatus( pgr);
-<a name="l01260"></a>01260 
-<a name="l01261"></a>01261       <span class="keywordflow">if</span>( es != PGRES_COMMAND_OK &amp;&amp; es != PGRES_TUPLES_OK) {
-<a name="l01262"></a>01262         <span class="keywordtype">char</span> *emess;
-<a name="l01263"></a>01263         emess = PQresultErrorMessage( pgr);
-<a name="l01264"></a>01264         <span class="keywordflow">if</span>( emess != NULL &amp;&amp; emess[0] != 0) {
-<a name="l01265"></a>01265           <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b">lslogging_log_message</a>( <span class="stringliteral">&quot;Error from query &apos;%s&apos;:\n%s&quot;</span>, qqp-&gt;<a class="code" href="structlspgQueryQueueStruct.html#abf8c9c581b38a5e3e269eda69e47de15" title="our queries should all be pretty short as we&amp;#39;ll just be calling functions: fixed...">qs</a>, emess);
-<a name="l01266"></a>01266         }
-<a name="l01267"></a>01267       } <span class="keywordflow">else</span> {
-<a name="l01268"></a>01268         <span class="comment">//</span>
-<a name="l01269"></a>01269         <span class="comment">// Deal with the response</span>
-<a name="l01270"></a>01270         <span class="comment">//</span>
-<a name="l01271"></a>01271         <span class="comment">// If the response is likely to take awhile we should probably</span>
-<a name="l01272"></a>01272         <span class="comment">// add a new state and put something in the main look to run the onResponse</span>
-<a name="l01273"></a>01273         <span class="comment">// routine in the main loop.  For now, though, we only expect very brief onResponse routines</span>
-<a name="l01274"></a>01274         <span class="comment">//</span>
-<a name="l01275"></a>01275         <span class="keywordflow">if</span>( qqp != NULL &amp;&amp; qqp-&gt;<a class="code" href="structlspgQueryQueueStruct.html#a53bac5ae4cab775423940bff5092a831" title="Callback function for when a query returns a result.">onResponse</a> != NULL)
-<a name="l01276"></a>01276           qqp-&gt;<a class="code" href="structlspgQueryQueueStruct.html#a53bac5ae4cab775423940bff5092a831" title="Callback function for when a query returns a result.">onResponse</a>( qqp, pgr);
-<a name="l01277"></a>01277       }
-<a name="l01278"></a>01278       PQclear( pgr);
-<a name="l01279"></a>01279     }
-<a name="l01280"></a>01280   }
-<a name="l01281"></a>01281 }
-<a name="l01282"></a>01282 
-<a name="l01287"></a><a class="code" href="lspg_8c.html#a049f4422994aa2eb2b841ffb2937f895">01287</a> <span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#a049f4422994aa2eb2b841ffb2937f895" title="Service a signal Signals here are treated as file descriptors and fits into our poll...">lspg_sig_service</a>(
-<a name="l01288"></a>01288                       <span class="keyword">struct</span> pollfd *evt                
-<a name="l01289"></a>01289                       ) {
-<a name="l01290"></a>01290   <span class="keyword">struct </span>signalfd_siginfo fdsi;
-<a name="l01291"></a>01291 
-<a name="l01292"></a>01292   <span class="comment">//</span>
-<a name="l01293"></a>01293   <span class="comment">// Really, we don&apos;t care about the signal,</span>
-<a name="l01294"></a>01294   <span class="comment">// it&apos;s just used to drop out of the poll</span>
-<a name="l01295"></a>01295   <span class="comment">// function when there is something for us</span>
-<a name="l01296"></a>01296   <span class="comment">// to do that didn&apos;t invovle something coming</span>
-<a name="l01297"></a>01297   <span class="comment">// from our postgresql server.</span>
-<a name="l01298"></a>01298   <span class="comment">//</span>
-<a name="l01299"></a>01299   <span class="comment">// This is accompished by the query_push function</span>
-<a name="l01300"></a>01300   <span class="comment">// to notify us that a new query is ready.</span>
-<a name="l01301"></a>01301   <span class="comment">//</span>
-<a name="l01302"></a>01302 
-<a name="l01303"></a>01303   read( evt-&gt;fd, &amp;fdsi, <span class="keyword">sizeof</span>( <span class="keyword">struct</span> signalfd_siginfo));
-<a name="l01304"></a>01304 
-<a name="l01305"></a>01305 }
-<a name="l01306"></a>01306 
-<a name="l01309"></a><a class="code" href="lspg_8c.html#aa8d1fed4b461c2139a21826d524777d5">01309</a> <span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#aa8d1fed4b461c2139a21826d524777d5" title="I/O control to/from the postgresql server.">lspg_pg_service</a>(
-<a name="l01310"></a>01310                      <span class="keyword">struct</span> pollfd *evt                 
-<a name="l01311"></a>01311                      ) {
-<a name="l01312"></a>01312   <span class="comment">//</span>
-<a name="l01313"></a>01313   <span class="comment">// Currently just used to check for notifies</span>
-<a name="l01314"></a>01314   <span class="comment">// Other socket communication is done syncronously</span>
-<a name="l01315"></a>01315   <span class="comment">// Reconsider this if we start using the pmac gather functions</span>
-<a name="l01316"></a>01316   <span class="comment">// since we&apos;ll want to be servicing those sockets ASAP</span>
-<a name="l01317"></a>01317   <span class="comment">//</span>
-<a name="l01318"></a>01318 
-<a name="l01319"></a>01319   <span class="keywordflow">if</span>( evt-&gt;revents &amp; POLLIN) {
-<a name="l01320"></a>01320     <span class="keywordtype">int</span> err;
+<a name="l01206"></a>01206   qqp = <a class="code" href="lspg_8c.html#ad5f3ec8f197cc330c83dba70f310533c" title="Return the next item in the postgresql queue.">lspg_query_next</a>();
+<a name="l01207"></a>01207   <span class="keywordflow">if</span>( qqp == NULL) {
+<a name="l01208"></a>01208     <span class="comment">//</span>
+<a name="l01209"></a>01209     <span class="comment">// A send without a query?  Should never happen.</span>
+<a name="l01210"></a>01210     <span class="comment">// But at least we shouldn&apos;t segfault if it does.</span>
+<a name="l01211"></a>01211     <span class="comment">//</span>
+<a name="l01212"></a>01212     <span class="keywordflow">return</span>;
+<a name="l01213"></a>01213   }
+<a name="l01214"></a>01214 
+<a name="l01215"></a>01215   <span class="keywordflow">if</span>( qqp-&gt;<a class="code" href="structlspgQueryQueueStruct.html#abf8c9c581b38a5e3e269eda69e47de15" title="our queries should all be pretty short as we&amp;#39;ll just be calling functions: fixed...">qs</a>[0] == 0) {
+<a name="l01216"></a>01216     <span class="comment">//</span>
+<a name="l01217"></a>01217     <span class="comment">// Do we really have to check this case?</span>
+<a name="l01218"></a>01218     <span class="comment">// It would only come up if we stupidly pushed an empty query string</span>
+<a name="l01219"></a>01219     <span class="comment">// or ran off the end of the queue</span>
+<a name="l01220"></a>01220     <span class="comment">//</span>
+<a name="l01221"></a>01221     <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b">lslogging_log_message</a>( <span class="stringliteral">&quot;Popped empty query string.  Probably bad things are going on.&quot;</span>);
+<a name="l01222"></a>01222 
+<a name="l01223"></a>01223     <a class="code" href="lspg_8c.html#a3847589e641f7e16a0cd68ef30e37cca" title="Remove the oldest item in the queue.">lspg_query_reply_next</a>();
+<a name="l01224"></a>01224     <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>;
+<a name="l01225"></a>01225   } <span class="keywordflow">else</span> {
+<a name="l01226"></a>01226     err = PQsendQuery( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>, qqp-&gt;<a class="code" href="structlspgQueryQueueStruct.html#abf8c9c581b38a5e3e269eda69e47de15" title="our queries should all be pretty short as we&amp;#39;ll just be calling functions: fixed...">qs</a>);
+<a name="l01227"></a>01227     <span class="keywordflow">if</span>( err == 0) {
+<a name="l01228"></a>01228       <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b">lslogging_log_message</a>( <span class="stringliteral">&quot;query failed: %s\n&quot;</span>, PQerrorMessage( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>));
+<a name="l01229"></a>01229 
+<a name="l01230"></a>01230       <span class="comment">//</span>
+<a name="l01231"></a>01231       <span class="comment">// Don&apos;t wait for a reply, just reset the connection</span>
+<a name="l01232"></a>01232       <span class="comment">//</span>
+<a name="l01233"></a>01233       <a class="code" href="lspg_8c.html#a3847589e641f7e16a0cd68ef30e37cca" title="Remove the oldest item in the queue.">lspg_query_reply_next</a>();
+<a name="l01234"></a>01234       <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;
+<a name="l01235"></a>01235     } <span class="keywordflow">else</span> {
+<a name="l01236"></a>01236       <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#a88a7e80c12fb0449c4b0857a0c7deb21">LS_PG_STATE_SEND_FLUSH</a>;
+<a name="l01237"></a>01237     }
+<a name="l01238"></a>01238   }
+<a name="l01239"></a>01239 }
+<a name="l01240"></a>01240 
+<a name="l01243"></a><a class="code" href="lspg_8c.html#a038c5af23469b789fc1c55d21cb43029">01243</a> <span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#a038c5af23469b789fc1c55d21cb43029" title="Receive a result of a query.">lspg_receive</a>() {
+<a name="l01244"></a>01244   PGresult *pgr;
+<a name="l01245"></a>01245   <a class="code" href="structlspgQueryQueueStruct.html" title="Store each query along with it&amp;#39;s callback function.">lspg_query_queue_t</a> *qqp;
+<a name="l01246"></a>01246   <span class="keywordtype">int</span> err;
+<a name="l01247"></a>01247 
+<a name="l01248"></a>01248   err = PQconsumeInput( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
+<a name="l01249"></a>01249   <span class="keywordflow">if</span>( err != 1) {
+<a name="l01250"></a>01250     <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b">lslogging_log_message</a>( <span class="stringliteral">&quot;consume input failed: %s&quot;</span>, PQerrorMessage( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>));
+<a name="l01251"></a>01251     <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;
+<a name="l01252"></a>01252     <span class="keywordflow">return</span>;
+<a name="l01253"></a>01253   }
+<a name="l01254"></a>01254 
+<a name="l01255"></a>01255   <span class="comment">//</span>
+<a name="l01256"></a>01256   <span class="comment">// We must call PQgetResult until it returns NULL before sending the next query</span>
+<a name="l01257"></a>01257   <span class="comment">// This implies that only one query can ever be active at a time and our queue</span>
+<a name="l01258"></a>01258   <span class="comment">// management should be simple</span>
+<a name="l01259"></a>01259   <span class="comment">//</span>
+<a name="l01260"></a>01260   <span class="comment">// We should be in the LS_PG_STATE_RECV here</span>
+<a name="l01261"></a>01261   <span class="comment">//</span>
+<a name="l01262"></a>01262 
+<a name="l01263"></a>01263   <span class="keywordflow">while</span>( !PQisBusy( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>)) {
+<a name="l01264"></a>01264     pgr = PQgetResult( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
+<a name="l01265"></a>01265     <span class="keywordflow">if</span>( pgr == NULL) {
+<a name="l01266"></a>01266       <a class="code" href="lspg_8c.html#a3847589e641f7e16a0cd68ef30e37cca" title="Remove the oldest item in the queue.">lspg_query_reply_next</a>();
+<a name="l01267"></a>01267       <span class="comment">//</span>
+<a name="l01268"></a>01268       <span class="comment">// we are now done reading the response from the database</span>
+<a name="l01269"></a>01269       <span class="comment">//</span>
+<a name="l01270"></a>01270       <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>;
+<a name="l01271"></a>01271       <span class="keywordflow">break</span>;
+<a name="l01272"></a>01272     } <span class="keywordflow">else</span> {
+<a name="l01273"></a>01273       ExecStatusType es;
+<a name="l01274"></a>01274 
+<a name="l01275"></a>01275       qqp = <a class="code" href="lspg_8c.html#ae6bf4f54117bedf903360883bb32699f" title="Return the next item in the reply queue but don&amp;#39;t pop it since we may need it...">lspg_query_reply_peek</a>();
+<a name="l01276"></a>01276       es = PQresultStatus( pgr);
+<a name="l01277"></a>01277 
+<a name="l01278"></a>01278       <span class="keywordflow">if</span>( es != PGRES_COMMAND_OK &amp;&amp; es != PGRES_TUPLES_OK) {
+<a name="l01279"></a>01279         <span class="keywordtype">char</span> *emess;
+<a name="l01280"></a>01280         emess = PQresultErrorMessage( pgr);
+<a name="l01281"></a>01281         <span class="keywordflow">if</span>( emess != NULL &amp;&amp; emess[0] != 0) {
+<a name="l01282"></a>01282           <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b">lslogging_log_message</a>( <span class="stringliteral">&quot;Error from query &apos;%s&apos;:\n%s&quot;</span>, qqp-&gt;<a class="code" href="structlspgQueryQueueStruct.html#abf8c9c581b38a5e3e269eda69e47de15" title="our queries should all be pretty short as we&amp;#39;ll just be calling functions: fixed...">qs</a>, emess);
+<a name="l01283"></a>01283         }
+<a name="l01284"></a>01284       } <span class="keywordflow">else</span> {
+<a name="l01285"></a>01285         <span class="comment">//</span>
+<a name="l01286"></a>01286         <span class="comment">// Deal with the response</span>
+<a name="l01287"></a>01287         <span class="comment">//</span>
+<a name="l01288"></a>01288         <span class="comment">// If the response is likely to take awhile we should probably</span>
+<a name="l01289"></a>01289         <span class="comment">// add a new state and put something in the main look to run the onResponse</span>
+<a name="l01290"></a>01290         <span class="comment">// routine in the main loop.  For now, though, we only expect very brief onResponse routines</span>
+<a name="l01291"></a>01291         <span class="comment">//</span>
+<a name="l01292"></a>01292         <span class="keywordflow">if</span>( qqp != NULL &amp;&amp; qqp-&gt;<a class="code" href="structlspgQueryQueueStruct.html#a53bac5ae4cab775423940bff5092a831" title="Callback function for when a query returns a result.">onResponse</a> != NULL)
+<a name="l01293"></a>01293           qqp-&gt;<a class="code" href="structlspgQueryQueueStruct.html#a53bac5ae4cab775423940bff5092a831" title="Callback function for when a query returns a result.">onResponse</a>( qqp, pgr);
+<a name="l01294"></a>01294       }
+<a name="l01295"></a>01295       PQclear( pgr);
+<a name="l01296"></a>01296     }
+<a name="l01297"></a>01297   }
+<a name="l01298"></a>01298 }
+<a name="l01299"></a>01299 
+<a name="l01304"></a><a class="code" href="lspg_8c.html#a049f4422994aa2eb2b841ffb2937f895">01304</a> <span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#a049f4422994aa2eb2b841ffb2937f895" title="Service a signal Signals here are treated as file descriptors and fits into our poll...">lspg_sig_service</a>(
+<a name="l01305"></a>01305                       <span class="keyword">struct</span> pollfd *evt                
+<a name="l01306"></a>01306                       ) {
+<a name="l01307"></a>01307   <span class="keyword">struct </span>signalfd_siginfo fdsi;
+<a name="l01308"></a>01308 
+<a name="l01309"></a>01309   <span class="comment">//</span>
+<a name="l01310"></a>01310   <span class="comment">// Really, we don&apos;t care about the signal,</span>
+<a name="l01311"></a>01311   <span class="comment">// it&apos;s just used to drop out of the poll</span>
+<a name="l01312"></a>01312   <span class="comment">// function when there is something for us</span>
+<a name="l01313"></a>01313   <span class="comment">// to do that didn&apos;t invovle something coming</span>
+<a name="l01314"></a>01314   <span class="comment">// from our postgresql server.</span>
+<a name="l01315"></a>01315   <span class="comment">//</span>
+<a name="l01316"></a>01316   <span class="comment">// This is accompished by the query_push function</span>
+<a name="l01317"></a>01317   <span class="comment">// to notify us that a new query is ready.</span>
+<a name="l01318"></a>01318   <span class="comment">//</span>
+<a name="l01319"></a>01319 
+<a name="l01320"></a>01320   read( evt-&gt;fd, &amp;fdsi, <span class="keyword">sizeof</span>( <span class="keyword">struct</span> signalfd_siginfo));
 <a name="l01321"></a>01321 
-<a name="l01322"></a>01322     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#ae7ea5876846b5f04c419aee22d3c0aa1">LS_PG_STATE_INIT_POLL</a>) {
-<a name="l01323"></a>01323       <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> = PQconnectPoll( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
-<a name="l01324"></a>01324       <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> == PGRES_POLLING_FAILED) {
-<a name="l01325"></a>01325         <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;
-<a name="l01326"></a>01326       }
-<a name="l01327"></a>01327       <span class="keywordflow">return</span>;
-<a name="l01328"></a>01328     }
-<a name="l01329"></a>01329 
-<a name="l01330"></a>01330     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#ac70a1141f3b138055ea7143bd493187c">LS_PG_STATE_RESET_POLL</a>) {
-<a name="l01331"></a>01331       <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> = PQresetPoll( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
-<a name="l01332"></a>01332       <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> == PGRES_POLLING_FAILED) {
-<a name="l01333"></a>01333         <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;
-<a name="l01334"></a>01334       }
-<a name="l01335"></a>01335       <span class="keywordflow">return</span>;
-<a name="l01336"></a>01336     }
-<a name="l01337"></a>01337 
-<a name="l01338"></a>01338 
-<a name="l01339"></a>01339     <span class="comment">//</span>
-<a name="l01340"></a>01340     <span class="comment">// if in IDLE or RECV we need to call consumeInput first</span>
-<a name="l01341"></a>01341     <span class="comment">//</span>
-<a name="l01342"></a>01342     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>) {
-<a name="l01343"></a>01343       err = PQconsumeInput( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
-<a name="l01344"></a>01344       <span class="keywordflow">if</span>( err != 1) {
-<a name="l01345"></a>01345         <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b">lslogging_log_message</a>( <span class="stringliteral">&quot;consume input failed: %s&quot;</span>, PQerrorMessage( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>));
-<a name="l01346"></a>01346         <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;
-<a name="l01347"></a>01347         <span class="keywordflow">return</span>;
-<a name="l01348"></a>01348       }
-<a name="l01349"></a>01349     }      
-<a name="l01350"></a>01350 
-<a name="l01351"></a>01351     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#a373e668840b4795ff9a71bc3f744d209">LS_PG_STATE_RECV</a>) {
-<a name="l01352"></a>01352       <a class="code" href="lspg_8c.html#a038c5af23469b789fc1c55d21cb43029" title="Receive a result of a query.">lspg_receive</a>();
-<a name="l01353"></a>01353     }
-<a name="l01354"></a>01354 
-<a name="l01355"></a>01355     <span class="comment">//</span>
-<a name="l01356"></a>01356     <span class="comment">// Check for notifies regardless of our state</span>
-<a name="l01357"></a>01357     <span class="comment">// Push as many requests as we have notifies.</span>
-<a name="l01358"></a>01358     <span class="comment">//</span>
-<a name="l01359"></a>01359     {
-<a name="l01360"></a>01360       PGnotify *pgn;
-<a name="l01361"></a>01361 
-<a name="l01362"></a>01362       <span class="keywordflow">while</span>( 1) {
-<a name="l01363"></a>01363         pgn = PQnotifies( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
-<a name="l01364"></a>01364         <span class="keywordflow">if</span>( pgn == NULL)
-<a name="l01365"></a>01365           <span class="keywordflow">break</span>;
-<a name="l01366"></a>01366         
-<a name="l01367"></a>01367         <span class="keywordflow">if</span>( strstr( pgn-&gt;relname, <span class="stringliteral">&quot;_pmac&quot;</span>) != NULL) {
-<a name="l01368"></a>01368           <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#a1e11f525ca0f9ac9ab71f9fbe983c42b" title="Send strings directly to PMAC queue.">lspg_cmd_cb</a>, <span class="stringliteral">&quot;SELECT pmac.md2_queue_next()&quot;</span>);
-<a name="l01369"></a>01369         } <span class="keywordflow">else</span> {
-<a name="l01370"></a>01370           <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#aeda8dad89b03d7d61cc994dd63ee5db6" title="Queue the next MD2 instruction.">lspg_nextaction_cb</a>, <span class="stringliteral">&quot;SELECT action FROM px.nextaction()&quot;</span>);
-<a name="l01371"></a>01371         }
-<a name="l01372"></a>01372         PQfreemem( pgn);
-<a name="l01373"></a>01373       }
-<a name="l01374"></a>01374     }
-<a name="l01375"></a>01375   }
+<a name="l01322"></a>01322 }
+<a name="l01323"></a>01323 
+<a name="l01326"></a><a class="code" href="lspg_8c.html#aa8d1fed4b461c2139a21826d524777d5">01326</a> <span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#aa8d1fed4b461c2139a21826d524777d5" title="I/O control to/from the postgresql server.">lspg_pg_service</a>(
+<a name="l01327"></a>01327                      <span class="keyword">struct</span> pollfd *evt                 
+<a name="l01328"></a>01328                      ) {
+<a name="l01329"></a>01329   <span class="comment">//</span>
+<a name="l01330"></a>01330   <span class="comment">// Currently just used to check for notifies</span>
+<a name="l01331"></a>01331   <span class="comment">// Other socket communication is done syncronously</span>
+<a name="l01332"></a>01332   <span class="comment">//</span>
+<a name="l01333"></a>01333 
+<a name="l01334"></a>01334   <span class="keywordflow">if</span>( evt-&gt;revents &amp; POLLIN) {
+<a name="l01335"></a>01335     <span class="keywordtype">int</span> err;
+<a name="l01336"></a>01336 
+<a name="l01337"></a>01337     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#ae7ea5876846b5f04c419aee22d3c0aa1">LS_PG_STATE_INIT_POLL</a>) {
+<a name="l01338"></a>01338       <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> = PQconnectPoll( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
+<a name="l01339"></a>01339       <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> == PGRES_POLLING_FAILED) {
+<a name="l01340"></a>01340         <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;
+<a name="l01341"></a>01341       }
+<a name="l01342"></a>01342       <span class="keywordflow">return</span>;
+<a name="l01343"></a>01343     }
+<a name="l01344"></a>01344 
+<a name="l01345"></a>01345     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#ac70a1141f3b138055ea7143bd493187c">LS_PG_STATE_RESET_POLL</a>) {
+<a name="l01346"></a>01346       <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> = PQresetPoll( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
+<a name="l01347"></a>01347       <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> == PGRES_POLLING_FAILED) {
+<a name="l01348"></a>01348         <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;
+<a name="l01349"></a>01349       }
+<a name="l01350"></a>01350       <span class="keywordflow">return</span>;
+<a name="l01351"></a>01351     }
+<a name="l01352"></a>01352 
+<a name="l01353"></a>01353 
+<a name="l01354"></a>01354     <span class="comment">//</span>
+<a name="l01355"></a>01355     <span class="comment">// if in IDLE or RECV we need to call consumeInput first</span>
+<a name="l01356"></a>01356     <span class="comment">//</span>
+<a name="l01357"></a>01357     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>) {
+<a name="l01358"></a>01358       err = PQconsumeInput( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
+<a name="l01359"></a>01359       <span class="keywordflow">if</span>( err != 1) {
+<a name="l01360"></a>01360         <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b">lslogging_log_message</a>( <span class="stringliteral">&quot;consume input failed: %s&quot;</span>, PQerrorMessage( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>));
+<a name="l01361"></a>01361         <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;
+<a name="l01362"></a>01362         <span class="keywordflow">return</span>;
+<a name="l01363"></a>01363       }
+<a name="l01364"></a>01364     }      
+<a name="l01365"></a>01365 
+<a name="l01366"></a>01366     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#a373e668840b4795ff9a71bc3f744d209">LS_PG_STATE_RECV</a>) {
+<a name="l01367"></a>01367       <a class="code" href="lspg_8c.html#a038c5af23469b789fc1c55d21cb43029" title="Receive a result of a query.">lspg_receive</a>();
+<a name="l01368"></a>01368     }
+<a name="l01369"></a>01369 
+<a name="l01370"></a>01370     <span class="comment">//</span>
+<a name="l01371"></a>01371     <span class="comment">// Check for notifies regardless of our state</span>
+<a name="l01372"></a>01372     <span class="comment">// Push as many requests as we have notifies.</span>
+<a name="l01373"></a>01373     <span class="comment">//</span>
+<a name="l01374"></a>01374     {
+<a name="l01375"></a>01375       PGnotify *pgn;
 <a name="l01376"></a>01376 
-<a name="l01377"></a>01377   <span class="keywordflow">if</span>( evt-&gt;revents &amp; POLLOUT) {
-<a name="l01378"></a>01378 
-<a name="l01379"></a>01379     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#ae7ea5876846b5f04c419aee22d3c0aa1">LS_PG_STATE_INIT_POLL</a>) {
-<a name="l01380"></a>01380       <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> = PQconnectPoll( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
-<a name="l01381"></a>01381       <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> == PGRES_POLLING_FAILED) {
-<a name="l01382"></a>01382         <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;
-<a name="l01383"></a>01383       }
-<a name="l01384"></a>01384       <span class="keywordflow">return</span>;
-<a name="l01385"></a>01385     }
-<a name="l01386"></a>01386 
-<a name="l01387"></a>01387     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#ac70a1141f3b138055ea7143bd493187c">LS_PG_STATE_RESET_POLL</a>) {
-<a name="l01388"></a>01388       <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> = PQresetPoll( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
-<a name="l01389"></a>01389       <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> == PGRES_POLLING_FAILED) {
-<a name="l01390"></a>01390         <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;
-<a name="l01391"></a>01391       }
-<a name="l01392"></a>01392       <span class="keywordflow">return</span>;
-<a name="l01393"></a>01393     }
-<a name="l01394"></a>01394 
+<a name="l01377"></a>01377       <span class="keywordflow">while</span>( 1) {
+<a name="l01378"></a>01378         pgn = PQnotifies( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
+<a name="l01379"></a>01379         <span class="keywordflow">if</span>( pgn == NULL)
+<a name="l01380"></a>01380           <span class="keywordflow">break</span>;
+<a name="l01381"></a>01381         
+<a name="l01382"></a>01382         <span class="keywordflow">if</span>( strstr( pgn-&gt;relname, <span class="stringliteral">&quot;_pmac&quot;</span>) != NULL) {
+<a name="l01383"></a>01383           <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#a1e11f525ca0f9ac9ab71f9fbe983c42b" title="Send strings directly to PMAC queue.">lspg_cmd_cb</a>, <span class="stringliteral">&quot;SELECT pmac.md2_queue_next()&quot;</span>);
+<a name="l01384"></a>01384         } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strstr( pgn-&gt;relname, <span class="stringliteral">&quot;_diff&quot;</span>) != NULL) {
+<a name="l01385"></a>01385           <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#aeda8dad89b03d7d61cc994dd63ee5db6" title="Queue the next MD2 instruction.">lspg_nextaction_cb</a>, <span class="stringliteral">&quot;SELECT action FROM px.nextaction()&quot;</span>);
+<a name="l01386"></a>01386         } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strstr( pgn-&gt;relname, <span class="stringliteral">&quot;_kvs&quot;</span>) != NULL) {
+<a name="l01387"></a>01387           <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#a6de3621552c9265950a0df573429c519" title="retrieve kv pairs with new values">lspg_kvs_cb</a>, <span class="stringliteral">&quot;SELECT pmac.getkvs()&quot;</span>);
+<a name="l01388"></a>01388         }
+<a name="l01389"></a>01389         PQfreemem( pgn);
+<a name="l01390"></a>01390       }
+<a name="l01391"></a>01391     }
+<a name="l01392"></a>01392   }
+<a name="l01393"></a>01393 
+<a name="l01394"></a>01394   <span class="keywordflow">if</span>( evt-&gt;revents &amp; POLLOUT) {
 <a name="l01395"></a>01395 
-<a name="l01396"></a>01396     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#a3c6eb19f262a990e1f9ba630d9edc309">LS_PG_STATE_SEND</a>) {
-<a name="l01397"></a>01397       <a class="code" href="lspg_8c.html#a714b15e117ffe7bfce4f2f2ce4725b0a" title="send the next queued query to the DB server">lspg_send_next_query</a>();
-<a name="l01398"></a>01398     }
-<a name="l01399"></a>01399 
-<a name="l01400"></a>01400     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#a88a7e80c12fb0449c4b0857a0c7deb21">LS_PG_STATE_SEND_FLUSH</a>) {
-<a name="l01401"></a>01401       <a class="code" href="lspg_8c.html#af6485ac1749c5de3008dd0e0badaa09c" title="Flush psql output buffer (ie, send the query).">lspg_flush</a>();
+<a name="l01396"></a>01396     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#ae7ea5876846b5f04c419aee22d3c0aa1">LS_PG_STATE_INIT_POLL</a>) {
+<a name="l01397"></a>01397       <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> = PQconnectPoll( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
+<a name="l01398"></a>01398       <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> == PGRES_POLLING_FAILED) {
+<a name="l01399"></a>01399         <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;
+<a name="l01400"></a>01400       }
+<a name="l01401"></a>01401       <span class="keywordflow">return</span>;
 <a name="l01402"></a>01402     }
-<a name="l01403"></a>01403   }
-<a name="l01404"></a>01404 }
-<a name="l01405"></a>01405 
-<a name="l01406"></a>01406 
-<a name="l01409"></a><a class="code" href="lspg_8c.html#a581c18be0368425665a40b4b7f7d9714">01409</a> <span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#a581c18be0368425665a40b4b7f7d9714" title="Connect to the pg server.">lspg_pg_connect</a>() {
-<a name="l01410"></a>01410   PGresult *pgr;
-<a name="l01411"></a>01411   <span class="keywordtype">int</span> wait_interval = 1;
-<a name="l01412"></a>01412   <span class="keywordtype">int</span> connection_init = 0;
-<a name="l01413"></a>01413   <span class="keywordtype">int</span> i, err;
-<a name="l01414"></a>01414 
-<a name="l01415"></a>01415   <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> == NULL)
-<a name="l01416"></a>01416     <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#af443092447378c73bf93aa143576aba4">LS_PG_STATE_INIT</a>;
-<a name="l01417"></a>01417 
-<a name="l01418"></a>01418   <span class="keywordflow">switch</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a>) {
-<a name="l01419"></a>01419   <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#af443092447378c73bf93aa143576aba4">LS_PG_STATE_INIT</a>:
-<a name="l01420"></a>01420 
-<a name="l01421"></a>01421     <span class="keywordflow">if</span>( lspg_time_sent.tv_sec != 0) {
-<a name="l01422"></a>01422       <span class="comment">//</span>
-<a name="l01423"></a>01423       <span class="comment">// Reality check: if it&apos;s less the about 10 seconds since the last failed attempt</span>
-<a name="l01424"></a>01424       <span class="comment">// the just chill.</span>
-<a name="l01425"></a>01425       <span class="comment">//</span>
-<a name="l01426"></a>01426       gettimeofday( &amp;<a class="code" href="lspg_8c.html#ad40ac52086f6b774928af45b09d54c6e" title="used to ensure we do not inundate the db server with connection requests">now</a>, NULL);
-<a name="l01427"></a>01427       <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#ad40ac52086f6b774928af45b09d54c6e" title="used to ensure we do not inundate the db server with connection requests">now</a>.tv_sec - lspg_time_sent.tv_sec &lt; 10) {
-<a name="l01428"></a>01428         <span class="keywordflow">return</span>;
-<a name="l01429"></a>01429       }
-<a name="l01430"></a>01430     }
+<a name="l01403"></a>01403 
+<a name="l01404"></a>01404     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#ac70a1141f3b138055ea7143bd493187c">LS_PG_STATE_RESET_POLL</a>) {
+<a name="l01405"></a>01405       <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> = PQresetPoll( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
+<a name="l01406"></a>01406       <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> == PGRES_POLLING_FAILED) {
+<a name="l01407"></a>01407         <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;
+<a name="l01408"></a>01408       }
+<a name="l01409"></a>01409       <span class="keywordflow">return</span>;
+<a name="l01410"></a>01410     }
+<a name="l01411"></a>01411 
+<a name="l01412"></a>01412 
+<a name="l01413"></a>01413     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#a3c6eb19f262a990e1f9ba630d9edc309">LS_PG_STATE_SEND</a>) {
+<a name="l01414"></a>01414       <a class="code" href="lspg_8c.html#a714b15e117ffe7bfce4f2f2ce4725b0a" title="send the next queued query to the DB server">lspg_send_next_query</a>();
+<a name="l01415"></a>01415     }
+<a name="l01416"></a>01416 
+<a name="l01417"></a>01417     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#a88a7e80c12fb0449c4b0857a0c7deb21">LS_PG_STATE_SEND_FLUSH</a>) {
+<a name="l01418"></a>01418       <a class="code" href="lspg_8c.html#af6485ac1749c5de3008dd0e0badaa09c" title="Flush psql output buffer (ie, send the query).">lspg_flush</a>();
+<a name="l01419"></a>01419     }
+<a name="l01420"></a>01420   }
+<a name="l01421"></a>01421 }
+<a name="l01422"></a>01422 
+<a name="l01423"></a>01423 
+<a name="l01426"></a><a class="code" href="lspg_8c.html#a581c18be0368425665a40b4b7f7d9714">01426</a> <span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#a581c18be0368425665a40b4b7f7d9714" title="Connect to the pg server.">lspg_pg_connect</a>() {
+<a name="l01427"></a>01427   PGresult *pgr;
+<a name="l01428"></a>01428   <span class="keywordtype">int</span> wait_interval = 1;
+<a name="l01429"></a>01429   <span class="keywordtype">int</span> connection_init = 0;
+<a name="l01430"></a>01430   <span class="keywordtype">int</span> i, err;
 <a name="l01431"></a>01431 
-<a name="l01432"></a>01432     <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> = PQconnectStart( <span class="stringliteral">&quot;dbname=ls user=lsuser hostaddr=10.1.0.3&quot;</span>);
-<a name="l01433"></a>01433     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> == NULL) {
-<a name="l01434"></a>01434       <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b">lslogging_log_message</a>( <span class="stringliteral">&quot;Out of memory (lspg_pg_connect)&quot;</span>);
-<a name="l01435"></a>01435       exit( -1);
-<a name="l01436"></a>01436     }
+<a name="l01432"></a>01432   <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> == NULL)
+<a name="l01433"></a>01433     <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#af443092447378c73bf93aa143576aba4">LS_PG_STATE_INIT</a>;
+<a name="l01434"></a>01434 
+<a name="l01435"></a>01435   <span class="keywordflow">switch</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a>) {
+<a name="l01436"></a>01436   <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#af443092447378c73bf93aa143576aba4">LS_PG_STATE_INIT</a>:
 <a name="l01437"></a>01437 
-<a name="l01438"></a>01438     err = PQstatus( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
-<a name="l01439"></a>01439     <span class="keywordflow">if</span>( err == CONNECTION_BAD) {
-<a name="l01440"></a>01440       <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b">lslogging_log_message</a>( <span class="stringliteral">&quot;Trouble connecting to database&quot;</span>);
-<a name="l01441"></a>01441 
-<a name="l01442"></a>01442       gettimeofday( &amp;lspg_time_sent, NULL);
-<a name="l01443"></a>01443       <span class="keywordflow">return</span>;
-<a name="l01444"></a>01444     }
-<a name="l01445"></a>01445     err = PQsetnonblocking( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>, 1);
-<a name="l01446"></a>01446     <span class="keywordflow">if</span>( err != 0) {
-<a name="l01447"></a>01447       <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b">lslogging_log_message</a>( <span class="stringliteral">&quot;Odd, could not set database connection to nonblocking&quot;</span>);
-<a name="l01448"></a>01448     }
-<a name="l01449"></a>01449 
-<a name="l01450"></a>01450     <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#ae7ea5876846b5f04c419aee22d3c0aa1">LS_PG_STATE_INIT_POLL</a>;
-<a name="l01451"></a>01451     <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> = PGRES_POLLING_WRITING;
-<a name="l01452"></a>01452     <span class="comment">//</span>
-<a name="l01453"></a>01453     <span class="comment">// set up the connection for poll</span>
-<a name="l01454"></a>01454     <span class="comment">//</span>
-<a name="l01455"></a>01455     <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.fd = PQsocket( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
-<a name="l01456"></a>01456     <span class="keywordflow">break</span>;
-<a name="l01457"></a>01457 
-<a name="l01458"></a>01458   <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#ae7ea5876846b5f04c419aee22d3c0aa1">LS_PG_STATE_INIT_POLL</a>:
-<a name="l01459"></a>01459     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> == PGRES_POLLING_FAILED) {
-<a name="l01460"></a>01460       PQfinish( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
-<a name="l01461"></a>01461       <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> = NULL;
-<a name="l01462"></a>01462       <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#af443092447378c73bf93aa143576aba4">LS_PG_STATE_INIT</a>;
-<a name="l01463"></a>01463     } <span class="keywordflow">else</span> <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> == PGRES_POLLING_OK) {
-<a name="l01464"></a>01464       <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#a329a7fdfa5025a403ea2779e178fd3ed" title="Motor initialization callback.">lspg_init_motors_cb</a>, <span class="stringliteral">&quot;select * from pmac.md2_getmotors()&quot;</span>);
-<a name="l01465"></a>01465       <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( NULL, <span class="stringliteral">&quot;select pmac.md2_init()&quot;</span>);
-<a name="l01466"></a>01466       <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#af34559ab5624e1e68085dbcd9410c692" title="Zoom motor look up table callback.">lspg_zoom_lut_cb</a>, <span class="stringliteral">&quot;SELECT * FROM pmac.md2_zoom_lut()&quot;</span>);
-<a name="l01467"></a>01467       <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#ac5d5d512350a9ba346635e2415d7c3d5" title="Front Light Lookup table query callback Install the lookup table for the Front Light...">lspg_flight_lut_cb</a>, <span class="stringliteral">&quot;SELECT * FROM pmac.md2_flight_lut()&quot;</span>);
-<a name="l01468"></a>01468       <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#a6f5fa5727f2876f8b9370110a92afa50" title="Back Light Lookup Table Callback Install the lookup table for the Back Light.">lspg_blight_lut_cb</a>, <span class="stringliteral">&quot;SELECT * FROM pmac.md2_blight_lut()&quot;</span>);
-<a name="l01469"></a>01469       <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#a71db585552ea3f58a1c9ab3fbe62bb79">lspg_scint_lut_cb</a>,      <span class="stringliteral">&quot;SELECT * FROM pmac.md2_scint_lut()&quot;</span>);
-<a name="l01470"></a>01470 
-<a name="l01471"></a>01471       <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>;
-<a name="l01472"></a>01472     }
+<a name="l01438"></a>01438     <span class="keywordflow">if</span>( lspg_time_sent.tv_sec != 0) {
+<a name="l01439"></a>01439       <span class="comment">//</span>
+<a name="l01440"></a>01440       <span class="comment">// Reality check: if it&apos;s less the about 10 seconds since the last failed attempt</span>
+<a name="l01441"></a>01441       <span class="comment">// the just chill.</span>
+<a name="l01442"></a>01442       <span class="comment">//</span>
+<a name="l01443"></a>01443       gettimeofday( &amp;<a class="code" href="lspg_8c.html#ad40ac52086f6b774928af45b09d54c6e" title="used to ensure we do not inundate the db server with connection requests">now</a>, NULL);
+<a name="l01444"></a>01444       <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#ad40ac52086f6b774928af45b09d54c6e" title="used to ensure we do not inundate the db server with connection requests">now</a>.tv_sec - lspg_time_sent.tv_sec &lt; 10) {
+<a name="l01445"></a>01445         <span class="keywordflow">return</span>;
+<a name="l01446"></a>01446       }
+<a name="l01447"></a>01447     }
+<a name="l01448"></a>01448 
+<a name="l01449"></a>01449     <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> = PQconnectStart( <span class="stringliteral">&quot;dbname=ls user=lsuser hostaddr=10.1.0.3&quot;</span>);
+<a name="l01450"></a>01450     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> == NULL) {
+<a name="l01451"></a>01451       <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b">lslogging_log_message</a>( <span class="stringliteral">&quot;Out of memory (lspg_pg_connect)&quot;</span>);
+<a name="l01452"></a>01452       exit( -1);
+<a name="l01453"></a>01453     }
+<a name="l01454"></a>01454 
+<a name="l01455"></a>01455     err = PQstatus( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
+<a name="l01456"></a>01456     <span class="keywordflow">if</span>( err == CONNECTION_BAD) {
+<a name="l01457"></a>01457       <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b">lslogging_log_message</a>( <span class="stringliteral">&quot;Trouble connecting to database&quot;</span>);
+<a name="l01458"></a>01458 
+<a name="l01459"></a>01459       gettimeofday( &amp;lspg_time_sent, NULL);
+<a name="l01460"></a>01460       <span class="keywordflow">return</span>;
+<a name="l01461"></a>01461     }
+<a name="l01462"></a>01462     err = PQsetnonblocking( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>, 1);
+<a name="l01463"></a>01463     <span class="keywordflow">if</span>( err != 0) {
+<a name="l01464"></a>01464       <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b">lslogging_log_message</a>( <span class="stringliteral">&quot;Odd, could not set database connection to nonblocking&quot;</span>);
+<a name="l01465"></a>01465     }
+<a name="l01466"></a>01466 
+<a name="l01467"></a>01467     <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#ae7ea5876846b5f04c419aee22d3c0aa1">LS_PG_STATE_INIT_POLL</a>;
+<a name="l01468"></a>01468     <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> = PGRES_POLLING_WRITING;
+<a name="l01469"></a>01469     <span class="comment">//</span>
+<a name="l01470"></a>01470     <span class="comment">// set up the connection for poll</span>
+<a name="l01471"></a>01471     <span class="comment">//</span>
+<a name="l01472"></a>01472     <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.fd = PQsocket( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
 <a name="l01473"></a>01473     <span class="keywordflow">break</span>;
 <a name="l01474"></a>01474 
-<a name="l01475"></a>01475   <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>:
-<a name="l01476"></a>01476     err = PQresetStart( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
-<a name="l01477"></a>01477     <span class="keywordflow">if</span>( err == 0) {
-<a name="l01478"></a>01478       PQfinish( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
-<a name="l01479"></a>01479       <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> = NULL;
-<a name="l01480"></a>01480       <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#af443092447378c73bf93aa143576aba4">LS_PG_STATE_INIT</a>;
-<a name="l01481"></a>01481     } <span class="keywordflow">else</span> {
-<a name="l01482"></a>01482       <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#ac70a1141f3b138055ea7143bd493187c">LS_PG_STATE_RESET_POLL</a>;
-<a name="l01483"></a>01483       <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> = PGRES_POLLING_WRITING;
-<a name="l01484"></a>01484     }
-<a name="l01485"></a>01485     <span class="keywordflow">break</span>;
-<a name="l01486"></a>01486 
-<a name="l01487"></a>01487   <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#ac70a1141f3b138055ea7143bd493187c">LS_PG_STATE_RESET_POLL</a>:
-<a name="l01488"></a>01488     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> == PGRES_POLLING_FAILED) {
-<a name="l01489"></a>01489       PQfinish( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
-<a name="l01490"></a>01490       <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> = NULL;
-<a name="l01491"></a>01491       <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#af443092447378c73bf93aa143576aba4">LS_PG_STATE_INIT</a>;
-<a name="l01492"></a>01492     } <span class="keywordflow">else</span> <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> == PGRES_POLLING_OK) {
-<a name="l01493"></a>01493       <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#a329a7fdfa5025a403ea2779e178fd3ed" title="Motor initialization callback.">lspg_init_motors_cb</a>, <span class="stringliteral">&quot;select * from pmac.md2_getmotors()&quot;</span>);
-<a name="l01494"></a>01494       <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( NULL, <span class="stringliteral">&quot;select pmac.md2_init()&quot;</span>);
-<a name="l01495"></a>01495       <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>;
-<a name="l01496"></a>01496     }
-<a name="l01497"></a>01497     <span class="keywordflow">break</span>;
-<a name="l01498"></a>01498   }
-<a name="l01499"></a>01499 }
-<a name="l01500"></a>01500 
-<a name="l01501"></a>01501 
-<a name="l01502"></a>01502 
-<a name="l01507"></a><a class="code" href="lspg_8c.html#ab52a8c8245bf6561f40c0f224fc07ff4">01507</a> <span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#ab52a8c8245bf6561f40c0f224fc07ff4" title="Implements our state machine Does not strictly only set the next state as it also...">lspg_next_state</a>() {
-<a name="l01508"></a>01508   <span class="comment">//</span>
-<a name="l01509"></a>01509   <span class="comment">// connect to the database</span>
-<a name="l01510"></a>01510   <span class="comment">//</span>
-<a name="l01511"></a>01511   <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> == NULL ||
-<a name="l01512"></a>01512       <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#af443092447378c73bf93aa143576aba4">LS_PG_STATE_INIT</a> ||
-<a name="l01513"></a>01513       <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a> ||
-<a name="l01514"></a>01514       <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#ae7ea5876846b5f04c419aee22d3c0aa1">LS_PG_STATE_INIT_POLL</a> ||
-<a name="l01515"></a>01515       <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#ac70a1141f3b138055ea7143bd493187c">LS_PG_STATE_RESET_POLL</a>)
-<a name="l01516"></a>01516     <a class="code" href="lspg_8c.html#a581c18be0368425665a40b4b7f7d9714" title="Connect to the pg server.">lspg_pg_connect</a>( <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>);
+<a name="l01475"></a>01475   <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#ae7ea5876846b5f04c419aee22d3c0aa1">LS_PG_STATE_INIT_POLL</a>:
+<a name="l01476"></a>01476     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> == PGRES_POLLING_FAILED) {
+<a name="l01477"></a>01477       PQfinish( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
+<a name="l01478"></a>01478       <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> = NULL;
+<a name="l01479"></a>01479       <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#af443092447378c73bf93aa143576aba4">LS_PG_STATE_INIT</a>;
+<a name="l01480"></a>01480     } <span class="keywordflow">else</span> <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> == PGRES_POLLING_OK) {
+<a name="l01481"></a>01481       <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#a329a7fdfa5025a403ea2779e178fd3ed" title="Motor initialization callback.">lspg_init_motors_cb</a>, <span class="stringliteral">&quot;select * from pmac.md2_getmotors()&quot;</span>);
+<a name="l01482"></a>01482       <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( NULL, <span class="stringliteral">&quot;select pmac.md2_init()&quot;</span>);
+<a name="l01483"></a>01483       <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#af34559ab5624e1e68085dbcd9410c692" title="Zoom motor look up table callback.">lspg_zoom_lut_cb</a>, <span class="stringliteral">&quot;SELECT * FROM pmac.md2_zoom_lut()&quot;</span>);
+<a name="l01484"></a>01484       <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#ac5d5d512350a9ba346635e2415d7c3d5" title="Front Light Lookup table query callback Install the lookup table for the Front Light...">lspg_flight_lut_cb</a>, <span class="stringliteral">&quot;SELECT * FROM pmac.md2_flight_lut()&quot;</span>);
+<a name="l01485"></a>01485       <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#a6f5fa5727f2876f8b9370110a92afa50" title="Back Light Lookup Table Callback Install the lookup table for the Back Light.">lspg_blight_lut_cb</a>, <span class="stringliteral">&quot;SELECT * FROM pmac.md2_blight_lut()&quot;</span>);
+<a name="l01486"></a>01486       <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#a71db585552ea3f58a1c9ab3fbe62bb79">lspg_scint_lut_cb</a>,      <span class="stringliteral">&quot;SELECT * FROM pmac.md2_scint_lut()&quot;</span>);
+<a name="l01487"></a>01487 
+<a name="l01488"></a>01488       <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>;
+<a name="l01489"></a>01489     }
+<a name="l01490"></a>01490     <span class="keywordflow">break</span>;
+<a name="l01491"></a>01491 
+<a name="l01492"></a>01492   <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>:
+<a name="l01493"></a>01493     err = PQresetStart( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
+<a name="l01494"></a>01494     <span class="keywordflow">if</span>( err == 0) {
+<a name="l01495"></a>01495       PQfinish( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
+<a name="l01496"></a>01496       <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> = NULL;
+<a name="l01497"></a>01497       <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#af443092447378c73bf93aa143576aba4">LS_PG_STATE_INIT</a>;
+<a name="l01498"></a>01498     } <span class="keywordflow">else</span> {
+<a name="l01499"></a>01499       <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#ac70a1141f3b138055ea7143bd493187c">LS_PG_STATE_RESET_POLL</a>;
+<a name="l01500"></a>01500       <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> = PGRES_POLLING_WRITING;
+<a name="l01501"></a>01501     }
+<a name="l01502"></a>01502     <span class="keywordflow">break</span>;
+<a name="l01503"></a>01503 
+<a name="l01504"></a>01504   <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#ac70a1141f3b138055ea7143bd493187c">LS_PG_STATE_RESET_POLL</a>:
+<a name="l01505"></a>01505     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> == PGRES_POLLING_FAILED) {
+<a name="l01506"></a>01506       PQfinish( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);
+<a name="l01507"></a>01507       <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> = NULL;
+<a name="l01508"></a>01508       <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#af443092447378c73bf93aa143576aba4">LS_PG_STATE_INIT</a>;
+<a name="l01509"></a>01509     } <span class="keywordflow">else</span> <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> == PGRES_POLLING_OK) {
+<a name="l01510"></a>01510       <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#a329a7fdfa5025a403ea2779e178fd3ed" title="Motor initialization callback.">lspg_init_motors_cb</a>, <span class="stringliteral">&quot;select * from pmac.md2_getmotors()&quot;</span>);
+<a name="l01511"></a>01511       <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( NULL, <span class="stringliteral">&quot;select pmac.md2_init()&quot;</span>);
+<a name="l01512"></a>01512       <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>;
+<a name="l01513"></a>01513     }
+<a name="l01514"></a>01514     <span class="keywordflow">break</span>;
+<a name="l01515"></a>01515   }
+<a name="l01516"></a>01516 }
 <a name="l01517"></a>01517 
 <a name="l01518"></a>01518 
-<a name="l01519"></a>01519   <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a> &amp;&amp; <a class="code" href="lspg_8c.html#a3cbe7f3161b3c1838ebc56a3bbcfd8a6" title="Next position to add something to the queue.">lspg_query_queue_on</a> != <a class="code" href="lspg_8c.html#aca86bb77d6cecfae9251743f4171bafb" title="The last item still being used (on == off means nothing in queue).">lspg_query_queue_off</a>)
-<a name="l01520"></a>01520     <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#a3c6eb19f262a990e1f9ba630d9edc309">LS_PG_STATE_SEND</a>;
-<a name="l01521"></a>01521 
-<a name="l01522"></a>01522   <span class="keywordflow">switch</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a>) {
-<a name="l01523"></a>01523   <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#ae7ea5876846b5f04c419aee22d3c0aa1">LS_PG_STATE_INIT_POLL</a>:
-<a name="l01524"></a>01524     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> == PGRES_POLLING_WRITING)
-<a name="l01525"></a>01525       <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = POLLOUT;
-<a name="l01526"></a>01526     <span class="keywordflow">else</span> <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> == PGRES_POLLING_READING)
-<a name="l01527"></a>01527       <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = POLLIN;
-<a name="l01528"></a>01528     <span class="keywordflow">else</span>
-<a name="l01529"></a>01529       <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = 0;
-<a name="l01530"></a>01530     <span class="keywordflow">break</span>;
-<a name="l01531"></a>01531       
-<a name="l01532"></a>01532   <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#ac70a1141f3b138055ea7143bd493187c">LS_PG_STATE_RESET_POLL</a>:
-<a name="l01533"></a>01533     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> == PGRES_POLLING_WRITING)
-<a name="l01534"></a>01534       <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = POLLOUT;
-<a name="l01535"></a>01535     <span class="keywordflow">else</span> <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> == PGRES_POLLING_READING)
-<a name="l01536"></a>01536       <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = POLLIN;
-<a name="l01537"></a>01537     <span class="keywordflow">else</span>
-<a name="l01538"></a>01538       <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = 0;
-<a name="l01539"></a>01539     <span class="keywordflow">break</span>;
-<a name="l01540"></a>01540 
-<a name="l01541"></a>01541   <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>:
-<a name="l01542"></a>01542   <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#a373e668840b4795ff9a71bc3f744d209">LS_PG_STATE_RECV</a>:
-<a name="l01543"></a>01543     <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = POLLIN;
-<a name="l01544"></a>01544     <span class="keywordflow">break</span>;
-<a name="l01545"></a>01545 
-<a name="l01546"></a>01546   <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#a3c6eb19f262a990e1f9ba630d9edc309">LS_PG_STATE_SEND</a>:
-<a name="l01547"></a>01547   <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#a88a7e80c12fb0449c4b0857a0c7deb21">LS_PG_STATE_SEND_FLUSH</a>:
-<a name="l01548"></a>01548     <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = POLLOUT;
-<a name="l01549"></a>01549     <span class="keywordflow">break</span>;
-<a name="l01550"></a>01550 
-<a name="l01551"></a>01551   <span class="keywordflow">default</span>:
-<a name="l01552"></a>01552     <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = 0;
-<a name="l01553"></a>01553   }
-<a name="l01554"></a>01554 }
-<a name="l01555"></a>01555 
-<a name="l01558"></a><a class="code" href="lspg_8c.html#aaf4fadd2943fa3a2ecb5d840e84d68fa">01558</a> <span class="keywordtype">void</span> *<a class="code" href="lspg_8c.html#aaf4fadd2943fa3a2ecb5d840e84d68fa" title="The main loop for the lspg thread.">lspg_worker</a>(
-<a name="l01559"></a>01559                   <span class="keywordtype">void</span> *dummy           
-<a name="l01560"></a>01560                   ) {
-<a name="l01561"></a>01561   <span class="keyword">static</span> <span class="keyword">struct </span>pollfd fda[2];  <span class="comment">// 0=signal handler, 1=pg socket</span>
-<a name="l01562"></a>01562   <span class="keyword">static</span> <span class="keywordtype">int</span> nfda = 0;
-<a name="l01563"></a>01563   <span class="keyword">static</span> sigset_t our_sigset;
-<a name="l01564"></a>01564   <span class="keywordtype">int</span> sigfd;
-<a name="l01565"></a>01565 
-<a name="l01566"></a>01566   sigemptyset( &amp;our_sigset);
-<a name="l01567"></a>01567   sigaddset( &amp;our_sigset, SIGUSR1);
-<a name="l01568"></a>01568 
-<a name="l01569"></a>01569 
-<a name="l01570"></a>01570   <span class="comment">//</span>
-<a name="l01571"></a>01571   <span class="comment">// block ordinary signal mechanism</span>
-<a name="l01572"></a>01572   <span class="comment">//</span>
-<a name="l01573"></a>01573   sigprocmask(SIG_BLOCK, &amp;our_sigset, NULL);
-<a name="l01574"></a>01574 
-<a name="l01575"></a>01575     
-<a name="l01576"></a>01576   fda[0].fd = signalfd( -1, &amp;our_sigset, SFD_NONBLOCK);
-<a name="l01577"></a>01577   <span class="keywordflow">if</span>( fda[0].fd == -1) {
-<a name="l01578"></a>01578     <span class="keywordtype">char</span> *es;
-<a name="l01579"></a>01579 
-<a name="l01580"></a>01580     es = strerror( errno);
-<a name="l01581"></a>01581     <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b">lslogging_log_message</a>( <span class="stringliteral">&quot;Signalfd trouble: %s&quot;</span>, es);
-<a name="l01582"></a>01582   }
-<a name="l01583"></a>01583   fda[0].events = POLLIN;
-<a name="l01584"></a>01584 
-<a name="l01585"></a>01585   <span class="comment">//</span>
-<a name="l01586"></a>01586   <span class="comment">//  make sure file descriptor is not legal until it&apos;s been conneceted</span>
+<a name="l01519"></a>01519 
+<a name="l01524"></a><a class="code" href="lspg_8c.html#ab52a8c8245bf6561f40c0f224fc07ff4">01524</a> <span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#ab52a8c8245bf6561f40c0f224fc07ff4" title="Implements our state machine Does not strictly only set the next state as it also...">lspg_next_state</a>() {
+<a name="l01525"></a>01525   <span class="comment">//</span>
+<a name="l01526"></a>01526   <span class="comment">// connect to the database</span>
+<a name="l01527"></a>01527   <span class="comment">//</span>
+<a name="l01528"></a>01528   <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> == NULL ||
+<a name="l01529"></a>01529       <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#af443092447378c73bf93aa143576aba4">LS_PG_STATE_INIT</a> ||
+<a name="l01530"></a>01530       <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a> ||
+<a name="l01531"></a>01531       <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#ae7ea5876846b5f04c419aee22d3c0aa1">LS_PG_STATE_INIT_POLL</a> ||
+<a name="l01532"></a>01532       <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#ac70a1141f3b138055ea7143bd493187c">LS_PG_STATE_RESET_POLL</a>)
+<a name="l01533"></a>01533     <a class="code" href="lspg_8c.html#a581c18be0368425665a40b4b7f7d9714" title="Connect to the pg server.">lspg_pg_connect</a>( <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>);
+<a name="l01534"></a>01534 
+<a name="l01535"></a>01535 
+<a name="l01536"></a>01536   <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a> &amp;&amp; <a class="code" href="lspg_8c.html#a3cbe7f3161b3c1838ebc56a3bbcfd8a6" title="Next position to add something to the queue.">lspg_query_queue_on</a> != <a class="code" href="lspg_8c.html#aca86bb77d6cecfae9251743f4171bafb" title="The last item still being used (on == off means nothing in queue).">lspg_query_queue_off</a>)
+<a name="l01537"></a>01537     <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#a3c6eb19f262a990e1f9ba630d9edc309">LS_PG_STATE_SEND</a>;
+<a name="l01538"></a>01538 
+<a name="l01539"></a>01539   <span class="keywordflow">switch</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a>) {
+<a name="l01540"></a>01540   <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#ae7ea5876846b5f04c419aee22d3c0aa1">LS_PG_STATE_INIT_POLL</a>:
+<a name="l01541"></a>01541     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> == PGRES_POLLING_WRITING)
+<a name="l01542"></a>01542       <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = POLLOUT;
+<a name="l01543"></a>01543     <span class="keywordflow">else</span> <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> == PGRES_POLLING_READING)
+<a name="l01544"></a>01544       <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = POLLIN;
+<a name="l01545"></a>01545     <span class="keywordflow">else</span>
+<a name="l01546"></a>01546       <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = 0;
+<a name="l01547"></a>01547     <span class="keywordflow">break</span>;
+<a name="l01548"></a>01548       
+<a name="l01549"></a>01549   <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#ac70a1141f3b138055ea7143bd493187c">LS_PG_STATE_RESET_POLL</a>:
+<a name="l01550"></a>01550     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> == PGRES_POLLING_WRITING)
+<a name="l01551"></a>01551       <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = POLLOUT;
+<a name="l01552"></a>01552     <span class="keywordflow">else</span> <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> == PGRES_POLLING_READING)
+<a name="l01553"></a>01553       <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = POLLIN;
+<a name="l01554"></a>01554     <span class="keywordflow">else</span>
+<a name="l01555"></a>01555       <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = 0;
+<a name="l01556"></a>01556     <span class="keywordflow">break</span>;
+<a name="l01557"></a>01557 
+<a name="l01558"></a>01558   <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>:
+<a name="l01559"></a>01559   <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#a373e668840b4795ff9a71bc3f744d209">LS_PG_STATE_RECV</a>:
+<a name="l01560"></a>01560     <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = POLLIN;
+<a name="l01561"></a>01561     <span class="keywordflow">break</span>;
+<a name="l01562"></a>01562 
+<a name="l01563"></a>01563   <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#a3c6eb19f262a990e1f9ba630d9edc309">LS_PG_STATE_SEND</a>:
+<a name="l01564"></a>01564   <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#a88a7e80c12fb0449c4b0857a0c7deb21">LS_PG_STATE_SEND_FLUSH</a>:
+<a name="l01565"></a>01565     <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = POLLOUT;
+<a name="l01566"></a>01566     <span class="keywordflow">break</span>;
+<a name="l01567"></a>01567 
+<a name="l01568"></a>01568   <span class="keywordflow">default</span>:
+<a name="l01569"></a>01569     <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = 0;
+<a name="l01570"></a>01570   }
+<a name="l01571"></a>01571 }
+<a name="l01572"></a>01572 
+<a name="l01575"></a><a class="code" href="lspg_8c.html#aaf4fadd2943fa3a2ecb5d840e84d68fa">01575</a> <span class="keywordtype">void</span> *<a class="code" href="lspg_8c.html#aaf4fadd2943fa3a2ecb5d840e84d68fa" title="The main loop for the lspg thread.">lspg_worker</a>(
+<a name="l01576"></a>01576                   <span class="keywordtype">void</span> *dummy           
+<a name="l01577"></a>01577                   ) {
+<a name="l01578"></a>01578   <span class="keyword">static</span> <span class="keyword">struct </span>pollfd fda[2];  <span class="comment">// 0=signal handler, 1=pg socket</span>
+<a name="l01579"></a>01579   <span class="keyword">static</span> <span class="keywordtype">int</span> nfda = 0;
+<a name="l01580"></a>01580   <span class="keyword">static</span> sigset_t our_sigset;
+<a name="l01581"></a>01581   <span class="keywordtype">int</span> sigfd;
+<a name="l01582"></a>01582 
+<a name="l01583"></a>01583   sigemptyset( &amp;our_sigset);
+<a name="l01584"></a>01584   sigaddset( &amp;our_sigset, SIGUSR1);
+<a name="l01585"></a>01585 
+<a name="l01586"></a>01586 
 <a name="l01587"></a>01587   <span class="comment">//</span>
-<a name="l01588"></a>01588   <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.fd   = -1;
-<a name="l01589"></a>01589 
-<a name="l01590"></a>01590 
-<a name="l01591"></a>01591   <span class="keywordflow">while</span>( 1) {
-<a name="l01592"></a>01592     <span class="keywordtype">int</span> pollrtn;
-<a name="l01593"></a>01593     <span class="keywordtype">int</span> poll_timeout_ms;
-<a name="l01594"></a>01594 
-<a name="l01595"></a>01595     <a class="code" href="lspg_8c.html#ab52a8c8245bf6561f40c0f224fc07ff4" title="Implements our state machine Does not strictly only set the next state as it also...">lspg_next_state</a>();
+<a name="l01588"></a>01588   <span class="comment">// block ordinary signal mechanism</span>
+<a name="l01589"></a>01589   <span class="comment">//</span>
+<a name="l01590"></a>01590   sigprocmask(SIG_BLOCK, &amp;our_sigset, NULL);
+<a name="l01591"></a>01591 
+<a name="l01592"></a>01592     
+<a name="l01593"></a>01593   fda[0].fd = signalfd( -1, &amp;our_sigset, SFD_NONBLOCK);
+<a name="l01594"></a>01594   <span class="keywordflow">if</span>( fda[0].fd == -1) {
+<a name="l01595"></a>01595     <span class="keywordtype">char</span> *es;
 <a name="l01596"></a>01596 
-<a name="l01597"></a>01597     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.fd == -1) {
-<a name="l01598"></a>01598       <span class="comment">//</span>
-<a name="l01599"></a>01599       <span class="comment">// Here a connection to the database is not established.</span>
-<a name="l01600"></a>01600       <span class="comment">// Periodicaly try again.  Should possibly arrange to reconnect</span>
-<a name="l01601"></a>01601       <span class="comment">// to signalfd but that&apos;s unlikely to be nessesary.</span>
-<a name="l01602"></a>01602       <span class="comment">//</span>
-<a name="l01603"></a>01603       nfda = 1;
-<a name="l01604"></a>01604       poll_timeout_ms = 10000;
-<a name="l01605"></a>01605       fda[1].revents = 0;
-<a name="l01606"></a>01606     } <span class="keywordflow">else</span> {
-<a name="l01607"></a>01607       <span class="comment">//</span>
-<a name="l01608"></a>01608       <span class="comment">// Arrange to peacfully do nothing until either the pg server sends us something</span>
-<a name="l01609"></a>01609       <span class="comment">// or someone pushs something onto our queue</span>
-<a name="l01610"></a>01610       <span class="comment">//</span>
-<a name="l01611"></a>01611       nfda = 2;
-<a name="l01612"></a>01612       fda[1].fd      = <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.fd;
-<a name="l01613"></a>01613       fda[1].events  = <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events;
-<a name="l01614"></a>01614       fda[1].revents = 0;
-<a name="l01615"></a>01615       poll_timeout_ms = -1;
-<a name="l01616"></a>01616     }
-<a name="l01617"></a>01617 
-<a name="l01618"></a>01618     pollrtn = poll( fda, nfda, poll_timeout_ms);
-<a name="l01619"></a>01619 
-<a name="l01620"></a>01620     <span class="keywordflow">if</span>( pollrtn &amp;&amp; fda[0].revents) {
-<a name="l01621"></a>01621       <a class="code" href="lspg_8c.html#a049f4422994aa2eb2b841ffb2937f895" title="Service a signal Signals here are treated as file descriptors and fits into our poll...">lspg_sig_service</a>( &amp;(fda[0]));
-<a name="l01622"></a>01622       pollrtn--;
-<a name="l01623"></a>01623     } 
-<a name="l01624"></a>01624     <span class="keywordflow">if</span>( pollrtn &amp;&amp; fda[1].revents) {
-<a name="l01625"></a>01625       <a class="code" href="lspg_8c.html#aa8d1fed4b461c2139a21826d524777d5" title="I/O control to/from the postgresql server.">lspg_pg_service</a>( &amp;(fda[1]));
-<a name="l01626"></a>01626       pollrtn--;
-<a name="l01627"></a>01627     } 
-<a name="l01628"></a>01628 
-<a name="l01629"></a>01629 
-<a name="l01630"></a>01630 
-<a name="l01631"></a>01631 
-<a name="l01632"></a>01632   }
-<a name="l01633"></a>01633 }
+<a name="l01597"></a>01597     es = strerror( errno);
+<a name="l01598"></a>01598     <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b">lslogging_log_message</a>( <span class="stringliteral">&quot;Signalfd trouble: %s&quot;</span>, es);
+<a name="l01599"></a>01599   }
+<a name="l01600"></a>01600   fda[0].events = POLLIN;
+<a name="l01601"></a>01601 
+<a name="l01602"></a>01602   <span class="comment">//</span>
+<a name="l01603"></a>01603   <span class="comment">//  make sure file descriptor is not legal until it&apos;s been conneceted</span>
+<a name="l01604"></a>01604   <span class="comment">//</span>
+<a name="l01605"></a>01605   <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.fd   = -1;
+<a name="l01606"></a>01606 
+<a name="l01607"></a>01607 
+<a name="l01608"></a>01608   <span class="keywordflow">while</span>( 1) {
+<a name="l01609"></a>01609     <span class="keywordtype">int</span> pollrtn;
+<a name="l01610"></a>01610     <span class="keywordtype">int</span> poll_timeout_ms;
+<a name="l01611"></a>01611 
+<a name="l01612"></a>01612     <a class="code" href="lspg_8c.html#ab52a8c8245bf6561f40c0f224fc07ff4" title="Implements our state machine Does not strictly only set the next state as it also...">lspg_next_state</a>();
+<a name="l01613"></a>01613 
+<a name="l01614"></a>01614     <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.fd == -1) {
+<a name="l01615"></a>01615       <span class="comment">//</span>
+<a name="l01616"></a>01616       <span class="comment">// Here a connection to the database is not established.</span>
+<a name="l01617"></a>01617       <span class="comment">// Periodicaly try again.  Should possibly arrange to reconnect</span>
+<a name="l01618"></a>01618       <span class="comment">// to signalfd but that&apos;s unlikely to be nessesary.</span>
+<a name="l01619"></a>01619       <span class="comment">//</span>
+<a name="l01620"></a>01620       nfda = 1;
+<a name="l01621"></a>01621       poll_timeout_ms = 10000;
+<a name="l01622"></a>01622       fda[1].revents = 0;
+<a name="l01623"></a>01623     } <span class="keywordflow">else</span> {
+<a name="l01624"></a>01624       <span class="comment">//</span>
+<a name="l01625"></a>01625       <span class="comment">// Arrange to peacfully do nothing until either the pg server sends us something</span>
+<a name="l01626"></a>01626       <span class="comment">// or someone pushs something onto our queue</span>
+<a name="l01627"></a>01627       <span class="comment">//</span>
+<a name="l01628"></a>01628       nfda = 2;
+<a name="l01629"></a>01629       fda[1].fd      = <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.fd;
+<a name="l01630"></a>01630       fda[1].events  = <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events;
+<a name="l01631"></a>01631       fda[1].revents = 0;
+<a name="l01632"></a>01632       poll_timeout_ms = -1;
+<a name="l01633"></a>01633     }
 <a name="l01634"></a>01634 
-<a name="l01635"></a>01635 
-<a name="l01638"></a><a class="code" href="pgpmac_8h.html#a8a77972df14166e05c94ed0792baa09b">01638</a> <span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#a8a77972df14166e05c94ed0792baa09b" title="Initiallize the lspg module.">lspg_init</a>() {
-<a name="l01639"></a>01639   pthread_mutex_init( &amp;<a class="code" href="lspg_8c.html#aed46a94106c583796e3a8ca0e89aa8e4" title="keep the queue from getting tangled">lspg_queue_mutex</a>, NULL);
-<a name="l01640"></a>01640   pthread_cond_init( &amp;<a class="code" href="lspg_8c.html#a61a308b6a37afd645beb422653b95baa" title="keeps the queue from overflowing">lspg_queue_cond</a>, NULL);
-<a name="l01641"></a>01641   <a class="code" href="lspg_8c.html#aff91db7d60e6c832684c023813e36dbf" title="Initialize the nextshot variable, mutex, and condition.">lspg_nextshot_init</a>();
-<a name="l01642"></a>01642   <a class="code" href="lspg_8c.html#ad31db17587a02302ac4e40fb7d260b1b" title="Initialize getcenter object.">lspg_getcenter_init</a>();
-<a name="l01643"></a>01643   <a class="code" href="lspg_8c.html#a3517f8fbed91c998f6036284f9bd0c48" title="initialize the detector timing object">lspg_wait_for_detector_init</a>();
-<a name="l01644"></a>01644   <a class="code" href="lspg_8c.html#a39bb94f8e0d47702b2b920a3dee61ebc" title="initialize the diffractometer locking object">lspg_lock_diffractometer_init</a>();
-<a name="l01645"></a>01645   <a class="code" href="lspg_8c.html#a0e9bbf847dadfe0d10830d67824d9be8" title="Initialize detector lock object.">lspg_lock_detector_init</a>();
-<a name="l01646"></a>01646 }
+<a name="l01635"></a>01635     pollrtn = poll( fda, nfda, poll_timeout_ms);
+<a name="l01636"></a>01636 
+<a name="l01637"></a>01637     <span class="keywordflow">if</span>( pollrtn &amp;&amp; fda[0].revents) {
+<a name="l01638"></a>01638       <a class="code" href="lspg_8c.html#a049f4422994aa2eb2b841ffb2937f895" title="Service a signal Signals here are treated as file descriptors and fits into our poll...">lspg_sig_service</a>( &amp;(fda[0]));
+<a name="l01639"></a>01639       pollrtn--;
+<a name="l01640"></a>01640     } 
+<a name="l01641"></a>01641     <span class="keywordflow">if</span>( pollrtn &amp;&amp; fda[1].revents) {
+<a name="l01642"></a>01642       <a class="code" href="lspg_8c.html#aa8d1fed4b461c2139a21826d524777d5" title="I/O control to/from the postgresql server.">lspg_pg_service</a>( &amp;(fda[1]));
+<a name="l01643"></a>01643       pollrtn--;
+<a name="l01644"></a>01644     } 
+<a name="l01645"></a>01645 
+<a name="l01646"></a>01646 
 <a name="l01647"></a>01647 
-<a name="l01650"></a><a class="code" href="pgpmac_8h.html#a1adfdb5ca9fdb5060849d726bf540117">01650</a> <span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#a1adfdb5ca9fdb5060849d726bf540117" title="Start &amp;#39;er runnin&amp;#39;.">lspg_run</a>() {
-<a name="l01651"></a>01651   pthread_create( &amp;<a class="code" href="lspg_8c.html#a04eb0cda0d5e5afeae7c393b51689765" title="our worker thread">lspg_thread</a>, NULL, <a class="code" href="lspg_8c.html#aaf4fadd2943fa3a2ecb5d840e84d68fa" title="The main loop for the lspg thread.">lspg_worker</a>, NULL);
-<a name="l01652"></a>01652 }
+<a name="l01648"></a>01648 
+<a name="l01649"></a>01649   }
+<a name="l01650"></a>01650 }
+<a name="l01651"></a>01651 
+<a name="l01652"></a>01652 
+<a name="l01655"></a><a class="code" href="pgpmac_8h.html#a8a77972df14166e05c94ed0792baa09b">01655</a> <span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#a8a77972df14166e05c94ed0792baa09b" title="Initiallize the lspg module.">lspg_init</a>() {
+<a name="l01656"></a>01656   pthread_mutex_init( &amp;<a class="code" href="lspg_8c.html#aed46a94106c583796e3a8ca0e89aa8e4" title="keep the queue from getting tangled">lspg_queue_mutex</a>, NULL);
+<a name="l01657"></a>01657   pthread_cond_init( &amp;<a class="code" href="lspg_8c.html#a61a308b6a37afd645beb422653b95baa" title="keeps the queue from overflowing">lspg_queue_cond</a>, NULL);
+<a name="l01658"></a>01658   <a class="code" href="lspg_8c.html#aff91db7d60e6c832684c023813e36dbf" title="Initialize the nextshot variable, mutex, and condition.">lspg_nextshot_init</a>();
+<a name="l01659"></a>01659   <a class="code" href="lspg_8c.html#ad31db17587a02302ac4e40fb7d260b1b" title="Initialize getcenter object.">lspg_getcenter_init</a>();
+<a name="l01660"></a>01660   <a class="code" href="lspg_8c.html#a3517f8fbed91c998f6036284f9bd0c48" title="initialize the detector timing object">lspg_wait_for_detector_init</a>();
+<a name="l01661"></a>01661   <a class="code" href="lspg_8c.html#a39bb94f8e0d47702b2b920a3dee61ebc" title="initialize the diffractometer locking object">lspg_lock_diffractometer_init</a>();
+<a name="l01662"></a>01662   <a class="code" href="lspg_8c.html#a0e9bbf847dadfe0d10830d67824d9be8" title="Initialize detector lock object.">lspg_lock_detector_init</a>();
+<a name="l01663"></a>01663 }
+<a name="l01664"></a>01664 
+<a name="l01667"></a><a class="code" href="pgpmac_8h.html#a1adfdb5ca9fdb5060849d726bf540117">01667</a> <span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#a1adfdb5ca9fdb5060849d726bf540117" title="Start &amp;#39;er runnin&amp;#39;.">lspg_run</a>() {
+<a name="l01668"></a>01668   pthread_create( &amp;<a class="code" href="lspg_8c.html#a04eb0cda0d5e5afeae7c393b51689765" title="our worker thread">lspg_thread</a>, NULL, <a class="code" href="lspg_8c.html#aaf4fadd2943fa3a2ecb5d840e84d68fa" title="The main loop for the lspg thread.">lspg_worker</a>, NULL);
+<a name="l01669"></a>01669 }
 </pre></div></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on 13 Nov 2012 for LS-CAT PGPMAC by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on 14 Nov 2012 for LS-CAT PGPMAC by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

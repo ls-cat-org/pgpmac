@@ -395,6 +395,7 @@ int main(
   lspmac_init( ivars, mvars);
   lspg_init();
   lsupdate_init();
+  lskvs_init();
   md2cmds_init();
 
   term_status = newwin( LS_DISPLAY_WINDOW_HEIGHT, LS_DISPLAY_WINDOW_WIDTH, 3*LS_DISPLAY_WINDOW_HEIGHT, 0*LS_DISPLAY_WINDOW_WIDTH);

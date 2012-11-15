@@ -1,4 +1,4 @@
-.TH "lspg.c" 3 "13 Nov 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lspg.c" 3 "14 Nov 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -278,6 +278,10 @@ Postgresql support for the LS-CAT pgpmac project.
 .RI "void \fBlspg_nextaction_cb\fP (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
 .br
 .RI "\fIQueue the next MD2 instruction. \fP"
+.ti -1c
+.RI "void \fBlspg_kvs_cb\fP (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
+.br
+.RI "\fIretrieve kv pairs with new values \fP"
 .ti -1c
 .RI "void \fBlspg_cmd_cb\fP (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
 .br
@@ -665,31 +669,31 @@ Send strings directly to PMAC queue. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1120 of file lspg.c.
+Definition at line 1137 of file lspg.c.
 .PP
 .nf
-1123                    {
-1124   //
-1125   // Call back funciton assumes query results in zero or more commands to send to the PMAC
-1126   //
-1127   int i;
-1128   char *sp;
-1129   
-1130   for( i=0; i<PQntuples( pgr); i++) {
-1131     sp = PQgetvalue( pgr, i, 0);
-1132     if( sp != NULL && *sp != 0) {
-1133       lspmac_SockSendline( sp);
-1134       //
-1135       // Keep asking for more until
-1136       // there are no commands left
-1137       // 
-1138       // This should solve a potential problem where
-1139       // more than one command is put on the queue for a given notify.
-1140       //
-1141       lspg_query_push( lspg_cmd_cb, 'select pmac.md2_queue_next()');
-1142     }
-1143   }
-1144 }
+1140                    {
+1141   //
+1142   // Call back funciton assumes query results in zero or more commands to send to the PMAC
+1143   //
+1144   int i;
+1145   char *sp;
+1146   
+1147   for( i=0; i<PQntuples( pgr); i++) {
+1148     sp = PQgetvalue( pgr, i, 0);
+1149     if( sp != NULL && *sp != 0) {
+1150       lspmac_SockSendline( sp);
+1151       //
+1152       // Keep asking for more until
+1153       // there are no commands left
+1154       // 
+1155       // This should solve a potential problem where
+1156       // more than one command is put on the queue for a given notify.
+1157       //
+1158       lspg_query_push( lspg_cmd_cb, 'select pmac.md2_queue_next()');
+1159     }
+1160   }
+1161 }
 .fi
 .SS "void lspg_flight_lut_cb (\fBlspg_query_queue_t\fP * qqp, PGresult * pgr)"
 .PP
@@ -730,36 +734,36 @@ Definition at line 393 of file lspg.c.
 .PP
 Flush psql output buffer (ie, send the query). 
 .PP
-Definition at line 1149 of file lspg.c.
+Definition at line 1166 of file lspg.c.
 .PP
 .nf
-1149                   {
-1150   int err;
-1151 
-1152   err = PQflush( q);
-1153   switch( err) {
-1154   case -1:
-1155     // an error occured
-1156 
-1157     lslogging_log_message( 'flush failed: %s', PQerrorMessage( q));
-1158 
-1159     ls_pg_state = LS_PG_STATE_IDLE;
-1160     //
-1161     // We should probably reset the connection and start from scratch.  Probably the connection died.
-1162     //
-1163     break;
-1164           
-1165   case 0:
-1166     // goodness and joy.
-1167     ls_pg_state = LS_PG_STATE_RECV;
-1168     break;
-1169 
-1170   case 1:
-1171     // more sending to do
-1172     ls_pg_state = LS_PG_STATE_SEND_FLUSH;
-1173     break;
-1174   }
-1175 }
+1166                   {
+1167   int err;
+1168 
+1169   err = PQflush( q);
+1170   switch( err) {
+1171   case -1:
+1172     // an error occured
+1173 
+1174     lslogging_log_message( 'flush failed: %s', PQerrorMessage( q));
+1175 
+1176     ls_pg_state = LS_PG_STATE_IDLE;
+1177     //
+1178     // We should probably reset the connection and start from scratch.  Probably the connection died.
+1179     //
+1180     break;
+1181           
+1182   case 0:
+1183     // goodness and joy.
+1184     ls_pg_state = LS_PG_STATE_RECV;
+1185     break;
+1186 
+1187   case 1:
+1188     // more sending to do
+1189     ls_pg_state = LS_PG_STATE_SEND_FLUSH;
+1190     break;
+1191   }
+1192 }
 .fi
 .SS "void lspg_getcenter_all ()"
 .PP
@@ -892,18 +896,18 @@ Definition at line 1071 of file lspg.c.
 .PP
 Initiallize the lspg module. 
 .PP
-Definition at line 1638 of file lspg.c.
+Definition at line 1655 of file lspg.c.
 .PP
 .nf
-1638                  {
-1639   pthread_mutex_init( &lspg_queue_mutex, NULL);
-1640   pthread_cond_init( &lspg_queue_cond, NULL);
-1641   lspg_nextshot_init();
-1642   lspg_getcenter_init();
-1643   lspg_wait_for_detector_init();
-1644   lspg_lock_diffractometer_init();
-1645   lspg_lock_detector_init();
-1646 }
+1655                  {
+1656   pthread_mutex_init( &lspg_queue_mutex, NULL);
+1657   pthread_cond_init( &lspg_queue_cond, NULL);
+1658   lspg_nextshot_init();
+1659   lspg_getcenter_init();
+1660   lspg_wait_for_detector_init();
+1661   lspg_lock_diffractometer_init();
+1662   lspg_lock_detector_init();
+1663 }
 .fi
 .SS "void lspg_init_motors_cb (\fBlspg_query_queue_t\fP * qqp, PGresult * pgr)"
 .PP
@@ -972,6 +976,33 @@ Definition at line 287 of file lspg.c.
 340       lsdp->u2c = 1.0;
 341   }
 342 }
+.fi
+.SS "void lspg_kvs_cb (\fBlspg_query_queue_t\fP * qqp, PGresult * pgr)"
+.PP
+retrieve kv pairs with new values \fBParameters:\fP
+.RS 4
+\fIqqp\fP Our query 
+.br
+\fIpgr\fP Our result 
+.RE
+.PP
+
+.PP
+Definition at line 1120 of file lspg.c.
+.PP
+.nf
+1123                    {
+1124   int i;
+1125 
+1126   lslogging_log_message( 'lspg_kvs_cb: %d tuples', PQntuples(pgr));
+1127 
+1128   // Even i is key  (the name)
+1129   // Odd  i is value
+1130   //
+1131   for( i=0; i<PQntuples(pgr)/2; i++) {
+1132     lskvs_set( PQgetvalue( pgr, 2*i, 0), PQgetvalue( pgr, 2*i+1, 0));
+1133   }
+1134 }
 .fi
 .SS "void lspg_lock_detector_all ()"
 .PP
@@ -1135,57 +1166,57 @@ Definition at line 835 of file lspg.c.
 .PP
 Implements our state machine Does not strictly only set the next state as it also calls some functions that, perhaps, alters the state mid-function. 
 .PP
-Definition at line 1507 of file lspg.c.
+Definition at line 1524 of file lspg.c.
 .PP
 .nf
-1507                        {
-1508   //
-1509   // connect to the database
-1510   //
-1511   if( q == NULL ||
-1512       ls_pg_state == LS_PG_STATE_INIT ||
-1513       ls_pg_state == LS_PG_STATE_RESET ||
-1514       ls_pg_state == LS_PG_STATE_INIT_POLL ||
-1515       ls_pg_state == LS_PG_STATE_RESET_POLL)
-1516     lspg_pg_connect( lspgfd);
-1517 
-1518 
-1519   if( ls_pg_state == LS_PG_STATE_IDLE && lspg_query_queue_on != lspg_query_queue_off)
-1520     ls_pg_state = LS_PG_STATE_SEND;
-1521 
-1522   switch( ls_pg_state) {
-1523   case LS_PG_STATE_INIT_POLL:
-1524     if( lspg_connectPoll_response == PGRES_POLLING_WRITING)
-1525       lspgfd.events = POLLOUT;
-1526     else if( lspg_connectPoll_response == PGRES_POLLING_READING)
-1527       lspgfd.events = POLLIN;
-1528     else
-1529       lspgfd.events = 0;
-1530     break;
-1531       
-1532   case LS_PG_STATE_RESET_POLL:
-1533     if( lspg_resetPoll_response == PGRES_POLLING_WRITING)
-1534       lspgfd.events = POLLOUT;
-1535     else if( lspg_resetPoll_response == PGRES_POLLING_READING)
-1536       lspgfd.events = POLLIN;
-1537     else
-1538       lspgfd.events = 0;
-1539     break;
-1540 
-1541   case LS_PG_STATE_IDLE:
-1542   case LS_PG_STATE_RECV:
-1543     lspgfd.events = POLLIN;
-1544     break;
-1545 
-1546   case LS_PG_STATE_SEND:
-1547   case LS_PG_STATE_SEND_FLUSH:
-1548     lspgfd.events = POLLOUT;
-1549     break;
-1550 
-1551   default:
-1552     lspgfd.events = 0;
-1553   }
-1554 }
+1524                        {
+1525   //
+1526   // connect to the database
+1527   //
+1528   if( q == NULL ||
+1529       ls_pg_state == LS_PG_STATE_INIT ||
+1530       ls_pg_state == LS_PG_STATE_RESET ||
+1531       ls_pg_state == LS_PG_STATE_INIT_POLL ||
+1532       ls_pg_state == LS_PG_STATE_RESET_POLL)
+1533     lspg_pg_connect( lspgfd);
+1534 
+1535 
+1536   if( ls_pg_state == LS_PG_STATE_IDLE && lspg_query_queue_on != lspg_query_queue_off)
+1537     ls_pg_state = LS_PG_STATE_SEND;
+1538 
+1539   switch( ls_pg_state) {
+1540   case LS_PG_STATE_INIT_POLL:
+1541     if( lspg_connectPoll_response == PGRES_POLLING_WRITING)
+1542       lspgfd.events = POLLOUT;
+1543     else if( lspg_connectPoll_response == PGRES_POLLING_READING)
+1544       lspgfd.events = POLLIN;
+1545     else
+1546       lspgfd.events = 0;
+1547     break;
+1548       
+1549   case LS_PG_STATE_RESET_POLL:
+1550     if( lspg_resetPoll_response == PGRES_POLLING_WRITING)
+1551       lspgfd.events = POLLOUT;
+1552     else if( lspg_resetPoll_response == PGRES_POLLING_READING)
+1553       lspgfd.events = POLLIN;
+1554     else
+1555       lspgfd.events = 0;
+1556     break;
+1557 
+1558   case LS_PG_STATE_IDLE:
+1559   case LS_PG_STATE_RECV:
+1560     lspgfd.events = POLLIN;
+1561     break;
+1562 
+1563   case LS_PG_STATE_SEND:
+1564   case LS_PG_STATE_SEND_FLUSH:
+1565     lspgfd.events = POLLOUT;
+1566     break;
+1567 
+1568   default:
+1569     lspgfd.events = 0;
+1570   }
+1571 }
 .fi
 .SS "void lspg_nextaction_cb (\fBlspg_query_queue_t\fP * qqp, PGresult * pgr)"
 .PP
@@ -1534,100 +1565,100 @@ Definition at line 718 of file lspg.c.
 .PP
 Connect to the pg server. 
 .PP
-Definition at line 1409 of file lspg.c.
+Definition at line 1426 of file lspg.c.
 .PP
 .nf
-1409                        {
-1410   PGresult *pgr;
-1411   int wait_interval = 1;
-1412   int connection_init = 0;
-1413   int i, err;
-1414 
-1415   if( q == NULL)
-1416     ls_pg_state = LS_PG_STATE_INIT;
-1417 
-1418   switch( ls_pg_state) {
-1419   case LS_PG_STATE_INIT:
-1420 
-1421     if( lspg_time_sent.tv_sec != 0) {
-1422       //
-1423       // Reality check: if it's less the about 10 seconds since the last failed attempt
-1424       // the just chill.
-1425       //
-1426       gettimeofday( &now, NULL);
-1427       if( now.tv_sec - lspg_time_sent.tv_sec < 10) {
-1428         return;
-1429       }
-1430     }
+1426                        {
+1427   PGresult *pgr;
+1428   int wait_interval = 1;
+1429   int connection_init = 0;
+1430   int i, err;
 1431 
-1432     q = PQconnectStart( 'dbname=ls user=lsuser hostaddr=10.1.0.3');
-1433     if( q == NULL) {
-1434       lslogging_log_message( 'Out of memory (lspg_pg_connect)');
-1435       exit( -1);
-1436     }
+1432   if( q == NULL)
+1433     ls_pg_state = LS_PG_STATE_INIT;
+1434 
+1435   switch( ls_pg_state) {
+1436   case LS_PG_STATE_INIT:
 1437 
-1438     err = PQstatus( q);
-1439     if( err == CONNECTION_BAD) {
-1440       lslogging_log_message( 'Trouble connecting to database');
-1441 
-1442       gettimeofday( &lspg_time_sent, NULL);
-1443       return;
-1444     }
-1445     err = PQsetnonblocking( q, 1);
-1446     if( err != 0) {
-1447       lslogging_log_message( 'Odd, could not set database connection to nonblocking');
-1448     }
-1449 
-1450     ls_pg_state = LS_PG_STATE_INIT_POLL;
-1451     lspg_connectPoll_response = PGRES_POLLING_WRITING;
-1452     //
-1453     // set up the connection for poll
-1454     //
-1455     lspgfd.fd = PQsocket( q);
-1456     break;
-1457 
-1458   case LS_PG_STATE_INIT_POLL:
-1459     if( lspg_connectPoll_response == PGRES_POLLING_FAILED) {
-1460       PQfinish( q);
-1461       q = NULL;
-1462       ls_pg_state = LS_PG_STATE_INIT;
-1463     } else if( lspg_connectPoll_response == PGRES_POLLING_OK) {
-1464       lspg_query_push( lspg_init_motors_cb, 'select * from pmac.md2_getmotors()');
-1465       lspg_query_push( NULL, 'select pmac.md2_init()');
-1466       lspg_query_push( lspg_zoom_lut_cb, 'SELECT * FROM pmac.md2_zoom_lut()');
-1467       lspg_query_push( lspg_flight_lut_cb, 'SELECT * FROM pmac.md2_flight_lut()');
-1468       lspg_query_push( lspg_blight_lut_cb, 'SELECT * FROM pmac.md2_blight_lut()');
-1469       lspg_query_push( lspg_scint_lut_cb,      'SELECT * FROM pmac.md2_scint_lut()');
-1470 
-1471       ls_pg_state = LS_PG_STATE_IDLE;
-1472     }
+1438     if( lspg_time_sent.tv_sec != 0) {
+1439       //
+1440       // Reality check: if it's less the about 10 seconds since the last failed attempt
+1441       // the just chill.
+1442       //
+1443       gettimeofday( &now, NULL);
+1444       if( now.tv_sec - lspg_time_sent.tv_sec < 10) {
+1445         return;
+1446       }
+1447     }
+1448 
+1449     q = PQconnectStart( 'dbname=ls user=lsuser hostaddr=10.1.0.3');
+1450     if( q == NULL) {
+1451       lslogging_log_message( 'Out of memory (lspg_pg_connect)');
+1452       exit( -1);
+1453     }
+1454 
+1455     err = PQstatus( q);
+1456     if( err == CONNECTION_BAD) {
+1457       lslogging_log_message( 'Trouble connecting to database');
+1458 
+1459       gettimeofday( &lspg_time_sent, NULL);
+1460       return;
+1461     }
+1462     err = PQsetnonblocking( q, 1);
+1463     if( err != 0) {
+1464       lslogging_log_message( 'Odd, could not set database connection to nonblocking');
+1465     }
+1466 
+1467     ls_pg_state = LS_PG_STATE_INIT_POLL;
+1468     lspg_connectPoll_response = PGRES_POLLING_WRITING;
+1469     //
+1470     // set up the connection for poll
+1471     //
+1472     lspgfd.fd = PQsocket( q);
 1473     break;
 1474 
-1475   case LS_PG_STATE_RESET:
-1476     err = PQresetStart( q);
-1477     if( err == 0) {
-1478       PQfinish( q);
-1479       q = NULL;
-1480       ls_pg_state = LS_PG_STATE_INIT;
-1481     } else {
-1482       ls_pg_state = LS_PG_STATE_RESET_POLL;
-1483       lspg_resetPoll_response = PGRES_POLLING_WRITING;
-1484     }
-1485     break;
-1486 
-1487   case LS_PG_STATE_RESET_POLL:
-1488     if( lspg_resetPoll_response == PGRES_POLLING_FAILED) {
-1489       PQfinish( q);
-1490       q = NULL;
-1491       ls_pg_state = LS_PG_STATE_INIT;
-1492     } else if( lspg_resetPoll_response == PGRES_POLLING_OK) {
-1493       lspg_query_push( lspg_init_motors_cb, 'select * from pmac.md2_getmotors()');
-1494       lspg_query_push( NULL, 'select pmac.md2_init()');
-1495       ls_pg_state = LS_PG_STATE_IDLE;
-1496     }
-1497     break;
-1498   }
-1499 }
+1475   case LS_PG_STATE_INIT_POLL:
+1476     if( lspg_connectPoll_response == PGRES_POLLING_FAILED) {
+1477       PQfinish( q);
+1478       q = NULL;
+1479       ls_pg_state = LS_PG_STATE_INIT;
+1480     } else if( lspg_connectPoll_response == PGRES_POLLING_OK) {
+1481       lspg_query_push( lspg_init_motors_cb, 'select * from pmac.md2_getmotors()');
+1482       lspg_query_push( NULL, 'select pmac.md2_init()');
+1483       lspg_query_push( lspg_zoom_lut_cb, 'SELECT * FROM pmac.md2_zoom_lut()');
+1484       lspg_query_push( lspg_flight_lut_cb, 'SELECT * FROM pmac.md2_flight_lut()');
+1485       lspg_query_push( lspg_blight_lut_cb, 'SELECT * FROM pmac.md2_blight_lut()');
+1486       lspg_query_push( lspg_scint_lut_cb,      'SELECT * FROM pmac.md2_scint_lut()');
+1487 
+1488       ls_pg_state = LS_PG_STATE_IDLE;
+1489     }
+1490     break;
+1491 
+1492   case LS_PG_STATE_RESET:
+1493     err = PQresetStart( q);
+1494     if( err == 0) {
+1495       PQfinish( q);
+1496       q = NULL;
+1497       ls_pg_state = LS_PG_STATE_INIT;
+1498     } else {
+1499       ls_pg_state = LS_PG_STATE_RESET_POLL;
+1500       lspg_resetPoll_response = PGRES_POLLING_WRITING;
+1501     }
+1502     break;
+1503 
+1504   case LS_PG_STATE_RESET_POLL:
+1505     if( lspg_resetPoll_response == PGRES_POLLING_FAILED) {
+1506       PQfinish( q);
+1507       q = NULL;
+1508       ls_pg_state = LS_PG_STATE_INIT;
+1509     } else if( lspg_resetPoll_response == PGRES_POLLING_OK) {
+1510       lspg_query_push( lspg_init_motors_cb, 'select * from pmac.md2_getmotors()');
+1511       lspg_query_push( NULL, 'select pmac.md2_init()');
+1512       ls_pg_state = LS_PG_STATE_IDLE;
+1513     }
+1514     break;
+1515   }
+1516 }
 .fi
 .SS "void lspg_pg_service (struct pollfd * evt)"
 .PP
@@ -1638,103 +1669,103 @@ I/O control to/from the postgresql server. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1309 of file lspg.c.
+Definition at line 1326 of file lspg.c.
 .PP
 .nf
-1311                        {
-1312   //
-1313   // Currently just used to check for notifies
-1314   // Other socket communication is done syncronously
-1315   // Reconsider this if we start using the pmac gather functions
-1316   // since we'll want to be servicing those sockets ASAP
-1317   //
-1318 
-1319   if( evt->revents & POLLIN) {
-1320     int err;
-1321 
-1322     if( ls_pg_state == LS_PG_STATE_INIT_POLL) {
-1323       lspg_connectPoll_response = PQconnectPoll( q);
-1324       if( lspg_connectPoll_response == PGRES_POLLING_FAILED) {
-1325         ls_pg_state = LS_PG_STATE_RESET;
-1326       }
-1327       return;
-1328     }
-1329 
-1330     if( ls_pg_state == LS_PG_STATE_RESET_POLL) {
-1331       lspg_resetPoll_response = PQresetPoll( q);
-1332       if( lspg_resetPoll_response == PGRES_POLLING_FAILED) {
-1333         ls_pg_state = LS_PG_STATE_RESET;
-1334       }
-1335       return;
-1336     }
-1337 
-1338 
-1339     //
-1340     // if in IDLE or RECV we need to call consumeInput first
-1341     //
-1342     if( ls_pg_state == LS_PG_STATE_IDLE) {
-1343       err = PQconsumeInput( q);
-1344       if( err != 1) {
-1345         lslogging_log_message( 'consume input failed: %s', PQerrorMessage( q));
-1346         ls_pg_state == LS_PG_STATE_RESET;
-1347         return;
-1348       }
-1349     }      
-1350 
-1351     if( ls_pg_state == LS_PG_STATE_RECV) {
-1352       lspg_receive();
-1353     }
-1354 
-1355     //
-1356     // Check for notifies regardless of our state
-1357     // Push as many requests as we have notifies.
-1358     //
-1359     {
-1360       PGnotify *pgn;
-1361 
-1362       while( 1) {
-1363         pgn = PQnotifies( q);
-1364         if( pgn == NULL)
-1365           break;
-1366         
-1367         if( strstr( pgn->relname, '_pmac') != NULL) {
-1368           lspg_query_push( lspg_cmd_cb, 'SELECT pmac.md2_queue_next()');
-1369         } else {
-1370           lspg_query_push( lspg_nextaction_cb, 'SELECT action FROM px.nextaction()');
-1371         }
-1372         PQfreemem( pgn);
-1373       }
-1374     }
-1375   }
+1328                        {
+1329   //
+1330   // Currently just used to check for notifies
+1331   // Other socket communication is done syncronously
+1332   //
+1333 
+1334   if( evt->revents & POLLIN) {
+1335     int err;
+1336 
+1337     if( ls_pg_state == LS_PG_STATE_INIT_POLL) {
+1338       lspg_connectPoll_response = PQconnectPoll( q);
+1339       if( lspg_connectPoll_response == PGRES_POLLING_FAILED) {
+1340         ls_pg_state = LS_PG_STATE_RESET;
+1341       }
+1342       return;
+1343     }
+1344 
+1345     if( ls_pg_state == LS_PG_STATE_RESET_POLL) {
+1346       lspg_resetPoll_response = PQresetPoll( q);
+1347       if( lspg_resetPoll_response == PGRES_POLLING_FAILED) {
+1348         ls_pg_state = LS_PG_STATE_RESET;
+1349       }
+1350       return;
+1351     }
+1352 
+1353 
+1354     //
+1355     // if in IDLE or RECV we need to call consumeInput first
+1356     //
+1357     if( ls_pg_state == LS_PG_STATE_IDLE) {
+1358       err = PQconsumeInput( q);
+1359       if( err != 1) {
+1360         lslogging_log_message( 'consume input failed: %s', PQerrorMessage( q));
+1361         ls_pg_state == LS_PG_STATE_RESET;
+1362         return;
+1363       }
+1364     }      
+1365 
+1366     if( ls_pg_state == LS_PG_STATE_RECV) {
+1367       lspg_receive();
+1368     }
+1369 
+1370     //
+1371     // Check for notifies regardless of our state
+1372     // Push as many requests as we have notifies.
+1373     //
+1374     {
+1375       PGnotify *pgn;
 1376 
-1377   if( evt->revents & POLLOUT) {
-1378 
-1379     if( ls_pg_state == LS_PG_STATE_INIT_POLL) {
-1380       lspg_connectPoll_response = PQconnectPoll( q);
-1381       if( lspg_connectPoll_response == PGRES_POLLING_FAILED) {
-1382         ls_pg_state = LS_PG_STATE_RESET;
-1383       }
-1384       return;
-1385     }
-1386 
-1387     if( ls_pg_state == LS_PG_STATE_RESET_POLL) {
-1388       lspg_resetPoll_response = PQresetPoll( q);
-1389       if( lspg_resetPoll_response == PGRES_POLLING_FAILED) {
-1390         ls_pg_state = LS_PG_STATE_RESET;
-1391       }
-1392       return;
-1393     }
-1394 
+1377       while( 1) {
+1378         pgn = PQnotifies( q);
+1379         if( pgn == NULL)
+1380           break;
+1381         
+1382         if( strstr( pgn->relname, '_pmac') != NULL) {
+1383           lspg_query_push( lspg_cmd_cb, 'SELECT pmac.md2_queue_next()');
+1384         } else if (strstr( pgn->relname, '_diff') != NULL) {
+1385           lspg_query_push( lspg_nextaction_cb, 'SELECT action FROM px.nextaction()');
+1386         } else if (strstr( pgn->relname, '_kvs') != NULL) {
+1387           lspg_query_push( lspg_kvs_cb, 'SELECT pmac.getkvs()');
+1388         }
+1389         PQfreemem( pgn);
+1390       }
+1391     }
+1392   }
+1393 
+1394   if( evt->revents & POLLOUT) {
 1395 
-1396     if( ls_pg_state == LS_PG_STATE_SEND) {
-1397       lspg_send_next_query();
-1398     }
-1399 
-1400     if( ls_pg_state == LS_PG_STATE_SEND_FLUSH) {
-1401       lspg_flush();
+1396     if( ls_pg_state == LS_PG_STATE_INIT_POLL) {
+1397       lspg_connectPoll_response = PQconnectPoll( q);
+1398       if( lspg_connectPoll_response == PGRES_POLLING_FAILED) {
+1399         ls_pg_state = LS_PG_STATE_RESET;
+1400       }
+1401       return;
 1402     }
-1403   }
-1404 }
+1403 
+1404     if( ls_pg_state == LS_PG_STATE_RESET_POLL) {
+1405       lspg_resetPoll_response = PQresetPoll( q);
+1406       if( lspg_resetPoll_response == PGRES_POLLING_FAILED) {
+1407         ls_pg_state = LS_PG_STATE_RESET;
+1408       }
+1409       return;
+1410     }
+1411 
+1412 
+1413     if( ls_pg_state == LS_PG_STATE_SEND) {
+1414       lspg_send_next_query();
+1415     }
+1416 
+1417     if( ls_pg_state == LS_PG_STATE_SEND_FLUSH) {
+1418       lspg_flush();
+1419     }
+1420   }
+1421 }
 .fi
 .SS "\fBlspg_query_queue_t\fP* lspg_query_next ()"
 .PP
@@ -1843,76 +1874,76 @@ Definition at line 116 of file lspg.c.
 .PP
 Receive a result of a query. 
 .PP
-Definition at line 1226 of file lspg.c.
+Definition at line 1243 of file lspg.c.
 .PP
 .nf
-1226                     {
-1227   PGresult *pgr;
-1228   lspg_query_queue_t *qqp;
-1229   int err;
-1230 
-1231   err = PQconsumeInput( q);
-1232   if( err != 1) {
-1233     lslogging_log_message( 'consume input failed: %s', PQerrorMessage( q));
-1234     ls_pg_state == LS_PG_STATE_RESET;
-1235     return;
-1236   }
-1237 
-1238   //
-1239   // We must call PQgetResult until it returns NULL before sending the next query
-1240   // This implies that only one query can ever be active at a time and our queue
-1241   // management should be simple
-1242   //
-1243   // We should be in the LS_PG_STATE_RECV here
-1244   //
-1245 
-1246   while( !PQisBusy( q)) {
-1247     pgr = PQgetResult( q);
-1248     if( pgr == NULL) {
-1249       lspg_query_reply_next();
-1250       //
-1251       // we are now done reading the response from the database
-1252       //
-1253       ls_pg_state = LS_PG_STATE_IDLE;
-1254       break;
-1255     } else {
-1256       ExecStatusType es;
-1257 
-1258       qqp = lspg_query_reply_peek();
-1259       es = PQresultStatus( pgr);
-1260 
-1261       if( es != PGRES_COMMAND_OK && es != PGRES_TUPLES_OK) {
-1262         char *emess;
-1263         emess = PQresultErrorMessage( pgr);
-1264         if( emess != NULL && emess[0] != 0) {
-1265           lslogging_log_message( 'Error from query '%s':\n%s', qqp->qs, emess);
-1266         }
-1267       } else {
-1268         //
-1269         // Deal with the response
-1270         //
-1271         // If the response is likely to take awhile we should probably
-1272         // add a new state and put something in the main look to run the onResponse
-1273         // routine in the main loop.  For now, though, we only expect very brief onResponse routines
-1274         //
-1275         if( qqp != NULL && qqp->onResponse != NULL)
-1276           qqp->onResponse( qqp, pgr);
-1277       }
-1278       PQclear( pgr);
-1279     }
-1280   }
-1281 }
+1243                     {
+1244   PGresult *pgr;
+1245   lspg_query_queue_t *qqp;
+1246   int err;
+1247 
+1248   err = PQconsumeInput( q);
+1249   if( err != 1) {
+1250     lslogging_log_message( 'consume input failed: %s', PQerrorMessage( q));
+1251     ls_pg_state == LS_PG_STATE_RESET;
+1252     return;
+1253   }
+1254 
+1255   //
+1256   // We must call PQgetResult until it returns NULL before sending the next query
+1257   // This implies that only one query can ever be active at a time and our queue
+1258   // management should be simple
+1259   //
+1260   // We should be in the LS_PG_STATE_RECV here
+1261   //
+1262 
+1263   while( !PQisBusy( q)) {
+1264     pgr = PQgetResult( q);
+1265     if( pgr == NULL) {
+1266       lspg_query_reply_next();
+1267       //
+1268       // we are now done reading the response from the database
+1269       //
+1270       ls_pg_state = LS_PG_STATE_IDLE;
+1271       break;
+1272     } else {
+1273       ExecStatusType es;
+1274 
+1275       qqp = lspg_query_reply_peek();
+1276       es = PQresultStatus( pgr);
+1277 
+1278       if( es != PGRES_COMMAND_OK && es != PGRES_TUPLES_OK) {
+1279         char *emess;
+1280         emess = PQresultErrorMessage( pgr);
+1281         if( emess != NULL && emess[0] != 0) {
+1282           lslogging_log_message( 'Error from query '%s':\n%s', qqp->qs, emess);
+1283         }
+1284       } else {
+1285         //
+1286         // Deal with the response
+1287         //
+1288         // If the response is likely to take awhile we should probably
+1289         // add a new state and put something in the main look to run the onResponse
+1290         // routine in the main loop.  For now, though, we only expect very brief onResponse routines
+1291         //
+1292         if( qqp != NULL && qqp->onResponse != NULL)
+1293           qqp->onResponse( qqp, pgr);
+1294       }
+1295       PQclear( pgr);
+1296     }
+1297   }
+1298 }
 .fi
 .SS "void lspg_run ()"
 .PP
 Start 'er runnin'. 
 .PP
-Definition at line 1650 of file lspg.c.
+Definition at line 1667 of file lspg.c.
 .PP
 .nf
-1650                 {
-1651   pthread_create( &lspg_thread, NULL, lspg_worker, NULL);
-1652 }
+1667                 {
+1668   pthread_create( &lspg_thread, NULL, lspg_worker, NULL);
+1669 }
 .fi
 .SS "void lspg_scint_lut_cb (\fBlspg_query_queue_t\fP * qqp, PGresult * pgr)"\fBParameters:\fP
 .RS 4
@@ -1948,53 +1979,53 @@ Definition at line 369 of file lspg.c.
 .PP
 send the next queued query to the DB server 
 .PP
-Definition at line 1179 of file lspg.c.
+Definition at line 1196 of file lspg.c.
 .PP
 .nf
-1179                             {
-1180   //
-1181   // Normally we should be in the 'send' state
-1182   // but we can also send if we are servicing
-1183   // a reply
-1184   //
-1185 
-1186   lspg_query_queue_t *qqp;
-1187   int err;
-1188 
-1189   qqp = lspg_query_next();
-1190   if( qqp == NULL) {
-1191     //
-1192     // A send without a query?  Should never happen.
-1193     // But at least we shouldn't segfault if it does.
-1194     //
-1195     return;
-1196   }
-1197 
-1198   if( qqp->qs[0] == 0) {
-1199     //
-1200     // Do we really have to check this case?
-1201     // It would only come up if we stupidly pushed an empty query string
-1202     // or ran off the end of the queue
-1203     //
-1204     lslogging_log_message( 'Popped empty query string.  Probably bad things are going on.');
+1196                             {
+1197   //
+1198   // Normally we should be in the 'send' state
+1199   // but we can also send if we are servicing
+1200   // a reply
+1201   //
+1202 
+1203   lspg_query_queue_t *qqp;
+1204   int err;
 1205 
-1206     lspg_query_reply_next();
-1207     ls_pg_state = LS_PG_STATE_IDLE;
-1208   } else {
-1209     err = PQsendQuery( q, qqp->qs);
-1210     if( err == 0) {
-1211       lslogging_log_message( 'query failed: %s\n', PQerrorMessage( q));
-1212 
-1213       //
-1214       // Don't wait for a reply, just reset the connection
-1215       //
-1216       lspg_query_reply_next();
-1217       ls_pg_state == LS_PG_STATE_RESET;
-1218     } else {
-1219       ls_pg_state = LS_PG_STATE_SEND_FLUSH;
-1220     }
-1221   }
-1222 }
+1206   qqp = lspg_query_next();
+1207   if( qqp == NULL) {
+1208     //
+1209     // A send without a query?  Should never happen.
+1210     // But at least we shouldn't segfault if it does.
+1211     //
+1212     return;
+1213   }
+1214 
+1215   if( qqp->qs[0] == 0) {
+1216     //
+1217     // Do we really have to check this case?
+1218     // It would only come up if we stupidly pushed an empty query string
+1219     // or ran off the end of the queue
+1220     //
+1221     lslogging_log_message( 'Popped empty query string.  Probably bad things are going on.');
+1222 
+1223     lspg_query_reply_next();
+1224     ls_pg_state = LS_PG_STATE_IDLE;
+1225   } else {
+1226     err = PQsendQuery( q, qqp->qs);
+1227     if( err == 0) {
+1228       lslogging_log_message( 'query failed: %s\n', PQerrorMessage( q));
+1229 
+1230       //
+1231       // Don't wait for a reply, just reset the connection
+1232       //
+1233       lspg_query_reply_next();
+1234       ls_pg_state == LS_PG_STATE_RESET;
+1235     } else {
+1236       ls_pg_state = LS_PG_STATE_SEND_FLUSH;
+1237     }
+1238   }
+1239 }
 .fi
 .SS "void lspg_seq_run_prep_all (long long skey, double kappa, double phi, double cx, double cy, double ax, double ay, double az)"
 .PP
@@ -2130,26 +2161,26 @@ Service a signal Signals here are treated as file descriptors and fits into our 
 .PP
 
 .PP
-Definition at line 1287 of file lspg.c.
+Definition at line 1304 of file lspg.c.
 .PP
 .nf
-1289                         {
-1290   struct signalfd_siginfo fdsi;
-1291 
-1292   //
-1293   // Really, we don't care about the signal,
-1294   // it's just used to drop out of the poll
-1295   // function when there is something for us
-1296   // to do that didn't invovle something coming
-1297   // from our postgresql server.
-1298   //
-1299   // This is accompished by the query_push function
-1300   // to notify us that a new query is ready.
-1301   //
-1302 
-1303   read( evt->fd, &fdsi, sizeof( struct signalfd_siginfo));
-1304 
-1305 }
+1306                         {
+1307   struct signalfd_siginfo fdsi;
+1308 
+1309   //
+1310   // Really, we don't care about the signal,
+1311   // it's just used to drop out of the poll
+1312   // function when there is something for us
+1313   // to do that didn't invovle something coming
+1314   // from our postgresql server.
+1315   //
+1316   // This is accompished by the query_push function
+1317   // to notify us that a new query is ready.
+1318   //
+1319 
+1320   read( evt->fd, &fdsi, sizeof( struct signalfd_siginfo));
+1321 
+1322 }
 .fi
 .SS "void lspg_wait_for_detector_all ()"
 .PP
@@ -2239,83 +2270,83 @@ The main loop for the lspg thread. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1558 of file lspg.c.
+Definition at line 1575 of file lspg.c.
 .PP
 .nf
-1560                     {
-1561   static struct pollfd fda[2];  // 0=signal handler, 1=pg socket
-1562   static int nfda = 0;
-1563   static sigset_t our_sigset;
-1564   int sigfd;
-1565 
-1566   sigemptyset( &our_sigset);
-1567   sigaddset( &our_sigset, SIGUSR1);
-1568 
-1569 
-1570   //
-1571   // block ordinary signal mechanism
-1572   //
-1573   sigprocmask(SIG_BLOCK, &our_sigset, NULL);
-1574 
-1575     
-1576   fda[0].fd = signalfd( -1, &our_sigset, SFD_NONBLOCK);
-1577   if( fda[0].fd == -1) {
-1578     char *es;
-1579 
-1580     es = strerror( errno);
-1581     lslogging_log_message( 'Signalfd trouble: %s', es);
-1582   }
-1583   fda[0].events = POLLIN;
-1584 
-1585   //
-1586   //  make sure file descriptor is not legal until it's been conneceted
+1577                     {
+1578   static struct pollfd fda[2];  // 0=signal handler, 1=pg socket
+1579   static int nfda = 0;
+1580   static sigset_t our_sigset;
+1581   int sigfd;
+1582 
+1583   sigemptyset( &our_sigset);
+1584   sigaddset( &our_sigset, SIGUSR1);
+1585 
+1586 
 1587   //
-1588   lspgfd.fd   = -1;
-1589 
-1590 
-1591   while( 1) {
-1592     int pollrtn;
-1593     int poll_timeout_ms;
-1594 
-1595     lspg_next_state();
+1588   // block ordinary signal mechanism
+1589   //
+1590   sigprocmask(SIG_BLOCK, &our_sigset, NULL);
+1591 
+1592     
+1593   fda[0].fd = signalfd( -1, &our_sigset, SFD_NONBLOCK);
+1594   if( fda[0].fd == -1) {
+1595     char *es;
 1596 
-1597     if( lspgfd.fd == -1) {
-1598       //
-1599       // Here a connection to the database is not established.
-1600       // Periodicaly try again.  Should possibly arrange to reconnect
-1601       // to signalfd but that's unlikely to be nessesary.
-1602       //
-1603       nfda = 1;
-1604       poll_timeout_ms = 10000;
-1605       fda[1].revents = 0;
-1606     } else {
-1607       //
-1608       // Arrange to peacfully do nothing until either the pg server sends us something
-1609       // or someone pushs something onto our queue
-1610       //
-1611       nfda = 2;
-1612       fda[1].fd      = lspgfd.fd;
-1613       fda[1].events  = lspgfd.events;
-1614       fda[1].revents = 0;
-1615       poll_timeout_ms = -1;
-1616     }
-1617 
-1618     pollrtn = poll( fda, nfda, poll_timeout_ms);
-1619 
-1620     if( pollrtn && fda[0].revents) {
-1621       lspg_sig_service( &(fda[0]));
-1622       pollrtn--;
-1623     } 
-1624     if( pollrtn && fda[1].revents) {
-1625       lspg_pg_service( &(fda[1]));
-1626       pollrtn--;
-1627     } 
-1628 
-1629 
-1630 
-1631 
-1632   }
-1633 }
+1597     es = strerror( errno);
+1598     lslogging_log_message( 'Signalfd trouble: %s', es);
+1599   }
+1600   fda[0].events = POLLIN;
+1601 
+1602   //
+1603   //  make sure file descriptor is not legal until it's been conneceted
+1604   //
+1605   lspgfd.fd   = -1;
+1606 
+1607 
+1608   while( 1) {
+1609     int pollrtn;
+1610     int poll_timeout_ms;
+1611 
+1612     lspg_next_state();
+1613 
+1614     if( lspgfd.fd == -1) {
+1615       //
+1616       // Here a connection to the database is not established.
+1617       // Periodicaly try again.  Should possibly arrange to reconnect
+1618       // to signalfd but that's unlikely to be nessesary.
+1619       //
+1620       nfda = 1;
+1621       poll_timeout_ms = 10000;
+1622       fda[1].revents = 0;
+1623     } else {
+1624       //
+1625       // Arrange to peacfully do nothing until either the pg server sends us something
+1626       // or someone pushs something onto our queue
+1627       //
+1628       nfda = 2;
+1629       fda[1].fd      = lspgfd.fd;
+1630       fda[1].events  = lspgfd.events;
+1631       fda[1].revents = 0;
+1632       poll_timeout_ms = -1;
+1633     }
+1634 
+1635     pollrtn = poll( fda, nfda, poll_timeout_ms);
+1636 
+1637     if( pollrtn && fda[0].revents) {
+1638       lspg_sig_service( &(fda[0]));
+1639       pollrtn--;
+1640     } 
+1641     if( pollrtn && fda[1].revents) {
+1642       lspg_pg_service( &(fda[1]));
+1643       pollrtn--;
+1644     } 
+1645 
+1646 
+1647 
+1648 
+1649   }
+1650 }
 .fi
 .SS "void lspg_zoom_lut_cb (\fBlspg_query_queue_t\fP * qqp, PGresult * pgr)"
 .PP

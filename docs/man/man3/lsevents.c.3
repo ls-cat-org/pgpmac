@@ -1,0 +1,327 @@
+.TH "lsevents.c" 3 "14 Nov 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+lsevents.c \- 
+.PP
+event subsystem for inter-pgpmac communication  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'pgpmac.h'\fP
+.br
+
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBlsevents_queue_struct\fP"
+.br
+.ti -1c
+.RI "struct \fBlsevents_listener_struct\fP"
+.br
+.in -1c
+.SS "Defines"
+
+.in +1c
+.ti -1c
+.RI "#define \fBLSEVENTS_QUEUE_LENGTH\fP   256"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBlsevents_queue_struct\fP \fBlsevents_queue_t\fP"
+.br
+.ti -1c
+.RI "typedef struct \fBlsevents_listener_struct\fP \fBlsevents_listener_t\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBlsevents_send_event\fP (char *fmt,...)"
+.br
+.ti -1c
+.RI "void \fBlsevents_add_listener\fP (char *event, void(*cb)(char *))"
+.br
+.ti -1c
+.RI "void \fBlsevents_remove_listener\fP (char *event, void(*cb)(char *))"
+.br
+.ti -1c
+.RI "void * \fBlsevents_worker\fP (void *dummy)"
+.br
+.ti -1c
+.RI "void \fBlsevents_init\fP ()"
+.br
+.ti -1c
+.RI "void \fBlsevents_run\fP ()"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "static \fBlsevents_queue_t\fP \fBlsevents_queue\fP [LSEVENTS_QUEUE_LENGTH]"
+.br
+.ti -1c
+.RI "static unsigned int \fBlsevents_queue_on\fP = 0"
+.br
+.ti -1c
+.RI "static unsigned int \fBlsevents_queue_off\fP = 0"
+.br
+.ti -1c
+.RI "static \fBlsevents_listener_t\fP * \fBlsevents_listeners_p\fP = NULL"
+.br
+.ti -1c
+.RI "static pthread_t \fBlsevents_thread\fP"
+.br
+.RI "\fIthread to run the event queue \fP"
+.ti -1c
+.RI "static pthread_mutex_t \fBlsevents_listener_mutex\fP"
+.br
+.RI "\fImutex to protect the listener linked list \fP"
+.ti -1c
+.RI "static pthread_mutex_t \fBlsevents_queue_mutex\fP"
+.br
+.RI "\fImutex to protect the event queue \fP"
+.ti -1c
+.RI "static pthread_cond_t \fBlsevents_queue_cond\fP"
+.br
+.RI "\fIcondition to pause the queue if needed \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+event subsystem for inter-pgpmac communication 
+
+\fBDate:\fP
+.RS 4
+2012 
+.RE
+.PP
+\fBAuthor:\fP
+.RS 4
+Keith Brister  All Rights Reserved 
+.RE
+.PP
+
+.PP
+Definition in file \fBlsevents.c\fP.
+.SH "Define Documentation"
+.PP 
+.SS "#define LSEVENTS_QUEUE_LENGTH   256"
+.PP
+Definition at line 10 of file lsevents.c.
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBlsevents_listener_struct\fP  \fBlsevents_listener_t\fP"
+.SS "typedef struct \fBlsevents_queue_struct\fP  \fBlsevents_queue_t\fP"
+.SH "Function Documentation"
+.PP 
+.SS "void lsevents_add_listener (char * event, void(*)(char *) cb)"
+.PP
+Definition at line 61 of file lsevents.c.
+.PP
+.nf
+61                                                              {
+62   lsevents_listener_t *new;
+63 
+64   new = calloc( 1, sizeof( lsevents_listener_t));
+65   if( new == NULL) {
+66     lslogging_log_message( 'lsevents_add_listener: out of memory');
+67     exit( -1);
+68   }
+69 
+70   strncpy( new->event, event, LSEVENTS_EVENT_LENGTH);
+71   new->event[LSEVENTS_EVENT_LENGTH-1] = 0;
+72   new->cb   = cb;
+73   new->next = lsevents_listeners_p;
+74 
+75   pthread_mutex_lock( &lsevents_listener_mutex);
+76   lsevents_listeners_p = new;
+77   pthread_mutex_unlock( &lsevents_listener_mutex);
+78 
+79   lslogging_log_message( 'lsevents_add_listener: added listener for event %s', event);
+80 
+81 }
+.fi
+.SS "void lsevents_init ()"
+.PP
+Definition at line 163 of file lsevents.c.
+.PP
+.nf
+163                      {
+164   pthread_mutex_init( &lsevents_queue_mutex, NULL);
+165   pthread_cond_init(  &lsevents_queue_cond, NULL);
+166   pthread_mutex_init( &lsevents_listener_mutex, NULL);
+167 }
+.fi
+.SS "void lsevents_remove_listener (char * event, void(*)(char *) cb)"
+.PP
+Definition at line 83 of file lsevents.c.
+.PP
+.nf
+83                                                                 {
+84   
+85   lsevents_listener_t *last, *current;
+86 
+87   //
+88   // Find the listener to remove
+89   // and unlink it from the list
+90   //
+91   pthread_mutex_lock( &lsevents_listener_mutex);
+92   last = NULL;
+93   for( current = lsevents_listeners_p; current != NULL; current = current->next) {
+94     if( strcmp( last->event, event) == 0 && last->cb == cb) {
+95       if( last == NULL) {
+96         lsevents_listeners_p = current->next;
+97       } else {
+98         last->next = current->next;
+99       }
+100       break;
+101     }
+102   }
+103   pthread_mutex_unlock( &lsevents_listener_mutex);
+104 
+105   //
+106   // Now remove it
+107   // TODO: use saner memory management where we allocate many listeners at a time
+108   // as an array and then just flag the ones that are used
+109   //
+110   if( current != NULL) {
+111     if( current->event != NULL)
+112       free( current->event);
+113     free(current);
+114   }
+115 }
+.fi
+.SS "void lsevents_run ()"
+.PP
+Definition at line 169 of file lsevents.c.
+.PP
+.nf
+169                     {
+170   pthread_create( &lsevents_thread, NULL, lsevents_worker, NULL);
+171 }
+.fi
+.SS "void lsevents_send_event (char * fmt,  ...)"
+.PP
+Definition at line 33 of file lsevents.c.
+.PP
+.nf
+33                                           {
+34   char event[LSEVENTS_EVENT_LENGTH];
+35   char *sp;
+36   va_list arg_ptr;
+37 
+38   va_start( arg_ptr, fmt);
+39   vsnprintf( event, sizeof(event)-1, fmt, arg_ptr);
+40   event[sizeof(event)-1]=0;
+41   va_end( arg_ptr);
+42 
+43   lslogging_log_message( 'lsevents_send_event: %s', event);
+44 
+45   pthread_mutex_lock( &lsevents_queue_mutex);
+46 
+47   // maybe wait for room on the queue
+48   while( lsevents_queue_on + 1 == lsevents_queue_off)
+49     pthread_cond_wait( &lsevents_queue_cond, &lsevents_queue_mutex);
+50   
+51   sp = lsevents_queue[(lsevents_queue_on++) % LSEVENTS_QUEUE_LENGTH].event;
+52   strncpy( sp, event, LSEVENTS_EVENT_LENGTH);
+53   sp[LSEVENTS_EVENT_LENGTH - 1] = 0;
+54 
+55   pthread_cond_signal(  &lsevents_queue_cond);
+56   pthread_mutex_unlock( &lsevents_queue_mutex);
+57 
+58 }
+.fi
+.SS "void* lsevents_worker (void * dummy)"
+.PP
+Definition at line 117 of file lsevents.c.
+.PP
+.nf
+119                        {
+120   
+121   char event[LSEVENTS_EVENT_LENGTH];
+122   lsevents_queue_t *ep;
+123   lsevents_listener_t *p;
+124 
+125   while( 1) {
+126     pthread_mutex_lock( &lsevents_queue_mutex);
+127 
+128     //
+129     // wait for someone to send an event
+130     //
+131     while( lsevents_queue_off == lsevents_queue_on)
+132       pthread_cond_wait( &lsevents_queue_cond, &lsevents_queue_mutex);
+133 
+134     //
+135     // copy event string since the value in the queue may change when
+136     // we unlock the mutex
+137     //
+138     ep = &(lsevents_queue[(lsevents_queue_off++) % LSEVENTS_QUEUE_LENGTH]);
+139     strncpy( event, ep->event, LSEVENTS_EVENT_LENGTH);
+140     event[LSEVENTS_EVENT_LENGTH-1] = 0;
+141 
+142     //
+143     // let the send event process know there is room on the queue again
+144     //
+145     pthread_cond_signal(  &lsevents_queue_cond);
+146     pthread_mutex_unlock( &lsevents_queue_mutex);
+147 
+148     //
+149     // Find the callbacks and, well, call them back
+150     //
+151     pthread_mutex_lock( &lsevents_listener_mutex);
+152     for( p = lsevents_listeners_p; p != NULL; p = p->next) {
+153       if( strcmp( event, p->event) == 0) {
+154         p->cb( p->event);
+155       }
+156     }
+157 
+158     pthread_mutex_unlock( &lsevents_listener_mutex);
+159   }
+160   return NULL;
+161 }
+.fi
+.SH "Variable Documentation"
+.PP 
+.SS "pthread_mutex_t \fBlsevents_listener_mutex\fP\fC [static]\fP"
+.PP
+mutex to protect the listener linked list 
+.PP
+Definition at line 29 of file lsevents.c.
+.SS "\fBlsevents_listener_t\fP* \fBlsevents_listeners_p\fP = NULL\fC [static]\fP"
+.PP
+Definition at line 26 of file lsevents.c.
+.SS "\fBlsevents_queue_t\fP \fBlsevents_queue\fP[LSEVENTS_QUEUE_LENGTH]\fC [static]\fP"
+.PP
+Definition at line 16 of file lsevents.c.
+.SS "pthread_cond_t \fBlsevents_queue_cond\fP\fC [static]\fP"
+.PP
+condition to pause the queue if needed 
+.PP
+Definition at line 31 of file lsevents.c.
+.SS "pthread_mutex_t \fBlsevents_queue_mutex\fP\fC [static]\fP"
+.PP
+mutex to protect the event queue 
+.PP
+Definition at line 30 of file lsevents.c.
+.SS "unsigned int \fBlsevents_queue_off\fP = 0\fC [static]\fP"
+.PP
+Definition at line 18 of file lsevents.c.
+.SS "unsigned int \fBlsevents_queue_on\fP = 0\fC [static]\fP"
+.PP
+Definition at line 17 of file lsevents.c.
+.SS "pthread_t \fBlsevents_thread\fP\fC [static]\fP"
+.PP
+thread to run the event queue 
+.PP
+Definition at line 28 of file lsevents.c.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for LS-CAT PGPMAC from the source code.
