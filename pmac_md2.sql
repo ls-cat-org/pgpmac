@@ -5,12 +5,54 @@ GRANT USAGE ON SCHEMA pmac TO PUBLIC;
 BEGIN;
 
 CREATE TABLE pmac.md2_registration (
-       mr_key serial primary key,
-       mr_stn int,
-       mr_ts timestamptz default now(),
-       mr_client inet default inet_client_addr()
+       mr_key serial primary key,                       -- our key
+       mr_stn int,                                      -- our station
+       mr_ts timestamptz default now(),                 -- time we logged in
+       mr_client inet default inet_client_addr(),       -- our ip address
+       mr_kvseq int default 0                           -- the most recent kvseq for kv pairs sent to md2 process
 );
 ALTER TABLE pmac.md2_registration OWNER TO lsadmin;
+
+
+CREATE OR REPLACE FUNCTION pmac.getkvs( the_stn int) returns setof text AS $$
+  DECLARE
+    the_mrkey int;
+    the_seq  int;
+    new_seq  int;
+    the_ntfy text;
+    the_ntfya text[];
+    the_k    text;
+    the_v    text;
+
+  BEGIN
+    SELECT INTO the_mrkey, the_seq mr_key,mr_kvseq FROM pmac.md2_registration WHERE mr_stn=the_stn ORDER BY mr_key DESC LIMIT 1;
+    IF NOT FOUND THEN
+      return;
+    END IF;
+
+    SELECT INTO the_ntfy cnotifykvs FROM px._config WHERE cstnkey = the_stn;
+    IF NOT FOUND THEN
+      return;
+    END IF;
+
+    the_ntfya = ('{' || the_ntfy || '}')::text[];
+
+    FOR new_seq, the_k, the_v IN SELECT kvseq, kvname, kvvalue FROM px.kvs WHERE kvseq > the_seq and kvnotify @> the_ntfya order by kvseq LOOP
+      return next the_k;
+      return next the_v;
+    END LOOP;
+
+    IF new_seq is not null and new_seq > the_seq THEN
+      UPDATE pmac.md2_registration SET mr_kvseq = new_seq WHERE mr_key = the_mrkey;
+    END IF;
+  END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+ALTER FUNCTION pmac.getkvs( int) OWNER TO lsadmin;
+
+CREATE OR REPLACE FUNCTION pmac.getkvs() returns setof text AS $$
+  SELECT pmac.getkvs( px.getstation());
+$$ LANGUAGE SQL SECURITY DEFINER;
+ALTER FUNCTION pmac.getkvs() OWNER TO lsadmin;
 
 
 CREATE TABLE pmac.md2_mvars (
@@ -76,28 +118,48 @@ $$ LANGUAGE SQL SECURITY DEFINER;
 ALTER FUNCTION pmac.md2_ivar_set( int, text) OWNER TO lsadmin;
 
 CREATE OR REPLACE FUNCTION pmac.md2_init( the_stn int) returns void as $$
+  --
+  -- initialize a new connection with the md2 diffractometer
+  --
   DECLARE
-    ntfy text;
+    ntfy_pmac text;
+    ntfy_diff text;
+    ntfy_kvs  text;
+    ntfy_kvsa  text[];
+    
     motor record;
     minit text;
   BEGIN
-    SELECT INTO ntfy cnotifypmac FROM px._config WHERE cstnkey=the_stn;
+
+    --
+    -- Listen for the correct notifies
+    --
+    SELECT INTO ntfy_pmac,ntfy_diff,ntfy_kvs cnotifypmac, cnotifydiffractometer, cnotifykvs FROM px._config WHERE cstnkey=the_stn;
     IF NOT FOUND THEN
       RAISE EXCEPTION 'Cannot find station %', the_stn;
     END IF;
-    EXECUTE 'LISTEN ' || ntfy;
+    EXECUTE 'LISTEN ' || ntfy_pmac;
+    EXECUTE 'LISTEN ' || ntfy_diff;
+    EXECUTE 'LISTEN ' || ntfy_kvs;
+    EXECUTE 'NOTIFY ' || ntfy_kvs;
 
-    SELECT INTO ntfy cnotifydiffractometer FROM px._config WHERE cstnkey=the_stn;
-    IF NOT FOUND THEN
-      RAISE EXCEPTION 'Cannot find station %', the_stn;
-    END IF;
-    EXECUTE 'LISTEN ' || ntfy;
 
+    --
+    -- Mark our station's presets to notify us on change
+    --
+    ntfy_kvsa := ('{' || ntfy_kvs || '}')::text[];
+    UPDATE px.kvs SET kvnotify = kvnotify || ntfy_kvsa WHERE kvname like 'stns.' || the_stn || '.%.presets.%' and (not kvnotify @> ntfy_kvsa or kvnotify is null);
+
+
+    -- Log the fact that we are connecting
+    --
     INSERT INTO pmac.md2_registration (mr_stn) values (the_stn);
 
     PERFORM px.ininotifies( the_stn);
 
 
+    -- Remove all the old information from the database queue
+    --
     DELETE FROM pmac.md2_queue WHERE mq_stn=the_stn;
 
     --
@@ -111,6 +173,9 @@ CREATE OR REPLACE FUNCTION pmac.md2_init( the_stn int) returns void as $$
     PERFORM pmac.md2_queue_push( the_stn, 'ENABLE PLCC 2');
 
 
+    --
+    -- Run the initialzation code for each of the motors
+    --
     FOR motor IN SELECT * FROM pmac.md2_motors ORDER BY mm_motor LOOP
       IF motor.mm_active THEN
         FOR minit IN SELECT unnest( motor.mm_active_init) LOOP
@@ -123,6 +188,9 @@ CREATE OR REPLACE FUNCTION pmac.md2_init( the_stn int) returns void as $$
       END IF;
     END LOOP;
 
+  --
+  -- Set flag for PLCC 0 to initialize (or reset) various motor settings
+  --
   PERFORM pmac.md2_queue_push( the_stn, 'M2000=1');
 
   END;
@@ -198,10 +266,10 @@ CREATE TABLE pmac.md2_motors (
        mm_name text,                    -- name of motor
        mm_type text not null
                references pmac.md2_motor_types (mt),
-       mm_active boolean default TRUE,	-- 1 if active, 0 if simulated
-       mm_active_init text[],		-- PMAC commands when motor is active
-       mm_inactive_init text[],		-- PMAC commands when motor is inactive
-       mm_home text[],			-- PMAC commands to activate and home motor
+       mm_active boolean default TRUE,  -- 1 if active, 0 if simulated
+       mm_active_init text[],           -- PMAC commands when motor is active
+       mm_inactive_init text[],         -- PMAC commands when motor is inactive
+       mm_home text[],                  -- PMAC commands to activate and home motor
        mm_motor int default -1,         -- motor number
        mm_coord int default 0,          -- coordinate system number
        mm_unit text,                    -- name of unit
@@ -211,8 +279,8 @@ CREATE TABLE pmac.md2_motors (
        mm_printf text,                  -- String for printf type conversions
        mm_min float,                    -- minimum position 
        mm_max float,                    -- maximum position
-       mm_update_resolution float,	-- minimum magnetude of position change to trigger px.kvs update
-       mm_update_format text		-- generate string for lsupdates to update px.kvs
+       mm_update_resolution float,      -- minimum magnetude of position change to trigger px.kvs update
+       mm_update_format text            -- generate string for lsupdates to update px.kvs
 );
 ALTER TABLE pmac.md2_motors OWNER TO lsadmin;
 
@@ -384,14 +452,14 @@ CREATE OR REPLACE FUNCTION pmac.md2_home_centers( the_stn int) returns void as $
     --
     -- Run pmac program 53: centerx and centery homing
     --
-    --  M453=1		flag indicating program is running
+    --  M453=1          flag indicating program is running
     --  &2              The centering stages are in coordinate system 2
     --  E               Enable centerx and centery
     --  B53             Run program 53 from the beginning
     --  R               GO!
 
     PERFORM pmac.md2_queue_push( the_stn, 'M453=1&2E'); --
-    PERFORM pmac.md2_queue_push( the_stn, '&2B53R');	-- make sure another coordinate system didn't sneak in
+    PERFORM pmac.md2_queue_push( the_stn, '&2B53R');    -- make sure another coordinate system didn't sneak in
   END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ALTER FUNCTION pmac.md2_home_centers( int) OWNER TO lsadmin;
@@ -460,7 +528,7 @@ CREATE OR REPLACE FUNCTION pmac.md2_home_zoom( the_stn int) returns void as $$
     --
     -- Run pmac program 6: camera zoom
     --
-    --  M406=1	  flag indicating program is running
+    --  M406=1    flag indicating program is running
     --  &4        The zoom is in coordinate system 4
     --  E         Enable the alignment stages
     --  B6        Run program 6 from the beginning
@@ -711,11 +779,11 @@ ALTER FUNCTION pmac.md2_moveabs( text, float) OWNER TO lsadmin;
 
 CREATE OR REPLACE FUNCTION pmac.md2_scan_omega( the_stn int, start_angle float, delta float, exposure_time float) returns void as $$
   DECLARE
-  p170 float;		-- PMAC start angle in counts
-  p171 float;		-- PMAC stop angle in counts
-  p173 float;		-- PMAC omega velocity (cts/msec)
-  p175 float;		-- PMAC acceleration time (msec)
-  p180 float;		-- PMAC exposure time (msec)
+  p170 float;           -- PMAC start angle in counts
+  p171 float;           -- PMAC stop angle in counts
+  p173 float;           -- PMAC omega velocity (cts/msec)
+  p175 float;           -- PMAC acceleration time (msec)
+  p180 float;           -- PMAC exposure time (msec)
   BEGIN
 
    p180 := exposure_time * 1000.0;
