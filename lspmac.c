@@ -48,7 +48,6 @@
 #define LS_PMAC_STATE_GB       10
 #define LS_PMAC_STATE_WCR      11
 #define LS_PMAC_STATE_WGB      12
-
 static int ls_pmac_state = LS_PMAC_STATE_DETACHED;	//!< Current state of the PMAC communications state machine
 
 int lspmac_shutter_state;			//!< State of the shutter, used to detect changes
@@ -94,6 +93,10 @@ lspmac_motor_t *fscint;				//!< Scintillator Piezo DAC
 lspmac_motor_t *blight_ud;			//!< Back Light Up/Down actuator
 lspmac_motor_t *cryo;				//!< Move the cryostream towards or away from the crystal
 lspmac_motor_t *dryer;				//!< blow air on the scintilator to dry it off
+
+//! Regex to pick out preset name and corresponding position
+#define LSPMAC_PRESET_REGEX "(.*\\.%s\\.presets)\\.([0-9]+)\\.(name|position)"
+
 
 //! The PMAC (only) listens on this port
 #define PMACPORT 1025
@@ -1820,6 +1823,75 @@ void lspmac_movezoom_queue(
   }
 }
 
+/** Move a given motor to one of its preset positions.
+ *  No movement if the preset is not found.
+ *  \param mp lspmac motor pointer
+ *  \param name Name of the preset to use
+ */
+void lspmac_move_preset_queue( lspmac_motor_t *mp, char *name) {
+  lskvs_kvs_list_t *q, *r;
+  regmatch_t q_pmatch[4];	//!< 0 = stns.2.appy.preset, for example, 1 = index, 2 = "position" or "name"
+  regmatch_t r_pmatch[4];	//!< 0 = stns.2.appy.preset, for example, 1 = index, 2 = "position" or "name"
+  double pos;
+
+  lslogging_log_message( "lspmac_move_preset_queue: Called with motor %s and preset named '%s'", mp->name, name);
+
+  //
+  // This checks both the ".name" and the ".position" entries
+  // but as long as no one gives names like "1.23" to their presets
+  // we should be OK.
+  //
+  for( q=mp->presets; q != NULL; q = q->next) {
+    if( strcmp( name, q->kvs->v) == 0)
+      break;
+  }
+  if( q == NULL) {
+    lslogging_log_message( "lspmac_move_preset_queue: no preset named %s found for motor %s", name, mp->name);
+    return;
+  }
+  if( regexec( &(mp->preset_regex), q->kvs->k, 4, q_pmatch, 0) != 0 || q_pmatch[2].rm_so == -1 || q_pmatch[2].rm_eo == -1) {
+    lslogging_log_message( "lspmac_move_preset_queue: Could not parse %s (q)", q->kvs->k);
+    return;
+  }
+  
+  //
+  // find the position entry.  Note we are assuming that we've already found the name and only the position is left with the sample index
+  //
+  for( r=mp->presets; r != NULL; r = r->next) {
+    if( r == q)
+      continue;
+    if( regexec( &(mp->preset_regex), r->kvs->k, 4, r_pmatch, 0) != 0 || r_pmatch[2].rm_so == -1 || r_pmatch[2].rm_eo == -1) {
+      lslogging_log_message( "lspmac_move_preset_queue: Could not parse %s (r)", r->kvs->k);
+      return;
+    }
+
+    lslogging_log_message( "q->kvs->k: '%s'   r->kvs->k: '%s'", q->kvs->k, r->kvs->k);
+
+    //
+    // Make sure everything matches up to (and through) the array index
+    //
+    if( strncmp( q->kvs->k, r->kvs->k, q_pmatch[2].rm_eo + 1) == 0) {
+      break;
+    }
+  }
+
+  if( r == NULL) {
+    lslogging_log_message( "lspmac_move_preset_queue: Could not find position for preset '%s' for motor '%s'", name, mp->name);
+    return;
+  }
+
+  errno = 0;
+  pos = strtod( r->kvs->v, NULL);
+  if( errno != 0) {
+    lslogging_log_message( "lspmac_move_preset_queue: Could not parse preset position '%s' for motor '%s'", r->kvs->v, mp->name);
+    return;
+  }
+  mp->moveAbs( mp, pos);
+  lslogging_log_message( "lspmac_move_preset_queue: moving %s to preset '%s' (%f)", mp->name, name, pos);
+}
+
+
+
 /** Move method for the fast shutter
  *
  *  Slightly more complicated than a binary io as some flags need
@@ -1979,22 +2051,25 @@ lspmac_motor_t *lspmac_motor_init(
   pthread_mutex_init( &(d->mutex), NULL);
   pthread_cond_init(  &(d->cond), NULL);
 
-  d->name = strdup(name);
-  d->moveAbs = moveAbs;
-  d->read = lspmac_pmacmotor_read;
-  d->lut = NULL;
-  d->nlut = 0;
-  d->actual_pos_cnts_p = posp;
+  lskvs_regcomp( &(d->preset_regex), REG_EXTENDED, LSPMAC_PRESET_REGEX, name);
+
+  d->presets             = NULL;
+  d->name                = strdup(name);
+  d->moveAbs             = moveAbs;
+  d->read                = lspmac_pmacmotor_read;
+  d->lut                 = NULL;
+  d->nlut                = 0;
+  d->actual_pos_cnts_p   = posp;
   d->status1_p           = stat1p;
   d->status2_p           = stat2p;
-  d->motor_num = motor_number;
-  d->dac_mvar          = NULL;
+  d->motor_num           = motor_number;
+  d->dac_mvar            = NULL;
   d->win = newwin( LS_DISPLAY_WINDOW_HEIGHT, LS_DISPLAY_WINDOW_WIDTH, wy*LS_DISPLAY_WINDOW_HEIGHT, wx*LS_DISPLAY_WINDOW_WIDTH);
   box( d->win, 0, 0);
   mvwprintw( d->win, 1, 1, "%s", wtitle);
   wnoutrefresh( d->win);
-  d->homing = 0;
-  d->lspg_initialized = 0;
+  d->homing              = 0;
+  d->lspg_initialized    = 0;
 
   return d;
 }
@@ -2005,11 +2080,14 @@ lspmac_motor_t *lspmac_fshut_init(
 				  lspmac_motor_t *d		/**< [in] Our uninitialized motor object	*/
 				  ) {
   lspmac_nmotors++;
-  d->name           = strdup("fastShutter");
-  d->moveAbs        = lspmac_moveabs_fshut_queue;
-  d->read           = lspmac_shutter_read;
-  d->lut            = NULL;
-  d->nlut           = 0;
+
+  d->presets           = NULL;
+  d->name              = strdup("fastShutter");
+  lskvs_regcomp( &(d->preset_regex), REG_EXTENDED, LSPMAC_PRESET_REGEX, d->name);
+  d->moveAbs           = lspmac_moveabs_fshut_queue;
+  d->read              = lspmac_shutter_read;
+  d->lut               = NULL;
+  d->nlut              = 0;
   d->actual_pos_cnts_p = NULL;
   d->status1_p         = NULL;
   d->status2_p         = NULL;
@@ -2038,6 +2116,8 @@ lspmac_motor_t *lspmac_bio_init(
 				) {
   lspmac_nmotors++;
 
+  lskvs_regcomp( &(d->preset_regex), REG_EXTENDED, LSPMAC_PRESET_REGEX, name);
+  d->presets           = NULL;
   d->name              = strdup( name);
   d->moveAbs           = lspmac_moveabs_bio_queue;
   d->read              = lspmac_bio_read;
@@ -2076,11 +2156,14 @@ lspmac_motor_t *lspmac_dac_init(
 				char *name			/**< [in] name to coordinate with DB		*/
 				) {
   lspmac_nmotors++;
-  d->name     = strdup( name);
-  d->moveAbs  = lspmac_movedac_queue;
-  d->read     = lspmac_dac_read;
-  d->lut      = NULL;
-  d->nlut     = 0;
+  lskvs_regcomp( &(d->preset_regex), REG_EXTENDED, LSPMAC_PRESET_REGEX, name);
+  d->presets           = NULL;
+
+  d->name              = strdup( name);
+  d->moveAbs           = lspmac_movedac_queue;
+  d->read              = lspmac_dac_read;
+  d->lut               = NULL;
+  d->nlut              = 0;
   d->actual_pos_cnts_p = posp;
   d->status1_p         = NULL;
   d->status2_p         = NULL;
@@ -2185,8 +2268,51 @@ void lspmac_init(
 
 }
 
+
+void lspmac_newKV_cb( char *event) {
+  lspmac_motor_t   *d;
+  lskvs_kvs_t      *p;
+  lskvs_kvs_list_t *q;
+  lskvs_kvs_list_t *r;
+  int i;
+
+  pthread_rwlock_rdlock( &lskvs_rwlock);
+  p = lskvs_kvs;
+  pthread_rwlock_unlock( &lskvs_rwlock);  
+
+  while( p != NULL) {
+    for( i=0; i<lspmac_nmotors; i++) {
+      d = &(lspmac_motors[i]);
+
+      if( regexec( &(d->preset_regex), p->k, 0, NULL, 0) == 0) {
+	for( q = d->presets; q != NULL; q = q->next)
+	  if( strcmp( q->kvs->k, p->k) == 0)
+	    break;
+	if( q == NULL) {
+	  //
+	  // We don't know about this preset yet.  Add it to our list.
+	  //
+	  r = calloc( 1, sizeof( *r));
+	  if( r == NULL) {
+	    lslogging_log_message( "lspmac_newKV_cb: Out of memory for kv %s", p->k);
+	    exit( -1);
+	  }
+	  r->kvs = p;
+	  pthread_mutex_lock( &(d->mutex));
+	  r->next    = d->presets;
+	  d->presets = r;
+	  pthread_mutex_unlock( &(d->mutex));
+	  lslogging_log_message( "lspmac_newKV_cb: added '%s' with value '%s' to motor '%s'", p->k, p->v, d->name);
+	}
+      }
+    }
+    p = p->next;
+  }
+}
+
 /** Start up the lspmac thread
  */
 void lspmac_run() {
   pthread_create( &pmac_thread, NULL, lspmac_worker, NULL);
+  lsevents_add_listener( "NewKV", lspmac_newKV_cb);
 }

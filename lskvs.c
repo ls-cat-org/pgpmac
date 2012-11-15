@@ -8,23 +8,65 @@
 
 
 
-/** Storage for the key value pairs
- *
- * the k's and v's are strings and to keep the memory management less crazy
- * we'll calloc some space for these strings and only free and re-calloc if we need
- * more space later.  Only the values are ever going to be resized.
+lskvs_kvs_t *lskvs_kvs = NULL;	//!< our list (or at least the start of it
+pthread_rwlock_t lskvs_rwlock;		//!< needed to protect the list
+
+
+
+/** Utility wrapper for regcomp providing printf style formating
+ *  \param preg   Buffer for the compile regex object
+ *  \param cflags See regcomp man page
+ *  \param fmt    Printf style formating string
+ *  \param ...    Argument list specified by fmt
  */
-typedef struct lskvs_kvs_struct {
-  struct lskvs_kvs_struct *next;	//!< the next kvpair
-  pthread_rwlock_t l;			//!< our lock
-  char *k;				//!< the key
-  char *v;				//!< the value
-  int   vl;				//!< the length of the calloced v
-} lskvs_kvs_t;
+void lskvs_regcomp( regex_t *preg, int cflags, char *fmt, ...) {
+  struct regerror_struct {
+    int errcode;
+    char *errstr;
+  };
+  static struct regerror_struct regerrors[] = {
+    { REG_BADBR,    "Invalid use of back reference operator."},
+    { REG_BADPAT,   "Invalid use of pattern operators such as group or list."},
+    { REG_BADRPT,   "Invalid use of repetition operators such as using '*' as the first character."},
+    { REG_EBRACE,   "Un-matched brace interval operators."},
+    { REG_EBRACK,   "Un-matched bracket list operators."},
+    { REG_ECOLLATE, "Invalid collating element."},
+    { REG_ECTYPE,   "Unknown character class name."},
+    { REG_EEND,     "Non specific error.  This is not defined by POSIX.2."},
+    { REG_EESCAPE,  "Trailing backslash."},
+    { REG_EPAREN,   "Un-matched parenthesis group operators."},
+    { REG_ERANGE,   "Invalid use of the range operator, e.g., the ending point of the range occurs prior to the starting point."},
+    { REG_ESIZE,    "Compiled regular expression requires a pattern buffer larger than 64Kb.  This is not defined by POSIX.2."},
+    { REG_ESPACE,   "The regex routines ran out of memory."},
+    { REG_ESUBREG,  "Invalid back reference to a subexpression."},
+    { 0,            "No errors"}
+  };
 
-static lskvs_kvs_t *lskvs_kvs = NULL;	//!< our list (or at least the start of it
-static pthread_rwlock_t lskvs_rwlock;	//!< needed to protect the list
 
+
+  va_list arg_ptr;
+  char s[512];		//!< no reason our search strings should ever be this big
+  int err;
+
+  va_start( arg_ptr, fmt);
+  vsnprintf( s, sizeof(s)-1, fmt, arg_ptr);
+  s[ sizeof(s)-1] = 0;
+  va_end( arg_ptr);
+
+  err = regcomp( preg, s, cflags);
+  if( err != 0) {
+    int i;
+
+    for( i=0; regerrors[i].errcode != 0; i++)
+      if( regerrors[i].errcode == err)
+	break;
+
+    if( regerrors[i].errcode != 0) {
+      lslogging_log_message( "lskvs_regcomp: could not compile regular experssion '%s'", s);
+      lslogging_log_message( "lskvs_regcomp: regcomp returned %d: %s", err, regerrors[i]);
+    }
+  }
+}
 
 
 /** Set the value of a kv pair
@@ -108,6 +150,9 @@ void lskvs_set( char *k, char *v) {
     p->next   = lskvs_kvs;
     lskvs_kvs = p;
     pthread_rwlock_unlock( &lskvs_rwlock);
+
+    lsevents_send_event( "NewKV");
+
   } else {
     //
     // Just update the value

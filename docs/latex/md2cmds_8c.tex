@@ -126,7 +126,7 @@ Move centering and alignment tables as requested T\-O\-D\-O\-: Implement.
 
 
 
-Definition at line 490 of file md2cmds.\-c.
+Definition at line 496 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -146,7 +146,7 @@ Collect some data.
 
 
 
-Definition at line 205 of file md2cmds.\-c.
+Definition at line 211 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -391,7 +391,7 @@ Initialize the md2cmds module.
 
 
 
-Definition at line 529 of file md2cmds.\-c.
+Definition at line 535 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -442,10 +442,8 @@ Definition at line 59 of file md2cmds.\-c.
   \textcolor{comment}{//}
   ignore = strtok\_r( cmd, \textcolor{stringliteral}{" "}, &ptr);
   \textcolor{keywordflow}{if}( ignore == NULL) \{
-    \textcolor{comment}{//}
-    \textcolor{comment}{// Should generate error message}
-    \textcolor{comment}{// about blank command}
-    \textcolor{comment}{//}
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_moveAbs: ignoring
+       blank command '%s'"}, cmd);
     \textcolor{keywordflow}{return};
   \}
 
@@ -459,6 +457,19 @@ Definition at line 59 of file md2cmds.\-c.
     \textcolor{keywordflow}{return};
   \}
 
+  mp = NULL;
+  \textcolor{keywordflow}{for}( i=0; i<\hyperlink{lspmac_8c_a56260f012c50a591ee7f97e500f16994}{lspmac\_nmotors}; i++) \{
+    \textcolor{keywordflow}{if}( strcmp( \hyperlink{lspmac_8c_a9bffbf72495499b505543cd942f665da}{lspmac\_motors}[i].name, mtr) == 0) \{
+      mp = &(\hyperlink{lspmac_8c_a9bffbf72495499b505543cd942f665da}{lspmac\_motors}[i]);
+      \textcolor{keywordflow}{break};
+    \}
+  \}
+  \textcolor{keywordflow}{if}( mp == NULL) \{
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds moveAbs error: cannot
+       find motor %s"}, mtr);
+    \textcolor{keywordflow}{return};
+  \}
+
   pos = strtok\_r( NULL, \textcolor{stringliteral}{" "}, &ptr);
   \textcolor{keywordflow}{if}( pos == NULL) \{
     \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds moveAbs error: missing
@@ -468,18 +479,14 @@ Definition at line 59 of file md2cmds.\-c.
 
   fpos = strtod( pos, &endptr);
   \textcolor{keywordflow}{if}( pos == endptr) \{
-    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds moveAbs error: Can't
-       decipher '%s' as a number"}, pos);
+    \textcolor{comment}{//}
+    \textcolor{comment}{// Maybe we have a preset.  Give it a whirl}
+    \textcolor{comment}{// In any case we are done here.}
+    \textcolor{comment}{//}
+    \hyperlink{lspmac_8c_a290212c160e6ef1f560c9df9fc8f58e4}{lspmac\_move\_preset\_queue}( mp, pos);
     \textcolor{keywordflow}{return};
   \}
   
-  mp = NULL;
-  \textcolor{keywordflow}{for}( i=0; i<\hyperlink{lspmac_8c_a56260f012c50a591ee7f97e500f16994}{lspmac\_nmotors}; i++) \{
-    \textcolor{keywordflow}{if}( strcmp( \hyperlink{lspmac_8c_a9bffbf72495499b505543cd942f665da}{lspmac\_motors}[i].name, mtr) == 0) \{
-      mp = &(\hyperlink{lspmac_8c_a9bffbf72495499b505543cd942f665da}{lspmac\_motors}[i]);
-      \textcolor{keywordflow}{break};
-    \}
-  \}
 
 
   \textcolor{keywordflow}{if}( mp != NULL && mp->\hyperlink{structlspmac__motor__struct_a20db3de86854b627815b3d940555ea75}{moveAbs} != NULL) \{
@@ -520,7 +527,7 @@ Move the centering and alignment tables.
 \end{DoxyParams}
 
 
-Definition at line 164 of file md2cmds.\-c.
+Definition at line 170 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -558,7 +565,7 @@ Sets up a centering table and alignment table move Ensures that when we issue th
 
 
 
-Definition at line 125 of file md2cmds.\-c.
+Definition at line 131 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -615,7 +622,7 @@ Wait for the centering and alignment tables to stop moving.
 
 
 
-Definition at line 191 of file md2cmds.\-c.
+Definition at line 197 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -644,7 +651,7 @@ Spin 360 and make a video (recenter first, maybe)
 
 
 
-Definition at line 407 of file md2cmds.\-c.
+Definition at line 413 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -743,7 +750,7 @@ Start up the thread.
 
 
 
-Definition at line 542 of file md2cmds.\-c.
+Definition at line 548 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -792,7 +799,7 @@ Our worker thread.
 \end{DoxyParams}
 
 
-Definition at line 497 of file md2cmds.\-c.
+Definition at line 503 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}

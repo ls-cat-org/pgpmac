@@ -25,6 +25,7 @@ Headers for the entire pgpmac project.
 {\ttfamily \#include $<$sys/time.\-h$>$}\\*
 {\ttfamily \#include $<$time.\-h$>$}\\*
 {\ttfamily \#include $<$getopt.\-h$>$}\\*
+{\ttfamily \#include $<$regex.\-h$>$}\\*
 \subsection*{Data Structures}
 \begin{DoxyCompactItemize}
 \item 
@@ -32,6 +33,10 @@ struct \hyperlink{structtagEthernetCmd}{tag\-Ethernet\-Cmd}
 \begin{DoxyCompactList}\small\item\em P\-M\-A\-C ethernet packet definition. \end{DoxyCompactList}\item 
 struct \hyperlink{structlspmac__cmd__queue__struct}{lspmac\-\_\-cmd\-\_\-queue\-\_\-struct}
 \begin{DoxyCompactList}\small\item\em P\-M\-A\-C command queue item. \end{DoxyCompactList}\item 
+struct \hyperlink{structlskvs__kvs__struct}{lskvs\-\_\-kvs\-\_\-struct}
+\begin{DoxyCompactList}\small\item\em Storage for the key value pairs. \end{DoxyCompactList}\item 
+struct \hyperlink{structlskvs__kvs__list__struct}{lskvs\-\_\-kvs\-\_\-list\-\_\-struct}
+\begin{DoxyCompactList}\small\item\em A second linked list type to handle private lists of K\-Vs. \end{DoxyCompactList}\item 
 struct \hyperlink{structlspmac__motor__struct}{lspmac\-\_\-motor\-\_\-struct}
 \begin{DoxyCompactList}\small\item\em Motor information. \end{DoxyCompactList}\item 
 struct \hyperlink{structlspg__getcenter__struct}{lspg\-\_\-getcenter\-\_\-struct}
@@ -59,6 +64,11 @@ typedef struct \hyperlink{structtagEthernetCmd}{tag\-Ethernet\-Cmd} \hyperlink{p
 typedef struct \\*
 \hyperlink{structlspmac__cmd__queue__struct}{lspmac\-\_\-cmd\-\_\-queue\-\_\-struct} \hyperlink{pgpmac_8h_a99c275e32ad897dca34d196b91f038cb}{pmac\-\_\-cmd\-\_\-queue\-\_\-t}
 \begin{DoxyCompactList}\small\item\em P\-M\-A\-C command queue item. \end{DoxyCompactList}\item 
+typedef struct \hyperlink{structlskvs__kvs__struct}{lskvs\-\_\-kvs\-\_\-struct} \hyperlink{pgpmac_8h_a54bd386f945edb8a0311a20199e8f793}{lskvs\-\_\-kvs\-\_\-t}
+\begin{DoxyCompactList}\small\item\em Storage for the key value pairs. \end{DoxyCompactList}\item 
+typedef struct \\*
+\hyperlink{structlskvs__kvs__list__struct}{lskvs\-\_\-kvs\-\_\-list\-\_\-struct} \hyperlink{pgpmac_8h_a47bb31b9c285a4b3e73874070fa8af0c}{lskvs\-\_\-kvs\-\_\-list\-\_\-t}
+\begin{DoxyCompactList}\small\item\em A second linked list type to handle private lists of K\-Vs. \end{DoxyCompactList}\item 
 typedef struct \hyperlink{structlspmac__motor__struct}{lspmac\-\_\-motor\-\_\-struct} \hyperlink{pgpmac_8h_aa5067fcbaabc5bbfdc52492495518c96}{lspmac\-\_\-motor\-\_\-t}
 \begin{DoxyCompactList}\small\item\em Motor information. \end{DoxyCompactList}\item 
 typedef struct \\*
@@ -116,6 +126,10 @@ void \hyperlink{pgpmac_8h_af712dd2e9419026eff2762ba062eeaf1}{lstimer\-\_\-add\-\
 \begin{DoxyCompactList}\small\item\em the getcenter object \end{DoxyCompactList}\item 
 \hyperlink{pgpmac_8h_a17ea2bf07a0b3b892baa00bd392607b3}{lspg\-\_\-nextshot\-\_\-t} \hyperlink{pgpmac_8h_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\-\_\-nextshot}
 \begin{DoxyCompactList}\small\item\em the nextshot object \end{DoxyCompactList}\item 
+\hyperlink{pgpmac_8h_a54bd386f945edb8a0311a20199e8f793}{lskvs\-\_\-kvs\-\_\-t} $\ast$ \hyperlink{pgpmac_8h_a14ca7cca8246dcfc266ad30d56701c0a}{lskvs\-\_\-kvs}
+\begin{DoxyCompactList}\small\item\em our list (or at least the start of it \end{DoxyCompactList}\item 
+pthread\-\_\-rwlock\-\_\-t \hyperlink{pgpmac_8h_ad329bf890bd9eef896815dd53a323c2f}{lskvs\-\_\-rwlock}
+\begin{DoxyCompactList}\small\item\em needed to protect the list \end{DoxyCompactList}\item 
 \hyperlink{pgpmac_8h_aa5067fcbaabc5bbfdc52492495518c96}{lspmac\-\_\-motor\-\_\-t} \hyperlink{pgpmac_8h_aebfce5f9cbc8ba7bd4e2ee4880f303e8}{lspmac\-\_\-motors} \mbox{[}$\,$\mbox{]}
 \begin{DoxyCompactList}\small\item\em All our motors. \end{DoxyCompactList}\item 
 \hyperlink{pgpmac_8h_aa5067fcbaabc5bbfdc52492495518c96}{lspmac\-\_\-motor\-\_\-t} $\ast$ \hyperlink{pgpmac_8h_a8237e646ce032a840637a4ef7bff49b9}{omega}
@@ -228,7 +242,7 @@ Number of status box rows.
 
 
 
-Definition at line 29 of file pgpmac.\-h.
+Definition at line 30 of file pgpmac.\-h.
 
 \hypertarget{pgpmac_8h_a1f96754f00a1f82414cebc66f75ded78}{\index{pgpmac.\-h@{pgpmac.\-h}!L\-S\-\_\-\-D\-I\-S\-P\-L\-A\-Y\-\_\-\-W\-I\-N\-D\-O\-W\-\_\-\-W\-I\-D\-T\-H@{L\-S\-\_\-\-D\-I\-S\-P\-L\-A\-Y\-\_\-\-W\-I\-N\-D\-O\-W\-\_\-\-W\-I\-D\-T\-H}}
 \index{L\-S\-\_\-\-D\-I\-S\-P\-L\-A\-Y\-\_\-\-W\-I\-N\-D\-O\-W\-\_\-\-W\-I\-D\-T\-H@{L\-S\-\_\-\-D\-I\-S\-P\-L\-A\-Y\-\_\-\-W\-I\-N\-D\-O\-W\-\_\-\-W\-I\-D\-T\-H}!pgpmac.h@{pgpmac.\-h}}
@@ -239,7 +253,7 @@ Number of status box columns.
 
 
 
-Definition at line 33 of file pgpmac.\-h.
+Definition at line 34 of file pgpmac.\-h.
 
 \hypertarget{pgpmac_8h_a3a8ef1b4b5994d6dd12bf74454ea891b}{\index{pgpmac.\-h@{pgpmac.\-h}!L\-S\-\_\-\-P\-G\-\_\-\-Q\-U\-E\-R\-Y\-\_\-\-S\-T\-R\-I\-N\-G\-\_\-\-L\-E\-N\-G\-T\-H@{L\-S\-\_\-\-P\-G\-\_\-\-Q\-U\-E\-R\-Y\-\_\-\-S\-T\-R\-I\-N\-G\-\_\-\-L\-E\-N\-G\-T\-H}}
 \index{L\-S\-\_\-\-P\-G\-\_\-\-Q\-U\-E\-R\-Y\-\_\-\-S\-T\-R\-I\-N\-G\-\_\-\-L\-E\-N\-G\-T\-H@{L\-S\-\_\-\-P\-G\-\_\-\-Q\-U\-E\-R\-Y\-\_\-\-S\-T\-R\-I\-N\-G\-\_\-\-L\-E\-N\-G\-T\-H}!pgpmac.h@{pgpmac.\-h}}
@@ -250,7 +264,7 @@ Fixed length postgresql query strings. Queries should all be function calls so t
 
 
 
-Definition at line 36 of file pgpmac.\-h.
+Definition at line 37 of file pgpmac.\-h.
 
 \hypertarget{pgpmac_8h_ab61d790b5572f116e091babfda53627b}{\index{pgpmac.\-h@{pgpmac.\-h}!L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-E\-V\-E\-N\-T\-\_\-\-L\-E\-N\-G\-T\-H@{L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-E\-V\-E\-N\-T\-\_\-\-L\-E\-N\-G\-T\-H}}
 \index{L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-E\-V\-E\-N\-T\-\_\-\-L\-E\-N\-G\-T\-H@{L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-E\-V\-E\-N\-T\-\_\-\-L\-E\-N\-G\-T\-H}!pgpmac.h@{pgpmac.\-h}}
@@ -261,19 +275,33 @@ Fixed length for event names\-: simplifies string handling.
 
 
 
-Definition at line 39 of file pgpmac.\-h.
+Definition at line 40 of file pgpmac.\-h.
 
 \hypertarget{pgpmac_8h_a30f0f377b0f0695284145d420ea51846}{\index{pgpmac.\-h@{pgpmac.\-h}!M\-D2\-C\-M\-D\-S\-\_\-\-C\-M\-D\-\_\-\-L\-E\-N\-G\-T\-H@{M\-D2\-C\-M\-D\-S\-\_\-\-C\-M\-D\-\_\-\-L\-E\-N\-G\-T\-H}}
 \index{M\-D2\-C\-M\-D\-S\-\_\-\-C\-M\-D\-\_\-\-L\-E\-N\-G\-T\-H@{M\-D2\-C\-M\-D\-S\-\_\-\-C\-M\-D\-\_\-\-L\-E\-N\-G\-T\-H}!pgpmac.h@{pgpmac.\-h}}
 \subsubsection[{M\-D2\-C\-M\-D\-S\-\_\-\-C\-M\-D\-\_\-\-L\-E\-N\-G\-T\-H}]{\setlength{\rightskip}{0pt plus 5cm}\#define M\-D2\-C\-M\-D\-S\-\_\-\-C\-M\-D\-\_\-\-L\-E\-N\-G\-T\-H~32}}\label{pgpmac_8h_a30f0f377b0f0695284145d420ea51846}
 
 
-Definition at line 333 of file pgpmac.\-h.
+Definition at line 361 of file pgpmac.\-h.
 
 
 
 \subsection{Typedef Documentation}
-\hypertarget{pgpmac_8h_a48b627e412dd038c1f17cdb0501eec33}{\index{pgpmac.\-h@{pgpmac.\-h}!lspg\-\_\-getcenter\-\_\-t@{lspg\-\_\-getcenter\-\_\-t}}
+\hypertarget{pgpmac_8h_a47bb31b9c285a4b3e73874070fa8af0c}{\index{pgpmac.\-h@{pgpmac.\-h}!lskvs\-\_\-kvs\-\_\-list\-\_\-t@{lskvs\-\_\-kvs\-\_\-list\-\_\-t}}
+\index{lskvs\-\_\-kvs\-\_\-list\-\_\-t@{lskvs\-\_\-kvs\-\_\-list\-\_\-t}!pgpmac.h@{pgpmac.\-h}}
+\subsubsection[{lskvs\-\_\-kvs\-\_\-list\-\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf lskvs\-\_\-kvs\-\_\-list\-\_\-struct}  {\bf lskvs\-\_\-kvs\-\_\-list\-\_\-t}}}\label{pgpmac_8h_a47bb31b9c285a4b3e73874070fa8af0c}
+
+
+A second linked list type to handle private lists of K\-Vs. 
+
+Developed to support lists of preset motor positions. \hypertarget{pgpmac_8h_a54bd386f945edb8a0311a20199e8f793}{\index{pgpmac.\-h@{pgpmac.\-h}!lskvs\-\_\-kvs\-\_\-t@{lskvs\-\_\-kvs\-\_\-t}}
+\index{lskvs\-\_\-kvs\-\_\-t@{lskvs\-\_\-kvs\-\_\-t}!pgpmac.h@{pgpmac.\-h}}
+\subsubsection[{lskvs\-\_\-kvs\-\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf lskvs\-\_\-kvs\-\_\-struct}  {\bf lskvs\-\_\-kvs\-\_\-t}}}\label{pgpmac_8h_a54bd386f945edb8a0311a20199e8f793}
+
+
+Storage for the key value pairs. 
+
+the k's and v's are strings and to keep the memory management less crazy we'll calloc some space for these strings and only free and re-\/calloc if we need more space later. Only the values are ever going to be resized. \hypertarget{pgpmac_8h_a48b627e412dd038c1f17cdb0501eec33}{\index{pgpmac.\-h@{pgpmac.\-h}!lspg\-\_\-getcenter\-\_\-t@{lspg\-\_\-getcenter\-\_\-t}}
 \index{lspg\-\_\-getcenter\-\_\-t@{lspg\-\_\-getcenter\-\_\-t}!pgpmac.h@{pgpmac.\-h}}
 \subsubsection[{lspg\-\_\-getcenter\-\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf lspg\-\_\-getcenter\-\_\-struct}  {\bf lspg\-\_\-getcenter\-\_\-t}}}\label{pgpmac_8h_a48b627e412dd038c1f17cdb0501eec33}
 
@@ -641,7 +669,7 @@ Initialize this module.
 
 
 
-Definition at line 2100 of file lspmac.\-c.
+Definition at line 2183 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -796,13 +824,15 @@ Start up the lspmac thread.
 
 
 
-Definition at line 2190 of file lspmac.\-c.
+Definition at line 2315 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
                   \{
   pthread\_create( &\hyperlink{lspmac_8c_a6b7011dd7d2c2d3afadff8d3e50e7677}{pmac\_thread}, NULL, \hyperlink{lspmac_8c_abdec5883055967b1eda043670870f55f}{lspmac\_worker}, 
       NULL);
+  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"NewKV"}, \hyperlink{lspmac_8c_af4547210eb34ffbdcee34ac0f7f9c05f}{lspmac\_newKV\_cb}
+      );
 \}
 \end{DoxyCode}
 \hypertarget{pgpmac_8h_af712dd2e9419026eff2762ba062eeaf1}{\index{pgpmac.\-h@{pgpmac.\-h}!lstimer\-\_\-add\-\_\-timer@{lstimer\-\_\-add\-\_\-timer}}
@@ -982,7 +1012,7 @@ Initialize the md2cmds module.
 
 
 
-Definition at line 529 of file md2cmds.\-c.
+Definition at line 535 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1010,7 +1040,7 @@ Start up the thread.
 
 
 
-Definition at line 542 of file md2cmds.\-c.
+Definition at line 548 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1038,7 +1068,7 @@ Terminal output routine ala printf.
 \end{DoxyParams}
 
 
-Definition at line 325 of file pgpmac.\-c.
+Definition at line 326 of file pgpmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1078,7 +1108,7 @@ Alignment stage X.
 
 
 
-Definition at line 74 of file lspmac.\-c.
+Definition at line 73 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_a737c246c3948e644a18d191a931e1acd}{\index{pgpmac.\-h@{pgpmac.\-h}!aligny@{aligny}}
 \index{aligny@{aligny}!pgpmac.h@{pgpmac.\-h}}
@@ -1089,7 +1119,7 @@ Alignment stage Y.
 
 
 
-Definition at line 75 of file lspmac.\-c.
+Definition at line 74 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_ae7642b1da0f7c7f8448104c691d40a12}{\index{pgpmac.\-h@{pgpmac.\-h}!alignz@{alignz}}
 \index{alignz@{alignz}!pgpmac.h@{pgpmac.\-h}}
@@ -1100,7 +1130,7 @@ Alignment stage X.
 
 
 
-Definition at line 76 of file lspmac.\-c.
+Definition at line 75 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_aa90d2363b744acbd4d45133b7a716d8f}{\index{pgpmac.\-h@{pgpmac.\-h}!anal@{anal}}
 \index{anal@{anal}!pgpmac.h@{pgpmac.\-h}}
@@ -1111,7 +1141,7 @@ Polaroid analyzer motor.
 
 
 
-Definition at line 77 of file lspmac.\-c.
+Definition at line 76 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_a139200ddaa9856a7ffcec0e6cbaa8f1b}{\index{pgpmac.\-h@{pgpmac.\-h}!apery@{apery}}
 \index{apery@{apery}!pgpmac.h@{pgpmac.\-h}}
@@ -1122,7 +1152,7 @@ Aperture Y.
 
 
 
-Definition at line 79 of file lspmac.\-c.
+Definition at line 78 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_ab93bd6ee850b285ca3a95e64d15e9477}{\index{pgpmac.\-h@{pgpmac.\-h}!aperz@{aperz}}
 \index{aperz@{aperz}!pgpmac.h@{pgpmac.\-h}}
@@ -1133,7 +1163,7 @@ Aperture Z.
 
 
 
-Definition at line 80 of file lspmac.\-c.
+Definition at line 79 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_a85d6eaa4b4a82bb3112574f458d1dc50}{\index{pgpmac.\-h@{pgpmac.\-h}!blight@{blight}}
 \index{blight@{blight}!pgpmac.h@{pgpmac.\-h}}
@@ -1144,7 +1174,7 @@ Back Light D\-A\-C.
 
 
 
-Definition at line 91 of file lspmac.\-c.
+Definition at line 90 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_af813a2eff0b7efa4c70633559054e84c}{\index{pgpmac.\-h@{pgpmac.\-h}!blight\-\_\-ud@{blight\-\_\-ud}}
 \index{blight\-\_\-ud@{blight\-\_\-ud}!pgpmac.h@{pgpmac.\-h}}
@@ -1155,7 +1185,7 @@ Back Light Up/\-Down actuator.
 
 
 
-Definition at line 94 of file lspmac.\-c.
+Definition at line 93 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_a51358daaea8b5236f08414877d8af6c2}{\index{pgpmac.\-h@{pgpmac.\-h}!capy@{capy}}
 \index{capy@{capy}!pgpmac.h@{pgpmac.\-h}}
@@ -1166,7 +1196,7 @@ Capillary Y.
 
 
 
-Definition at line 81 of file lspmac.\-c.
+Definition at line 80 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_aa45f268d0af9f3d465acfab128919718}{\index{pgpmac.\-h@{pgpmac.\-h}!capz@{capz}}
 \index{capz@{capz}!pgpmac.h@{pgpmac.\-h}}
@@ -1177,7 +1207,7 @@ Capillary Z.
 
 
 
-Definition at line 82 of file lspmac.\-c.
+Definition at line 81 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_ac940d950d9efeaf3f0ae67e9bf331188}{\index{pgpmac.\-h@{pgpmac.\-h}!cenx@{cenx}}
 \index{cenx@{cenx}!pgpmac.h@{pgpmac.\-h}}
@@ -1188,7 +1218,7 @@ Centering Table X.
 
 
 
-Definition at line 84 of file lspmac.\-c.
+Definition at line 83 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_aaed18e738ba7bfb6c771a44f5d7ea827}{\index{pgpmac.\-h@{pgpmac.\-h}!ceny@{ceny}}
 \index{ceny@{ceny}!pgpmac.h@{pgpmac.\-h}}
@@ -1199,7 +1229,7 @@ Centering Table Y.
 
 
 
-Definition at line 85 of file lspmac.\-c.
+Definition at line 84 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_ae78d9a757d4c85419fff9c94b15e25d7}{\index{pgpmac.\-h@{pgpmac.\-h}!cryo@{cryo}}
 \index{cryo@{cryo}!pgpmac.h@{pgpmac.\-h}}
@@ -1210,7 +1240,7 @@ Move the cryostream towards or away from the crystal.
 
 
 
-Definition at line 95 of file lspmac.\-c.
+Definition at line 94 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_a9d9c5030d817483ca9518027c91adac4}{\index{pgpmac.\-h@{pgpmac.\-h}!dryer@{dryer}}
 \index{dryer@{dryer}!pgpmac.h@{pgpmac.\-h}}
@@ -1221,7 +1251,7 @@ blow air on the scintilator to dry it off
 
 
 
-Definition at line 96 of file lspmac.\-c.
+Definition at line 95 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_aeb09895663eff333b7a75acb319a9fc1}{\index{pgpmac.\-h@{pgpmac.\-h}!flight@{flight}}
 \index{flight@{flight}!pgpmac.h@{pgpmac.\-h}}
@@ -1232,7 +1262,7 @@ Front Light D\-A\-C.
 
 
 
-Definition at line 90 of file lspmac.\-c.
+Definition at line 89 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_a8a3ca6fcf5e24dcc26170736843e53b2}{\index{pgpmac.\-h@{pgpmac.\-h}!fscint@{fscint}}
 \index{fscint@{fscint}!pgpmac.h@{pgpmac.\-h}}
@@ -1243,7 +1273,7 @@ Scintillator Piezo D\-A\-C.
 
 
 
-Definition at line 92 of file lspmac.\-c.
+Definition at line 91 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_a26dec4623af9beed912b8e7e6f99822c}{\index{pgpmac.\-h@{pgpmac.\-h}!fshut@{fshut}}
 \index{fshut@{fshut}!pgpmac.h@{pgpmac.\-h}}
@@ -1254,7 +1284,7 @@ Fast shutter.
 
 
 
-Definition at line 89 of file lspmac.\-c.
+Definition at line 88 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_a0be79ccb7ebf3a665248fd856112b9fd}{\index{pgpmac.\-h@{pgpmac.\-h}!kappa@{kappa}}
 \index{kappa@{kappa}!pgpmac.h@{pgpmac.\-h}}
@@ -1265,7 +1295,29 @@ Kappa.
 
 
 
-Definition at line 86 of file lspmac.\-c.
+Definition at line 85 of file lspmac.\-c.
+
+\hypertarget{pgpmac_8h_a14ca7cca8246dcfc266ad30d56701c0a}{\index{pgpmac.\-h@{pgpmac.\-h}!lskvs\-\_\-kvs@{lskvs\-\_\-kvs}}
+\index{lskvs\-\_\-kvs@{lskvs\-\_\-kvs}!pgpmac.h@{pgpmac.\-h}}
+\subsubsection[{lskvs\-\_\-kvs}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lskvs\-\_\-kvs\-\_\-t}$\ast$ lskvs\-\_\-kvs}}\label{pgpmac_8h_a14ca7cca8246dcfc266ad30d56701c0a}
+
+
+our list (or at least the start of it 
+
+
+
+Definition at line 11 of file lskvs.\-c.
+
+\hypertarget{pgpmac_8h_ad329bf890bd9eef896815dd53a323c2f}{\index{pgpmac.\-h@{pgpmac.\-h}!lskvs\-\_\-rwlock@{lskvs\-\_\-rwlock}}
+\index{lskvs\-\_\-rwlock@{lskvs\-\_\-rwlock}!pgpmac.h@{pgpmac.\-h}}
+\subsubsection[{lskvs\-\_\-rwlock}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-rwlock\-\_\-t lskvs\-\_\-rwlock}}\label{pgpmac_8h_ad329bf890bd9eef896815dd53a323c2f}
+
+
+needed to protect the list 
+
+
+
+Definition at line 12 of file lskvs.\-c.
 
 \hypertarget{pgpmac_8h_a7ef8a09203117578c9b2ce4719519f36}{\index{pgpmac.\-h@{pgpmac.\-h}!lspg\-\_\-getcenter@{lspg\-\_\-getcenter}}
 \index{lspg\-\_\-getcenter@{lspg\-\_\-getcenter}!pgpmac.h@{pgpmac.\-h}}
@@ -1298,7 +1350,7 @@ All our motors.
 
 
 
-Definition at line 71 of file lspmac.\-c.
+Definition at line 70 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_a57547d211906c981ef20257eba99f8df}{\index{pgpmac.\-h@{pgpmac.\-h}!lspmac\-\_\-moving\-\_\-cond@{lspmac\-\_\-moving\-\_\-cond}}
 \index{lspmac\-\_\-moving\-\_\-cond@{lspmac\-\_\-moving\-\_\-cond}!pgpmac.h@{pgpmac.\-h}}
@@ -1309,7 +1361,7 @@ Wait for motor(s) to finish moving condition.
 
 
 
-Definition at line 59 of file lspmac.\-c.
+Definition at line 58 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_a7a32c617c183166308241e270959df56}{\index{pgpmac.\-h@{pgpmac.\-h}!lspmac\-\_\-moving\-\_\-flags@{lspmac\-\_\-moving\-\_\-flags}}
 \index{lspmac\-\_\-moving\-\_\-flags@{lspmac\-\_\-moving\-\_\-flags}!pgpmac.h@{pgpmac.\-h}}
@@ -1320,7 +1372,7 @@ Flag used to implement motor moving condition.
 
 
 
-Definition at line 60 of file lspmac.\-c.
+Definition at line 59 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_a85679cac947e199c88794f8e5a12bf5f}{\index{pgpmac.\-h@{pgpmac.\-h}!lspmac\-\_\-moving\-\_\-mutex@{lspmac\-\_\-moving\-\_\-mutex}}
 \index{lspmac\-\_\-moving\-\_\-mutex@{lspmac\-\_\-moving\-\_\-mutex}!pgpmac.h@{pgpmac.\-h}}
@@ -1331,7 +1383,7 @@ Coordinate moving motors between threads.
 
 
 
-Definition at line 58 of file lspmac.\-c.
+Definition at line 57 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_a56260f012c50a591ee7f97e500f16994}{\index{pgpmac.\-h@{pgpmac.\-h}!lspmac\-\_\-nmotors@{lspmac\-\_\-nmotors}}
 \index{lspmac\-\_\-nmotors@{lspmac\-\_\-nmotors}!pgpmac.h@{pgpmac.\-h}}
@@ -1342,7 +1394,7 @@ The number of motors we manage.
 
 
 
-Definition at line 72 of file lspmac.\-c.
+Definition at line 71 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_afbd51c2cefcee87afe994c9e9f372241}{\index{pgpmac.\-h@{pgpmac.\-h}!lspmac\-\_\-shutter\-\_\-cond@{lspmac\-\_\-shutter\-\_\-cond}}
 \index{lspmac\-\_\-shutter\-\_\-cond@{lspmac\-\_\-shutter\-\_\-cond}!pgpmac.h@{pgpmac.\-h}}
@@ -1353,7 +1405,7 @@ Allows waiting for the shutter status to change.
 
 
 
-Definition at line 57 of file lspmac.\-c.
+Definition at line 56 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_a396fbf06208de3ecbe1b0df549f1cd46}{\index{pgpmac.\-h@{pgpmac.\-h}!lspmac\-\_\-shutter\-\_\-has\-\_\-opened@{lspmac\-\_\-shutter\-\_\-has\-\_\-opened}}
 \index{lspmac\-\_\-shutter\-\_\-has\-\_\-opened@{lspmac\-\_\-shutter\-\_\-has\-\_\-opened}!pgpmac.h@{pgpmac.\-h}}
@@ -1364,7 +1416,7 @@ Indicates that the shutter had opened, perhaps briefly even if the state did not
 
 
 
-Definition at line 55 of file lspmac.\-c.
+Definition at line 54 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_a1b78a13c654409333569815e1c109d38}{\index{pgpmac.\-h@{pgpmac.\-h}!lspmac\-\_\-shutter\-\_\-mutex@{lspmac\-\_\-shutter\-\_\-mutex}}
 \index{lspmac\-\_\-shutter\-\_\-mutex@{lspmac\-\_\-shutter\-\_\-mutex}!pgpmac.h@{pgpmac.\-h}}
@@ -1375,7 +1427,7 @@ Coordinates threads reading shutter status.
 
 
 
-Definition at line 56 of file lspmac.\-c.
+Definition at line 55 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_a112158e0cd50449a440ac55c7af7bea2}{\index{pgpmac.\-h@{pgpmac.\-h}!lspmac\-\_\-shutter\-\_\-state@{lspmac\-\_\-shutter\-\_\-state}}
 \index{lspmac\-\_\-shutter\-\_\-state@{lspmac\-\_\-shutter\-\_\-state}!pgpmac.h@{pgpmac.\-h}}
@@ -1386,7 +1438,7 @@ State of the shutter, used to detect changes.
 
 
 
-Definition at line 54 of file lspmac.\-c.
+Definition at line 53 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_a7a3e763682bd7f987d07f149e94b3bf8}{\index{pgpmac.\-h@{pgpmac.\-h}!md2\-\_\-status\-\_\-mutex@{md2\-\_\-status\-\_\-mutex}}
 \index{md2\-\_\-status\-\_\-mutex@{md2\-\_\-status\-\_\-mutex}!pgpmac.h@{pgpmac.\-h}}
@@ -1397,7 +1449,7 @@ Synchronize reading/writting status buffer.
 
 
 
-Definition at line 279 of file lspmac.\-c.
+Definition at line 282 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_a1ccf455563dc8d828558b6a230e164a6}{\index{pgpmac.\-h@{pgpmac.\-h}!md2cmds\-\_\-cmd@{md2cmds\-\_\-cmd}}
 \index{md2cmds\-\_\-cmd@{md2cmds\-\_\-cmd}!pgpmac.h@{pgpmac.\-h}}
@@ -1463,7 +1515,7 @@ allow more than one thread access to the screen
 
 
 
-Definition at line 241 of file pgpmac.\-c.
+Definition at line 242 of file pgpmac.\-c.
 
 \hypertarget{pgpmac_8h_a8237e646ce032a840637a4ef7bff49b9}{\index{pgpmac.\-h@{pgpmac.\-h}!omega@{omega}}
 \index{omega@{omega}!pgpmac.h@{pgpmac.\-h}}
@@ -1474,7 +1526,7 @@ M\-D2 omega axis (the air bearing)
 
 
 
-Definition at line 73 of file lspmac.\-c.
+Definition at line 72 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_ac8070dc568ad974a3db42b51eca828cc}{\index{pgpmac.\-h@{pgpmac.\-h}!phi@{phi}}
 \index{phi@{phi}!pgpmac.h@{pgpmac.\-h}}
@@ -1485,7 +1537,7 @@ Phi (not data collection axis)
 
 
 
-Definition at line 87 of file lspmac.\-c.
+Definition at line 86 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_ac0eeaffa0996271d8a38344a470d13d7}{\index{pgpmac.\-h@{pgpmac.\-h}!scinz@{scinz}}
 \index{scinz@{scinz}!pgpmac.h@{pgpmac.\-h}}
@@ -1496,7 +1548,7 @@ Scintillator Z.
 
 
 
-Definition at line 83 of file lspmac.\-c.
+Definition at line 82 of file lspmac.\-c.
 
 \hypertarget{pgpmac_8h_ab0487111dbe3c05d0bd835eb2fb9a3f7}{\index{pgpmac.\-h@{pgpmac.\-h}!term\-\_\-input@{term\-\_\-input}}
 \index{term\-\_\-input@{term\-\_\-input}!pgpmac.h@{pgpmac.\-h}}
@@ -1507,7 +1559,7 @@ place to put the cursor
 
 
 
-Definition at line 237 of file pgpmac.\-c.
+Definition at line 238 of file pgpmac.\-c.
 
 \hypertarget{pgpmac_8h_a65daf0f4a5bc6def23a9df98ff5ca57e}{\index{pgpmac.\-h@{pgpmac.\-h}!term\-\_\-output@{term\-\_\-output}}
 \index{term\-\_\-output@{term\-\_\-output}!pgpmac.h@{pgpmac.\-h}}
@@ -1518,7 +1570,7 @@ place to print stuff out
 
 
 
-Definition at line 236 of file pgpmac.\-c.
+Definition at line 237 of file pgpmac.\-c.
 
 \hypertarget{pgpmac_8h_ae746a6903fb8a4ea216def88eccedc3c}{\index{pgpmac.\-h@{pgpmac.\-h}!term\-\_\-status@{term\-\_\-status}}
 \index{term\-\_\-status@{term\-\_\-status}!pgpmac.h@{pgpmac.\-h}}
@@ -1529,7 +1581,7 @@ shutter, lamp, air, etc status
 
 
 
-Definition at line 238 of file pgpmac.\-c.
+Definition at line 239 of file pgpmac.\-c.
 
 \hypertarget{pgpmac_8h_ae2d7da3afeb756716e6e4ee9cab78f8a}{\index{pgpmac.\-h@{pgpmac.\-h}!term\-\_\-status2@{term\-\_\-status2}}
 \index{term\-\_\-status2@{term\-\_\-status2}!pgpmac.h@{pgpmac.\-h}}
@@ -1540,7 +1592,7 @@ shutter, lamp, air, etc status
 
 
 
-Definition at line 239 of file pgpmac.\-c.
+Definition at line 240 of file pgpmac.\-c.
 
 \hypertarget{pgpmac_8h_ad53a42cfaa04eff0336a44c8c9986333}{\index{pgpmac.\-h@{pgpmac.\-h}!zoom@{zoom}}
 \index{zoom@{zoom}!pgpmac.h@{pgpmac.\-h}}
@@ -1551,5 +1603,5 @@ Optical zoom.
 
 
 
-Definition at line 78 of file lspmac.\-c.
+Definition at line 77 of file lspmac.\-c.
 

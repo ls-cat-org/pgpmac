@@ -1,4 +1,4 @@
-.TH "pgpmac.h" 3 "Wed Nov 14 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "pgpmac.h" 3 "Thu Nov 15 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -47,6 +47,8 @@ Headers for the entire pgpmac project\&.
 .br
 \fC#include <getopt\&.h>\fP
 .br
+\fC#include <regex\&.h>\fP
+.br
 
 .SS "Data Structures"
 
@@ -59,6 +61,14 @@ Headers for the entire pgpmac project\&.
 .RI "struct \fBlspmac_cmd_queue_struct\fP"
 .br
 .RI "\fIPMAC command queue item\&. \fP"
+.ti -1c
+.RI "struct \fBlskvs_kvs_struct\fP"
+.br
+.RI "\fIStorage for the key value pairs\&. \fP"
+.ti -1c
+.RI "struct \fBlskvs_kvs_list_struct\fP"
+.br
+.RI "\fIA second linked list type to handle private lists of KVs\&. \fP"
 .ti -1c
 .RI "struct \fBlspmac_motor_struct\fP"
 .br
@@ -108,6 +118,16 @@ Headers for the entire pgpmac project\&.
 \fBlspmac_cmd_queue_struct\fP \fBpmac_cmd_queue_t\fP"
 .br
 .RI "\fIPMAC command queue item\&. \fP"
+.ti -1c
+.RI "typedef struct \fBlskvs_kvs_struct\fP \fBlskvs_kvs_t\fP"
+.br
+.RI "\fIStorage for the key value pairs\&. \fP"
+.ti -1c
+.RI "typedef struct 
+.br
+\fBlskvs_kvs_list_struct\fP \fBlskvs_kvs_list_t\fP"
+.br
+.RI "\fIA second linked list type to handle private lists of KVs\&. \fP"
 .ti -1c
 .RI "typedef struct \fBlspmac_motor_struct\fP \fBlspmac_motor_t\fP"
 .br
@@ -215,6 +235,14 @@ Headers for the entire pgpmac project\&.
 .RI "\fBlspg_nextshot_t\fP \fBlspg_nextshot\fP"
 .br
 .RI "\fIthe nextshot object \fP"
+.ti -1c
+.RI "\fBlskvs_kvs_t\fP * \fBlskvs_kvs\fP"
+.br
+.RI "\fIour list (or at least the start of it \fP"
+.ti -1c
+.RI "pthread_rwlock_t \fBlskvs_rwlock\fP"
+.br
+.RI "\fIneeded to protect the list \fP"
 .ti -1c
 .RI "\fBlspmac_motor_t\fP \fBlspmac_motors\fP []"
 .br
@@ -413,31 +441,39 @@ Definition in file \fBpgpmac\&.h\fP\&.
 .PP
 Number of status box rows\&. 
 .PP
-Definition at line 29 of file pgpmac\&.h\&.
+Definition at line 30 of file pgpmac\&.h\&.
 .SS "#define LS_DISPLAY_WINDOW_WIDTH   24"
 
 .PP
 Number of status box columns\&. 
 .PP
-Definition at line 33 of file pgpmac\&.h\&.
+Definition at line 34 of file pgpmac\&.h\&.
 .SS "#define LS_PG_QUERY_STRING_LENGTH   1024"
 
 .PP
 Fixed length postgresql query strings\&. Queries should all be function calls so this is not as weird as one might think\&. 
 .PP
-Definition at line 36 of file pgpmac\&.h\&.
+Definition at line 37 of file pgpmac\&.h\&.
 .SS "#define LSEVENTS_EVENT_LENGTH   32"
 
 .PP
 Fixed length for event names: simplifies string handling\&. 
 .PP
-Definition at line 39 of file pgpmac\&.h\&.
+Definition at line 40 of file pgpmac\&.h\&.
 .SS "#define MD2CMDS_CMD_LENGTH   32"
 
 .PP
-Definition at line 333 of file pgpmac\&.h\&.
+Definition at line 361 of file pgpmac\&.h\&.
 .SH "Typedef Documentation"
 .PP 
+.SS "typedef struct \fBlskvs_kvs_list_struct\fP  \fBlskvs_kvs_list_t\fP"
+
+.PP
+A second linked list type to handle private lists of KVs\&. Developed to support lists of preset motor positions\&. 
+.SS "typedef struct \fBlskvs_kvs_struct\fP  \fBlskvs_kvs_t\fP"
+
+.PP
+Storage for the key value pairs\&. the k's and v's are strings and to keep the memory management less crazy we'll calloc some space for these strings and only free and re-calloc if we need more space later\&. Only the values are ever going to be resized\&. 
 .SS "typedef struct \fBlspg_getcenter_struct\fP  \fBlspg_getcenter_t\fP"
 
 .PP
@@ -684,7 +720,7 @@ Definition at line 979 of file lspg\&.c\&.
 .PP
 Initialize this module\&. 
 .PP
-Definition at line 2100 of file lspmac\&.c\&.
+Definition at line 2183 of file lspmac\&.c\&.
 .PP
 .nf
                    {
@@ -777,11 +813,12 @@ Definition at line 2100 of file lspmac\&.c\&.
 .PP
 Start up the lspmac thread\&. 
 .PP
-Definition at line 2190 of file lspmac\&.c\&.
+Definition at line 2315 of file lspmac\&.c\&.
 .PP
 .nf
                   {
   pthread_create( &pmac_thread, NULL, lspmac_worker, NULL);
+  lsevents_add_listener( 'NewKV', lspmac_newKV_cb);
 }
 .fi
 .SS "void lstimer_add_timer (char *, int, unsigned longint, unsigned longint)"
@@ -899,7 +936,7 @@ Definition at line 113 of file lsupdate\&.c\&.
 .PP
 Initialize the md2cmds module\&. 
 .PP
-Definition at line 529 of file md2cmds\&.c\&.
+Definition at line 535 of file md2cmds\&.c\&.
 .PP
 .nf
                     {
@@ -918,7 +955,7 @@ Definition at line 529 of file md2cmds\&.c\&.
 .PP
 Start up the thread\&. 
 .PP
-Definition at line 542 of file md2cmds\&.c\&.
+Definition at line 548 of file md2cmds\&.c\&.
 .PP
 .nf
                    {
@@ -935,7 +972,7 @@ Terminal output routine ala printf\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 325 of file pgpmac\&.c\&.
+Definition at line 326 of file pgpmac\&.c\&.
 .PP
 .nf
                      {
@@ -964,109 +1001,121 @@ Definition at line 325 of file pgpmac\&.c\&.
 .PP
 Alignment stage X\&. 
 .PP
-Definition at line 74 of file lspmac\&.c\&.
+Definition at line 73 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* aligny"
 
 .PP
 Alignment stage Y\&. 
 .PP
-Definition at line 75 of file lspmac\&.c\&.
+Definition at line 74 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* alignz"
 
 .PP
 Alignment stage X\&. 
 .PP
-Definition at line 76 of file lspmac\&.c\&.
+Definition at line 75 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* anal"
 
 .PP
 Polaroid analyzer motor\&. 
 .PP
-Definition at line 77 of file lspmac\&.c\&.
+Definition at line 76 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* apery"
 
 .PP
 Aperture Y\&. 
 .PP
-Definition at line 79 of file lspmac\&.c\&.
+Definition at line 78 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* aperz"
 
 .PP
 Aperture Z\&. 
 .PP
-Definition at line 80 of file lspmac\&.c\&.
+Definition at line 79 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* blight"
 
 .PP
 Back Light DAC\&. 
 .PP
-Definition at line 91 of file lspmac\&.c\&.
+Definition at line 90 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* blight_ud"
 
 .PP
 Back Light Up/Down actuator\&. 
 .PP
-Definition at line 94 of file lspmac\&.c\&.
+Definition at line 93 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* capy"
 
 .PP
 Capillary Y\&. 
 .PP
-Definition at line 81 of file lspmac\&.c\&.
+Definition at line 80 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* capz"
 
 .PP
 Capillary Z\&. 
 .PP
-Definition at line 82 of file lspmac\&.c\&.
+Definition at line 81 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* cenx"
 
 .PP
 Centering Table X\&. 
 .PP
-Definition at line 84 of file lspmac\&.c\&.
+Definition at line 83 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* ceny"
 
 .PP
 Centering Table Y\&. 
 .PP
-Definition at line 85 of file lspmac\&.c\&.
+Definition at line 84 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* cryo"
 
 .PP
 Move the cryostream towards or away from the crystal\&. 
 .PP
-Definition at line 95 of file lspmac\&.c\&.
+Definition at line 94 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* dryer"
 
 .PP
 blow air on the scintilator to dry it off 
 .PP
-Definition at line 96 of file lspmac\&.c\&.
+Definition at line 95 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* flight"
 
 .PP
 Front Light DAC\&. 
 .PP
-Definition at line 90 of file lspmac\&.c\&.
+Definition at line 89 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* fscint"
 
 .PP
 Scintillator Piezo DAC\&. 
 .PP
-Definition at line 92 of file lspmac\&.c\&.
+Definition at line 91 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* fshut"
 
 .PP
 Fast shutter\&. 
 .PP
-Definition at line 89 of file lspmac\&.c\&.
+Definition at line 88 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* kappa"
 
 .PP
 Kappa\&. 
 .PP
-Definition at line 86 of file lspmac\&.c\&.
+Definition at line 85 of file lspmac\&.c\&.
+.SS "\fBlskvs_kvs_t\fP* lskvs_kvs"
+
+.PP
+our list (or at least the start of it 
+.PP
+Definition at line 11 of file lskvs\&.c\&.
+.SS "pthread_rwlock_t lskvs_rwlock"
+
+.PP
+needed to protect the list 
+.PP
+Definition at line 12 of file lskvs\&.c\&.
 .SS "\fBlspg_getcenter_t\fP lspg_getcenter"
 
 .PP
@@ -1084,61 +1133,61 @@ Definition at line 72 of file lspg\&.c\&.
 .PP
 All our motors\&. 
 .PP
-Definition at line 71 of file lspmac\&.c\&.
+Definition at line 70 of file lspmac\&.c\&.
 .SS "pthread_cond_t lspmac_moving_cond"
 
 .PP
 Wait for motor(s) to finish moving condition\&. 
 .PP
-Definition at line 59 of file lspmac\&.c\&.
+Definition at line 58 of file lspmac\&.c\&.
 .SS "int lspmac_moving_flags"
 
 .PP
 Flag used to implement motor moving condition\&. 
 .PP
-Definition at line 60 of file lspmac\&.c\&.
+Definition at line 59 of file lspmac\&.c\&.
 .SS "pthread_mutex_t lspmac_moving_mutex"
 
 .PP
 Coordinate moving motors between threads\&. 
 .PP
-Definition at line 58 of file lspmac\&.c\&.
+Definition at line 57 of file lspmac\&.c\&.
 .SS "int lspmac_nmotors"
 
 .PP
 The number of motors we manage\&. 
 .PP
-Definition at line 72 of file lspmac\&.c\&.
+Definition at line 71 of file lspmac\&.c\&.
 .SS "pthread_cond_t lspmac_shutter_cond"
 
 .PP
 Allows waiting for the shutter status to change\&. 
 .PP
-Definition at line 57 of file lspmac\&.c\&.
+Definition at line 56 of file lspmac\&.c\&.
 .SS "int lspmac_shutter_has_opened"
 
 .PP
 Indicates that the shutter had opened, perhaps briefly even if the state did not change\&. 
 .PP
-Definition at line 55 of file lspmac\&.c\&.
+Definition at line 54 of file lspmac\&.c\&.
 .SS "pthread_mutex_t lspmac_shutter_mutex"
 
 .PP
 Coordinates threads reading shutter status\&. 
 .PP
-Definition at line 56 of file lspmac\&.c\&.
+Definition at line 55 of file lspmac\&.c\&.
 .SS "int lspmac_shutter_state"
 
 .PP
 State of the shutter, used to detect changes\&. 
 .PP
-Definition at line 54 of file lspmac\&.c\&.
+Definition at line 53 of file lspmac\&.c\&.
 .SS "pthread_mutex_t md2_status_mutex"
 
 .PP
 Synchronize reading/writting status buffer\&. 
 .PP
-Definition at line 279 of file lspmac\&.c\&.
+Definition at line 282 of file lspmac\&.c\&.
 .SS "char md2cmds_cmd[]"
 
 .PP
@@ -1174,55 +1223,55 @@ Definition at line 14 of file md2cmds\&.c\&.
 .PP
 allow more than one thread access to the screen 
 .PP
-Definition at line 241 of file pgpmac\&.c\&.
+Definition at line 242 of file pgpmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* omega"
 
 .PP
 MD2 omega axis (the air bearing) 
 .PP
-Definition at line 73 of file lspmac\&.c\&.
+Definition at line 72 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* phi"
 
 .PP
 Phi (not data collection axis) 
 .PP
-Definition at line 87 of file lspmac\&.c\&.
+Definition at line 86 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* scinz"
 
 .PP
 Scintillator Z\&. 
 .PP
-Definition at line 83 of file lspmac\&.c\&.
+Definition at line 82 of file lspmac\&.c\&.
 .SS "WINDOW* term_input"
 
 .PP
 place to put the cursor 
 .PP
-Definition at line 237 of file pgpmac\&.c\&.
+Definition at line 238 of file pgpmac\&.c\&.
 .SS "WINDOW* term_output"
 
 .PP
 place to print stuff out 
 .PP
-Definition at line 236 of file pgpmac\&.c\&.
+Definition at line 237 of file pgpmac\&.c\&.
 .SS "WINDOW* term_status"
 
 .PP
 shutter, lamp, air, etc status 
 .PP
-Definition at line 238 of file pgpmac\&.c\&.
+Definition at line 239 of file pgpmac\&.c\&.
 .SS "WINDOW* term_status2"
 
 .PP
 shutter, lamp, air, etc status 
 .PP
-Definition at line 239 of file pgpmac\&.c\&.
+Definition at line 240 of file pgpmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* zoom"
 
 .PP
 Optical zoom\&. 
 .PP
-Definition at line 78 of file lspmac\&.c\&.
+Definition at line 77 of file lspmac\&.c\&.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for LS-CAT PGPMAC from the source code\&.

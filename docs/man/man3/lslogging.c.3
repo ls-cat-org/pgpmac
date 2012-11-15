@@ -1,4 +1,4 @@
-.TH "lslogging.c" 3 "Wed Nov 14 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lslogging.c" 3 "Thu Nov 15 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -182,6 +182,7 @@ Definition at line 48 of file lslogging\&.c\&.
   char msg[LSLOGGING_MSG_LENGTH];
   struct timespec theTime;
   va_list arg_ptr;
+  unsigned int on;
 
   clock_gettime( CLOCK_REALTIME, &theTime);
 
@@ -192,10 +193,11 @@ Definition at line 48 of file lslogging\&.c\&.
 
   pthread_mutex_lock( &lslogging_mutex);
   
-  strncpy( lslogging_queue[lslogging_on]\&.lmsg, msg, LSLOGGING_MSG_LENGTH - 1);
-  lslogging_queue[lslogging_on]\&.lmsg[LSLOGGING_MSG_LENGTH-1] = 0;
+  on = (lslogging_on++) % LSLOGGING_QUEUE_LENGTH;
+  strncpy( lslogging_queue[on]\&.lmsg, msg, LSLOGGING_MSG_LENGTH - 1);
+  lslogging_queue[on]\&.lmsg[LSLOGGING_MSG_LENGTH-1] = 0;
   
-  memcpy( &(lslogging_queue[(lslogging_on++) % LSLOGGING_QUEUE_LENGTH]\&.ltime), &theTime, sizeof(theTime));
+  memcpy( &(lslogging_queue[on]\&.ltime), &theTime, sizeof(theTime));
 
   pthread_cond_signal(  &lslogging_cond);
   pthread_mutex_unlock( &lslogging_mutex);
@@ -207,7 +209,7 @@ Definition at line 48 of file lslogging\&.c\&.
 .PP
 Start up the worker thread\&. 
 .PP
-Definition at line 103 of file lslogging\&.c\&.
+Definition at line 105 of file lslogging\&.c\&.
 .PP
 .nf
                      {
@@ -225,7 +227,7 @@ Service the queue, write to the file\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 74 of file lslogging\&.c\&.
+Definition at line 76 of file lslogging\&.c\&.
 .PP
 .nf
                         {
@@ -234,6 +236,7 @@ Definition at line 74 of file lslogging\&.c\&.
   struct tm coarsetime;
   char tstr[64];
   unsigned int msecs;
+  unsigned int off;
 
   pthread_mutex_lock( &lslogging_mutex);
 
@@ -242,14 +245,13 @@ Definition at line 74 of file lslogging\&.c\&.
       pthread_cond_wait( &lslogging_cond, &lslogging_mutex);
     }
     
-    localtime_r( &(lslogging_queue[lslogging_off]\&.ltime\&.tv_sec), &coarsetime);
+    off = (lslogging_off++) % LSLOGGING_QUEUE_LENGTH;
+    localtime_r( &(lslogging_queue[off]\&.ltime\&.tv_sec), &coarsetime);
     strftime( tstr, sizeof(tstr)-1, '%Y-%m-%d %H:%M:%S', &coarsetime);
     tstr[sizeof(tstr)-1] = 0;
-    msecs = lslogging_queue[lslogging_off % LSLOGGING_QUEUE_LENGTH]\&.ltime\&.tv_nsec / 1000000;
-    fprintf( lslogging_file, '%s\&.%\&.03u  %s\n', tstr, msecs, lslogging_queue[lslogging_off % LSLOGGING_QUEUE_LENGTH]\&.lmsg);
+    msecs = lslogging_queue[off]\&.ltime\&.tv_nsec / 1000000;
+    fprintf( lslogging_file, '%s\&.%\&.03u  %s\n', tstr, msecs, lslogging_queue[off]\&.lmsg);
     fflush( lslogging_file);
-
-    lslogging_off++;
   }
 }
 .fi

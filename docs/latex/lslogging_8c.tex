@@ -174,6 +174,7 @@ Definition at line 48 of file lslogging.\-c.
   \textcolor{keywordtype}{char} msg[\hyperlink{lslogging_8c_a0526e4aa12fbaf357fe315d6b3209c54}{LSLOGGING\_MSG\_LENGTH}];
   \textcolor{keyword}{struct }timespec theTime;
   va\_list arg\_ptr;
+  \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int} on;
 
   clock\_gettime( CLOCK\_REALTIME, &theTime);
 
@@ -184,14 +185,15 @@ Definition at line 48 of file lslogging.\-c.
 
   pthread\_mutex\_lock( &\hyperlink{lslogging_8c_a4a97ffe8731ae437f014ada051301be3}{lslogging\_mutex});
   
-  strncpy( \hyperlink{lslogging_8c_af98f94aec3e4501328da1b71f706c652}{lslogging\_queue}[\hyperlink{lslogging_8c_a1f6e69ade57a17755e6b74a6286505df}{lslogging\_on}].lmsg, msg, 
-      \hyperlink{lslogging_8c_a0526e4aa12fbaf357fe315d6b3209c54}{LSLOGGING\_MSG\_LENGTH} - 1);
-  \hyperlink{lslogging_8c_af98f94aec3e4501328da1b71f706c652}{lslogging\_queue}[\hyperlink{lslogging_8c_a1f6e69ade57a17755e6b74a6286505df}{lslogging\_on}].\hyperlink{structlslogging__queue__struct_a5e83db0116b1289a84683ce48626d99d}{lmsg}[
-      \hyperlink{lslogging_8c_a0526e4aa12fbaf357fe315d6b3209c54}{LSLOGGING\_MSG\_LENGTH}-1] = 0;
+  on = (\hyperlink{lslogging_8c_a1f6e69ade57a17755e6b74a6286505df}{lslogging\_on}++) % \hyperlink{lslogging_8c_a5b1cb610bee26b000a2d64caa7d77a8d}{LSLOGGING\_QUEUE\_LENGTH}
+      ;
+  strncpy( \hyperlink{lslogging_8c_af98f94aec3e4501328da1b71f706c652}{lslogging\_queue}[on].lmsg, msg, \hyperlink{lslogging_8c_a0526e4aa12fbaf357fe315d6b3209c54}{LSLOGGING\_MSG\_LENGTH}
+       - 1);
+  \hyperlink{lslogging_8c_af98f94aec3e4501328da1b71f706c652}{lslogging\_queue}[on].\hyperlink{structlslogging__queue__struct_a5e83db0116b1289a84683ce48626d99d}{lmsg}[\hyperlink{lslogging_8c_a0526e4aa12fbaf357fe315d6b3209c54}{LSLOGGING\_MSG\_LENGTH}
+      -1] = 0;
   
-  memcpy( &(\hyperlink{lslogging_8c_af98f94aec3e4501328da1b71f706c652}{lslogging\_queue}[(\hyperlink{lslogging_8c_a1f6e69ade57a17755e6b74a6286505df}{lslogging\_on}++) % 
-      \hyperlink{lslogging_8c_a5b1cb610bee26b000a2d64caa7d77a8d}{LSLOGGING\_QUEUE\_LENGTH}].ltime), &theTime, \textcolor{keyword}{sizeof}(theTime)
-      );
+  memcpy( &(\hyperlink{lslogging_8c_af98f94aec3e4501328da1b71f706c652}{lslogging\_queue}[on].ltime), &theTime, \textcolor{keyword}{sizeof}(theTime
+      ));
 
   pthread\_cond\_signal(  &\hyperlink{lslogging_8c_afa5f05c4337683edc3c88ab56aa5ea6f}{lslogging\_cond});
   pthread\_mutex\_unlock( &\hyperlink{lslogging_8c_a4a97ffe8731ae437f014ada051301be3}{lslogging\_mutex});
@@ -211,7 +213,7 @@ Start up the worker thread.
 
 
 
-Definition at line 103 of file lslogging.\-c.
+Definition at line 105 of file lslogging.\-c.
 
 
 \begin{DoxyCode}
@@ -239,7 +241,7 @@ Service the queue, write to the file.
 \end{DoxyParams}
 
 
-Definition at line 74 of file lslogging.\-c.
+Definition at line 76 of file lslogging.\-c.
 
 
 \begin{DoxyCode}
@@ -249,6 +251,7 @@ Definition at line 74 of file lslogging.\-c.
   \textcolor{keyword}{struct }tm coarsetime;
   \textcolor{keywordtype}{char} tstr[64];
   \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int} msecs;
+  \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int} off;
 
   pthread\_mutex\_lock( &\hyperlink{lslogging_8c_a4a97ffe8731ae437f014ada051301be3}{lslogging\_mutex});
 
@@ -258,18 +261,16 @@ Definition at line 74 of file lslogging.\-c.
       );
     \}
     
-    localtime\_r( &(\hyperlink{lslogging_8c_af98f94aec3e4501328da1b71f706c652}{lslogging\_queue}[\hyperlink{lslogging_8c_a6c571e94580b7fc9ab72e01fbc5d23c7}{lslogging\_off}].
-      ltime.tv\_sec), &coarsetime);
+    off = (\hyperlink{lslogging_8c_a6c571e94580b7fc9ab72e01fbc5d23c7}{lslogging\_off}++) % \hyperlink{lslogging_8c_a5b1cb610bee26b000a2d64caa7d77a8d}{LSLOGGING\_QUEUE\_LENGTH}
+      ;
+    localtime\_r( &(\hyperlink{lslogging_8c_af98f94aec3e4501328da1b71f706c652}{lslogging\_queue}[off].ltime.tv\_sec), &
+      coarsetime);
     strftime( tstr, \textcolor{keyword}{sizeof}(tstr)-1, \textcolor{stringliteral}{"%Y-%m-%d %H:%M:%S"}, &coarsetime);
     tstr[\textcolor{keyword}{sizeof}(tstr)-1] = 0;
-    msecs = \hyperlink{lslogging_8c_af98f94aec3e4501328da1b71f706c652}{lslogging\_queue}[\hyperlink{lslogging_8c_a6c571e94580b7fc9ab72e01fbc5d23c7}{lslogging\_off} % 
-      \hyperlink{lslogging_8c_a5b1cb610bee26b000a2d64caa7d77a8d}{LSLOGGING\_QUEUE\_LENGTH}].\hyperlink{structlslogging__queue__struct_aa8211878c89f3c98757c3433115453eb}{ltime}.tv\_nsec / 1000000;
+    msecs = \hyperlink{lslogging_8c_af98f94aec3e4501328da1b71f706c652}{lslogging\_queue}[off].\hyperlink{structlslogging__queue__struct_aa8211878c89f3c98757c3433115453eb}{ltime}.tv\_nsec / 1000000;
     fprintf( \hyperlink{lslogging_8c_a5709d6eb68a8eebf78ba58bb78da0649}{lslogging\_file}, \textcolor{stringliteral}{"%s.%.03u  %s\(\backslash\)n"}, tstr, msecs, 
-      \hyperlink{lslogging_8c_af98f94aec3e4501328da1b71f706c652}{lslogging\_queue}[\hyperlink{lslogging_8c_a6c571e94580b7fc9ab72e01fbc5d23c7}{lslogging\_off} % 
-      \hyperlink{lslogging_8c_a5b1cb610bee26b000a2d64caa7d77a8d}{LSLOGGING\_QUEUE\_LENGTH}].lmsg);
+      \hyperlink{lslogging_8c_af98f94aec3e4501328da1b71f706c652}{lslogging\_queue}[off].lmsg);
     fflush( \hyperlink{lslogging_8c_a5709d6eb68a8eebf78ba58bb78da0649}{lslogging\_file});
-
-    \hyperlink{lslogging_8c_a6c571e94580b7fc9ab72e01fbc5d23c7}{lslogging\_off}++;
   \}
 \}
 \end{DoxyCode}

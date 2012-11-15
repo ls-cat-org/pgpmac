@@ -24,6 +24,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <getopt.h>
+#include <regex.h>
 
 //! Number of status box rows
 #define LS_DISPLAY_WINDOW_HEIGHT 8
@@ -63,6 +64,28 @@ typedef struct lspmac_cmd_queue_struct {
   void (*onResponse)(struct lspmac_cmd_queue_struct *,int, unsigned char *);	//!< function to call when response is received.  args are (int fd, nreturned, buffer)
 } pmac_cmd_queue_t;
 
+/** Storage for the key value pairs
+ *
+ * the k's and v's are strings and to keep the memory management less crazy
+ * we'll calloc some space for these strings and only free and re-calloc if we need
+ * more space later.  Only the values are ever going to be resized.
+ */
+typedef struct lskvs_kvs_struct {
+  struct lskvs_kvs_struct *next;	//!< the next kvpair
+  pthread_rwlock_t l;			//!< our lock
+  char *k;				//!< the key
+  char *v;				//!< the value
+  int   vl;				//!< the length of the calloced v
+} lskvs_kvs_t;
+
+/** A second linked list type to handle private lists of KVs.
+ *  Developed to support lists of preset motor positions.
+ */
+typedef struct lskvs_kvs_list_struct {
+  struct lskvs_kvs_list_struct * next;	//!< next item
+  lskvs_kvs_t *kvs;			//!< the KV
+} lskvs_kvs_list_t;
+
 /** Motor information.
  *
  * A catchall for motors and motor like objects.
@@ -72,6 +95,8 @@ typedef struct lspmac_motor_struct {
   pthread_mutex_t mutex;	//!< coordinate waiting for motor to be done
   pthread_cond_t cond;		//!<
   int lspg_initialized;		//!< bit flags: bit 0 = motor initialized by database, bit 1 = px.kvs value initialized
+  lskvs_kvs_list_t *presets;	//!< list of preset positions
+  regex_t preset_regex;		//!< buffer used by regex routines to find preset positions for this motor
   void (*read)( struct lspmac_motor_struct *);	//!< function to read the motor status and position
   int not_done;			//!< set to 1 when request is queued, zero after motion has toggled
   int motion_seen;		//!< set to 1 when motion has been verified to have started
@@ -279,6 +304,9 @@ typedef struct lspg_nextshot_struct {
 
 
 extern lspg_nextshot_t lspg_nextshot;
+
+extern lskvs_kvs_t     *lskvs_kvs;
+extern pthread_rwlock_t lskvs_rwlock;
 
 extern lspmac_motor_t lspmac_motors[];
 extern lspmac_motor_t *omega;

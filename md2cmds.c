@@ -72,10 +72,7 @@ void md2cmds_moveAbs(
   //
   ignore = strtok_r( cmd, " ", &ptr);
   if( ignore == NULL) {
-    //
-    // Should generate error message
-    // about blank command
-    //
+    lslogging_log_message( "md2cmds_moveAbs: ignoring blank command '%s'", cmd);
     return;
   }
 
@@ -88,6 +85,18 @@ void md2cmds_moveAbs(
     return;
   }
 
+  mp = NULL;
+  for( i=0; i<lspmac_nmotors; i++) {
+    if( strcmp( lspmac_motors[i].name, mtr) == 0) {
+      mp = &(lspmac_motors[i]);
+      break;
+    }
+  }
+  if( mp == NULL) {
+    lslogging_log_message( "md2cmds moveAbs error: cannot find motor %s", mtr);
+    return;
+  }
+
   pos = strtok_r( NULL, " ", &ptr);
   if( pos == NULL) {
     lslogging_log_message( "md2cmds moveAbs error: missing position");
@@ -96,17 +105,14 @@ void md2cmds_moveAbs(
 
   fpos = strtod( pos, &endptr);
   if( pos == endptr) {
-    lslogging_log_message( "md2cmds moveAbs error: Can't decipher '%s' as a number", pos);
+    //
+    // Maybe we have a preset.  Give it a whirl
+    // In any case we are done here.
+    //
+    lspmac_move_preset_queue( mp, pos);
     return;
   }
   
-  mp = NULL;
-  for( i=0; i<lspmac_nmotors; i++) {
-    if( strcmp( lspmac_motors[i].name, mtr) == 0) {
-      mp = &(lspmac_motors[i]);
-      break;
-    }
-  }
 
 
   if( mp != NULL && mp->moveAbs != NULL) {

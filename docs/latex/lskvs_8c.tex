@@ -7,22 +7,14 @@ Support for the remote access client key value pairs.
 
 
 {\ttfamily \#include \char`\"{}pgpmac.\-h\char`\"{}}\\*
-\subsection*{Data Structures}
-\begin{DoxyCompactItemize}
-\item 
-struct \hyperlink{structlskvs__kvs__struct}{lskvs\-\_\-kvs\-\_\-struct}
-\begin{DoxyCompactList}\small\item\em Storage for the key value pairs. \end{DoxyCompactList}\end{DoxyCompactItemize}
-\subsection*{Typedefs}
-\begin{DoxyCompactItemize}
-\item 
-typedef struct \hyperlink{structlskvs__kvs__struct}{lskvs\-\_\-kvs\-\_\-struct} \hyperlink{lskvs_8c_a54bd386f945edb8a0311a20199e8f793}{lskvs\-\_\-kvs\-\_\-t}
-\begin{DoxyCompactList}\small\item\em Storage for the key value pairs. \end{DoxyCompactList}\end{DoxyCompactItemize}
 \subsection*{Functions}
 \begin{DoxyCompactItemize}
 \item 
+void \hyperlink{lskvs_8c_ac1a924903bc31ef067c08e5152e1b2eb}{lskvs\-\_\-regcomp} (regex\-\_\-t $\ast$preg, int cflags, char $\ast$fmt,...)
+\begin{DoxyCompactList}\small\item\em Utility wrapper for regcomp providing printf style formating. \end{DoxyCompactList}\item 
 void \hyperlink{lskvs_8c_ab04e99f92c761522972c4d80d85f4830}{lskvs\-\_\-set} (char $\ast$k, char $\ast$v)
 \begin{DoxyCompactList}\small\item\em Set the value of a kv pair Create the pair if the key does not exsist. \end{DoxyCompactList}\item 
-\hyperlink{lskvs_8c_a54bd386f945edb8a0311a20199e8f793}{lskvs\-\_\-kvs\-\_\-t} $\ast$ \hyperlink{lskvs_8c_a3bc37cbeae347da068124d23ba3c1905}{lskvs\-\_\-get} (char $\ast$k)
+\hyperlink{pgpmac_8h_a54bd386f945edb8a0311a20199e8f793}{lskvs\-\_\-kvs\-\_\-t} $\ast$ \hyperlink{lskvs_8c_a3bc37cbeae347da068124d23ba3c1905}{lskvs\-\_\-get} (char $\ast$k)
 \begin{DoxyCompactList}\small\item\em Find the kv pair object Return with a pointer to the structure or N\-U\-L\-L if not found. \end{DoxyCompactList}\item 
 void \hyperlink{lskvs_8c_ae4c780cd3a394259ca74d447bdae3537}{lskvs\-\_\-init} ()
 \begin{DoxyCompactList}\small\item\em Initialize lskvs objects. \end{DoxyCompactList}\item 
@@ -31,9 +23,9 @@ void \hyperlink{lskvs_8c_ab67e0bf3edaa2cea837fe68814e025f5}{lskvs\-\_\-run} ()
 \subsection*{Variables}
 \begin{DoxyCompactItemize}
 \item 
-static \hyperlink{lskvs_8c_a54bd386f945edb8a0311a20199e8f793}{lskvs\-\_\-kvs\-\_\-t} $\ast$ \hyperlink{lskvs_8c_a14ca7cca8246dcfc266ad30d56701c0a}{lskvs\-\_\-kvs} = N\-U\-L\-L
+\hyperlink{pgpmac_8h_a54bd386f945edb8a0311a20199e8f793}{lskvs\-\_\-kvs\-\_\-t} $\ast$ \hyperlink{lskvs_8c_a14ca7cca8246dcfc266ad30d56701c0a}{lskvs\-\_\-kvs} = N\-U\-L\-L
 \begin{DoxyCompactList}\small\item\em our list (or at least the start of it \end{DoxyCompactList}\item 
-static pthread\-\_\-rwlock\-\_\-t \hyperlink{lskvs_8c_ad329bf890bd9eef896815dd53a323c2f}{lskvs\-\_\-rwlock}
+pthread\-\_\-rwlock\-\_\-t \hyperlink{lskvs_8c_ad329bf890bd9eef896815dd53a323c2f}{lskvs\-\_\-rwlock}
 \begin{DoxyCompactList}\small\item\em needed to protect the list \end{DoxyCompactList}\end{DoxyCompactItemize}
 
 
@@ -52,16 +44,6 @@ All Rights Reserved
 Definition in file \hyperlink{lskvs_8c_source}{lskvs.\-c}.
 
 
-
-\subsection{Typedef Documentation}
-\hypertarget{lskvs_8c_a54bd386f945edb8a0311a20199e8f793}{\index{lskvs.\-c@{lskvs.\-c}!lskvs\-\_\-kvs\-\_\-t@{lskvs\-\_\-kvs\-\_\-t}}
-\index{lskvs\-\_\-kvs\-\_\-t@{lskvs\-\_\-kvs\-\_\-t}!lskvs.c@{lskvs.\-c}}
-\subsubsection[{lskvs\-\_\-kvs\-\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf lskvs\-\_\-kvs\-\_\-struct}  {\bf lskvs\-\_\-kvs\-\_\-t}}}\label{lskvs_8c_a54bd386f945edb8a0311a20199e8f793}
-
-
-Storage for the key value pairs. 
-
-the k's and v's are strings and to keep the memory management less crazy we'll calloc some space for these strings and only free and re-\/calloc if we need more space later. Only the values are ever going to be resized. 
 
 \subsection{Function Documentation}
 \hypertarget{lskvs_8c_a3bc37cbeae347da068124d23ba3c1905}{\index{lskvs.\-c@{lskvs.\-c}!lskvs\-\_\-get@{lskvs\-\_\-get}}
@@ -82,7 +64,7 @@ Find the kv pair object Return with a pointer to the structure or N\-U\-L\-L if 
 \end{DoxyParams}
 
 
-Definition at line 137 of file lskvs.\-c.
+Definition at line 182 of file lskvs.\-c.
 
 
 \begin{DoxyCode}
@@ -115,12 +97,97 @@ Initialize lskvs objects.
 
 
 
-Definition at line 158 of file lskvs.\-c.
+Definition at line 203 of file lskvs.\-c.
 
 
 \begin{DoxyCode}
                   \{
   pthread\_rwlock\_init( &\hyperlink{lskvs_8c_ad329bf890bd9eef896815dd53a323c2f}{lskvs\_rwlock}, NULL);
+\}
+\end{DoxyCode}
+\hypertarget{lskvs_8c_ac1a924903bc31ef067c08e5152e1b2eb}{\index{lskvs.\-c@{lskvs.\-c}!lskvs\-\_\-regcomp@{lskvs\-\_\-regcomp}}
+\index{lskvs\-\_\-regcomp@{lskvs\-\_\-regcomp}!lskvs.c@{lskvs.\-c}}
+\subsubsection[{lskvs\-\_\-regcomp}]{\setlength{\rightskip}{0pt plus 5cm}void lskvs\-\_\-regcomp (
+\begin{DoxyParamCaption}
+\item[{regex\-\_\-t $\ast$}]{preg, }
+\item[{int}]{cflags, }
+\item[{char $\ast$}]{fmt, }
+\item[{}]{...}
+\end{DoxyParamCaption}
+)}}\label{lskvs_8c_ac1a924903bc31ef067c08e5152e1b2eb}
+
+
+Utility wrapper for regcomp providing printf style formating. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em preg} & Buffer for the compile regex object \\
+\hline
+{\em cflags} & See regcomp man page \\
+\hline
+{\em fmt} & Printf style formating string \\
+\hline
+{\em ...} & Argument list specified by fmt \\
+\hline
+\end{DoxyParams}
+$<$ no reason our search strings should ever be this big 
+
+Definition at line 22 of file lskvs.\-c.
+
+
+\begin{DoxyCode}
+                                                               \{
+  \textcolor{keyword}{struct }regerror\_struct \{
+    \textcolor{keywordtype}{int} errcode;
+    \textcolor{keywordtype}{char} *errstr;
+  \};
+  \textcolor{keyword}{static} \textcolor{keyword}{struct }regerror\_struct regerrors[] = \{
+    \{ REG\_BADBR,    \textcolor{stringliteral}{"Invalid use of back reference operator."}\},
+    \{ REG\_BADPAT,   \textcolor{stringliteral}{"Invalid use of pattern operators such as group or list."}\},
+    \{ REG\_BADRPT,   \textcolor{stringliteral}{"Invalid use of repetition operators such as using '*' as
+       the first character."}\},
+    \{ REG\_EBRACE,   \textcolor{stringliteral}{"Un-matched brace interval operators."}\},
+    \{ REG\_EBRACK,   \textcolor{stringliteral}{"Un-matched bracket list operators."}\},
+    \{ REG\_ECOLLATE, \textcolor{stringliteral}{"Invalid collating element."}\},
+    \{ REG\_ECTYPE,   \textcolor{stringliteral}{"Unknown character class name."}\},
+    \{ REG\_EEND,     \textcolor{stringliteral}{"Non specific error.  This is not defined by POSIX.2."}\},
+    \{ REG\_EESCAPE,  \textcolor{stringliteral}{"Trailing backslash."}\},
+    \{ REG\_EPAREN,   \textcolor{stringliteral}{"Un-matched parenthesis group operators."}\},
+    \{ REG\_ERANGE,   \textcolor{stringliteral}{"Invalid use of the range operator, e.g., the ending point
+       of the range occurs prior to the starting point."}\},
+    \{ REG\_ESIZE,    \textcolor{stringliteral}{"Compiled regular expression requires a pattern buffer
+       larger than 64Kb.  This is not defined by POSIX.2."}\},
+    \{ REG\_ESPACE,   \textcolor{stringliteral}{"The regex routines ran out of memory."}\},
+    \{ REG\_ESUBREG,  \textcolor{stringliteral}{"Invalid back reference to a subexpression."}\},
+    \{ 0,            \textcolor{stringliteral}{"No errors"}\}
+  \};
+
+
+
+  va\_list arg\_ptr;
+  \textcolor{keywordtype}{char} s[512];          
+  \textcolor{keywordtype}{int} err;
+
+  va\_start( arg\_ptr, fmt);
+  vsnprintf( s, \textcolor{keyword}{sizeof}(s)-1, fmt, arg\_ptr);
+  s[ \textcolor{keyword}{sizeof}(s)-1] = 0;
+  va\_end( arg\_ptr);
+
+  err = regcomp( preg, s, cflags);
+  \textcolor{keywordflow}{if}( err != 0) \{
+    \textcolor{keywordtype}{int} i;
+
+    \textcolor{keywordflow}{for}( i=0; regerrors[i].errcode != 0; i++)
+      \textcolor{keywordflow}{if}( regerrors[i].errcode == err)
+        \textcolor{keywordflow}{break};
+
+    \textcolor{keywordflow}{if}( regerrors[i].errcode != 0) \{
+      \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lskvs\_regcomp: could not
+       compile regular experssion '%s'"}, s);
+      \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lskvs\_regcomp: regcomp
+       returned %d: %s"}, err, regerrors[i]);
+    \}
+  \}
 \}
 \end{DoxyCode}
 \hypertarget{lskvs_8c_ab67e0bf3edaa2cea837fe68814e025f5}{\index{lskvs.\-c@{lskvs.\-c}!lskvs\-\_\-run@{lskvs\-\_\-run}}
@@ -136,7 +203,7 @@ Run things.
 
 Really, there is nothing to run. There is no need for a worker thread here but this has been added so we can add lskvs just like any other module to the pgpmac project. Maybe one day we'll need to add a thread and this little routine can be celebrated as being far sighted, ahead of its time. 
 
-Definition at line 168 of file lskvs.\-c.
+Definition at line 213 of file lskvs.\-c.
 
 
 \begin{DoxyCode}
@@ -166,7 +233,7 @@ If more than one thread tries to create the same key at the same time it is poss
 \end{DoxyParams}
 
 
-Definition at line 44 of file lskvs.\-c.
+Definition at line 86 of file lskvs.\-c.
 
 
 \begin{DoxyCode}
@@ -241,6 +308,9 @@ Definition at line 44 of file lskvs.\-c.
     p->\hyperlink{structlskvs__kvs__struct_a6302f184418962708bd1efe3320d4347}{next}   = \hyperlink{lskvs_8c_a14ca7cca8246dcfc266ad30d56701c0a}{lskvs\_kvs};
     \hyperlink{lskvs_8c_a14ca7cca8246dcfc266ad30d56701c0a}{lskvs\_kvs} = p;
     pthread\_rwlock\_unlock( &\hyperlink{lskvs_8c_ad329bf890bd9eef896815dd53a323c2f}{lskvs\_rwlock});
+
+    \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"NewKV"});
+
   \} \textcolor{keywordflow}{else} \{
     \textcolor{comment}{//}
     \textcolor{comment}{// Just update the value}
@@ -270,23 +340,23 @@ Definition at line 44 of file lskvs.\-c.
 \subsection{Variable Documentation}
 \hypertarget{lskvs_8c_a14ca7cca8246dcfc266ad30d56701c0a}{\index{lskvs.\-c@{lskvs.\-c}!lskvs\-\_\-kvs@{lskvs\-\_\-kvs}}
 \index{lskvs\-\_\-kvs@{lskvs\-\_\-kvs}!lskvs.c@{lskvs.\-c}}
-\subsubsection[{lskvs\-\_\-kvs}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lskvs\-\_\-kvs\-\_\-t}$\ast$ lskvs\-\_\-kvs = N\-U\-L\-L\hspace{0.3cm}{\ttfamily [static]}}}\label{lskvs_8c_a14ca7cca8246dcfc266ad30d56701c0a}
+\subsubsection[{lskvs\-\_\-kvs}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lskvs\-\_\-kvs\-\_\-t}$\ast$ lskvs\-\_\-kvs = N\-U\-L\-L}}\label{lskvs_8c_a14ca7cca8246dcfc266ad30d56701c0a}
 
 
 our list (or at least the start of it 
 
 
 
-Definition at line 25 of file lskvs.\-c.
+Definition at line 11 of file lskvs.\-c.
 
 \hypertarget{lskvs_8c_ad329bf890bd9eef896815dd53a323c2f}{\index{lskvs.\-c@{lskvs.\-c}!lskvs\-\_\-rwlock@{lskvs\-\_\-rwlock}}
 \index{lskvs\-\_\-rwlock@{lskvs\-\_\-rwlock}!lskvs.c@{lskvs.\-c}}
-\subsubsection[{lskvs\-\_\-rwlock}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-rwlock\-\_\-t lskvs\-\_\-rwlock\hspace{0.3cm}{\ttfamily [static]}}}\label{lskvs_8c_ad329bf890bd9eef896815dd53a323c2f}
+\subsubsection[{lskvs\-\_\-rwlock}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-rwlock\-\_\-t lskvs\-\_\-rwlock}}\label{lskvs_8c_ad329bf890bd9eef896815dd53a323c2f}
 
 
 needed to protect the list 
 
 
 
-Definition at line 26 of file lskvs.\-c.
+Definition at line 12 of file lskvs.\-c.
 

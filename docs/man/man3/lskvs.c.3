@@ -1,4 +1,4 @@
-.TH "lskvs.c" 3 "Wed Nov 14 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lskvs.c" 3 "Thu Nov 15 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -12,25 +12,13 @@ Support for the remote access client key value pairs\&.
 \fC#include 'pgpmac\&.h'\fP
 .br
 
-.SS "Data Structures"
-
-.in +1c
-.ti -1c
-.RI "struct \fBlskvs_kvs_struct\fP"
-.br
-.RI "\fIStorage for the key value pairs\&. \fP"
-.in -1c
-.SS "Typedefs"
-
-.in +1c
-.ti -1c
-.RI "typedef struct \fBlskvs_kvs_struct\fP \fBlskvs_kvs_t\fP"
-.br
-.RI "\fIStorage for the key value pairs\&. \fP"
-.in -1c
 .SS "Functions"
 
 .in +1c
+.ti -1c
+.RI "void \fBlskvs_regcomp\fP (regex_t *preg, int cflags, char *fmt,\&.\&.\&.)"
+.br
+.RI "\fIUtility wrapper for regcomp providing printf style formating\&. \fP"
 .ti -1c
 .RI "void \fBlskvs_set\fP (char *k, char *v)"
 .br
@@ -52,11 +40,11 @@ Support for the remote access client key value pairs\&.
 
 .in +1c
 .ti -1c
-.RI "static \fBlskvs_kvs_t\fP * \fBlskvs_kvs\fP = NULL"
+.RI "\fBlskvs_kvs_t\fP * \fBlskvs_kvs\fP = NULL"
 .br
 .RI "\fIour list (or at least the start of it \fP"
 .ti -1c
-.RI "static pthread_rwlock_t \fBlskvs_rwlock\fP"
+.RI "pthread_rwlock_t \fBlskvs_rwlock\fP"
 .br
 .RI "\fIneeded to protect the list \fP"
 .in -1c
@@ -82,12 +70,6 @@ All Rights Reserved
 
 .PP
 Definition in file \fBlskvs\&.c\fP\&.
-.SH "Typedef Documentation"
-.PP 
-.SS "typedef struct \fBlskvs_kvs_struct\fP  \fBlskvs_kvs_t\fP"
-
-.PP
-Storage for the key value pairs\&. the k's and v's are strings and to keep the memory management less crazy we'll calloc some space for these strings and only free and re-calloc if we need more space later\&. Only the values are ever going to be resized\&. 
 .SH "Function Documentation"
 .PP 
 .SS "\fBlskvs_kvs_t\fP* lskvs_get (char *k)"
@@ -100,7 +82,7 @@ Find the kv pair object Return with a pointer to the structure or NULL if not fo
 .PP
 
 .PP
-Definition at line 137 of file lskvs\&.c\&.
+Definition at line 182 of file lskvs\&.c\&.
 .PP
 .nf
                          {
@@ -124,11 +106,79 @@ Definition at line 137 of file lskvs\&.c\&.
 .PP
 Initialize lskvs objects\&. 
 .PP
-Definition at line 158 of file lskvs\&.c\&.
+Definition at line 203 of file lskvs\&.c\&.
 .PP
 .nf
                   {
   pthread_rwlock_init( &lskvs_rwlock, NULL);
+}
+.fi
+.SS "void lskvs_regcomp (regex_t *preg, intcflags, char *fmt, \&.\&.\&.)"
+
+.PP
+Utility wrapper for regcomp providing printf style formating\&. \fBParameters:\fP
+.RS 4
+\fIpreg\fP Buffer for the compile regex object 
+.br
+\fIcflags\fP See regcomp man page 
+.br
+\fIfmt\fP Printf style formating string 
+.br
+\fI\&.\&.\&.\fP Argument list specified by fmt 
+.RE
+.PP
+< no reason our search strings should ever be this big 
+.PP
+Definition at line 22 of file lskvs\&.c\&.
+.PP
+.nf
+                                                               {
+  struct regerror_struct {
+    int errcode;
+    char *errstr;
+  };
+  static struct regerror_struct regerrors[] = {
+    { REG_BADBR,    'Invalid use of back reference operator\&.'},
+    { REG_BADPAT,   'Invalid use of pattern operators such as group or list\&.'},
+    { REG_BADRPT,   'Invalid use of repetition operators such as using '*' as the first character\&.'},
+    { REG_EBRACE,   'Un-matched brace interval operators\&.'},
+    { REG_EBRACK,   'Un-matched bracket list operators\&.'},
+    { REG_ECOLLATE, 'Invalid collating element\&.'},
+    { REG_ECTYPE,   'Unknown character class name\&.'},
+    { REG_EEND,     'Non specific error\&.  This is not defined by POSIX\&.2\&.'},
+    { REG_EESCAPE,  'Trailing backslash\&.'},
+    { REG_EPAREN,   'Un-matched parenthesis group operators\&.'},
+    { REG_ERANGE,   'Invalid use of the range operator, e\&.g\&., the ending point of the range occurs prior to the starting point\&.'},
+    { REG_ESIZE,    'Compiled regular expression requires a pattern buffer larger than 64Kb\&.  This is not defined by POSIX\&.2\&.'},
+    { REG_ESPACE,   'The regex routines ran out of memory\&.'},
+    { REG_ESUBREG,  'Invalid back reference to a subexpression\&.'},
+    { 0,            'No errors'}
+  };
+
+
+
+  va_list arg_ptr;
+  char s[512];          
+  int err;
+
+  va_start( arg_ptr, fmt);
+  vsnprintf( s, sizeof(s)-1, fmt, arg_ptr);
+  s[ sizeof(s)-1] = 0;
+  va_end( arg_ptr);
+
+  err = regcomp( preg, s, cflags);
+  if( err != 0) {
+    int i;
+
+    for( i=0; regerrors[i]\&.errcode != 0; i++)
+      if( regerrors[i]\&.errcode == err)
+        break;
+
+    if( regerrors[i]\&.errcode != 0) {
+      lslogging_log_message( 'lskvs_regcomp: could not compile regular experssion '%s'', s);
+      lslogging_log_message( 'lskvs_regcomp: regcomp returned %d: %s', err, regerrors[i]);
+    }
+  }
 }
 .fi
 .SS "void lskvs_run ()"
@@ -136,7 +186,7 @@ Definition at line 158 of file lskvs\&.c\&.
 .PP
 Run things\&. Really, there is nothing to run\&. There is no need for a worker thread here but this has been added so we can add lskvs just like any other module to the pgpmac project\&. Maybe one day we'll need to add a thread and this little routine can be celebrated as being far sighted, ahead of its time\&. 
 .PP
-Definition at line 168 of file lskvs\&.c\&.
+Definition at line 213 of file lskvs\&.c\&.
 .PP
 .nf
                  {
@@ -156,7 +206,7 @@ Set the value of a kv pair Create the pair if the key does not exsist\&. If more
 .PP
 
 .PP
-Definition at line 44 of file lskvs\&.c\&.
+Definition at line 86 of file lskvs\&.c\&.
 .PP
 .nf
                                   {
@@ -226,6 +276,9 @@ Definition at line 44 of file lskvs\&.c\&.
     p->next   = lskvs_kvs;
     lskvs_kvs = p;
     pthread_rwlock_unlock( &lskvs_rwlock);
+
+    lsevents_send_event( 'NewKV');
+
   } else {
     //
     // Just update the value
@@ -251,18 +304,18 @@ Definition at line 44 of file lskvs\&.c\&.
 .fi
 .SH "Variable Documentation"
 .PP 
-.SS "\fBlskvs_kvs_t\fP* lskvs_kvs = NULL\fC [static]\fP"
+.SS "\fBlskvs_kvs_t\fP* lskvs_kvs = NULL"
 
 .PP
 our list (or at least the start of it 
 .PP
-Definition at line 25 of file lskvs\&.c\&.
-.SS "pthread_rwlock_t lskvs_rwlock\fC [static]\fP"
+Definition at line 11 of file lskvs\&.c\&.
+.SS "pthread_rwlock_t lskvs_rwlock"
 
 .PP
 needed to protect the list 
 .PP
-Definition at line 26 of file lskvs\&.c\&.
+Definition at line 12 of file lskvs\&.c\&.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for LS-CAT PGPMAC from the source code\&.

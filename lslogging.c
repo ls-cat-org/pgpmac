@@ -49,6 +49,7 @@ void lslogging_log_message( char *fmt, ...) {
   char msg[LSLOGGING_MSG_LENGTH];
   struct timespec theTime;
   va_list arg_ptr;
+  unsigned int on;
 
   clock_gettime( CLOCK_REALTIME, &theTime);
 
@@ -59,10 +60,11 @@ void lslogging_log_message( char *fmt, ...) {
 
   pthread_mutex_lock( &lslogging_mutex);
   
-  strncpy( lslogging_queue[lslogging_on].lmsg, msg, LSLOGGING_MSG_LENGTH - 1);
-  lslogging_queue[lslogging_on].lmsg[LSLOGGING_MSG_LENGTH-1] = 0;
+  on = (lslogging_on++) % LSLOGGING_QUEUE_LENGTH;
+  strncpy( lslogging_queue[on].lmsg, msg, LSLOGGING_MSG_LENGTH - 1);
+  lslogging_queue[on].lmsg[LSLOGGING_MSG_LENGTH-1] = 0;
   
-  memcpy( &(lslogging_queue[(lslogging_on++) % LSLOGGING_QUEUE_LENGTH].ltime), &theTime, sizeof(theTime));
+  memcpy( &(lslogging_queue[on].ltime), &theTime, sizeof(theTime));
 
   pthread_cond_signal(  &lslogging_cond);
   pthread_mutex_unlock( &lslogging_mutex);
@@ -79,6 +81,7 @@ void *lslogging_worker(
   struct tm coarsetime;
   char tstr[64];
   unsigned int msecs;
+  unsigned int off;
 
   pthread_mutex_lock( &lslogging_mutex);
 
@@ -87,14 +90,13 @@ void *lslogging_worker(
       pthread_cond_wait( &lslogging_cond, &lslogging_mutex);
     }
     
-    localtime_r( &(lslogging_queue[lslogging_off].ltime.tv_sec), &coarsetime);
+    off = (lslogging_off++) % LSLOGGING_QUEUE_LENGTH;
+    localtime_r( &(lslogging_queue[off].ltime.tv_sec), &coarsetime);
     strftime( tstr, sizeof(tstr)-1, "%Y-%m-%d %H:%M:%S", &coarsetime);
     tstr[sizeof(tstr)-1] = 0;
-    msecs = lslogging_queue[lslogging_off % LSLOGGING_QUEUE_LENGTH].ltime.tv_nsec / 1000000;
-    fprintf( lslogging_file, "%s.%.03u  %s\n", tstr, msecs, lslogging_queue[lslogging_off % LSLOGGING_QUEUE_LENGTH].lmsg);
+    msecs = lslogging_queue[off].ltime.tv_nsec / 1000000;
+    fprintf( lslogging_file, "%s.%.03u  %s\n", tstr, msecs, lslogging_queue[off].lmsg);
     fflush( lslogging_file);
-
-    lslogging_off++;
   }
 }
 

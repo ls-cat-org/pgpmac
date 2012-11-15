@@ -1,4 +1,4 @@
-.TH "md2cmds.c" 3 "Wed Nov 14 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "md2cmds.c" 3 "Thu Nov 15 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -155,7 +155,7 @@ Definition at line 30 of file md2cmds\&.c\&.
 .PP
 Move centering and alignment tables as requested TODO: Implement\&. 
 .PP
-Definition at line 490 of file md2cmds\&.c\&.
+Definition at line 496 of file md2cmds\&.c\&.
 .PP
 .nf
                       {
@@ -166,7 +166,7 @@ Definition at line 490 of file md2cmds\&.c\&.
 .PP
 Collect some data\&. 
 .PP
-Definition at line 205 of file md2cmds\&.c\&.
+Definition at line 211 of file md2cmds\&.c\&.
 .PP
 .nf
                        {
@@ -373,7 +373,7 @@ Definition at line 205 of file md2cmds\&.c\&.
 .PP
 Initialize the md2cmds module\&. 
 .PP
-Definition at line 529 of file md2cmds\&.c\&.
+Definition at line 535 of file md2cmds\&.c\&.
 .PP
 .nf
                     {
@@ -414,10 +414,7 @@ Definition at line 59 of file md2cmds\&.c\&.
   //
   ignore = strtok_r( cmd, ' ', &ptr);
   if( ignore == NULL) {
-    //
-    // Should generate error message
-    // about blank command
-    //
+    lslogging_log_message( 'md2cmds_moveAbs: ignoring blank command '%s'', cmd);
     return;
   }
 
@@ -430,6 +427,18 @@ Definition at line 59 of file md2cmds\&.c\&.
     return;
   }
 
+  mp = NULL;
+  for( i=0; i<lspmac_nmotors; i++) {
+    if( strcmp( lspmac_motors[i]\&.name, mtr) == 0) {
+      mp = &(lspmac_motors[i]);
+      break;
+    }
+  }
+  if( mp == NULL) {
+    lslogging_log_message( 'md2cmds moveAbs error: cannot find motor %s', mtr);
+    return;
+  }
+
   pos = strtok_r( NULL, ' ', &ptr);
   if( pos == NULL) {
     lslogging_log_message( 'md2cmds moveAbs error: missing position');
@@ -438,17 +447,14 @@ Definition at line 59 of file md2cmds\&.c\&.
 
   fpos = strtod( pos, &endptr);
   if( pos == endptr) {
-    lslogging_log_message( 'md2cmds moveAbs error: Can't decipher '%s' as a number', pos);
+    //
+    // Maybe we have a preset\&.  Give it a whirl
+    // In any case we are done here\&.
+    //
+    lspmac_move_preset_queue( mp, pos);
     return;
   }
   
-  mp = NULL;
-  for( i=0; i<lspmac_nmotors; i++) {
-    if( strcmp( lspmac_motors[i]\&.name, mtr) == 0) {
-      mp = &(lspmac_motors[i]);
-      break;
-    }
-  }
 
 
   if( mp != NULL && mp->moveAbs != NULL) {
@@ -477,7 +483,7 @@ Move the centering and alignment tables\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 164 of file md2cmds\&.c\&.
+Definition at line 170 of file md2cmds\&.c\&.
 .PP
 .nf
                              {
@@ -504,7 +510,7 @@ Definition at line 164 of file md2cmds\&.c\&.
 .PP
 Sets up a centering table and alignment table move Ensures that when we issue the move command that we can detect that the move happened\&. 
 .PP
-Definition at line 125 of file md2cmds\&.c\&.
+Definition at line 131 of file md2cmds\&.c\&.
 .PP
 .nf
                              {
@@ -549,7 +555,7 @@ Definition at line 125 of file md2cmds\&.c\&.
 .PP
 Wait for the centering and alignment tables to stop moving\&. 
 .PP
-Definition at line 191 of file md2cmds\&.c\&.
+Definition at line 197 of file md2cmds\&.c\&.
 .PP
 .nf
                              {
@@ -568,7 +574,7 @@ Definition at line 191 of file md2cmds\&.c\&.
 .PP
 Spin 360 and make a video (recenter first, maybe) 
 .PP
-Definition at line 407 of file md2cmds\&.c\&.
+Definition at line 413 of file md2cmds\&.c\&.
 .PP
 .nf
                       {
@@ -656,7 +662,7 @@ Definition at line 407 of file md2cmds\&.c\&.
 .PP
 Start up the thread\&. 
 .PP
-Definition at line 542 of file md2cmds\&.c\&.
+Definition at line 548 of file md2cmds\&.c\&.
 .PP
 .nf
                    {
@@ -689,7 +695,7 @@ Our worker thread\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 497 of file md2cmds\&.c\&.
+Definition at line 503 of file md2cmds\&.c\&.
 .PP
 .nf
                        {
