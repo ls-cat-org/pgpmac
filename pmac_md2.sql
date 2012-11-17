@@ -117,6 +117,17 @@ CREATE OR REPLACE FUNCTION pmac.md2_ivar_set( int, text) returns void as $$
 $$ LANGUAGE SQL SECURITY DEFINER;
 ALTER FUNCTION pmac.md2_ivar_set( int, text) OWNER TO lsadmin;
 
+CREATE OR REPLACE FUNCTION pmac.array_pop(a anyarray, element text) RETURNS anyarray AS $$
+  DECLARE 
+    result a%TYPE;
+  BEGIN
+  SELECT ARRAY(
+    SELECT b.e FROM (SELECT unnest(a)) AS b(e) WHERE b.e <> element) INTO result;
+  RETURN result;
+  END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+ALTER FUNCTION pmac.array_pop( anyarray, text) OWNER TO lsadmin;
+
 CREATE OR REPLACE FUNCTION pmac.md2_init( the_stn int) returns void as $$
   --
   -- initialize a new connection with the md2 diffractometer
@@ -138,17 +149,23 @@ CREATE OR REPLACE FUNCTION pmac.md2_init( the_stn int) returns void as $$
     IF NOT FOUND THEN
       RAISE EXCEPTION 'Cannot find station %', the_stn;
     END IF;
-    EXECUTE 'LISTEN ' || ntfy_pmac;
-    EXECUTE 'LISTEN ' || ntfy_diff;
-    EXECUTE 'LISTEN ' || ntfy_kvs;
-    EXECUTE 'NOTIFY ' || ntfy_kvs;
+    EXECUTE 'LISTEN ' || ntfy_pmac;	-- A raw PMAC command is in the queue
+    EXECUTE 'LISTEN ' || ntfy_diff;	-- A diffractometer command awaits
+    EXECUTE 'LISTEN ' || ntfy_kvs;	-- Learn of changed KV's
+    EXECUTE 'NOTIFY ' || ntfy_kvs;	-- Imediately call this notify so the md2 can update its kv list
 
 
+    
     --
-    -- Mark our station's presets to notify us on change
+    -- Add them back in
     --
     ntfy_kvsa := ('{' || ntfy_kvs || '}')::text[];
-    UPDATE px.kvs SET kvnotify = kvnotify || ntfy_kvsa WHERE kvname like 'stns.' || the_stn || '.%.presets.%' and (not kvnotify @> ntfy_kvsa or kvnotify is null);
+    --
+    -- Remove our previous notifies on the off chance we changed which ones we are interested in
+    --
+    UPDATE px.kvs SET kvnotify = pmac.array_pop( kvnotify, ntfy_kvs) WHERE kvnotify @> ntfy_kvsa;
+
+    UPDATE px.kvs SET kvnotify = kvnotify || ntfy_kvsa WHERE kvname ~ (E'stns\\.' || the_stn || E'\\..*\\.presets\\.[0-9]+\\.(name|position)');
 
 
     -- Log the fact that we are connecting
