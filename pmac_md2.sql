@@ -149,10 +149,10 @@ CREATE OR REPLACE FUNCTION pmac.md2_init( the_stn int) returns void as $$
     IF NOT FOUND THEN
       RAISE EXCEPTION 'Cannot find station %', the_stn;
     END IF;
-    EXECUTE 'LISTEN ' || ntfy_pmac;	-- A raw PMAC command is in the queue
-    EXECUTE 'LISTEN ' || ntfy_diff;	-- A diffractometer command awaits
-    EXECUTE 'LISTEN ' || ntfy_kvs;	-- Learn of changed KV's
-    EXECUTE 'NOTIFY ' || ntfy_kvs;	-- Imediately call this notify so the md2 can update its kv list
+    EXECUTE 'LISTEN ' || ntfy_pmac;     -- A raw PMAC command is in the queue
+    EXECUTE 'LISTEN ' || ntfy_diff;     -- A diffractometer command awaits
+    EXECUTE 'LISTEN ' || ntfy_kvs;      -- Learn of changed KV's
+    EXECUTE 'NOTIFY ' || ntfy_kvs;      -- Immediately call this notify so the md2 can update its kv list
 
 
     
@@ -165,6 +165,9 @@ CREATE OR REPLACE FUNCTION pmac.md2_init( the_stn int) returns void as $$
     --
     UPDATE px.kvs SET kvnotify = pmac.array_pop( kvnotify, ntfy_kvs) WHERE kvnotify @> ntfy_kvsa;
 
+    --
+    -- Now add the ones we want back in
+    --
     UPDATE px.kvs SET kvnotify = kvnotify || ntfy_kvsa WHERE kvname ~ (E'stns\\.' || the_stn || E'\\..*\\.presets\\.[0-9]+\\.(name|position)');
 
 
