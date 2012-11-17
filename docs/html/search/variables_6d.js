@@ -1,5 +1,6 @@
 var searchData=
 [
+  ['mask',['mask',['../structlspmac__bi__struct.html#ac010058c9883088705059dee1d90ee72',1,'lspmac_bi_struct']]],
   ['max_5faccel',['max_accel',['../structlspmac__motor__struct.html#afec8dc1d4b97ba9c1d6e4f7a088342e4',1,'lspmac_motor_struct']]],
   ['max_5fspeed',['max_speed',['../structlspmac__motor__struct.html#af27159eeef80e4438446e01f24fae9d5',1,'lspmac_motor_struct']]],
   ['md2_5fstatus',['md2_status',['../lspmac_8c.html#ad5bce7451d48127bace5af445d03b492',1,'lspmac.c']]],
@@ -14,5 +15,5 @@ var searchData=
   ['motor_5fnum',['motor_num',['../structlspmac__motor__struct.html#a45fae17618f0c0827e97060dc04f79cb',1,'lspmac_motor_struct']]],
   ['moveabs',['moveAbs',['../structlspmac__motor__struct.html#a20db3de86854b627815b3d940555ea75',1,'lspmac_motor_struct']]],
   ['moving_5fflags',['moving_flags',['../structmd2StatusStruct.html#aac82f8e97fa39ea9be7823dd1d308986',1,'md2StatusStruct']]],
-  ['mutex',['mutex',['../structlspg__wait__for__detector__struct.html#a958e9fe59e671e61f95c2ce796ba24ce',1,'lspg_wait_for_detector_struct::mutex()'],['../structlspg__lock__diffractometer__struct.html#a362e848dfd1551428b8d12d8776fd2ed',1,'lspg_lock_diffractometer_struct::mutex()'],['../structlspg__lock__detector__struct.html#ab5ab5534b376a8fbafdd0b54cec4483c',1,'lspg_lock_detector_struct::mutex()'],['../structlspg__seq__run__prep__struct.html#ad146cb91b5f7dd8bb283092c28781fe7',1,'lspg_seq_run_prep_struct::mutex()'],['../structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907',1,'lspmac_motor_struct::mutex()'],['../structlspg__getcenter__struct.html#a214bb7e88b137162f13f41f2c43002a9',1,'lspg_getcenter_struct::mutex()'],['../structlspg__nextshot__struct.html#a38b657155fbee9b73278f76912cf2333',1,'lspg_nextshot_struct::mutex()']]]
+  ['mutex',['mutex',['../structlspg__wait__for__detector__struct.html#a958e9fe59e671e61f95c2ce796ba24ce',1,'lspg_wait_for_detector_struct::mutex()'],['../structlspg__lock__diffractometer__struct.html#a362e848dfd1551428b8d12d8776fd2ed',1,'lspg_lock_diffractometer_struct::mutex()'],['../structlspg__lock__detector__struct.html#ab5ab5534b376a8fbafdd0b54cec4483c',1,'lspg_lock_detector_struct::mutex()'],['../structlspg__seq__run__prep__struct.html#ad146cb91b5f7dd8bb283092c28781fe7',1,'lspg_seq_run_prep_struct::mutex()'],['../structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907',1,'lspmac_motor_struct::mutex()'],['../structlspmac__bi__struct.html#a58053a98fa4696b56d674e775b3b4690',1,'lspmac_bi_struct::mutex()'],['../structlspg__getcenter__struct.html#a214bb7e88b137162f13f41f2c43002a9',1,'lspg_getcenter_struct::mutex()'],['../structlspg__nextshot__struct.html#a38b657155fbee9b73278f76912cf2333',1,'lspg_nextshot_struct::mutex()']]]
 ];

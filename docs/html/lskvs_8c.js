@@ -1,5 +1,6 @@
 var lskvs_8c =
 [
+    [ "lskvs_find_preset_position", "lskvs_8c.html#ad676b373a9a8a2938578c0decf9bd04b", null ],
     [ "lskvs_get", "lskvs_8c.html#a3bc37cbeae347da068124d23ba3c1905", null ],
     [ "lskvs_init", "lskvs_8c.html#ae4c780cd3a394259ca74d447bdae3537", null ],
     [ "lskvs_regcomp", "lskvs_8c.html#ac1a924903bc31ef067c08e5152e1b2eb", null ],

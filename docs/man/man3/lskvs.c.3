@@ -1,4 +1,4 @@
-.TH "lskvs.c" 3 "Thu Nov 15 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lskvs.c" 3 "Fri Nov 16 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -15,6 +15,10 @@ Support for the remote access client key value pairs\&.
 .SS "Functions"
 
 .in +1c
+.ti -1c
+.RI "double \fBlskvs_find_preset_position\fP (\fBlspmac_motor_t\fP *mp, char *name, int *err)"
+.br
+.RI "\fIfind a postion for a given preset name \fP"
 .ti -1c
 .RI "void \fBlskvs_regcomp\fP (regex_t *preg, int cflags, char *fmt,\&.\&.\&.)"
 .br
@@ -72,6 +76,88 @@ All Rights Reserved
 Definition in file \fBlskvs\&.c\fP\&.
 .SH "Function Documentation"
 .PP 
+.SS "double lskvs_find_preset_position (\fBlspmac_motor_t\fP *mp, char *name, int *err)"
+
+.PP
+find a postion for a given preset name \fBParameters:\fP
+.RS 4
+\fImp\fP Motor pointer 
+.br
+\fIname\fP The preset to search for 
+.br
+\fIerr\fP set to non-zero on error, ignored if null 
+.RE
+.PP
+
+.PP
+Definition at line 21 of file lskvs\&.c\&.
+.PP
+.nf
+                                                                             {
+  regmatch_t pmatch[4], qmatch[4];
+  double rtn;
+  lskvs_kvs_list_t
+    *position_kv = NULL,
+    *name_kv     = NULL;
+  int e;
+
+  *err = -4;
+  if( name == NULL || *name == 0)
+    return 0\&.0;
+
+  *err = 0;
+  for( name_kv = mp->presets; name_kv != NULL; name_kv = name_kv->next) {
+    if( strcmp( name, name_kv->kvs->v) == 0) {
+      //
+      // We found the correct preset, now get the index
+      //
+      e = regexec( &(mp->preset_regex), name_kv->kvs->k, 4, pmatch, 0);
+      if( e != 0) {
+        lslogging_log_message( 'lskvs_find_preset_position: could not parse name key '%s'', name_kv->kvs->k);
+        if( err != NULL)
+          *err = e;
+        return 0\&.0;
+      }
+
+      for( position_kv = mp->presets; position_kv != NULL; position_kv = position_kv->next) {
+        if( position_kv == name_kv)
+          continue;
+
+        e = regexec( &(mp->preset_regex), position_kv->kvs->k, 4, qmatch, 0);
+        if( e != 0) {
+          lslogging_log_message( 'lskvs_find_preset_position: could not parse position key '%s'', position_kv->kvs->k);
+          if( err != NULL)
+            *err = e;
+          return 0\&.0;
+        }
+
+        if( strncmp( name_kv->kvs->k, position_kv->kvs->k, qmatch[2]\&.rm_eo + 1) == 0) {
+          break;
+        }
+      }
+      if( position_kv != NULL)
+        break;
+    }
+  }
+
+  if( name_kv != NULL || position_kv != NULL) {
+    errno = 0;
+    rtn = strtod( position_kv->kvs->v, NULL);
+    lslogging_log_message( 'lskvs_find_preset_position: v = '%s', rtn = %f', position_kv->kvs->v, rtn);
+    if( errno != 0) {
+      lslogging_log_message( 'lskvs_find_preset_position: bad preset value for motor %s, preset %s, value '%s'', mp->name, name, position_kv->kvs->v);
+      if( err != NULL)
+        *err = -2;
+      return 0\&.0;
+    }
+    return rtn;
+  }
+  lslogging_log_message( 'lskvs_find_preset_position: could not find preset for motor %s, preset %s', mp->name, name);
+  if( err != NULL)
+    *err = -3;
+  return 0\&.0;
+}
+.fi
 .SS "\fBlskvs_kvs_t\fP* lskvs_get (char *k)"
 
 .PP
@@ -82,7 +168,7 @@ Find the kv pair object Return with a pointer to the structure or NULL if not fo
 .PP
 
 .PP
-Definition at line 182 of file lskvs\&.c\&.
+Definition at line 253 of file lskvs\&.c\&.
 .PP
 .nf
                          {
@@ -106,7 +192,7 @@ Definition at line 182 of file lskvs\&.c\&.
 .PP
 Initialize lskvs objects\&. 
 .PP
-Definition at line 203 of file lskvs\&.c\&.
+Definition at line 274 of file lskvs\&.c\&.
 .PP
 .nf
                   {
@@ -129,7 +215,7 @@ Utility wrapper for regcomp providing printf style formating\&. \fBParameters:\f
 .PP
 < no reason our search strings should ever be this big 
 .PP
-Definition at line 22 of file lskvs\&.c\&.
+Definition at line 93 of file lskvs\&.c\&.
 .PP
 .nf
                                                                {
@@ -186,7 +272,7 @@ Definition at line 22 of file lskvs\&.c\&.
 .PP
 Run things\&. Really, there is nothing to run\&. There is no need for a worker thread here but this has been added so we can add lskvs just like any other module to the pgpmac project\&. Maybe one day we'll need to add a thread and this little routine can be celebrated as being far sighted, ahead of its time\&. 
 .PP
-Definition at line 213 of file lskvs\&.c\&.
+Definition at line 284 of file lskvs\&.c\&.
 .PP
 .nf
                  {
@@ -206,7 +292,7 @@ Set the value of a kv pair Create the pair if the key does not exsist\&. If more
 .PP
 
 .PP
-Definition at line 86 of file lskvs\&.c\&.
+Definition at line 157 of file lskvs\&.c\&.
 .PP
 .nf
                                   {

@@ -337,6 +337,8 @@ Functions</h2></td></tr>
 <tr class="memitem:aa8d1fed4b461c2139a21826d524777d5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lspg_8c.html#aa8d1fed4b461c2139a21826d524777d5">lspg_pg_service</a> (struct pollfd *evt)</td></tr>
 <tr class="memdesc:aa8d1fed4b461c2139a21826d524777d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">I/O control to/from the postgresql server.  <a href="#aa8d1fed4b461c2139a21826d524777d5"></a><br/></td></tr>
 <tr class="separator:aa8d1fed4b461c2139a21826d524777d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a62b110949d206fb22789191207e1d066"><td class="memItemLeft" align="right" valign="top">PQnoticeProcessor&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lspg_8c.html#a62b110949d206fb22789191207e1d066">lspg_notice_processor</a> (void *arg, const char *msg)</td></tr>
+<tr class="separator:a62b110949d206fb22789191207e1d066"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a581c18be0368425665a40b4b7f7d9714"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lspg_8c.html#a581c18be0368425665a40b4b7f7d9714">lspg_pg_connect</a> ()</td></tr>
 <tr class="memdesc:a581c18be0368425665a40b4b7f7d9714"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connect to the pg server.  <a href="#a581c18be0368425665a40b4b7f7d9714"></a><br/></td></tr>
 <tr class="separator:a581c18be0368425665a40b4b7f7d9714"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -1207,7 +1209,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Initiallize the lspg module. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l01655">1655</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01659">1659</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                 {</div>
 <div class="line">  pthread_mutex_init( &amp;<a class="code" href="lspg_8c.html#aed46a94106c583796e3a8ca0e89aa8e4" title="keep the queue from getting tangled">lspg_queue_mutex</a>, NULL);</div>
 <div class="line">  pthread_cond_init( &amp;<a class="code" href="lspg_8c.html#a61a308b6a37afd645beb422653b95baa" title="keeps the queue from overflowing">lspg_queue_cond</a>, NULL);</div>
@@ -1686,7 +1688,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Implements our state machine Does not strictly only set the next state as it also calls some functions that, perhaps, alters the state mid-function. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l01524">1524</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01528">1528</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                       {</div>
 <div class="line">  <span class="comment">//</span></div>
 <div class="line">  <span class="comment">// connect to the database</span></div>
@@ -2170,6 +2172,37 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 </div><!-- fragment -->
 </div>
 </div>
+<a class="anchor" id="a62b110949d206fb22789191207e1d066"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">PQnoticeProcessor lspg_notice_processor </td>
+          <td>(</td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>arg</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>msg</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01423">1423</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<div class="fragment"><div class="line">                                                                     {</div>
+<div class="line">  <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lspg: %s&quot;</span>, msg);</div>
+<div class="line">}</div>
+</div><!-- fragment -->
+</div>
+</div>
 <a class="anchor" id="a581c18be0368425665a40b4b7f7d9714"></a>
 <div class="memitem">
 <div class="memproto">
@@ -2185,7 +2218,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Connect to the pg server. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l01426">1426</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01429">1429</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                       {</div>
 <div class="line">  PGresult *pgr;</div>
 <div class="line">  <span class="keywordtype">int</span> wait_interval = 1;</div>
@@ -2241,6 +2274,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 <div class="line">      <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> = NULL;</div>
 <div class="line">      <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#af443092447378c73bf93aa143576aba4">LS_PG_STATE_INIT</a>;</div>
 <div class="line">    } <span class="keywordflow">else</span> <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> == PGRES_POLLING_OK) {</div>
+<div class="line">      PQsetNoticeProcessor( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>, (PQnoticeProcessor)<a class="code" href="lspg_8c.html#a62b110949d206fb22789191207e1d066">lspg_notice_processor</a>, NULL);</div>
 <div class="line">      <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#a329a7fdfa5025a403ea2779e178fd3ed" title="Motor initialization callback.">lspg_init_motors_cb</a>, <span class="stringliteral">&quot;select * from pmac.md2_getmotors()&quot;</span>);</div>
 <div class="line">      <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( NULL, <span class="stringliteral">&quot;select pmac.md2_init()&quot;</span>);</div>
 <div class="line">      <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#af34559ab5624e1e68085dbcd9410c692" title="Zoom motor look up table callback.">lspg_zoom_lut_cb</a>, <span class="stringliteral">&quot;SELECT * FROM pmac.md2_zoom_lut()&quot;</span>);</div>
@@ -2657,7 +2691,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Start 'er runnin'. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l01667">1667</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01671">1671</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                {</div>
 <div class="line">  pthread_create( &amp;<a class="code" href="lspg_8c.html#a04eb0cda0d5e5afeae7c393b51689765" title="our worker thread">lspg_thread</a>, NULL, <a class="code" href="lspg_8c.html#aaf4fadd2943fa3a2ecb5d840e84d68fa" title="The main loop for the lspg thread.">lspg_worker</a>, NULL);</div>
 <div class="line">}</div>
@@ -3284,7 +3318,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l01575">1575</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01579">1579</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                    {</div>
 <div class="line">  <span class="keyword">static</span> <span class="keyword">struct </span>pollfd fda[2];  <span class="comment">// 0=signal handler, 1=pg socket</span></div>
 <div class="line">  <span class="keyword">static</span> <span class="keywordtype">int</span> nfda = 0;</div>
@@ -3860,7 +3894,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="lspg_8c.html">lspg.c</a></li>
-    <li class="footer">Generated on Thu Nov 15 2012 17:51:47 for LS-CAT PGPMAC by
+    <li class="footer">Generated on Fri Nov 16 2012 20:50:35 for LS-CAT PGPMAC by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.2 </li>
   </ul>

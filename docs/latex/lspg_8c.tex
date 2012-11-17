@@ -167,6 +167,8 @@ void \hyperlink{lspg_8c_a049f4422994aa2eb2b841ffb2937f895}{lspg\-\_\-sig\-\_\-se
 \begin{DoxyCompactList}\small\item\em Service a signal Signals here are treated as file descriptors and fits into our poll scheme. \end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_aa8d1fed4b461c2139a21826d524777d5}{lspg\-\_\-pg\-\_\-service} (struct pollfd $\ast$evt)
 \begin{DoxyCompactList}\small\item\em I/\-O control to/from the postgresql server. \end{DoxyCompactList}\item 
+P\-Qnotice\-Processor \hyperlink{lspg_8c_a62b110949d206fb22789191207e1d066}{lspg\-\_\-notice\-\_\-processor} (void $\ast$arg, const char $\ast$msg)
+\item 
 void \hyperlink{lspg_8c_a581c18be0368425665a40b4b7f7d9714}{lspg\-\_\-pg\-\_\-connect} ()
 \begin{DoxyCompactList}\small\item\em Connect to the pg server. \end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_ab52a8c8245bf6561f40c0f224fc07ff4}{lspg\-\_\-next\-\_\-state} ()
@@ -902,7 +904,7 @@ Initiallize the lspg module.
 
 
 
-Definition at line 1655 of file lspg.\-c.
+Definition at line 1659 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1357,7 +1359,7 @@ Implements our state machine Does not strictly only set the next state as it als
 
 
 
-Definition at line 1524 of file lspg.\-c.
+Definition at line 1528 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1891,6 +1893,24 @@ Definition at line 718 of file lspg.\-c.
       .\hyperlink{structlspg__nextshot__struct_a38b657155fbee9b73278f76912cf2333}{mutex}));
 \}
 \end{DoxyCode}
+\hypertarget{lspg_8c_a62b110949d206fb22789191207e1d066}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-notice\-\_\-processor@{lspg\-\_\-notice\-\_\-processor}}
+\index{lspg\-\_\-notice\-\_\-processor@{lspg\-\_\-notice\-\_\-processor}!lspg.c@{lspg.\-c}}
+\subsubsection[{lspg\-\_\-notice\-\_\-processor}]{\setlength{\rightskip}{0pt plus 5cm}P\-Qnotice\-Processor lspg\-\_\-notice\-\_\-processor (
+\begin{DoxyParamCaption}
+\item[{void $\ast$}]{arg, }
+\item[{const char $\ast$}]{msg}
+\end{DoxyParamCaption}
+)}}\label{lspg_8c_a62b110949d206fb22789191207e1d066}
+
+
+Definition at line 1423 of file lspg.\-c.
+
+
+\begin{DoxyCode}
+                                                                     \{
+  \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspg: %s"}, msg);
+\}
+\end{DoxyCode}
 \hypertarget{lspg_8c_a581c18be0368425665a40b4b7f7d9714}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-pg\-\_\-connect@{lspg\-\_\-pg\-\_\-connect}}
 \index{lspg\-\_\-pg\-\_\-connect@{lspg\-\_\-pg\-\_\-connect}!lspg.c@{lspg.\-c}}
 \subsubsection[{lspg\-\_\-pg\-\_\-connect}]{\setlength{\rightskip}{0pt plus 5cm}void lspg\-\_\-pg\-\_\-connect (
@@ -1904,7 +1924,7 @@ Connect to the pg server.
 
 
 
-Definition at line 1426 of file lspg.\-c.
+Definition at line 1429 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1969,6 +1989,8 @@ Definition at line 1426 of file lspg.\-c.
       \hyperlink{lspg_8c_a4937baac0cc78ea306d58b5f027867f1}{ls\_pg\_state} = \hyperlink{lspg_8c_af443092447378c73bf93aa143576aba4}{LS\_PG\_STATE\_INIT};
     \} \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}( \hyperlink{lspg_8c_a69ae04978986e6413ca7cefcb692b645}{lspg\_connectPoll\_response} == 
       PGRES\_POLLING\_OK) \{
+      PQsetNoticeProcessor( \hyperlink{lspg_8c_a9012783dbbadf652a81649a289697cf3}{q}, (PQnoticeProcessor)\hyperlink{lspg_8c_a62b110949d206fb22789191207e1d066}{lspg\_notice\_processor}
+      , NULL);
       \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_a329a7fdfa5025a403ea2779e178fd3ed}{lspg\_init\_motors\_cb}, \textcolor{stringliteral}{"
       select * from pmac.md2\_getmotors()"});
       \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"select pmac.md2\_init()"});
@@ -2390,7 +2412,7 @@ Start 'er runnin'.
 
 
 
-Definition at line 1667 of file lspg.\-c.
+Definition at line 1671 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2919,7 +2941,7 @@ The main loop for the lspg thread.
 \end{DoxyParams}
 
 
-Definition at line 1575 of file lspg.\-c.
+Definition at line 1579 of file lspg.\-c.
 
 
 \begin{DoxyCode}

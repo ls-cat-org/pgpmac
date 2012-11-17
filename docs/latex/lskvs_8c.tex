@@ -10,6 +10,8 @@ Support for the remote access client key value pairs.
 \subsection*{Functions}
 \begin{DoxyCompactItemize}
 \item 
+double \hyperlink{lskvs_8c_ad676b373a9a8a2938578c0decf9bd04b}{lskvs\-\_\-find\-\_\-preset\-\_\-position} (\hyperlink{pgpmac_8h_aa5067fcbaabc5bbfdc52492495518c96}{lspmac\-\_\-motor\-\_\-t} $\ast$mp, char $\ast$name, int $\ast$err)
+\begin{DoxyCompactList}\small\item\em find a postion for a given preset name \end{DoxyCompactList}\item 
 void \hyperlink{lskvs_8c_ac1a924903bc31ef067c08e5152e1b2eb}{lskvs\-\_\-regcomp} (regex\-\_\-t $\ast$preg, int cflags, char $\ast$fmt,...)
 \begin{DoxyCompactList}\small\item\em Utility wrapper for regcomp providing printf style formating. \end{DoxyCompactList}\item 
 void \hyperlink{lskvs_8c_ab04e99f92c761522972c4d80d85f4830}{lskvs\-\_\-set} (char $\ast$k, char $\ast$v)
@@ -46,6 +48,110 @@ Definition in file \hyperlink{lskvs_8c_source}{lskvs.\-c}.
 
 
 \subsection{Function Documentation}
+\hypertarget{lskvs_8c_ad676b373a9a8a2938578c0decf9bd04b}{\index{lskvs.\-c@{lskvs.\-c}!lskvs\-\_\-find\-\_\-preset\-\_\-position@{lskvs\-\_\-find\-\_\-preset\-\_\-position}}
+\index{lskvs\-\_\-find\-\_\-preset\-\_\-position@{lskvs\-\_\-find\-\_\-preset\-\_\-position}!lskvs.c@{lskvs.\-c}}
+\subsubsection[{lskvs\-\_\-find\-\_\-preset\-\_\-position}]{\setlength{\rightskip}{0pt plus 5cm}double lskvs\-\_\-find\-\_\-preset\-\_\-position (
+\begin{DoxyParamCaption}
+\item[{{\bf lspmac\-\_\-motor\-\_\-t} $\ast$}]{mp, }
+\item[{char $\ast$}]{name, }
+\item[{int $\ast$}]{err}
+\end{DoxyParamCaption}
+)}}\label{lskvs_8c_ad676b373a9a8a2938578c0decf9bd04b}
+
+
+find a postion for a given preset name 
+
+
+\begin{DoxyParams}{Parameters}
+{\em mp} & Motor pointer \\
+\hline
+{\em name} & The preset to search for \\
+\hline
+{\em err} & set to non-\/zero on error, ignored if null \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 21 of file lskvs.\-c.
+
+
+\begin{DoxyCode}
+                                                                             \{
+  regmatch\_t pmatch[4], qmatch[4];
+  \textcolor{keywordtype}{double} rtn;
+  \hyperlink{structlskvs__kvs__list__struct}{lskvs\_kvs\_list\_t}
+    *position\_kv = NULL,
+    *name\_kv     = NULL;
+  \textcolor{keywordtype}{int} e;
+
+  *err = -4;
+  \textcolor{keywordflow}{if}( name == NULL || *name == 0)
+    \textcolor{keywordflow}{return} 0.0;
+
+  *err = 0;
+  \textcolor{keywordflow}{for}( name\_kv = mp->\hyperlink{structlspmac__motor__struct_a7c913e6abf9b203584c477ac49fdd517}{presets}; name\_kv != NULL; name\_kv = name\_kv->\hyperlink{structlskvs__kvs__list__struct_aa3ed4d35bdda99bb1c08793633579edc}{next}
+      ) \{
+    \textcolor{keywordflow}{if}( strcmp( name, name\_kv->kvs->v) == 0) \{
+      \textcolor{comment}{//}
+      \textcolor{comment}{// We found the correct preset, now get the index}
+      \textcolor{comment}{//}
+      e = regexec( &(mp->\hyperlink{structlspmac__motor__struct_a1df97b771d18bc9a6eed78f3a66fd15c}{preset\_regex}), name\_kv->kvs->k, 4, pmatch,
+       0);
+      \textcolor{keywordflow}{if}( e != 0) \{
+        \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"
+      lskvs\_find\_preset\_position: could not parse name key '%s'"}, name\_kv->kvs->k);
+        \textcolor{keywordflow}{if}( err != NULL)
+          *err = e;
+        \textcolor{keywordflow}{return} 0.0;
+      \}
+
+      \textcolor{keywordflow}{for}( position\_kv = mp->\hyperlink{structlspmac__motor__struct_a7c913e6abf9b203584c477ac49fdd517}{presets}; position\_kv != NULL; position\_kv =
+       position\_kv->\hyperlink{structlskvs__kvs__list__struct_aa3ed4d35bdda99bb1c08793633579edc}{next}) \{
+        \textcolor{keywordflow}{if}( position\_kv == name\_kv)
+          \textcolor{keywordflow}{continue};
+
+        e = regexec( &(mp->\hyperlink{structlspmac__motor__struct_a1df97b771d18bc9a6eed78f3a66fd15c}{preset\_regex}), position\_kv->\hyperlink{structlskvs__kvs__list__struct_a7f5620fa24157783bb02e6dd82bdcb22}{kvs}->\hyperlink{structlskvs__kvs__struct_afaaab7729ce9dbabd8f3e2c502a8e4c5}{k}, 
+      4, qmatch, 0);
+        \textcolor{keywordflow}{if}( e != 0) \{
+          \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"
+      lskvs\_find\_preset\_position: could not parse position key '%s'"}, position\_kv->\hyperlink{structlskvs__kvs__list__struct_a7f5620fa24157783bb02e6dd82bdcb22}{kvs}->\hyperlink{structlskvs__kvs__struct_afaaab7729ce9dbabd8f3e2c502a8e4c5}{k});
+          \textcolor{keywordflow}{if}( err != NULL)
+            *err = e;
+          \textcolor{keywordflow}{return} 0.0;
+        \}
+
+        \textcolor{keywordflow}{if}( strncmp( name\_kv->kvs->k, position\_kv->\hyperlink{structlskvs__kvs__list__struct_a7f5620fa24157783bb02e6dd82bdcb22}{kvs}->\hyperlink{structlskvs__kvs__struct_afaaab7729ce9dbabd8f3e2c502a8e4c5}{k}, qmatch[2].rm\_eo 
+      + 1) == 0) \{
+          \textcolor{keywordflow}{break};
+        \}
+      \}
+      \textcolor{keywordflow}{if}( position\_kv != NULL)
+        \textcolor{keywordflow}{break};
+    \}
+  \}
+
+  \textcolor{keywordflow}{if}( name\_kv != NULL || position\_kv != NULL) \{
+    errno = 0;
+    rtn = strtod( position\_kv->\hyperlink{structlskvs__kvs__list__struct_a7f5620fa24157783bb02e6dd82bdcb22}{kvs}->\hyperlink{structlskvs__kvs__struct_a27a0ae4415b6d65c8a9f9fac11c130f9}{v}, NULL);
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lskvs\_find\_preset\_position: v
+       = '%s', rtn = %f"}, position\_kv->\hyperlink{structlskvs__kvs__list__struct_a7f5620fa24157783bb02e6dd82bdcb22}{kvs}->\hyperlink{structlskvs__kvs__struct_a27a0ae4415b6d65c8a9f9fac11c130f9}{v}, rtn);
+    \textcolor{keywordflow}{if}( errno != 0) \{
+      \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lskvs\_find\_preset\_position:
+       bad preset value for motor %s, preset %s, value '%s'"}, mp->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name}, name, 
+      position\_kv->\hyperlink{structlskvs__kvs__list__struct_a7f5620fa24157783bb02e6dd82bdcb22}{kvs}->\hyperlink{structlskvs__kvs__struct_a27a0ae4415b6d65c8a9f9fac11c130f9}{v});
+      \textcolor{keywordflow}{if}( err != NULL)
+        *err = -2;
+      \textcolor{keywordflow}{return} 0.0;
+    \}
+    \textcolor{keywordflow}{return} rtn;
+  \}
+  \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lskvs\_find\_preset\_position:
+       could not find preset for motor %s, preset %s"}, mp->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name}, name);
+  \textcolor{keywordflow}{if}( err != NULL)
+    *err = -3;
+  \textcolor{keywordflow}{return} 0.0;
+\}
+\end{DoxyCode}
 \hypertarget{lskvs_8c_a3bc37cbeae347da068124d23ba3c1905}{\index{lskvs.\-c@{lskvs.\-c}!lskvs\-\_\-get@{lskvs\-\_\-get}}
 \index{lskvs\-\_\-get@{lskvs\-\_\-get}!lskvs.c@{lskvs.\-c}}
 \subsubsection[{lskvs\-\_\-get}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lskvs\-\_\-kvs\-\_\-t}$\ast$ lskvs\-\_\-get (
@@ -64,7 +170,7 @@ Find the kv pair object Return with a pointer to the structure or N\-U\-L\-L if 
 \end{DoxyParams}
 
 
-Definition at line 182 of file lskvs.\-c.
+Definition at line 253 of file lskvs.\-c.
 
 
 \begin{DoxyCode}
@@ -97,7 +203,7 @@ Initialize lskvs objects.
 
 
 
-Definition at line 203 of file lskvs.\-c.
+Definition at line 274 of file lskvs.\-c.
 
 
 \begin{DoxyCode}
@@ -132,7 +238,7 @@ Utility wrapper for regcomp providing printf style formating.
 \end{DoxyParams}
 $<$ no reason our search strings should ever be this big 
 
-Definition at line 22 of file lskvs.\-c.
+Definition at line 93 of file lskvs.\-c.
 
 
 \begin{DoxyCode}
@@ -203,7 +309,7 @@ Run things.
 
 Really, there is nothing to run. There is no need for a worker thread here but this has been added so we can add lskvs just like any other module to the pgpmac project. Maybe one day we'll need to add a thread and this little routine can be celebrated as being far sighted, ahead of its time. 
 
-Definition at line 213 of file lskvs.\-c.
+Definition at line 284 of file lskvs.\-c.
 
 
 \begin{DoxyCode}
@@ -233,7 +339,7 @@ If more than one thread tries to create the same key at the same time it is poss
 \end{DoxyParams}
 
 
-Definition at line 86 of file lskvs.\-c.
+Definition at line 157 of file lskvs.\-c.
 
 
 \begin{DoxyCode}

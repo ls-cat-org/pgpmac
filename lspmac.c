@@ -67,6 +67,9 @@ static struct pollfd pmacfd;		        //!< our poll structure
 static int getivars = 0;			//!< flag set at initialization to send i vars to db
 static int getmvars = 0;			//!< flag set at initialization to send m vars to db
 
+lspmac_bi_t lspmac_bis[16];			//!< array of binary inputs
+int lspmac_nbis = 0;				//!< number of active binary inputs
+
 lspmac_motor_t lspmac_motors[32];		//!< All our motors
 int lspmac_nmotors = 0;				//!< The number of motors we manage
 lspmac_motor_t *omega;				//!< MD2 omega axis (the air bearing)
@@ -79,7 +82,7 @@ lspmac_motor_t *apery;				//!< Aperture Y
 lspmac_motor_t *aperz;				//!< Aperture Z
 lspmac_motor_t *capy;				//!< Capillary Y
 lspmac_motor_t *capz;				//!< Capillary Z
-lspmac_motor_t *scinz;				//!< Scintillator Z
+lspmac_motor_t *scint;				//!< Scintillator Z
 lspmac_motor_t *cenx;				//!< Centering Table X
 lspmac_motor_t *ceny;				//!< Centering Table Y
 lspmac_motor_t *kappa;				//!< Kappa
@@ -93,6 +96,9 @@ lspmac_motor_t *fscint;				//!< Scintillator Piezo DAC
 lspmac_motor_t *blight_ud;			//!< Back Light Up/Down actuator
 lspmac_motor_t *cryo;				//!< Move the cryostream towards or away from the crystal
 lspmac_motor_t *dryer;				//!< blow air on the scintilator to dry it off
+lspmac_motor_t *fluo;				//!< Move the fluorescence detector in/out
+
+lspmac_bi_t    *cryo_switch;			//!< that little toggle switch for the cryo
 
 //! Regex to pick out preset name and corresponding position
 #define LSPMAC_PRESET_REGEX "(.*\\.%s\\.presets)\\.([0-9]+)\\.(name|position)"
@@ -995,7 +1001,7 @@ void lspmac_Getmem() {
 /** Read the state of a binary i/o motor
  *  This is the read method for the binary i/o motor class
  */
-void lspmac_bio_read(
+void lspmac_bo_read(
 		     lspmac_motor_t *mp		/**< [in] The motor			*/
 		     ) {
   char s[512];
@@ -1009,15 +1015,6 @@ void lspmac_bio_read(
   // Not sure what kind of status makes sense to report
   mp->statuss[0] = 0;
 
-
-  /*
-  pthread_mutex_lock( &ncurses_mutex);
-  wprintw( term_output, "    %d    %f\n", pos, mp->position);
-  wnoutrefresh( term_output);
-  wnoutrefresh( term_input);
-  doupdate();
-  pthread_mutex_unlock( &ncurses_mutex);
-  */
 
   pthread_mutex_unlock( &(mp->mutex));
 }
@@ -1228,8 +1225,8 @@ void lspmac_pmacmotor_read(
   // with no real motion.
   //
   if( mp->status2 & 1 && mp->status2 == *mp->status2_p && abs( mp->actual_pos_cnts - *mp->actual_pos_cnts_p) > 256) {
-    lslogging_log_message( "Instantaneous change: %s old status1: %0x, new status1: %0x, old status2: %0x, new status2: %0x, old cnts: %0x, new cnts: %0x",
-			   mp->name, mp->status1, *mp->status1_p, mp->status2, *mp->status2_p, mp->actual_pos_cnts, *mp->actual_pos_cnts_p);
+    //    lslogging_log_message( "Instantaneous change: %s old status1: %0x, new status1: %0x, old status2: %0x, new status2: %0x, old cnts: %0x, new cnts: %0x",
+    //			   mp->name, mp->status1, *mp->status1_p, mp->status2, *mp->status2_p, mp->actual_pos_cnts, *mp->actual_pos_cnts_p);
 
     //
     // At this point we'll just log the event and return
@@ -1386,6 +1383,7 @@ void lspmac_get_status_cb(
   char *sp;
   int i, pos;
   lspmac_motor_t *mp;
+  lspmac_bi_t    *bp;
 
   if( cnt == 0) {
     gettimeofday( &ts1, NULL);
@@ -1407,9 +1405,39 @@ void lspmac_get_status_cb(
   pthread_mutex_unlock( &lspmac_moving_mutex);
 
 
-
+  //
+  // Read the motor positions
+  //
   for( i=0; i<lspmac_nmotors; i++) {
     lspmac_motors[i].read(&(lspmac_motors[i]));
+  }
+
+  //
+  // Read the binary inputs and perhaps send an event
+  //
+  for( i=0; i<lspmac_nbis; i++) {
+    bp = &(lspmac_bis[i]);
+    
+    pthread_mutex_lock( &(bp->mutex));
+
+    pos = (*(bp->ptr) & bp->mask) == 0 ? 0 : 1;
+
+    if( bp->first_time) {
+      bp->first_time = 0;
+      if( pos==1 && bp->changeEventOn != NULL && bp->changeEventOn[0] != 0)
+	lsevents_send_event( lspmac_bis[i].changeEventOn);
+      if( pos==0 && bp->changeEventOff != NULL && bp->changeEventOff[0] != 0)
+	lsevents_send_event( lspmac_bis[i].changeEventOff);
+    } else {
+      if( pos != bp->previous) {
+	if( pos==1 && bp->changeEventOn != NULL && bp->changeEventOn[0] != 0)
+	  lsevents_send_event( lspmac_bis[i].changeEventOn);
+	if( pos==0 && bp->changeEventOff != NULL && bp->changeEventOff[0] != 0)
+	  lsevents_send_event( lspmac_bis[i].changeEventOff);
+      }
+    }
+    bp->previous = pos;
+    pthread_mutex_unlock( &(bp->mutex));
   }
 
   pthread_mutex_lock( &ncurses_mutex);
@@ -1423,11 +1451,6 @@ void lspmac_get_status_cb(
   // 0x10  4
   // 0x20  5
   // 0x40  6	Cryo is back
-
-  if( md2_status.acc11c_1 & 0x40)
-    mvwprintw( term_status2, 3, 1, "%*s", -8, "Cryo Out");
-  else
-    mvwprintw( term_status2, 3, 1, "%*s", -8, "Cryo In ");
 
   //
   // acc11c_2
@@ -1475,6 +1498,11 @@ void lspmac_get_status_cb(
   // 0x20  5
   // 0x40  6    1=SmartMag, 0=Permanent Mag
   //
+
+  if( md2_status.acc11c_5 & 0x04)
+    mvwprintw( term_status2, 3, 1, "%*s", -8, "Cryo Out");
+  else
+    mvwprintw( term_status2, 3, 1, "%*s", -8, "Cryo In ");
 
   // acc11c_6
   // mask   bit
@@ -1865,8 +1893,6 @@ void lspmac_move_preset_queue( lspmac_motor_t *mp, char *name) {
       return;
     }
 
-    lslogging_log_message( "q->kvs->k: '%s'   r->kvs->k: '%s'", q->kvs->k, r->kvs->k);
-
     //
     // Make sure everything matches up to (and through) the array index
     //
@@ -1924,16 +1950,21 @@ void lspmac_moveabs_fshut_queue(
 
 /** Move method for binary i/o motor objects
  */
-void lspmac_moveabs_bio_queue(
+void lspmac_moveabs_bo_queue(
 			      lspmac_motor_t *mp,		/**< [in] A binary i/o motor object		*/
 			      double requested_position		/**< [in] a 1 or a 0 request to move		*/
 			      ) {
+
+
   pthread_mutex_lock( &(mp->mutex));
-  mp->requested_position = requested_position;
+  mp->requested_position = requested_position == 0.0 ? 0.0 : 1.0;
+  mp->requested_pos_cnts = requested_position == 0.0 ? 0 : 1;
+
   mp->not_done    = 1;
   mp->motion_seen = 0;
-  mp->requested_pos_cnts = requested_position;
   mp->pq = lspmac_SockSendline_nr( mp->write_fmt, mp->requested_pos_cnts);
+
+
   pthread_mutex_unlock( &(mp->mutex));
 
   if( mp == blight_ud) {
@@ -2107,7 +2138,7 @@ lspmac_motor_t *lspmac_fshut_init(
 /** Initialize binary i/o motor
  */
 
-lspmac_motor_t *lspmac_bio_init(
+lspmac_motor_t *lspmac_bo_init(
 				lspmac_motor_t *d,		/**< [in] Our uninitialized motor object				*/
 				char *name,			/**< [in] Name of motor to coordinate with DB				*/
 				char *write_fmt,		/**< [in] Format string used to generate PMAC command to move motor	*/
@@ -2119,8 +2150,8 @@ lspmac_motor_t *lspmac_bio_init(
   lskvs_regcomp( &(d->preset_regex), REG_EXTENDED, LSPMAC_PRESET_REGEX, name);
   d->presets           = NULL;
   d->name              = strdup( name);
-  d->moveAbs           = lspmac_moveabs_bio_queue;
-  d->read              = lspmac_bio_read;
+  d->moveAbs           = lspmac_moveabs_bo_queue;
+  d->read              = lspmac_bo_read;
   d->lut               = NULL;
   d->nlut              = 0;
   d->actual_pos_cnts_p = NULL;
@@ -2178,6 +2209,18 @@ lspmac_motor_t *lspmac_dac_init(
 }
 
 
+/** Initialize binary input
+ */
+lspmac_bi_t *lspmac_bi_init( lspmac_bi_t *d, int *ptr, int mask, char *onEvent, char *offEvent) {
+  lspmac_nbis++;
+  pthread_mutex_init( &(d->mutex), NULL);
+  d->ptr            = ptr;
+  d->mask           = mask;
+  d->changeEventOn  = strdup( onEvent);
+  d->changeEventOff = strdup( offEvent);
+  d->first_time     = 1;
+}
+
 /** Initialize this module
  */
 void lspmac_init(
@@ -2209,7 +2252,7 @@ void lspmac_init(
   aperz  = lspmac_motor_init( &(lspmac_motors[ 7]),  8, 1, 2, &p->aperturez_act_pos, &p->aperturez_status_1, &p->aperturez_status_2, "Aper Z  #8 &5 Z", "appz",        lspmac_moveabs_queue);
   capy   = lspmac_motor_init( &(lspmac_motors[ 8]),  9, 1, 3, &p->capy_act_pos,      &p->capy_status_1,      &p->capy_status_2,      "Cap Y   #9 &5 U", "capy",        lspmac_moveabs_queue);
   capz   = lspmac_motor_init( &(lspmac_motors[ 9]), 10, 1, 4, &p->capz_act_pos,      &p->capz_status_1,      &p->capz_status_2,      "Cap Z  #10 &5 V", "capz",        lspmac_moveabs_queue);
-  scinz  = lspmac_motor_init( &(lspmac_motors[10]), 11, 2, 0, &p->scint_act_pos,     &p->scint_status_1,     &p->scint_status_2,     "Scin Z #11 &5 W", "scint",       lspmac_moveabs_queue);
+  scint  = lspmac_motor_init( &(lspmac_motors[10]), 11, 2, 0, &p->scint_act_pos,     &p->scint_status_1,     &p->scint_status_2,     "Scin Z #11 &5 W", "scint",       lspmac_moveabs_queue);
   cenx   = lspmac_motor_init( &(lspmac_motors[11]), 17, 2, 1, &p->centerx_act_pos,   &p->centerx_status_1,   &p->centerx_status_2,   "Cen X  #17 &2 X", "centering.x", lspmac_moveabs_queue);
   ceny   = lspmac_motor_init( &(lspmac_motors[12]), 18, 2, 2, &p->centery_act_pos,   &p->centery_status_1,   &p->centery_status_2,   "Cen Y  #18 &2 Y", "centering.y", lspmac_moveabs_queue);
   kappa  = lspmac_motor_init( &(lspmac_motors[13]), 19, 2, 3, &p->kappa_act_pos,     &p->kappa_status_1,     &p->kappa_status_2,     "Kappa  #19 &7 X", "kappa",       lspmac_moveabs_queue);
@@ -2220,11 +2263,12 @@ void lspmac_init(
   blight = lspmac_dac_init( &(lspmac_motors[17]), &p->back_dac,    160.0, "M1201", "backLight.intensity");
   fscint = lspmac_dac_init( &(lspmac_motors[18]), &p->scint_piezo, 320.0, "M1203", "scint.focus");
 
-  blight_ud = lspmac_bio_init( &(lspmac_motors[19]), "backLight", "M1101=%d", &(md2_status.acc11c_5), 0x02);
-  cryo      = lspmac_bio_init( &(lspmac_motors[20]), "cryo",      "M1102=%d", &(md2_status.acc11c_1), 0x40);
-  dryer     = lspmac_bio_init( &(lspmac_motors[21]), "dryer",     "M1103=%d", &(md2_status.acc11c_5), 0x08);
+  blight_ud = lspmac_bo_init( &(lspmac_motors[19]), "backLight", "M1101=%d", &(md2_status.acc11c_5), 0x02);
+  cryo      = lspmac_bo_init( &(lspmac_motors[20]), "cryo",      "M1102=%d", &(md2_status.acc11c_5), 0x04);
+  dryer     = lspmac_bo_init( &(lspmac_motors[21]), "dryer",     "M1103=%d", &(md2_status.acc11c_5), 0x08);
+  fluo      = lspmac_bo_init( &(lspmac_motors[22]), "fluo",      "M1008=%d", &(md2_status.acc11c_2), 0x01);
 
-
+  cryo_switch = lspmac_bi_init( &(lspmac_bis[0]), &(md2_status.acc11c_1), 0x04, "CryoSwitchChanged", "CryoSwitchChanged");
 
 
   //
@@ -2266,6 +2310,50 @@ void lspmac_init(
   pthread_mutex_init( &lspmac_moving_mutex, NULL);
   pthread_cond_init(  &lspmac_moving_cond, NULL);
 
+}
+
+
+void lspmac_cryoSwitchChanged_cb( char *event) {
+  int pos;
+
+  pthread_mutex_lock( &(cryo->mutex));
+  pos = cryo->position;
+  pthread_mutex_unlock( &(cryo->mutex));
+
+  cryo->moveAbs( cryo, pos ? 0.0 : 1.0);
+}
+
+/** Maybe start drying off the scintilator
+ *  \param event required by protocol
+ */
+void lspmac_scint_inPosition_cb( char *event) {
+  double pos;
+  double cover;
+  int err;
+
+  pthread_mutex_lock( &(scint->mutex));
+  pos = scint->position;
+  cover = lskvs_find_preset_position( scint, "Cover", &err);
+  pthread_mutex_unlock( &(scint->mutex));
+
+  lslogging_log_message( "lspmac_scint_inPosition_cb: pos %f, cover %f, diff %f, err %d", pos, cover, fabs( pos-cover), err);
+
+  if( err != 0)
+    return;
+
+  if( fabs( pos - cover) <= 0.1) {
+    dryer->moveAbs( dryer, 1.0);
+    lslogging_log_message( "lspmac_scint_inPosition_cb: Starting dryer");
+    lstimer_add_timer( "scintDried", 1, 120, 0);
+  }
+}
+
+/** Turn off the dryer
+ *  \param event required by protocol
+ */
+void lspmac_scint_dried_cb( char *event) {
+  lslogging_log_message( "lspmac_scint_dried_cb: Stopping dryer");
+  dryer->moveAbs( dryer, 0.0);
 }
 
 
@@ -2315,4 +2403,7 @@ void lspmac_newKV_cb( char *event) {
 void lspmac_run() {
   pthread_create( &pmac_thread, NULL, lspmac_worker, NULL);
   lsevents_add_listener( "NewKV", lspmac_newKV_cb);
+  lsevents_add_listener( "CryoSwitchChanged", lspmac_cryoSwitchChanged_cb);
+  lsevents_add_listener( "scint In Position", lspmac_scint_inPosition_cb);
+  lsevents_add_listener( "scintDried",        lspmac_scint_dried_cb);
 }

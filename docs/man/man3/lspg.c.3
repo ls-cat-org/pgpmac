@@ -1,4 +1,4 @@
-.TH "lspg.c" 3 "Thu Nov 15 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lspg.c" 3 "Fri Nov 16 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -314,6 +314,9 @@ Postgresql support for the LS-CAT pgpmac project\&.
 .RI "void \fBlspg_pg_service\fP (struct pollfd *evt)"
 .br
 .RI "\fII/O control to/from the postgresql server\&. \fP"
+.ti -1c
+.RI "PQnoticeProcessor \fBlspg_notice_processor\fP (void *arg, const char *msg)"
+.br
 .ti -1c
 .RI "void \fBlspg_pg_connect\fP ()"
 .br
@@ -930,7 +933,7 @@ Definition at line 1071 of file lspg\&.c\&.
 .PP
 Initiallize the lspg module\&. 
 .PP
-Definition at line 1655 of file lspg\&.c\&.
+Definition at line 1659 of file lspg\&.c\&.
 .PP
 .nf
                  {
@@ -1215,7 +1218,7 @@ Definition at line 835 of file lspg\&.c\&.
 .PP
 Implements our state machine Does not strictly only set the next state as it also calls some functions that, perhaps, alters the state mid-function\&. 
 .PP
-Definition at line 1524 of file lspg\&.c\&.
+Definition at line 1528 of file lspg\&.c\&.
 .PP
 .nf
                        {
@@ -1616,12 +1619,22 @@ Definition at line 718 of file lspg\&.c\&.
     pthread_cond_wait( &(lspg_nextshot\&.cond), &(lspg_nextshot\&.mutex));
 }
 .fi
+.SS "PQnoticeProcessor lspg_notice_processor (void *arg, const char *msg)"
+
+.PP
+Definition at line 1423 of file lspg\&.c\&.
+.PP
+.nf
+                                                                     {
+  lslogging_log_message( 'lspg: %s', msg);
+}
+.fi
 .SS "void lspg_pg_connect ()"
 
 .PP
 Connect to the pg server\&. 
 .PP
-Definition at line 1426 of file lspg\&.c\&.
+Definition at line 1429 of file lspg\&.c\&.
 .PP
 .nf
                        {
@@ -1679,6 +1692,7 @@ Definition at line 1426 of file lspg\&.c\&.
       q = NULL;
       ls_pg_state = LS_PG_STATE_INIT;
     } else if( lspg_connectPoll_response == PGRES_POLLING_OK) {
+      PQsetNoticeProcessor( q, (PQnoticeProcessor)lspg_notice_processor, NULL);
       lspg_query_push( lspg_init_motors_cb, 'select * from pmac\&.md2_getmotors()');
       lspg_query_push( NULL, 'select pmac\&.md2_init()');
       lspg_query_push( lspg_zoom_lut_cb, 'SELECT * FROM pmac\&.md2_zoom_lut()');
@@ -2001,7 +2015,7 @@ Definition at line 1243 of file lspg\&.c\&.
 .PP
 Start 'er runnin'\&. 
 .PP
-Definition at line 1667 of file lspg\&.c\&.
+Definition at line 1671 of file lspg\&.c\&.
 .PP
 .nf
                 {
@@ -2349,7 +2363,7 @@ The main loop for the lspg thread\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1575 of file lspg\&.c\&.
+Definition at line 1579 of file lspg\&.c\&.
 .PP
 .nf
                     {

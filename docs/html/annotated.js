@@ -12,6 +12,7 @@ var annotated =
     [ "lspg_seq_run_prep_struct", "structlspg__seq__run__prep__struct.html", "structlspg__seq__run__prep__struct" ],
     [ "lspg_wait_for_detector_struct", "structlspg__wait__for__detector__struct.html", "structlspg__wait__for__detector__struct" ],
     [ "lspgQueryQueueStruct", "structlspgQueryQueueStruct.html", "structlspgQueryQueueStruct" ],
+    [ "lspmac_bi_struct", "structlspmac__bi__struct.html", "structlspmac__bi__struct" ],
     [ "lspmac_cmd_queue_struct", "structlspmac__cmd__queue__struct.html", "structlspmac__cmd__queue__struct" ],
     [ "lspmac_motor_struct", "structlspmac__motor__struct.html", "structlspmac__motor__struct" ],
     [ "lstimer_list_struct", "structlstimer__list__struct.html", "structlstimer__list__struct" ],

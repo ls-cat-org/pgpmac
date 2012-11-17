@@ -114,6 +114,9 @@ $(document).ready(function(){initNavTree('lskvs_8c.html','');});
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:ad676b373a9a8a2938578c0decf9bd04b"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lskvs_8c.html#ad676b373a9a8a2938578c0decf9bd04b">lskvs_find_preset_position</a> (<a class="el" href="pgpmac_8h.html#aa5067fcbaabc5bbfdc52492495518c96">lspmac_motor_t</a> *mp, char *name, int *err)</td></tr>
+<tr class="memdesc:ad676b373a9a8a2938578c0decf9bd04b"><td class="mdescLeft">&#160;</td><td class="mdescRight">find a postion for a given preset name  <a href="#ad676b373a9a8a2938578c0decf9bd04b"></a><br/></td></tr>
+<tr class="separator:ad676b373a9a8a2938578c0decf9bd04b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac1a924903bc31ef067c08e5152e1b2eb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lskvs_8c.html#ac1a924903bc31ef067c08e5152e1b2eb">lskvs_regcomp</a> (regex_t *preg, int cflags, char *fmt,...)</td></tr>
 <tr class="memdesc:ac1a924903bc31ef067c08e5152e1b2eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Utility wrapper for regcomp providing printf style formating.  <a href="#ac1a924903bc31ef067c08e5152e1b2eb"></a><br/></td></tr>
 <tr class="separator:ac1a924903bc31ef067c08e5152e1b2eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -147,6 +150,114 @@ Variables</h2></td></tr>
 
 <p>Definition in file <a class="el" href="lskvs_8c_source.html">lskvs.c</a>.</p>
 </div><h2 class="groupheader">Function Documentation</h2>
+<a class="anchor" id="ad676b373a9a8a2938578c0decf9bd04b"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double lskvs_find_preset_position </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="pgpmac_8h.html#aa5067fcbaabc5bbfdc52492495518c96">lspmac_motor_t</a> *&#160;</td>
+          <td class="paramname"><em>mp</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">char *&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int *&#160;</td>
+          <td class="paramname"><em>err</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>find a postion for a given preset name </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">mp</td><td>Motor pointer </td></tr>
+    <tr><td class="paramname">name</td><td>The preset to search for </td></tr>
+    <tr><td class="paramname">err</td><td>set to non-zero on error, ignored if null </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="lskvs_8c_source.html#l00021">21</a> of file <a class="el" href="lskvs_8c_source.html">lskvs.c</a>.</p>
+<div class="fragment"><div class="line">                                                                             {</div>
+<div class="line">  regmatch_t pmatch[4], qmatch[4];</div>
+<div class="line">  <span class="keywordtype">double</span> rtn;</div>
+<div class="line">  <a class="code" href="structlskvs__kvs__list__struct.html" title="A second linked list type to handle private lists of KVs.">lskvs_kvs_list_t</a></div>
+<div class="line">    *position_kv = NULL,</div>
+<div class="line">    *name_kv     = NULL;</div>
+<div class="line">  <span class="keywordtype">int</span> e;</div>
+<div class="line"></div>
+<div class="line">  *err = -4;</div>
+<div class="line">  <span class="keywordflow">if</span>( name == NULL || *name == 0)</div>
+<div class="line">    <span class="keywordflow">return</span> 0.0;</div>
+<div class="line"></div>
+<div class="line">  *err = 0;</div>
+<div class="line">  <span class="keywordflow">for</span>( name_kv = mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a7c913e6abf9b203584c477ac49fdd517" title="list of preset positions">presets</a>; name_kv != NULL; name_kv = name_kv-&gt;<a class="code" href="structlskvs__kvs__list__struct.html#aa3ed4d35bdda99bb1c08793633579edc" title="next item">next</a>) {</div>
+<div class="line">    <span class="keywordflow">if</span>( strcmp( name, name_kv-&gt;kvs-&gt;v) == 0) {</div>
+<div class="line">      <span class="comment">//</span></div>
+<div class="line">      <span class="comment">// We found the correct preset, now get the index</span></div>
+<div class="line">      <span class="comment">//</span></div>
+<div class="line">      e = regexec( &amp;(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a1df97b771d18bc9a6eed78f3a66fd15c" title="buffer used by regex routines to find preset positions for this motor">preset_regex</a>), name_kv-&gt;kvs-&gt;k, 4, pmatch, 0);</div>
+<div class="line">      <span class="keywordflow">if</span>( e != 0) {</div>
+<div class="line">        <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lskvs_find_preset_position: could not parse name key &#39;%s&#39;&quot;</span>, name_kv-&gt;kvs-&gt;k);</div>
+<div class="line">        <span class="keywordflow">if</span>( err != NULL)</div>
+<div class="line">          *err = e;</div>
+<div class="line">        <span class="keywordflow">return</span> 0.0;</div>
+<div class="line">      }</div>
+<div class="line"></div>
+<div class="line">      <span class="keywordflow">for</span>( position_kv = mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a7c913e6abf9b203584c477ac49fdd517" title="list of preset positions">presets</a>; position_kv != NULL; position_kv = position_kv-&gt;<a class="code" href="structlskvs__kvs__list__struct.html#aa3ed4d35bdda99bb1c08793633579edc" title="next item">next</a>) {</div>
+<div class="line">        <span class="keywordflow">if</span>( position_kv == name_kv)</div>
+<div class="line">          <span class="keywordflow">continue</span>;</div>
+<div class="line"></div>
+<div class="line">        e = regexec( &amp;(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a1df97b771d18bc9a6eed78f3a66fd15c" title="buffer used by regex routines to find preset positions for this motor">preset_regex</a>), position_kv-&gt;<a class="code" href="structlskvs__kvs__list__struct.html#a7f5620fa24157783bb02e6dd82bdcb22" title="the KV">kvs</a>-&gt;<a class="code" href="structlskvs__kvs__struct.html#afaaab7729ce9dbabd8f3e2c502a8e4c5" title="the key">k</a>, 4, qmatch, 0);</div>
+<div class="line">        <span class="keywordflow">if</span>( e != 0) {</div>
+<div class="line">          <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lskvs_find_preset_position: could not parse position key &#39;%s&#39;&quot;</span>, position_kv-&gt;<a class="code" href="structlskvs__kvs__list__struct.html#a7f5620fa24157783bb02e6dd82bdcb22" title="the KV">kvs</a>-&gt;<a class="code" href="structlskvs__kvs__struct.html#afaaab7729ce9dbabd8f3e2c502a8e4c5" title="the key">k</a>);</div>
+<div class="line">          <span class="keywordflow">if</span>( err != NULL)</div>
+<div class="line">            *err = e;</div>
+<div class="line">          <span class="keywordflow">return</span> 0.0;</div>
+<div class="line">        }</div>
+<div class="line"></div>
+<div class="line">        <span class="keywordflow">if</span>( strncmp( name_kv-&gt;kvs-&gt;k, position_kv-&gt;<a class="code" href="structlskvs__kvs__list__struct.html#a7f5620fa24157783bb02e6dd82bdcb22" title="the KV">kvs</a>-&gt;<a class="code" href="structlskvs__kvs__struct.html#afaaab7729ce9dbabd8f3e2c502a8e4c5" title="the key">k</a>, qmatch[2].rm_eo + 1) == 0) {</div>
+<div class="line">          <span class="keywordflow">break</span>;</div>
+<div class="line">        }</div>
+<div class="line">      }</div>
+<div class="line">      <span class="keywordflow">if</span>( position_kv != NULL)</div>
+<div class="line">        <span class="keywordflow">break</span>;</div>
+<div class="line">    }</div>
+<div class="line">  }</div>
+<div class="line"></div>
+<div class="line">  <span class="keywordflow">if</span>( name_kv != NULL || position_kv != NULL) {</div>
+<div class="line">    errno = 0;</div>
+<div class="line">    rtn = strtod( position_kv-&gt;<a class="code" href="structlskvs__kvs__list__struct.html#a7f5620fa24157783bb02e6dd82bdcb22" title="the KV">kvs</a>-&gt;<a class="code" href="structlskvs__kvs__struct.html#a27a0ae4415b6d65c8a9f9fac11c130f9" title="the value">v</a>, NULL);</div>
+<div class="line">    <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lskvs_find_preset_position: v = &#39;%s&#39;, rtn = %f&quot;</span>, position_kv-&gt;<a class="code" href="structlskvs__kvs__list__struct.html#a7f5620fa24157783bb02e6dd82bdcb22" title="the KV">kvs</a>-&gt;<a class="code" href="structlskvs__kvs__struct.html#a27a0ae4415b6d65c8a9f9fac11c130f9" title="the value">v</a>, rtn);</div>
+<div class="line">    <span class="keywordflow">if</span>( errno != 0) {</div>
+<div class="line">      <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lskvs_find_preset_position: bad preset value for motor %s, preset %s, value &#39;%s&#39;&quot;</span>, mp-&gt;<a class="code" href="structlspmac__motor__struct.html#aa90af2f6f1489f1befe1d0891e51575a" title="Name of motor as refered by ls database kvs table.">name</a>, name, position_kv-&gt;<a class="code" href="structlskvs__kvs__list__struct.html#a7f5620fa24157783bb02e6dd82bdcb22" title="the KV">kvs</a>-&gt;<a class="code" href="structlskvs__kvs__struct.html#a27a0ae4415b6d65c8a9f9fac11c130f9" title="the value">v</a>);</div>
+<div class="line">      <span class="keywordflow">if</span>( err != NULL)</div>
+<div class="line">        *err = -2;</div>
+<div class="line">      <span class="keywordflow">return</span> 0.0;</div>
+<div class="line">    }</div>
+<div class="line">    <span class="keywordflow">return</span> rtn;</div>
+<div class="line">  }</div>
+<div class="line">  <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lskvs_find_preset_position: could not find preset for motor %s, preset %s&quot;</span>, mp-&gt;<a class="code" href="structlspmac__motor__struct.html#aa90af2f6f1489f1befe1d0891e51575a" title="Name of motor as refered by ls database kvs table.">name</a>, name);</div>
+<div class="line">  <span class="keywordflow">if</span>( err != NULL)</div>
+<div class="line">    *err = -3;</div>
+<div class="line">  <span class="keywordflow">return</span> 0.0;</div>
+<div class="line">}</div>
+</div><!-- fragment -->
+</div>
+</div>
 <a class="anchor" id="a3bc37cbeae347da068124d23ba3c1905"></a>
 <div class="memitem">
 <div class="memproto">
@@ -169,7 +280,7 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lskvs_8c_source.html#l00182">182</a> of file <a class="el" href="lskvs_8c_source.html">lskvs.c</a>.</p>
+<p>Definition at line <a class="el" href="lskvs_8c_source.html#l00253">253</a> of file <a class="el" href="lskvs_8c_source.html">lskvs.c</a>.</p>
 <div class="fragment"><div class="line">                         {</div>
 <div class="line">  <a class="code" href="structlskvs__kvs__struct.html" title="Storage for the key value pairs.">lskvs_kvs_t</a></div>
 <div class="line">    *rtn;</div>
@@ -203,7 +314,7 @@ Variables</h2></td></tr>
 
 <p>Initialize lskvs objects. </p>
 
-<p>Definition at line <a class="el" href="lskvs_8c_source.html#l00203">203</a> of file <a class="el" href="lskvs_8c_source.html">lskvs.c</a>.</p>
+<p>Definition at line <a class="el" href="lskvs_8c_source.html#l00274">274</a> of file <a class="el" href="lskvs_8c_source.html">lskvs.c</a>.</p>
 <div class="fragment"><div class="line">                  {</div>
 <div class="line">  pthread_rwlock_init( &amp;<a class="code" href="lskvs_8c.html#ad329bf890bd9eef896815dd53a323c2f" title="needed to protect the list">lskvs_rwlock</a>, NULL);</div>
 <div class="line">}</div>
@@ -258,7 +369,7 @@ Variables</h2></td></tr>
 </dl>
 <p>&lt; no reason our search strings should ever be this big </p>
 
-<p>Definition at line <a class="el" href="lskvs_8c_source.html#l00022">22</a> of file <a class="el" href="lskvs_8c_source.html">lskvs.c</a>.</p>
+<p>Definition at line <a class="el" href="lskvs_8c_source.html#l00093">93</a> of file <a class="el" href="lskvs_8c_source.html">lskvs.c</a>.</p>
 <div class="fragment"><div class="line">                                                               {</div>
 <div class="line">  <span class="keyword">struct </span>regerror_struct {</div>
 <div class="line">    <span class="keywordtype">int</span> errcode;</div>
@@ -326,7 +437,7 @@ Variables</h2></td></tr>
 <p>Run things. </p>
 <p>Really, there is nothing to run. There is no need for a worker thread here but this has been added so we can add lskvs just like any other module to the pgpmac project. Maybe one day we'll need to add a thread and this little routine can be celebrated as being far sighted, ahead of its time. </p>
 
-<p>Definition at line <a class="el" href="lskvs_8c_source.html#l00213">213</a> of file <a class="el" href="lskvs_8c_source.html">lskvs.c</a>.</p>
+<p>Definition at line <a class="el" href="lskvs_8c_source.html#l00284">284</a> of file <a class="el" href="lskvs_8c_source.html">lskvs.c</a>.</p>
 <div class="fragment"><div class="line">                 {</div>
 <div class="line">}</div>
 </div><!-- fragment -->
@@ -366,7 +477,7 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lskvs_8c_source.html#l00086">86</a> of file <a class="el" href="lskvs_8c_source.html">lskvs.c</a>.</p>
+<p>Definition at line <a class="el" href="lskvs_8c_source.html#l00157">157</a> of file <a class="el" href="lskvs_8c_source.html">lskvs.c</a>.</p>
 <div class="fragment"><div class="line">                                  {</div>
 <div class="line">  <a class="code" href="structlskvs__kvs__struct.html" title="Storage for the key value pairs.">lskvs_kvs_t</a></div>
 <div class="line">    *root,</div>
@@ -501,7 +612,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="lskvs_8c.html">lskvs.c</a></li>
-    <li class="footer">Generated on Thu Nov 15 2012 17:51:47 for LS-CAT PGPMAC by
+    <li class="footer">Generated on Fri Nov 16 2012 20:50:35 for LS-CAT PGPMAC by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.2 </li>
   </ul>

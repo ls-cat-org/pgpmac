@@ -12,6 +12,7 @@ var searchData=
   ['lspg_5fseq_5frun_5fprep_5fstruct',['lspg_seq_run_prep_struct',['../structlspg__seq__run__prep__struct.html',1,'']]],
   ['lspg_5fwait_5ffor_5fdetector_5fstruct',['lspg_wait_for_detector_struct',['../structlspg__wait__for__detector__struct.html',1,'']]],
   ['lspgqueryqueuestruct',['lspgQueryQueueStruct',['../structlspgQueryQueueStruct.html',1,'']]],
+  ['lspmac_5fbi_5fstruct',['lspmac_bi_struct',['../structlspmac__bi__struct.html',1,'']]],
   ['lspmac_5fcmd_5fqueue_5fstruct',['lspmac_cmd_queue_struct',['../structlspmac__cmd__queue__struct.html',1,'']]],
   ['lspmac_5fmotor_5fstruct',['lspmac_motor_struct',['../structlspmac__motor__struct.html',1,'']]],
   ['lstimer_5flist_5fstruct',['lstimer_list_struct',['../structlstimer__list__struct.html',1,'']]]

@@ -50,10 +50,6 @@ void lsupdate_updateit() {
       snprintf( s1, sizeof(s1)-1, mp->update_format, mp->position);
       s1[sizeof(s1)-1] = 0;
     
-      if( mp->name != NULL && mp->status1_p != NULL && mp->status2_p != NULL && mp->actual_pos_cnts_p != NULL) {
-	lslogging_log_message( "%s status1: %0x  status2: %0x  cnts: %d", mp->name, mp->status1, mp->status2, mp->actual_pos_cnts);
-      }
-
       mp->reported_position = mp->position;
       mp->lspg_initialized |= 2;
       pthread_mutex_unlock( &(mp->mutex));
@@ -63,8 +59,6 @@ void lsupdate_updateit() {
 	strcat( s, "}'::text[])");
 	lspg_query_push( NULL, s);
 	
-	lslogging_log_message( "Update: %s", s);
-
 	s[0] = 0;
 	strcpy( s, "select px.kvupdate('{");
 	needComma = 0;
@@ -83,8 +77,6 @@ void lsupdate_updateit() {
   if( gotone) {
     strcat( s, "}')");
     lspg_query_push( NULL, s);
-
-    lslogging_log_message( "Update: %s", s);
   }
 }
 

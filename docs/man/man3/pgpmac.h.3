@@ -1,4 +1,4 @@
-.TH "pgpmac.h" 3 "Thu Nov 15 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "pgpmac.h" 3 "Fri Nov 16 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -74,6 +74,10 @@ Headers for the entire pgpmac project\&.
 .br
 .RI "\fIMotor information\&. \fP"
 .ti -1c
+.RI "struct \fBlspmac_bi_struct\fP"
+.br
+.RI "\fIStorage for binary inputs\&. \fP"
+.ti -1c
 .RI "struct \fBlspg_getcenter_struct\fP"
 .br
 .RI "\fIStorage for getcenter query Used for the md2 ROTATE command that generates the centering movies\&. \fP"
@@ -132,6 +136,10 @@ Headers for the entire pgpmac project\&.
 .RI "typedef struct \fBlspmac_motor_struct\fP \fBlspmac_motor_t\fP"
 .br
 .RI "\fIMotor information\&. \fP"
+.ti -1c
+.RI "typedef struct \fBlspmac_bi_struct\fP \fBlspmac_bi_t\fP"
+.br
+.RI "\fIStorage for binary inputs\&. \fP"
 .ti -1c
 .RI "typedef struct 
 .br
@@ -223,6 +231,14 @@ Headers for the entire pgpmac project\&.
 .ti -1c
 .RI "void \fBlstimer_add_timer\fP (char *, int, unsigned long int, unsigned long int)"
 .br
+.ti -1c
+.RI "void \fBlskvs_regcomp\fP (regex_t *preg, int cflags, char *fmt,\&.\&.\&.)"
+.br
+.RI "\fIUtility wrapper for regcomp providing printf style formating\&. \fP"
+.ti -1c
+.RI "double \fBlskvs_find_preset_position\fP (\fBlspmac_motor_t\fP *mp, char *name, int *err)"
+.br
+.RI "\fIfind a postion for a given preset name \fP"
 .in -1c
 .SS "Variables"
 
@@ -288,7 +304,7 @@ Headers for the entire pgpmac project\&.
 .br
 .RI "\fICapillary Z\&. \fP"
 .ti -1c
-.RI "\fBlspmac_motor_t\fP * \fBscinz\fP"
+.RI "\fBlspmac_motor_t\fP * \fBscint\fP"
 .br
 .RI "\fIScintillator Z\&. \fP"
 .ti -1c
@@ -335,6 +351,10 @@ Headers for the entire pgpmac project\&.
 .RI "\fBlspmac_motor_t\fP * \fBdryer\fP"
 .br
 .RI "\fIblow air on the scintilator to dry it off \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBfluo\fP"
+.br
+.RI "\fIMove the fluorescence detector in/out\&. \fP"
 .ti -1c
 .RI "int \fBlspmac_nmotors\fP"
 .br
@@ -463,7 +483,7 @@ Definition at line 40 of file pgpmac\&.h\&.
 .SS "#define MD2CMDS_CMD_LENGTH   32"
 
 .PP
-Definition at line 361 of file pgpmac\&.h\&.
+Definition at line 376 of file pgpmac\&.h\&.
 .SH "Typedef Documentation"
 .PP 
 .SS "typedef struct \fBlskvs_kvs_list_struct\fP  \fBlskvs_kvs_list_t\fP"
@@ -482,6 +502,10 @@ Storage for getcenter query Used for the md2 ROTATE command that generates the c
 
 .PP
 Storage definition for nextshot query\&. The next shot query returns all the information needed to collect the next data frame\&. Since SQL allows for null fields independently from blank strings a separate integer is used as a flag for this case\&. This adds to the program complexity but allows for some important cases\&. Suck it up\&.definition of the next image to be taken (and the one after that, too!) 
+.SS "typedef struct \fBlspmac_bi_struct\fP  \fBlspmac_bi_t\fP"
+
+.PP
+Storage for binary inputs\&. 
 .SS "typedef struct \fBlspmac_motor_struct\fP  \fBlspmac_motor_t\fP"
 
 .PP
@@ -650,12 +674,162 @@ Definition at line 44 of file lsevents\&.c\&.
 
 }
 .fi
+.SS "double lskvs_find_preset_position (\fBlspmac_motor_t\fP *mp, char *name, int *err)"
+
+.PP
+find a postion for a given preset name \fBParameters:\fP
+.RS 4
+\fImp\fP Motor pointer 
+.br
+\fIname\fP The preset to search for 
+.br
+\fIerr\fP set to non-zero on error, ignored if null 
+.RE
+.PP
+
+.PP
+Definition at line 21 of file lskvs\&.c\&.
+.PP
+.nf
+                                                                             {
+  regmatch_t pmatch[4], qmatch[4];
+  double rtn;
+  lskvs_kvs_list_t
+    *position_kv = NULL,
+    *name_kv     = NULL;
+  int e;
+
+  *err = -4;
+  if( name == NULL || *name == 0)
+    return 0\&.0;
+
+  *err = 0;
+  for( name_kv = mp->presets; name_kv != NULL; name_kv = name_kv->next) {
+    if( strcmp( name, name_kv->kvs->v) == 0) {
+      //
+      // We found the correct preset, now get the index
+      //
+      e = regexec( &(mp->preset_regex), name_kv->kvs->k, 4, pmatch, 0);
+      if( e != 0) {
+        lslogging_log_message( 'lskvs_find_preset_position: could not parse name key '%s'', name_kv->kvs->k);
+        if( err != NULL)
+          *err = e;
+        return 0\&.0;
+      }
+
+      for( position_kv = mp->presets; position_kv != NULL; position_kv = position_kv->next) {
+        if( position_kv == name_kv)
+          continue;
+
+        e = regexec( &(mp->preset_regex), position_kv->kvs->k, 4, qmatch, 0);
+        if( e != 0) {
+          lslogging_log_message( 'lskvs_find_preset_position: could not parse position key '%s'', position_kv->kvs->k);
+          if( err != NULL)
+            *err = e;
+          return 0\&.0;
+        }
+
+        if( strncmp( name_kv->kvs->k, position_kv->kvs->k, qmatch[2]\&.rm_eo + 1) == 0) {
+          break;
+        }
+      }
+      if( position_kv != NULL)
+        break;
+    }
+  }
+
+  if( name_kv != NULL || position_kv != NULL) {
+    errno = 0;
+    rtn = strtod( position_kv->kvs->v, NULL);
+    lslogging_log_message( 'lskvs_find_preset_position: v = '%s', rtn = %f', position_kv->kvs->v, rtn);
+    if( errno != 0) {
+      lslogging_log_message( 'lskvs_find_preset_position: bad preset value for motor %s, preset %s, value '%s'', mp->name, name, position_kv->kvs->v);
+      if( err != NULL)
+        *err = -2;
+      return 0\&.0;
+    }
+    return rtn;
+  }
+  lslogging_log_message( 'lskvs_find_preset_position: could not find preset for motor %s, preset %s', mp->name, name);
+  if( err != NULL)
+    *err = -3;
+  return 0\&.0;
+}
+.fi
+.SS "void lskvs_regcomp (regex_t *preg, intcflags, char *fmt, \&.\&.\&.)"
+
+.PP
+Utility wrapper for regcomp providing printf style formating\&. \fBParameters:\fP
+.RS 4
+\fIpreg\fP Buffer for the compile regex object 
+.br
+\fIcflags\fP See regcomp man page 
+.br
+\fIfmt\fP Printf style formating string 
+.br
+\fI\&.\&.\&.\fP Argument list specified by fmt 
+.RE
+.PP
+< no reason our search strings should ever be this big 
+.PP
+Definition at line 93 of file lskvs\&.c\&.
+.PP
+.nf
+                                                               {
+  struct regerror_struct {
+    int errcode;
+    char *errstr;
+  };
+  static struct regerror_struct regerrors[] = {
+    { REG_BADBR,    'Invalid use of back reference operator\&.'},
+    { REG_BADPAT,   'Invalid use of pattern operators such as group or list\&.'},
+    { REG_BADRPT,   'Invalid use of repetition operators such as using '*' as the first character\&.'},
+    { REG_EBRACE,   'Un-matched brace interval operators\&.'},
+    { REG_EBRACK,   'Un-matched bracket list operators\&.'},
+    { REG_ECOLLATE, 'Invalid collating element\&.'},
+    { REG_ECTYPE,   'Unknown character class name\&.'},
+    { REG_EEND,     'Non specific error\&.  This is not defined by POSIX\&.2\&.'},
+    { REG_EESCAPE,  'Trailing backslash\&.'},
+    { REG_EPAREN,   'Un-matched parenthesis group operators\&.'},
+    { REG_ERANGE,   'Invalid use of the range operator, e\&.g\&., the ending point of the range occurs prior to the starting point\&.'},
+    { REG_ESIZE,    'Compiled regular expression requires a pattern buffer larger than 64Kb\&.  This is not defined by POSIX\&.2\&.'},
+    { REG_ESPACE,   'The regex routines ran out of memory\&.'},
+    { REG_ESUBREG,  'Invalid back reference to a subexpression\&.'},
+    { 0,            'No errors'}
+  };
+
+
+
+  va_list arg_ptr;
+  char s[512];          
+  int err;
+
+  va_start( arg_ptr, fmt);
+  vsnprintf( s, sizeof(s)-1, fmt, arg_ptr);
+  s[ sizeof(s)-1] = 0;
+  va_end( arg_ptr);
+
+  err = regcomp( preg, s, cflags);
+  if( err != 0) {
+    int i;
+
+    for( i=0; regerrors[i]\&.errcode != 0; i++)
+      if( regerrors[i]\&.errcode == err)
+        break;
+
+    if( regerrors[i]\&.errcode != 0) {
+      lslogging_log_message( 'lskvs_regcomp: could not compile regular experssion '%s'', s);
+      lslogging_log_message( 'lskvs_regcomp: regcomp returned %d: %s', err, regerrors[i]);
+    }
+  }
+}
+.fi
 .SS "void lspg_init ()"
 
 .PP
 Initiallize the lspg module\&. 
 .PP
-Definition at line 1655 of file lspg\&.c\&.
+Definition at line 1659 of file lspg\&.c\&.
 .PP
 .nf
                  {
@@ -673,7 +847,7 @@ Definition at line 1655 of file lspg\&.c\&.
 .PP
 Start 'er runnin'\&. 
 .PP
-Definition at line 1667 of file lspg\&.c\&.
+Definition at line 1671 of file lspg\&.c\&.
 .PP
 .nf
                 {
@@ -720,7 +894,7 @@ Definition at line 979 of file lspg\&.c\&.
 .PP
 Initialize this module\&. 
 .PP
-Definition at line 2183 of file lspmac\&.c\&.
+Definition at line 2226 of file lspmac\&.c\&.
 .PP
 .nf
                    {
@@ -749,7 +923,7 @@ Definition at line 2183 of file lspmac\&.c\&.
   aperz  = lspmac_motor_init( &(lspmac_motors[ 7]),  8, 1, 2, &p->aperturez_act_pos, &p->aperturez_status_1, &p->aperturez_status_2, 'Aper Z  #8 &5 Z', 'appz',        lspmac_moveabs_queue);
   capy   = lspmac_motor_init( &(lspmac_motors[ 8]),  9, 1, 3, &p->capy_act_pos,      &p->capy_status_1,      &p->capy_status_2,      'Cap Y   #9 &5 U', 'capy',        lspmac_moveabs_queue);
   capz   = lspmac_motor_init( &(lspmac_motors[ 9]), 10, 1, 4, &p->capz_act_pos,      &p->capz_status_1,      &p->capz_status_2,      'Cap Z  #10 &5 V', 'capz',        lspmac_moveabs_queue);
-  scinz  = lspmac_motor_init( &(lspmac_motors[10]), 11, 2, 0, &p->scint_act_pos,     &p->scint_status_1,     &p->scint_status_2,     'Scin Z #11 &5 W', 'scint',       lspmac_moveabs_queue);
+  scint  = lspmac_motor_init( &(lspmac_motors[10]), 11, 2, 0, &p->scint_act_pos,     &p->scint_status_1,     &p->scint_status_2,     'Scin Z #11 &5 W', 'scint',       lspmac_moveabs_queue);
   cenx   = lspmac_motor_init( &(lspmac_motors[11]), 17, 2, 1, &p->centerx_act_pos,   &p->centerx_status_1,   &p->centerx_status_2,   'Cen X  #17 &2 X', 'centering\&.x', lspmac_moveabs_queue);
   ceny   = lspmac_motor_init( &(lspmac_motors[12]), 18, 2, 2, &p->centery_act_pos,   &p->centery_status_1,   &p->centery_status_2,   'Cen Y  #18 &2 Y', 'centering\&.y', lspmac_moveabs_queue);
   kappa  = lspmac_motor_init( &(lspmac_motors[13]), 19, 2, 3, &p->kappa_act_pos,     &p->kappa_status_1,     &p->kappa_status_2,     'Kappa  #19 &7 X', 'kappa',       lspmac_moveabs_queue);
@@ -760,11 +934,12 @@ Definition at line 2183 of file lspmac\&.c\&.
   blight = lspmac_dac_init( &(lspmac_motors[17]), &p->back_dac,    160\&.0, 'M1201', 'backLight\&.intensity');
   fscint = lspmac_dac_init( &(lspmac_motors[18]), &p->scint_piezo, 320\&.0, 'M1203', 'scint\&.focus');
 
-  blight_ud = lspmac_bio_init( &(lspmac_motors[19]), 'backLight', 'M1101=%d', &(md2_status\&.acc11c_5), 0x02);
-  cryo      = lspmac_bio_init( &(lspmac_motors[20]), 'cryo',      'M1102=%d', &(md2_status\&.acc11c_1), 0x40);
-  dryer     = lspmac_bio_init( &(lspmac_motors[21]), 'dryer',     'M1103=%d', &(md2_status\&.acc11c_5), 0x08);
+  blight_ud = lspmac_bo_init( &(lspmac_motors[19]), 'backLight', 'M1101=%d', &(md2_status\&.acc11c_5), 0x02);
+  cryo      = lspmac_bo_init( &(lspmac_motors[20]), 'cryo',      'M1102=%d', &(md2_status\&.acc11c_5), 0x04);
+  dryer     = lspmac_bo_init( &(lspmac_motors[21]), 'dryer',     'M1103=%d', &(md2_status\&.acc11c_5), 0x08);
+  fluo      = lspmac_bo_init( &(lspmac_motors[22]), 'fluo',      'M1008=%d', &(md2_status\&.acc11c_2), 0x01);
 
-
+  cryo_switch = lspmac_bi_init( &(lspmac_bis[0]), &(md2_status\&.acc11c_1), 0x04, 'CryoSwitchChanged', 'CryoSwitchChanged');
 
 
   //
@@ -813,12 +988,15 @@ Definition at line 2183 of file lspmac\&.c\&.
 .PP
 Start up the lspmac thread\&. 
 .PP
-Definition at line 2315 of file lspmac\&.c\&.
+Definition at line 2403 of file lspmac\&.c\&.
 .PP
 .nf
                   {
   pthread_create( &pmac_thread, NULL, lspmac_worker, NULL);
   lsevents_add_listener( 'NewKV', lspmac_newKV_cb);
+  lsevents_add_listener( 'CryoSwitchChanged', lspmac_cryoSwitchChanged_cb);
+  lsevents_add_listener( 'scint In Position', lspmac_scint_inPosition_cb);
+  lsevents_add_listener( 'scintDried',        lspmac_scint_dried_cb);
 }
 .fi
 .SS "void lstimer_add_timer (char *, int, unsigned longint, unsigned longint)"
@@ -913,7 +1091,7 @@ Definition at line 270 of file lstimer\&.c\&.
 .PP
 Initialize this module\&. 
 .PP
-Definition at line 108 of file lsupdate\&.c\&.
+Definition at line 100 of file lsupdate\&.c\&.
 .PP
 .nf
                      {
@@ -924,7 +1102,7 @@ Definition at line 108 of file lsupdate\&.c\&.
 .PP
 run the update routines 
 .PP
-Definition at line 113 of file lsupdate\&.c\&.
+Definition at line 105 of file lsupdate\&.c\&.
 .PP
 .nf
                     {
@@ -936,7 +1114,7 @@ Definition at line 113 of file lsupdate\&.c\&.
 .PP
 Initialize the md2cmds module\&. 
 .PP
-Definition at line 535 of file md2cmds\&.c\&.
+Definition at line 642 of file md2cmds\&.c\&.
 .PP
 .nf
                     {
@@ -955,7 +1133,7 @@ Definition at line 535 of file md2cmds\&.c\&.
 .PP
 Start up the thread\&. 
 .PP
-Definition at line 548 of file md2cmds\&.c\&.
+Definition at line 655 of file md2cmds\&.c\&.
 .PP
 .nf
                    {
@@ -1001,109 +1179,115 @@ Definition at line 326 of file pgpmac\&.c\&.
 .PP
 Alignment stage X\&. 
 .PP
-Definition at line 73 of file lspmac\&.c\&.
+Definition at line 76 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* aligny"
 
 .PP
 Alignment stage Y\&. 
 .PP
-Definition at line 74 of file lspmac\&.c\&.
+Definition at line 77 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* alignz"
 
 .PP
 Alignment stage X\&. 
 .PP
-Definition at line 75 of file lspmac\&.c\&.
+Definition at line 78 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* anal"
 
 .PP
 Polaroid analyzer motor\&. 
 .PP
-Definition at line 76 of file lspmac\&.c\&.
+Definition at line 79 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* apery"
 
 .PP
 Aperture Y\&. 
 .PP
-Definition at line 78 of file lspmac\&.c\&.
+Definition at line 81 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* aperz"
 
 .PP
 Aperture Z\&. 
 .PP
-Definition at line 79 of file lspmac\&.c\&.
+Definition at line 82 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* blight"
 
 .PP
 Back Light DAC\&. 
 .PP
-Definition at line 90 of file lspmac\&.c\&.
+Definition at line 93 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* blight_ud"
 
 .PP
 Back Light Up/Down actuator\&. 
 .PP
-Definition at line 93 of file lspmac\&.c\&.
+Definition at line 96 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* capy"
 
 .PP
 Capillary Y\&. 
 .PP
-Definition at line 80 of file lspmac\&.c\&.
+Definition at line 83 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* capz"
 
 .PP
 Capillary Z\&. 
 .PP
-Definition at line 81 of file lspmac\&.c\&.
+Definition at line 84 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* cenx"
 
 .PP
 Centering Table X\&. 
 .PP
-Definition at line 83 of file lspmac\&.c\&.
+Definition at line 86 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* ceny"
 
 .PP
 Centering Table Y\&. 
 .PP
-Definition at line 84 of file lspmac\&.c\&.
+Definition at line 87 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* cryo"
 
 .PP
 Move the cryostream towards or away from the crystal\&. 
 .PP
-Definition at line 94 of file lspmac\&.c\&.
+Definition at line 97 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* dryer"
 
 .PP
 blow air on the scintilator to dry it off 
 .PP
-Definition at line 95 of file lspmac\&.c\&.
+Definition at line 98 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* flight"
 
 .PP
 Front Light DAC\&. 
 .PP
-Definition at line 89 of file lspmac\&.c\&.
+Definition at line 92 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* fluo"
+
+.PP
+Move the fluorescence detector in/out\&. 
+.PP
+Definition at line 99 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* fscint"
 
 .PP
 Scintillator Piezo DAC\&. 
 .PP
-Definition at line 91 of file lspmac\&.c\&.
+Definition at line 94 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* fshut"
 
 .PP
 Fast shutter\&. 
 .PP
-Definition at line 88 of file lspmac\&.c\&.
+Definition at line 91 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* kappa"
 
 .PP
 Kappa\&. 
 .PP
-Definition at line 85 of file lspmac\&.c\&.
+Definition at line 88 of file lspmac\&.c\&.
 .SS "\fBlskvs_kvs_t\fP* lskvs_kvs"
 
 .PP
@@ -1133,7 +1317,7 @@ Definition at line 72 of file lspg\&.c\&.
 .PP
 All our motors\&. 
 .PP
-Definition at line 70 of file lspmac\&.c\&.
+Definition at line 73 of file lspmac\&.c\&.
 .SS "pthread_cond_t lspmac_moving_cond"
 
 .PP
@@ -1157,7 +1341,7 @@ Definition at line 57 of file lspmac\&.c\&.
 .PP
 The number of motors we manage\&. 
 .PP
-Definition at line 71 of file lspmac\&.c\&.
+Definition at line 74 of file lspmac\&.c\&.
 .SS "pthread_cond_t lspmac_shutter_cond"
 
 .PP
@@ -1187,7 +1371,7 @@ Definition at line 53 of file lspmac\&.c\&.
 .PP
 Synchronize reading/writting status buffer\&. 
 .PP
-Definition at line 282 of file lspmac\&.c\&.
+Definition at line 288 of file lspmac\&.c\&.
 .SS "char md2cmds_cmd[]"
 
 .PP
@@ -1229,19 +1413,19 @@ Definition at line 242 of file pgpmac\&.c\&.
 .PP
 MD2 omega axis (the air bearing) 
 .PP
-Definition at line 72 of file lspmac\&.c\&.
+Definition at line 75 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* phi"
 
 .PP
 Phi (not data collection axis) 
 .PP
-Definition at line 86 of file lspmac\&.c\&.
-.SS "\fBlspmac_motor_t\fP* scinz"
+Definition at line 89 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* scint"
 
 .PP
 Scintillator Z\&. 
 .PP
-Definition at line 82 of file lspmac\&.c\&.
+Definition at line 85 of file lspmac\&.c\&.
 .SS "WINDOW* term_input"
 
 .PP
@@ -1271,7 +1455,7 @@ Definition at line 240 of file pgpmac\&.c\&.
 .PP
 Optical zoom\&. 
 .PP
-Definition at line 77 of file lspmac\&.c\&.
+Definition at line 80 of file lspmac\&.c\&.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for LS-CAT PGPMAC from the source code\&.

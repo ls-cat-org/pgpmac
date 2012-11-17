@@ -146,70 +146,62 @@ $(document).ready(function(){initNavTree('lsupdate_8c_source.html','');});
 <div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;      snprintf( s1, <span class="keyword">sizeof</span>(s1)-1, mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a514ee9ed48c7171157d579623f7de23f" title="special format string to create text array for px.kvs update (lsupdate)">update_format</a>, mp-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>);</div>
 <div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;      s1[<span class="keyword">sizeof</span>(s1)-1] = 0;</div>
 <div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;    </div>
-<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;      <span class="keywordflow">if</span>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#aa90af2f6f1489f1befe1d0891e51575a" title="Name of motor as refered by ls database kvs table.">name</a> != NULL &amp;&amp; mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a56c41875faf19c643e97c10519e6eb8c" title="First 24 bit PMAC motor status word.">status1_p</a> != NULL &amp;&amp; mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a2b33ef6e12717459c1e9967cc6e659c6" title="Sectond 24 bit PMAC motor status word.">status2_p</a> != NULL &amp;&amp; mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a312047bb71def5cd2443fecd875eaea5" title="pointer to the md2_status structure to the actual position">actual_pos_cnts_p</a> != NULL) {</div>
-<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;        <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;%s status1: %0x  status2: %0x  cnts: %d&quot;</span>, mp-&gt;<a class="code" href="structlspmac__motor__struct.html#aa90af2f6f1489f1befe1d0891e51575a" title="Name of motor as refered by ls database kvs table.">name</a>, mp-&gt;<a class="code" href="structlspmac__motor__struct.html#acb52b612b9237e8eec0b97fb1e76a35d" title="local copy of status1">status1</a>, mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a6a412224c09268c1dc92de9c2a1a2512" title="local copy of status2">status2</a>, mp-&gt;<a class="code" href="structlspmac__motor__struct.html#ae5c7aea45b9637a1817be246688fd980" title="local copy of actual counts so only our mutex is needed to read">actual_pos_cnts</a>);</div>
-<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;      }</div>
+<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;      mp-&gt;<a class="code" href="structlspmac__motor__struct.html#ae5f1f605a0f587500e627332ad4e5e7e" title="previous position reported to the database">reported_position</a> = mp-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>;</div>
+<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;      mp-&gt;<a class="code" href="structlspmac__motor__struct.html#af11e5f75c1cf88ed6842d04154d27a31" title="bit flags: bit 0 = motor initialized by database, bit 1 = px.kvs value initialized">lspg_initialized</a> |= 2;</div>
+<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;      pthread_mutex_unlock( &amp;(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));</div>
 <div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;</div>
-<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;      mp-&gt;<a class="code" href="structlspmac__motor__struct.html#ae5f1f605a0f587500e627332ad4e5e7e" title="previous position reported to the database">reported_position</a> = mp-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>;</div>
-<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;      mp-&gt;<a class="code" href="structlspmac__motor__struct.html#af11e5f75c1cf88ed6842d04154d27a31" title="bit flags: bit 0 = motor initialized by database, bit 1 = px.kvs value initialized">lspg_initialized</a> |= 2;</div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;      pthread_mutex_unlock( &amp;(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));</div>
-<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;</div>
-<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;      <span class="keywordflow">if</span>( strlen(s1) + strlen(s) + 32 &gt;= <span class="keyword">sizeof</span>( s)-1) {</div>
-<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;        <span class="comment">// send off update now and reset s</span></div>
-<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;        strcat( s, <span class="stringliteral">&quot;}&#39;::text[])&quot;</span>);</div>
-<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;        <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( NULL, s);</div>
-<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;        </div>
-<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;        <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;Update: %s&quot;</span>, s);</div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;      <span class="keywordflow">if</span>( strlen(s1) + strlen(s) + 32 &gt;= <span class="keyword">sizeof</span>( s)-1) {</div>
+<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;        <span class="comment">// send off update now and reset s</span></div>
+<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;        strcat( s, <span class="stringliteral">&quot;}&#39;::text[])&quot;</span>);</div>
+<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;        <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( NULL, s);</div>
+<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;        </div>
+<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;        s[0] = 0;</div>
+<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;        strcpy( s, <span class="stringliteral">&quot;select px.kvupdate(&#39;{&quot;</span>);</div>
+<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;        needComma = 0;</div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;        gotone    = 0;</div>
+<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;      }</div>
 <div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;</div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;        s[0] = 0;</div>
-<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;        strcpy( s, <span class="stringliteral">&quot;select px.kvupdate(&#39;{&quot;</span>);</div>
-<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;        needComma = 0;</div>
-<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;        gotone    = 0;</div>
-<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;      }</div>
-<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;</div>
-<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;      <span class="keywordflow">if</span>( needComma)</div>
-<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;        strcat( s, <span class="stringliteral">&quot;,&quot;</span>);</div>
-<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;      <span class="keywordflow">else</span></div>
-<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;        needComma=1;</div>
-<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;</div>
-<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;      strcat( s, s1);</div>
-<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;    }</div>
-<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;  }</div>
+<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;      <span class="keywordflow">if</span>( needComma)</div>
+<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;        strcat( s, <span class="stringliteral">&quot;,&quot;</span>);</div>
+<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;      <span class="keywordflow">else</span></div>
+<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;        needComma=1;</div>
+<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;</div>
+<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;      strcat( s, s1);</div>
+<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;    }</div>
+<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;  }</div>
+<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;</div>
+<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;  <span class="keywordflow">if</span>( gotone) {</div>
+<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;    strcat( s, <span class="stringliteral">&quot;}&#39;)&quot;</span>);</div>
+<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;    <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( NULL, s);</div>
+<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;  }</div>
+<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;}</div>
 <div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;</div>
-<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;  <span class="keywordflow">if</span>( gotone) {</div>
-<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;    strcat( s, <span class="stringliteral">&quot;}&#39;)&quot;</span>);</div>
-<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;    <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( NULL, s);</div>
-<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;</div>
-<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;    <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;Update: %s&quot;</span>, s);</div>
-<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;  }</div>
-<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;}</div>
-<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;</div>
-<div class="line"><a name="l00093"></a><span class="lineno"><a class="code" href="lsupdate_8c.html#ac4e85ea626b76b06d68c27db1c3e8b43">   93</a></span>&#160;<span class="keywordtype">void</span> *<a class="code" href="lsupdate_8c.html#ac4e85ea626b76b06d68c27db1c3e8b43" title="Our worker thread.">lsupdate_worker</a>(</div>
-<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;                      <span class="keywordtype">void</span> *dummy               </div>
-<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;                      ) {</div>
-<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;  <span class="keyword">static</span> <span class="keyword">struct </span>timespec naptime;</div>
+<div class="line"><a name="l00085"></a><span class="lineno"><a class="code" href="lsupdate_8c.html#ac4e85ea626b76b06d68c27db1c3e8b43">   85</a></span>&#160;<span class="keywordtype">void</span> *<a class="code" href="lsupdate_8c.html#ac4e85ea626b76b06d68c27db1c3e8b43" title="Our worker thread.">lsupdate_worker</a>(</div>
+<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;                      <span class="keywordtype">void</span> *dummy               </div>
+<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;                      ) {</div>
+<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;  <span class="keyword">static</span> <span class="keyword">struct </span>timespec naptime;</div>
+<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;</div>
+<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;  naptime.tv_sec  = 0;</div>
+<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;  naptime.tv_nsec = 500000000;</div>
+<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;  <span class="keywordflow">while</span>( 1) {</div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;    <a class="code" href="lsupdate_8c.html#af28d93f773e70f701699b323563fa218" title="Query the motors and perhaps tell the DB about it.">lsupdate_updateit</a>();</div>
+<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;    nanosleep( &amp;naptime, NULL);</div>
+<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;  }    </div>
+<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;}</div>
 <div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;</div>
-<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;  naptime.tv_sec  = 0;</div>
-<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;  naptime.tv_nsec = 500000000;</div>
-<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;  <span class="keywordflow">while</span>( 1) {</div>
-<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;    <a class="code" href="lsupdate_8c.html#af28d93f773e70f701699b323563fa218" title="Query the motors and perhaps tell the DB about it.">lsupdate_updateit</a>();</div>
-<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;    nanosleep( &amp;naptime, NULL);</div>
-<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;  }    </div>
-<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;}</div>
-<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;</div>
-<div class="line"><a name="l00108"></a><span class="lineno"><a class="code" href="pgpmac_8h.html#adf63440ffbc65024fef87ea6a11ea8b0">  108</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="lsupdate_8c.html#adf63440ffbc65024fef87ea6a11ea8b0" title="Initialize this module.">lsupdate_init</a>() {</div>
-<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;}</div>
-<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;</div>
-<div class="line"><a name="l00113"></a><span class="lineno"><a class="code" href="pgpmac_8h.html#af219e9b2cc124f109aa4c2c2e16b5d07">  113</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="lsupdate_8c.html#af219e9b2cc124f109aa4c2c2e16b5d07" title="run the update routines">lsupdate_run</a>() {</div>
-<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;  pthread_create( &amp;<a class="code" href="lsupdate_8c.html#a00578477e1b3791fc8aed17ebe60b606" title="our worker thread">lsupdate_thread</a>, NULL, <a class="code" href="lsupdate_8c.html#ac4e85ea626b76b06d68c27db1c3e8b43" title="Our worker thread.">lsupdate_worker</a>, NULL);</div>
-<div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;}</div>
+<div class="line"><a name="l00100"></a><span class="lineno"><a class="code" href="pgpmac_8h.html#adf63440ffbc65024fef87ea6a11ea8b0">  100</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="lsupdate_8c.html#adf63440ffbc65024fef87ea6a11ea8b0" title="Initialize this module.">lsupdate_init</a>() {</div>
+<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;}</div>
+<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;</div>
+<div class="line"><a name="l00105"></a><span class="lineno"><a class="code" href="pgpmac_8h.html#af219e9b2cc124f109aa4c2c2e16b5d07">  105</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="lsupdate_8c.html#af219e9b2cc124f109aa4c2c2e16b5d07" title="run the update routines">lsupdate_run</a>() {</div>
+<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;  pthread_create( &amp;<a class="code" href="lsupdate_8c.html#a00578477e1b3791fc8aed17ebe60b606" title="our worker thread">lsupdate_thread</a>, NULL, <a class="code" href="lsupdate_8c.html#ac4e85ea626b76b06d68c27db1c3e8b43" title="Our worker thread.">lsupdate_worker</a>, NULL);</div>
+<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;}</div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="lsupdate_8c.html">lsupdate.c</a></li>
-    <li class="footer">Generated on Thu Nov 15 2012 17:51:47 for LS-CAT PGPMAC by
+    <li class="footer">Generated on Fri Nov 16 2012 20:50:35 for LS-CAT PGPMAC by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.2 </li>
   </ul>

@@ -14,8 +14,10 @@ void \hyperlink{md2cmds_8c_adba92015101973846ee66a33ea39addf}{md2cmds\-\_\-trans
 \begin{DoxyCompactList}\small\item\em Transfer a sample T\-O\-D\-O\-: Implement. \end{DoxyCompactList}\item 
 char $\ast$ \hyperlink{md2cmds_8c_a0b466dd608ba033b0b618c6dce8b2601}{logtime} ()
 \begin{DoxyCompactList}\small\item\em Return a time string for loggin Time is from the first call to this funciton. \end{DoxyCompactList}\item 
-void \hyperlink{md2cmds_8c_a82542bd5f69f6975583bbd9dfadec0cb}{md2cmds\-\_\-move\-Abs} (char $\ast$cmd)
+void \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\-\_\-move\-Abs} (const char $\ast$ccmd)
 \begin{DoxyCompactList}\small\item\em Move a motor to the position requested. \end{DoxyCompactList}\item 
+void \hyperlink{md2cmds_8c_ad80ca66acb37fad601a46e7a187e110a}{md2cmds\-\_\-phase\-\_\-change} (const char $\ast$ccmd)
+\begin{DoxyCompactList}\small\item\em Move md2 devices to a preconfigured state. \end{DoxyCompactList}\item 
 void \hyperlink{md2cmds_8c_afc2d53af3d531cfaae116e7b57077347}{md2cmds\-\_\-mvcenter\-\_\-prep} ()
 \begin{DoxyCompactList}\small\item\em Sets up a centering table and alignment table move Ensures that when we issue the move command that we can detect that the move happened. \end{DoxyCompactList}\item 
 void \hyperlink{md2cmds_8c_afdc46152b46ae4d37c73407b83016b78}{md2cmds\-\_\-mvcenter\-\_\-move} (double cx, double cy, double ax, double ay, double az)
@@ -126,7 +128,7 @@ Move centering and alignment tables as requested T\-O\-D\-O\-: Implement.
 
 
 
-Definition at line 496 of file md2cmds.\-c.
+Definition at line 601 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -146,7 +148,7 @@ Collect some data.
 
 
 
-Definition at line 211 of file md2cmds.\-c.
+Definition at line 316 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -391,7 +393,7 @@ Initialize the md2cmds module.
 
 
 
-Definition at line 535 of file md2cmds.\-c.
+Definition at line 642 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -406,20 +408,20 @@ Definition at line 535 of file md2cmds.\-c.
 
 \}
 \end{DoxyCode}
-\hypertarget{md2cmds_8c_a82542bd5f69f6975583bbd9dfadec0cb}{\index{md2cmds.\-c@{md2cmds.\-c}!md2cmds\-\_\-move\-Abs@{md2cmds\-\_\-move\-Abs}}
+\hypertarget{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{\index{md2cmds.\-c@{md2cmds.\-c}!md2cmds\-\_\-move\-Abs@{md2cmds\-\_\-move\-Abs}}
 \index{md2cmds\-\_\-move\-Abs@{md2cmds\-\_\-move\-Abs}!md2cmds.c@{md2cmds.\-c}}
 \subsubsection[{md2cmds\-\_\-move\-Abs}]{\setlength{\rightskip}{0pt plus 5cm}void md2cmds\-\_\-move\-Abs (
 \begin{DoxyParamCaption}
-\item[{char $\ast$}]{cmd}
+\item[{const char $\ast$}]{ccmd}
 \end{DoxyParamCaption}
-)}}\label{md2cmds_8c_a82542bd5f69f6975583bbd9dfadec0cb}
+)}}\label{md2cmds_8c_aab520d15af31fe87571d025d7491987e}
 
 
 Move a motor to the position requested. 
 
 
 \begin{DoxyParams}[1]{Parameters}
-\mbox{\tt in}  & {\em cmd} & The full command string to parse, ie, \char`\"{}move\-Abs omega 180\char`\"{} \\
+\mbox{\tt in}  & {\em ccmd} & The full command string to parse, ie, \char`\"{}move\-Abs omega 180\char`\"{} \\
 \hline
 \end{DoxyParams}
 
@@ -429,6 +431,7 @@ Definition at line 59 of file md2cmds.\-c.
 
 \begin{DoxyCode}
                        \{
+  \textcolor{keywordtype}{char} *cmd;
   \textcolor{keywordtype}{char} *ignore;
   \textcolor{keywordtype}{char} *ptr;
   \textcolor{keywordtype}{char} *mtr;
@@ -438,12 +441,22 @@ Definition at line 59 of file md2cmds.\-c.
   \hyperlink{structlspmac__motor__struct}{lspmac\_motor\_t} *mp;
   \textcolor{keywordtype}{int} i;
 
+  \textcolor{comment}{// ignore nothing}
+  \textcolor{keywordflow}{if}( ccmd == NULL || *ccmd == 0) \{
+    \textcolor{keywordflow}{return};
+  \}
+
+  \textcolor{comment}{// operate on a copy of the string since strtok\_r will modify its argument}
+  \textcolor{comment}{//}
+  cmd = strdup( ccmd);
+
   \textcolor{comment}{// Parse the command string}
   \textcolor{comment}{//}
   ignore = strtok\_r( cmd, \textcolor{stringliteral}{" "}, &ptr);
   \textcolor{keywordflow}{if}( ignore == NULL) \{
     \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_moveAbs: ignoring
        blank command '%s'"}, cmd);
+    free( cmd);
     \textcolor{keywordflow}{return};
   \}
 
@@ -454,6 +467,7 @@ Definition at line 59 of file md2cmds.\-c.
   \textcolor{keywordflow}{if}( mtr == NULL) \{
     \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds moveAbs error: missing
        motor name"});
+    free( cmd);
     \textcolor{keywordflow}{return};
   \}
 
@@ -467,6 +481,7 @@ Definition at line 59 of file md2cmds.\-c.
   \textcolor{keywordflow}{if}( mp == NULL) \{
     \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds moveAbs error: cannot
        find motor %s"}, mtr);
+    free( cmd);
     \textcolor{keywordflow}{return};
   \}
 
@@ -474,6 +489,7 @@ Definition at line 59 of file md2cmds.\-c.
   \textcolor{keywordflow}{if}( pos == NULL) \{
     \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds moveAbs error: missing
        position"});
+    free( cmd);
     \textcolor{keywordflow}{return};
   \}
 
@@ -484,10 +500,9 @@ Definition at line 59 of file md2cmds.\-c.
     \textcolor{comment}{// In any case we are done here.}
     \textcolor{comment}{//}
     \hyperlink{lspmac_8c_a290212c160e6ef1f560c9df9fc8f58e4}{lspmac\_move\_preset\_queue}( mp, pos);
+    free( cmd);
     \textcolor{keywordflow}{return};
   \}
-  
-
 
   \textcolor{keywordflow}{if}( mp != NULL && mp->\hyperlink{structlspmac__motor__struct_a20db3de86854b627815b3d940555ea75}{moveAbs} != NULL) \{
     wprintw( \hyperlink{pgpmac_8c_a65daf0f4a5bc6def23a9df98ff5ca57e}{term\_output}, \textcolor{stringliteral}{"Moving %s to %f\(\backslash\)n"}, mtr, fpos);
@@ -495,6 +510,7 @@ Definition at line 59 of file md2cmds.\-c.
     mp->\hyperlink{structlspmac__motor__struct_a20db3de86854b627815b3d940555ea75}{moveAbs}( mp, fpos);
   \}
 
+  free( cmd);
 \}
 \end{DoxyCode}
 \hypertarget{md2cmds_8c_afdc46152b46ae4d37c73407b83016b78}{\index{md2cmds.\-c@{md2cmds.\-c}!md2cmds\-\_\-mvcenter\-\_\-move@{md2cmds\-\_\-mvcenter\-\_\-move}}
@@ -527,7 +543,7 @@ Move the centering and alignment tables.
 \end{DoxyParams}
 
 
-Definition at line 170 of file md2cmds.\-c.
+Definition at line 275 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -565,7 +581,7 @@ Sets up a centering table and alignment table move Ensures that when we issue th
 
 
 
-Definition at line 131 of file md2cmds.\-c.
+Definition at line 236 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -622,7 +638,7 @@ Wait for the centering and alignment tables to stop moving.
 
 
 
-Definition at line 197 of file md2cmds.\-c.
+Definition at line 302 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -638,6 +654,117 @@ Definition at line 197 of file md2cmds.\-c.
   pthread\_mutex\_unlock( &\hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
 \}
 \end{DoxyCode}
+\hypertarget{md2cmds_8c_ad80ca66acb37fad601a46e7a187e110a}{\index{md2cmds.\-c@{md2cmds.\-c}!md2cmds\-\_\-phase\-\_\-change@{md2cmds\-\_\-phase\-\_\-change}}
+\index{md2cmds\-\_\-phase\-\_\-change@{md2cmds\-\_\-phase\-\_\-change}!md2cmds.c@{md2cmds.\-c}}
+\subsubsection[{md2cmds\-\_\-phase\-\_\-change}]{\setlength{\rightskip}{0pt plus 5cm}void md2cmds\-\_\-phase\-\_\-change (
+\begin{DoxyParamCaption}
+\item[{const char $\ast$}]{ccmd}
+\end{DoxyParamCaption}
+)}}\label{md2cmds_8c_ad80ca66acb37fad601a46e7a187e110a}
+
+
+Move md2 devices to a preconfigured state. 
+
+E\-M\-B\-L calls these states \char`\"{}phases\char`\"{} and this language is partially retained here
+
+
+\begin{DoxyParams}{Parameters}
+{\em ccmd} & The full text of the command that sent us here \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 146 of file md2cmds.\-c.
+
+
+\begin{DoxyCode}
+                                             \{
+  \textcolor{keywordtype}{char} *cmd;
+  \textcolor{keywordtype}{char} *ignore;
+  \textcolor{keywordtype}{char} *ptr;
+  \textcolor{keywordtype}{char} *mode;
+  
+  \textcolor{keywordflow}{if}( ccmd == NULL || *ccmd == 0)
+    \textcolor{keywordflow}{return};
+
+  \textcolor{comment}{// use a copy as strtok\_r modifies the string it is parsing}
+  \textcolor{comment}{//}
+  cmd = strdup( ccmd);
+
+  ignore = strtok\_r( cmd, \textcolor{stringliteral}{" "}, &ptr);
+  \textcolor{keywordflow}{if}( ignore == NULL) \{
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_phase\_change: ignoring
+       empty command string (how did we let things get this far?"});
+    free( cmd);
+    \textcolor{keywordflow}{return};
+  \}
+
+  \textcolor{comment}{//}
+  \textcolor{comment}{// ignore should point to "mode" cause that's how we got here.  Ignore it}
+  \textcolor{comment}{//}
+  mode = strtok\_r( NULL, \textcolor{stringliteral}{" "}, &ptr);
+  \textcolor{keywordflow}{if}( mode == NULL) \{
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_phase\_change: no mode
+       specified"});
+    free( cmd);
+    \textcolor{keywordflow}{return};
+  \}
+  
+  \textcolor{keywordflow}{if}( strcmp( mode, \textcolor{stringliteral}{"manualMount"}) == 0) \{
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs kappa manualMount"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs omega manualMount"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs appz Cover"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs capz Cover"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs scint Cover"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs backLight 0"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs backLight.intensity 0"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs cryo 1"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs fluo 0"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs zoom 1"});
+  \} \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}( strcmp( mode, \textcolor{stringliteral}{"robotMount"}) == 0) \{
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs kappa 0"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs omega 0"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs appz In"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs capz Cover"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs scint Cover"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs backLight 0"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs backLight.intensity 0"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs cryo 1"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs fluo 0"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs zoom 1"});
+  \} \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}( strcmp( mode, \textcolor{stringliteral}{"center"}) == 0) \{
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs kappa 0"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs omega 0"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs appz In"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs capz In"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs scint Cover"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs backLight 1"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs zoom 1"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs cryo 0"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs fluo 0"});
+  \} \textcolor{keywordflow}{if}( strcmp( mode, \textcolor{stringliteral}{"dataCollection"}) == 0) \{
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs appz In"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs capz In"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs backLight 0"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs backLight.intensity 0"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs cryo 0"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs fluo 0"});
+  \} \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}( strcmp( mode, \textcolor{stringliteral}{"beamLocation"}) == 0) \{
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs kappa 0"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs omega 0"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs appz Out"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs capz Out"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs scint Scintillator"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs backLight 0"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs zoom 1"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs cryo 0"});
+    \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \textcolor{stringliteral}{"moveAbs fluo 0"});
+  \}
+
+  
+  free( cmd);
+\}
+\end{DoxyCode}
 \hypertarget{md2cmds_8c_ac9e84b4a527da535d21cca65dc4aa61a}{\index{md2cmds.\-c@{md2cmds.\-c}!md2cmds\-\_\-rotate@{md2cmds\-\_\-rotate}}
 \index{md2cmds\-\_\-rotate@{md2cmds\-\_\-rotate}!md2cmds.c@{md2cmds.\-c}}
 \subsubsection[{md2cmds\-\_\-rotate}]{\setlength{\rightskip}{0pt plus 5cm}void md2cmds\-\_\-rotate (
@@ -651,7 +778,7 @@ Spin 360 and make a video (recenter first, maybe)
 
 
 
-Definition at line 413 of file md2cmds.\-c.
+Definition at line 518 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -750,7 +877,7 @@ Start up the thread.
 
 
 
-Definition at line 548 of file md2cmds.\-c.
+Definition at line 655 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -799,7 +926,7 @@ Our worker thread.
 \end{DoxyParams}
 
 
-Definition at line 503 of file md2cmds.\-c.
+Definition at line 608 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -824,7 +951,9 @@ Definition at line 503 of file md2cmds.\-c.
     \} \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}( strcmp( \hyperlink{md2cmds_8c_a5f0fe1e2dfa92cf345b8c29134ab1ede}{md2cmds\_cmd}, \textcolor{stringliteral}{"center"}) == 0) \{
       \hyperlink{md2cmds_8c_a5a9d72c08597ffe45287622c40975e7f}{md2cmds\_center}();
     \} \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}( strncmp( \hyperlink{md2cmds_8c_a5f0fe1e2dfa92cf345b8c29134ab1ede}{md2cmds\_cmd}, \textcolor{stringliteral}{"moveAbs"}, 7) == 0) \{
-      \hyperlink{md2cmds_8c_a82542bd5f69f6975583bbd9dfadec0cb}{md2cmds\_moveAbs}( \hyperlink{md2cmds_8c_a5f0fe1e2dfa92cf345b8c29134ab1ede}{md2cmds\_cmd});
+      \hyperlink{md2cmds_8c_aab520d15af31fe87571d025d7491987e}{md2cmds\_moveAbs}( \hyperlink{md2cmds_8c_a5f0fe1e2dfa92cf345b8c29134ab1ede}{md2cmds\_cmd});
+    \} \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}( strncmp( \hyperlink{md2cmds_8c_a5f0fe1e2dfa92cf345b8c29134ab1ede}{md2cmds\_cmd}, \textcolor{stringliteral}{"changeMode"}, 10) == 0) \{
+      \hyperlink{md2cmds_8c_ad80ca66acb37fad601a46e7a187e110a}{md2cmds\_phase\_change}( \hyperlink{md2cmds_8c_a5f0fe1e2dfa92cf345b8c29134ab1ede}{md2cmds\_cmd});
     \}
 
     \hyperlink{md2cmds_8c_a5f0fe1e2dfa92cf345b8c29134ab1ede}{md2cmds\_cmd}[0] = 0;

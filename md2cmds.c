@@ -57,8 +57,9 @@ char *logtime() {
 /** Move a motor to the position requested
  */
 void md2cmds_moveAbs(
-		     char *cmd			/**< [in] The full command string to parse, ie, "moveAbs omega 180"	*/
+		     const char *ccmd			/**< [in] The full command string to parse, ie, "moveAbs omega 180"	*/
 		     ) {
+  char *cmd;
   char *ignore;
   char *ptr;
   char *mtr;
@@ -68,11 +69,21 @@ void md2cmds_moveAbs(
   lspmac_motor_t *mp;
   int i;
 
+  // ignore nothing
+  if( ccmd == NULL || *ccmd == 0) {
+    return;
+  }
+
+  // operate on a copy of the string since strtok_r will modify its argument
+  //
+  cmd = strdup( ccmd);
+
   // Parse the command string
   //
   ignore = strtok_r( cmd, " ", &ptr);
   if( ignore == NULL) {
     lslogging_log_message( "md2cmds_moveAbs: ignoring blank command '%s'", cmd);
+    free( cmd);
     return;
   }
 
@@ -82,6 +93,7 @@ void md2cmds_moveAbs(
   mtr = strtok_r( NULL, " ", &ptr);
   if( mtr == NULL) {
     lslogging_log_message( "md2cmds moveAbs error: missing motor name");
+    free( cmd);
     return;
   }
 
@@ -94,12 +106,14 @@ void md2cmds_moveAbs(
   }
   if( mp == NULL) {
     lslogging_log_message( "md2cmds moveAbs error: cannot find motor %s", mtr);
+    free( cmd);
     return;
   }
 
   pos = strtok_r( NULL, " ", &ptr);
   if( pos == NULL) {
     lslogging_log_message( "md2cmds moveAbs error: missing position");
+    free( cmd);
     return;
   }
 
@@ -110,10 +124,9 @@ void md2cmds_moveAbs(
     // In any case we are done here.
     //
     lspmac_move_preset_queue( mp, pos);
+    free( cmd);
     return;
   }
-  
-
 
   if( mp != NULL && mp->moveAbs != NULL) {
     wprintw( term_output, "Moving %s to %f\n", mtr, fpos);
@@ -121,6 +134,98 @@ void md2cmds_moveAbs(
     mp->moveAbs( mp, fpos);
   }
 
+  free( cmd);
+}
+
+
+/** Move md2 devices to a preconfigured state.
+ *  EMBL calls these states "phases" and this language is partially retained here
+ *
+ *  \param ccmd The full text of the command that sent us here
+ */
+void md2cmds_phase_change( const char *ccmd) {
+  char *cmd;
+  char *ignore;
+  char *ptr;
+  char *mode;
+  
+  if( ccmd == NULL || *ccmd == 0)
+    return;
+
+  // use a copy as strtok_r modifies the string it is parsing
+  //
+  cmd = strdup( ccmd);
+
+  ignore = strtok_r( cmd, " ", &ptr);
+  if( ignore == NULL) {
+    lslogging_log_message( "md2cmds_phase_change: ignoring empty command string (how did we let things get this far?");
+    free( cmd);
+    return;
+  }
+
+  //
+  // ignore should point to "mode" cause that's how we got here.  Ignore it
+  //
+  mode = strtok_r( NULL, " ", &ptr);
+  if( mode == NULL) {
+    lslogging_log_message( "md2cmds_phase_change: no mode specified");
+    free( cmd);
+    return;
+  }
+  
+  if( strcmp( mode, "manualMount") == 0) {
+    md2cmds_moveAbs( "moveAbs kappa manualMount");
+    md2cmds_moveAbs( "moveAbs omega manualMount");
+    md2cmds_moveAbs( "moveAbs appz Cover");
+    md2cmds_moveAbs( "moveAbs capz Cover");
+    md2cmds_moveAbs( "moveAbs scint Cover");
+    md2cmds_moveAbs( "moveAbs backLight 0");
+    md2cmds_moveAbs( "moveAbs backLight.intensity 0");
+    md2cmds_moveAbs( "moveAbs cryo 1");
+    md2cmds_moveAbs( "moveAbs fluo 0");
+    md2cmds_moveAbs( "moveAbs zoom 1");
+  } else if( strcmp( mode, "robotMount") == 0) {
+    md2cmds_moveAbs( "moveAbs kappa 0");
+    md2cmds_moveAbs( "moveAbs omega 0");
+    md2cmds_moveAbs( "moveAbs appz In");
+    md2cmds_moveAbs( "moveAbs capz Cover");
+    md2cmds_moveAbs( "moveAbs scint Cover");
+    md2cmds_moveAbs( "moveAbs backLight 0");
+    md2cmds_moveAbs( "moveAbs backLight.intensity 0");
+    md2cmds_moveAbs( "moveAbs cryo 1");
+    md2cmds_moveAbs( "moveAbs fluo 0");
+    md2cmds_moveAbs( "moveAbs zoom 1");
+  } else if( strcmp( mode, "center") == 0) {
+    md2cmds_moveAbs( "moveAbs kappa 0");
+    md2cmds_moveAbs( "moveAbs omega 0");
+    md2cmds_moveAbs( "moveAbs appz In");
+    md2cmds_moveAbs( "moveAbs capz In");
+    md2cmds_moveAbs( "moveAbs scint Cover");
+    md2cmds_moveAbs( "moveAbs backLight 1");
+    md2cmds_moveAbs( "moveAbs zoom 1");
+    md2cmds_moveAbs( "moveAbs cryo 0");
+    md2cmds_moveAbs( "moveAbs fluo 0");
+  } if( strcmp( mode, "dataCollection") == 0) {
+    md2cmds_moveAbs( "moveAbs appz In");
+    md2cmds_moveAbs( "moveAbs capz In");
+    md2cmds_moveAbs( "moveAbs backLight 0");
+    md2cmds_moveAbs( "moveAbs backLight.intensity 0");
+    md2cmds_moveAbs( "moveAbs cryo 0");
+    md2cmds_moveAbs( "moveAbs fluo 0");
+  } else if( strcmp( mode, "beamLocation") == 0) {
+    md2cmds_moveAbs( "moveAbs kappa 0");
+    md2cmds_moveAbs( "moveAbs omega 0");
+    md2cmds_moveAbs( "moveAbs appz Out");
+    md2cmds_moveAbs( "moveAbs capz Out");
+    md2cmds_moveAbs( "moveAbs scint Scintillator");
+    md2cmds_moveAbs( "moveAbs backLight 0");
+    md2cmds_moveAbs( "moveAbs zoom 1");
+    md2cmds_moveAbs( "moveAbs cryo 0");
+    md2cmds_moveAbs( "moveAbs fluo 0");
+  }
+
+  
+  free( cmd);
 }
 
 
@@ -523,6 +628,8 @@ void *md2cmds_worker(
       md2cmds_center();
     } else if( strncmp( md2cmds_cmd, "moveAbs", 7) == 0) {
       md2cmds_moveAbs( md2cmds_cmd);
+    } else if( strncmp( md2cmds_cmd, "changeMode", 10) == 0) {
+      md2cmds_phase_change( md2cmds_cmd);
     }
 
     md2cmds_cmd[0] = 0;

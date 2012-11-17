@@ -52,6 +52,7 @@ var lspg_8c =
     [ "lspg_nextshot_done", "lspg_8c.html#a50458a014041a4118452802dfb303960", null ],
     [ "lspg_nextshot_init", "lspg_8c.html#aff91db7d60e6c832684c023813e36dbf", null ],
     [ "lspg_nextshot_wait", "lspg_8c.html#a784a6de32a86fec9efb3ef3ae4b6e3ac", null ],
+    [ "lspg_notice_processor", "lspg_8c.html#a62b110949d206fb22789191207e1d066", null ],
     [ "lspg_pg_connect", "lspg_8c.html#a581c18be0368425665a40b4b7f7d9714", null ],
     [ "lspg_pg_service", "lspg_8c.html#aa8d1fed4b461c2139a21826d524777d5", null ],
     [ "lspg_query_next", "lspg_8c.html#ad5f3ec8f197cc330c83dba70f310533c", null ],

@@ -12,6 +12,77 @@ lskvs_kvs_t *lskvs_kvs = NULL;	//!< our list (or at least the start of it
 pthread_rwlock_t lskvs_rwlock;		//!< needed to protect the list
 
 
+/** find a postion for a given preset name
+ *
+ * \param mp Motor pointer
+ * \param name The preset to search for
+ * \param err set to non-zero on error, ignored if null
+ */
+double lskvs_find_preset_position( lspmac_motor_t *mp, char *name, int *err) {
+  regmatch_t pmatch[4], qmatch[4];
+  double rtn;
+  lskvs_kvs_list_t
+    *position_kv = NULL,
+    *name_kv     = NULL;
+  int e;
+
+  *err = -4;
+  if( name == NULL || *name == 0)
+    return 0.0;
+
+  *err = 0;
+  for( name_kv = mp->presets; name_kv != NULL; name_kv = name_kv->next) {
+    if( strcmp( name, name_kv->kvs->v) == 0) {
+      //
+      // We found the correct preset, now get the index
+      //
+      e = regexec( &(mp->preset_regex), name_kv->kvs->k, 4, pmatch, 0);
+      if( e != 0) {
+	lslogging_log_message( "lskvs_find_preset_position: could not parse name key '%s'", name_kv->kvs->k);
+	if( err != NULL)
+	  *err = e;
+	return 0.0;
+      }
+
+      for( position_kv = mp->presets; position_kv != NULL; position_kv = position_kv->next) {
+	if( position_kv == name_kv)
+	  continue;
+
+	e = regexec( &(mp->preset_regex), position_kv->kvs->k, 4, qmatch, 0);
+	if( e != 0) {
+	  lslogging_log_message( "lskvs_find_preset_position: could not parse position key '%s'", position_kv->kvs->k);
+	  if( err != NULL)
+	    *err = e;
+	  return 0.0;
+	}
+
+	if( strncmp( name_kv->kvs->k, position_kv->kvs->k, qmatch[2].rm_eo + 1) == 0) {
+	  break;
+	}
+      }
+      if( position_kv != NULL)
+	break;
+    }
+  }
+
+  if( name_kv != NULL || position_kv != NULL) {
+    errno = 0;
+    rtn = strtod( position_kv->kvs->v, NULL);
+    lslogging_log_message( "lskvs_find_preset_position: v = '%s', rtn = %f", position_kv->kvs->v, rtn);
+    if( errno != 0) {
+      lslogging_log_message( "lskvs_find_preset_position: bad preset value for motor %s, preset %s, value '%s'", mp->name, name, position_kv->kvs->v);
+      if( err != NULL)
+	*err = -2;
+      return 0.0;
+    }
+    return rtn;
+  }
+  lslogging_log_message( "lskvs_find_preset_position: could not find preset for motor %s, preset %s", mp->name, name);
+  if( err != NULL)
+    *err = -3;
+  return 0.0;
+}
+
 
 /** Utility wrapper for regcomp providing printf style formating
  *  \param preg   Buffer for the compile regex object

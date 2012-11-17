@@ -136,6 +136,20 @@ typedef struct lspmac_motor_struct {
 } lspmac_motor_t;
 
 
+/** Storage for binary inputs.
+ */
+typedef struct lspmac_bi_struct {
+  int *ptr;			//!< points to the location in the status buffer
+  pthread_mutex_t mutex;	//!< so we don't get confused
+  int mask;			//!< mask for the bit in the status register
+  int previous;			//!< the previous value
+  int first_time;		//!< flag indicating we've not read the input even once
+  char *changeEventOn;		//!< Event to send when the value changes to 1
+  char *changeEventOff;		//!< Event to send when the value changes to 0
+} lspmac_bi_t;
+
+
+
 /** Storage for getcenter query
  *  Used for the md2 ROTATE command
  *  that generates the centering movies
@@ -319,7 +333,7 @@ extern lspmac_motor_t *apery;
 extern lspmac_motor_t *aperz;
 extern lspmac_motor_t *capy;
 extern lspmac_motor_t *capz;
-extern lspmac_motor_t *scinz;
+extern lspmac_motor_t *scint;
 extern lspmac_motor_t *cenx;
 extern lspmac_motor_t *ceny;
 extern lspmac_motor_t *kappa;
@@ -333,6 +347,7 @@ extern lspmac_motor_t *fscint;
 extern lspmac_motor_t *blight_ud;
 extern lspmac_motor_t *cryo;
 extern lspmac_motor_t *dryer;
+extern lspmac_motor_t *fluo;
 
 extern int lspmac_nmotors;
 
@@ -382,3 +397,5 @@ extern void lsevents_remove_listener( char *, void (*cb)(char *));
 extern void lstimer_init();
 extern void lstimer_run();
 extern void lstimer_add_timer( char *, int, unsigned long int, unsigned long int);
+extern void lskvs_regcomp( regex_t *preg, int cflags, char *fmt, ...);
+extern double lskvs_find_preset_position( lspmac_motor_t *mp, char *name, int *err);

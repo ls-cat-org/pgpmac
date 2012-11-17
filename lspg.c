@@ -1420,6 +1420,9 @@ void lspg_pg_service(
   }
 }
 
+PQnoticeProcessor lspg_notice_processor( void *arg, const char *msg) {
+  lslogging_log_message( "lspg: %s", msg);
+}
 
 /** Connect to the pg server
  */
@@ -1478,6 +1481,7 @@ void lspg_pg_connect() {
       q = NULL;
       ls_pg_state = LS_PG_STATE_INIT;
     } else if( lspg_connectPoll_response == PGRES_POLLING_OK) {
+      PQsetNoticeProcessor( q, (PQnoticeProcessor)lspg_notice_processor, NULL);
       lspg_query_push( lspg_init_motors_cb, "select * from pmac.md2_getmotors()");
       lspg_query_push( NULL, "select pmac.md2_init()");
       lspg_query_push( lspg_zoom_lut_cb, "SELECT * FROM pmac.md2_zoom_lut()");
