@@ -10,12 +10,17 @@
 pthread_cond_t  md2cmds_cond;		//!< condition to signal when it's time to run an md2 command
 pthread_mutex_t md2cmds_mutex;		//!< mutex for the condition
 
-pthread_cond_t  md2cmds_pg_cond;	//!< coordinate call and response
-pthread_mutex_t md2cmds_pg_mutex;	//!< message passing between md2cmds and pg
+pthread_cond_t  md2cmds_moving_cond;	//!< coordinate call and response
+pthread_mutex_t md2cmds_moving_mutex;	//!< message passing between md2cmds and pg
+pmac_cmd_queue_t *md2cmds_moving_pq;	//!< pmac queue item from last command
+
+int md2cmds_moving_count = 0;
 
 char md2cmds_cmd[MD2CMDS_CMD_LENGTH];	//!< our command;
 
 static pthread_t md2cmds_thread;
+
+static int rotating = 0;		//!< flag: when omega is in position after a rotate we want to re-home omega
 
 
 /** Transfer a sample
@@ -24,35 +29,6 @@ static pthread_t md2cmds_thread;
 void md2cmds_transfer() {
 }
 
-/** Return a time string for loggin
- *  Time is from the first call to this funciton.
- */
-char *logtime() {
-  static char rtn[128];
-  static char tmp[64];
-  static int first_time = 1;
-  static struct timeval base;
-  struct timeval now;
-  struct tm nows;
-  double diffs;
-
-  if( first_time) {
-    first_time=0;
-    gettimeofday( &base, NULL);
-    strftime(tmp, sizeof(tmp)-1, "%Y-%m-%d %H:%M:%S", localtime( &(base.tv_sec)));
-    tmp[sizeof(tmp)-1]=0;
-    snprintf( rtn, sizeof(rtn)-1, "%s.%06d", tmp, base.tv_usec);
-    rtn[sizeof(rtn)-1]=0;
-  } else {
-    gettimeofday( &now, NULL);
-    diffs =  (now.tv_sec - base.tv_sec);
-    diffs += (now.tv_usec - base.tv_usec)/1000000.;
-    snprintf( rtn, sizeof( rtn)-1, "%0.6f", diffs);
-    rtn[sizeof(rtn)-1]=0;
-  }
-
-  return rtn;
-}
 
 /** Move a motor to the position requested
  */
@@ -174,22 +150,25 @@ void md2cmds_phase_change( const char *ccmd) {
   }
   
   if( strcmp( mode, "manualMount") == 0) {
-    md2cmds_moveAbs( "moveAbs kappa manualMount");
-    md2cmds_moveAbs( "moveAbs omega manualMount");
-    md2cmds_moveAbs( "moveAbs appz Cover");
-    md2cmds_moveAbs( "moveAbs capz Cover");
-    md2cmds_moveAbs( "moveAbs scint Cover");
+    lspmac_move_or_jog_preset_queue( kappa, "manualMount", 1);
+    lspmac_move_or_jog_preset_queue( omega, "manualMount", 0);
+    lspmac_move_or_jog_abs_queue(    phi,   "manualMount", 0);
+    lspmac_move_or_jog_preset_queue( aperz, "Cover", 1);
+    lspmac_move_or_jog_preset_queue( capz,  "Cover", 1);
+    lspmac_move_or_jog_preset_queue( scint, "Cover", 1);
     md2cmds_moveAbs( "moveAbs backLight 0");
     md2cmds_moveAbs( "moveAbs backLight.intensity 0");
     md2cmds_moveAbs( "moveAbs cryo 1");
     md2cmds_moveAbs( "moveAbs fluo 0");
     md2cmds_moveAbs( "moveAbs zoom 1");
   } else if( strcmp( mode, "robotMount") == 0) {
-    md2cmds_moveAbs( "moveAbs kappa 0");
-    md2cmds_moveAbs( "moveAbs omega 0");
-    md2cmds_moveAbs( "moveAbs appz In");
-    md2cmds_moveAbs( "moveAbs capz Cover");
-    md2cmds_moveAbs( "moveAbs scint Cover");
+    lspmac_home1_queue( kappa);
+    lspmac_home1_queue( omega);
+    lspmac_move_or_jog_abs_queue(    phi,   "manualMount", 0);
+    lspmac_move_or_jog_preset_queue( apery, "In", 1);
+    lspmac_move_or_jog_preset_queue( aperz, "In", 1);
+    lspmac_move_or_jog_preset_queue( capz,  "Cover", 1);
+    lspmac_move_or_jog_preset_queue( scint, "Cover", 1);
     md2cmds_moveAbs( "moveAbs backLight 0");
     md2cmds_moveAbs( "moveAbs backLight.intensity 0");
     md2cmds_moveAbs( "moveAbs cryo 1");
@@ -198,16 +177,22 @@ void md2cmds_phase_change( const char *ccmd) {
   } else if( strcmp( mode, "center") == 0) {
     md2cmds_moveAbs( "moveAbs kappa 0");
     md2cmds_moveAbs( "moveAbs omega 0");
-    md2cmds_moveAbs( "moveAbs appz In");
-    md2cmds_moveAbs( "moveAbs capz In");
-    md2cmds_moveAbs( "moveAbs scint Cover");
+    lspmac_move_or_jog_abs_queue(    phi,   "manualMount", 0);
+    lspmac_move_or_jog_preset_queue( apery, "In", 1);
+    lspmac_move_or_jog_preset_queue( aperz, "In", 1);
+    lspmac_move_or_jog_preset_queue( capy,  "In", 1);
+    lspmac_move_or_jog_preset_queue( capz,  "In", 1);
+    lspmac_move_or_jog_preset_queue( scint, "Cover", 1);
     md2cmds_moveAbs( "moveAbs backLight 1");
     md2cmds_moveAbs( "moveAbs zoom 1");
     md2cmds_moveAbs( "moveAbs cryo 0");
     md2cmds_moveAbs( "moveAbs fluo 0");
-  } if( strcmp( mode, "dataCollection") == 0) {
-    md2cmds_moveAbs( "moveAbs appz In");
-    md2cmds_moveAbs( "moveAbs capz In");
+  } else if( strcmp( mode, "dataCollection") == 0) {
+    lspmac_move_or_jog_preset_queue( apery, "In", 1);
+    lspmac_move_or_jog_preset_queue( aperz, "In", 1);
+    lspmac_move_or_jog_preset_queue( capy,  "In", 1);
+    lspmac_move_or_jog_preset_queue( capz,  "In", 1);
+    lspmac_move_or_jog_preset_queue( scint, "Cover", 1);
     md2cmds_moveAbs( "moveAbs backLight 0");
     md2cmds_moveAbs( "moveAbs backLight.intensity 0");
     md2cmds_moveAbs( "moveAbs cryo 0");
@@ -215,9 +200,23 @@ void md2cmds_phase_change( const char *ccmd) {
   } else if( strcmp( mode, "beamLocation") == 0) {
     md2cmds_moveAbs( "moveAbs kappa 0");
     md2cmds_moveAbs( "moveAbs omega 0");
-    md2cmds_moveAbs( "moveAbs appz Out");
-    md2cmds_moveAbs( "moveAbs capz Out");
-    md2cmds_moveAbs( "moveAbs scint Scintillator");
+    lspmac_move_or_jog_preset_queue( apery, "In", 1);
+    lspmac_move_or_jog_preset_queue( aperz, "In", 1);
+    lspmac_move_or_jog_preset_queue( capy,  "In", 1);
+    lspmac_move_or_jog_preset_queue( capz,  "In", 1);
+    lspmac_move_or_jog_preset_queue( scint, "Scintillator", 1);
+    md2cmds_moveAbs( "moveAbs backLight 0");
+    md2cmds_moveAbs( "moveAbs zoom 1");
+    md2cmds_moveAbs( "moveAbs cryo 0");
+    md2cmds_moveAbs( "moveAbs fluo 0");
+  } else if( strcmp( mode, "safe") == 0) {
+    md2cmds_moveAbs( "moveAbs kappa 0");
+    md2cmds_moveAbs( "moveAbs omega 0");
+    lspmac_move_or_jog_preset_queue( apery, "In", 1);
+    lspmac_move_or_jog_preset_queue( aperz, "Cover", 1);
+    lspmac_move_or_jog_preset_queue( capy,  "In", 1);
+    lspmac_move_or_jog_preset_queue( capz,  "Cover", 1);
+    lspmac_move_or_jog_preset_queue( scint, "Cover", 1);
     md2cmds_moveAbs( "moveAbs backLight 0");
     md2cmds_moveAbs( "moveAbs zoom 1");
     md2cmds_moveAbs( "moveAbs cryo 0");
@@ -234,40 +233,92 @@ void md2cmds_phase_change( const char *ccmd) {
  *  we can detect that the move happened.
  */
 void md2cmds_mvcenter_prep() {
-  //
-  // Clears the motion flags for coordinate systems 2 and 3
-  // Then sets them.
-  // Each time we wait until we've read back
-  // the changed values
-  //
-  // This guarantees that when we are waiting for motion to stop that it did, in fact, start
-  //
+  pmac_cmd_queue_t *pq;
+  int flag;
+
+  pthread_mutex_lock( &lspmac_moving_mutex);
+  flag = (lspmac_moving_flags & 6) != 0;
+  pthread_mutex_unlock( &lspmac_moving_mutex);
 
   //
-  // Clear the centering and alignment stage flags
+  // Only wait for the all clear if it's not all clear already
+  // Otherwise we may get confused
   //
-  lspmac_SockSendline( "M7075=(M7075 | 6) ^ 6");
+  if( flag) {
+    //
+    // Clears the motion flags for coordinate systems 2 and 3
+    // Then sets them.
+    // Each time we wait until we've read back
+    // the changed values
+    //
+    // This guarantees that when we are waiting for motion to stop that it did, in fact, start
+    //
+    
+    //
+    // Clear the centering and alignment stage flags
+    //
+    pq = lspmac_SockSendline( "M5075=(M5075 | 6) ^ 6");
+    
+    pthread_mutex_lock( &pmac_queue_mutex);
+    //
+    // wait for the command to be sent
+    //
+    while( pq->time_sent.tv_sec==0)
+      pthread_cond_wait( &pmac_queue_cond, &pmac_queue_mutex);
+    pthread_mutex_unlock( &pmac_queue_mutex);
+    
+    //
+    // Make sure the command propagates back to the status
+    //
+    pthread_mutex_lock( &lspmac_moving_mutex);
+    while( (lspmac_moving_flags & 6) != 0)
+      pthread_cond_wait( &lspmac_moving_cond, &lspmac_moving_mutex);
+
+    lslogging_log_message( "md2cmds_mvcenter_prep: lspmac_moving_flags = %d", lspmac_moving_flags);
+    pthread_mutex_unlock( &lspmac_moving_mutex);
+  }
+
+
+  //
+  // set a flag so the event listener doesn't send a callback too soon
+  //
+  pthread_mutex_lock( &md2cmds_moving_mutex);
+  md2cmds_moving_count = -1;
+  pthread_mutex_unlock( &md2cmds_moving_mutex);
+
+  //
+  // Now set the centering and alignment stage flags
+  //
+  pq = lspmac_SockSendline( "M5075=(M5075 | 6)");
+
+  pthread_mutex_lock( &pmac_queue_mutex);
+  //
+  // wait for the command to be sent
+  //
+  while( pq->time_sent.tv_sec==0)
+    pthread_cond_wait( &pmac_queue_cond, &pmac_queue_mutex);
+  pthread_mutex_unlock( &pmac_queue_mutex);
 
   //
   // Make sure it propagates
   //
   pthread_mutex_lock( &lspmac_moving_mutex);
-  while( lspmac_moving_flags & 6)
+  while( (lspmac_moving_flags & 6) != 6)
     pthread_cond_wait( &lspmac_moving_cond, &lspmac_moving_mutex);
-  pthread_mutex_unlock( &lspmac_moving_mutex);
 
-  //
-  // Set the centering and alignment stage flags
-  //
-  lspmac_SockSendline( "M7075=(M7075 | 6)");
-
-  //
-  // Make sure it propagates
-  //
-  pthread_mutex_lock( &lspmac_moving_mutex);
-  while( (lspmac_moving_flags & 6) == 0)
-    pthread_cond_wait( &lspmac_moving_cond, &lspmac_moving_mutex);
+  lslogging_log_message( "md2cmds_mvcenter_prep: lspmac_moving_flags = %d", lspmac_moving_flags);
   pthread_mutex_unlock( &lspmac_moving_mutex);
+}
+
+double md2cmds_prep_motion( lspmac_motor_t *mp, double pos) {
+  double rtn;
+  pthread_mutex_lock( &(mp->mutex));
+  rtn = mp->u2c   * pos;
+  mp->motion_seen = 0;
+  mp->not_done    = 1;
+  pthread_mutex_unlock( &(mp->mutex));
+
+  return rtn;
 }
 
 /** Move the centering and alignment tables
@@ -279,6 +330,7 @@ void md2cmds_mvcenter_move(
 			   double ay,	/**< [in] Requested Alignment Table Y		*/
 			   double az	/**< [in] Requested Alignment Table Z		*/
 			   ) {
+  
   //
   // centering stage is coordinate system 2
   // alignment stage is coordinate system 3
@@ -286,14 +338,14 @@ void md2cmds_mvcenter_move(
   
   double cx_cts, cy_cts, ax_cts, ay_cts, az_cts;
 
-  cx_cts = cenx->u2c   * cx;
-  cy_cts = ceny->u2c   * cy;
-  ax_cts = alignx->u2c * ax;
-  ay_cts = aligny->u2c * ay;
-  az_cts = alignz->u2c * az;
+  cx_cts = md2cmds_prep_motion( cenx, cx);
+  cy_cts = md2cmds_prep_motion( ceny, cy);
+  ax_cts = md2cmds_prep_motion( alignx, ax);
+  ay_cts = md2cmds_prep_motion( aligny, ay);
+  az_cts = md2cmds_prep_motion( alignz, az);
 
-  lspmac_SockSendline( "M7075=(M7075 | 2) &2 Q100=2 Q20=%.1f Q21=%.1f B150R", cx_cts, cy_cts);
-  lspmac_SockSendline( "M7075=(M7075 | 4) &3 Q100=4 Q30=%.1f Q31=%.1f Q32=%.1f B160R", ax_cts, ay_cts, az_cts);
+  lspmac_SockSendline( "&2 Q100=2 Q20=%.1f Q21=%.1f B150R", cx_cts, cy_cts);
+  md2cmds_moving_pq = lspmac_SockSendline( "&3 Q100=4 Q30=%.1f Q31=%.1f Q32=%.1f B160R", ax_cts, ay_cts, az_cts);
   
 }
 
@@ -302,14 +354,64 @@ void md2cmds_mvcenter_move(
 void md2cmds_mvcenter_wait() {
   //
   // Just wait until the motion flags are lowered
+  // Note this does not mean the motors are done moving,
+  // just that the motion program is done.
+  // 
+  // Look for the "In Position" events to see if we are really done
   //
+  // We are assuming that the "Moving" callback was received and acted on
+  // before the motion programs have all finished.  Probably a reasonable
+  // expectation but not really guaranteed
+  //
+
+  pthread_mutex_lock( &pmac_queue_mutex);
+  //
+  // wait for the command to be sent
+  //
+  while( md2cmds_moving_pq->time_sent.tv_sec==0)
+    pthread_cond_wait( &pmac_queue_cond, &pmac_queue_mutex);
+  pthread_mutex_unlock( &pmac_queue_mutex);
+
 
   pthread_mutex_lock( &lspmac_moving_mutex);
   while( lspmac_moving_flags & 6)
     pthread_cond_wait( &lspmac_moving_cond, &lspmac_moving_mutex);
   pthread_mutex_unlock( &lspmac_moving_mutex);
+
+  pthread_mutex_lock( &md2cmds_moving_mutex);
+  while( md2cmds_moving_count > 0)
+    pthread_cond_wait( &md2cmds_moving_cond, &md2cmds_moving_mutex);
+  pthread_mutex_unlock( &md2cmds_moving_mutex);
 }
 
+
+/** Track how many motors are moving
+ */
+void md2cmds_maybe_done_moving_cb( char *event) {
+
+  pthread_mutex_lock(   &md2cmds_moving_mutex);
+  if( strstr( event, "Moving") != NULL) {
+    //
+    // -1 is a flag indicating we're expecting some action
+    //
+    if( md2cmds_moving_count == -1)
+      md2cmds_moving_count = 1;
+    else
+      md2cmds_moving_count++;
+  } else {
+    //
+    // Shouldn't need this but just in case a move was not finished before we're ready
+    // this might take care of the problem
+    //
+    if( md2cmds_moving_count > 0)
+      md2cmds_moving_count--;
+  }
+
+  if( md2cmds_moving_count == 0)
+    pthread_cond_signal( &md2cmds_moving_cond);
+  pthread_mutex_unlock( &md2cmds_moving_mutex);
+  
+}
 
 /** Collect some data
  */
@@ -320,13 +422,8 @@ void md2cmds_collect() {
   double p173;	// omega velocity cnts/msec
   double p175;	// acceleration time (msec)
   double p180;	// exposure time (msec)
-  FILE *zzlog;
-  struct timeval tt_base, tt_now;
   int center_request;
 
-  zzlog = fopen( "/tmp/collect_log.txt", "w");
-  fprintf( zzlog, "%s: Start md2cmds\n", logtime());
-  fflush( zzlog);
 
   //
   // reset shutter has opened flag
@@ -335,20 +432,12 @@ void md2cmds_collect() {
 
 
   while( 1) {
-    fprintf( zzlog, "%s: call lspg_nextshot_call\n", logtime());
-    fflush( zzlog);
     lspg_nextshot_call();
 
     //
     // This is where we'd tell the md2 to move the organs into position
     //
-
-    fprintf( zzlog, "%s: call lspg_nextshot_wait\n", logtime());
-    fflush( zzlog);
-
     lspg_nextshot_wait();
-    fprintf( zzlog, "%s: returned from  lspg_nextshot_wait\n", logtime());
-    fflush( zzlog);
 
     if( lspg_nextshot.no_rows_returned) {
       lspg_nextshot_done();
@@ -413,9 +502,6 @@ void md2cmds_collect() {
     //
     lspg_nextshot_done();
 
-    fprintf( zzlog, "%s: finished with lspg_nextshot_done, calling lspg_seq_run_prep_all\n", logtime());
-    fflush( zzlog);
-
     //
     // prepare the database and detector to expose
     // On exit we own the diffractometer lock and
@@ -432,8 +518,6 @@ void md2cmds_collect() {
 			   );
 
     
-    fprintf( zzlog, "%s: finished with lspg_seq_run_prep_all\n", logtime());
-    fflush( zzlog);
     //
     // make sure our has opened flag is down
     // wait for the p3001=0 command to be noticed
@@ -450,8 +534,6 @@ void md2cmds_collect() {
 			 p170,      p171,     p173,            p175,                          p180);
 
 
-    fprintf( zzlog, "%s: sent command to pmac\n", logtime());
-    fflush( zzlog);
 
     //
     // wait for the shutter to open
@@ -460,8 +542,6 @@ void md2cmds_collect() {
     if( lspmac_shutter_has_opened == 0)
       pthread_cond_wait( &lspmac_shutter_cond, &lspmac_shutter_mutex);
 
-    fprintf( zzlog, "%s: shutter has opened\n", logtime());
-    fflush( zzlog);
 
     //
     // wait for the shutter to close
@@ -470,14 +550,8 @@ void md2cmds_collect() {
       pthread_cond_wait( &lspmac_shutter_cond, &lspmac_shutter_mutex);
     pthread_mutex_unlock( &lspmac_shutter_mutex);
 
-    fprintf( zzlog, "%s: shutter now closed, unlocking diffractometer\n", logtime());
-    fflush( zzlog);
-
 
     lspg_query_push( NULL, "SELECT px.unlock_diffractometer()");
-
-    fprintf( zzlog, "%s: unlocked diffractometer\n", logtime());
-    fflush( zzlog);
 
     lspg_query_push( NULL, "SELECT px.shots_set_state(%lld, 'Writing')", skey);
 
@@ -503,19 +577,25 @@ void md2cmds_collect() {
 	md2cmds_mvcenter_prep();
 	md2cmds_mvcenter_move( lspg_nextshot.cx, lspg_nextshot.cy, lspg_nextshot.ax, lspg_nextshot.ay, lspg_nextshot.az);
 	md2cmds_mvcenter_wait();
+	lspmac_moveabs_wait( cenx);
+	lspmac_moveabs_wait( ceny);
+	lspmac_moveabs_wait( alignx);
+	lspmac_moveabs_wait( aligny);
+	lspmac_moveabs_wait( alignz);
       }
     }
 
   }
-  fprintf( zzlog, "%s: done\n", logtime());
-  fflush( zzlog);
-  fclose( zzlog);
 }
 
 /** Spin 360 and make a video (recenter first, maybe)
  *  
  */
 void md2cmds_rotate() {
+  int v;		//!< velocity (cnts/msec) for omega
+  double cx, cy, ax, ay, az;
+  struct timespec snooze;
+
   //
   // BLUMax disables scintilator here.
   //
@@ -523,25 +603,25 @@ void md2cmds_rotate() {
   //
   // get the new center information
   //
+  lslogging_log_message( "md2cmds_rotate: calling getcenter");
   lspg_getcenter_call();
 
+  lslogging_log_message( "md2cmds_rotate: wait for getcenter");
   lspg_getcenter_wait();
 
 
+  lslogging_log_message( "md2cmds_rotate: moving backlight up");
   // put up the back light
   blight_ud->moveAbs( blight_ud, 1);
 
   if( lspg_getcenter.no_rows_returned) {
     //
-    // the other case is considered below
-    // Bottom line, zoom is always defined
+    // Always specify zoom even if no other center information is found
     //
     zoom->moveAbs( zoom, 1);	// default zoom is 1
-  }
-
-
-  if( lspg_getcenter.no_rows_returned == 0) {
-    double cx, cy, ax, ay, az;
+  } else {
+    lslogging_log_message( "md2cmds_rotate: getcenter returned dcx %f, dcy %f, dax %f, day %f, daz %f, zoom %d",
+			   lspg_getcenter.dcx, lspg_getcenter.dcy, lspg_getcenter.dax, lspg_getcenter.day, lspg_getcenter.daz,lspg_getcenter.zoom);
 
     if( lspg_getcenter.zoom_isnull == 0) {
       zoom->moveAbs( zoom, lspg_getcenter.zoom);
@@ -550,50 +630,99 @@ void md2cmds_rotate() {
     }
 
     //
-    // OK, why not just implement a nice getter that does the locking transparently?  UGLY!
+    // Grab the current positions and perhaps add the tad specified by getcenter
     //
-    pthread_mutex_lock( &(cenx->mutex));
-    cx = cenx->position;
-    pthread_mutex_unlock( &(cenx->mutex));
+    cx = lspmac_getPosition( cenx);
+    cy = lspmac_getPosition( ceny);
+    ax = lspmac_getPosition( alignx);
+    ay = lspmac_getPosition( aligny);
+    az = lspmac_getPosition( alignz);
+    lslogging_log_message( "md2cmds_rotate: actual positions cx %f, cy %f, ax %f, ay %f, az %f", cx, cy, ax, ay, az);
+
     if( lspg_getcenter.dcx_isnull == 0)
       cx += lspg_getcenter.dcx;
 
-    pthread_mutex_lock( &(ceny->mutex));
-    cy = ceny->position;
-    pthread_mutex_unlock( &(ceny->mutex));
     if( lspg_getcenter.dcy_isnull == 0)
       cy  += lspg_getcenter.dcy;
 			  
-    pthread_mutex_lock( &(alignx->mutex));
-    ax = alignx->position;
-    pthread_mutex_unlock( &(alignx->mutex));
     if( lspg_getcenter.dax_isnull == 0)
       ax  += lspg_getcenter.dax;
 
-    pthread_mutex_lock( &(aligny->mutex));
-    ay = aligny->position;
-    pthread_mutex_unlock( &(aligny->mutex));
     if( lspg_getcenter.day_isnull == 0)
       ay  += lspg_getcenter.day;
 			  
-    pthread_mutex_lock( &(alignz->mutex));
-    az = alignz->position;
-    pthread_mutex_unlock( &(alignz->mutex));
     if( lspg_getcenter.daz_isnull == 0)
       az  += lspg_getcenter.daz;
 			  
+    lslogging_log_message( "md2cmds_rotate: requested positions cx %f, cy %f, ax %f, ay %f, az %f", cx, cy, ax, ay, az);
+
+    md2cmds_mvcenter_prep();
+    lslogging_log_message( "md2cmds_rotate: moving center");
     md2cmds_mvcenter_move( cx, cy, ax, ay, az);
+
+
+    lslogging_log_message( "md2cmds_rotate: waiting for center move");
     md2cmds_mvcenter_wait();
+    lslogging_log_message( "md2cmds_rotate: done waiting");
   }
   lspg_getcenter_done();
 
-  // Home omega
-  lspmac_SockSendline("M401=1 M1115=1 #1$ &1B1R");
 
+  // Omega was just homed before we mounted the sample, don't do it again here
   
-  
-  
+  // Report new center positions
+  cx = lspmac_getPosition( cenx);
+  cy = lspmac_getPosition( ceny);
+  ax = lspmac_getPosition( alignx);
+  ay = lspmac_getPosition( aligny);
+  az = lspmac_getPosition( alignz);
+  lspg_query_push( NULL, "SELECT px.applycenter( %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f)", cx, cy, ax, ay, az, lspmac_getPosition(kappa), lspmac_getPosition( phi));
+
+  lspmac_moveabs_wait( zoom);
+
+  lslogging_log_message( "md2cmds_rotate: done with applycenter");
+  lspmac_video_rotate( 4.0);
+  lslogging_log_message( "md2cmds_rotate: starting rotation");
+  rotating = 1;
 }
+
+/** Tell the database about the time we went through omega=zero.
+ *  This should trigger the video feed server to starting making a movie.
+ */
+void md2cmds_rotate_cb( char *event) {
+  struct tm t;
+  int usecs;
+
+  localtime_r( &(omega_zero_time.tv_sec), &t);
+  
+  lslogging_log_message( "md2cmds_rotate_cb: Here I am");
+
+  usecs = omega_zero_time.tv_nsec / 1000;
+  lspg_query_push( NULL, "SELECT px.trigcam('%d-%d-%d %d:%d:%d.%06d', %d, 0.0, 90.0)",
+		   t.tm_year+1900, t.tm_mon+1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec, usecs,
+		   (int)(lspmac_getPosition( zoom)));
+
+}
+
+/** Now that we are done with the 360 rotation lets rehome right quick
+ */
+void md2cmds_maybe_rotate_done_cb( char *event) {
+  if( rotating) {
+    rotating = 0;
+    lspmac_home1_queue( omega);
+  }
+}
+
+
+/** Fix up xscale and yscale when zoom changes
+ */
+void md2cmds_set_scale_cb( char *event) {
+  int mag;
+
+  mag = lspmac_getPosition( zoom);
+  lspg_query_push( NULL, "SELECT pmac.md2_set_scales( %d)", mag);
+}
+
 
 /** Move centering and alignment tables as requested
  *  TODO: Implement
@@ -645,13 +774,27 @@ void md2cmds_init() {
   pthread_mutex_init( &md2cmds_mutex, NULL);
   pthread_cond_init( &md2cmds_cond, NULL);
 
-  pthread_mutex_init( &md2cmds_pg_mutex, NULL);
-  pthread_cond_init( &md2cmds_pg_cond, NULL);
+  pthread_mutex_init( &md2cmds_moving_mutex, NULL);
+  pthread_cond_init(  &md2cmds_moving_cond, NULL);
+
 
 }
 
 /** Start up the thread
  */
 void md2cmds_run() {
-  pthread_create( &md2cmds_thread, NULL, md2cmds_worker, NULL);
+  pthread_create( &md2cmds_thread, NULL,            md2cmds_worker, NULL);
+  lsevents_add_listener( "omega crossed zero",      md2cmds_rotate_cb);
+  lsevents_add_listener( "omega In Position",       md2cmds_maybe_rotate_done_cb);
+  lsevents_add_listener( "align.x In Position",     md2cmds_maybe_done_moving_cb);
+  lsevents_add_listener( "align.y In Position",     md2cmds_maybe_done_moving_cb);
+  lsevents_add_listener( "align.z In Position",     md2cmds_maybe_done_moving_cb);
+  lsevents_add_listener( "centering.x In Position", md2cmds_maybe_done_moving_cb);
+  lsevents_add_listener( "centering.y In Position", md2cmds_maybe_done_moving_cb);
+  lsevents_add_listener( "align.x Moving",          md2cmds_maybe_done_moving_cb);
+  lsevents_add_listener( "align.y Moving",          md2cmds_maybe_done_moving_cb);
+  lsevents_add_listener( "align.z Moving",          md2cmds_maybe_done_moving_cb);
+  lsevents_add_listener( "centering.x Moving",      md2cmds_maybe_done_moving_cb);
+  lsevents_add_listener( "centering.y Moving",      md2cmds_maybe_done_moving_cb);
+  lsevents_add_listener( "cam.zoom In Position",    md2cmds_set_scale_cb);
 }
