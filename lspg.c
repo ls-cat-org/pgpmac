@@ -57,7 +57,7 @@ typedef struct lspgQueryQueueStruct {
  *  We should be safe as long as the thread the adds stuff to the queue is not
  *  the one that removes it.  (And we can tolerate the adding thread being paused.)
  */
-#define LS_PG_QUERY_QUEUE_LENGTH 256
+#define LS_PG_QUERY_QUEUE_LENGTH 16384
 static lspg_query_queue_t lspg_query_queue[LS_PG_QUERY_QUEUE_LENGTH];	//!< Our query queue
 static unsigned int lspg_query_queue_on    = 0;				//!< Next position to add something to the queue
 static unsigned int lspg_query_queue_off   = 0;				//!< The last item still being used  (on == off means nothing in queue)
@@ -206,9 +206,6 @@ char **lspg_array2ptrs( char *a) {
   }
   rtni = 0;
   
-  lslogging_log_message( "lspg_array2ptrs: enter with %s", a);
-
-
   // Go through and create the individual strings
   sp = acums;
   *sp = 0;
@@ -290,7 +287,7 @@ void lspg_init_motors_cb(
 			 ) {
   int i, j;
   uint32_t  motor_number, motor_number_column, max_speed_column, max_accel_column, home_column;
-  uint32_t units_column, coord_column, name_column;
+  uint32_t units_column, coord_column, name_column, axis_column;
   uint32_t u2c_column;
   uint32_t format_column;
   uint32_t update_resolution_column;
@@ -305,6 +302,7 @@ void lspg_init_motors_cb(
   motor_number_column      = PQfnumber( pgr, "mm_motor");
   coord_column		   = PQfnumber( pgr, "mm_coord");
   units_column             = PQfnumber( pgr, "mm_unit");
+  axis_column		   = PQfnumber( pgr, "mm_axis");
   u2c_column               = PQfnumber( pgr, "mm_u2c");
   format_column            = PQfnumber( pgr, "mm_printf");
   max_speed_column         = PQfnumber( pgr, "mm_max_speed");
@@ -328,7 +326,14 @@ void lspg_init_motors_cb(
 	lsdp->max_accel         = atof(PQgetvalue( pgr, i, max_accel_column));
 	lsdp->update_resolution = atof(PQgetvalue( pgr, i, update_resolution_column));
 	lsdp->update_format     = strdup( PQgetvalue( pgr, i, update_format_column));
+
+	if( PQgetisnull( pgr, i, axis_column))
+	  lsdp->axis            = NULL;
+	else
+	  lsdp->axis            = strdup(PQgetvalue( pgr, i, axis_column));
+
 	lsdp->home              = lspg_array2ptrs( PQgetvalue( pgr, i, home_column));
+
 	lsdp->lspg_initialized  = 1;
 	break;
       }
@@ -991,7 +996,7 @@ void lspg_seq_run_prep_all(
   lspg_seq_run_prep_done();
 }
 
-/** TODO: implement getcenter code
+/** Retrieve the data to center the crystal
  */
 void lspg_getcenter_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   static int
