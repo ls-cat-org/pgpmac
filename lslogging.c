@@ -94,8 +94,8 @@ void *lslogging_worker(
     localtime_r( &(lslogging_queue[off].ltime.tv_sec), &coarsetime);
     strftime( tstr, sizeof(tstr)-1, "%Y-%m-%d %H:%M:%S", &coarsetime);
     tstr[sizeof(tstr)-1] = 0;
-    msecs = lslogging_queue[off].ltime.tv_nsec / 1000000;
-    fprintf( lslogging_file, "%s.%.03u  %s\n", tstr, msecs, lslogging_queue[off].lmsg);
+    msecs = lslogging_queue[off].ltime.tv_nsec / 1000;
+    fprintf( lslogging_file, "%s.%.06u  %s\n", tstr, msecs, lslogging_queue[off].lmsg);
     fflush( lslogging_file);
   }
 }
