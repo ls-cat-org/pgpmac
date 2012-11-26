@@ -68,7 +68,6 @@ double lskvs_find_preset_position( lspmac_motor_t *mp, char *name, int *err) {
   if( name_kv != NULL || position_kv != NULL) {
     errno = 0;
     rtn = strtod( position_kv->kvs->v, NULL);
-    lslogging_log_message( "lskvs_find_preset_position: v = '%s', rtn = %f", position_kv->kvs->v, rtn);
     if( errno != 0) {
       lslogging_log_message( "lskvs_find_preset_position: bad preset value for motor %s, preset %s, value '%s'", mp->name, name, position_kv->kvs->v);
       if( err != NULL)
