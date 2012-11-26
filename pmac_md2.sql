@@ -211,7 +211,7 @@ CREATE OR REPLACE FUNCTION pmac.md2_init( the_stn int) returns void as $$
   --
   -- Set flag for PLCC 0 to initialize (or reset) various motor settings
   --
-  PERFORM pmac.md2_queue_push( the_stn, 'M2000=1');
+  --  PERFORM pmac.md2_queue_push( the_stn, 'M2000=1');
 
   END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -292,6 +292,7 @@ CREATE TABLE pmac.md2_motors (
        mm_home text[],                  -- PMAC commands to activate and home motor
        mm_motor int default -1,         -- motor number
        mm_coord int default 0,          -- coordinate system number
+       mm_axis text default NULL,	-- The name of the axis (X, Y, Z, etc)
        mm_unit text,                    -- name of unit
        mm_u2c float,                    -- Conversion between encoder counts and units
        mm_max_speed float,              -- maximum speed (Ixx16) in counts/msec
@@ -304,104 +305,104 @@ CREATE TABLE pmac.md2_motors (
 );
 ALTER TABLE pmac.md2_motors OWNER TO lsadmin;
 
-INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,  mm_update_resolution, mm_update_format) VALUES
-                            ( 2,     'PMAC',  1,        1,        'omega',  'deg',   12800.0,  1664.0,       2.0,          '%*.4f°',   '-Infinity', 'Infinity', 0.001,               '"omega.position",%.3f');
+INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_axis, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,  mm_update_resolution, mm_update_format) VALUES
+                            ( 2,     'PMAC',  1,        1,        'A',     'omega',  'deg',   12800.0,  1664.0,       2.0,          '%*.4f°',   '-Infinity', 'Infinity', 0.001,               '"omega.position",%.3f');
 
-UPDATE pmac.md2_motors SET mm_active_init   = '{"M31=1", "&1#1->X", "M700=(M700 | $000001) ^ $000001", "M1115=1"}' WHERE mm_motor=1;
+UPDATE pmac.md2_motors SET mm_active_init   = '{"M31=1", "&1#1->A", "M700=(M700 | $000001) ^ $000001", "M1115=1"}' WHERE mm_motor=1;
 UPDATE pmac.md2_motors SET mm_inactive_init = '{"M31=0", "&1#1->0", "M700=M700 | $000001", "M1115=0"}' WHERE mm_motor=1;
 UPDATE pmac.md2_motors SET mm_home          = '{"M401=1 M1115=1 #1$","&1E","#1&1B1R"}' WHERE mm_motor=1;
 
-INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,  mm_update_resolution, mm_update_format) VALUES
-                            ( 2,     'PMAC',  2,        3,        'align.x', 'mm',    60620.8,  121.0,        0.5,           '%*.3f mm',  0.01,         4.0,    0.001,                '"align.x.position",%.3f');
+INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_axis, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,  mm_update_resolution, mm_update_format) VALUES
+                            ( 2,     'PMAC',  2,        3,        'X',     'align.x', 'mm',    60620.8,  121.0,        0.5,           '%*.3f mm',  0.01,         4.0,    0.001,                '"align.x.position",%.3f');
 
 UPDATE pmac.md2_motors SET mm_active_init   = '{"M32=1", "&3#2->X", "M700=(M700 | $000002) ^ $000002"}' WHERE mm_motor=2;
 UPDATE pmac.md2_motors SET mm_inactive_init = '{"M32=0", "&3#2->0", "M700=M700 | $000002"}' WHERE mm_motor=2;
 UPDATE pmac.md2_motors SET mm_home          = '{"#2$","M402=1","&3E","#2&3B2R"}' WHERE mm_motor=2;
 
-INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,  mm_update_resolution, mm_update_format) VALUES
-                            ( 2,     'PMAC',  3,        3,        'align.y', 'mm',    60620.8,  121.0,        0.5,           '%*.3f mm',  0.16,         16.15,  0.001,                '"align.y.position",%.3f');
+INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_axis, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,  mm_update_resolution, mm_update_format) VALUES
+                            ( 2,     'PMAC',  3,        3,        'Y',     'align.y', 'mm',    60620.8,  121.0,        0.5,           '%*.3f mm',  0.16,         16.15,  0.001,                '"align.y.position",%.3f');
 
 UPDATE pmac.md2_motors SET mm_active_init   = '{"M33=1", "&3#3->Y", "M700=(M700 | $000004) ^ $000004"}' WHERE mm_motor=3;
 UPDATE pmac.md2_motors SET mm_inactive_init = '{"M33=0", "&3#3->0", "M700=M700 | $000004"}' WHERE mm_motor=3;
 UPDATE pmac.md2_motors SET mm_home          = '{"#3$","M403=1","&3E","#3&3B3R"}' WHERE mm_motor=3;
 
-INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,  mm_update_resolution, mm_update_format) VALUES
-                            ( 2,     'PMAC',  4,        3,        'align.z', 'mm',    60620.8,  121.0,        0.5,           '%*.3f mm',  0.45,         5.85,   0.001,                '"align.z.position",%.3f');
+INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_axis, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,  mm_update_resolution, mm_update_format) VALUES
+                            ( 2,     'PMAC',  4,        3,        'Z',     'align.z', 'mm',    60620.8,  121.0,        0.5,           '%*.3f mm',  0.45,         5.85,   0.001,                '"align.z.position",%.3f');
 
 UPDATE pmac.md2_motors SET mm_active_init   = '{"M34=1", "&3#4->Z", "M700=(M700 | $000008) ^ $000008"}' WHERE mm_motor=4;
 UPDATE pmac.md2_motors SET mm_inactive_init = '{"M34=0", "&3#4->0", "M700=M700 | $000008"}' WHERE mm_motor=4;
 UPDATE pmac.md2_motors SET mm_home          = '{"#4$","M404=1","&3E","#4&3B4R"}' WHERE mm_motor=4;
 
-INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,   mm_update_resolution, mm_update_format) VALUES
-                            ( 2,     'PMAC',  5,        0,        'lightPolar',   'deg',   142.0,    3.0,          0.2,          '%*.0f°',   '-Infinity', 'Infinity', 1.0,                  '"lightPolar.position",%.1f');
+INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_axis, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,   mm_update_resolution, mm_update_format) VALUES
+                            ( 2,     'PMAC',  5,        0,        NULL,    'lightPolar',   'deg',   142.0,    3.0,          0.2,          '%*.0f°',   '-Infinity', 'Infinity', 1.0,                  '"lightPolar.position",%.1f');
 
 UPDATE pmac.md2_motors SET mm_home          = '{#5$,#5HMZ}' WHERE mm_motor=5;
 
-INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,  mm_update_resolution, mm_update_format) VALUES
-                            ( 2,     'PMAC',  6,        4,        'zoom',   'X mag',   1.0,      10.0,         0.2,          '%*.0fX Mag',   0.0,      10,       0.5,                   '"zoom.position",%.0f');
+INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_axis, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,  mm_update_resolution, mm_update_format) VALUES
+                            ( 2,     'PMAC',  6,        4,        'Z',     'cam.zoom',   'X mag',   1.0,      10.0,         0.2,          '%*.0fX Mag',   0.0,      10,       0.5,                 '"cam.zoom",%.0f');
 
 UPDATE pmac.md2_motors SET mm_active_init   = '{"M36=1", "&4#6->Z", "M700=(M700 | $000020) ^ $000020"}' WHERE mm_motor=6;
 UPDATE pmac.md2_motors SET mm_inactive_init = '{"M36=0", "&4#6->0", "M700=M700 | $000020"}' WHERE mm_motor=6;
 UPDATE pmac.md2_motors SET mm_home          = '{"#6$","M406=1","&4E","#6&4B6R"}' WHERE mm_motor=6;
 
-INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,  mm_update_resolution, mm_update_format) VALUES
-                            ( 2,     'PMAC',  7,        5,        'appy',  'mm',    121241.6, 201.0,        1.0,          '%*.3f mm',   0.2,         3.25,    0.001,                '"appy.position",%.3f');
+INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_axis, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,  mm_update_resolution, mm_update_format) VALUES
+                            ( 2,     'PMAC',  7,        5,        'Y',     'appy',  'mm',    121241.6, 201.0,        1.0,          '%*.3f mm',   0.2,         3.25,    0.001,                '"appy.position",%.3f');
 
 UPDATE pmac.md2_motors SET mm_active_init   = '{"M37=1", "&5#7->Y", "M700=(M700 | $000040) ^ $000040"}' WHERE mm_motor=7;
 UPDATE pmac.md2_motors SET mm_inactive_init = '{"M37=0", "&5#7->0", "M700=M700 | $000040"}' WHERE mm_motor=7;
 UPDATE pmac.md2_motors SET mm_home          = '{"#7$","M407=1","&5E","#7&5B7R"}' WHERE mm_motor=7;
 
-INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,  mm_update_resolution, mm_update_format) VALUES
-                            ( 2,     'PMAC',  8,        5,        'appz',  'mm',    60620.8,  201.0,        1.0,          '%*.3f mm',   0.3,         82.5,    0.001,                '"appz.position",%.3f');
+INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_axis, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,  mm_update_resolution, mm_update_format) VALUES
+                            ( 2,     'PMAC',  8,        5,        'Z',     'appz',  'mm',    60620.8,  201.0,        1.0,          '%*.3f mm',   0.3,         82.5,    0.001,                '"appz.position",%.3f');
 
 UPDATE pmac.md2_motors SET mm_active_init   = '{"M38=1", "&5#8->Z", "M700=(M700 | $000080) ^ $000080"}' WHERE mm_motor=8;
 UPDATE pmac.md2_motors SET mm_inactive_init = '{"M38=0", "&5#8->0", "M700=M700 | $000080"}' WHERE mm_motor=8;
 UPDATE pmac.md2_motors SET mm_home          = '{"#8$","M408=1","&5E","#8&5B8R"}' WHERE mm_motor=8;
 
-INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,  mm_update_resolution, mm_update_format) VALUES
-                            ( 2,     'PMAC',  9,        5,        'capy',   'mm',    121241.6, 201.0,        1.0,          '%*.3f mm',   0.05,        3.19,    0.001,                '"capy.position",%.3f');
+INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_axis, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,  mm_update_resolution, mm_update_format) VALUES
+                            ( 2,     'PMAC',  9,        5,        'U',     'capy',   'mm',    121241.6, 201.0,        1.0,          '%*.3f mm',   0.05,        3.19,    0.001,                '"capy.position",%.3f');
 
 UPDATE pmac.md2_motors SET mm_active_init   = '{"M39=1", "&5#9->U", "M700=(M700 | $000100) ^ $000100"}' WHERE mm_motor=9;
 UPDATE pmac.md2_motors SET mm_inactive_init = '{"M39=0", "&5#9->0", "M700=M700 | $000100"}' WHERE mm_motor=9;
 UPDATE pmac.md2_motors SET mm_home          = '{"#9$","M409=1","&5E","#9&5B9R"}' WHERE mm_motor=9;
 
-INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,  mm_update_resolution, mm_update_format) VALUES
-                            ( 2,     'PMAC',  10,       5,        'capz',  'mm',     19865.6,  201.0,        0.5,          '%*.3f mm',   0.57,        81.49,   0.001,                '"capz.position",%.3f');
+INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_axis, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,  mm_update_resolution, mm_update_format) VALUES
+                            ( 2,     'PMAC',  10,       5,        'V',     'capz',  'mm',     19865.6,  201.0,        0.5,          '%*.3f mm',   0.57,        81.49,   0.001,                '"capz.position",%.3f');
 
 UPDATE pmac.md2_motors SET mm_active_init   = '{"M40=1", "&5#10->V", "M700=(M700 | $000200) ^ $000200"}' WHERE mm_motor=10;
 UPDATE pmac.md2_motors SET mm_inactive_init = '{"M40=0", "&5#10->0", "M700=M700 | $000200"}' WHERE mm_motor=10;
 UPDATE pmac.md2_motors SET mm_home          = '{"#10$","M410=1","&5E","#10&5B10R"}' WHERE mm_motor=10;
 
-INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,  mm_update_resolution, mm_update_format) VALUES
-                            ( 2,     'PMAC',  11,       5,        'scint',  'mm',     19865.6,  151.0,        0.5,          '%*.3f mm',   0.02,        86.1,    0.001,                '"scint.position",%.3f');
+INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_axis, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,  mm_update_resolution, mm_update_format) VALUES
+                            ( 2,     'PMAC',  11,       5,        'W',     'scint',  'mm',     19865.6,  151.0,        0.5,          '%*.3f mm',   0.02,        86.1,    0.001,                '"scint.position",%.3f');
 
 UPDATE pmac.md2_motors SET mm_active_init   = '{"M41=1", "&5#11->W", "M700=(M700 | $000400) ^ $000400"}' WHERE mm_motor=11;
 UPDATE pmac.md2_motors SET mm_inactive_init = '{"M41=0", "&5#11->0", "M700=M700 | $000400"}' WHERE mm_motor=11;
 UPDATE pmac.md2_motors SET mm_home          = '{"#11$","M411=1","&5E","#11&5B11R"}' WHERE mm_motor=11;
 
-INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,  mm_update_resolution, mm_update_format) VALUES
-                            ( 2,     'PMAC',  17,       2,        'centering.x',  'mm',     182400.,  150.0,        0.5,          '%*.3f mm',   -2.56,       2.496,   0.001,                '"centering.x.position",%.3f');
+INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_axis, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,  mm_update_resolution, mm_update_format) VALUES
+                            ( 2,     'PMAC',  17,       2,        'X',     'centering.x',  'mm',     182400.,  150.0,        0.5,          '%*.3f mm',   -2.56,       2.496,   0.001,                '"centering.x.position",%.3f');
 
 UPDATE pmac.md2_motors SET mm_active_init   = '{"M47=1", "&2#17->X", "M700=(M700 | $010000) ^ $010000"}' WHERE mm_motor=17;
 UPDATE pmac.md2_motors SET mm_inactive_init = '{"M47=0", "&2#17->0", "M700=M700 | $010000"}' WHERE mm_motor=17;
 UPDATE pmac.md2_motors SET mm_home          = '{"#17$","M417=1","&2E","#17&2B17R"}' WHERE mm_motor = 17;
 
-INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,  mm_update_resolution, mm_update_format) VALUES
-                            ( 2,     'PMAC',  18,       2,        'centering.y',  'mm',     182400.,  150.0,        0.5,          '%*.3f mm',   -2.58,       2.4,     0.001,                '"centering.y.position",%.3f');
+INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_axis, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,  mm_update_resolution, mm_update_format) VALUES
+                            ( 2,     'PMAC',  18,       2,        'Y',     'centering.y',  'mm',     182400.,  150.0,        0.5,          '%*.3f mm',   -2.58,       2.4,     0.001,                '"centering.y.position",%.3f');
 
 UPDATE pmac.md2_motors SET mm_active_init   = '{"M48=1", "&2#18->Y", "M700=(M700 | $020000) ^ $020000"}' WHERE mm_motor=18;
 UPDATE pmac.md2_motors SET mm_inactive_init = '{"M48=0", "&2#18->0", "M700=M700 | $020000"}' WHERE mm_motor=18;
 UPDATE pmac.md2_motors SET mm_home          = '{"#18$","M418=1","&2E","#18&2B18R"}' WHERE mm_motor=18;
 
-INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,  mm_update_resolution, mm_update_format) VALUES
-                            ( 2,     'PMAC',  19,       7,        'kappa', 'deg',    2844.444, 50.0,         0.2,          '%*.2f°',     -5.0,        248.0,   0.1,                  '"kappa.position",%.3f');
+INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_axis, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,    mm_min,      mm_max,  mm_update_resolution, mm_update_format) VALUES
+                            ( 2,     'PMAC',  19,       7,        'X',     'kappa', 'deg',    2844.444, 50.0,         0.2,          '%*.2f°',     -5.0,        248.0,   0.1,                  '"kappa.position",%.3f');
 
 UPDATE pmac.md2_motors SET mm_active_init   = '{"M49=1", "&7#19->X", "M700=(M700 | $040000) ^ $040000"}' WHERE mm_motor=19;
 UPDATE pmac.md2_motors SET mm_inactive_init = '{"M49=0", "&7#19->0", "M700=M700 | $040000"}' WHERE mm_motor=19;
 UPDATE pmac.md2_motors SET mm_home          = '{"#19$","M419=1","&7E","#19&7B119R"}' WHERE mm_motor=19;
 
-INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,   mm_min,      mm_max,      mm_update_resolution, mm_update_format) VALUES
-                            ( 2,     'PMAC',  20,       7,        'phi',   'deg',    711.111,  50,           0.2,          '%*.2f°',    '-Infinity', 'Infinity',  1.0,                  '"phi.position",%.2f');
+INSERT INTO pmac.md2_motors (mm_stn, mm_type, mm_motor, mm_coord, mm_axis, mm_name,  mm_unit, mm_u2c,   mm_max_speed, mm_max_accel, mm_printf,   mm_min,      mm_max,      mm_update_resolution, mm_update_format) VALUES
+                            ( 2,     'PMAC',  20,       7,        'Y',     'phi',   'deg',    711.111,  50,           0.2,          '%*.2f°',    '-Infinity', 'Infinity',  1.0,                  '"phi.position",%.2f');
 
 UPDATE pmac.md2_motors SET mm_active_init   = '{"M50=1", "&7#20->Y", "M700=(M700 | $080000) ^ $080000"}' WHERE mm_motor=20;
 UPDATE pmac.md2_motors SET mm_inactive_init = '{"M50=0", "&7#20->0", "M700=M700 | $080000"}' WHERE mm_motor=20;
@@ -418,6 +419,12 @@ INSERT INTO pmac.md2_motors( mm_stn, mm_type, mm_name,                mm_u2c, mm
                            ( 2,      'DAC',   'backLight.intensity', 1,      0,      10,      0.5,                  '"backLight.intensity",%.0f');
 
 INSERT INTO pmac.md2_motors( mm_stn, mm_type, mm_name,                mm_u2c, mm_min, mm_max, mm_update_resolution, mm_update_format) VALUES
+                           ( 2,      'DAC',   'frontLight.factor',    1,      60,     140,    0.5,                  '"frontLight.factor",%.0f');
+
+INSERT INTO pmac.md2_motors( mm_stn, mm_type, mm_name,                mm_u2c, mm_min, mm_max, mm_update_resolution, mm_update_format) VALUES
+                           ( 2,      'DAC',   'backLight.factor',     1,      60,     140,    0.5,                  '"backLight.factor",%.0f');
+
+INSERT INTO pmac.md2_motors( mm_stn, mm_type, mm_name,                mm_u2c, mm_min, mm_max, mm_update_resolution, mm_update_format) VALUES
                            ( 2,      'DAC',   'scint.focus', 1,      0,      100,      0.5,                  '"scint.focus.position",%.0f');
 
 INSERT INTO pmac.md2_motors( mm_stn, mm_type, mm_name,        mm_u2c, mm_min, mm_max, mm_update_resolution, mm_update_format) VALUES
@@ -428,6 +435,12 @@ INSERT INTO pmac.md2_motors( mm_stn, mm_type, mm_name,        mm_u2c, mm_min, mm
 
 INSERT INTO pmac.md2_motors( mm_stn, mm_type, mm_name,        mm_u2c, mm_min, mm_max, mm_update_resolution, mm_update_format) VALUES
                            ( 2,      'BIO',   'dryer',         1.0,    0,      1,      0.5,                  '"dryer.position",%.0f');
+
+INSERT INTO pmac.md2_motors( mm_stn, mm_type, mm_name,        mm_u2c, mm_min, mm_max, mm_update_resolution, mm_update_format) VALUES
+                           ( 2,      'BIO',   'frontLight',   1.0,    0,      1,      0.5,                  '"frontLight.position",%.0f');
+
+
+
 
 
 CREATE OR REPLACE FUNCTION pmac.md2_getmotors( the_stn int) returns setof pmac.md2_motors AS $$
@@ -924,6 +937,26 @@ CREATE OR REPLACE FUNCTION pmac.md2_scint_lut() returns setof text as $$
   SELECT pmac.md2_scint_lut( px.getstation());
 $$ LANGUAGE SQL SECURITY DEFINER;
 ALTER FUNCTION pmac.md2_scint_lut() OWNER TO lsadmin;
+
+
+CREATE OR REPLACE FUNCTION pmac.md2_set_scales( the_stn int, zoom int) returns void as $$
+  DECLARE
+  BEGIN
+    IF zoom is null or zoom < 1 or zoom > 10 THEN
+      RAISE NOTICE 'pmac.md2_set_scales: called with bad zoom value.  zoom = "%"', zoom;
+      return;
+    END IF;
+    PERFORM px.kvset2( the_stn, 'cam.xScale', px.kvget( the_stn, 'cam.zoom.' || zoom || '.ScaleX'));
+    PERFORM px.kvset2( the_stn, 'cam.yScale', px.kvget( the_stn, 'cam.zoom.' || zoom || '.ScaleY'));
+  END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+ALTER FUNCTION pmac.md2_set_scales( int, int) OWNER TO lsadmin;
+
+CREATE OR REPLACE FUNCTION pmac.md2_set_scales( zoom int) returns void as $$
+  SELECT pmac.md2_set_scales( px.getstation(), $1);
+$$ LANGUAGE SQL SECURITY DEFINER;
+ALTER FUNCTION pmac.md2_set_scales( int) OWNER TO lsadmin;
+
 
 
 CREATE OR REPLACE FUNCTION pmac.md2_get_presets( the_stn int, the_motor text) returns setof text as $$
