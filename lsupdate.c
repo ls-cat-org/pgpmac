@@ -15,6 +15,7 @@ static pthread_t lsupdate_thread;		//!< our worker thread
 void lsupdate_updateit() {
   static char s[4096];
   static char s1[512];
+  static char s2[512];		//!< support for obsolete (ie, non .position) style
   lspmac_motor_t *mp;
   int i;
   int needComma;
@@ -50,11 +51,16 @@ void lsupdate_updateit() {
       snprintf( s1, sizeof(s1)-1, mp->update_format, mp->position);
       s1[sizeof(s1)-1] = 0;
     
+      if( mp->name != NULL && *mp->name != 0) {
+	snprintf( s2, sizeof(s2)-1, ",\"%s\",%.3f", mp->name, mp->position);
+	s2[sizeof(s2)-1] = 0;
+      }
+
       mp->reported_position = mp->position;
       mp->lspg_initialized |= 2;
       pthread_mutex_unlock( &(mp->mutex));
 
-      if( strlen(s1) + strlen(s) + 32 >= sizeof( s)-1) {
+      if( strlen(s2) + strlen(s1) + strlen(s) + 32 >= sizeof( s)-1) {
 	// send off update now and reset s
 	strcat( s, "}'::text[])");
 	lspg_query_push( NULL, s);
@@ -71,6 +77,9 @@ void lsupdate_updateit() {
 	needComma=1;
 
       strcat( s, s1);
+      if( mp->name != NULL && *mp->name != 0) {
+	strcat( s, s2);
+      }
     }
   }
 
