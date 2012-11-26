@@ -93,12 +93,12 @@ typedef struct lskvs_kvs_list_struct {
  */
 typedef struct lspmac_motor_struct {
   pthread_mutex_t mutex;	//!< coordinate waiting for motor to be done
-  pthread_cond_t cond;		//!<
+  pthread_cond_t cond;		//!< used to signal when a motor is done moving
+  int not_done;			//!< set to 1 when request is queued, zero after motion has toggled
   int lspg_initialized;		//!< bit flags: bit 0 = motor initialized by database, bit 1 = px.kvs value initialized
   lskvs_kvs_list_t *presets;	//!< list of preset positions
   regex_t preset_regex;		//!< buffer used by regex routines to find preset positions for this motor
-  void (*read)( struct lspmac_motor_struct *);	//!< function to read the motor status and position
-  int not_done;			//!< set to 1 when request is queued, zero after motion has toggled
+  void (*read)( struct lspmac_motor_struct *);		//!< method to read the motor status and position
   int motion_seen;		//!< set to 1 when motion has been verified to have started
   struct lspmac_cmd_queue_struct *pq;	//!< the queue item requesting motion.  Used to check time request was made
 
@@ -119,6 +119,7 @@ typedef struct lspmac_motor_struct {
   char statuss[64];		//!< short text summarizing status
   int motor_num;		//!< pmac motor number
   int coord_num;		//!< coordinate system this motor belongs to (0 if none)
+  char *axis;			//!< the axis (X, Y, Z, etc) or null if not in a coordinate system
   char *dac_mvar;		//!< controlling mvariable as a string
   char *name;			//!< Name of motor as refered by ls database kvs table
   char *units;			//!< string to use as the units
@@ -345,11 +346,17 @@ extern lspmac_motor_t *blight;
 extern lspmac_motor_t *fscint;
 
 extern lspmac_motor_t *blight_ud;
+extern lspmac_motor_t *flight_oo;
+extern lspmac_motor_t *blight_f;
+extern lspmac_motor_t *flight_f;
 extern lspmac_motor_t *cryo;
 extern lspmac_motor_t *dryer;
 extern lspmac_motor_t *fluo;
 
 extern int lspmac_nmotors;
+extern struct timespec omega_zero_time;
+
+extern double lspmac_getPosition( lspmac_motor_t *);
 
 extern WINDOW *term_output;
 extern WINDOW *term_input;
@@ -358,10 +365,12 @@ extern WINDOW *term_status2;
 
 extern pthread_mutex_t ncurses_mutex;
 
-extern pthread_cond_t  md2cmds_cond;		// condition to signal when it's time to run an md2 command
-extern pthread_mutex_t md2cmds_mutex;		// mutex for the condition
-extern pthread_cond_t  md2cmds_pg_cond;		// coordinate call and response
-extern pthread_mutex_t md2cmds_pg_mutex;	// message passing between md2cmds and pg
+extern pthread_cond_t  md2cmds_cond;	
+extern pthread_mutex_t md2cmds_mutex;	
+extern pthread_cond_t  md2cmds_pg_cond;	
+extern pthread_mutex_t md2cmds_pg_mutex;
+extern pthread_mutex_t pmac_queue_mutex;
+extern pthread_cond_t  pmac_queue_cond;	
 
 extern pthread_mutex_t lspmac_shutter_mutex;
 extern pthread_cond_t  lspmac_shutter_cond;
@@ -378,17 +387,22 @@ extern char md2cmds_cmd[];			// our command;
 
 
 extern void PmacSockSendline( char *s);
+extern void pgpmac_printf( char *fmt, ...);
+extern void lspg_init();
+extern void lspg_run();
 extern void lspg_seq_run_prep_all( long long skey, double kappa, double phi, double cx, double cy, double ax, double ay, double az);
 extern void lspg_zoom_lut_call();
-extern void pgpmac_printf( char *fmt, ...);
 extern void lspmac_init( int, int);
-extern void lspg_init();
+extern void lspmac_run();
+extern void lspmac_move_or_jog_queue( lspmac_motor_t *, double, int);
+extern void lspmac_move_or_jog_preset_queue( lspmac_motor_t *, char *, int);
+extern void lspmac_moveabs_queue( lspmac_motor_t *, double);
+extern void lspmac_jogabs_queue( lspmac_motor_t *, double);
+extern pmac_cmd_queue_t *lspmac_SockSendline(char *, ...);
 extern void lsupdate_init();
 extern void md2cmds_init();
-extern void lspmac_run();
-extern void lspg_run();
-extern void lsupdate_run();
 extern void md2cmds_run();
+extern void lsupdate_run();
 extern void lsevents_init();
 extern void lsevents_run();
 extern void lsevents_send_event( char *, ...);
