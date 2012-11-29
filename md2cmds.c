@@ -160,7 +160,7 @@ void md2cmds_phase_change( const char *ccmd) {
     md2cmds_moveAbs( "moveAbs backLight.intensity 0");
     md2cmds_moveAbs( "moveAbs cryo 1");
     md2cmds_moveAbs( "moveAbs fluo 0");
-    md2cmds_moveAbs( "moveAbs zoom 1");
+    md2cmds_moveAbs( "moveAbs cam.zoom 1");
   } else if( strcmp( mode, "robotMount") == 0) {
     lspmac_home1_queue( kappa);
     lspmac_home1_queue( omega);
@@ -173,7 +173,7 @@ void md2cmds_phase_change( const char *ccmd) {
     md2cmds_moveAbs( "moveAbs backLight.intensity 0");
     md2cmds_moveAbs( "moveAbs cryo 1");
     md2cmds_moveAbs( "moveAbs fluo 0");
-    md2cmds_moveAbs( "moveAbs zoom 1");
+    md2cmds_moveAbs( "moveAbs cam.zoom 1");
   } else if( strcmp( mode, "center") == 0) {
     md2cmds_moveAbs( "moveAbs kappa 0");
     md2cmds_moveAbs( "moveAbs omega 0");
@@ -184,7 +184,7 @@ void md2cmds_phase_change( const char *ccmd) {
     lspmac_move_or_jog_preset_queue( capz,  "In", 1);
     lspmac_move_or_jog_preset_queue( scint, "Cover", 1);
     md2cmds_moveAbs( "moveAbs backLight 1");
-    md2cmds_moveAbs( "moveAbs zoom 1");
+    md2cmds_moveAbs( "moveAbs cam.zoom 1");
     md2cmds_moveAbs( "moveAbs cryo 0");
     md2cmds_moveAbs( "moveAbs fluo 0");
   } else if( strcmp( mode, "dataCollection") == 0) {
@@ -206,7 +206,7 @@ void md2cmds_phase_change( const char *ccmd) {
     lspmac_move_or_jog_preset_queue( capz,  "In", 1);
     lspmac_move_or_jog_preset_queue( scint, "Scintillator", 1);
     md2cmds_moveAbs( "moveAbs backLight 0");
-    md2cmds_moveAbs( "moveAbs zoom 1");
+    md2cmds_moveAbs( "moveAbs cam.zoom 1");
     md2cmds_moveAbs( "moveAbs cryo 0");
     md2cmds_moveAbs( "moveAbs fluo 0");
   } else if( strcmp( mode, "safe") == 0) {
@@ -218,7 +218,7 @@ void md2cmds_phase_change( const char *ccmd) {
     lspmac_move_or_jog_preset_queue( capz,  "Cover", 1);
     lspmac_move_or_jog_preset_queue( scint, "Cover", 1);
     md2cmds_moveAbs( "moveAbs backLight 0");
-    md2cmds_moveAbs( "moveAbs zoom 1");
+    md2cmds_moveAbs( "moveAbs cam.zoom 1");
     md2cmds_moveAbs( "moveAbs cryo 0");
     md2cmds_moveAbs( "moveAbs fluo 0");
   }
