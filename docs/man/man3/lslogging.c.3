@@ -1,4 +1,4 @@
-.TH "lslogging.c" 3 "Fri Nov 16 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lslogging.c" 3 "Thu Nov 29 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -249,8 +249,8 @@ Definition at line 76 of file lslogging\&.c\&.
     localtime_r( &(lslogging_queue[off]\&.ltime\&.tv_sec), &coarsetime);
     strftime( tstr, sizeof(tstr)-1, '%Y-%m-%d %H:%M:%S', &coarsetime);
     tstr[sizeof(tstr)-1] = 0;
-    msecs = lslogging_queue[off]\&.ltime\&.tv_nsec / 1000000;
-    fprintf( lslogging_file, '%s\&.%\&.03u  %s\n', tstr, msecs, lslogging_queue[off]\&.lmsg);
+    msecs = lslogging_queue[off]\&.ltime\&.tv_nsec / 1000;
+    fprintf( lslogging_file, '%s\&.%\&.06u  %s\n', tstr, msecs, lslogging_queue[off]\&.lmsg);
     fflush( lslogging_file);
   }
 }

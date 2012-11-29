@@ -151,7 +151,7 @@ Macros</h2></td></tr>
 <tr class="separator:a88a7e80c12fb0449c4b0857a0c7deb21"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a373e668840b4795ff9a71bc3f744d209"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lspg_8c.html#a373e668840b4795ff9a71bc3f744d209">LS_PG_STATE_RECV</a>&#160;&#160;&#160;4</td></tr>
 <tr class="separator:a373e668840b4795ff9a71bc3f744d209"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a08fe83fe8226002ee8b80ce0a914fd11"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lspg_8c.html#a08fe83fe8226002ee8b80ce0a914fd11">LS_PG_QUERY_QUEUE_LENGTH</a>&#160;&#160;&#160;256</td></tr>
+<tr class="memitem:a08fe83fe8226002ee8b80ce0a914fd11"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lspg_8c.html#a08fe83fe8226002ee8b80ce0a914fd11">LS_PG_QUERY_QUEUE_LENGTH</a>&#160;&#160;&#160;16384</td></tr>
 <tr class="memdesc:a08fe83fe8226002ee8b80ce0a914fd11"><td class="mdescLeft">&#160;</td><td class="mdescRight">Queue length should be long enough that we do not ordinarly bump into the end We should be safe as long as the thread the adds stuff to the queue is not the one that removes it.  <a href="#a08fe83fe8226002ee8b80ce0a914fd11"></a><br/></td></tr>
 <tr class="separator:a08fe83fe8226002ee8b80ce0a914fd11"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -296,7 +296,7 @@ Functions</h2></td></tr>
 <tr class="memdesc:a4253474d4dd305aec0afdd5552b3ddd5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convinence function to call seq run prep.  <a href="#a4253474d4dd305aec0afdd5552b3ddd5"></a><br/></td></tr>
 <tr class="separator:a4253474d4dd305aec0afdd5552b3ddd5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8184824f2b71b1d35141d7922ca69cd7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lspg_8c.html#a8184824f2b71b1d35141d7922ca69cd7">lspg_getcenter_cb</a> (<a class="el" href="lspg_8c.html#ae57432c0a6ac48a50457815dab2c5b4c">lspg_query_queue_t</a> *qqp, PGresult *pgr)</td></tr>
-<tr class="memdesc:a8184824f2b71b1d35141d7922ca69cd7"><td class="mdescLeft">&#160;</td><td class="mdescRight">TODO: implement getcenter code.  <a href="#a8184824f2b71b1d35141d7922ca69cd7"></a><br/></td></tr>
+<tr class="memdesc:a8184824f2b71b1d35141d7922ca69cd7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieve the data to center the crystal.  <a href="#a8184824f2b71b1d35141d7922ca69cd7"></a><br/></td></tr>
 <tr class="separator:a8184824f2b71b1d35141d7922ca69cd7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad31db17587a02302ac4e40fb7d260b1b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lspg_8c.html#ad31db17587a02302ac4e40fb7d260b1b">lspg_getcenter_init</a> ()</td></tr>
 <tr class="memdesc:ad31db17587a02302ac4e40fb7d260b1b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize getcenter object.  <a href="#ad31db17587a02302ac4e40fb7d260b1b"></a><br/></td></tr>
@@ -435,7 +435,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define LS_PG_QUERY_QUEUE_LENGTH&#160;&#160;&#160;256</td>
+          <td class="memname">#define LS_PG_QUERY_QUEUE_LENGTH&#160;&#160;&#160;16384</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -693,9 +693,6 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 <div class="line">  }</div>
 <div class="line">  rtni = 0;</div>
 <div class="line">  </div>
-<div class="line">  <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lspg_array2ptrs: enter with %s&quot;</span>, a);</div>
-<div class="line"></div>
-<div class="line"></div>
 <div class="line">  <span class="comment">// Go through and create the individual strings</span></div>
 <div class="line">  sp = acums;</div>
 <div class="line">  *sp = 0;</div>
@@ -804,7 +801,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00421">421</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00426">426</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                          {</div>
 <div class="line">  <span class="keywordtype">int</span> i;</div>
 <div class="line">  </div>
@@ -861,7 +858,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l01137">1137</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01142">1142</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                   {</div>
 <div class="line">  <span class="comment">//</span></div>
 <div class="line">  <span class="comment">// Call back funciton assumes query results in zero or more commands to send to the PMAC</span></div>
@@ -920,7 +917,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00393">393</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00398">398</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                          {</div>
 <div class="line">  <span class="keywordtype">int</span> i;</div>
 <div class="line">  </div>
@@ -959,7 +956,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Flush psql output buffer (ie, send the query) </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l01166">1166</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01171">1171</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                  {</div>
 <div class="line">  <span class="keywordtype">int</span> err;</div>
 <div class="line"></div>
@@ -1005,7 +1002,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Convenience function to complete synchronous getcenter query. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l01085">1085</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01090">1090</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                          {</div>
 <div class="line">  <a class="code" href="lspg_8c.html#a6f7cd0a06f6a266ef65b3604cf33d6c4" title="Request a getcenter query.">lspg_getcenter_call</a>();</div>
 <div class="line">  <a class="code" href="lspg_8c.html#a3e0e4b3cb9fa03961ee0c104e0b06754" title="Wait for a getcenter query to return.">lspg_getcenter_wait</a>();</div>
@@ -1029,13 +1026,13 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Request a getcenter query. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l01061">1061</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01066">1066</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                           {</div>
 <div class="line">  pthread_mutex_lock( &amp;<a class="code" href="lspg_8c.html#a7ef8a09203117578c9b2ce4719519f36" title="the getcenter object">lspg_getcenter</a>.<a class="code" href="structlspg__getcenter__struct.html#a214bb7e88b137162f13f41f2c43002a9" title="don&#39;t let the threads collide!">mutex</a>);</div>
 <div class="line">  <a class="code" href="lspg_8c.html#a7ef8a09203117578c9b2ce4719519f36" title="the getcenter object">lspg_getcenter</a>.<a class="code" href="structlspg__getcenter__struct.html#a4b350f11f1e375b9e9e839caaffbcb6b" title="used with condition">new_value_ready</a> = 0;</div>
 <div class="line">  pthread_mutex_unlock( &amp;<a class="code" href="lspg_8c.html#a7ef8a09203117578c9b2ce4719519f36" title="the getcenter object">lspg_getcenter</a>.<a class="code" href="structlspg__getcenter__struct.html#a214bb7e88b137162f13f41f2c43002a9" title="don&#39;t let the threads collide!">mutex</a>);</div>
 <div class="line"></div>
-<div class="line">  <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#a8184824f2b71b1d35141d7922ca69cd7" title="TODO: implement getcenter code.">lspg_getcenter_cb</a>, <span class="stringliteral">&quot;SELECT * FROM px.getcenter2()&quot;</span>);</div>
+<div class="line">  <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#a8184824f2b71b1d35141d7922ca69cd7" title="Retrieve the data to center the crystal.">lspg_getcenter_cb</a>, <span class="stringliteral">&quot;SELECT * FROM px.getcenter2()&quot;</span>);</div>
 <div class="line">}</div>
 </div><!-- fragment -->
 </div>
@@ -1064,9 +1061,9 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
       </table>
 </div><div class="memdoc">
 
-<p>TODO: implement getcenter code. </p>
+<p>Retrieve the data to center the crystal. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00996">996</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01001">1001</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                                                                {</div>
 <div class="line">  <span class="keyword">static</span> <span class="keywordtype">int</span></div>
 <div class="line">    zoom_c, dcx_c, dcy_c, dax_c, day_c, daz_c;</div>
@@ -1139,7 +1136,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Done with getcenter query. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l01079">1079</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01084">1084</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                           {</div>
 <div class="line">  pthread_mutex_unlock( &amp;(<a class="code" href="lspg_8c.html#a7ef8a09203117578c9b2ce4719519f36" title="the getcenter object">lspg_getcenter</a>.<a class="code" href="structlspg__getcenter__struct.html#a214bb7e88b137162f13f41f2c43002a9" title="don&#39;t let the threads collide!">mutex</a>));</div>
 <div class="line">}</div>
@@ -1161,7 +1158,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Initialize getcenter object. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l01053">1053</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01058">1058</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                           {</div>
 <div class="line">  memset( &amp;<a class="code" href="lspg_8c.html#a7ef8a09203117578c9b2ce4719519f36" title="the getcenter object">lspg_getcenter</a>, 0, <span class="keyword">sizeof</span>( <a class="code" href="lspg_8c.html#a7ef8a09203117578c9b2ce4719519f36" title="the getcenter object">lspg_getcenter</a>));</div>
 <div class="line">  pthread_mutex_init( &amp;(<a class="code" href="lspg_8c.html#a7ef8a09203117578c9b2ce4719519f36" title="the getcenter object">lspg_getcenter</a>.<a class="code" href="structlspg__getcenter__struct.html#a214bb7e88b137162f13f41f2c43002a9" title="don&#39;t let the threads collide!">mutex</a>), NULL);</div>
@@ -1185,7 +1182,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Wait for a getcenter query to return. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l01071">1071</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01076">1076</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                           {</div>
 <div class="line">  pthread_mutex_lock( &amp;(<a class="code" href="lspg_8c.html#a7ef8a09203117578c9b2ce4719519f36" title="the getcenter object">lspg_getcenter</a>.<a class="code" href="structlspg__getcenter__struct.html#a214bb7e88b137162f13f41f2c43002a9" title="don&#39;t let the threads collide!">mutex</a>));</div>
 <div class="line">  <span class="keywordflow">while</span>( <a class="code" href="lspg_8c.html#a7ef8a09203117578c9b2ce4719519f36" title="the getcenter object">lspg_getcenter</a>.<a class="code" href="structlspg__getcenter__struct.html#a4b350f11f1e375b9e9e839caaffbcb6b" title="used with condition">new_value_ready</a> == 0)</div>
@@ -1209,7 +1206,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Initiallize the lspg module. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l01659">1659</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01664">1664</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                 {</div>
 <div class="line">  pthread_mutex_init( &amp;<a class="code" href="lspg_8c.html#aed46a94106c583796e3a8ca0e89aa8e4" title="keep the queue from getting tangled">lspg_queue_mutex</a>, NULL);</div>
 <div class="line">  pthread_cond_init( &amp;<a class="code" href="lspg_8c.html#a61a308b6a37afd645beb422653b95baa" title="keeps the queue from overflowing">lspg_queue_cond</a>, NULL);</div>
@@ -1255,11 +1252,11 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00287">287</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00284">284</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                           {</div>
 <div class="line">  <span class="keywordtype">int</span> i, j;</div>
 <div class="line">  uint32_t  motor_number, motor_number_column, max_speed_column, max_accel_column, home_column;</div>
-<div class="line">  uint32_t units_column, coord_column, name_column;</div>
+<div class="line">  uint32_t units_column, coord_column, name_column, axis_column;</div>
 <div class="line">  uint32_t u2c_column;</div>
 <div class="line">  uint32_t format_column;</div>
 <div class="line">  uint32_t update_resolution_column;</div>
@@ -1274,6 +1271,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 <div class="line">  motor_number_column      = PQfnumber( pgr, <span class="stringliteral">&quot;mm_motor&quot;</span>);</div>
 <div class="line">  coord_column             = PQfnumber( pgr, <span class="stringliteral">&quot;mm_coord&quot;</span>);</div>
 <div class="line">  units_column             = PQfnumber( pgr, <span class="stringliteral">&quot;mm_unit&quot;</span>);</div>
+<div class="line">  axis_column              = PQfnumber( pgr, <span class="stringliteral">&quot;mm_axis&quot;</span>);</div>
 <div class="line">  u2c_column               = PQfnumber( pgr, <span class="stringliteral">&quot;mm_u2c&quot;</span>);</div>
 <div class="line">  format_column            = PQfnumber( pgr, <span class="stringliteral">&quot;mm_printf&quot;</span>);</div>
 <div class="line">  max_speed_column         = PQfnumber( pgr, <span class="stringliteral">&quot;mm_max_speed&quot;</span>);</div>
@@ -1286,8 +1284,8 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 <div class="line"></div>
 <div class="line">    lsdp = NULL;</div>
 <div class="line">    <span class="keywordflow">for</span>( j=0; j&lt;<a class="code" href="lspmac_8c.html#a56260f012c50a591ee7f97e500f16994" title="The number of motors we manage.">lspmac_nmotors</a>; j++) {</div>
-<div class="line">      <span class="keywordflow">if</span>( strcmp(<a class="code" href="lspmac_8c.html#a9bffbf72495499b505543cd942f665da" title="All our motors.">lspmac_motors</a>[j].name, PQgetvalue( pgr, i, name_column)) == 0) {</div>
-<div class="line">        lsdp                    = &amp;(<a class="code" href="lspmac_8c.html#a9bffbf72495499b505543cd942f665da" title="All our motors.">lspmac_motors</a>[j]);</div>
+<div class="line">      <span class="keywordflow">if</span>( strcmp(<a class="code" href="lspmac_8c.html#a894c709ddd0652583d6db22e86282503" title="All our motors.">lspmac_motors</a>[j].name, PQgetvalue( pgr, i, name_column)) == 0) {</div>
+<div class="line">        lsdp                    = &amp;(<a class="code" href="lspmac_8c.html#a894c709ddd0652583d6db22e86282503" title="All our motors.">lspmac_motors</a>[j]);</div>
 <div class="line">        lsdp-&gt;<a class="code" href="structlspmac__motor__struct.html#a45fae17618f0c0827e97060dc04f79cb" title="pmac motor number">motor_num</a>         = atoi(PQgetvalue( pgr, i, motor_number_column));</div>
 <div class="line">        lsdp-&gt;<a class="code" href="structlspmac__motor__struct.html#a2093b0a3cd2f9500fd92e3c89bf46577" title="coordinate system this motor belongs to (0 if none)">coord_num</a>         = atoi( PQgetvalue( pgr, i, coord_column));</div>
 <div class="line">        lsdp-&gt;<a class="code" href="structlspmac__motor__struct.html#a82bceff2ae698b4b9618360b446aec08" title="string to use as the units">units</a>             = strdup( PQgetvalue( pgr, i, units_column));</div>
@@ -1297,7 +1295,14 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 <div class="line">        lsdp-&gt;<a class="code" href="structlspmac__motor__struct.html#afec8dc1d4b97ba9c1d6e4f7a088342e4" title="our maximum acceleration (cts/msec^2)">max_accel</a>         = atof(PQgetvalue( pgr, i, max_accel_column));</div>
 <div class="line">        lsdp-&gt;<a class="code" href="structlspmac__motor__struct.html#a18386126b724d9c7f72364db126f5b93" title="Change needs to be at least this big to report as a new position to the database.">update_resolution</a> = atof(PQgetvalue( pgr, i, update_resolution_column));</div>
 <div class="line">        lsdp-&gt;<a class="code" href="structlspmac__motor__struct.html#a514ee9ed48c7171157d579623f7de23f" title="special format string to create text array for px.kvs update (lsupdate)">update_format</a>     = strdup( PQgetvalue( pgr, i, update_format_column));</div>
+<div class="line"></div>
+<div class="line">        <span class="keywordflow">if</span>( PQgetisnull( pgr, i, axis_column))</div>
+<div class="line">          lsdp-&gt;<a class="code" href="structlspmac__motor__struct.html#a79d2049141b8ec29638f96b3fb91b7f1" title="the axis (X, Y, Z, etc) or null if not in a coordinate system">axis</a>            = NULL;</div>
+<div class="line">        <span class="keywordflow">else</span></div>
+<div class="line">          lsdp-&gt;<a class="code" href="structlspmac__motor__struct.html#a79d2049141b8ec29638f96b3fb91b7f1" title="the axis (X, Y, Z, etc) or null if not in a coordinate system">axis</a>            = strdup(PQgetvalue( pgr, i, axis_column));</div>
+<div class="line"></div>
 <div class="line">        lsdp-&gt;<a class="code" href="structlspmac__motor__struct.html#a073246b8878d75615b0536301b343f3d" title="pmac commands to home motor">home</a>              = <a class="code" href="lspg_8c.html#a46f23ae999129d6fd5712d7975b99aed" title="returns a null terminated list of strings parsed from postgresql array">lspg_array2ptrs</a>( PQgetvalue( pgr, i, home_column));</div>
+<div class="line"></div>
 <div class="line">        lsdp-&gt;<a class="code" href="structlspmac__motor__struct.html#af11e5f75c1cf88ed6842d04154d27a31" title="bit flags: bit 0 = motor initialized by database, bit 1 = px.kvs value initialized">lspg_initialized</a>  = 1;</div>
 <div class="line">        <span class="keywordflow">break</span>;</div>
 <div class="line">      }</div>
@@ -1345,7 +1350,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l01120">1120</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01125">1125</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                   {</div>
 <div class="line">  <span class="keywordtype">int</span> i;</div>
 <div class="line"></div>
@@ -1376,7 +1381,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Detector lock convinence function. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00908">908</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00913">913</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                              {</div>
 <div class="line">  <a class="code" href="lspg_8c.html#a5f71a20cc297684b2afe28e7bd8e8383" title="Request (demand) a detector lock.">lspg_lock_detector_call</a>();</div>
 <div class="line">  <a class="code" href="lspg_8c.html#ad3d9c56bd3ca6bcc43db30872cc441cc" title="Wait for the detector lock.">lspg_lock_detector_wait</a>();</div>
@@ -1400,7 +1405,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Request (demand) a detector lock. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00884">884</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00889">889</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                               {</div>
 <div class="line">  pthread_mutex_lock( &amp;(<a class="code" href="lspg_8c.html#adbf3b3652c6531c3d194320d1abc1c80">lspg_lock_detector</a>.<a class="code" href="structlspg__lock__detector__struct.html#ab5ab5534b376a8fbafdd0b54cec4483c">mutex</a>));</div>
 <div class="line">  <a class="code" href="lspg_8c.html#adbf3b3652c6531c3d194320d1abc1c80">lspg_lock_detector</a>.<a class="code" href="structlspg__lock__detector__struct.html#a62373414b815fe178edd8522b3bd4d78">new_value_ready</a> = 0;</div>
@@ -1437,7 +1442,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Callback for when the detector lock has be grabbed. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00875">875</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00880">880</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                                                                    {</div>
 <div class="line">  pthread_mutex_lock( &amp;(<a class="code" href="lspg_8c.html#adbf3b3652c6531c3d194320d1abc1c80">lspg_lock_detector</a>.<a class="code" href="structlspg__lock__detector__struct.html#ab5ab5534b376a8fbafdd0b54cec4483c">mutex</a>));</div>
 <div class="line">  <a class="code" href="lspg_8c.html#adbf3b3652c6531c3d194320d1abc1c80">lspg_lock_detector</a>.<a class="code" href="structlspg__lock__detector__struct.html#a62373414b815fe178edd8522b3bd4d78">new_value_ready</a> = 1;</div>
@@ -1462,7 +1467,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Finish waiting. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00902">902</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00907">907</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                               {</div>
 <div class="line">  pthread_mutex_unlock( &amp;(<a class="code" href="lspg_8c.html#adbf3b3652c6531c3d194320d1abc1c80">lspg_lock_detector</a>.<a class="code" href="structlspg__lock__detector__struct.html#ab5ab5534b376a8fbafdd0b54cec4483c">mutex</a>));</div>
 <div class="line">}</div>
@@ -1484,7 +1489,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Initialize detector lock object. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00867">867</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00872">872</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                               {</div>
 <div class="line">  <a class="code" href="lspg_8c.html#adbf3b3652c6531c3d194320d1abc1c80">lspg_lock_detector</a>.<a class="code" href="structlspg__lock__detector__struct.html#a62373414b815fe178edd8522b3bd4d78">new_value_ready</a> = 0;</div>
 <div class="line">  pthread_mutex_init( &amp;(<a class="code" href="lspg_8c.html#adbf3b3652c6531c3d194320d1abc1c80">lspg_lock_detector</a>.<a class="code" href="structlspg__lock__detector__struct.html#ab5ab5534b376a8fbafdd0b54cec4483c">mutex</a>), NULL);</div>
@@ -1508,7 +1513,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Wait for the detector lock. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00894">894</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00899">899</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                               {</div>
 <div class="line">  pthread_mutex_lock( &amp;(<a class="code" href="lspg_8c.html#adbf3b3652c6531c3d194320d1abc1c80">lspg_lock_detector</a>.<a class="code" href="structlspg__lock__detector__struct.html#ab5ab5534b376a8fbafdd0b54cec4483c">mutex</a>));</div>
 <div class="line">  <span class="keywordflow">while</span>( <a class="code" href="lspg_8c.html#adbf3b3652c6531c3d194320d1abc1c80">lspg_lock_detector</a>.<a class="code" href="structlspg__lock__detector__struct.html#a62373414b815fe178edd8522b3bd4d78">new_value_ready</a> == 0)</div>
@@ -1532,7 +1537,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Convience function that combines lock diffractometer calls. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00849">849</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00854">854</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                                    {</div>
 <div class="line">  <a class="code" href="lspg_8c.html#ac5ebeb38e8e9926a52f024fe76201175" title="Request that the database grab the diffractometer lock.">lspg_lock_diffractometer_call</a>();</div>
 <div class="line">  <a class="code" href="lspg_8c.html#a8445e1dec753f2c517b87fcb9c5b5943" title="Wait for the diffractometer lock.">lspg_lock_diffractometer_wait</a>();</div>
@@ -1556,7 +1561,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Request that the database grab the diffractometer lock. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00825">825</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00830">830</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                                     {</div>
 <div class="line">  pthread_mutex_lock( &amp;(<a class="code" href="lspg_8c.html#aaae7ce3ecd7d54a9e46c41d7a742a454">lspg_lock_diffractometer</a>.<a class="code" href="structlspg__lock__diffractometer__struct.html#a362e848dfd1551428b8d12d8776fd2ed">mutex</a>));</div>
 <div class="line">  <a class="code" href="lspg_8c.html#aaae7ce3ecd7d54a9e46c41d7a742a454">lspg_lock_diffractometer</a>.<a class="code" href="structlspg__lock__diffractometer__struct.html#ae94acdf44008ce48930e3083f08f5b6c">new_value_ready</a> = 0;</div>
@@ -1593,7 +1598,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Callback routine for a lock diffractometer query. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00816">816</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00821">821</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                                                                          {</div>
 <div class="line">  pthread_mutex_lock( &amp;(<a class="code" href="lspg_8c.html#aaae7ce3ecd7d54a9e46c41d7a742a454">lspg_lock_diffractometer</a>.<a class="code" href="structlspg__lock__diffractometer__struct.html#a362e848dfd1551428b8d12d8776fd2ed">mutex</a>));</div>
 <div class="line">  <a class="code" href="lspg_8c.html#aaae7ce3ecd7d54a9e46c41d7a742a454">lspg_lock_diffractometer</a>.<a class="code" href="structlspg__lock__diffractometer__struct.html#ae94acdf44008ce48930e3083f08f5b6c">new_value_ready</a> = 1;</div>
@@ -1618,7 +1623,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Finish up the lock diffractometer call. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00843">843</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00848">848</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                                     {</div>
 <div class="line">  pthread_mutex_unlock( &amp;(<a class="code" href="lspg_8c.html#aaae7ce3ecd7d54a9e46c41d7a742a454">lspg_lock_diffractometer</a>.<a class="code" href="structlspg__lock__diffractometer__struct.html#a362e848dfd1551428b8d12d8776fd2ed">mutex</a>));</div>
 <div class="line">}</div>
@@ -1640,7 +1645,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>initialize the diffractometer locking object </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00808">808</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00813">813</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                                     {</div>
 <div class="line">  <a class="code" href="lspg_8c.html#aaae7ce3ecd7d54a9e46c41d7a742a454">lspg_lock_diffractometer</a>.<a class="code" href="structlspg__lock__diffractometer__struct.html#ae94acdf44008ce48930e3083f08f5b6c">new_value_ready</a> = 0;</div>
 <div class="line">  pthread_mutex_init( &amp;(<a class="code" href="lspg_8c.html#aaae7ce3ecd7d54a9e46c41d7a742a454">lspg_lock_diffractometer</a>.<a class="code" href="structlspg__lock__diffractometer__struct.html#a362e848dfd1551428b8d12d8776fd2ed">mutex</a>), NULL);</div>
@@ -1664,7 +1669,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Wait for the diffractometer lock. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00835">835</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00840">840</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                                     {</div>
 <div class="line">  pthread_mutex_lock( &amp;(<a class="code" href="lspg_8c.html#aaae7ce3ecd7d54a9e46c41d7a742a454">lspg_lock_diffractometer</a>.<a class="code" href="structlspg__lock__diffractometer__struct.html#a362e848dfd1551428b8d12d8776fd2ed">mutex</a>));</div>
 <div class="line">  <span class="keywordflow">while</span>( <a class="code" href="lspg_8c.html#aaae7ce3ecd7d54a9e46c41d7a742a454">lspg_lock_diffractometer</a>.<a class="code" href="structlspg__lock__diffractometer__struct.html#ae94acdf44008ce48930e3083f08f5b6c">new_value_ready</a> == 0)</div>
@@ -1688,7 +1693,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Implements our state machine Does not strictly only set the next state as it also calls some functions that, perhaps, alters the state mid-function. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l01528">1528</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01533">1533</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                       {</div>
 <div class="line">  <span class="comment">//</span></div>
 <div class="line">  <span class="comment">// connect to the database</span></div>
@@ -1773,7 +1778,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l01094">1094</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01099">1099</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                          {</div>
 <div class="line">  <span class="keywordtype">char</span> *action;</div>
 <div class="line"></div>
@@ -1812,7 +1817,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Queue up a nextshot query. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00708">708</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00713">713</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                          {</div>
 <div class="line">  pthread_mutex_lock( &amp;(<a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a38b657155fbee9b73278f76912cf2333" title="Our mutex for sanity in the multi-threaded program.">mutex</a>));</div>
 <div class="line">  <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#adb8da14444b98f556dba9420dd4666dc" title="Our flag for the condition to wait for.">new_value_ready</a> = 0;</div>
@@ -1857,7 +1862,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00453">453</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00458">458</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                        {</div>
 <div class="line">  <span class="keyword">static</span> <span class="keywordtype">int</span> got_col_nums=0;</div>
 <div class="line">  <span class="keyword">static</span> <span class="keywordtype">int</span></div>
@@ -2117,7 +2122,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Called when the next shot query has been processed. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00726">726</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00731">731</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                          {</div>
 <div class="line">  pthread_mutex_unlock( &amp;(<a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a38b657155fbee9b73278f76912cf2333" title="Our mutex for sanity in the multi-threaded program.">mutex</a>));</div>
 <div class="line">}</div>
@@ -2139,7 +2144,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Initialize the nextshot variable, mutex, and condition. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00700">700</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00705">705</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                          {</div>
 <div class="line">  memset( &amp;<a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>, 0, <span class="keyword">sizeof</span>( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>));</div>
 <div class="line">  pthread_mutex_init( &amp;(<a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a38b657155fbee9b73278f76912cf2333" title="Our mutex for sanity in the multi-threaded program.">mutex</a>), NULL);</div>
@@ -2163,7 +2168,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Wait for the next shot query to get processed. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00718">718</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00723">723</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                          {</div>
 <div class="line">  pthread_mutex_lock( &amp;(<a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#a38b657155fbee9b73278f76912cf2333" title="Our mutex for sanity in the multi-threaded program.">mutex</a>));</div>
 <div class="line">  <span class="keywordflow">while</span>( <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#adb8da14444b98f556dba9420dd4666dc" title="Our flag for the condition to wait for.">new_value_ready</a> == 0)</div>
@@ -2196,7 +2201,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l01423">1423</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01428">1428</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                                                                     {</div>
 <div class="line">  <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lspg: %s&quot;</span>, msg);</div>
 <div class="line">}</div>
@@ -2218,7 +2223,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Connect to the pg server. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l01429">1429</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01434">1434</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                       {</div>
 <div class="line">  PGresult *pgr;</div>
 <div class="line">  <span class="keywordtype">int</span> wait_interval = 1;</div>
@@ -2336,7 +2341,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l01326">1326</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01331">1331</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                       {</div>
 <div class="line">  <span class="comment">//</span></div>
 <div class="line">  <span class="comment">// Currently just used to check for notifies</span></div>
@@ -2616,7 +2621,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Receive a result of a query. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l01243">1243</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01248">1248</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                    {</div>
 <div class="line">  PGresult *pgr;</div>
 <div class="line">  <a class="code" href="structlspgQueryQueueStruct.html" title="Store each query along with it&#39;s callback function.">lspg_query_queue_t</a> *qqp;</div>
@@ -2691,7 +2696,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Start 'er runnin'. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l01671">1671</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01676">1676</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                {</div>
 <div class="line">  pthread_create( &amp;<a class="code" href="lspg_8c.html#a04eb0cda0d5e5afeae7c393b51689765" title="our worker thread">lspg_thread</a>, NULL, <a class="code" href="lspg_8c.html#aaf4fadd2943fa3a2ecb5d840e84d68fa" title="The main loop for the lspg thread.">lspg_worker</a>, NULL);</div>
 <div class="line">}</div>
@@ -2729,7 +2734,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00369">369</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00374">374</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                          {</div>
 <div class="line">  <span class="keywordtype">int</span> i;</div>
 <div class="line">  pthread_mutex_lock( &amp;(<a class="code" href="lspmac_8c.html#a8a3ca6fcf5e24dcc26170736843e53b2" title="Scintillator Piezo DAC.">fscint</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));</div>
@@ -2765,7 +2770,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>send the next queued query to the DB server </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l01196">1196</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01201">1201</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                            {</div>
 <div class="line">  <span class="comment">//</span></div>
 <div class="line">  <span class="comment">// Normally we should be in the &quot;send&quot; state</span></div>
@@ -2888,7 +2893,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00979">979</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00984">984</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                             {</div>
 <div class="line">  <a class="code" href="lspg_8c.html#af7d6efd861b152a371442791deb42bd3" title="queue up the seq_run_prep query">lspg_seq_run_prep_call</a>( skey, <a class="code" href="lspmac_8c.html#a0be79ccb7ebf3a665248fd856112b9fd" title="Kappa.">kappa</a>, <a class="code" href="lspmac_8c.html#ac8070dc568ad974a3db42b51eca828cc" title="Phi (not data collection axis)">phi</a>, cx, cy, ax, ay, az);</div>
 <div class="line">  <a class="code" href="lspg_8c.html#ac0b01f501322432a8fa37f31898c3499" title="Wait for seq run prep query to return.">lspg_seq_run_prep_wait</a>();</div>
@@ -2972,7 +2977,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00945">945</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00950">950</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                              {</div>
 <div class="line">  pthread_mutex_lock( &amp;(<a class="code" href="lspg_8c.html#a1b0d9fc30bcea6905b075d2362149172">lspg_seq_run_prep</a>.<a class="code" href="structlspg__seq__run__prep__struct.html#ad146cb91b5f7dd8bb283092c28781fe7">mutex</a>));</div>
 <div class="line">  <a class="code" href="lspg_8c.html#a1b0d9fc30bcea6905b075d2362149172">lspg_seq_run_prep</a>.<a class="code" href="structlspg__seq__run__prep__struct.html#a42d08888327e9059ddd69ddfec31b8a9">new_value_ready</a> = 0;</div>
@@ -3017,7 +3022,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00933">933</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00938">938</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                            {</div>
 <div class="line">  pthread_mutex_lock( &amp;(<a class="code" href="lspg_8c.html#a1b0d9fc30bcea6905b075d2362149172">lspg_seq_run_prep</a>.<a class="code" href="structlspg__seq__run__prep__struct.html#ad146cb91b5f7dd8bb283092c28781fe7">mutex</a>));</div>
 <div class="line">  <a class="code" href="lspg_8c.html#a1b0d9fc30bcea6905b075d2362149172">lspg_seq_run_prep</a>.<a class="code" href="structlspg__seq__run__prep__struct.html#a42d08888327e9059ddd69ddfec31b8a9">new_value_ready</a> = 1;</div>
@@ -3042,7 +3047,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Indicate we are done waiting. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00973">973</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00978">978</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                              {</div>
 <div class="line">  pthread_mutex_unlock( &amp;(<a class="code" href="lspg_8c.html#a1b0d9fc30bcea6905b075d2362149172">lspg_seq_run_prep</a>.<a class="code" href="structlspg__seq__run__prep__struct.html#ad146cb91b5f7dd8bb283092c28781fe7">mutex</a>));</div>
 <div class="line">}</div>
@@ -3064,7 +3069,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Initialize the data collection object. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00925">925</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00930">930</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                              {</div>
 <div class="line">  <a class="code" href="lspg_8c.html#a1b0d9fc30bcea6905b075d2362149172">lspg_seq_run_prep</a>.<a class="code" href="structlspg__seq__run__prep__struct.html#a42d08888327e9059ddd69ddfec31b8a9">new_value_ready</a> = 0;</div>
 <div class="line">  pthread_mutex_init( &amp;(<a class="code" href="lspg_8c.html#a1b0d9fc30bcea6905b075d2362149172">lspg_seq_run_prep</a>.<a class="code" href="structlspg__seq__run__prep__struct.html#ad146cb91b5f7dd8bb283092c28781fe7">mutex</a>), NULL);</div>
@@ -3088,7 +3093,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Wait for seq run prep query to return. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00965">965</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00970">970</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                              {</div>
 <div class="line">  pthread_mutex_lock( &amp;(<a class="code" href="lspg_8c.html#a1b0d9fc30bcea6905b075d2362149172">lspg_seq_run_prep</a>.<a class="code" href="structlspg__seq__run__prep__struct.html#ad146cb91b5f7dd8bb283092c28781fe7">mutex</a>));</div>
 <div class="line">  <span class="keywordflow">while</span>( <a class="code" href="lspg_8c.html#a1b0d9fc30bcea6905b075d2362149172">lspg_seq_run_prep</a>.<a class="code" href="structlspg__seq__run__prep__struct.html#a42d08888327e9059ddd69ddfec31b8a9">new_value_ready</a> == 0)</div>
@@ -3119,7 +3124,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l01304">1304</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01309">1309</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                        {</div>
 <div class="line">  <span class="keyword">struct </span>signalfd_siginfo fdsi;</div>
 <div class="line"></div>
@@ -3155,7 +3160,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Combined call to wait for the detector. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00789">789</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00794">794</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                                  {</div>
 <div class="line">  <a class="code" href="lspg_8c.html#a4b5222b859a44eae616804a1e990b86d" title="initiate the wait for detector query">lspg_wait_for_detector_call</a>();</div>
 <div class="line">  <a class="code" href="lspg_8c.html#af094e01be121ce8e14abb679abd17e19" title="Pause the calling thread until the detector is ready Called by the MD2 thread.">lspg_wait_for_detector_wait</a>();</div>
@@ -3179,7 +3184,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>initiate the wait for detector query </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00763">763</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00768">768</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                                   {</div>
 <div class="line">  pthread_mutex_lock( &amp;(<a class="code" href="lspg_8c.html#a0dfc8d0410cd2d7f7da7a70d3ef88e58" title="Instance of the detector timing object.">lspg_wait_for_detector</a>.<a class="code" href="structlspg__wait__for__detector__struct.html#a958e9fe59e671e61f95c2ce796ba24ce">mutex</a>));</div>
 <div class="line">  <a class="code" href="lspg_8c.html#a0dfc8d0410cd2d7f7da7a70d3ef88e58" title="Instance of the detector timing object.">lspg_wait_for_detector</a>.<a class="code" href="structlspg__wait__for__detector__struct.html#ad950e85c70c4473c5c7c40f8ceeae61d">new_value_ready</a> = 0;</div>
@@ -3216,7 +3221,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Callback for the wait for detector query. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00754">754</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00759">759</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                                                                        {</div>
 <div class="line">  pthread_mutex_lock( &amp;(<a class="code" href="lspg_8c.html#a0dfc8d0410cd2d7f7da7a70d3ef88e58" title="Instance of the detector timing object.">lspg_wait_for_detector</a>.<a class="code" href="structlspg__wait__for__detector__struct.html#a958e9fe59e671e61f95c2ce796ba24ce">mutex</a>));</div>
 <div class="line">  <a class="code" href="lspg_8c.html#a0dfc8d0410cd2d7f7da7a70d3ef88e58" title="Instance of the detector timing object.">lspg_wait_for_detector</a>.<a class="code" href="structlspg__wait__for__detector__struct.html#ad950e85c70c4473c5c7c40f8ceeae61d">new_value_ready</a> = 1;</div>
@@ -3241,7 +3246,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Done waiting for the detector. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00782">782</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00787">787</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                                   {</div>
 <div class="line">  pthread_mutex_unlock( &amp;(<a class="code" href="lspg_8c.html#a0dfc8d0410cd2d7f7da7a70d3ef88e58" title="Instance of the detector timing object.">lspg_wait_for_detector</a>.<a class="code" href="structlspg__wait__for__detector__struct.html#a958e9fe59e671e61f95c2ce796ba24ce">mutex</a>));</div>
 <div class="line">}</div>
@@ -3263,7 +3268,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>initialize the detector timing object </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00746">746</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00751">751</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                                   {</div>
 <div class="line">  <a class="code" href="lspg_8c.html#a0dfc8d0410cd2d7f7da7a70d3ef88e58" title="Instance of the detector timing object.">lspg_wait_for_detector</a>.<a class="code" href="structlspg__wait__for__detector__struct.html#ad950e85c70c4473c5c7c40f8ceeae61d">new_value_ready</a> = 0;</div>
 <div class="line">  pthread_mutex_init( &amp;(<a class="code" href="lspg_8c.html#a0dfc8d0410cd2d7f7da7a70d3ef88e58" title="Instance of the detector timing object.">lspg_wait_for_detector</a>.<a class="code" href="structlspg__wait__for__detector__struct.html#a958e9fe59e671e61f95c2ce796ba24ce">mutex</a>), NULL);</div>
@@ -3287,7 +3292,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Pause the calling thread until the detector is ready Called by the MD2 thread. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00774">774</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00779">779</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                                   {</div>
 <div class="line">  pthread_mutex_lock( &amp;(<a class="code" href="lspg_8c.html#a0dfc8d0410cd2d7f7da7a70d3ef88e58" title="Instance of the detector timing object.">lspg_wait_for_detector</a>.<a class="code" href="structlspg__wait__for__detector__struct.html#a958e9fe59e671e61f95c2ce796ba24ce">mutex</a>));</div>
 <div class="line">  <span class="keywordflow">while</span>( <a class="code" href="lspg_8c.html#a0dfc8d0410cd2d7f7da7a70d3ef88e58" title="Instance of the detector timing object.">lspg_wait_for_detector</a>.<a class="code" href="structlspg__wait__for__detector__struct.html#ad950e85c70c4473c5c7c40f8ceeae61d">new_value_ready</a> == 0)</div>
@@ -3318,7 +3323,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l01579">1579</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01584">1584</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                    {</div>
 <div class="line">  <span class="keyword">static</span> <span class="keyword">struct </span>pollfd fda[2];  <span class="comment">// 0=signal handler, 1=pg socket</span></div>
 <div class="line">  <span class="keyword">static</span> <span class="keywordtype">int</span> nfda = 0;</div>
@@ -3429,7 +3434,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00346">346</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00351">351</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                        {</div>
 <div class="line">  <span class="keywordtype">int</span> i;</div>
 <div class="line">  </div>
@@ -3535,7 +3540,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00863">863</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00868">868</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 
 </div>
 </div>
@@ -3557,7 +3562,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00804">804</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00809">809</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 
 </div>
 </div>
@@ -3764,7 +3769,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00921">921</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00926">926</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 
 </div>
 </div>
@@ -3812,7 +3817,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Instance of the detector timing object. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00742">742</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00747">747</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 
 </div>
 </div>
@@ -3894,7 +3899,7 @@ lspg_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="lspg_8c.html">lspg.c</a></li>
-    <li class="footer">Generated on Fri Nov 16 2012 20:50:35 for LS-CAT PGPMAC by
+    <li class="footer">Generated on Thu Nov 29 2012 13:05:30 for LS-CAT PGPMAC by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.2 </li>
   </ul>

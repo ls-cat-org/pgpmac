@@ -1,4 +1,4 @@
-.TH "pgpmac.h" 3 "Fri Nov 16 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "pgpmac.h" 3 "Thu Nov 29 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -155,8 +155,24 @@ Headers for the entire pgpmac project\&.
 
 .in +1c
 .ti -1c
+.RI "double \fBlspmac_getPosition\fP (\fBlspmac_motor_t\fP *)"
+.br
+.RI "\fIget the motor position (with locking) \fP"
+.ti -1c
 .RI "void \fBPmacSockSendline\fP (char *s)"
 .br
+.ti -1c
+.RI "void \fBpgpmac_printf\fP (char *fmt,\&.\&.\&.)"
+.br
+.RI "\fITerminal output routine ala printf\&. \fP"
+.ti -1c
+.RI "void \fBlspg_init\fP ()"
+.br
+.RI "\fIInitiallize the lspg module\&. \fP"
+.ti -1c
+.RI "void \fBlspg_run\fP ()"
+.br
+.RI "\fIStart 'er runnin'\&. \fP"
 .ti -1c
 .RI "void \fBlspg_seq_run_prep_all\fP (long long skey, double \fBkappa\fP, double \fBphi\fP, double cx, double cy, double ax, double ay, double az)"
 .br
@@ -165,17 +181,32 @@ Headers for the entire pgpmac project\&.
 .RI "void \fBlspg_zoom_lut_call\fP ()"
 .br
 .ti -1c
-.RI "void \fBpgpmac_printf\fP (char *fmt,\&.\&.\&.)"
-.br
-.RI "\fITerminal output routine ala printf\&. \fP"
-.ti -1c
 .RI "void \fBlspmac_init\fP (int, int)"
 .br
 .RI "\fIInitialize this module\&. \fP"
 .ti -1c
-.RI "void \fBlspg_init\fP ()"
+.RI "void \fBlspmac_run\fP ()"
 .br
-.RI "\fIInitiallize the lspg module\&. \fP"
+.RI "\fIStart up the lspmac thread\&. \fP"
+.ti -1c
+.RI "void \fBlspmac_move_or_jog_queue\fP (\fBlspmac_motor_t\fP *, double, int)"
+.br
+.ti -1c
+.RI "void \fBlspmac_move_or_jog_preset_queue\fP (\fBlspmac_motor_t\fP *, char *, int)"
+.br
+.RI "\fImove using a preset value \fP"
+.ti -1c
+.RI "void \fBlspmac_moveabs_queue\fP (\fBlspmac_motor_t\fP *, double)"
+.br
+.RI "\fIUse coordinate system motion program, if available, to move motor to requested position\&. \fP"
+.ti -1c
+.RI "void \fBlspmac_jogabs_queue\fP (\fBlspmac_motor_t\fP *, double)"
+.br
+.RI "\fIUse jog to move motor to requested position\&. \fP"
+.ti -1c
+.RI "\fBpmac_cmd_queue_t\fP * \fBlspmac_SockSendline\fP (char *,\&.\&.\&.)"
+.br
+.RI "\fISend a one line command\&. \fP"
 .ti -1c
 .RI "void \fBlsupdate_init\fP ()"
 .br
@@ -185,21 +216,13 @@ Headers for the entire pgpmac project\&.
 .br
 .RI "\fIInitialize the md2cmds module\&. \fP"
 .ti -1c
-.RI "void \fBlspmac_run\fP ()"
+.RI "void \fBmd2cmds_run\fP ()"
 .br
-.RI "\fIStart up the lspmac thread\&. \fP"
-.ti -1c
-.RI "void \fBlspg_run\fP ()"
-.br
-.RI "\fIStart 'er runnin'\&. \fP"
+.RI "\fIStart up the thread\&. \fP"
 .ti -1c
 .RI "void \fBlsupdate_run\fP ()"
 .br
 .RI "\fIrun the update routines \fP"
-.ti -1c
-.RI "void \fBmd2cmds_run\fP ()"
-.br
-.RI "\fIStart up the thread\&. \fP"
 .ti -1c
 .RI "void \fBlsevents_init\fP ()"
 .br
@@ -342,7 +365,19 @@ Headers for the entire pgpmac project\&.
 .ti -1c
 .RI "\fBlspmac_motor_t\fP * \fBblight_ud\fP"
 .br
-.RI "\fIBack Light Up/Down actuator\&. \fP"
+.RI "\fIBack light Up/Down actuator\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBflight_oo\fP"
+.br
+.RI "\fITurn front light on/off\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBblight_f\fP"
+.br
+.RI "\fIBack light scale factor\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBflight_f\fP"
+.br
+.RI "\fIFront light scale factor\&. \fP"
 .ti -1c
 .RI "\fBlspmac_motor_t\fP * \fBcryo\fP"
 .br
@@ -359,6 +394,10 @@ Headers for the entire pgpmac project\&.
 .RI "int \fBlspmac_nmotors\fP"
 .br
 .RI "\fIThe number of motors we manage\&. \fP"
+.ti -1c
+.RI "struct timespec \fBomega_zero_time\fP"
+.br
+.RI "\fITime we believe that omega crossed zero\&. \fP"
 .ti -1c
 .RI "WINDOW * \fBterm_output\fP"
 .br
@@ -390,11 +429,17 @@ Headers for the entire pgpmac project\&.
 .ti -1c
 .RI "pthread_cond_t \fBmd2cmds_pg_cond\fP"
 .br
-.RI "\fIcoordinate call and response \fP"
 .ti -1c
 .RI "pthread_mutex_t \fBmd2cmds_pg_mutex\fP"
 .br
-.RI "\fImessage passing between md2cmds and pg \fP"
+.ti -1c
+.RI "pthread_mutex_t \fBpmac_queue_mutex\fP"
+.br
+.RI "\fImanage access to the pmac command queue \fP"
+.ti -1c
+.RI "pthread_cond_t \fBpmac_queue_cond\fP"
+.br
+.RI "\fIwait for a command to be sent to PMAC before continuing \fP"
 .ti -1c
 .RI "pthread_mutex_t \fBlspmac_shutter_mutex\fP"
 .br
@@ -483,7 +528,7 @@ Definition at line 40 of file pgpmac\&.h\&.
 .SS "#define MD2CMDS_CMD_LENGTH   32"
 
 .PP
-Definition at line 376 of file pgpmac\&.h\&.
+Definition at line 385 of file pgpmac\&.h\&.
 .SH "Typedef Documentation"
 .PP 
 .SS "typedef struct \fBlskvs_kvs_list_struct\fP  \fBlskvs_kvs_list_t\fP"
@@ -741,7 +786,6 @@ Definition at line 21 of file lskvs\&.c\&.
   if( name_kv != NULL || position_kv != NULL) {
     errno = 0;
     rtn = strtod( position_kv->kvs->v, NULL);
-    lslogging_log_message( 'lskvs_find_preset_position: v = '%s', rtn = %f', position_kv->kvs->v, rtn);
     if( errno != 0) {
       lslogging_log_message( 'lskvs_find_preset_position: bad preset value for motor %s, preset %s, value '%s'', mp->name, name, position_kv->kvs->v);
       if( err != NULL)
@@ -772,7 +816,7 @@ Utility wrapper for regcomp providing printf style formating\&. \fBParameters:\f
 .PP
 < no reason our search strings should ever be this big 
 .PP
-Definition at line 93 of file lskvs\&.c\&.
+Definition at line 92 of file lskvs\&.c\&.
 .PP
 .nf
                                                                {
@@ -829,7 +873,7 @@ Definition at line 93 of file lskvs\&.c\&.
 .PP
 Initiallize the lspg module\&. 
 .PP
-Definition at line 1659 of file lspg\&.c\&.
+Definition at line 1664 of file lspg\&.c\&.
 .PP
 .nf
                  {
@@ -847,7 +891,7 @@ Definition at line 1659 of file lspg\&.c\&.
 .PP
 Start 'er runnin'\&. 
 .PP
-Definition at line 1671 of file lspg\&.c\&.
+Definition at line 1676 of file lspg\&.c\&.
 .PP
 .nf
                 {
@@ -878,7 +922,7 @@ Convinence function to call seq run prep\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 979 of file lspg\&.c\&.
+Definition at line 984 of file lspg\&.c\&.
 .PP
 .nf
                              {
@@ -889,12 +933,33 @@ Definition at line 979 of file lspg\&.c\&.
 .fi
 .SS "void lspg_zoom_lut_call ()"
 
+.SS "double lspmac_getPosition (\fBlspmac_motor_t\fP *mp)"
+
+.PP
+get the motor position (with locking) \fBParameters:\fP
+.RS 4
+\fImp\fP the motor object 
+.RE
+.PP
+
+.PP
+Definition at line 1227 of file lspmac\&.c\&.
+.PP
+.nf
+                                               {
+  double rtn;
+  pthread_mutex_lock( &(mp->mutex));
+  rtn = mp->position;
+  pthread_mutex_unlock( &(mp->mutex));
+  return rtn;
+}
+.fi
 .SS "void lspmac_init (int, int)"
 
 .PP
 Initialize this module\&. 
 .PP
-Definition at line 2226 of file lspmac\&.c\&.
+Definition at line 2557 of file lspmac\&.c\&.
 .PP
 .nf
                    {
@@ -913,12 +978,12 @@ Definition at line 2226 of file lspmac\&.c\&.
 
   p = &md2_status;
 
-  omega  = lspmac_motor_init( &(lspmac_motors[ 0]),  1, 0, 0, &p->omega_act_pos,     &p->omega_status_1,     &p->omega_status_2,     'Omega   #1 &1 X', 'omega',       lspmac_moveabs_queue);
+  omega  = lspmac_motor_init( &(lspmac_motors[ 0]),  1, 0, 0, &p->omega_act_pos,     &p->omega_status_1,     &p->omega_status_2,     'Omega   #1 &1 A', 'omega',       lspmac_moveabs_queue);
   alignx = lspmac_motor_init( &(lspmac_motors[ 1]),  2, 0, 1, &p->alignx_act_pos,    &p->alignx_status_1,    &p->alignx_status_2,    'Align X #2 &3 X', 'align\&.x',     lspmac_moveabs_queue);
   aligny = lspmac_motor_init( &(lspmac_motors[ 2]),  3, 0, 2, &p->aligny_act_pos,    &p->aligny_status_1,    &p->aligny_status_2,    'Align Y #3 &3 Y', 'align\&.y',     lspmac_moveabs_queue);
   alignz = lspmac_motor_init( &(lspmac_motors[ 3]),  4, 0, 3, &p->alignz_act_pos,    &p->alignz_status_1,    &p->alignz_status_2,    'Align Z #4 &3 Z', 'align\&.z',     lspmac_moveabs_queue);
   anal   = lspmac_motor_init( &(lspmac_motors[ 4]),  5, 0, 4, &p->analyzer_act_pos,  &p->analyzer_status_1,  &p->analyzer_status_2,  'Anal    #5',      'lightPolar',  lspmac_moveabs_queue);
-  zoom   = lspmac_motor_init( &(lspmac_motors[ 5]),  6, 1, 0, &p->zoom_act_pos,      &p->zoom_status_1,      &p->zoom_status_2,      'Zoom    #6 &4 Z', 'zoom',        lspmac_movezoom_queue);
+  zoom   = lspmac_motor_init( &(lspmac_motors[ 5]),  6, 1, 0, &p->zoom_act_pos,      &p->zoom_status_1,      &p->zoom_status_2,      'Zoom    #6 &4 Z', 'cam\&.zoom',    lspmac_movezoom_queue);
   apery  = lspmac_motor_init( &(lspmac_motors[ 6]),  7, 1, 1, &p->aperturey_act_pos, &p->aperturey_status_1, &p->aperturey_status_2, 'Aper Y  #7 &5 Y', 'appy',        lspmac_moveabs_queue);
   aperz  = lspmac_motor_init( &(lspmac_motors[ 7]),  8, 1, 2, &p->aperturez_act_pos, &p->aperturez_status_1, &p->aperturez_status_2, 'Aper Z  #8 &5 Z', 'appz',        lspmac_moveabs_queue);
   capy   = lspmac_motor_init( &(lspmac_motors[ 8]),  9, 1, 3, &p->capy_act_pos,      &p->capy_status_1,      &p->capy_status_2,      'Cap Y   #9 &5 U', 'capy',        lspmac_moveabs_queue);
@@ -930,17 +995,19 @@ Definition at line 2226 of file lspmac\&.c\&.
   phi    = lspmac_motor_init( &(lspmac_motors[14]), 20, 2, 4, &p->phi_act_pos,       &p->phi_status_1,       &p->phi_status_2,       'Phi    #20 &7 Y', 'phi',         lspmac_moveabs_queue);
 
   fshut  = lspmac_fshut_init( &(lspmac_motors[15]));
-  flight = lspmac_dac_init( &(lspmac_motors[16]), &p->front_dac,   160\&.0, 'M1200', 'frontLight\&.intensity');
-  blight = lspmac_dac_init( &(lspmac_motors[17]), &p->back_dac,    160\&.0, 'M1201', 'backLight\&.intensity');
-  fscint = lspmac_dac_init( &(lspmac_motors[18]), &p->scint_piezo, 320\&.0, 'M1203', 'scint\&.focus');
+  flight = lspmac_dac_init( &(lspmac_motors[16]), &p->front_dac,   160\&.0, 'M1200', 'frontLight\&.intensity', lspmac_movedac_queue);
+  blight = lspmac_dac_init( &(lspmac_motors[17]), &p->back_dac,    160\&.0, 'M1201', 'backLight\&.intensity',  lspmac_movedac_queue);
+  fscint = lspmac_dac_init( &(lspmac_motors[18]), &p->scint_piezo, 320\&.0, 'M1203', 'scint\&.focus',          lspmac_movedac_queue);
 
-  blight_ud = lspmac_bo_init( &(lspmac_motors[19]), 'backLight', 'M1101=%d', &(md2_status\&.acc11c_5), 0x02);
-  cryo      = lspmac_bo_init( &(lspmac_motors[20]), 'cryo',      'M1102=%d', &(md2_status\&.acc11c_5), 0x04);
-  dryer     = lspmac_bo_init( &(lspmac_motors[21]), 'dryer',     'M1103=%d', &(md2_status\&.acc11c_5), 0x08);
-  fluo      = lspmac_bo_init( &(lspmac_motors[22]), 'fluo',      'M1008=%d', &(md2_status\&.acc11c_2), 0x01);
+  blight_ud = lspmac_bo_init( &(lspmac_motors[19]), 'backLight',  'M1101=%d', &(md2_status\&.acc11c_5), 0x02);
+  cryo      = lspmac_bo_init( &(lspmac_motors[20]), 'cryo',       'M1102=%d', &(md2_status\&.acc11c_5), 0x04);
+  dryer     = lspmac_bo_init( &(lspmac_motors[21]), 'dryer',      'M1103=%d', &(md2_status\&.acc11c_5), 0x08);
+  fluo      = lspmac_bo_init( &(lspmac_motors[22]), 'fluo',       'M1008=%d', &(md2_status\&.acc11c_2), 0x01);
+  flight_oo = lspmac_soft_motor_init( &(lspmac_motors[23]), 'frontLight',        1\&.0, lspmac_moveabs_frontlight_oo_queue);
+  blight_f  = lspmac_soft_motor_init( &(lspmac_motors[24]), 'backLight\&.factor',  1\&.0, lspmac_moveabs_blight_factor_queue);
+  flight_f  = lspmac_soft_motor_init( &(lspmac_motors[25]), 'frontLight\&.factor', 1\&.0, lspmac_moveabs_flight_factor_queue);
 
   cryo_switch = lspmac_bi_init( &(lspmac_bis[0]), &(md2_status\&.acc11c_1), 0x04, 'CryoSwitchChanged', 'CryoSwitchChanged');
-
 
   //
   // Initialize several commands that get called, perhaps, alot
@@ -980,7 +1047,56 @@ Definition at line 2226 of file lspmac\&.c\&.
 
   pthread_mutex_init( &lspmac_moving_mutex, NULL);
   pthread_cond_init(  &lspmac_moving_cond, NULL);
+}
+.fi
+.SS "void lspmac_jogabs_queue (\fBlspmac_motor_t\fP *, double)"
 
+.PP
+Use jog to move motor to requested position\&. 
+.PP
+Definition at line 2289 of file lspmac\&.c\&.
+.PP
+.nf
+                            {
+  
+  lspmac_move_or_jog_abs_queue( mp, requested_position, 1);
+}
+.fi
+.SS "void lspmac_move_or_jog_preset_queue (\fBlspmac_motor_t\fP *, char *, int)"
+
+.PP
+move using a preset value 
+.PP
+Definition at line 2258 of file lspmac\&.c\&.
+.PP
+.nf
+                                       {
+  double pos;
+  int err;
+
+  if( preset == NULL || *preset == 0)
+    return;
+
+  pthread_mutex_lock( &(mp->mutex));
+  pos = lskvs_find_preset_position( mp, preset, &err);
+  pthread_mutex_unlock( &(mp->mutex));
+
+  lspmac_move_or_jog_abs_queue( mp, pos, use_jog);
+}
+.fi
+.SS "void lspmac_move_or_jog_queue (\fBlspmac_motor_t\fP *, double, int)"
+
+.SS "void lspmac_moveabs_queue (\fBlspmac_motor_t\fP *, double)"
+
+.PP
+Use coordinate system motion program, if available, to move motor to requested position\&. 
+.PP
+Definition at line 2279 of file lspmac\&.c\&.
+.PP
+.nf
+                            {
+  
+  lspmac_move_or_jog_abs_queue( mp, requested_position, 0);
 }
 .fi
 .SS "void lspmac_run ()"
@@ -988,7 +1104,7 @@ Definition at line 2226 of file lspmac\&.c\&.
 .PP
 Start up the lspmac thread\&. 
 .PP
-Definition at line 2403 of file lspmac\&.c\&.
+Definition at line 2771 of file lspmac\&.c\&.
 .PP
 .nf
                   {
@@ -997,6 +1113,36 @@ Definition at line 2403 of file lspmac\&.c\&.
   lsevents_add_listener( 'CryoSwitchChanged', lspmac_cryoSwitchChanged_cb);
   lsevents_add_listener( 'scint In Position', lspmac_scint_inPosition_cb);
   lsevents_add_listener( 'scintDried',        lspmac_scint_dried_cb);
+  lsevents_add_listener( 'backLight 1',       lspmac_backLight_up_cb);
+  lsevents_add_listener( 'backLight 0',       lspmac_backLight_down_cb);
+  lsevents_add_listener( 'cam\&.zoom In Position',  lspmac_light_zoom_cb);
+}
+.fi
+.SS "\fBpmac_cmd_queue_t\fP* lspmac_SockSendline (char *fmt, \&.\&.\&.)"
+
+.PP
+Send a one line command\&. Uses printf style arguments\&. \fBParameters:\fP
+.RS 4
+\fIfmt\fP Printf style format string 
+.RE
+.PP
+
+.PP
+Definition at line 957 of file lspmac\&.c\&.
+.PP
+.nf
+                                         {
+  va_list arg_ptr;
+  char payload[1400];
+
+  va_start( arg_ptr, fmt);
+  vsnprintf( payload, sizeof(payload)-1, fmt, arg_ptr);
+  payload[ sizeof(payload)-1] = 0;
+  va_end( arg_ptr);
+
+  lslogging_log_message( payload);
+
+  return lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( payload), payload, lspmac_GetShortReplyCB, 0);
 }
 .fi
 .SS "void lstimer_add_timer (char *, int, unsigned longint, unsigned longint)"
@@ -1091,7 +1237,7 @@ Definition at line 270 of file lstimer\&.c\&.
 .PP
 Initialize this module\&. 
 .PP
-Definition at line 100 of file lsupdate\&.c\&.
+Definition at line 109 of file lsupdate\&.c\&.
 .PP
 .nf
                      {
@@ -1102,7 +1248,7 @@ Definition at line 100 of file lsupdate\&.c\&.
 .PP
 run the update routines 
 .PP
-Definition at line 105 of file lsupdate\&.c\&.
+Definition at line 114 of file lsupdate\&.c\&.
 .PP
 .nf
                     {
@@ -1114,7 +1260,7 @@ Definition at line 105 of file lsupdate\&.c\&.
 .PP
 Initialize the md2cmds module\&. 
 .PP
-Definition at line 642 of file md2cmds\&.c\&.
+Definition at line 771 of file md2cmds\&.c\&.
 .PP
 .nf
                     {
@@ -1123,8 +1269,9 @@ Definition at line 642 of file md2cmds\&.c\&.
   pthread_mutex_init( &md2cmds_mutex, NULL);
   pthread_cond_init( &md2cmds_cond, NULL);
 
-  pthread_mutex_init( &md2cmds_pg_mutex, NULL);
-  pthread_cond_init( &md2cmds_pg_cond, NULL);
+  pthread_mutex_init( &md2cmds_moving_mutex, NULL);
+  pthread_cond_init(  &md2cmds_moving_cond, NULL);
+
 
 }
 .fi
@@ -1133,11 +1280,24 @@ Definition at line 642 of file md2cmds\&.c\&.
 .PP
 Start up the thread\&. 
 .PP
-Definition at line 655 of file md2cmds\&.c\&.
+Definition at line 785 of file md2cmds\&.c\&.
 .PP
 .nf
                    {
-  pthread_create( &md2cmds_thread, NULL, md2cmds_worker, NULL);
+  pthread_create( &md2cmds_thread, NULL,            md2cmds_worker, NULL);
+  lsevents_add_listener( 'omega crossed zero',      md2cmds_rotate_cb);
+  lsevents_add_listener( 'omega In Position',       md2cmds_maybe_rotate_done_cb);
+  lsevents_add_listener( 'align\&.x In Position',     md2cmds_maybe_done_moving_cb);
+  lsevents_add_listener( 'align\&.y In Position',     md2cmds_maybe_done_moving_cb);
+  lsevents_add_listener( 'align\&.z In Position',     md2cmds_maybe_done_moving_cb);
+  lsevents_add_listener( 'centering\&.x In Position', md2cmds_maybe_done_moving_cb);
+  lsevents_add_listener( 'centering\&.y In Position', md2cmds_maybe_done_moving_cb);
+  lsevents_add_listener( 'align\&.x Moving',          md2cmds_maybe_done_moving_cb);
+  lsevents_add_listener( 'align\&.y Moving',          md2cmds_maybe_done_moving_cb);
+  lsevents_add_listener( 'align\&.z Moving',          md2cmds_maybe_done_moving_cb);
+  lsevents_add_listener( 'centering\&.x Moving',      md2cmds_maybe_done_moving_cb);
+  lsevents_add_listener( 'centering\&.y Moving',      md2cmds_maybe_done_moving_cb);
+  lsevents_add_listener( 'cam\&.zoom In Position',    md2cmds_set_scale_cb);
 }
 .fi
 .SS "void pgpmac_printf (char *fmt, \&.\&.\&.)"
@@ -1179,115 +1339,133 @@ Definition at line 326 of file pgpmac\&.c\&.
 .PP
 Alignment stage X\&. 
 .PP
-Definition at line 76 of file lspmac\&.c\&.
+Definition at line 81 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* aligny"
 
 .PP
 Alignment stage Y\&. 
 .PP
-Definition at line 77 of file lspmac\&.c\&.
+Definition at line 82 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* alignz"
 
 .PP
 Alignment stage X\&. 
 .PP
-Definition at line 78 of file lspmac\&.c\&.
+Definition at line 83 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* anal"
 
 .PP
 Polaroid analyzer motor\&. 
 .PP
-Definition at line 79 of file lspmac\&.c\&.
+Definition at line 84 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* apery"
 
 .PP
 Aperture Y\&. 
 .PP
-Definition at line 81 of file lspmac\&.c\&.
+Definition at line 86 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* aperz"
 
 .PP
 Aperture Z\&. 
 .PP
-Definition at line 82 of file lspmac\&.c\&.
+Definition at line 87 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* blight"
 
 .PP
 Back Light DAC\&. 
 .PP
-Definition at line 93 of file lspmac\&.c\&.
+Definition at line 98 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* blight_f"
+
+.PP
+Back light scale factor\&. 
+.PP
+Definition at line 103 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* blight_ud"
 
 .PP
-Back Light Up/Down actuator\&. 
+Back light Up/Down actuator\&. 
 .PP
-Definition at line 96 of file lspmac\&.c\&.
+Definition at line 101 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* capy"
 
 .PP
 Capillary Y\&. 
 .PP
-Definition at line 83 of file lspmac\&.c\&.
+Definition at line 88 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* capz"
 
 .PP
 Capillary Z\&. 
 .PP
-Definition at line 84 of file lspmac\&.c\&.
+Definition at line 89 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* cenx"
 
 .PP
 Centering Table X\&. 
 .PP
-Definition at line 86 of file lspmac\&.c\&.
+Definition at line 91 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* ceny"
 
 .PP
 Centering Table Y\&. 
 .PP
-Definition at line 87 of file lspmac\&.c\&.
+Definition at line 92 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* cryo"
 
 .PP
 Move the cryostream towards or away from the crystal\&. 
 .PP
-Definition at line 97 of file lspmac\&.c\&.
+Definition at line 105 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* dryer"
 
 .PP
 blow air on the scintilator to dry it off 
 .PP
-Definition at line 98 of file lspmac\&.c\&.
+Definition at line 106 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* flight"
 
 .PP
 Front Light DAC\&. 
 .PP
-Definition at line 92 of file lspmac\&.c\&.
+Definition at line 97 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* flight_f"
+
+.PP
+Front light scale factor\&. 
+.PP
+Definition at line 104 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* flight_oo"
+
+.PP
+Turn front light on/off\&. 
+.PP
+Definition at line 102 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* fluo"
 
 .PP
 Move the fluorescence detector in/out\&. 
 .PP
-Definition at line 99 of file lspmac\&.c\&.
+Definition at line 107 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* fscint"
 
 .PP
 Scintillator Piezo DAC\&. 
 .PP
-Definition at line 94 of file lspmac\&.c\&.
+Definition at line 99 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* fshut"
 
 .PP
 Fast shutter\&. 
 .PP
-Definition at line 91 of file lspmac\&.c\&.
+Definition at line 96 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* kappa"
 
 .PP
 Kappa\&. 
 .PP
-Definition at line 88 of file lspmac\&.c\&.
+Definition at line 93 of file lspmac\&.c\&.
 .SS "\fBlskvs_kvs_t\fP* lskvs_kvs"
 
 .PP
@@ -1317,7 +1495,7 @@ Definition at line 72 of file lspg\&.c\&.
 .PP
 All our motors\&. 
 .PP
-Definition at line 73 of file lspmac\&.c\&.
+Definition at line 78 of file lspmac\&.c\&.
 .SS "pthread_cond_t lspmac_moving_cond"
 
 .PP
@@ -1341,7 +1519,7 @@ Definition at line 57 of file lspmac\&.c\&.
 .PP
 The number of motors we manage\&. 
 .PP
-Definition at line 74 of file lspmac\&.c\&.
+Definition at line 79 of file lspmac\&.c\&.
 .SS "pthread_cond_t lspmac_shutter_cond"
 
 .PP
@@ -1371,13 +1549,13 @@ Definition at line 53 of file lspmac\&.c\&.
 .PP
 Synchronize reading/writting status buffer\&. 
 .PP
-Definition at line 288 of file lspmac\&.c\&.
+Definition at line 296 of file lspmac\&.c\&.
 .SS "char md2cmds_cmd[]"
 
 .PP
 our command; 
 .PP
-Definition at line 16 of file md2cmds\&.c\&.
+Definition at line 19 of file md2cmds\&.c\&.
 .SS "pthread_cond_t md2cmds_cond"
 
 .PP
@@ -1392,16 +1570,8 @@ mutex for the condition
 Definition at line 11 of file md2cmds\&.c\&.
 .SS "pthread_cond_t md2cmds_pg_cond"
 
-.PP
-coordinate call and response 
-.PP
-Definition at line 13 of file md2cmds\&.c\&.
 .SS "pthread_mutex_t md2cmds_pg_mutex"
 
-.PP
-message passing between md2cmds and pg 
-.PP
-Definition at line 14 of file md2cmds\&.c\&.
 .SS "pthread_mutex_t ncurses_mutex"
 
 .PP
@@ -1413,19 +1583,37 @@ Definition at line 242 of file pgpmac\&.c\&.
 .PP
 MD2 omega axis (the air bearing) 
 .PP
-Definition at line 75 of file lspmac\&.c\&.
+Definition at line 80 of file lspmac\&.c\&.
+.SS "struct timespec omega_zero_time"
+
+.PP
+Time we believe that omega crossed zero\&. 
+.PP
+Definition at line 63 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* phi"
 
 .PP
 Phi (not data collection axis) 
 .PP
-Definition at line 89 of file lspmac\&.c\&.
+Definition at line 94 of file lspmac\&.c\&.
+.SS "pthread_cond_t pmac_queue_cond"
+
+.PP
+wait for a command to be sent to PMAC before continuing 
+.PP
+Definition at line 69 of file lspmac\&.c\&.
+.SS "pthread_mutex_t pmac_queue_mutex"
+
+.PP
+manage access to the pmac command queue 
+.PP
+Definition at line 68 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* scint"
 
 .PP
 Scintillator Z\&. 
 .PP
-Definition at line 85 of file lspmac\&.c\&.
+Definition at line 90 of file lspmac\&.c\&.
 .SS "WINDOW* term_input"
 
 .PP
@@ -1455,7 +1643,7 @@ Definition at line 240 of file pgpmac\&.c\&.
 .PP
 Optical zoom\&. 
 .PP
-Definition at line 80 of file lspmac\&.c\&.
+Definition at line 85 of file lspmac\&.c\&.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for LS-CAT PGPMAC from the source code\&.

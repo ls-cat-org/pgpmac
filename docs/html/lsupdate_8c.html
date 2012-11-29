@@ -156,7 +156,7 @@ Variables</h2></td></tr>
 
 <p>Initialize this module. </p>
 
-<p>Definition at line <a class="el" href="lsupdate_8c_source.html#l00100">100</a> of file <a class="el" href="lsupdate_8c_source.html">lsupdate.c</a>.</p>
+<p>Definition at line <a class="el" href="lsupdate_8c_source.html#l00109">109</a> of file <a class="el" href="lsupdate_8c_source.html">lsupdate.c</a>.</p>
 <div class="fragment"><div class="line">                     {</div>
 <div class="line">}</div>
 </div><!-- fragment -->
@@ -177,7 +177,7 @@ Variables</h2></td></tr>
 
 <p>run the update routines </p>
 
-<p>Definition at line <a class="el" href="lsupdate_8c_source.html#l00105">105</a> of file <a class="el" href="lsupdate_8c_source.html">lsupdate.c</a>.</p>
+<p>Definition at line <a class="el" href="lsupdate_8c_source.html#l00114">114</a> of file <a class="el" href="lsupdate_8c_source.html">lsupdate.c</a>.</p>
 <div class="fragment"><div class="line">                    {</div>
 <div class="line">  pthread_create( &amp;<a class="code" href="lsupdate_8c.html#a00578477e1b3791fc8aed17ebe60b606" title="our worker thread">lsupdate_thread</a>, NULL, <a class="code" href="lsupdate_8c.html#ac4e85ea626b76b06d68c27db1c3e8b43" title="Our worker thread.">lsupdate_worker</a>, NULL);</div>
 <div class="line">}</div>
@@ -198,11 +198,13 @@ Variables</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Query the motors and perhaps tell the DB about it. </p>
+<p>&lt; support for obsolete (ie, non .position) style </p>
 
 <p>Definition at line <a class="el" href="lsupdate_8c_source.html#l00015">15</a> of file <a class="el" href="lsupdate_8c_source.html">lsupdate.c</a>.</p>
 <div class="fragment"><div class="line">                         {</div>
 <div class="line">  <span class="keyword">static</span> <span class="keywordtype">char</span> s[4096];</div>
 <div class="line">  <span class="keyword">static</span> <span class="keywordtype">char</span> s1[512];</div>
+<div class="line">  <span class="keyword">static</span> <span class="keywordtype">char</span> s2[512];          </div>
 <div class="line">  <a class="code" href="structlspmac__motor__struct.html" title="Motor information.">lspmac_motor_t</a> *mp;</div>
 <div class="line">  <span class="keywordtype">int</span> i;</div>
 <div class="line">  <span class="keywordtype">int</span> needComma;</div>
@@ -214,7 +216,7 @@ Variables</h2></td></tr>
 <div class="line">  strcpy(s, <span class="stringliteral">&quot;select px.kvupdate(&#39;{&quot;</span>);</div>
 <div class="line"></div>
 <div class="line">  <span class="keywordflow">for</span>( i=0; i&lt;<a class="code" href="lspmac_8c.html#a56260f012c50a591ee7f97e500f16994" title="The number of motors we manage.">lspmac_nmotors</a>; i++) {</div>
-<div class="line">    mp = &amp;(<a class="code" href="lspmac_8c.html#a9bffbf72495499b505543cd942f665da" title="All our motors.">lspmac_motors</a>[i]);</div>
+<div class="line">    mp = &amp;(<a class="code" href="lspmac_8c.html#a894c709ddd0652583d6db22e86282503" title="All our motors.">lspmac_motors</a>[i]);</div>
 <div class="line"></div>
 <div class="line">    pthread_mutex_lock( &amp;(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));</div>
 <div class="line">    <span class="comment">//</span></div>
@@ -238,11 +240,16 @@ Variables</h2></td></tr>
 <div class="line">      snprintf( s1, <span class="keyword">sizeof</span>(s1)-1, mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a514ee9ed48c7171157d579623f7de23f" title="special format string to create text array for px.kvs update (lsupdate)">update_format</a>, mp-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>);</div>
 <div class="line">      s1[<span class="keyword">sizeof</span>(s1)-1] = 0;</div>
 <div class="line">    </div>
+<div class="line">      <span class="keywordflow">if</span>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#aa90af2f6f1489f1befe1d0891e51575a" title="Name of motor as refered by ls database kvs table.">name</a> != NULL &amp;&amp; *mp-&gt;<a class="code" href="structlspmac__motor__struct.html#aa90af2f6f1489f1befe1d0891e51575a" title="Name of motor as refered by ls database kvs table.">name</a> != 0) {</div>
+<div class="line">        snprintf( s2, <span class="keyword">sizeof</span>(s2)-1, <span class="stringliteral">&quot;,\&quot;%s\&quot;,%.3f&quot;</span>, mp-&gt;<a class="code" href="structlspmac__motor__struct.html#aa90af2f6f1489f1befe1d0891e51575a" title="Name of motor as refered by ls database kvs table.">name</a>, mp-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>);</div>
+<div class="line">        s2[<span class="keyword">sizeof</span>(s2)-1] = 0;</div>
+<div class="line">      }</div>
+<div class="line"></div>
 <div class="line">      mp-&gt;<a class="code" href="structlspmac__motor__struct.html#ae5f1f605a0f587500e627332ad4e5e7e" title="previous position reported to the database">reported_position</a> = mp-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>;</div>
 <div class="line">      mp-&gt;<a class="code" href="structlspmac__motor__struct.html#af11e5f75c1cf88ed6842d04154d27a31" title="bit flags: bit 0 = motor initialized by database, bit 1 = px.kvs value initialized">lspg_initialized</a> |= 2;</div>
 <div class="line">      pthread_mutex_unlock( &amp;(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));</div>
 <div class="line"></div>
-<div class="line">      <span class="keywordflow">if</span>( strlen(s1) + strlen(s) + 32 &gt;= <span class="keyword">sizeof</span>( s)-1) {</div>
+<div class="line">      <span class="keywordflow">if</span>( strlen(s2) + strlen(s1) + strlen(s) + 32 &gt;= <span class="keyword">sizeof</span>( s)-1) {</div>
 <div class="line">        <span class="comment">// send off update now and reset s</span></div>
 <div class="line">        strcat( s, <span class="stringliteral">&quot;}&#39;::text[])&quot;</span>);</div>
 <div class="line">        <a class="code" href="lspg_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( NULL, s);</div>
@@ -259,6 +266,9 @@ Variables</h2></td></tr>
 <div class="line">        needComma=1;</div>
 <div class="line"></div>
 <div class="line">      strcat( s, s1);</div>
+<div class="line">      <span class="keywordflow">if</span>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#aa90af2f6f1489f1befe1d0891e51575a" title="Name of motor as refered by ls database kvs table.">name</a> != NULL &amp;&amp; *mp-&gt;<a class="code" href="structlspmac__motor__struct.html#aa90af2f6f1489f1befe1d0891e51575a" title="Name of motor as refered by ls database kvs table.">name</a> != 0) {</div>
+<div class="line">        strcat( s, s2);</div>
+<div class="line">      }</div>
 <div class="line">    }</div>
 <div class="line">  }</div>
 <div class="line"></div>
@@ -292,7 +302,7 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lsupdate_8c_source.html#l00085">85</a> of file <a class="el" href="lsupdate_8c_source.html">lsupdate.c</a>.</p>
+<p>Definition at line <a class="el" href="lsupdate_8c_source.html#l00094">94</a> of file <a class="el" href="lsupdate_8c_source.html">lsupdate.c</a>.</p>
 <div class="fragment"><div class="line">                        {</div>
 <div class="line">  <span class="keyword">static</span> <span class="keyword">struct </span>timespec naptime;</div>
 <div class="line"></div>
@@ -337,7 +347,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="lsupdate_8c.html">lsupdate.c</a></li>
-    <li class="footer">Generated on Fri Nov 16 2012 20:50:36 for LS-CAT PGPMAC by
+    <li class="footer">Generated on Thu Nov 29 2012 13:05:31 for LS-CAT PGPMAC by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.2 </li>
   </ul>

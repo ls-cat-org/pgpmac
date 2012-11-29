@@ -39,7 +39,7 @@ struct \hyperlink{structlspg__seq__run__prep__struct}{lspg\-\_\-seq\-\_\-run\-\_
 \item 
 \#define \hyperlink{lspg_8c_a373e668840b4795ff9a71bc3f744d209}{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-R\-E\-C\-V}~4
 \item 
-\#define \hyperlink{lspg_8c_a08fe83fe8226002ee8b80ce0a914fd11}{L\-S\-\_\-\-P\-G\-\_\-\-Q\-U\-E\-R\-Y\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H}~256
+\#define \hyperlink{lspg_8c_a08fe83fe8226002ee8b80ce0a914fd11}{L\-S\-\_\-\-P\-G\-\_\-\-Q\-U\-E\-R\-Y\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H}~16384
 \begin{DoxyCompactList}\small\item\em Queue length should be long enough that we do not ordinarly bump into the end We should be safe as long as the thread the adds stuff to the queue is not the one that removes it. \end{DoxyCompactList}\end{DoxyCompactItemize}
 \subsection*{Typedefs}
 \begin{DoxyCompactItemize}
@@ -140,7 +140,7 @@ void \hyperlink{lspg_8c_a472b09ddf716c80207f97e2bb5d37d66}{lspg\-\_\-seq\-\_\-ru
 void \hyperlink{lspg_8c_a4253474d4dd305aec0afdd5552b3ddd5}{lspg\-\_\-seq\-\_\-run\-\_\-prep\-\_\-all} (long long skey, double \hyperlink{pgpmac_8h_a0be79ccb7ebf3a665248fd856112b9fd}{kappa}, double \hyperlink{pgpmac_8h_ac8070dc568ad974a3db42b51eca828cc}{phi}, double cx, double cy, double ax, double ay, double az)
 \begin{DoxyCompactList}\small\item\em Convinence function to call seq run prep. \end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_a8184824f2b71b1d35141d7922ca69cd7}{lspg\-\_\-getcenter\-\_\-cb} (\hyperlink{lspg_8c_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
-\begin{DoxyCompactList}\small\item\em T\-O\-D\-O\-: implement getcenter code. \end{DoxyCompactList}\item 
+\begin{DoxyCompactList}\small\item\em Retrieve the data to center the crystal. \end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_ad31db17587a02302ac4e40fb7d260b1b}{lspg\-\_\-getcenter\-\_\-init} ()
 \begin{DoxyCompactList}\small\item\em Initialize getcenter object. \end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_a6f7cd0a06f6a266ef65b3604cf33d6c4}{lspg\-\_\-getcenter\-\_\-call} ()
@@ -258,7 +258,7 @@ Definition in file \hyperlink{lspg_8c_source}{lspg.\-c}.
 \subsection{Macro Definition Documentation}
 \hypertarget{lspg_8c_a08fe83fe8226002ee8b80ce0a914fd11}{\index{lspg.\-c@{lspg.\-c}!L\-S\-\_\-\-P\-G\-\_\-\-Q\-U\-E\-R\-Y\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H@{L\-S\-\_\-\-P\-G\-\_\-\-Q\-U\-E\-R\-Y\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H}}
 \index{L\-S\-\_\-\-P\-G\-\_\-\-Q\-U\-E\-R\-Y\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H@{L\-S\-\_\-\-P\-G\-\_\-\-Q\-U\-E\-R\-Y\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H}!lspg.c@{lspg.\-c}}
-\subsubsection[{L\-S\-\_\-\-P\-G\-\_\-\-Q\-U\-E\-R\-Y\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H}]{\setlength{\rightskip}{0pt plus 5cm}\#define L\-S\-\_\-\-P\-G\-\_\-\-Q\-U\-E\-R\-Y\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H~256}}\label{lspg_8c_a08fe83fe8226002ee8b80ce0a914fd11}
+\subsubsection[{L\-S\-\_\-\-P\-G\-\_\-\-Q\-U\-E\-R\-Y\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H}]{\setlength{\rightskip}{0pt plus 5cm}\#define L\-S\-\_\-\-P\-G\-\_\-\-Q\-U\-E\-R\-Y\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H~16384}}\label{lspg_8c_a08fe83fe8226002ee8b80ce0a914fd11}
 
 
 Queue length should be long enough that we do not ordinarly bump into the end We should be safe as long as the thread the adds stuff to the queue is not the one that removes it. 
@@ -425,10 +425,6 @@ Definition at line 165 of file lspg.\-c.
   \}
   rtni = 0;
   
-  \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspg\_array2ptrs: enter with %s"},
-       a);
-
-
   \textcolor{comment}{// Go through and create the individual strings}
   sp = acums;
   *sp = 0;
@@ -523,7 +519,7 @@ Back Light Lookup Table Callback Install the lookup table for the Back Light.
 \end{DoxyParams}
 
 
-Definition at line 421 of file lspg.\-c.
+Definition at line 426 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -570,7 +566,7 @@ Send strings directly to P\-M\-A\-C queue.
 \end{DoxyParams}
 
 
-Definition at line 1137 of file lspg.\-c.
+Definition at line 1142 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -620,7 +616,7 @@ Front Light Lookup table query callback Install the lookup table for the Front L
 \end{DoxyParams}
 
 
-Definition at line 393 of file lspg.\-c.
+Definition at line 398 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -659,7 +655,7 @@ Flush psql output buffer (ie, send the query)
 
 
 
-Definition at line 1166 of file lspg.\-c.
+Definition at line 1171 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -706,7 +702,7 @@ Convenience function to complete synchronous getcenter query.
 
 
 
-Definition at line 1085 of file lspg.\-c.
+Definition at line 1090 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -729,7 +725,7 @@ Request a getcenter query.
 
 
 
-Definition at line 1061 of file lspg.\-c.
+Definition at line 1066 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -752,11 +748,11 @@ Definition at line 1061 of file lspg.\-c.
 )}}\label{lspg_8c_a8184824f2b71b1d35141d7922ca69cd7}
 
 
-T\-O\-D\-O\-: implement getcenter code. 
+Retrieve the data to center the crystal. 
 
 
 
-Definition at line 996 of file lspg.\-c.
+Definition at line 1001 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -835,7 +831,7 @@ Done with getcenter query.
 
 
 
-Definition at line 1079 of file lspg.\-c.
+Definition at line 1084 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -856,7 +852,7 @@ Initialize getcenter object.
 
 
 
-Definition at line 1053 of file lspg.\-c.
+Definition at line 1058 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -880,7 +876,7 @@ Wait for a getcenter query to return.
 
 
 
-Definition at line 1071 of file lspg.\-c.
+Definition at line 1076 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -904,7 +900,7 @@ Initiallize the lspg module.
 
 
 
-Definition at line 1659 of file lspg.\-c.
+Definition at line 1664 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -939,7 +935,7 @@ Motor initialization callback.
 \end{DoxyParams}
 
 
-Definition at line 287 of file lspg.\-c.
+Definition at line 284 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -947,7 +943,7 @@ Definition at line 287 of file lspg.\-c.
   \textcolor{keywordtype}{int} i, j;
   uint32\_t  motor\_number, motor\_number\_column, max\_speed\_column, 
       max\_accel\_column, home\_column;
-  uint32\_t units\_column, coord\_column, name\_column;
+  uint32\_t units\_column, coord\_column, name\_column, axis\_column;
   uint32\_t u2c\_column;
   uint32\_t format\_column;
   uint32\_t update\_resolution\_column;
@@ -962,6 +958,7 @@ Definition at line 287 of file lspg.\-c.
   motor\_number\_column      = PQfnumber( pgr, \textcolor{stringliteral}{"mm\_motor"});
   coord\_column             = PQfnumber( pgr, \textcolor{stringliteral}{"mm\_coord"});
   units\_column             = PQfnumber( pgr, \textcolor{stringliteral}{"mm\_unit"});
+  axis\_column              = PQfnumber( pgr, \textcolor{stringliteral}{"mm\_axis"});
   u2c\_column               = PQfnumber( pgr, \textcolor{stringliteral}{"mm\_u2c"});
   format\_column            = PQfnumber( pgr, \textcolor{stringliteral}{"mm\_printf"});
   max\_speed\_column         = PQfnumber( pgr, \textcolor{stringliteral}{"mm\_max\_speed"});
@@ -974,9 +971,9 @@ Definition at line 287 of file lspg.\-c.
 
     lsdp = NULL;
     \textcolor{keywordflow}{for}( j=0; j<\hyperlink{lspmac_8c_a56260f012c50a591ee7f97e500f16994}{lspmac\_nmotors}; j++) \{
-      \textcolor{keywordflow}{if}( strcmp(\hyperlink{lspmac_8c_a9bffbf72495499b505543cd942f665da}{lspmac\_motors}[j].name, PQgetvalue( pgr, i, 
+      \textcolor{keywordflow}{if}( strcmp(\hyperlink{lspmac_8c_a894c709ddd0652583d6db22e86282503}{lspmac\_motors}[j].name, PQgetvalue( pgr, i, 
       name\_column)) == 0) \{
-        lsdp                    = &(\hyperlink{lspmac_8c_a9bffbf72495499b505543cd942f665da}{lspmac\_motors}[j]);
+        lsdp                    = &(\hyperlink{lspmac_8c_a894c709ddd0652583d6db22e86282503}{lspmac\_motors}[j]);
         lsdp->\hyperlink{structlspmac__motor__struct_a45fae17618f0c0827e97060dc04f79cb}{motor\_num}         = atoi(PQgetvalue( pgr, i, 
       motor\_number\_column));
         lsdp->\hyperlink{structlspmac__motor__struct_a2093b0a3cd2f9500fd92e3c89bf46577}{coord\_num}         = atoi( PQgetvalue( pgr, i, 
@@ -994,8 +991,15 @@ Definition at line 287 of file lspg.\-c.
       update\_resolution\_column));
         lsdp->\hyperlink{structlspmac__motor__struct_a514ee9ed48c7171157d579623f7de23f}{update\_format}     = strdup( PQgetvalue( pgr, i, 
       update\_format\_column));
+
+        \textcolor{keywordflow}{if}( PQgetisnull( pgr, i, axis\_column))
+          lsdp->\hyperlink{structlspmac__motor__struct_a79d2049141b8ec29638f96b3fb91b7f1}{axis}            = NULL;
+        \textcolor{keywordflow}{else}
+          lsdp->\hyperlink{structlspmac__motor__struct_a79d2049141b8ec29638f96b3fb91b7f1}{axis}            = strdup(PQgetvalue( pgr, i, axis\_column));
+
         lsdp->\hyperlink{structlspmac__motor__struct_a073246b8878d75615b0536301b343f3d}{home}              = \hyperlink{lspg_8c_a46f23ae999129d6fd5712d7975b99aed}{lspg\_array2ptrs}( 
       PQgetvalue( pgr, i, home\_column));
+
         lsdp->\hyperlink{structlspmac__motor__struct_af11e5f75c1cf88ed6842d04154d27a31}{lspg\_initialized}  = 1;
         \textcolor{keywordflow}{break};
       \}
@@ -1029,7 +1033,7 @@ retrieve kv pairs with new values
 \end{DoxyParams}
 
 
-Definition at line 1120 of file lspg.\-c.
+Definition at line 1125 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1060,7 +1064,7 @@ Detector lock convinence function.
 
 
 
-Definition at line 908 of file lspg.\-c.
+Definition at line 913 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1083,7 +1087,7 @@ Request (demand) a detector lock.
 
 
 
-Definition at line 884 of file lspg.\-c.
+Definition at line 889 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1110,7 +1114,7 @@ Callback for when the detector lock has be grabbed.
 
 
 
-Definition at line 875 of file lspg.\-c.
+Definition at line 880 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1134,7 +1138,7 @@ Finish waiting.
 
 
 
-Definition at line 902 of file lspg.\-c.
+Definition at line 907 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1155,7 +1159,7 @@ Initialize detector lock object.
 
 
 
-Definition at line 867 of file lspg.\-c.
+Definition at line 872 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1179,7 +1183,7 @@ Wait for the detector lock.
 
 
 
-Definition at line 894 of file lspg.\-c.
+Definition at line 899 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1204,7 +1208,7 @@ Convience function that combines lock diffractometer calls.
 
 
 
-Definition at line 849 of file lspg.\-c.
+Definition at line 854 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1227,7 +1231,7 @@ Request that the database grab the diffractometer lock.
 
 
 
-Definition at line 825 of file lspg.\-c.
+Definition at line 830 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1257,7 +1261,7 @@ Callback routine for a lock diffractometer query.
 
 
 
-Definition at line 816 of file lspg.\-c.
+Definition at line 821 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1285,7 +1289,7 @@ Finish up the lock diffractometer call.
 
 
 
-Definition at line 843 of file lspg.\-c.
+Definition at line 848 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1307,7 +1311,7 @@ initialize the diffractometer locking object
 
 
 
-Definition at line 808 of file lspg.\-c.
+Definition at line 813 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1333,7 +1337,7 @@ Wait for the diffractometer lock.
 
 
 
-Definition at line 835 of file lspg.\-c.
+Definition at line 840 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1359,7 +1363,7 @@ Implements our state machine Does not strictly only set the next state as it als
 
 
 
-Definition at line 1528 of file lspg.\-c.
+Definition at line 1533 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1439,7 +1443,7 @@ Queue the next M\-D2 instruction.
 \end{DoxyParams}
 
 
-Definition at line 1094 of file lspg.\-c.
+Definition at line 1099 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1480,7 +1484,7 @@ Queue up a nextshot query.
 
 
 
-Definition at line 708 of file lspg.\-c.
+Definition at line 713 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1514,7 +1518,7 @@ This is a long and tedious routine as there are a large number of variables retu
 \end{DoxyParams}
 
 
-Definition at line 453 of file lspg.\-c.
+Definition at line 458 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1838,7 +1842,7 @@ Called when the next shot query has been processed.
 
 
 
-Definition at line 726 of file lspg.\-c.
+Definition at line 731 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1859,7 +1863,7 @@ Initialize the nextshot variable, mutex, and condition.
 
 
 
-Definition at line 700 of file lspg.\-c.
+Definition at line 705 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1882,7 +1886,7 @@ Wait for the next shot query to get processed.
 
 
 
-Definition at line 718 of file lspg.\-c.
+Definition at line 723 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1903,7 +1907,7 @@ Definition at line 718 of file lspg.\-c.
 )}}\label{lspg_8c_a62b110949d206fb22789191207e1d066}
 
 
-Definition at line 1423 of file lspg.\-c.
+Definition at line 1428 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1924,7 +1928,7 @@ Connect to the pg server.
 
 
 
-Definition at line 1429 of file lspg.\-c.
+Definition at line 1434 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2054,7 +2058,7 @@ I/\-O control to/from the postgresql server.
 \end{DoxyParams}
 
 
-Definition at line 1326 of file lspg.\-c.
+Definition at line 1331 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2332,7 +2336,7 @@ Receive a result of a query.
 
 
 
-Definition at line 1243 of file lspg.\-c.
+Definition at line 1248 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2412,7 +2416,7 @@ Start 'er runnin'.
 
 
 
-Definition at line 1671 of file lspg.\-c.
+Definition at line 1676 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2437,7 +2441,7 @@ Definition at line 1671 of file lspg.\-c.
 \end{DoxyParams}
 
 
-Definition at line 369 of file lspg.\-c.
+Definition at line 374 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2473,7 +2477,7 @@ send the next queued query to the D\-B server
 
 
 
-Definition at line 1196 of file lspg.\-c.
+Definition at line 1201 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2563,7 +2567,7 @@ Convinence function to call seq run prep.
 \end{DoxyParams}
 
 
-Definition at line 979 of file lspg.\-c.
+Definition at line 984 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2613,7 +2617,7 @@ queue up the seq\-\_\-run\-\_\-prep query
 \end{DoxyParams}
 
 
-Definition at line 945 of file lspg.\-c.
+Definition at line 950 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2648,7 +2652,7 @@ Callback for the seq\-\_\-run\-\_\-prep query.
 \end{DoxyParams}
 
 
-Definition at line 933 of file lspg.\-c.
+Definition at line 938 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2672,7 +2676,7 @@ Indicate we are done waiting.
 
 
 
-Definition at line 973 of file lspg.\-c.
+Definition at line 978 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2693,7 +2697,7 @@ Initialize the data collection object.
 
 
 
-Definition at line 925 of file lspg.\-c.
+Definition at line 930 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2716,7 +2720,7 @@ Wait for seq run prep query to return.
 
 
 
-Definition at line 965 of file lspg.\-c.
+Definition at line 970 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2746,7 +2750,7 @@ Service a signal Signals here are treated as file descriptors and fits into our 
 \end{DoxyParams}
 
 
-Definition at line 1304 of file lspg.\-c.
+Definition at line 1309 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2781,7 +2785,7 @@ Combined call to wait for the detector.
 
 
 
-Definition at line 789 of file lspg.\-c.
+Definition at line 794 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2804,7 +2808,7 @@ initiate the wait for detector query
 
 
 
-Definition at line 763 of file lspg.\-c.
+Definition at line 768 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2834,7 +2838,7 @@ Callback for the wait for detector query.
 
 
 
-Definition at line 754 of file lspg.\-c.
+Definition at line 759 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2862,7 +2866,7 @@ Done waiting for the detector.
 
 
 
-Definition at line 782 of file lspg.\-c.
+Definition at line 787 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2884,7 +2888,7 @@ initialize the detector timing object
 
 
 
-Definition at line 746 of file lspg.\-c.
+Definition at line 751 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2910,7 +2914,7 @@ Pause the calling thread until the detector is ready Called by the M\-D2 thread.
 
 
 
-Definition at line 774 of file lspg.\-c.
+Definition at line 779 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2941,7 +2945,7 @@ The main loop for the lspg thread.
 \end{DoxyParams}
 
 
-Definition at line 1579 of file lspg.\-c.
+Definition at line 1584 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -3042,7 +3046,7 @@ Zoom motor look up table callback.
 \end{DoxyParams}
 
 
-Definition at line 346 of file lspg.\-c.
+Definition at line 351 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -3108,14 +3112,14 @@ Definition at line 73 of file lspg.\-c.
 \subsubsection[{lspg\-\_\-lock\-\_\-detector}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lspg\-\_\-lock\-\_\-detector\-\_\-t} lspg\-\_\-lock\-\_\-detector\hspace{0.3cm}{\ttfamily [static]}}}\label{lspg_8c_adbf3b3652c6531c3d194320d1abc1c80}
 
 
-Definition at line 863 of file lspg.\-c.
+Definition at line 868 of file lspg.\-c.
 
 \hypertarget{lspg_8c_aaae7ce3ecd7d54a9e46c41d7a742a454}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-lock\-\_\-diffractometer@{lspg\-\_\-lock\-\_\-diffractometer}}
 \index{lspg\-\_\-lock\-\_\-diffractometer@{lspg\-\_\-lock\-\_\-diffractometer}!lspg.c@{lspg.\-c}}
 \subsubsection[{lspg\-\_\-lock\-\_\-diffractometer}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lspg\-\_\-lock\-\_\-diffractometer\-\_\-t} lspg\-\_\-lock\-\_\-diffractometer\hspace{0.3cm}{\ttfamily [static]}}}\label{lspg_8c_aaae7ce3ecd7d54a9e46c41d7a742a454}
 
 
-Definition at line 804 of file lspg.\-c.
+Definition at line 809 of file lspg.\-c.
 
 \hypertarget{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-nextshot@{lspg\-\_\-nextshot}}
 \index{lspg\-\_\-nextshot@{lspg\-\_\-nextshot}!lspg.c@{lspg.\-c}}
@@ -3210,7 +3214,7 @@ Definition at line 70 of file lspg.\-c.
 \subsubsection[{lspg\-\_\-seq\-\_\-run\-\_\-prep}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lspg\-\_\-seq\-\_\-run\-\_\-prep\-\_\-t} lspg\-\_\-seq\-\_\-run\-\_\-prep\hspace{0.3cm}{\ttfamily [static]}}}\label{lspg_8c_a1b0d9fc30bcea6905b075d2362149172}
 
 
-Definition at line 921 of file lspg.\-c.
+Definition at line 926 of file lspg.\-c.
 
 \hypertarget{lspg_8c_a04eb0cda0d5e5afeae7c393b51689765}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-thread@{lspg\-\_\-thread}}
 \index{lspg\-\_\-thread@{lspg\-\_\-thread}!lspg.c@{lspg.\-c}}
@@ -3232,7 +3236,7 @@ Instance of the detector timing object.
 
 
 
-Definition at line 742 of file lspg.\-c.
+Definition at line 747 of file lspg.\-c.
 
 \hypertarget{lspg_8c_af3f897b8ffa020ca54289bc5b28cb64d}{\index{lspg.\-c@{lspg.\-c}!lspgfd@{lspgfd}}
 \index{lspgfd@{lspgfd}!lspg.c@{lspg.\-c}}

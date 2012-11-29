@@ -2,6 +2,7 @@ var structlspmac__motor__struct =
 [
     [ "actual_pos_cnts", "structlspmac__motor__struct.html#ae5c7aea45b9637a1817be246688fd980", null ],
     [ "actual_pos_cnts_p", "structlspmac__motor__struct.html#a312047bb71def5cd2443fecd875eaea5", null ],
+    [ "axis", "structlspmac__motor__struct.html#a79d2049141b8ec29638f96b3fb91b7f1", null ],
     [ "cond", "structlspmac__motor__struct.html#aa0ea4108b8fed5b41ff91ca7266f3d84", null ],
     [ "coord_num", "structlspmac__motor__struct.html#a2093b0a3cd2f9500fd92e3c89bf46577", null ],
     [ "dac_mvar", "structlspmac__motor__struct.html#a05dff021221abbc1bf656039fffb3275", null ],

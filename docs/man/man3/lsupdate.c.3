@@ -1,4 +1,4 @@
-.TH "lsupdate.c" 3 "Fri Nov 16 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lsupdate.c" 3 "Thu Nov 29 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -69,7 +69,7 @@ Definition in file \fBlsupdate\&.c\fP\&.
 .PP
 Initialize this module\&. 
 .PP
-Definition at line 100 of file lsupdate\&.c\&.
+Definition at line 109 of file lsupdate\&.c\&.
 .PP
 .nf
                      {
@@ -80,7 +80,7 @@ Definition at line 100 of file lsupdate\&.c\&.
 .PP
 run the update routines 
 .PP
-Definition at line 105 of file lsupdate\&.c\&.
+Definition at line 114 of file lsupdate\&.c\&.
 .PP
 .nf
                     {
@@ -90,7 +90,7 @@ Definition at line 105 of file lsupdate\&.c\&.
 .SS "void lsupdate_updateit ()"
 
 .PP
-Query the motors and perhaps tell the DB about it\&. 
+Query the motors and perhaps tell the DB about it\&. < support for obsolete (ie, non \&.position) style 
 .PP
 Definition at line 15 of file lsupdate\&.c\&.
 .PP
@@ -98,6 +98,7 @@ Definition at line 15 of file lsupdate\&.c\&.
                          {
   static char s[4096];
   static char s1[512];
+  static char s2[512];          
   lspmac_motor_t *mp;
   int i;
   int needComma;
@@ -133,11 +134,16 @@ Definition at line 15 of file lsupdate\&.c\&.
       snprintf( s1, sizeof(s1)-1, mp->update_format, mp->position);
       s1[sizeof(s1)-1] = 0;
     
+      if( mp->name != NULL && *mp->name != 0) {
+        snprintf( s2, sizeof(s2)-1, ',\'%s\',%\&.3f', mp->name, mp->position);
+        s2[sizeof(s2)-1] = 0;
+      }
+
       mp->reported_position = mp->position;
       mp->lspg_initialized |= 2;
       pthread_mutex_unlock( &(mp->mutex));
 
-      if( strlen(s1) + strlen(s) + 32 >= sizeof( s)-1) {
+      if( strlen(s2) + strlen(s1) + strlen(s) + 32 >= sizeof( s)-1) {
         // send off update now and reset s
         strcat( s, '}'::text[])');
         lspg_query_push( NULL, s);
@@ -154,6 +160,9 @@ Definition at line 15 of file lsupdate\&.c\&.
         needComma=1;
 
       strcat( s, s1);
+      if( mp->name != NULL && *mp->name != 0) {
+        strcat( s, s2);
+      }
     }
   }
 
@@ -173,7 +182,7 @@ Our worker thread\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 85 of file lsupdate\&.c\&.
+Definition at line 94 of file lsupdate\&.c\&.
 .PP
 .nf
                         {

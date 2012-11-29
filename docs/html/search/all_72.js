@@ -9,5 +9,6 @@ var searchData=
   ['requested_5fpos_5fcnts',['requested_pos_cnts',['../structlspmac__motor__struct.html#a6e8dc9c11dc52a439fe9837230f93ce2',1,'lspmac_motor_struct']]],
   ['requested_5fposition',['requested_position',['../structlspmac__motor__struct.html#af8cdc94c6e2478b12ce942d4cf1d7499',1,'lspmac_motor_struct']]],
   ['requesttype',['RequestType',['../structtagEthernetCmd.html#a6a155eb3ae546dd29369c4a33ddb3310',1,'tagEthernetCmd']]],
+  ['rotating',['rotating',['../md2cmds_8c.html#aaa6eb2d46be8d5e17a511591dd5a1271',1,'md2cmds.c']]],
   ['rr_5fcmd',['rr_cmd',['../lspmac_8c.html#a6fcbbe47fe9912533962601f5befdb29',1,'lspmac.c']]]
 ];

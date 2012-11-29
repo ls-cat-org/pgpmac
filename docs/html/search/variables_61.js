@@ -39,6 +39,7 @@ var searchData=
   ['ax2',['ax2',['../structlspg__nextshot__struct.html#ab76bd38d2a098bc7eda82aff5dcb9c66',1,'lspg_nextshot_struct']]],
   ['ax2_5fisnull',['ax2_isnull',['../structlspg__nextshot__struct.html#a846845b0b9ecf6517ef85554771ec71d',1,'lspg_nextshot_struct']]],
   ['ax_5fisnull',['ax_isnull',['../structlspg__nextshot__struct.html#aae46c7911b2b218497ad4a68f3dbb7d9',1,'lspg_nextshot_struct']]],
+  ['axis',['axis',['../structlspmac__motor__struct.html#a79d2049141b8ec29638f96b3fb91b7f1',1,'lspmac_motor_struct']]],
   ['ay',['ay',['../structlspg__nextshot__struct.html#a9e20b9a0aeb41f7f7d653a1c60335bf1',1,'lspg_nextshot_struct']]],
   ['ay2',['ay2',['../structlspg__nextshot__struct.html#ad13759740204b42e379161f98815f3d0',1,'lspg_nextshot_struct']]],
   ['ay2_5fisnull',['ay2_isnull',['../structlspg__nextshot__struct.html#ad0f50ec6339296d3d39c8d95131ab6b5',1,'lspg_nextshot_struct']]],

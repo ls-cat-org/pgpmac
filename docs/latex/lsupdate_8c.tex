@@ -55,7 +55,7 @@ Initialize this module.
 
 
 
-Definition at line 100 of file lsupdate.\-c.
+Definition at line 109 of file lsupdate.\-c.
 
 
 \begin{DoxyCode}
@@ -75,7 +75,7 @@ run the update routines
 
 
 
-Definition at line 105 of file lsupdate.\-c.
+Definition at line 114 of file lsupdate.\-c.
 
 
 \begin{DoxyCode}
@@ -95,7 +95,7 @@ Definition at line 105 of file lsupdate.\-c.
 
 Query the motors and perhaps tell the D\-B about it. 
 
-
+$<$ support for obsolete (ie, non .position) style 
 
 Definition at line 15 of file lsupdate.\-c.
 
@@ -104,6 +104,7 @@ Definition at line 15 of file lsupdate.\-c.
                          \{
   \textcolor{keyword}{static} \textcolor{keywordtype}{char} s[4096];
   \textcolor{keyword}{static} \textcolor{keywordtype}{char} s1[512];
+  \textcolor{keyword}{static} \textcolor{keywordtype}{char} s2[512];          
   \hyperlink{structlspmac__motor__struct}{lspmac\_motor\_t} *mp;
   \textcolor{keywordtype}{int} i;
   \textcolor{keywordtype}{int} needComma;
@@ -115,7 +116,7 @@ Definition at line 15 of file lsupdate.\-c.
   strcpy(s, \textcolor{stringliteral}{"select px.kvupdate('\{"});
 
   \textcolor{keywordflow}{for}( i=0; i<\hyperlink{lspmac_8c_a56260f012c50a591ee7f97e500f16994}{lspmac\_nmotors}; i++) \{
-    mp = &(\hyperlink{lspmac_8c_a9bffbf72495499b505543cd942f665da}{lspmac\_motors}[i]);
+    mp = &(\hyperlink{lspmac_8c_a894c709ddd0652583d6db22e86282503}{lspmac\_motors}[i]);
 
     pthread\_mutex\_lock( &(mp->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex}));
     \textcolor{comment}{//}
@@ -143,11 +144,17 @@ Definition at line 15 of file lsupdate.\-c.
       );
       s1[\textcolor{keyword}{sizeof}(s1)-1] = 0;
     
+      \textcolor{keywordflow}{if}( mp->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name} != NULL && *mp->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name} != 0) \{
+        snprintf( s2, \textcolor{keyword}{sizeof}(s2)-1, \textcolor{stringliteral}{",\(\backslash\)"%s\(\backslash\)",%.3f"}, mp->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name}, mp->\hyperlink{structlspmac__motor__struct_af8ffb3aed907d8664b65b37601954411}{position}
+      );
+        s2[\textcolor{keyword}{sizeof}(s2)-1] = 0;
+      \}
+
       mp->\hyperlink{structlspmac__motor__struct_ae5f1f605a0f587500e627332ad4e5e7e}{reported\_position} = mp->\hyperlink{structlspmac__motor__struct_af8ffb3aed907d8664b65b37601954411}{position};
       mp->\hyperlink{structlspmac__motor__struct_af11e5f75c1cf88ed6842d04154d27a31}{lspg\_initialized} |= 2;
       pthread\_mutex\_unlock( &(mp->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex}));
 
-      \textcolor{keywordflow}{if}( strlen(s1) + strlen(s) + 32 >= \textcolor{keyword}{sizeof}( s)-1) \{
+      \textcolor{keywordflow}{if}( strlen(s2) + strlen(s1) + strlen(s) + 32 >= \textcolor{keyword}{sizeof}( s)-1) \{
         \textcolor{comment}{// send off update now and reset s}
         strcat( s, \textcolor{stringliteral}{"\}'::text[])"});
         \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, s);
@@ -164,6 +171,9 @@ Definition at line 15 of file lsupdate.\-c.
         needComma=1;
 
       strcat( s, s1);
+      \textcolor{keywordflow}{if}( mp->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name} != NULL && *mp->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name} != 0) \{
+        strcat( s, s2);
+      \}
     \}
   \}
 
@@ -191,7 +201,7 @@ Our worker thread.
 \end{DoxyParams}
 
 
-Definition at line 85 of file lsupdate.\-c.
+Definition at line 94 of file lsupdate.\-c.
 
 
 \begin{DoxyCode}
