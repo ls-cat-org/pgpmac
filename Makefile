@@ -35,3 +35,7 @@ lspg.o: lspg.c pgpmac.h Makefile
 
 md2cmds.o: md2cmds.c pgpmac.h Makefile
 	gcc -g -pthread -c md2cmds.c
+
+
+kvredis: kvredis.c Makefile
+	gcc -g kvredis.c -o kvredis -I /usr/local/include -L /usr/local/lib -lhiredis -lpq
