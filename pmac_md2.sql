@@ -187,10 +187,10 @@ CREATE OR REPLACE FUNCTION pmac.md2_init( the_stn int) returns void as $$
     -- PLCC 1 fills DPRAM for EMBL VB code (unused here)
     -- PLCC 2 fills DPRAM for us
     --
-    PERFORM pmac.md2_queue_push( the_stn, 'I5=3');
     PERFORM pmac.md2_queue_push( the_stn, 'ENABLE PLCC 0');
     PERFORM pmac.md2_queue_push( the_stn, 'DISABLE PLCC 1');
     PERFORM pmac.md2_queue_push( the_stn, 'ENABLE PLCC 2');
+    PERFORM pmac.md2_queue_push( the_stn, 'I5=3');
 
 
     --
