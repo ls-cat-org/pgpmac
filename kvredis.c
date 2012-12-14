@@ -61,6 +61,7 @@ void redisDisconnectCB(const redisAsyncContext *ac, int status) {
 }
 
 void debugCB( redisAsyncContext *ac, void *reply, void *privdata) {
+  static int indentlevel = 0;
   redisReply *r;
   int i;
 
@@ -73,36 +74,38 @@ void debugCB( redisAsyncContext *ac, void *reply, void *privdata) {
   
   switch( r->type) {
   case REDIS_REPLY_STATUS:
-    printf( "STATUS: %s\n", r->str);
+    printf( "%*sSTATUS: %s\n", indentlevel*4,"", r->str);
     break;
 
   case REDIS_REPLY_ERROR:
-    printf( "ERROR: %s\n", r->str);
+    printf( "%*sERROR: %s\n", indentlevel*4, "", r->str);
     break;
 
   case REDIS_REPLY_INTEGER:
-    printf( "Integer: %lld\n", r->integer);
+    printf( "%*sInteger: %lld\n", indentlevel*4, "", r->integer);
     break;
 
   case REDIS_REPLY_NIL:
-    printf( "(nil)\n");
+    printf( "%*s(nil)\n", indentlevel*4, "");
     break;
 
   case REDIS_REPLY_STRING:
-    printf( "STRING: %s\n", r->str);
+    printf( "%*sSTRING: %s\n", indentlevel*4, "", r->str);
     break;
 
   case REDIS_REPLY_ARRAY:
-    printf( "ARRAY of %d elements\n", (int)r->elements);
-    for( i=0; i<r->elements; i++)
+    printf( "%*sARRAY of %d elements\n", indentlevel*4, "", (int)r->elements);
+    indentlevel++;
+    for( i=0; i<r->elements; i++) {
       debugCB( ac, r->element[i], NULL);
+    }
+    indentlevel--;
     break;
     
   default:
-    printf( "Unknown type %d\n", r->type);
+    printf( "%*sUnknown type %d\n", indentlevel*4,"", r->type);
     
   }
-
 }
 
 void addRead( void *data) {
@@ -134,8 +137,8 @@ void cleanup( void *data) {
 void lspg_allkvs_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   int kvname_col, kvvalue_col, kvseq_col, kvdbrtype_col;
   int i;
-  int need_quotes;
   int seq;
+  char *argv[8];
   
   kvname_col    = PQfnumber( pgr, "rname");
   kvvalue_col   = PQfnumber( pgr, "rvalue");
@@ -147,32 +150,31 @@ void lspg_allkvs_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
     return;
   }
 
-  redisAsyncCommand( cmdac, debugCB, NULL, "MULTI");
+  redisAsyncCommand( cmdac, NULL, NULL, "MULTI");
   for( i=0; i<PQntuples( pgr); i++) {
     seq = atoi( PQgetvalue( pgr, i, kvseq_col));
     kvseq = kvseq < seq ? seq : kvseq;
 
-    need_quotes = strchr( PQgetvalue( pgr, i, kvvalue_col), ' ') == NULL ? 0 : 1;
-    redisAsyncCommand( cmdac, debugCB, NULL, "HMSET %s VALUE %s%s%s SEQ %d DBRTYPE %d",
-		       PQgetvalue( pgr, i, kvname_col),
-		       need_quotes ? "\0x42" : "",
-		       PQgetvalue( pgr, i, kvvalue_col),
-		       need_quotes ? "\0x42" : "",
-		       atoi(PQgetvalue( pgr, i, kvseq_col)),
-		       atoi(PQgetvalue( pgr, i, kvdbrtype_col))
-		       );
-    if( need_quotes)
-      fprintf( stderr, "lspg_allkvs_cb: %s %s\n", PQgetvalue( pgr, i, kvname_col), PQgetvalue( pgr, i, kvvalue_col));
+    argv[0] = "HMSET";
+    argv[1] = PQgetvalue( pgr, i, kvname_col);
+    argv[2] = "VALUE";
+    argv[3] = PQgetvalue( pgr, i, kvvalue_col);
+    argv[4] = "SEQ";
+    argv[5] = PQgetvalue( pgr, i, kvseq_col);
+    argv[6] = "DBRTYPE";
+    argv[7] = PQgetvalue( pgr, i, kvdbrtype_col);
+    redisAsyncCommandArgv( cmdac, NULL, NULL, 8, (const char **)argv, NULL);
 
-
+    argv[0] = "PUBLISH";
+    argv[1] = "REDIS_KV_CONNECTOR";
+    argv[2] = PQgetvalue( pgr, i, kvname_col);
+    redisAsyncCommandArgv( cmdac, NULL, NULL, 3, (const char **)argv, NULL);
   }
 
   redisAsyncCommand( cmdac, NULL, NULL, "SET redis.kvseq %d", kvseq);
-  redisAsyncCommand( cmdac, debugCB, NULL, "EXEC");
+
+  redisAsyncCommand( cmdac, NULL, NULL, "EXEC");
   
-  for( i=0; i<PQntuples( pgr); i++) {
-    redisAsyncCommand( cmdac, debugCB, NULL, "PUBLISH REDIS_KV_CONNECTOR '%s %s'", PQgetvalue( pgr, i, kvname_col), PQgetvalue( pgr, i, kvseq_col));
-  }
 }
 
 
@@ -702,12 +704,12 @@ main() {
 
   lspgfd.fd = -1;
 
-  if( redisAsyncCommand( cmdac, debugCB, NULL, "KEYS *") == REDIS_ERR) {
+  if( redisAsyncCommand( cmdac, NULL, NULL, "KEYS *") == REDIS_ERR) {
     fprintf( stderr, "Error sending KEYS command\n");
     exit( -1);
   }
 
-  if( redisAsyncCommand( subac, debugCB, NULL, "PSUBSCRIBE MD2* UI**") == REDIS_ERR) {
+  if( redisAsyncCommand( subac, debugCB, NULL, "PSUBSCRIBE MD2* UI*") == REDIS_ERR) {
     fprintf( stderr, "Error sending PSUBSCRIBE command\n");
     exit( -1);
   }
@@ -755,8 +757,6 @@ main() {
       poll_timeout_ms = -1;
     }
 
-
-    fprintf( stderr, "nfda: %d\n", nfda);
 
     pollrtn = poll( fda, nfda, poll_timeout_ms);
 
