@@ -321,7 +321,7 @@ void lspg_init_motors_cb(
 	lsdp->coord_num         = atoi( PQgetvalue( pgr, i, coord_column));
 	lsdp->units             = strdup( PQgetvalue( pgr, i, units_column));
 	lsdp->format            = strdup( PQgetvalue( pgr, i, format_column));
-	lsdp->u2c               = atof(PQgetvalue( pgr, i, u2c_column));
+	// lsdp->u2c               = atof(PQgetvalue( pgr, i, u2c_column));
 	lsdp->max_speed         = atof(PQgetvalue( pgr, i, max_speed_column));
 	lsdp->max_accel         = atof(PQgetvalue( pgr, i, max_accel_column));
 	lsdp->update_resolution = atof(PQgetvalue( pgr, i, update_resolution_column));
@@ -341,8 +341,10 @@ void lspg_init_motors_cb(
     if( lsdp == NULL)
       continue;
 
+    /*
     if( fabs(lsdp->u2c) <= 1.0e-9)
       lsdp->u2c = 1.0;
+    */
   }
 }
 
@@ -1618,7 +1620,7 @@ void *lspg_worker(
     int pollrtn;
     int poll_timeout_ms;
 
-    lspg_next_state();
+   lspg_next_state();
 
     if( lspgfd.fd == -1) {
       //

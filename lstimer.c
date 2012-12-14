@@ -8,7 +8,7 @@
 
 
 //! We'll allow this many timers. This should be way more than enough.
-#define LSTIMER_LIST_LENGTH 256
+#define LSTIMER_LIST_LENGTH 1024
 
 /** times within this amount in the future are considered "now"
  * and the events should be called
@@ -41,6 +41,12 @@ static pthread_cond_t  lstimer_cond;	//!< allows us to be idle when there is not
 static timer_t lstimer_timerid;		//!< our real time timer
 static int new_timer = 0;		//!< indicate that a new timer exists and a call to service_timers is required
 
+/** Create a timer
+ * \param event  Name of the event to send when the timer goes off
+ * \param shots  Number of times to run.  0 means never, -1 means forever
+ * \param secs   Number of seconds to wait
+ * \param nsecs  Number of nano-seconds to run in addition to secs
+ */
 void lstimer_add_timer( char *event, int shots, unsigned long int secs, unsigned long int nsecs) {
   int i;
   struct timespec now;

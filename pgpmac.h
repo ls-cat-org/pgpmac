@@ -25,6 +25,28 @@
 #include <time.h>
 #include <getopt.h>
 #include <regex.h>
+#include <hiredis/hiredis.h>
+#include <hiredis/async.h>
+
+
+/** Redis Object
+ *  Basic object whose value is sychronized with our redis db
+ */
+typedef struct lsredis_obj_struct {
+  pthread_mutex_t mutex;				//!< Don't let anyone use an old value
+  pthread_cond_t cond;					//!< wait for a valid value
+  struct lsredis_obj_struct *next;			//!< the next in our list (I guess this is going to be a linked list)
+  char valid;						//!< 1 if we think the value is good, 0 otherwise
+  int wait_for_me;					//!< Number of times we need to see our publication before we start accepting new values
+  char *key;						//!< The redis key for this object
+  char *events_name;					//!< Name used to generate events (normally key without the station id)
+  int value_length;					//!< Number of bytes allocated for value (not value's string length)
+  char *value;						//!< our value
+  char *(*getstr)( struct lsredis_obj_struct *);	//!< return a string representation of this object
+  double (*getd)( struct lsredis_obj_struct *);		//!< return a double floating point version
+  long int (*getl)( struct lsredis_obj_struct *);	//!< return a long value
+  int hits;						//!< number of times we've searched for this key
+} lsredis_obj_t;
 
 //! Number of status box rows
 #define LS_DISPLAY_WINDOW_HEIGHT 8
@@ -128,7 +150,7 @@ typedef struct lspmac_motor_struct {
   int *read_ptr;		//!< With read_mask finds bit to read for binary i/o
   int read_mask;		//!< WIth read_ptr find bit to read for binary i/o
   void (*moveAbs)( struct lspmac_motor_struct *, double);	//!< function to move the motor
-  double u2c;			//!< conversion from counts to units: 0.0 means not loaded yet
+  lsredis_obj_t *u2c;		//!< conversion from counts to units: 0.0 means not loaded yet
   double *lut;			//!< lookup table (instead of u2c)
   int  nlut;			//!< length of lut
   double max_speed;		//!< our maximum speed (cts/msec)
@@ -413,3 +435,6 @@ extern void lstimer_run();
 extern void lstimer_add_timer( char *, int, unsigned long int, unsigned long int);
 extern void lskvs_regcomp( regex_t *preg, int cflags, char *fmt, ...);
 extern double lskvs_find_preset_position( lspmac_motor_t *mp, char *name, int *err);
+extern void lsredis_init( char *pub, char *re, char *head);
+extern void lsredis_run();
+extern lsredis_obj_t *lsredis_get_obj( char *, ...);

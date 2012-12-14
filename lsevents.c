@@ -26,7 +26,8 @@ static unsigned int lsevents_queue_off = 0;				//!< next queue location to read
  */
 typedef struct lsevents_listener_struct {
   struct lsevents_listener_struct *next;	//!< Next listener
-  char event[LSEVENTS_EVENT_LENGTH];		//!< name of the event we are listening for
+  char *raw_regexp;				//!< the original string sent to us
+  regex_t re;					//!< regular expression representing listened for events
   void (*cb)( char *);				//!< call back function
 } lsevents_listener_t;
 
@@ -75,6 +76,11 @@ void lsevents_send_event( char *fmt, ...) {
  */
 void lsevents_add_listener( char *event, void (*cb)(char *)) {
   lsevents_listener_t *new;
+  int err;
+  char *errbuf;
+  int nerrbuf;
+
+
 
   new = calloc( 1, sizeof( lsevents_listener_t));
   if( new == NULL) {
@@ -82,8 +88,22 @@ void lsevents_add_listener( char *event, void (*cb)(char *)) {
     exit( -1);
   }
 
-  strncpy( new->event, event, LSEVENTS_EVENT_LENGTH);
-  new->event[LSEVENTS_EVENT_LENGTH-1] = 0;
+  err = regcomp( &new->re, event, REG_EXTENDED | REG_NOSUB);
+  if( err != 0) {
+    nerrbuf = regerror( err, &new->re, NULL, 0);
+    errbuf = calloc( nerrbuf, sizeof( char));
+    if( errbuf == NULL) {
+      lslogging_log_message( "lsevents_add_listener: out of memory (re)");
+      exit( -1);
+    }
+    regerror( err, &new->re, errbuf, nerrbuf);
+    lslogging_log_message( "lsevents_add_listener: %s", errbuf);
+    free( errbuf);
+    free( new);
+    return;
+  }
+
+  new->raw_regexp = strdup( event);
   new->cb   = cb;
 
   pthread_mutex_lock( &lsevents_listener_mutex);
@@ -110,7 +130,7 @@ void lsevents_remove_listener (char *event, void (*cb)(char *)) {
   pthread_mutex_lock( &lsevents_listener_mutex);
   last = NULL;
   for( current = lsevents_listeners_p; current != NULL; current = current->next) {
-    if( strcmp( last->event, event) == 0 && last->cb == cb) {
+    if( strcmp( last->raw_regexp, event) == 0 && last->cb == cb) {
       if( last == NULL) {
 	lsevents_listeners_p = current->next;
       } else {
@@ -123,12 +143,10 @@ void lsevents_remove_listener (char *event, void (*cb)(char *)) {
 
   //
   // Now remove it
-  // TODO: use saner memory management where we allocate many listeners at a time
-  // as an array and then just flag the ones that are used
   //
   if( current != NULL) {
-    if( current->event != NULL)
-      free( current->event);
+    if( current->raw_regexp != NULL)
+      free( current->raw_regexp);
     free(current);
   }
 }
@@ -140,7 +158,7 @@ void *lsevents_worker(
 		     void *dummy
 		     ) {
   
-  char event[LSEVENTS_EVENT_LENGTH];
+  char *event;
   lsevents_queue_t *ep;
   lsevents_listener_t *p;
 
@@ -158,7 +176,7 @@ void *lsevents_worker(
     // we unlock the mutex
     //
     ep = &(lsevents_queue[(lsevents_queue_off++) % LSEVENTS_QUEUE_LENGTH]);
-    strncpy( event, ep->event, LSEVENTS_EVENT_LENGTH);
+    event = strndup( ep->event, LSEVENTS_EVENT_LENGTH-1);
     event[LSEVENTS_EVENT_LENGTH-1] = 0;
 
     //
@@ -172,10 +190,11 @@ void *lsevents_worker(
     //
     pthread_mutex_lock( &lsevents_listener_mutex);
     for( p = lsevents_listeners_p; p != NULL; p = p->next) {
-      if( strcmp( event, p->event) == 0) {
-	p->cb( p->event);
+      if( regexec( &p->re, event, 0, NULL, 0) == 0) {
+	p->cb( event);
       }
     }
+    free( event);
 
     pthread_mutex_unlock( &lsevents_listener_mutex);
   }

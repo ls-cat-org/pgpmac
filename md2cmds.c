@@ -312,8 +312,12 @@ void md2cmds_mvcenter_prep() {
 
 double md2cmds_prep_motion( lspmac_motor_t *mp, double pos) {
   double rtn;
+  double u2c;
+
   pthread_mutex_lock( &(mp->mutex));
-  rtn = mp->u2c   * pos;
+  u2c = lsredis_getd( mp->u2c);
+
+  rtn = u2c   * pos;
   mp->motion_seen = 0;
   mp->not_done    = 1;
   pthread_mutex_unlock( &(mp->mutex));
@@ -423,7 +427,10 @@ void md2cmds_collect() {
   double p175;	// acceleration time (msec)
   double p180;	// exposure time (msec)
   int center_request;
+  double u2c;
 
+
+  u2c = lsredis_getd( omega->u2c);
 
   //
   // reset shutter has opened flag
@@ -490,10 +497,10 @@ void md2cmds_collect() {
     // Calculate the parameters we'll need to run the scan
     //
     p180 = lspg_nextshot.dsexp * 1000.0;
-    p170 = omega->u2c * lspg_nextshot.sstart;
-    //    p171 = omega->u2c * ( lspg_nextshot.sstart + lspg_nextshot.dsowidth);
-    p171 = omega->u2c * lspg_nextshot.dsowidth;
-    p173 = fabs(p180) < 1.e-4 ? 0.0 : omega->u2c * lspg_nextshot.dsowidth / p180;
+    p170 = u2c * lspg_nextshot.sstart;
+    //    p171 = u2c * ( lspg_nextshot.sstart + lspg_nextshot.dsowidth);
+    p171 = u2c * lspg_nextshot.dsowidth;
+    p173 = fabs(p180) < 1.e-4 ? 0.0 : u2c * lspg_nextshot.dsowidth / p180;
     p175 = p173/omega->max_accel;
 
 

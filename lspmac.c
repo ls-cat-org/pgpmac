@@ -1036,16 +1036,19 @@ void lspmac_dac_read(
 		     lspmac_motor_t *mp		/**< [in] The motor			*/
 		     ) {
   int pos;
+  double u2c;
+
   pthread_mutex_lock( &(mp->mutex));
   mp->actual_pos_cnts = *mp->actual_pos_cnts_p;
+  u2c = lsredis_getd( mp->u2c);
 
   if( mp->nlut >0 && mp->lut != NULL) {
-    if( mp->u2c == 0.0)
-      mp->u2c = 1.0;
-    mp->position = lspmac_rlut( mp->nlut, mp->lut, mp->actual_pos_cnts/mp->u2c);
+    if( u2c == 0.0)
+      u2c = 1.0;
+    mp->position = lspmac_rlut( mp->nlut, mp->lut, mp->actual_pos_cnts/u2c);
   } else {
-    if( mp->u2c != 0.0) {
-      mp->position = mp->actual_pos_cnts / mp->u2c;
+    if( u2c != 0.0) {
+      mp->position = mp->actual_pos_cnts / u2c;
     } else {
       mp->position = mp->actual_pos_cnts;
     }
@@ -1240,6 +1243,7 @@ void lspmac_pmacmotor_read(
 			   ) {
   char s[512], *sp;
   int homing1, homing2;
+  double u2c;
 
   pthread_mutex_lock( &(mp->mutex));
 
@@ -1341,11 +1345,13 @@ void lspmac_pmacmotor_read(
   mvwprintw( mp->win, 2, 1, "%*d cts", LS_DISPLAY_WINDOW_WIDTH-6, mp->actual_pos_cnts);
   mvwprintw( mp->win, 3, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, " ");
 
+  u2c = lsredis_getd( mp->u2c);
+
   if( mp->nlut >0 && mp->lut != NULL) {
     mp->position = lspmac_rlut( mp->nlut, mp->lut, mp->actual_pos_cnts);
   } else {
-    if( mp->u2c != 0.0) {
-      mp->position = mp->actual_pos_cnts / mp->u2c;
+    if( u2c != 0.0) {
+      mp->position = mp->actual_pos_cnts / u2c;
     } else {
       mp->position = mp->actual_pos_cnts;
     }
@@ -1842,13 +1848,15 @@ void lspmac_movedac_queue(
 			  ) {
   char s[512];
   double y;
+  double u2c;
 
   pthread_mutex_lock( &(mp->mutex));
 
+  u2c = lsredis_getd( mp->u2c);
   mp->requested_position = requested_position;
 
   if( mp->nlut > 0 && mp->lut != NULL) {
-    mp->requested_pos_cnts = mp->u2c * lspmac_lut( mp->nlut, mp->lut, requested_position);
+    mp->requested_pos_cnts = u2c * lspmac_lut( mp->nlut, mp->lut, requested_position);
     mp->not_done    = 1;
     mp->motion_seen = 0;
 
@@ -2040,9 +2048,12 @@ void lspmac_moveabs_timed_queue(
   int q100;	 // 1 << (coord sys no - 1)
   int coord_num; // our coordinate number
   char s[512];	 // PMAC command string buffer
+  double u2c;
 
   pthread_mutex_lock( &(mp->mutex));
-  if( mp->u2c == 0.0 || time <= 0.0) {
+
+  u2c = lsredis_getd( mp->u2c);
+  if( u2c == 0.0 || time <= 0.0) {
     //
     // Shouldn't try moving a motor that has no units defined
     //
@@ -2054,9 +2065,9 @@ void lspmac_moveabs_timed_queue(
   mp->motion_seen = 0;
 
   mp->requested_position = start + delta;
-  mp->requested_pos_cnts = mp->u2c * mp->requested_position;
+  mp->requested_pos_cnts = u2c * mp->requested_position;
   q10 = mp->requested_pos_cnts;
-  q11 = mp->u2c * delta;
+  q11 = u2c * delta;
   q12 = 1000 * time;
   q13 = q11 / q12 / mp->max_accel;
   q100 = 1 << (mp->coord_num - 1);
@@ -2091,7 +2102,9 @@ void lspmac_moveabs_flight_factor_queue( lspmac_motor_t *mp, double pos) {
     pthread_mutex_unlock( &(mp->mutex));
 
     pthread_mutex_lock( &(flight->mutex));
-    flight->u2c = pos / 100.0;
+
+    lsredis_setstr( flight->u2c, lsredis_getstr(flight->format), pos / 100.0);
+
     pthread_mutex_unlock( &(flight->mutex));
 
     flight->moveAbs( flight, lspmac_getPosition( zoom));
@@ -2107,7 +2120,7 @@ void lspmac_moveabs_blight_factor_queue( lspmac_motor_t *mp, double pos) {
     pthread_mutex_unlock( &(mp->mutex));
 
     pthread_mutex_lock( &(blight->mutex));
-    blight->u2c = pos / 100.0;
+    lsredis_setstr( blight->u2c, lsredis_getstr(blight->format), pos / 100.0);
     pthread_mutex_unlock( &(blight->mutex));
 
     blight->moveAbs( blight, lspmac_getPosition( zoom));
@@ -2121,20 +2134,23 @@ void lspmac_video_rotate( double secs) {
   double q10;		// starting position (counts)
   double q11;		// delta counts
   double q12;		// milliseconds to run over delta
-  // int q13;		// maximum acceleration (cnts/msec/msec)
-  // int q14;		// velocity to restore
   
+  double u2c;
+
   if( secs <= 0.0)
     return;
 
   omega_zero_search = 1;
 
   pthread_mutex_lock( &(omega->mutex));
+  u2c = lsredis_getd( omega->u2c);
+
   q10 = 0;
-  q11 = 360.0 * omega->u2c;
+  q11 = 360.0 * u2c;
   q12 = 1000 * secs;
   
-  omega_zero_velocity = 360.0 * omega->u2c / secs;	// counts/second to back calculate zero crossing time
+
+  omega_zero_velocity = 360.0 * u2c / secs;	// counts/second to back calculate zero crossing time
 
   omega->pq = lspmac_SockSendline_nr( "&1 Q10=%.1f Q11=%.1f Q12=%.1f Q13=(I117) Q14=(I116) B240R", q10, q11, q12);
   pthread_mutex_unlock( &(omega->mutex));
@@ -2153,9 +2169,12 @@ void lspmac_move_or_jog_abs_queue(
   int requested_pos_cnts;	//!< the requested position in units of "counts"
   int coord_num, motor_num;	//!< motor and coordinate system;
   char axis;			//!< our axis
+  double u2c;
 
   pthread_mutex_lock( &(mp->mutex));
-  if( mp->u2c == 0.0) {
+  u2c = lsredis_getd( mp->u2c);
+
+  if( u2c == 0.0) {
     //
     // Shouldn't try moving a motor that has no units defined
     //
@@ -2165,7 +2184,7 @@ void lspmac_move_or_jog_abs_queue(
   mp->requested_position = requested_position;
   mp->not_done    = 1;
   mp->motion_seen = 0;
-  mp->requested_pos_cnts = mp->u2c * requested_position;  
+  mp->requested_pos_cnts = u2c * requested_position;  
   requested_pos_cnts = mp->requested_pos_cnts;
   coord_num = mp->coord_num;
   motor_num = mp->motor_num;
@@ -2383,6 +2402,7 @@ lspmac_motor_t *lspmac_motor_init(
 
   lskvs_regcomp( &(d->preset_regex), REG_EXTENDED, LSPMAC_PRESET_REGEX, name);
 
+  d->u2c                 = lsredis_get_obj( "%s.u2c", name);
   d->presets             = NULL;
   d->name                = strdup(name);
   d->moveAbs             = moveAbs;
@@ -2413,6 +2433,7 @@ lspmac_motor_t *lspmac_fshut_init(
 
   d->presets           = NULL;
   d->name              = strdup("fastShutter");
+  d->u2c                 = lsredis_get_obj( "%s.u2c", d->name);
   lskvs_regcomp( &(d->preset_regex), REG_EXTENDED, LSPMAC_PRESET_REGEX, d->name);
   d->moveAbs           = lspmac_moveabs_fshut_queue;
   d->read              = lspmac_shutter_read;
@@ -2464,7 +2485,7 @@ lspmac_motor_t *lspmac_bo_init(
   d->read_mask         = read_mask;
   d->homing            = 0;
   d->win               = NULL;
-  d->u2c               = 1.0;
+  d->u2c               = lsredis_get_obj( "%s.u2c", name);
 
   d->lspg_initialized = 0;
   return d;
@@ -2500,7 +2521,7 @@ lspmac_motor_t *lspmac_dac_init(
   d->status2_p         = NULL;
   d->motor_num         = -1;
   d->dac_mvar          = strdup(mvar);
-  d->u2c               = scale;
+  d->u2c               = lsredis_get_obj( "%s.u2c", name);
   d->homing            = 0;
   d->win               = NULL;
 
@@ -2523,7 +2544,7 @@ lspmac_motor_t *lspmac_soft_motor_init( lspmac_motor_t *d, char *name, double sc
   d->name         = strdup(name);
   d->moveAbs      = moveAbs;
   d->read         = lspmac_soft_motor_read;
-  d->u2c          = scale;
+  d->u2c          = lsredis_get_obj( "%s.u2c", name);
   d->lut          = NULL;
   d->nlut         = 0;
   d->actual_pos_cnts_p = calloc( sizeof(int), 1);

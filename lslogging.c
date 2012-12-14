@@ -17,7 +17,7 @@ static pthread_cond_t  lslogging_cond;		//!< We'll spend most of our time waitin
 static FILE *lslogging_file;			//!< our log file object
 
 //! Fixed maximum length messages to keep some form of sanity
-#define LSLOGGING_MSG_LENGTH 256
+#define LSLOGGING_MSG_LENGTH 2048
 
 /** Our log object: time and message
  */
@@ -27,7 +27,7 @@ typedef struct lslogging_queue_struct {
 } lslogging_queue_t;
 
 //! Modest length queue
-#define LSLOGGING_QUEUE_LENGTH 256
+#define LSLOGGING_QUEUE_LENGTH 8192
 static lslogging_queue_t lslogging_queue[LSLOGGING_QUEUE_LENGTH];	//!< Our entire queue.  Right here.  Every message we'll ever write.
 
 static unsigned int lslogging_on = 0;	//!< next location to add to the queue

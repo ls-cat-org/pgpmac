@@ -13,7 +13,7 @@ static pthread_t lsupdate_thread;		//!< our worker thread
 /** Query the motors and perhaps tell the DB about it
  */
 void lsupdate_updateit() {
-  static char s[4096];
+  static char s[1024];
   static char s1[512];
   static char s2[512];		//!< support for obsolete (ie, non .position) style
   lspmac_motor_t *mp;
@@ -84,7 +84,7 @@ void lsupdate_updateit() {
   }
 
   if( gotone) {
-    strcat( s, "}')");
+    strcat( s, "}'::text[])");
     lspg_query_push( NULL, s);
   }
 }
