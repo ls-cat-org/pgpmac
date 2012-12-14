@@ -5,6 +5,7 @@ var searchData=
   ['lslogging_2ec',['lslogging.c',['../lslogging_8c.html',1,'']]],
   ['lspg_2ec',['lspg.c',['../lspg_8c.html',1,'']]],
   ['lspmac_2ec',['lspmac.c',['../lspmac_8c.html',1,'']]],
+  ['lsredis_2ec',['lsredis.c',['../lsredis_8c.html',1,'']]],
   ['lstimer_2ec',['lstimer.c',['../lstimer_8c.html',1,'']]],
   ['lsupdate_2ec',['lsupdate.c',['../lsupdate_8c.html',1,'']]]
 ];

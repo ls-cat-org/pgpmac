@@ -274,9 +274,14 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00076">76</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
+<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00077">77</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
 <div class="fragment"><div class="line">                                                             {</div>
 <div class="line">  <a class="code" href="structlsevents__listener__struct.html" title="Linked list of event listeners.">lsevents_listener_t</a> *<span class="keyword">new</span>;</div>
+<div class="line">  <span class="keywordtype">int</span> err;</div>
+<div class="line">  <span class="keywordtype">char</span> *errbuf;</div>
+<div class="line">  <span class="keywordtype">int</span> nerrbuf;</div>
+<div class="line"></div>
+<div class="line"></div>
 <div class="line"></div>
 <div class="line">  <span class="keyword">new</span> = calloc( 1, <span class="keyword">sizeof</span>( <a class="code" href="structlsevents__listener__struct.html" title="Linked list of event listeners.">lsevents_listener_t</a>));</div>
 <div class="line">  <span class="keywordflow">if</span>( <span class="keyword">new</span> == NULL) {</div>
@@ -284,8 +289,22 @@ Variables</h2></td></tr>
 <div class="line">    exit( -1);</div>
 <div class="line">  }</div>
 <div class="line"></div>
-<div class="line">  strncpy( new-&gt;event, event, <a class="code" href="pgpmac_8h.html#ab61d790b5572f116e091babfda53627b" title="Fixed length for event names: simplifies string handling.">LSEVENTS_EVENT_LENGTH</a>);</div>
-<div class="line">  <span class="keyword">new</span>-&gt;event[<a class="code" href="pgpmac_8h.html#ab61d790b5572f116e091babfda53627b" title="Fixed length for event names: simplifies string handling.">LSEVENTS_EVENT_LENGTH</a>-1] = 0;</div>
+<div class="line">  err = regcomp( &amp;new-&gt;re, event, REG_EXTENDED | REG_NOSUB);</div>
+<div class="line">  <span class="keywordflow">if</span>( err != 0) {</div>
+<div class="line">    nerrbuf = regerror( err, &amp;new-&gt;re, NULL, 0);</div>
+<div class="line">    errbuf = calloc( nerrbuf, <span class="keyword">sizeof</span>( <span class="keywordtype">char</span>));</div>
+<div class="line">    <span class="keywordflow">if</span>( errbuf == NULL) {</div>
+<div class="line">      <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lsevents_add_listener: out of memory (re)&quot;</span>);</div>
+<div class="line">      exit( -1);</div>
+<div class="line">    }</div>
+<div class="line">    regerror( err, &amp;new-&gt;re, errbuf, nerrbuf);</div>
+<div class="line">    <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lsevents_add_listener: %s&quot;</span>, errbuf);</div>
+<div class="line">    free( errbuf);</div>
+<div class="line">    free( <span class="keyword">new</span>);</div>
+<div class="line">    <span class="keywordflow">return</span>;</div>
+<div class="line">  }</div>
+<div class="line"></div>
+<div class="line">  <span class="keyword">new</span>-&gt;raw_regexp = strdup( event);</div>
 <div class="line">  <span class="keyword">new</span>-&gt;cb   = cb;</div>
 <div class="line"></div>
 <div class="line">  pthread_mutex_lock( &amp;<a class="code" href="lsevents_8c.html#a70bba59930a1c7d7d181aa03cdfb6c00" title="mutex to protect the listener linked list">lsevents_listener_mutex</a>);</div>
@@ -314,7 +333,7 @@ Variables</h2></td></tr>
 
 <p>Initialize this module. </p>
 
-<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00187">187</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
+<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00206">206</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
 <div class="fragment"><div class="line">                     {</div>
 <div class="line">  pthread_mutex_init( &amp;<a class="code" href="lsevents_8c.html#ab46f4ebda5e926a213faedac1a545ec1" title="mutex to protect the event queue">lsevents_queue_mutex</a>, NULL);</div>
 <div class="line">  pthread_cond_init(  &amp;<a class="code" href="lsevents_8c.html#a8079d9fb8c35db3ca5f83be5aeb2a747" title="condition to pause the queue if needed">lsevents_queue_cond</a>, NULL);</div>
@@ -356,7 +375,7 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00102">102</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
+<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00122">122</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
 <div class="fragment"><div class="line">                                                                {</div>
 <div class="line">  </div>
 <div class="line">  <a class="code" href="structlsevents__listener__struct.html" title="Linked list of event listeners.">lsevents_listener_t</a> *last, *current;</div>
@@ -368,7 +387,7 @@ Variables</h2></td></tr>
 <div class="line">  pthread_mutex_lock( &amp;<a class="code" href="lsevents_8c.html#a70bba59930a1c7d7d181aa03cdfb6c00" title="mutex to protect the listener linked list">lsevents_listener_mutex</a>);</div>
 <div class="line">  last = NULL;</div>
 <div class="line">  <span class="keywordflow">for</span>( current = <a class="code" href="lsevents_8c.html#a300dc3edfa8546d75e9f8bab8fa06c5c" title="Pointer to the first item in the link list of listeners.">lsevents_listeners_p</a>; current != NULL; current = current-&gt;<a class="code" href="structlsevents__listener__struct.html#a8aed9196b0deab84e018b96c0cc59305" title="Next listener.">next</a>) {</div>
-<div class="line">    <span class="keywordflow">if</span>( strcmp( last-&gt;<a class="code" href="structlsevents__listener__struct.html#a270117dccadeda0164592c753dae15a1" title="name of the event we are listening for">event</a>, event) == 0 &amp;&amp; last-&gt;<a class="code" href="structlsevents__listener__struct.html#a005906c1c9f0647e6ed1fb4592d8c5d0" title="call back function">cb</a> == cb) {</div>
+<div class="line">    <span class="keywordflow">if</span>( strcmp( last-&gt;<a class="code" href="structlsevents__listener__struct.html#afffe7a6889fda47a3a7a91beefed9168" title="the original string sent to us">raw_regexp</a>, event) == 0 &amp;&amp; last-&gt;<a class="code" href="structlsevents__listener__struct.html#a005906c1c9f0647e6ed1fb4592d8c5d0" title="call back function">cb</a> == cb) {</div>
 <div class="line">      <span class="keywordflow">if</span>( last == NULL) {</div>
 <div class="line">        <a class="code" href="lsevents_8c.html#a300dc3edfa8546d75e9f8bab8fa06c5c" title="Pointer to the first item in the link list of listeners.">lsevents_listeners_p</a> = current-&gt;<a class="code" href="structlsevents__listener__struct.html#a8aed9196b0deab84e018b96c0cc59305" title="Next listener.">next</a>;</div>
 <div class="line">      } <span class="keywordflow">else</span> {</div>
@@ -381,12 +400,10 @@ Variables</h2></td></tr>
 <div class="line"></div>
 <div class="line">  <span class="comment">//</span></div>
 <div class="line">  <span class="comment">// Now remove it</span></div>
-<div class="line">  <span class="comment">// TODO: use saner memory management where we allocate many listeners at a time</span></div>
-<div class="line">  <span class="comment">// as an array and then just flag the ones that are used</span></div>
 <div class="line">  <span class="comment">//</span></div>
 <div class="line">  <span class="keywordflow">if</span>( current != NULL) {</div>
-<div class="line">    <span class="keywordflow">if</span>( current-&gt;<a class="code" href="structlsevents__listener__struct.html#a270117dccadeda0164592c753dae15a1" title="name of the event we are listening for">event</a> != NULL)</div>
-<div class="line">      free( current-&gt;<a class="code" href="structlsevents__listener__struct.html#a270117dccadeda0164592c753dae15a1" title="name of the event we are listening for">event</a>);</div>
+<div class="line">    <span class="keywordflow">if</span>( current-&gt;<a class="code" href="structlsevents__listener__struct.html#afffe7a6889fda47a3a7a91beefed9168" title="the original string sent to us">raw_regexp</a> != NULL)</div>
+<div class="line">      free( current-&gt;<a class="code" href="structlsevents__listener__struct.html#afffe7a6889fda47a3a7a91beefed9168" title="the original string sent to us">raw_regexp</a>);</div>
 <div class="line">    free(current);</div>
 <div class="line">  }</div>
 <div class="line">}</div>
@@ -408,7 +425,7 @@ Variables</h2></td></tr>
 
 <p>Start up the thread and get out of the way. </p>
 
-<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00195">195</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
+<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00214">214</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
 <div class="fragment"><div class="line">                    {</div>
 <div class="line">  pthread_create( &amp;<a class="code" href="lsevents_8c.html#a314640d7c3cb4fa90823ab2418fbac9b" title="thread to run the event queue">lsevents_thread</a>, NULL, <a class="code" href="lsevents_8c.html#a48e8f9dee00710bbe293b4bbded37a39" title="Our worker.">lsevents_worker</a>, NULL);</div>
 <div class="line">}</div>
@@ -448,7 +465,7 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00044">44</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
+<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00045">45</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
 <div class="fragment"><div class="line">                                          {</div>
 <div class="line">  <span class="keywordtype">char</span> <span class="keyword">event</span>[<a class="code" href="pgpmac_8h.html#ab61d790b5572f116e091babfda53627b" title="Fixed length for event names: simplifies string handling.">LSEVENTS_EVENT_LENGTH</a>];</div>
 <div class="line">  <span class="keywordtype">char</span> *sp;</div>
@@ -500,10 +517,10 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00139">139</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
+<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00157">157</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
 <div class="fragment"><div class="line">                       {</div>
 <div class="line">  </div>
-<div class="line">  <span class="keywordtype">char</span> <span class="keyword">event</span>[<a class="code" href="pgpmac_8h.html#ab61d790b5572f116e091babfda53627b" title="Fixed length for event names: simplifies string handling.">LSEVENTS_EVENT_LENGTH</a>];</div>
+<div class="line">  <span class="keywordtype">char</span> *event;</div>
 <div class="line">  <a class="code" href="structlsevents__queue__struct.html" title="Storage definition for the events.">lsevents_queue_t</a> *ep;</div>
 <div class="line">  <a class="code" href="structlsevents__listener__struct.html" title="Linked list of event listeners.">lsevents_listener_t</a> *p;</div>
 <div class="line"></div>
@@ -521,7 +538,7 @@ Variables</h2></td></tr>
 <div class="line">    <span class="comment">// we unlock the mutex</span></div>
 <div class="line">    <span class="comment">//</span></div>
 <div class="line">    ep = &amp;(<a class="code" href="lsevents_8c.html#ad1ff5e895b4016113c8414d9a5daa2f2" title="simple list of events">lsevents_queue</a>[(<a class="code" href="lsevents_8c.html#a50ad47e12cc4fc2d88659230b2fd44ff" title="next queue location to read">lsevents_queue_off</a>++) % <a class="code" href="lsevents_8c.html#a75469307c70790f04b9b2bfcb1473a48">LSEVENTS_QUEUE_LENGTH</a>]);</div>
-<div class="line">    strncpy( event, ep-&gt;<a class="code" href="structlsevents__queue__struct.html#a945691e4f4afbca101722840a891581e" title="name of the event">event</a>, <a class="code" href="pgpmac_8h.html#ab61d790b5572f116e091babfda53627b" title="Fixed length for event names: simplifies string handling.">LSEVENTS_EVENT_LENGTH</a>);</div>
+<div class="line">    <span class="keyword">event</span> = strndup( ep-&gt;<a class="code" href="structlsevents__queue__struct.html#a945691e4f4afbca101722840a891581e" title="name of the event">event</a>, <a class="code" href="pgpmac_8h.html#ab61d790b5572f116e091babfda53627b" title="Fixed length for event names: simplifies string handling.">LSEVENTS_EVENT_LENGTH</a>-1);</div>
 <div class="line">    <span class="keyword">event</span>[<a class="code" href="pgpmac_8h.html#ab61d790b5572f116e091babfda53627b" title="Fixed length for event names: simplifies string handling.">LSEVENTS_EVENT_LENGTH</a>-1] = 0;</div>
 <div class="line"></div>
 <div class="line">    <span class="comment">//</span></div>
@@ -535,10 +552,11 @@ Variables</h2></td></tr>
 <div class="line">    <span class="comment">//</span></div>
 <div class="line">    pthread_mutex_lock( &amp;<a class="code" href="lsevents_8c.html#a70bba59930a1c7d7d181aa03cdfb6c00" title="mutex to protect the listener linked list">lsevents_listener_mutex</a>);</div>
 <div class="line">    <span class="keywordflow">for</span>( p = <a class="code" href="lsevents_8c.html#a300dc3edfa8546d75e9f8bab8fa06c5c" title="Pointer to the first item in the link list of listeners.">lsevents_listeners_p</a>; p != NULL; p = p-&gt;<a class="code" href="structlsevents__listener__struct.html#a8aed9196b0deab84e018b96c0cc59305" title="Next listener.">next</a>) {</div>
-<div class="line">      <span class="keywordflow">if</span>( strcmp( event, p-&gt;<a class="code" href="structlsevents__listener__struct.html#a270117dccadeda0164592c753dae15a1" title="name of the event we are listening for">event</a>) == 0) {</div>
-<div class="line">        p-&gt;<a class="code" href="structlsevents__listener__struct.html#a005906c1c9f0647e6ed1fb4592d8c5d0" title="call back function">cb</a>( p-&gt;<a class="code" href="structlsevents__listener__struct.html#a270117dccadeda0164592c753dae15a1" title="name of the event we are listening for">event</a>);</div>
+<div class="line">      <span class="keywordflow">if</span>( regexec( &amp;p-&gt;<a class="code" href="structlsevents__listener__struct.html#a60b0f9e188a08e6101c494af89052d3f" title="regular expression representing listened for events">re</a>, event, 0, NULL, 0) == 0) {</div>
+<div class="line">        p-&gt;<a class="code" href="structlsevents__listener__struct.html#a005906c1c9f0647e6ed1fb4592d8c5d0" title="call back function">cb</a>( event);</div>
 <div class="line">      }</div>
 <div class="line">    }</div>
+<div class="line">    free( event);</div>
 <div class="line"></div>
 <div class="line">    pthread_mutex_unlock( &amp;<a class="code" href="lsevents_8c.html#a70bba59930a1c7d7d181aa03cdfb6c00" title="mutex to protect the listener linked list">lsevents_listener_mutex</a>);</div>
 <div class="line">  }</div>
@@ -568,7 +586,7 @@ Variables</h2></td></tr>
 
 <p>mutex to protect the listener linked list </p>
 
-<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00036">36</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
+<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00037">37</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
 
 </div>
 </div>
@@ -592,7 +610,7 @@ Variables</h2></td></tr>
 
 <p>Pointer to the first item in the link list of listeners. </p>
 
-<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00033">33</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
+<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00034">34</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
 
 </div>
 </div>
@@ -640,7 +658,7 @@ Variables</h2></td></tr>
 
 <p>condition to pause the queue if needed </p>
 
-<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00038">38</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
+<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00039">39</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
 
 </div>
 </div>
@@ -664,7 +682,7 @@ Variables</h2></td></tr>
 
 <p>mutex to protect the event queue </p>
 
-<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00037">37</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
+<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00038">38</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
 
 </div>
 </div>
@@ -736,7 +754,7 @@ Variables</h2></td></tr>
 
 <p>thread to run the event queue </p>
 
-<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00035">35</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
+<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00036">36</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
 
 </div>
 </div>
@@ -746,7 +764,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="lsevents_8c.html">lsevents.c</a></li>
-    <li class="footer">Generated on Thu Nov 29 2012 13:05:30 for LS-CAT PGPMAC by
+    <li class="footer">Generated on Fri Dec 14 2012 16:43:03 for LS-CAT PGPMAC by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.2 </li>
   </ul>

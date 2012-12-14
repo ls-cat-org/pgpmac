@@ -1,0 +1,199 @@
+\hypertarget{structlsredis__obj__struct}{\section{lsredis\-\_\-obj\-\_\-struct Struct Reference}
+\label{structlsredis__obj__struct}\index{lsredis\-\_\-obj\-\_\-struct@{lsredis\-\_\-obj\-\_\-struct}}
+}
+
+
+Redis Object Basic object whose value is sychronized with our redis db.  
+
+
+
+
+{\ttfamily \#include $<$pgpmac.\-h$>$}
+
+\subsection*{Data Fields}
+\begin{DoxyCompactItemize}
+\item 
+pthread\-\_\-mutex\-\_\-t \hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex}
+\begin{DoxyCompactList}\small\item\em Don't let anyone use an old value. \end{DoxyCompactList}\item 
+pthread\-\_\-cond\-\_\-t \hyperlink{structlsredis__obj__struct_a356f6a228bb19ac7d66fdb1c875d68be}{cond}
+\begin{DoxyCompactList}\small\item\em wait for a valid value \end{DoxyCompactList}\item 
+struct \hyperlink{structlsredis__obj__struct}{lsredis\-\_\-obj\-\_\-struct} $\ast$ \hyperlink{structlsredis__obj__struct_afb7259e8c3c1c83ccc234b2b2894f2b0}{next}
+\begin{DoxyCompactList}\small\item\em the next in our list (I guess this is going to be a linked list) \end{DoxyCompactList}\item 
+char \hyperlink{structlsredis__obj__struct_a338ffa4123bd06b39c8b58f5e695575e}{valid}
+\begin{DoxyCompactList}\small\item\em 1 if we think the value is good, 0 otherwise \end{DoxyCompactList}\item 
+int \hyperlink{structlsredis__obj__struct_a8bc1a536b7155a1e2a749c7c434b898b}{wait\-\_\-for\-\_\-me}
+\begin{DoxyCompactList}\small\item\em Number of times we need to see our publication before we start accepting new values. \end{DoxyCompactList}\item 
+char $\ast$ \hyperlink{structlsredis__obj__struct_aa8c5a453b9424e5666320b8675a42f5c}{key}
+\begin{DoxyCompactList}\small\item\em The redis key for this object. \end{DoxyCompactList}\item 
+char $\ast$ \hyperlink{structlsredis__obj__struct_ad0a987a011b580eab739cda831f78fbb}{events\-\_\-name}
+\begin{DoxyCompactList}\small\item\em Name used to generate events (normally key without the station id) \end{DoxyCompactList}\item 
+int \hyperlink{structlsredis__obj__struct_a664f0eaafb8dffc0dbde126e0340efb9}{value\-\_\-length}
+\begin{DoxyCompactList}\small\item\em Number of bytes allocated for value (not value's string length) \end{DoxyCompactList}\item 
+char $\ast$ \hyperlink{structlsredis__obj__struct_a0465c65288e8101805a6f91049164517}{value}
+\begin{DoxyCompactList}\small\item\em our value \end{DoxyCompactList}\item 
+char $\ast$($\ast$ \hyperlink{structlsredis__obj__struct_aa61ab86f719e093af48810a3bd37b739}{getstr} )(struct \hyperlink{structlsredis__obj__struct}{lsredis\-\_\-obj\-\_\-struct} $\ast$)
+\begin{DoxyCompactList}\small\item\em return a string representation of this object \end{DoxyCompactList}\item 
+double($\ast$ \hyperlink{structlsredis__obj__struct_a6e8586747a0453b16e5b5104c41eab76}{getd} )(struct \hyperlink{structlsredis__obj__struct}{lsredis\-\_\-obj\-\_\-struct} $\ast$)
+\begin{DoxyCompactList}\small\item\em return a double floating point version \end{DoxyCompactList}\item 
+long int($\ast$ \hyperlink{structlsredis__obj__struct_abcb9459a7d8edabaf8ff4e9f1a96aba7}{getl} )(struct \hyperlink{structlsredis__obj__struct}{lsredis\-\_\-obj\-\_\-struct} $\ast$)
+\begin{DoxyCompactList}\small\item\em return a long value \end{DoxyCompactList}\item 
+int \hyperlink{structlsredis__obj__struct_a43fcbff584654ab086d973ce34cb6ddc}{hits}
+\begin{DoxyCompactList}\small\item\em number of times we've searched for this key \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Redis Object Basic object whose value is sychronized with our redis db. 
+
+Definition at line 35 of file pgpmac.\-h.
+
+
+
+\subsection{Field Documentation}
+\hypertarget{structlsredis__obj__struct_a356f6a228bb19ac7d66fdb1c875d68be}{\index{lsredis\-\_\-obj\-\_\-struct@{lsredis\-\_\-obj\-\_\-struct}!cond@{cond}}
+\index{cond@{cond}!lsredis_obj_struct@{lsredis\-\_\-obj\-\_\-struct}}
+\subsubsection[{cond}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-cond\-\_\-t lsredis\-\_\-obj\-\_\-struct\-::cond}}\label{structlsredis__obj__struct_a356f6a228bb19ac7d66fdb1c875d68be}
+
+
+wait for a valid value 
+
+
+
+Definition at line 37 of file pgpmac.\-h.
+
+\hypertarget{structlsredis__obj__struct_ad0a987a011b580eab739cda831f78fbb}{\index{lsredis\-\_\-obj\-\_\-struct@{lsredis\-\_\-obj\-\_\-struct}!events\-\_\-name@{events\-\_\-name}}
+\index{events\-\_\-name@{events\-\_\-name}!lsredis_obj_struct@{lsredis\-\_\-obj\-\_\-struct}}
+\subsubsection[{events\-\_\-name}]{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ lsredis\-\_\-obj\-\_\-struct\-::events\-\_\-name}}\label{structlsredis__obj__struct_ad0a987a011b580eab739cda831f78fbb}
+
+
+Name used to generate events (normally key without the station id) 
+
+
+
+Definition at line 42 of file pgpmac.\-h.
+
+\hypertarget{structlsredis__obj__struct_a6e8586747a0453b16e5b5104c41eab76}{\index{lsredis\-\_\-obj\-\_\-struct@{lsredis\-\_\-obj\-\_\-struct}!getd@{getd}}
+\index{getd@{getd}!lsredis_obj_struct@{lsredis\-\_\-obj\-\_\-struct}}
+\subsubsection[{getd}]{\setlength{\rightskip}{0pt plus 5cm}double($\ast$ lsredis\-\_\-obj\-\_\-struct\-::getd)(struct {\bf lsredis\-\_\-obj\-\_\-struct} $\ast$)}}\label{structlsredis__obj__struct_a6e8586747a0453b16e5b5104c41eab76}
+
+
+return a double floating point version 
+
+
+
+Definition at line 46 of file pgpmac.\-h.
+
+\hypertarget{structlsredis__obj__struct_abcb9459a7d8edabaf8ff4e9f1a96aba7}{\index{lsredis\-\_\-obj\-\_\-struct@{lsredis\-\_\-obj\-\_\-struct}!getl@{getl}}
+\index{getl@{getl}!lsredis_obj_struct@{lsredis\-\_\-obj\-\_\-struct}}
+\subsubsection[{getl}]{\setlength{\rightskip}{0pt plus 5cm}long int($\ast$ lsredis\-\_\-obj\-\_\-struct\-::getl)(struct {\bf lsredis\-\_\-obj\-\_\-struct} $\ast$)}}\label{structlsredis__obj__struct_abcb9459a7d8edabaf8ff4e9f1a96aba7}
+
+
+return a long value 
+
+
+
+Definition at line 47 of file pgpmac.\-h.
+
+\hypertarget{structlsredis__obj__struct_aa61ab86f719e093af48810a3bd37b739}{\index{lsredis\-\_\-obj\-\_\-struct@{lsredis\-\_\-obj\-\_\-struct}!getstr@{getstr}}
+\index{getstr@{getstr}!lsredis_obj_struct@{lsredis\-\_\-obj\-\_\-struct}}
+\subsubsection[{getstr}]{\setlength{\rightskip}{0pt plus 5cm}char$\ast$($\ast$ lsredis\-\_\-obj\-\_\-struct\-::getstr)(struct {\bf lsredis\-\_\-obj\-\_\-struct} $\ast$)}}\label{structlsredis__obj__struct_aa61ab86f719e093af48810a3bd37b739}
+
+
+return a string representation of this object 
+
+
+
+Definition at line 45 of file pgpmac.\-h.
+
+\hypertarget{structlsredis__obj__struct_a43fcbff584654ab086d973ce34cb6ddc}{\index{lsredis\-\_\-obj\-\_\-struct@{lsredis\-\_\-obj\-\_\-struct}!hits@{hits}}
+\index{hits@{hits}!lsredis_obj_struct@{lsredis\-\_\-obj\-\_\-struct}}
+\subsubsection[{hits}]{\setlength{\rightskip}{0pt plus 5cm}int lsredis\-\_\-obj\-\_\-struct\-::hits}}\label{structlsredis__obj__struct_a43fcbff584654ab086d973ce34cb6ddc}
+
+
+number of times we've searched for this key 
+
+
+
+Definition at line 48 of file pgpmac.\-h.
+
+\hypertarget{structlsredis__obj__struct_aa8c5a453b9424e5666320b8675a42f5c}{\index{lsredis\-\_\-obj\-\_\-struct@{lsredis\-\_\-obj\-\_\-struct}!key@{key}}
+\index{key@{key}!lsredis_obj_struct@{lsredis\-\_\-obj\-\_\-struct}}
+\subsubsection[{key}]{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ lsredis\-\_\-obj\-\_\-struct\-::key}}\label{structlsredis__obj__struct_aa8c5a453b9424e5666320b8675a42f5c}
+
+
+The redis key for this object. 
+
+
+
+Definition at line 41 of file pgpmac.\-h.
+
+\hypertarget{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{\index{lsredis\-\_\-obj\-\_\-struct@{lsredis\-\_\-obj\-\_\-struct}!mutex@{mutex}}
+\index{mutex@{mutex}!lsredis_obj_struct@{lsredis\-\_\-obj\-\_\-struct}}
+\subsubsection[{mutex}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-mutex\-\_\-t lsredis\-\_\-obj\-\_\-struct\-::mutex}}\label{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}
+
+
+Don't let anyone use an old value. 
+
+
+
+Definition at line 36 of file pgpmac.\-h.
+
+\hypertarget{structlsredis__obj__struct_afb7259e8c3c1c83ccc234b2b2894f2b0}{\index{lsredis\-\_\-obj\-\_\-struct@{lsredis\-\_\-obj\-\_\-struct}!next@{next}}
+\index{next@{next}!lsredis_obj_struct@{lsredis\-\_\-obj\-\_\-struct}}
+\subsubsection[{next}]{\setlength{\rightskip}{0pt plus 5cm}struct {\bf lsredis\-\_\-obj\-\_\-struct}$\ast$ lsredis\-\_\-obj\-\_\-struct\-::next}}\label{structlsredis__obj__struct_afb7259e8c3c1c83ccc234b2b2894f2b0}
+
+
+the next in our list (I guess this is going to be a linked list) 
+
+
+
+Definition at line 38 of file pgpmac.\-h.
+
+\hypertarget{structlsredis__obj__struct_a338ffa4123bd06b39c8b58f5e695575e}{\index{lsredis\-\_\-obj\-\_\-struct@{lsredis\-\_\-obj\-\_\-struct}!valid@{valid}}
+\index{valid@{valid}!lsredis_obj_struct@{lsredis\-\_\-obj\-\_\-struct}}
+\subsubsection[{valid}]{\setlength{\rightskip}{0pt plus 5cm}char lsredis\-\_\-obj\-\_\-struct\-::valid}}\label{structlsredis__obj__struct_a338ffa4123bd06b39c8b58f5e695575e}
+
+
+1 if we think the value is good, 0 otherwise 
+
+
+
+Definition at line 39 of file pgpmac.\-h.
+
+\hypertarget{structlsredis__obj__struct_a0465c65288e8101805a6f91049164517}{\index{lsredis\-\_\-obj\-\_\-struct@{lsredis\-\_\-obj\-\_\-struct}!value@{value}}
+\index{value@{value}!lsredis_obj_struct@{lsredis\-\_\-obj\-\_\-struct}}
+\subsubsection[{value}]{\setlength{\rightskip}{0pt plus 5cm}char$\ast$ lsredis\-\_\-obj\-\_\-struct\-::value}}\label{structlsredis__obj__struct_a0465c65288e8101805a6f91049164517}
+
+
+our value 
+
+
+
+Definition at line 44 of file pgpmac.\-h.
+
+\hypertarget{structlsredis__obj__struct_a664f0eaafb8dffc0dbde126e0340efb9}{\index{lsredis\-\_\-obj\-\_\-struct@{lsredis\-\_\-obj\-\_\-struct}!value\-\_\-length@{value\-\_\-length}}
+\index{value\-\_\-length@{value\-\_\-length}!lsredis_obj_struct@{lsredis\-\_\-obj\-\_\-struct}}
+\subsubsection[{value\-\_\-length}]{\setlength{\rightskip}{0pt plus 5cm}int lsredis\-\_\-obj\-\_\-struct\-::value\-\_\-length}}\label{structlsredis__obj__struct_a664f0eaafb8dffc0dbde126e0340efb9}
+
+
+Number of bytes allocated for value (not value's string length) 
+
+
+
+Definition at line 43 of file pgpmac.\-h.
+
+\hypertarget{structlsredis__obj__struct_a8bc1a536b7155a1e2a749c7c434b898b}{\index{lsredis\-\_\-obj\-\_\-struct@{lsredis\-\_\-obj\-\_\-struct}!wait\-\_\-for\-\_\-me@{wait\-\_\-for\-\_\-me}}
+\index{wait\-\_\-for\-\_\-me@{wait\-\_\-for\-\_\-me}!lsredis_obj_struct@{lsredis\-\_\-obj\-\_\-struct}}
+\subsubsection[{wait\-\_\-for\-\_\-me}]{\setlength{\rightskip}{0pt plus 5cm}int lsredis\-\_\-obj\-\_\-struct\-::wait\-\_\-for\-\_\-me}}\label{structlsredis__obj__struct_a8bc1a536b7155a1e2a749c7c434b898b}
+
+
+Number of times we need to see our publication before we start accepting new values. 
+
+
+
+Definition at line 40 of file pgpmac.\-h.
+
+
+
+The documentation for this struct was generated from the following file\-:\begin{DoxyCompactItemize}
+\item 
+\hyperlink{pgpmac_8h}{pgpmac.\-h}\end{DoxyCompactItemize}

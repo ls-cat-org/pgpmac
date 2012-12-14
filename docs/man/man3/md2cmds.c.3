@@ -1,4 +1,4 @@
-.TH "md2cmds.c" 3 "Thu Nov 29 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "md2cmds.c" 3 "Fri Dec 14 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -150,7 +150,7 @@ Definition in file \fBmd2cmds\&.c\fP\&.
 .PP
 Move centering and alignment tables as requested TODO: Implement\&. 
 .PP
-Definition at line 730 of file md2cmds\&.c\&.
+Definition at line 737 of file md2cmds\&.c\&.
 .PP
 .nf
                       {
@@ -161,7 +161,7 @@ Definition at line 730 of file md2cmds\&.c\&.
 .PP
 Collect some data\&. 
 .PP
-Definition at line 418 of file md2cmds\&.c\&.
+Definition at line 422 of file md2cmds\&.c\&.
 .PP
 .nf
                        {
@@ -172,7 +172,10 @@ Definition at line 418 of file md2cmds\&.c\&.
   double p175;  // acceleration time (msec)
   double p180;  // exposure time (msec)
   int center_request;
+  double u2c;
 
+
+  u2c = lsredis_getd( omega->u2c);
 
   //
   // reset shutter has opened flag
@@ -239,10 +242,10 @@ Definition at line 418 of file md2cmds\&.c\&.
     // Calculate the parameters we'll need to run the scan
     //
     p180 = lspg_nextshot\&.dsexp * 1000\&.0;
-    p170 = omega->u2c * lspg_nextshot\&.sstart;
-    //    p171 = omega->u2c * ( lspg_nextshot\&.sstart + lspg_nextshot\&.dsowidth);
-    p171 = omega->u2c * lspg_nextshot\&.dsowidth;
-    p173 = fabs(p180) < 1\&.e-4 ? 0\&.0 : omega->u2c * lspg_nextshot\&.dsowidth / p180;
+    p170 = u2c * lspg_nextshot\&.sstart;
+    //    p171 = u2c * ( lspg_nextshot\&.sstart + lspg_nextshot\&.dsowidth);
+    p171 = u2c * lspg_nextshot\&.dsowidth;
+    p173 = fabs(p180) < 1\&.e-4 ? 0\&.0 : u2c * lspg_nextshot\&.dsowidth / p180;
     p175 = p173/omega->max_accel;
 
 
@@ -342,7 +345,7 @@ Definition at line 418 of file md2cmds\&.c\&.
 .PP
 Initialize the md2cmds module\&. 
 .PP
-Definition at line 771 of file md2cmds\&.c\&.
+Definition at line 778 of file md2cmds\&.c\&.
 .PP
 .nf
                     {
@@ -362,7 +365,7 @@ Definition at line 771 of file md2cmds\&.c\&.
 .PP
 Track how many motors are moving\&. 
 .PP
-Definition at line 390 of file md2cmds\&.c\&.
+Definition at line 394 of file md2cmds\&.c\&.
 .PP
 .nf
                                                 {
@@ -396,7 +399,7 @@ Definition at line 390 of file md2cmds\&.c\&.
 .PP
 Now that we are done with the 360 rotation lets rehome right quick\&. 
 .PP
-Definition at line 709 of file md2cmds\&.c\&.
+Definition at line 716 of file md2cmds\&.c\&.
 .PP
 .nf
                                                 {
@@ -516,7 +519,7 @@ Move the centering and alignment tables\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 326 of file md2cmds\&.c\&.
+Definition at line 330 of file md2cmds\&.c\&.
 .PP
 .nf
                              {
@@ -630,7 +633,7 @@ Definition at line 235 of file md2cmds\&.c\&.
 .PP
 Wait for the centering and alignment tables to stop moving\&. 
 .PP
-Definition at line 354 of file md2cmds\&.c\&.
+Definition at line 358 of file md2cmds\&.c\&.
 .PP
 .nf
                              {
@@ -797,8 +800,12 @@ Definition at line 313 of file md2cmds\&.c\&.
 .nf
                                                             {
   double rtn;
+  double u2c;
+
   pthread_mutex_lock( &(mp->mutex));
-  rtn = mp->u2c   * pos;
+  u2c = lsredis_getd( mp->u2c);
+
+  rtn = u2c   * pos;
   mp->motion_seen = 0;
   mp->not_done    = 1;
   pthread_mutex_unlock( &(mp->mutex));
@@ -811,7 +818,7 @@ Definition at line 313 of file md2cmds\&.c\&.
 .PP
 Spin 360 and make a video (recenter first, maybe) < velocity (cnts/msec) for omega 
 .PP
-Definition at line 594 of file md2cmds\&.c\&.
+Definition at line 601 of file md2cmds\&.c\&.
 .PP
 .nf
                       {
@@ -914,7 +921,7 @@ Definition at line 594 of file md2cmds\&.c\&.
 .PP
 Tell the database about the time we went through omega=zero\&. This should trigger the video feed server to starting making a movie\&. 
 .PP
-Definition at line 692 of file md2cmds\&.c\&.
+Definition at line 699 of file md2cmds\&.c\&.
 .PP
 .nf
                                      {
@@ -937,7 +944,7 @@ Definition at line 692 of file md2cmds\&.c\&.
 .PP
 Start up the thread\&. 
 .PP
-Definition at line 785 of file md2cmds\&.c\&.
+Definition at line 792 of file md2cmds\&.c\&.
 .PP
 .nf
                    {
@@ -962,7 +969,7 @@ Definition at line 785 of file md2cmds\&.c\&.
 .PP
 Fix up xscale and yscale when zoom changes\&. 
 .PP
-Definition at line 719 of file md2cmds\&.c\&.
+Definition at line 726 of file md2cmds\&.c\&.
 .PP
 .nf
                                         {
@@ -998,7 +1005,7 @@ Our worker thread\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 737 of file md2cmds\&.c\&.
+Definition at line 744 of file md2cmds\&.c\&.
 .PP
 .nf
                        {

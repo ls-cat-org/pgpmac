@@ -1,4 +1,4 @@
-.TH "pgpmac.h" 3 "Thu Nov 29 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "pgpmac.h" 3 "Fri Dec 14 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -49,10 +49,18 @@ Headers for the entire pgpmac project\&.
 .br
 \fC#include <regex\&.h>\fP
 .br
+\fC#include <hiredis/hiredis\&.h>\fP
+.br
+\fC#include <hiredis/async\&.h>\fP
+.br
 
 .SS "Data Structures"
 
 .in +1c
+.ti -1c
+.RI "struct \fBlsredis_obj_struct\fP"
+.br
+.RI "\fIRedis Object Basic object whose value is sychronized with our redis db\&. \fP"
 .ti -1c
 .RI "struct \fBtagEthernetCmd\fP"
 .br
@@ -112,6 +120,10 @@ Headers for the entire pgpmac project\&.
 .SS "Typedefs"
 
 .in +1c
+.ti -1c
+.RI "typedef struct \fBlsredis_obj_struct\fP \fBlsredis_obj_t\fP"
+.br
+.RI "\fIRedis Object Basic object whose value is sychronized with our redis db\&. \fP"
 .ti -1c
 .RI "typedef struct \fBtagEthernetCmd\fP \fBpmac_cmd_t\fP"
 .br
@@ -254,6 +266,7 @@ Headers for the entire pgpmac project\&.
 .ti -1c
 .RI "void \fBlstimer_add_timer\fP (char *, int, unsigned long int, unsigned long int)"
 .br
+.RI "\fICreate a timer\&. \fP"
 .ti -1c
 .RI "void \fBlskvs_regcomp\fP (regex_t *preg, int cflags, char *fmt,\&.\&.\&.)"
 .br
@@ -262,6 +275,16 @@ Headers for the entire pgpmac project\&.
 .RI "double \fBlskvs_find_preset_position\fP (\fBlspmac_motor_t\fP *mp, char *name, int *err)"
 .br
 .RI "\fIfind a postion for a given preset name \fP"
+.ti -1c
+.RI "void \fBlsredis_init\fP (char *pub, char *re, char *head)"
+.br
+.RI "\fIInitialize this module, that is, set up the connections\&. \fP"
+.ti -1c
+.RI "void \fBlsredis_run\fP ()"
+.br
+.ti -1c
+.RI "\fBlsredis_obj_t\fP * \fBlsredis_get_obj\fP (char *,\&.\&.\&.)"
+.br
 .in -1c
 .SS "Variables"
 
@@ -506,29 +529,29 @@ Definition in file \fBpgpmac\&.h\fP\&.
 .PP
 Number of status box rows\&. 
 .PP
-Definition at line 30 of file pgpmac\&.h\&.
+Definition at line 52 of file pgpmac\&.h\&.
 .SS "#define LS_DISPLAY_WINDOW_WIDTH   24"
 
 .PP
 Number of status box columns\&. 
 .PP
-Definition at line 34 of file pgpmac\&.h\&.
+Definition at line 56 of file pgpmac\&.h\&.
 .SS "#define LS_PG_QUERY_STRING_LENGTH   1024"
 
 .PP
 Fixed length postgresql query strings\&. Queries should all be function calls so this is not as weird as one might think\&. 
 .PP
-Definition at line 37 of file pgpmac\&.h\&.
+Definition at line 59 of file pgpmac\&.h\&.
 .SS "#define LSEVENTS_EVENT_LENGTH   32"
 
 .PP
 Fixed length for event names: simplifies string handling\&. 
 .PP
-Definition at line 40 of file pgpmac\&.h\&.
+Definition at line 62 of file pgpmac\&.h\&.
 .SS "#define MD2CMDS_CMD_LENGTH   32"
 
 .PP
-Definition at line 385 of file pgpmac\&.h\&.
+Definition at line 407 of file pgpmac\&.h\&.
 .SH "Typedef Documentation"
 .PP 
 .SS "typedef struct \fBlskvs_kvs_list_struct\fP  \fBlskvs_kvs_list_t\fP"
@@ -555,6 +578,10 @@ Storage for binary inputs\&.
 
 .PP
 Motor information\&. A catchall for motors and motor like objects\&. Not all members are used by all objects\&. 
+.SS "typedef struct \fBlsredis_obj_struct\fP  \fBlsredis_obj_t\fP"
+
+.PP
+Redis Object Basic object whose value is sychronized with our redis db\&. 
 .SS "typedef struct \fBlspmac_cmd_queue_struct\fP  \fBpmac_cmd_queue_t\fP"
 
 .PP
@@ -577,11 +604,16 @@ Add a callback routine to listen for a specific event\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 76 of file lsevents\&.c\&.
+Definition at line 77 of file lsevents\&.c\&.
 .PP
 .nf
                                                              {
   lsevents_listener_t *new;
+  int err;
+  char *errbuf;
+  int nerrbuf;
+
+
 
   new = calloc( 1, sizeof( lsevents_listener_t));
   if( new == NULL) {
@@ -589,8 +621,22 @@ Definition at line 76 of file lsevents\&.c\&.
     exit( -1);
   }
 
-  strncpy( new->event, event, LSEVENTS_EVENT_LENGTH);
-  new->event[LSEVENTS_EVENT_LENGTH-1] = 0;
+  err = regcomp( &new->re, event, REG_EXTENDED | REG_NOSUB);
+  if( err != 0) {
+    nerrbuf = regerror( err, &new->re, NULL, 0);
+    errbuf = calloc( nerrbuf, sizeof( char));
+    if( errbuf == NULL) {
+      lslogging_log_message( 'lsevents_add_listener: out of memory (re)');
+      exit( -1);
+    }
+    regerror( err, &new->re, errbuf, nerrbuf);
+    lslogging_log_message( 'lsevents_add_listener: %s', errbuf);
+    free( errbuf);
+    free( new);
+    return;
+  }
+
+  new->raw_regexp = strdup( event);
   new->cb   = cb;
 
   pthread_mutex_lock( &lsevents_listener_mutex);
@@ -607,7 +653,7 @@ Definition at line 76 of file lsevents\&.c\&.
 .PP
 Initialize this module\&. 
 .PP
-Definition at line 187 of file lsevents\&.c\&.
+Definition at line 206 of file lsevents\&.c\&.
 .PP
 .nf
                      {
@@ -628,7 +674,7 @@ Remove a listener previously added with lsevents_add_listener\&. \fBParameters:\
 .PP
 
 .PP
-Definition at line 102 of file lsevents\&.c\&.
+Definition at line 122 of file lsevents\&.c\&.
 .PP
 .nf
                                                                 {
@@ -642,7 +688,7 @@ Definition at line 102 of file lsevents\&.c\&.
   pthread_mutex_lock( &lsevents_listener_mutex);
   last = NULL;
   for( current = lsevents_listeners_p; current != NULL; current = current->next) {
-    if( strcmp( last->event, event) == 0 && last->cb == cb) {
+    if( strcmp( last->raw_regexp, event) == 0 && last->cb == cb) {
       if( last == NULL) {
         lsevents_listeners_p = current->next;
       } else {
@@ -655,12 +701,10 @@ Definition at line 102 of file lsevents\&.c\&.
 
   //
   // Now remove it
-  // TODO: use saner memory management where we allocate many listeners at a time
-  // as an array and then just flag the ones that are used
   //
   if( current != NULL) {
-    if( current->event != NULL)
-      free( current->event);
+    if( current->raw_regexp != NULL)
+      free( current->raw_regexp);
     free(current);
   }
 }
@@ -670,7 +714,7 @@ Definition at line 102 of file lsevents\&.c\&.
 .PP
 Start up the thread and get out of the way\&. 
 .PP
-Definition at line 195 of file lsevents\&.c\&.
+Definition at line 214 of file lsevents\&.c\&.
 .PP
 .nf
                     {
@@ -689,7 +733,7 @@ Call the callback routines for the given event\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 44 of file lsevents\&.c\&.
+Definition at line 45 of file lsevents\&.c\&.
 .PP
 .nf
                                           {
@@ -873,7 +917,7 @@ Definition at line 92 of file lskvs\&.c\&.
 .PP
 Initiallize the lspg module\&. 
 .PP
-Definition at line 1664 of file lspg\&.c\&.
+Definition at line 1666 of file lspg\&.c\&.
 .PP
 .nf
                  {
@@ -891,7 +935,7 @@ Definition at line 1664 of file lspg\&.c\&.
 .PP
 Start 'er runnin'\&. 
 .PP
-Definition at line 1676 of file lspg\&.c\&.
+Definition at line 1678 of file lspg\&.c\&.
 .PP
 .nf
                 {
@@ -922,7 +966,7 @@ Convinence function to call seq run prep\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 984 of file lspg\&.c\&.
+Definition at line 986 of file lspg\&.c\&.
 .PP
 .nf
                              {
@@ -943,7 +987,7 @@ get the motor position (with locking) \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1227 of file lspmac\&.c\&.
+Definition at line 1230 of file lspmac\&.c\&.
 .PP
 .nf
                                                {
@@ -959,7 +1003,7 @@ Definition at line 1227 of file lspmac\&.c\&.
 .PP
 Initialize this module\&. 
 .PP
-Definition at line 2557 of file lspmac\&.c\&.
+Definition at line 2578 of file lspmac\&.c\&.
 .PP
 .nf
                    {
@@ -1054,7 +1098,7 @@ Definition at line 2557 of file lspmac\&.c\&.
 .PP
 Use jog to move motor to requested position\&. 
 .PP
-Definition at line 2289 of file lspmac\&.c\&.
+Definition at line 2308 of file lspmac\&.c\&.
 .PP
 .nf
                             {
@@ -1067,7 +1111,7 @@ Definition at line 2289 of file lspmac\&.c\&.
 .PP
 move using a preset value 
 .PP
-Definition at line 2258 of file lspmac\&.c\&.
+Definition at line 2277 of file lspmac\&.c\&.
 .PP
 .nf
                                        {
@@ -1091,7 +1135,7 @@ Definition at line 2258 of file lspmac\&.c\&.
 .PP
 Use coordinate system motion program, if available, to move motor to requested position\&. 
 .PP
-Definition at line 2279 of file lspmac\&.c\&.
+Definition at line 2298 of file lspmac\&.c\&.
 .PP
 .nf
                             {
@@ -1104,7 +1148,7 @@ Definition at line 2279 of file lspmac\&.c\&.
 .PP
 Start up the lspmac thread\&. 
 .PP
-Definition at line 2771 of file lspmac\&.c\&.
+Definition at line 2792 of file lspmac\&.c\&.
 .PP
 .nf
                   {
@@ -1145,10 +1189,136 @@ Definition at line 957 of file lspmac\&.c\&.
   return lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( payload), payload, lspmac_GetShortReplyCB, 0);
 }
 .fi
-.SS "void lstimer_add_timer (char *, int, unsigned longint, unsigned longint)"
+.SS "\fBlsredis_obj_t\fP* lsredis_get_obj (char *, \&.\&.\&.)"
 
 .PP
-Definition at line 44 of file lstimer\&.c\&.
+Definition at line 297 of file lsredis\&.c\&.
+.PP
+.nf
+                                                {
+  lsredis_obj_t *rtn;
+  va_list arg_ptr;
+  char k[512];
+  char *kp;
+  int nkp;
+
+  va_start( arg_ptr, fmt);
+  vsnprintf( k, sizeof(k)-1, fmt, arg_ptr);
+  k[sizeof(k)-1] = 0;
+  va_end( arg_ptr);
+
+  nkp = strlen(k) + strlen( lsredis_head) + 16;         // 16 is overkill, I know\&.  get over it\&.
+  kp = calloc( nkp, sizeof( char));
+  if( kp == NULL) {
+    lslogging_log_message( 'lsredis_get_obj: Out of memory');
+    exit( -1);
+  }
+  
+  snprintf( kp, nkp-1, '%s\&.%s', lsredis_head, k);
+  kp[nkp-1] = 0;
+  rtn = _lsredis_get_obj( kp);
+  free( kp);
+  return rtn;
+}
+.fi
+.SS "void lsredis_init (char *pub, char *re, char *head)"
+
+.PP
+Initialize this module, that is, set up the connections\&. \fBParameters:\fP
+.RS 4
+\fIpub\fP Publish under this (unique) name 
+.br
+\fIre\fP Regular expression to select keys we want to mirror 
+.br
+\fIhead\fP Prepend this (+ a dot) to the beginning of requested objects 
+.RE
+.PP
+
+.PP
+Definition at line 601 of file lsredis\&.c\&.
+.PP
+.nf
+                                                    {
+
+  lsredis_head = strdup( head);
+  lsredis_publisher = strdup( pub);
+
+  pthread_mutex_init( &lsredis_objs_mutex, NULL);
+  pthread_mutex_init( &lsredis_ro_mutex, NULL);
+  pthread_mutex_init( &lsredis_wr_mutex, NULL);
+
+  subac = redisAsyncConnect('127\&.0\&.0\&.1', 6379);
+  if( subac->err) {
+    lslogging_log_message( 'Error: %s', subac->errstr);
+  }
+
+  subfd\&.fd           = subac->c\&.fd;
+  subfd\&.events       = 0;
+  subac->ev\&.data     = &subfd;
+  subac->ev\&.addRead  = lsredis_addRead;
+  subac->ev\&.delRead  = lsredis_delRead;
+  subac->ev\&.addWrite = lsredis_addWrite;
+  subac->ev\&.delWrite = lsredis_delWrite;
+  subac->ev\&.cleanup  = lsredis_cleanup;
+
+  roac = redisAsyncConnect('127\&.0\&.0\&.1', 6379);
+  if( roac->err) {
+    lslogging_log_message( 'Error: %s', roac->errstr);
+  }
+
+  rofd\&.fd           = roac->c\&.fd;
+  rofd\&.events       = 0;
+  roac->ev\&.data     = &rofd;
+  roac->ev\&.addRead  = lsredis_addRead;
+  roac->ev\&.delRead  = lsredis_delRead;
+  roac->ev\&.addWrite = lsredis_addWrite;
+  roac->ev\&.delWrite = lsredis_delWrite;
+  roac->ev\&.cleanup  = lsredis_cleanup;
+
+  wrac = redisAsyncConnect('10\&.1\&.0\&.3', 6379);
+  if( wrac->err) {
+    lslogging_log_message( 'Error: %s', wrac->errstr);
+  }
+
+  wrfd\&.fd           = wrac->c\&.fd;
+  wrfd\&.events       = 0;
+  wrac->ev\&.data     = &wrfd;
+  wrac->ev\&.addRead  = lsredis_addRead;
+  wrac->ev\&.delRead  = lsredis_delRead;
+  wrac->ev\&.addWrite = lsredis_addWrite;
+  wrac->ev\&.delWrite = lsredis_delWrite;
+  wrac->ev\&.cleanup  = lsredis_cleanup;
+
+  lsredis_select( re);
+}
+.fi
+.SS "void lsredis_run ()"
+
+.PP
+Definition at line 731 of file lsredis\&.c\&.
+.PP
+.nf
+                   {
+  pthread_create( &lsredis_thread, NULL, lsredis_worker, NULL);
+}
+.fi
+.SS "void lstimer_add_timer (char *event, intshots, unsigned long intsecs, unsigned long intnsecs)"
+
+.PP
+Create a timer\&. \fBParameters:\fP
+.RS 4
+\fIevent\fP Name of the event to send when the timer goes off 
+.br
+\fIshots\fP Number of times to run\&. 0 means never, -1 means forever 
+.br
+\fIsecs\fP Number of seconds to wait 
+.br
+\fInsecs\fP Number of nano-seconds to run in addition to secs 
+.RE
+.PP
+
+.PP
+Definition at line 50 of file lstimer\&.c\&.
 .PP
 .nf
                                                                                                  {
@@ -1205,7 +1375,7 @@ Definition at line 44 of file lstimer\&.c\&.
 .PP
 Initialize the timer list and pthread stuff\&. 
 .PP
-Definition at line 256 of file lstimer\&.c\&.
+Definition at line 262 of file lstimer\&.c\&.
 .PP
 .nf
                     {
@@ -1225,7 +1395,7 @@ Definition at line 256 of file lstimer\&.c\&.
 .PP
 Start up our thread\&. 
 .PP
-Definition at line 270 of file lstimer\&.c\&.
+Definition at line 276 of file lstimer\&.c\&.
 .PP
 .nf
                    {
@@ -1260,7 +1430,7 @@ Definition at line 114 of file lsupdate\&.c\&.
 .PP
 Initialize the md2cmds module\&. 
 .PP
-Definition at line 771 of file md2cmds\&.c\&.
+Definition at line 778 of file md2cmds\&.c\&.
 .PP
 .nf
                     {
@@ -1280,7 +1450,7 @@ Definition at line 771 of file md2cmds\&.c\&.
 .PP
 Start up the thread\&. 
 .PP
-Definition at line 785 of file md2cmds\&.c\&.
+Definition at line 792 of file md2cmds\&.c\&.
 .PP
 .nf
                    {

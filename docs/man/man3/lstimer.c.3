@@ -1,4 +1,4 @@
-.TH "lstimer.c" 3 "Thu Nov 29 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lstimer.c" 3 "Fri Dec 14 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -24,7 +24,7 @@ Support for delayed and periodic events\&.
 
 .in +1c
 .ti -1c
-.RI "#define \fBLSTIMER_LIST_LENGTH\fP   256"
+.RI "#define \fBLSTIMER_LIST_LENGTH\fP   1024"
 .br
 .RI "\fIWe'll allow this many timers\&. This should be way more than enough\&. \fP"
 .ti -1c
@@ -46,6 +46,7 @@ Support for delayed and periodic events\&.
 .ti -1c
 .RI "void \fBlstimer_add_timer\fP (char *event, int shots, unsigned long int secs, unsigned long int nsecs)"
 .br
+.RI "\fICreate a timer\&. \fP"
 .ti -1c
 .RI "static void \fBservice_timers\fP ()"
 .br
@@ -123,7 +124,7 @@ All Rights Reserved
 Definition in file \fBlstimer\&.c\fP\&.
 .SH "Macro Definition Documentation"
 .PP 
-.SS "#define LSTIMER_LIST_LENGTH   256"
+.SS "#define LSTIMER_LIST_LENGTH   1024"
 
 .PP
 We'll allow this many timers\&. This should be way more than enough\&. 
@@ -148,7 +149,7 @@ Everything we need to know about a timer\&.
 .PP
 Service the signal\&. 
 .PP
-Definition at line 168 of file lstimer\&.c\&.
+Definition at line 174 of file lstimer\&.c\&.
 .PP
 .nf
                                                           {
@@ -160,7 +161,20 @@ Definition at line 168 of file lstimer\&.c\&.
 .SS "void lstimer_add_timer (char *event, intshots, unsigned long intsecs, unsigned long intnsecs)"
 
 .PP
-Definition at line 44 of file lstimer\&.c\&.
+Create a timer\&. \fBParameters:\fP
+.RS 4
+\fIevent\fP Name of the event to send when the timer goes off 
+.br
+\fIshots\fP Number of times to run\&. 0 means never, -1 means forever 
+.br
+\fIsecs\fP Number of seconds to wait 
+.br
+\fInsecs\fP Number of nano-seconds to run in addition to secs 
+.RE
+.PP
+
+.PP
+Definition at line 50 of file lstimer\&.c\&.
 .PP
 .nf
                                                                                                  {
@@ -217,7 +231,7 @@ Definition at line 44 of file lstimer\&.c\&.
 .PP
 Initialize the timer list and pthread stuff\&. 
 .PP
-Definition at line 256 of file lstimer\&.c\&.
+Definition at line 262 of file lstimer\&.c\&.
 .PP
 .nf
                     {
@@ -237,7 +251,7 @@ Definition at line 256 of file lstimer\&.c\&.
 .PP
 Start up our thread\&. 
 .PP
-Definition at line 270 of file lstimer\&.c\&.
+Definition at line 276 of file lstimer\&.c\&.
 .PP
 .nf
                    {
@@ -254,7 +268,7 @@ Our worker\&. The main loop runs when a new timer is added\&. The service routin
 .PP
 
 .PP
-Definition at line 178 of file lstimer\&.c\&.
+Definition at line 184 of file lstimer\&.c\&.
 .PP
 .nf
                        {
@@ -335,7 +349,7 @@ Definition at line 178 of file lstimer\&.c\&.
 .PP
 Send events that are past due, due, or just about to be due\&. 
 .PP
-Definition at line 96 of file lstimer\&.c\&.
+Definition at line 102 of file lstimer\&.c\&.
 .PP
 .nf
                              {

@@ -102,7 +102,7 @@ Definition at line 15 of file lsupdate.\-c.
 
 \begin{DoxyCode}
                          \{
-  \textcolor{keyword}{static} \textcolor{keywordtype}{char} s[4096];
+  \textcolor{keyword}{static} \textcolor{keywordtype}{char} s[1024];
   \textcolor{keyword}{static} \textcolor{keywordtype}{char} s1[512];
   \textcolor{keyword}{static} \textcolor{keywordtype}{char} s2[512];          
   \hyperlink{structlspmac__motor__struct}{lspmac\_motor\_t} *mp;
@@ -157,7 +157,7 @@ Definition at line 15 of file lsupdate.\-c.
       \textcolor{keywordflow}{if}( strlen(s2) + strlen(s1) + strlen(s) + 32 >= \textcolor{keyword}{sizeof}( s)-1) \{
         \textcolor{comment}{// send off update now and reset s}
         strcat( s, \textcolor{stringliteral}{"\}'::text[])"});
-        \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, s);
+        \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, s);
         
         s[0] = 0;
         strcpy( s, \textcolor{stringliteral}{"select px.kvupdate('\{"});
@@ -178,8 +178,8 @@ Definition at line 15 of file lsupdate.\-c.
   \}
 
   \textcolor{keywordflow}{if}( gotone) \{
-    strcat( s, \textcolor{stringliteral}{"\}')"});
-    \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, s);
+    strcat( s, \textcolor{stringliteral}{"\}'::text[])"});
+    \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, s);
   \}
 \}
 \end{DoxyCode}

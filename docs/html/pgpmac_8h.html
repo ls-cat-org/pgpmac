@@ -131,11 +131,16 @@ $(document).ready(function(){initNavTree('pgpmac_8h.html','');});
 <code>#include &lt;time.h&gt;</code><br/>
 <code>#include &lt;getopt.h&gt;</code><br/>
 <code>#include &lt;regex.h&gt;</code><br/>
+<code>#include &lt;hiredis/hiredis.h&gt;</code><br/>
+<code>#include &lt;hiredis/async.h&gt;</code><br/>
 </div>
 <p><a href="pgpmac_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Data Structures</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlsredis__obj__struct.html">lsredis_obj_struct</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Redis Object Basic object whose value is sychronized with our redis db.  <a href="structlsredis__obj__struct.html#details">More...</a><br/></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structtagEthernetCmd.html">tagEthernetCmd</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">PMAC ethernet packet definition.  <a href="structtagEthernetCmd.html#details">More...</a><br/></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -180,6 +185,9 @@ Macros</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
 Typedefs</h2></td></tr>
+<tr class="memitem:ad449de06d02791adf2498d2a1e1f909c"><td class="memItemLeft" align="right" valign="top">typedef struct <a class="el" href="structlsredis__obj__struct.html">lsredis_obj_struct</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pgpmac_8h.html#ad449de06d02791adf2498d2a1e1f909c">lsredis_obj_t</a></td></tr>
+<tr class="memdesc:ad449de06d02791adf2498d2a1e1f909c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Redis Object Basic object whose value is sychronized with our redis db.  <a href="#ad449de06d02791adf2498d2a1e1f909c"></a><br/></td></tr>
+<tr class="separator:ad449de06d02791adf2498d2a1e1f909c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2d163436571135a457f4a4e2fbd09633"><td class="memItemLeft" align="right" valign="top">typedef struct <a class="el" href="structtagEthernetCmd.html">tagEthernetCmd</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pgpmac_8h.html#a2d163436571135a457f4a4e2fbd09633">pmac_cmd_t</a></td></tr>
 <tr class="memdesc:a2d163436571135a457f4a4e2fbd09633"><td class="mdescLeft">&#160;</td><td class="mdescRight">PMAC ethernet packet definition.  <a href="#a2d163436571135a457f4a4e2fbd09633"></a><br/></td></tr>
 <tr class="separator:a2d163436571135a457f4a4e2fbd09633"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -283,6 +291,7 @@ Functions</h2></td></tr>
 <tr class="memdesc:a0b918acc1a4bf737cb62b5a70f8b553a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start up our thread.  <a href="#a0b918acc1a4bf737cb62b5a70f8b553a"></a><br/></td></tr>
 <tr class="separator:a0b918acc1a4bf737cb62b5a70f8b553a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af712dd2e9419026eff2762ba062eeaf1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pgpmac_8h.html#af712dd2e9419026eff2762ba062eeaf1">lstimer_add_timer</a> (char *, int, unsigned long int, unsigned long int)</td></tr>
+<tr class="memdesc:af712dd2e9419026eff2762ba062eeaf1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a timer.  <a href="#af712dd2e9419026eff2762ba062eeaf1"></a><br/></td></tr>
 <tr class="separator:af712dd2e9419026eff2762ba062eeaf1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac1a924903bc31ef067c08e5152e1b2eb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pgpmac_8h.html#ac1a924903bc31ef067c08e5152e1b2eb">lskvs_regcomp</a> (regex_t *preg, int cflags, char *fmt,...)</td></tr>
 <tr class="memdesc:ac1a924903bc31ef067c08e5152e1b2eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Utility wrapper for regcomp providing printf style formating.  <a href="#ac1a924903bc31ef067c08e5152e1b2eb"></a><br/></td></tr>
@@ -290,6 +299,13 @@ Functions</h2></td></tr>
 <tr class="memitem:ad676b373a9a8a2938578c0decf9bd04b"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pgpmac_8h.html#ad676b373a9a8a2938578c0decf9bd04b">lskvs_find_preset_position</a> (<a class="el" href="pgpmac_8h.html#aa5067fcbaabc5bbfdc52492495518c96">lspmac_motor_t</a> *mp, char *name, int *err)</td></tr>
 <tr class="memdesc:ad676b373a9a8a2938578c0decf9bd04b"><td class="mdescLeft">&#160;</td><td class="mdescRight">find a postion for a given preset name  <a href="#ad676b373a9a8a2938578c0decf9bd04b"></a><br/></td></tr>
 <tr class="separator:ad676b373a9a8a2938578c0decf9bd04b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aef0f12fda57e476a50b14acdc9f30b58"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pgpmac_8h.html#aef0f12fda57e476a50b14acdc9f30b58">lsredis_init</a> (char *pub, char *re, char *head)</td></tr>
+<tr class="memdesc:aef0f12fda57e476a50b14acdc9f30b58"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize this module, that is, set up the connections.  <a href="#aef0f12fda57e476a50b14acdc9f30b58"></a><br/></td></tr>
+<tr class="separator:aef0f12fda57e476a50b14acdc9f30b58"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad438e4368d86bbe15a93dcf86deaded5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pgpmac_8h.html#ad438e4368d86bbe15a93dcf86deaded5">lsredis_run</a> ()</td></tr>
+<tr class="separator:ad438e4368d86bbe15a93dcf86deaded5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6d9f550b9ba36acd237925164abe3ffc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="pgpmac_8h.html#ad449de06d02791adf2498d2a1e1f909c">lsredis_obj_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pgpmac_8h.html#a6d9f550b9ba36acd237925164abe3ffc">lsredis_get_obj</a> (char *,...)</td></tr>
+<tr class="separator:a6d9f550b9ba36acd237925164abe3ffc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
 Variables</h2></td></tr>
@@ -471,7 +487,7 @@ Variables</h2></td></tr>
 
 <p>Number of status box rows. </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00030">30</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00052">52</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -487,7 +503,7 @@ Variables</h2></td></tr>
 
 <p>Number of status box columns. </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00034">34</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00056">56</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -503,7 +519,7 @@ Variables</h2></td></tr>
 
 <p>Fixed length postgresql query strings. Queries should all be function calls so this is not as weird as one might think. </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00037">37</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00059">59</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -519,7 +535,7 @@ Variables</h2></td></tr>
 
 <p>Fixed length for event names: simplifies string handling. </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00040">40</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00062">62</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -533,7 +549,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00385">385</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8h_source.html#l00407">407</a> of file <a class="el" href="pgpmac_8h_source.html">pgpmac.h</a>.</p>
 
 </div>
 </div>
@@ -626,6 +642,20 @@ Variables</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ad449de06d02791adf2498d2a1e1f909c"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef struct <a class="el" href="structlsredis__obj__struct.html">lsredis_obj_struct</a>  <a class="el" href="pgpmac_8h.html#ad449de06d02791adf2498d2a1e1f909c">lsredis_obj_t</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Redis Object Basic object whose value is sychronized with our redis db. </p>
+
+</div>
+</div>
 <a class="anchor" id="a99c275e32ad897dca34d196b91f038cb"></a>
 <div class="memitem">
 <div class="memproto">
@@ -690,9 +720,14 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00076">76</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
+<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00077">77</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
 <div class="fragment"><div class="line">                                                             {</div>
 <div class="line">  <a class="code" href="structlsevents__listener__struct.html" title="Linked list of event listeners.">lsevents_listener_t</a> *<span class="keyword">new</span>;</div>
+<div class="line">  <span class="keywordtype">int</span> err;</div>
+<div class="line">  <span class="keywordtype">char</span> *errbuf;</div>
+<div class="line">  <span class="keywordtype">int</span> nerrbuf;</div>
+<div class="line"></div>
+<div class="line"></div>
 <div class="line"></div>
 <div class="line">  <span class="keyword">new</span> = calloc( 1, <span class="keyword">sizeof</span>( <a class="code" href="structlsevents__listener__struct.html" title="Linked list of event listeners.">lsevents_listener_t</a>));</div>
 <div class="line">  <span class="keywordflow">if</span>( <span class="keyword">new</span> == NULL) {</div>
@@ -700,8 +735,22 @@ Variables</h2></td></tr>
 <div class="line">    exit( -1);</div>
 <div class="line">  }</div>
 <div class="line"></div>
-<div class="line">  strncpy( new-&gt;event, event, <a class="code" href="pgpmac_8h.html#ab61d790b5572f116e091babfda53627b" title="Fixed length for event names: simplifies string handling.">LSEVENTS_EVENT_LENGTH</a>);</div>
-<div class="line">  <span class="keyword">new</span>-&gt;event[<a class="code" href="pgpmac_8h.html#ab61d790b5572f116e091babfda53627b" title="Fixed length for event names: simplifies string handling.">LSEVENTS_EVENT_LENGTH</a>-1] = 0;</div>
+<div class="line">  err = regcomp( &amp;new-&gt;re, event, REG_EXTENDED | REG_NOSUB);</div>
+<div class="line">  <span class="keywordflow">if</span>( err != 0) {</div>
+<div class="line">    nerrbuf = regerror( err, &amp;new-&gt;re, NULL, 0);</div>
+<div class="line">    errbuf = calloc( nerrbuf, <span class="keyword">sizeof</span>( <span class="keywordtype">char</span>));</div>
+<div class="line">    <span class="keywordflow">if</span>( errbuf == NULL) {</div>
+<div class="line">      <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lsevents_add_listener: out of memory (re)&quot;</span>);</div>
+<div class="line">      exit( -1);</div>
+<div class="line">    }</div>
+<div class="line">    regerror( err, &amp;new-&gt;re, errbuf, nerrbuf);</div>
+<div class="line">    <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lsevents_add_listener: %s&quot;</span>, errbuf);</div>
+<div class="line">    free( errbuf);</div>
+<div class="line">    free( <span class="keyword">new</span>);</div>
+<div class="line">    <span class="keywordflow">return</span>;</div>
+<div class="line">  }</div>
+<div class="line"></div>
+<div class="line">  <span class="keyword">new</span>-&gt;raw_regexp = strdup( event);</div>
 <div class="line">  <span class="keyword">new</span>-&gt;cb   = cb;</div>
 <div class="line"></div>
 <div class="line">  pthread_mutex_lock( &amp;<a class="code" href="lsevents_8c.html#a70bba59930a1c7d7d181aa03cdfb6c00" title="mutex to protect the listener linked list">lsevents_listener_mutex</a>);</div>
@@ -730,7 +779,7 @@ Variables</h2></td></tr>
 
 <p>Initialize this module. </p>
 
-<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00187">187</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
+<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00206">206</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
 <div class="fragment"><div class="line">                     {</div>
 <div class="line">  pthread_mutex_init( &amp;<a class="code" href="lsevents_8c.html#ab46f4ebda5e926a213faedac1a545ec1" title="mutex to protect the event queue">lsevents_queue_mutex</a>, NULL);</div>
 <div class="line">  pthread_cond_init(  &amp;<a class="code" href="lsevents_8c.html#a8079d9fb8c35db3ca5f83be5aeb2a747" title="condition to pause the queue if needed">lsevents_queue_cond</a>, NULL);</div>
@@ -772,7 +821,7 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00102">102</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
+<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00122">122</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
 <div class="fragment"><div class="line">                                                                {</div>
 <div class="line">  </div>
 <div class="line">  <a class="code" href="structlsevents__listener__struct.html" title="Linked list of event listeners.">lsevents_listener_t</a> *last, *current;</div>
@@ -784,7 +833,7 @@ Variables</h2></td></tr>
 <div class="line">  pthread_mutex_lock( &amp;<a class="code" href="lsevents_8c.html#a70bba59930a1c7d7d181aa03cdfb6c00" title="mutex to protect the listener linked list">lsevents_listener_mutex</a>);</div>
 <div class="line">  last = NULL;</div>
 <div class="line">  <span class="keywordflow">for</span>( current = <a class="code" href="lsevents_8c.html#a300dc3edfa8546d75e9f8bab8fa06c5c" title="Pointer to the first item in the link list of listeners.">lsevents_listeners_p</a>; current != NULL; current = current-&gt;<a class="code" href="structlsevents__listener__struct.html#a8aed9196b0deab84e018b96c0cc59305" title="Next listener.">next</a>) {</div>
-<div class="line">    <span class="keywordflow">if</span>( strcmp( last-&gt;<a class="code" href="structlsevents__listener__struct.html#a270117dccadeda0164592c753dae15a1" title="name of the event we are listening for">event</a>, event) == 0 &amp;&amp; last-&gt;<a class="code" href="structlsevents__listener__struct.html#a005906c1c9f0647e6ed1fb4592d8c5d0" title="call back function">cb</a> == cb) {</div>
+<div class="line">    <span class="keywordflow">if</span>( strcmp( last-&gt;<a class="code" href="structlsevents__listener__struct.html#afffe7a6889fda47a3a7a91beefed9168" title="the original string sent to us">raw_regexp</a>, event) == 0 &amp;&amp; last-&gt;<a class="code" href="structlsevents__listener__struct.html#a005906c1c9f0647e6ed1fb4592d8c5d0" title="call back function">cb</a> == cb) {</div>
 <div class="line">      <span class="keywordflow">if</span>( last == NULL) {</div>
 <div class="line">        <a class="code" href="lsevents_8c.html#a300dc3edfa8546d75e9f8bab8fa06c5c" title="Pointer to the first item in the link list of listeners.">lsevents_listeners_p</a> = current-&gt;<a class="code" href="structlsevents__listener__struct.html#a8aed9196b0deab84e018b96c0cc59305" title="Next listener.">next</a>;</div>
 <div class="line">      } <span class="keywordflow">else</span> {</div>
@@ -797,12 +846,10 @@ Variables</h2></td></tr>
 <div class="line"></div>
 <div class="line">  <span class="comment">//</span></div>
 <div class="line">  <span class="comment">// Now remove it</span></div>
-<div class="line">  <span class="comment">// TODO: use saner memory management where we allocate many listeners at a time</span></div>
-<div class="line">  <span class="comment">// as an array and then just flag the ones that are used</span></div>
 <div class="line">  <span class="comment">//</span></div>
 <div class="line">  <span class="keywordflow">if</span>( current != NULL) {</div>
-<div class="line">    <span class="keywordflow">if</span>( current-&gt;<a class="code" href="structlsevents__listener__struct.html#a270117dccadeda0164592c753dae15a1" title="name of the event we are listening for">event</a> != NULL)</div>
-<div class="line">      free( current-&gt;<a class="code" href="structlsevents__listener__struct.html#a270117dccadeda0164592c753dae15a1" title="name of the event we are listening for">event</a>);</div>
+<div class="line">    <span class="keywordflow">if</span>( current-&gt;<a class="code" href="structlsevents__listener__struct.html#afffe7a6889fda47a3a7a91beefed9168" title="the original string sent to us">raw_regexp</a> != NULL)</div>
+<div class="line">      free( current-&gt;<a class="code" href="structlsevents__listener__struct.html#afffe7a6889fda47a3a7a91beefed9168" title="the original string sent to us">raw_regexp</a>);</div>
 <div class="line">    free(current);</div>
 <div class="line">  }</div>
 <div class="line">}</div>
@@ -824,7 +871,7 @@ Variables</h2></td></tr>
 
 <p>Start up the thread and get out of the way. </p>
 
-<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00195">195</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
+<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00214">214</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
 <div class="fragment"><div class="line">                    {</div>
 <div class="line">  pthread_create( &amp;<a class="code" href="lsevents_8c.html#a314640d7c3cb4fa90823ab2418fbac9b" title="thread to run the event queue">lsevents_thread</a>, NULL, <a class="code" href="lsevents_8c.html#a48e8f9dee00710bbe293b4bbded37a39" title="Our worker.">lsevents_worker</a>, NULL);</div>
 <div class="line">}</div>
@@ -864,7 +911,7 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00044">44</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
+<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00045">45</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
 <div class="fragment"><div class="line">                                          {</div>
 <div class="line">  <span class="keywordtype">char</span> <span class="keyword">event</span>[<a class="code" href="pgpmac_8h.html#ab61d790b5572f116e091babfda53627b" title="Fixed length for event names: simplifies string handling.">LSEVENTS_EVENT_LENGTH</a>];</div>
 <div class="line">  <span class="keywordtype">char</span> *sp;</div>
@@ -1116,7 +1163,7 @@ Variables</h2></td></tr>
 
 <p>Initiallize the lspg module. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l01664">1664</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01666">1666</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                 {</div>
 <div class="line">  pthread_mutex_init( &amp;<a class="code" href="lspg_8c.html#aed46a94106c583796e3a8ca0e89aa8e4" title="keep the queue from getting tangled">lspg_queue_mutex</a>, NULL);</div>
 <div class="line">  pthread_cond_init( &amp;<a class="code" href="lspg_8c.html#a61a308b6a37afd645beb422653b95baa" title="keeps the queue from overflowing">lspg_queue_cond</a>, NULL);</div>
@@ -1144,7 +1191,7 @@ Variables</h2></td></tr>
 
 <p>Start 'er runnin'. </p>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l01676">1676</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l01678">1678</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                {</div>
 <div class="line">  pthread_create( &amp;<a class="code" href="lspg_8c.html#a04eb0cda0d5e5afeae7c393b51689765" title="our worker thread">lspg_thread</a>, NULL, <a class="code" href="lspg_8c.html#aaf4fadd2943fa3a2ecb5d840e84d68fa" title="The main loop for the lspg thread.">lspg_worker</a>, NULL);</div>
 <div class="line">}</div>
@@ -1226,7 +1273,7 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspg_8c_source.html#l00984">984</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
+<p>Definition at line <a class="el" href="lspg_8c_source.html#l00986">986</a> of file <a class="el" href="lspg_8c_source.html">lspg.c</a>.</p>
 <div class="fragment"><div class="line">                             {</div>
 <div class="line">  <a class="code" href="lspg_8c.html#af7d6efd861b152a371442791deb42bd3" title="queue up the seq_run_prep query">lspg_seq_run_prep_call</a>( skey, <a class="code" href="lspmac_8c.html#a0be79ccb7ebf3a665248fd856112b9fd" title="Kappa.">kappa</a>, <a class="code" href="lspmac_8c.html#ac8070dc568ad974a3db42b51eca828cc" title="Phi (not data collection axis)">phi</a>, cx, cy, ax, ay, az);</div>
 <div class="line">  <a class="code" href="lspg_8c.html#ac0b01f501322432a8fa37f31898c3499" title="Wait for seq run prep query to return.">lspg_seq_run_prep_wait</a>();</div>
@@ -1272,7 +1319,7 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01227">1227</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01230">1230</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                               {</div>
 <div class="line">  <span class="keywordtype">double</span> rtn;</div>
 <div class="line">  pthread_mutex_lock( &amp;(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));</div>
@@ -1309,7 +1356,7 @@ Variables</h2></td></tr>
 
 <p>Initialize this module. </p>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02557">2557</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02578">2578</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                   {</div>
 <div class="line">  <a class="code" href="structmd2StatusStruct.html" title="The block of memory retrieved in a status request.">md2_status_t</a> *p;</div>
 <div class="line"></div>
@@ -1425,7 +1472,7 @@ Variables</h2></td></tr>
 
 <p>Use jog to move motor to requested position. </p>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02289">2289</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02308">2308</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                            {</div>
 <div class="line">  </div>
 <div class="line">  <a class="code" href="lspmac_8c.html#a4ccd25a1a3a83cd7c9187975e52a9484" title="Move method for normal stepper and servo motor objects.">lspmac_move_or_jog_abs_queue</a>( mp, requested_position, 1);</div>
@@ -1465,7 +1512,7 @@ Variables</h2></td></tr>
 
 <p>move using a preset value </p>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02258">2258</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02277">2277</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                       {</div>
 <div class="line">  <span class="keywordtype">double</span> pos;</div>
 <div class="line">  <span class="keywordtype">int</span> err;</div>
@@ -1540,7 +1587,7 @@ Variables</h2></td></tr>
 
 <p>Use coordinate system motion program, if available, to move motor to requested position. </p>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02279">2279</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02298">2298</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                            {</div>
 <div class="line">  </div>
 <div class="line">  <a class="code" href="lspmac_8c.html#a4ccd25a1a3a83cd7c9187975e52a9484" title="Move method for normal stepper and servo motor objects.">lspmac_move_or_jog_abs_queue</a>( mp, requested_position, 0);</div>
@@ -1563,7 +1610,7 @@ Variables</h2></td></tr>
 
 <p>Start up the lspmac thread. </p>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02771">2771</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02792">2792</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                  {</div>
 <div class="line">  pthread_create( &amp;<a class="code" href="lspmac_8c.html#a6b7011dd7d2c2d3afadff8d3e50e7677" title="our thread to manage access and communication to the pmac">pmac_thread</a>, NULL, <a class="code" href="lspmac_8c.html#abdec5883055967b1eda043670870f55f" title="Our lspmac worker thread.">lspmac_worker</a>, NULL);</div>
 <div class="line">  <a class="code" href="lsevents_8c.html#ab0617d3f0594b51d10e34bf397096654" title="Add a callback routine to listen for a specific event.">lsevents_add_listener</a>( <span class="stringliteral">&quot;NewKV&quot;</span>, <a class="code" href="lspmac_8c.html#af4547210eb34ffbdcee34ac0f7f9c05f">lspmac_newKV_cb</a>);</div>
@@ -1627,12 +1674,12 @@ Variables</h2></td></tr>
 </div><!-- fragment -->
 </div>
 </div>
-<a class="anchor" id="af712dd2e9419026eff2762ba062eeaf1"></a>
+<a class="anchor" id="a6d9f550b9ba36acd237925164abe3ffc"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void lstimer_add_timer </td>
+          <td class="memname"><a class="el" href="pgpmac_8h.html#ad449de06d02791adf2498d2a1e1f909c">lsredis_obj_t</a>* lsredis_get_obj </td>
           <td>(</td>
           <td class="paramtype">char *&#160;</td>
           <td class="paramname">, </td>
@@ -1640,20 +1687,8 @@ Variables</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname">, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">unsigned long&#160;</td>
-          <td class="paramname"><em>int</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">unsigned long&#160;</td>
-          <td class="paramname"><em>int</em>&#160;</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>...</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1663,15 +1698,208 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="lstimer_8c_source.html#l00044">44</a> of file <a class="el" href="lstimer_8c_source.html">lstimer.c</a>.</p>
+<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00297">297</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
+<div class="fragment"><div class="line">                                                {</div>
+<div class="line">  <a class="code" href="structlsredis__obj__struct.html" title="Redis Object Basic object whose value is sychronized with our redis db.">lsredis_obj_t</a> *rtn;</div>
+<div class="line">  va_list arg_ptr;</div>
+<div class="line">  <span class="keywordtype">char</span> k[512];</div>
+<div class="line">  <span class="keywordtype">char</span> *kp;</div>
+<div class="line">  <span class="keywordtype">int</span> nkp;</div>
+<div class="line"></div>
+<div class="line">  va_start( arg_ptr, fmt);</div>
+<div class="line">  vsnprintf( k, <span class="keyword">sizeof</span>(k)-1, fmt, arg_ptr);</div>
+<div class="line">  k[<span class="keyword">sizeof</span>(k)-1] = 0;</div>
+<div class="line">  va_end( arg_ptr);</div>
+<div class="line"></div>
+<div class="line">  nkp = strlen(k) + strlen( <a class="code" href="lsredis_8c.html#acdca9095c7a3288d7febe9f4c440a6e9">lsredis_head</a>) + 16;         <span class="comment">// 16 is overkill, I know.  get over it.</span></div>
+<div class="line">  kp = calloc( nkp, <span class="keyword">sizeof</span>( <span class="keywordtype">char</span>));</div>
+<div class="line">  <span class="keywordflow">if</span>( kp == NULL) {</div>
+<div class="line">    <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lsredis_get_obj: Out of memory&quot;</span>);</div>
+<div class="line">    exit( -1);</div>
+<div class="line">  }</div>
+<div class="line">  </div>
+<div class="line">  snprintf( kp, nkp-1, <span class="stringliteral">&quot;%s.%s&quot;</span>, <a class="code" href="lsredis_8c.html#acdca9095c7a3288d7febe9f4c440a6e9">lsredis_head</a>, k);</div>
+<div class="line">  kp[nkp-1] = 0;</div>
+<div class="line">  rtn = <a class="code" href="lsredis_8c.html#ac3fb8589e280bfa18ecbca6619fea637" title="Maybe add a new object Used internally for this module.">_lsredis_get_obj</a>( kp);</div>
+<div class="line">  free( kp);</div>
+<div class="line">  <span class="keywordflow">return</span> rtn;</div>
+<div class="line">}</div>
+</div><!-- fragment -->
+</div>
+</div>
+<a class="anchor" id="aef0f12fda57e476a50b14acdc9f30b58"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void lsredis_init </td>
+          <td>(</td>
+          <td class="paramtype">char *&#160;</td>
+          <td class="paramname"><em>pub</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">char *&#160;</td>
+          <td class="paramname"><em>re</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">char *&#160;</td>
+          <td class="paramname"><em>head</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initialize this module, that is, set up the connections. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">pub</td><td>Publish under this (unique) name </td></tr>
+    <tr><td class="paramname">re</td><td>Regular expression to select keys we want to mirror </td></tr>
+    <tr><td class="paramname">head</td><td>Prepend this (+ a dot) to the beginning of requested objects </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00601">601</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
+<div class="fragment"><div class="line">                                                    {</div>
+<div class="line"></div>
+<div class="line">  <a class="code" href="lsredis_8c.html#acdca9095c7a3288d7febe9f4c440a6e9">lsredis_head</a> = strdup( head);</div>
+<div class="line">  <a class="code" href="lsredis_8c.html#a0c81dce2e75584eeb14ab7d9dd86c72e">lsredis_publisher</a> = strdup( pub);</div>
+<div class="line"></div>
+<div class="line">  pthread_mutex_init( &amp;<a class="code" href="lsredis_8c.html#ab3ace99b8775e2366da0cfe053b68607">lsredis_objs_mutex</a>, NULL);</div>
+<div class="line">  pthread_mutex_init( &amp;<a class="code" href="lsredis_8c.html#a4a3806596ef0d2baac37257033008ff2" title="keep from having more than one thread send a rediscommand to the read/only server">lsredis_ro_mutex</a>, NULL);</div>
+<div class="line">  pthread_mutex_init( &amp;<a class="code" href="lsredis_8c.html#ad650f89eb0d4fe24a32ea352ac404b27" title="keep from having more than one thread send a rediscommand to the write/read server">lsredis_wr_mutex</a>, NULL);</div>
+<div class="line"></div>
+<div class="line">  <a class="code" href="lsredis_8c.html#a4d65536cb1094fb5deda0a852b181232">subac</a> = redisAsyncConnect(<span class="stringliteral">&quot;127.0.0.1&quot;</span>, 6379);</div>
+<div class="line">  <span class="keywordflow">if</span>( <a class="code" href="lsredis_8c.html#a4d65536cb1094fb5deda0a852b181232">subac</a>-&gt;err) {</div>
+<div class="line">    <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;Error: %s&quot;</span>, <a class="code" href="lsredis_8c.html#a4d65536cb1094fb5deda0a852b181232">subac</a>-&gt;errstr);</div>
+<div class="line">  }</div>
+<div class="line"></div>
+<div class="line">  <a class="code" href="lsredis_8c.html#a0cd3bdc79d035eb1595371c845d14367">subfd</a>.fd           = <a class="code" href="lsredis_8c.html#a4d65536cb1094fb5deda0a852b181232">subac</a>-&gt;c.fd;</div>
+<div class="line">  <a class="code" href="lsredis_8c.html#a0cd3bdc79d035eb1595371c845d14367">subfd</a>.events       = 0;</div>
+<div class="line">  <a class="code" href="lsredis_8c.html#a4d65536cb1094fb5deda0a852b181232">subac</a>-&gt;ev.data     = &amp;<a class="code" href="lsredis_8c.html#a0cd3bdc79d035eb1595371c845d14367">subfd</a>;</div>
+<div class="line">  <a class="code" href="lsredis_8c.html#a4d65536cb1094fb5deda0a852b181232">subac</a>-&gt;ev.addRead  = <a class="code" href="lsredis_8c.html#adee3bccecc86dd531ac5f89491632439" title="hook to mange read events">lsredis_addRead</a>;</div>
+<div class="line">  <a class="code" href="lsredis_8c.html#a4d65536cb1094fb5deda0a852b181232">subac</a>-&gt;ev.delRead  = <a class="code" href="lsredis_8c.html#a2e1f2258b3cc864ce3eef4eda556e2a6" title="hook to manage &quot;don&#39;t need to read&quot; events">lsredis_delRead</a>;</div>
+<div class="line">  <a class="code" href="lsredis_8c.html#a4d65536cb1094fb5deda0a852b181232">subac</a>-&gt;ev.addWrite = <a class="code" href="lsredis_8c.html#a3cb6eda5c8ae80019e7a1c078940e9e9" title="hook to manage write events">lsredis_addWrite</a>;</div>
+<div class="line">  <a class="code" href="lsredis_8c.html#a4d65536cb1094fb5deda0a852b181232">subac</a>-&gt;ev.delWrite = <a class="code" href="lsredis_8c.html#a04f0119cfa1156dc34d35b237358822a" title="hook to manage &quot;don&#39;t need to write anymore&quot; events">lsredis_delWrite</a>;</div>
+<div class="line">  <a class="code" href="lsredis_8c.html#a4d65536cb1094fb5deda0a852b181232">subac</a>-&gt;ev.cleanup  = <a class="code" href="lsredis_8c.html#a45f946a5262c23b362be17c2cb0310c2" title="hook to clean up TODO: figure out what we are supposed to do here and do it">lsredis_cleanup</a>;</div>
+<div class="line"></div>
+<div class="line">  <a class="code" href="lsredis_8c.html#afc92245910ec04f9a341c092def45564">roac</a> = redisAsyncConnect(<span class="stringliteral">&quot;127.0.0.1&quot;</span>, 6379);</div>
+<div class="line">  <span class="keywordflow">if</span>( <a class="code" href="lsredis_8c.html#afc92245910ec04f9a341c092def45564">roac</a>-&gt;err) {</div>
+<div class="line">    <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;Error: %s&quot;</span>, <a class="code" href="lsredis_8c.html#afc92245910ec04f9a341c092def45564">roac</a>-&gt;errstr);</div>
+<div class="line">  }</div>
+<div class="line"></div>
+<div class="line">  <a class="code" href="lsredis_8c.html#add819e43a356d0575ec64c346c6fed57">rofd</a>.fd           = <a class="code" href="lsredis_8c.html#afc92245910ec04f9a341c092def45564">roac</a>-&gt;c.fd;</div>
+<div class="line">  <a class="code" href="lsredis_8c.html#add819e43a356d0575ec64c346c6fed57">rofd</a>.events       = 0;</div>
+<div class="line">  <a class="code" href="lsredis_8c.html#afc92245910ec04f9a341c092def45564">roac</a>-&gt;ev.data     = &amp;<a class="code" href="lsredis_8c.html#add819e43a356d0575ec64c346c6fed57">rofd</a>;</div>
+<div class="line">  <a class="code" href="lsredis_8c.html#afc92245910ec04f9a341c092def45564">roac</a>-&gt;ev.addRead  = <a class="code" href="lsredis_8c.html#adee3bccecc86dd531ac5f89491632439" title="hook to mange read events">lsredis_addRead</a>;</div>
+<div class="line">  <a class="code" href="lsredis_8c.html#afc92245910ec04f9a341c092def45564">roac</a>-&gt;ev.delRead  = <a class="code" href="lsredis_8c.html#a2e1f2258b3cc864ce3eef4eda556e2a6" title="hook to manage &quot;don&#39;t need to read&quot; events">lsredis_delRead</a>;</div>
+<div class="line">  <a class="code" href="lsredis_8c.html#afc92245910ec04f9a341c092def45564">roac</a>-&gt;ev.addWrite = <a class="code" href="lsredis_8c.html#a3cb6eda5c8ae80019e7a1c078940e9e9" title="hook to manage write events">lsredis_addWrite</a>;</div>
+<div class="line">  <a class="code" href="lsredis_8c.html#afc92245910ec04f9a341c092def45564">roac</a>-&gt;ev.delWrite = <a class="code" href="lsredis_8c.html#a04f0119cfa1156dc34d35b237358822a" title="hook to manage &quot;don&#39;t need to write anymore&quot; events">lsredis_delWrite</a>;</div>
+<div class="line">  <a class="code" href="lsredis_8c.html#afc92245910ec04f9a341c092def45564">roac</a>-&gt;ev.cleanup  = <a class="code" href="lsredis_8c.html#a45f946a5262c23b362be17c2cb0310c2" title="hook to clean up TODO: figure out what we are supposed to do here and do it">lsredis_cleanup</a>;</div>
+<div class="line"></div>
+<div class="line">  <a class="code" href="lsredis_8c.html#a7ea13129ad9e41a0ed2fc19fa75ffb0d">wrac</a> = redisAsyncConnect(<span class="stringliteral">&quot;10.1.0.3&quot;</span>, 6379);</div>
+<div class="line">  <span class="keywordflow">if</span>( <a class="code" href="lsredis_8c.html#a7ea13129ad9e41a0ed2fc19fa75ffb0d">wrac</a>-&gt;err) {</div>
+<div class="line">    <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;Error: %s&quot;</span>, <a class="code" href="lsredis_8c.html#a7ea13129ad9e41a0ed2fc19fa75ffb0d">wrac</a>-&gt;errstr);</div>
+<div class="line">  }</div>
+<div class="line"></div>
+<div class="line">  <a class="code" href="lsredis_8c.html#a13acbee14dbe8cdb98e238abb921d048">wrfd</a>.fd           = <a class="code" href="lsredis_8c.html#a7ea13129ad9e41a0ed2fc19fa75ffb0d">wrac</a>-&gt;c.fd;</div>
+<div class="line">  <a class="code" href="lsredis_8c.html#a13acbee14dbe8cdb98e238abb921d048">wrfd</a>.events       = 0;</div>
+<div class="line">  <a class="code" href="lsredis_8c.html#a7ea13129ad9e41a0ed2fc19fa75ffb0d">wrac</a>-&gt;ev.data     = &amp;<a class="code" href="lsredis_8c.html#a13acbee14dbe8cdb98e238abb921d048">wrfd</a>;</div>
+<div class="line">  <a class="code" href="lsredis_8c.html#a7ea13129ad9e41a0ed2fc19fa75ffb0d">wrac</a>-&gt;ev.addRead  = <a class="code" href="lsredis_8c.html#adee3bccecc86dd531ac5f89491632439" title="hook to mange read events">lsredis_addRead</a>;</div>
+<div class="line">  <a class="code" href="lsredis_8c.html#a7ea13129ad9e41a0ed2fc19fa75ffb0d">wrac</a>-&gt;ev.delRead  = <a class="code" href="lsredis_8c.html#a2e1f2258b3cc864ce3eef4eda556e2a6" title="hook to manage &quot;don&#39;t need to read&quot; events">lsredis_delRead</a>;</div>
+<div class="line">  <a class="code" href="lsredis_8c.html#a7ea13129ad9e41a0ed2fc19fa75ffb0d">wrac</a>-&gt;ev.addWrite = <a class="code" href="lsredis_8c.html#a3cb6eda5c8ae80019e7a1c078940e9e9" title="hook to manage write events">lsredis_addWrite</a>;</div>
+<div class="line">  <a class="code" href="lsredis_8c.html#a7ea13129ad9e41a0ed2fc19fa75ffb0d">wrac</a>-&gt;ev.delWrite = <a class="code" href="lsredis_8c.html#a04f0119cfa1156dc34d35b237358822a" title="hook to manage &quot;don&#39;t need to write anymore&quot; events">lsredis_delWrite</a>;</div>
+<div class="line">  <a class="code" href="lsredis_8c.html#a7ea13129ad9e41a0ed2fc19fa75ffb0d">wrac</a>-&gt;ev.cleanup  = <a class="code" href="lsredis_8c.html#a45f946a5262c23b362be17c2cb0310c2" title="hook to clean up TODO: figure out what we are supposed to do here and do it">lsredis_cleanup</a>;</div>
+<div class="line"></div>
+<div class="line">  <a class="code" href="lsredis_8c.html#a07dc95184cac704740bfe16fe4c6a4f0" title="set regexp to select variables we are interested in following">lsredis_select</a>( re);</div>
+<div class="line">}</div>
+</div><!-- fragment -->
+</div>
+</div>
+<a class="anchor" id="ad438e4368d86bbe15a93dcf86deaded5"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void lsredis_run </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00731">731</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
+<div class="fragment"><div class="line">                   {</div>
+<div class="line">  pthread_create( &amp;<a class="code" href="lsredis_8c.html#a79c33eb11ad6819247930ade3a25671f">lsredis_thread</a>, NULL, <a class="code" href="lsredis_8c.html#ade7b1ddfdc88c6964a4c90513e360f75" title="subscribe to changes and service sockets">lsredis_worker</a>, NULL);</div>
+<div class="line">}</div>
+</div><!-- fragment -->
+</div>
+</div>
+<a class="anchor" id="af712dd2e9419026eff2762ba062eeaf1"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void lstimer_add_timer </td>
+          <td>(</td>
+          <td class="paramtype">char *&#160;</td>
+          <td class="paramname"><em>event</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>shots</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned long int&#160;</td>
+          <td class="paramname"><em>secs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned long int&#160;</td>
+          <td class="paramname"><em>nsecs</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Create a timer. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">event</td><td>Name of the event to send when the timer goes off </td></tr>
+    <tr><td class="paramname">shots</td><td>Number of times to run. 0 means never, -1 means forever </td></tr>
+    <tr><td class="paramname">secs</td><td>Number of seconds to wait </td></tr>
+    <tr><td class="paramname">nsecs</td><td>Number of nano-seconds to run in addition to secs </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p>Definition at line <a class="el" href="lstimer_8c_source.html#l00050">50</a> of file <a class="el" href="lstimer_8c_source.html">lstimer.c</a>.</p>
 <div class="fragment"><div class="line">                                                                                                 {</div>
 <div class="line">  <span class="keywordtype">int</span> i;</div>
-<div class="line">  <span class="keyword">struct </span>timespec <a class="code" href="lspg_8c.html#ad40ac52086f6b774928af45b09d54c6e" title="used to ensure we do not inundate the db server with connection requests">now</a>;</div>
+<div class="line">  <span class="keyword">struct </span>timespec <a class="code" href="kvredis_8c.html#ad40ac52086f6b774928af45b09d54c6e" title="used to ensure we do not inundate the db server with connection requests">now</a>;</div>
 <div class="line"></div>
 <div class="line"></div>
 <div class="line">  <span class="comment">// Time we were called.  Delay is based on call time, not queued time</span></div>
 <div class="line">  <span class="comment">//</span></div>
-<div class="line">  clock_gettime( CLOCK_REALTIME, &amp;<a class="code" href="lspg_8c.html#ad40ac52086f6b774928af45b09d54c6e" title="used to ensure we do not inundate the db server with connection requests">now</a>);</div>
+<div class="line">  clock_gettime( CLOCK_REALTIME, &amp;<a class="code" href="kvredis_8c.html#ad40ac52086f6b774928af45b09d54c6e" title="used to ensure we do not inundate the db server with connection requests">now</a>);</div>
 <div class="line">  </div>
 <div class="line"></div>
 <div class="line">  pthread_mutex_lock( &amp;<a class="code" href="lstimer_8c.html#a170993cbed9b9ec8bc64b6642a3ed581" title="protect the timer list">lstimer_mutex</a>);</div>
@@ -1695,14 +1923,14 @@ Variables</h2></td></tr>
 <div class="line">  <a class="code" href="lstimer_8c.html#a35b456765fe2c955cef445768d12ca6c" title="Our timer list.">lstimer_list</a>[i].<a class="code" href="structlstimer__list__struct.html#a237da48d81b7e039c54901296aeee18e" title="number of seconds for a periodic delay">delay_secs</a>   = secs;</div>
 <div class="line">  <a class="code" href="lstimer_8c.html#a35b456765fe2c955cef445768d12ca6c" title="Our timer list.">lstimer_list</a>[i].<a class="code" href="structlstimer__list__struct.html#acb0c6a1600c4168e5dfb2d477a685b29" title="nano seconds of delay">delay_nsecs</a>  = nsecs;</div>
 <div class="line"></div>
-<div class="line">  <a class="code" href="lstimer_8c.html#a35b456765fe2c955cef445768d12ca6c" title="Our timer list.">lstimer_list</a>[i].<a class="code" href="structlstimer__list__struct.html#af0dcaad37472462c9f27d54ed0ceb75d" title="epoch (seconds) of next alarm">next_secs</a>    = secs + <a class="code" href="lspg_8c.html#ad40ac52086f6b774928af45b09d54c6e" title="used to ensure we do not inundate the db server with connection requests">now</a>.tv_sec + (<a class="code" href="lspg_8c.html#ad40ac52086f6b774928af45b09d54c6e" title="used to ensure we do not inundate the db server with connection requests">now</a>.tv_nsec + nsecs) / 1000000000;</div>
-<div class="line">  <a class="code" href="lstimer_8c.html#a35b456765fe2c955cef445768d12ca6c" title="Our timer list.">lstimer_list</a>[i].<a class="code" href="structlstimer__list__struct.html#ab115115d5be7933f98a094b46b6583bb" title="nano seconds of next alarm">next_nsecs</a>   = (<a class="code" href="lspg_8c.html#ad40ac52086f6b774928af45b09d54c6e" title="used to ensure we do not inundate the db server with connection requests">now</a>.tv_nsec + nsecs) % 1000000000;</div>
+<div class="line">  <a class="code" href="lstimer_8c.html#a35b456765fe2c955cef445768d12ca6c" title="Our timer list.">lstimer_list</a>[i].<a class="code" href="structlstimer__list__struct.html#af0dcaad37472462c9f27d54ed0ceb75d" title="epoch (seconds) of next alarm">next_secs</a>    = secs + <a class="code" href="kvredis_8c.html#ad40ac52086f6b774928af45b09d54c6e" title="used to ensure we do not inundate the db server with connection requests">now</a>.tv_sec + (<a class="code" href="kvredis_8c.html#ad40ac52086f6b774928af45b09d54c6e" title="used to ensure we do not inundate the db server with connection requests">now</a>.tv_nsec + nsecs) / 1000000000;</div>
+<div class="line">  <a class="code" href="lstimer_8c.html#a35b456765fe2c955cef445768d12ca6c" title="Our timer list.">lstimer_list</a>[i].<a class="code" href="structlstimer__list__struct.html#ab115115d5be7933f98a094b46b6583bb" title="nano seconds of next alarm">next_nsecs</a>   = (<a class="code" href="kvredis_8c.html#ad40ac52086f6b774928af45b09d54c6e" title="used to ensure we do not inundate the db server with connection requests">now</a>.tv_nsec + nsecs) % 1000000000;</div>
 <div class="line">  <a class="code" href="lstimer_8c.html#a35b456765fe2c955cef445768d12ca6c" title="Our timer list.">lstimer_list</a>[i].<a class="code" href="structlstimer__list__struct.html#ab0ac2907735701cb24ec9af95a1cc787" title="the last time this timer was triggered">last_secs</a>    = 0;</div>
 <div class="line">  <a class="code" href="lstimer_8c.html#a35b456765fe2c955cef445768d12ca6c" title="Our timer list.">lstimer_list</a>[i].<a class="code" href="structlstimer__list__struct.html#a19acf5aa7f57aa7ce60537c3d3d6a6af" title="the last time this timer was triggered">last_nsecs</a>   = 0;</div>
 <div class="line">  </div>
 <div class="line">  <a class="code" href="lstimer_8c.html#a35b456765fe2c955cef445768d12ca6c" title="Our timer list.">lstimer_list</a>[i].<a class="code" href="structlstimer__list__struct.html#aa56c5b8ce7fa0ae93132cb9908195836" title="track how many times we triggered a callback (like an unsigned long int is really needed)...">ncalls</a>       = 0;</div>
-<div class="line">  <a class="code" href="lstimer_8c.html#a35b456765fe2c955cef445768d12ca6c" title="Our timer list.">lstimer_list</a>[i].<a class="code" href="structlstimer__list__struct.html#a1222c76d49b149725467aa698abb7fb1" title="our initialization time">init_secs</a>    = <a class="code" href="lspg_8c.html#ad40ac52086f6b774928af45b09d54c6e" title="used to ensure we do not inundate the db server with connection requests">now</a>.tv_sec;</div>
-<div class="line">  <a class="code" href="lstimer_8c.html#a35b456765fe2c955cef445768d12ca6c" title="Our timer list.">lstimer_list</a>[i].<a class="code" href="structlstimer__list__struct.html#ad5bb7fa7d669b7ebbe34d8ed2bdb257a" title="our initialization time">init_nsecs</a>   = <a class="code" href="lspg_8c.html#ad40ac52086f6b774928af45b09d54c6e" title="used to ensure we do not inundate the db server with connection requests">now</a>.tv_nsec;</div>
+<div class="line">  <a class="code" href="lstimer_8c.html#a35b456765fe2c955cef445768d12ca6c" title="Our timer list.">lstimer_list</a>[i].<a class="code" href="structlstimer__list__struct.html#a1222c76d49b149725467aa698abb7fb1" title="our initialization time">init_secs</a>    = <a class="code" href="kvredis_8c.html#ad40ac52086f6b774928af45b09d54c6e" title="used to ensure we do not inundate the db server with connection requests">now</a>.tv_sec;</div>
+<div class="line">  <a class="code" href="lstimer_8c.html#a35b456765fe2c955cef445768d12ca6c" title="Our timer list.">lstimer_list</a>[i].<a class="code" href="structlstimer__list__struct.html#ad5bb7fa7d669b7ebbe34d8ed2bdb257a" title="our initialization time">init_nsecs</a>   = <a class="code" href="kvredis_8c.html#ad40ac52086f6b774928af45b09d54c6e" title="used to ensure we do not inundate the db server with connection requests">now</a>.tv_nsec;</div>
 <div class="line"></div>
 <div class="line">  <span class="keywordflow">if</span>( shots != 0) {</div>
 <div class="line">    <a class="code" href="lstimer_8c.html#a1a47dadbec1776920ab83409234c1833" title="count of the number timers we are tracking">lstimer_active_timers</a>++;</div>
@@ -1730,7 +1958,7 @@ Variables</h2></td></tr>
 
 <p>Initialize the timer list and pthread stuff. </p>
 
-<p>Definition at line <a class="el" href="lstimer_8c_source.html#l00256">256</a> of file <a class="el" href="lstimer_8c_source.html">lstimer.c</a>.</p>
+<p>Definition at line <a class="el" href="lstimer_8c_source.html#l00262">262</a> of file <a class="el" href="lstimer_8c_source.html">lstimer.c</a>.</p>
 <div class="fragment"><div class="line">                    {</div>
 <div class="line">  <span class="keywordtype">int</span> i;</div>
 <div class="line"></div>
@@ -1760,7 +1988,7 @@ Variables</h2></td></tr>
 
 <p>Start up our thread. </p>
 
-<p>Definition at line <a class="el" href="lstimer_8c_source.html#l00270">270</a> of file <a class="el" href="lstimer_8c_source.html">lstimer.c</a>.</p>
+<p>Definition at line <a class="el" href="lstimer_8c_source.html#l00276">276</a> of file <a class="el" href="lstimer_8c_source.html">lstimer.c</a>.</p>
 <div class="fragment"><div class="line">                   {</div>
 <div class="line">  pthread_create( &amp;<a class="code" href="lstimer_8c.html#a76660e8720b08f4adee2be9f44b5f419" title="the timer thread">lstimer_thread</a>, NULL, <a class="code" href="lstimer_8c.html#ab8b409bb2a7ff78da22d988cfb3b537a" title="Our worker.">lstimer_worker</a>, NULL);</div>
 <div class="line">}</div>
@@ -1825,7 +2053,7 @@ Variables</h2></td></tr>
 
 <p>Initialize the md2cmds module. </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00771">771</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00778">778</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                    {</div>
 <div class="line">  memset( <a class="code" href="md2cmds_8c.html#a5f0fe1e2dfa92cf345b8c29134ab1ede" title="our command;">md2cmds_cmd</a>, 0, <span class="keyword">sizeof</span>( <a class="code" href="md2cmds_8c.html#a5f0fe1e2dfa92cf345b8c29134ab1ede" title="our command;">md2cmds_cmd</a>));</div>
 <div class="line"></div>
@@ -1855,7 +2083,7 @@ Variables</h2></td></tr>
 
 <p>Start up the thread. </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00785">785</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00792">792</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                   {</div>
 <div class="line">  pthread_create( &amp;<a class="code" href="md2cmds_8c.html#aa230921945149692de98fff15c01962f">md2cmds_thread</a>, NULL,            <a class="code" href="md2cmds_8c.html#ae967e769d23555a631f615e630f25b00" title="Our worker thread.">md2cmds_worker</a>, NULL);</div>
 <div class="line">  <a class="code" href="lsevents_8c.html#ab0617d3f0594b51d10e34bf397096654" title="Add a callback routine to listen for a specific event.">lsevents_add_listener</a>( <span class="stringliteral">&quot;omega crossed zero&quot;</span>,      <a class="code" href="md2cmds_8c.html#aa43887b7c9799bc88d51df13745d0e5c" title="Tell the database about the time we went through omega=zero.">md2cmds_rotate_cb</a>);</div>
@@ -2790,7 +3018,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="pgpmac_8h.html">pgpmac.h</a></li>
-    <li class="footer">Generated on Thu Nov 29 2012 13:05:31 for LS-CAT PGPMAC by
+    <li class="footer">Generated on Fri Dec 14 2012 16:43:04 for LS-CAT PGPMAC by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.2 </li>
   </ul>

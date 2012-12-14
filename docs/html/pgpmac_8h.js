@@ -1,5 +1,6 @@
 var pgpmac_8h =
 [
+    [ "lsredis_obj_struct", "structlsredis__obj__struct.html", "structlsredis__obj__struct" ],
     [ "tagEthernetCmd", "structtagEthernetCmd.html", "structtagEthernetCmd" ],
     [ "lspmac_cmd_queue_struct", "structlspmac__cmd__queue__struct.html", "structlspmac__cmd__queue__struct" ],
     [ "lskvs_kvs_struct", "structlskvs__kvs__struct.html", "structlskvs__kvs__struct" ],
@@ -19,6 +20,7 @@ var pgpmac_8h =
     [ "lspg_nextshot_t", "pgpmac_8h.html#a17ea2bf07a0b3b892baa00bd392607b3", null ],
     [ "lspmac_bi_t", "pgpmac_8h.html#ac48984832ef73cf145e5f08bc65bd3a0", null ],
     [ "lspmac_motor_t", "pgpmac_8h.html#aa5067fcbaabc5bbfdc52492495518c96", null ],
+    [ "lsredis_obj_t", "pgpmac_8h.html#ad449de06d02791adf2498d2a1e1f909c", null ],
     [ "pmac_cmd_queue_t", "pgpmac_8h.html#a99c275e32ad897dca34d196b91f038cb", null ],
     [ "pmac_cmd_t", "pgpmac_8h.html#a2d163436571135a457f4a4e2fbd09633", null ],
     [ "lsevents_add_listener", "pgpmac_8h.html#aac89b916c1152c44042875feac35a9e4", null ],
@@ -40,6 +42,9 @@ var pgpmac_8h =
     [ "lspmac_moveabs_queue", "pgpmac_8h.html#af9edebb71a4ebca5dad3df63164e2004", null ],
     [ "lspmac_run", "pgpmac_8h.html#a3a7fb93fb3fb9c4454613f30bfb0b1ee", null ],
     [ "lspmac_SockSendline", "pgpmac_8h.html#aa30460bcac93f4ba19934ae19adad0ba", null ],
+    [ "lsredis_get_obj", "pgpmac_8h.html#a6d9f550b9ba36acd237925164abe3ffc", null ],
+    [ "lsredis_init", "pgpmac_8h.html#aef0f12fda57e476a50b14acdc9f30b58", null ],
+    [ "lsredis_run", "pgpmac_8h.html#ad438e4368d86bbe15a93dcf86deaded5", null ],
     [ "lstimer_add_timer", "pgpmac_8h.html#af712dd2e9419026eff2762ba062eeaf1", null ],
     [ "lstimer_init", "pgpmac_8h.html#a8cd37a8fb0f061456456a5d79bdd5189", null ],
     [ "lstimer_run", "pgpmac_8h.html#a0b918acc1a4bf737cb62b5a70f8b553a", null ],

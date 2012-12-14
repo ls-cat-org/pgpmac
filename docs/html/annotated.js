@@ -15,6 +15,7 @@ var annotated =
     [ "lspmac_bi_struct", "structlspmac__bi__struct.html", "structlspmac__bi__struct" ],
     [ "lspmac_cmd_queue_struct", "structlspmac__cmd__queue__struct.html", "structlspmac__cmd__queue__struct" ],
     [ "lspmac_motor_struct", "structlspmac__motor__struct.html", "structlspmac__motor__struct" ],
+    [ "lsredis_obj_struct", "structlsredis__obj__struct.html", "structlsredis__obj__struct" ],
     [ "lstimer_list_struct", "structlstimer__list__struct.html", "structlstimer__list__struct" ],
     [ "md2StatusStruct", "structmd2StatusStruct.html", "structmd2StatusStruct" ],
     [ "tagEthernetCmd", "structtagEthernetCmd.html", "structtagEthernetCmd" ]

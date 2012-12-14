@@ -15,7 +15,7 @@ struct \hyperlink{structlstimer__list__struct}{lstimer\-\_\-list\-\_\-struct}
 \subsection*{Macros}
 \begin{DoxyCompactItemize}
 \item 
-\#define \hyperlink{lstimer_8c_af020a0f708e86162a32d2ca6373c96bb}{L\-S\-T\-I\-M\-E\-R\-\_\-\-L\-I\-S\-T\-\_\-\-L\-E\-N\-G\-T\-H}~256
+\#define \hyperlink{lstimer_8c_af020a0f708e86162a32d2ca6373c96bb}{L\-S\-T\-I\-M\-E\-R\-\_\-\-L\-I\-S\-T\-\_\-\-L\-E\-N\-G\-T\-H}~1024
 \begin{DoxyCompactList}\small\item\em We'll allow this many timers. This should be way more than enough. \end{DoxyCompactList}\item 
 \#define \hyperlink{lstimer_8c_a602d98fa617eb9f4ab49e4b9c7f5d4d9}{L\-S\-T\-I\-M\-E\-R\-\_\-\-R\-E\-S\-O\-L\-U\-T\-I\-O\-N\-\_\-\-N\-S\-E\-C\-S}~100000
 \begin{DoxyCompactList}\small\item\em times within this amount in the future are considered \char`\"{}now\char`\"{} and the events should be called \end{DoxyCompactList}\end{DoxyCompactItemize}
@@ -28,7 +28,7 @@ typedef struct \hyperlink{structlstimer__list__struct}{lstimer\-\_\-list\-\_\-st
 \begin{DoxyCompactItemize}
 \item 
 void \hyperlink{lstimer_8c_a14f35a979ca0537d8180d90cbc56c577}{lstimer\-\_\-add\-\_\-timer} (char $\ast$event, int shots, unsigned long int secs, unsigned long int nsecs)
-\item 
+\begin{DoxyCompactList}\small\item\em Create a timer. \end{DoxyCompactList}\item 
 static void \hyperlink{lstimer_8c_a7796321359df34cb827ffa51bbc44e9c}{service\-\_\-timers} ()
 \begin{DoxyCompactList}\small\item\em Send events that are past due, due, or just about to be due. \end{DoxyCompactList}\item 
 static void \hyperlink{lstimer_8c_afa91bbd2fdb257d80ad65a5ce8abb845}{handler} (int sig, siginfo\-\_\-t $\ast$si, void $\ast$dummy)
@@ -77,7 +77,7 @@ Definition in file \hyperlink{lstimer_8c_source}{lstimer.\-c}.
 \subsection{Macro Definition Documentation}
 \hypertarget{lstimer_8c_af020a0f708e86162a32d2ca6373c96bb}{\index{lstimer.\-c@{lstimer.\-c}!L\-S\-T\-I\-M\-E\-R\-\_\-\-L\-I\-S\-T\-\_\-\-L\-E\-N\-G\-T\-H@{L\-S\-T\-I\-M\-E\-R\-\_\-\-L\-I\-S\-T\-\_\-\-L\-E\-N\-G\-T\-H}}
 \index{L\-S\-T\-I\-M\-E\-R\-\_\-\-L\-I\-S\-T\-\_\-\-L\-E\-N\-G\-T\-H@{L\-S\-T\-I\-M\-E\-R\-\_\-\-L\-I\-S\-T\-\_\-\-L\-E\-N\-G\-T\-H}!lstimer.c@{lstimer.\-c}}
-\subsubsection[{L\-S\-T\-I\-M\-E\-R\-\_\-\-L\-I\-S\-T\-\_\-\-L\-E\-N\-G\-T\-H}]{\setlength{\rightskip}{0pt plus 5cm}\#define L\-S\-T\-I\-M\-E\-R\-\_\-\-L\-I\-S\-T\-\_\-\-L\-E\-N\-G\-T\-H~256}}\label{lstimer_8c_af020a0f708e86162a32d2ca6373c96bb}
+\subsubsection[{L\-S\-T\-I\-M\-E\-R\-\_\-\-L\-I\-S\-T\-\_\-\-L\-E\-N\-G\-T\-H}]{\setlength{\rightskip}{0pt plus 5cm}\#define L\-S\-T\-I\-M\-E\-R\-\_\-\-L\-I\-S\-T\-\_\-\-L\-E\-N\-G\-T\-H~1024}}\label{lstimer_8c_af020a0f708e86162a32d2ca6373c96bb}
 
 
 We'll allow this many timers. This should be way more than enough. 
@@ -125,7 +125,7 @@ Service the signal.
 
 
 
-Definition at line 168 of file lstimer.\-c.
+Definition at line 174 of file lstimer.\-c.
 
 
 \begin{DoxyCode}
@@ -147,19 +147,34 @@ Definition at line 168 of file lstimer.\-c.
 )}}\label{lstimer_8c_a14f35a979ca0537d8180d90cbc56c577}
 
 
-Definition at line 44 of file lstimer.\-c.
+Create a timer. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em event} & Name of the event to send when the timer goes off \\
+\hline
+{\em shots} & Number of times to run. 0 means never, -\/1 means forever \\
+\hline
+{\em secs} & Number of seconds to wait \\
+\hline
+{\em nsecs} & Number of nano-\/seconds to run in addition to secs \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 50 of file lstimer.\-c.
 
 
 \begin{DoxyCode}
                                                                                
                         \{
   \textcolor{keywordtype}{int} i;
-  \textcolor{keyword}{struct }timespec \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now};
+  \textcolor{keyword}{struct }timespec \hyperlink{kvredis_8c_ad40ac52086f6b774928af45b09d54c6e}{now};
 
 
   \textcolor{comment}{// Time we were called.  Delay is based on call time, not queued time}
   \textcolor{comment}{//}
-  clock\_gettime( CLOCK\_REALTIME, &\hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now});
+  clock\_gettime( CLOCK\_REALTIME, &\hyperlink{kvredis_8c_ad40ac52086f6b774928af45b09d54c6e}{now});
   
 
   pthread\_mutex\_lock( &\hyperlink{lstimer_8c_a170993cbed9b9ec8bc64b6642a3ed581}{lstimer\_mutex});
@@ -186,16 +201,16 @@ Definition at line 44 of file lstimer.\-c.
   \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_a237da48d81b7e039c54901296aeee18e}{delay\_secs}   = secs;
   \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_acb0c6a1600c4168e5dfb2d477a685b29}{delay\_nsecs}  = nsecs;
 
-  \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_af0dcaad37472462c9f27d54ed0ceb75d}{next\_secs}    = secs + \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_sec + (
-      \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_nsec + nsecs) / 1000000000;
-  \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_ab115115d5be7933f98a094b46b6583bb}{next\_nsecs}   = (\hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_nsec + nsecs)
+  \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_af0dcaad37472462c9f27d54ed0ceb75d}{next\_secs}    = secs + \hyperlink{kvredis_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_sec + (
+      \hyperlink{kvredis_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_nsec + nsecs) / 1000000000;
+  \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_ab115115d5be7933f98a094b46b6583bb}{next\_nsecs}   = (\hyperlink{kvredis_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_nsec + nsecs)
        % 1000000000;
   \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_ab0ac2907735701cb24ec9af95a1cc787}{last\_secs}    = 0;
   \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_a19acf5aa7f57aa7ce60537c3d3d6a6af}{last\_nsecs}   = 0;
   
   \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_aa56c5b8ce7fa0ae93132cb9908195836}{ncalls}       = 0;
-  \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_a1222c76d49b149725467aa698abb7fb1}{init\_secs}    = \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_sec;
-  \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_ad5bb7fa7d669b7ebbe34d8ed2bdb257a}{init\_nsecs}   = \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_nsec;
+  \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_a1222c76d49b149725467aa698abb7fb1}{init\_secs}    = \hyperlink{kvredis_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_sec;
+  \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_ad5bb7fa7d669b7ebbe34d8ed2bdb257a}{init\_nsecs}   = \hyperlink{kvredis_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_nsec;
 
   \textcolor{keywordflow}{if}( shots != 0) \{
     \hyperlink{lstimer_8c_a1a47dadbec1776920ab83409234c1833}{lstimer\_active\_timers}++;
@@ -219,7 +234,7 @@ Initialize the timer list and pthread stuff.
 
 
 
-Definition at line 256 of file lstimer.\-c.
+Definition at line 262 of file lstimer.\-c.
 
 
 \begin{DoxyCode}
@@ -248,7 +263,7 @@ Start up our thread.
 
 
 
-Definition at line 270 of file lstimer.\-c.
+Definition at line 276 of file lstimer.\-c.
 
 
 \begin{DoxyCode}
@@ -275,7 +290,7 @@ The main loop runs when a new timer is added. The service routine deals with mai
 \end{DoxyParams}
 
 
-Definition at line 178 of file lstimer.\-c.
+Definition at line 184 of file lstimer.\-c.
 
 
 \begin{DoxyCode}
@@ -284,7 +299,7 @@ Definition at line 178 of file lstimer.\-c.
     i,
     known\_timers;
 
-  \textcolor{keyword}{struct }timespec \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now};
+  \textcolor{keyword}{struct }timespec \hyperlink{kvredis_8c_ad40ac52086f6b774928af45b09d54c6e}{now};
 
   \textcolor{keyword}{struct }sigevent  sev;
   \textcolor{keyword}{struct }sigaction sa;
@@ -369,7 +384,7 @@ Send events that are past due, due, or just about to be due.
 
 
 
-Definition at line 96 of file lstimer.\-c.
+Definition at line 102 of file lstimer.\-c.
 
 
 \begin{DoxyCode}
@@ -379,7 +394,7 @@ Definition at line 96 of file lstimer.\-c.
     found\_active;
 
   \hyperlink{structlstimer__list__struct}{lstimer\_list\_t} *p;
-  \textcolor{keyword}{struct }timespec \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}, then, soonest;
+  \textcolor{keyword}{struct }timespec \hyperlink{kvredis_8c_ad40ac52086f6b774928af45b09d54c6e}{now}, then, soonest;
   \textcolor{keyword}{struct }itimerspec its;
 
   \textcolor{comment}{//}
@@ -390,12 +405,12 @@ Definition at line 96 of file lstimer.\-c.
 
   \textcolor{comment}{// Call with lstimer\_mutex locked}
 
-  clock\_gettime( CLOCK\_REALTIME, &\hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now});
+  clock\_gettime( CLOCK\_REALTIME, &\hyperlink{kvredis_8c_ad40ac52086f6b774928af45b09d54c6e}{now});
   \textcolor{comment}{//}
   \textcolor{comment}{// Project a tad into the future}
-  then.tv\_sec  = \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_sec + (\hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_nsec + \hyperlink{lstimer_8c_a602d98fa617eb9f4ab49e4b9c7f5d4d9}{LSTIMER\_RESOLUTION\_NSECS}
+  then.tv\_sec  = \hyperlink{kvredis_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_sec + (\hyperlink{kvredis_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_nsec + \hyperlink{lstimer_8c_a602d98fa617eb9f4ab49e4b9c7f5d4d9}{LSTIMER\_RESOLUTION\_NSECS}
       ) / 1000000000;
-  then.tv\_nsec = (\hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_nsec + \hyperlink{lstimer_8c_a602d98fa617eb9f4ab49e4b9c7f5d4d9}{LSTIMER\_RESOLUTION\_NSECS}
+  then.tv\_nsec = (\hyperlink{kvredis_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_nsec + \hyperlink{lstimer_8c_a602d98fa617eb9f4ab49e4b9c7f5d4d9}{LSTIMER\_RESOLUTION\_NSECS}
       ) % 1000000000;
 
   found\_active = 0;
@@ -409,8 +424,8 @@ Definition at line 96 of file lstimer.\-c.
         \textcolor{comment}{//}
         \textcolor{comment}{// After sending the event, compute the next time we need to do this}
         \textcolor{comment}{//}
-        p->\hyperlink{structlstimer__list__struct_ab0ac2907735701cb24ec9af95a1cc787}{last\_secs}  = \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_sec;
-        p->\hyperlink{structlstimer__list__struct_a19acf5aa7f57aa7ce60537c3d3d6a6af}{last\_nsecs} = \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_nsec;
+        p->\hyperlink{structlstimer__list__struct_ab0ac2907735701cb24ec9af95a1cc787}{last\_secs}  = \hyperlink{kvredis_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_sec;
+        p->\hyperlink{structlstimer__list__struct_a19acf5aa7f57aa7ce60537c3d3d6a6af}{last\_nsecs} = \hyperlink{kvredis_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_nsec;
         p->\hyperlink{structlstimer__list__struct_aa56c5b8ce7fa0ae93132cb9908195836}{ncalls}++;
         \textcolor{comment}{//}
         \textcolor{comment}{// Decrement non-infinite loops}

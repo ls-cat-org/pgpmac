@@ -15,5 +15,6 @@ var searchData=
   ['lspmac_5fbi_5fstruct',['lspmac_bi_struct',['../structlspmac__bi__struct.html',1,'']]],
   ['lspmac_5fcmd_5fqueue_5fstruct',['lspmac_cmd_queue_struct',['../structlspmac__cmd__queue__struct.html',1,'']]],
   ['lspmac_5fmotor_5fstruct',['lspmac_motor_struct',['../structlspmac__motor__struct.html',1,'']]],
+  ['lsredis_5fobj_5fstruct',['lsredis_obj_struct',['../structlsredis__obj__struct.html',1,'']]],
   ['lstimer_5flist_5fstruct',['lstimer_list_struct',['../structlstimer__list__struct.html',1,'']]]
 ];

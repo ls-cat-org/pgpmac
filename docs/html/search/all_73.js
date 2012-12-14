@@ -29,5 +29,7 @@ var searchData=
   ['stype',['stype',['../structlspg__nextshot__struct.html#ab5a70b189c2fe516ca0c84bd06f3e564',1,'lspg_nextshot_struct']]],
   ['stype2',['stype2',['../structlspg__nextshot__struct.html#ae08ef74ea76e6e099a3ff6c7f845d337',1,'lspg_nextshot_struct']]],
   ['stype2_5fisnull',['stype2_isnull',['../structlspg__nextshot__struct.html#a203e29ed0bb403aaab6d7f95f690cc0d',1,'lspg_nextshot_struct']]],
-  ['stype_5fisnull',['stype_isnull',['../structlspg__nextshot__struct.html#a79f48c452a4aca8506bae22f897c7441',1,'lspg_nextshot_struct']]]
+  ['stype_5fisnull',['stype_isnull',['../structlspg__nextshot__struct.html#a79f48c452a4aca8506bae22f897c7441',1,'lspg_nextshot_struct']]],
+  ['subac',['subac',['../kvredis_8c.html#a4d65536cb1094fb5deda0a852b181232',1,'subac():&#160;kvredis.c'],['../lsredis_8c.html#a4d65536cb1094fb5deda0a852b181232',1,'subac():&#160;lsredis.c']]],
+  ['subfd',['subfd',['../kvredis_8c.html#a0cd3bdc79d035eb1595371c845d14367',1,'subfd():&#160;kvredis.c'],['../lsredis_8c.html#a0cd3bdc79d035eb1595371c845d14367',1,'subfd():&#160;lsredis.c']]]
 ];

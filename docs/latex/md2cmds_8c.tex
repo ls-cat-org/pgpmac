@@ -97,7 +97,7 @@ Move centering and alignment tables as requested T\-O\-D\-O\-: Implement.
 
 
 
-Definition at line 730 of file md2cmds.\-c.
+Definition at line 737 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -117,7 +117,7 @@ Collect some data.
 
 
 
-Definition at line 418 of file md2cmds.\-c.
+Definition at line 422 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -129,7 +129,10 @@ Definition at line 418 of file md2cmds.\-c.
   \textcolor{keywordtype}{double} p175;  \textcolor{comment}{// acceleration time (msec)}
   \textcolor{keywordtype}{double} p180;  \textcolor{comment}{// exposure time (msec)}
   \textcolor{keywordtype}{int} center\_request;
+  \textcolor{keywordtype}{double} u2c;
 
+
+  u2c = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( \hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega}->\hyperlink{structlspmac__motor__struct_a8838915ebb6f9989944117c8197d5e86}{u2c});
 
   \textcolor{comment}{//}
   \textcolor{comment}{// reset shutter has opened flag}
@@ -151,7 +154,7 @@ Definition at line 418 of file md2cmds.\-c.
     \}
 
     skey = \hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_nextshot}.\hyperlink{structlspg__nextshot__struct_af64a4e3f17752b5f1f05fb15d6f48382}{skey};
-    \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"SELECT px.shots\_set\_state(%lld,
+    \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"SELECT px.shots\_set\_state(%lld,
        'Preparing')"}, skey);
 
     center\_request = 0;
@@ -206,11 +209,11 @@ Definition at line 418 of file md2cmds.\-c.
     \textcolor{comment}{// Calculate the parameters we'll need to run the scan}
     \textcolor{comment}{//}
     p180 = \hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_nextshot}.\hyperlink{structlspg__nextshot__struct_a063e4c99201a763c2eb048acfc855efa}{dsexp} * 1000.0;
-    p170 = \hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega}->\hyperlink{structlspmac__motor__struct_a61415627ab2dc0f438b190d117e532db}{u2c} * \hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_nextshot}.\hyperlink{structlspg__nextshot__struct_a8dc11eaa094d59f61642c4abc226918f}{sstart};
-    \textcolor{comment}{//    p171 = omega->u2c * ( lspg\_nextshot.sstart + lspg\_nextshot.dsowidth);}
-    p171 = \hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega}->\hyperlink{structlspmac__motor__struct_a61415627ab2dc0f438b190d117e532db}{u2c} * \hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_nextshot}.\hyperlink{structlspg__nextshot__struct_ad5a8f568a04aa6a13767933062b28f19}{dsowidth};
-    p173 = fabs(p180) < 1.e-4 ? 0.0 : \hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega}->\hyperlink{structlspmac__motor__struct_a61415627ab2dc0f438b190d117e532db}{u2c} * \hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_nextshot}
-      .\hyperlink{structlspg__nextshot__struct_ad5a8f568a04aa6a13767933062b28f19}{dsowidth} / p180;
+    p170 = u2c * \hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_nextshot}.\hyperlink{structlspg__nextshot__struct_a8dc11eaa094d59f61642c4abc226918f}{sstart};
+    \textcolor{comment}{//    p171 = u2c * ( lspg\_nextshot.sstart + lspg\_nextshot.dsowidth);}
+    p171 = u2c * \hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_nextshot}.\hyperlink{structlspg__nextshot__struct_ad5a8f568a04aa6a13767933062b28f19}{dsowidth};
+    p173 = fabs(p180) < 1.e-4 ? 0.0 : u2c * \hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_nextshot}.\hyperlink{structlspg__nextshot__struct_ad5a8f568a04aa6a13767933062b28f19}{dsowidth}
+       / p180;
     p175 = p173/\hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega}->\hyperlink{structlspmac__motor__struct_afec8dc1d4b97ba9c1d6e4f7a088342e4}{max\_accel};
 
 
@@ -273,9 +276,9 @@ Definition at line 418 of file md2cmds.\-c.
     pthread\_mutex\_unlock( &\hyperlink{lspmac_8c_a1b78a13c654409333569815e1c109d38}{lspmac\_shutter\_mutex});
 
 
-    \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"SELECT px.unlock\_diffractometer()"});
+    \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"SELECT px.unlock\_diffractometer()"});
 
-    \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"SELECT px.shots\_set\_state(%lld,
+    \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"SELECT px.shots\_set\_state(%lld,
        'Writing')"}, skey);
 
     \textcolor{comment}{//}
@@ -332,7 +335,7 @@ Initialize the md2cmds module.
 
 
 
-Definition at line 771 of file md2cmds.\-c.
+Definition at line 778 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -361,7 +364,7 @@ Track how many motors are moving.
 
 
 
-Definition at line 390 of file md2cmds.\-c.
+Definition at line 394 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -405,7 +408,7 @@ Now that we are done with the 360 rotation lets rehome right quick.
 
 
 
-Definition at line 709 of file md2cmds.\-c.
+Definition at line 716 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -551,7 +554,7 @@ Move the centering and alignment tables.
 \end{DoxyParams}
 
 
-Definition at line 326 of file md2cmds.\-c.
+Definition at line 330 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -692,7 +695,7 @@ Wait for the centering and alignment tables to stop moving.
 
 
 
-Definition at line 354 of file md2cmds.\-c.
+Definition at line 358 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -914,8 +917,12 @@ Definition at line 313 of file md2cmds.\-c.
 \begin{DoxyCode}
                                                             \{
   \textcolor{keywordtype}{double} rtn;
+  \textcolor{keywordtype}{double} u2c;
+
   pthread\_mutex\_lock( &(mp->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex}));
-  rtn = mp->\hyperlink{structlspmac__motor__struct_a61415627ab2dc0f438b190d117e532db}{u2c}   * pos;
+  u2c = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( mp->\hyperlink{structlspmac__motor__struct_a8838915ebb6f9989944117c8197d5e86}{u2c});
+
+  rtn = u2c   * pos;
   mp->\hyperlink{structlspmac__motor__struct_a68c471836f52707fa8582f7860cf500f}{motion\_seen} = 0;
   mp->\hyperlink{structlspmac__motor__struct_ab7bd8bff48953ce05c758598d75877ac}{not\_done}    = 1;
   pthread\_mutex\_unlock( &(mp->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex}));
@@ -936,7 +943,7 @@ Spin 360 and make a video (recenter first, maybe)
 
 $<$ velocity (cnts/msec) for omega 
 
-Definition at line 594 of file md2cmds.\-c.
+Definition at line 601 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1038,7 +1045,7 @@ Definition at line 594 of file md2cmds.\-c.
   ax = \hyperlink{lspmac_8c_acc46bdddee59bd8c5ad662b3fd445e9f}{lspmac\_getPosition}( \hyperlink{lspmac_8c_a6cb218bdccfe5a93471c161f15a15cab}{alignx});
   ay = \hyperlink{lspmac_8c_acc46bdddee59bd8c5ad662b3fd445e9f}{lspmac\_getPosition}( \hyperlink{lspmac_8c_a737c246c3948e644a18d191a931e1acd}{aligny});
   az = \hyperlink{lspmac_8c_acc46bdddee59bd8c5ad662b3fd445e9f}{lspmac\_getPosition}( \hyperlink{lspmac_8c_ae7642b1da0f7c7f8448104c691d40a12}{alignz});
-  \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"SELECT px.applycenter( %.3f, %.3f,
+  \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"SELECT px.applycenter( %.3f, %.3f,
        %.3f, %.3f, %.3f, %.3f, %.3f)"}, cx, cy, ax, ay, az, \hyperlink{lspmac_8c_acc46bdddee59bd8c5ad662b3fd445e9f}{lspmac\_getPosition}
       (\hyperlink{lspmac_8c_a0be79ccb7ebf3a665248fd856112b9fd}{kappa}), \hyperlink{lspmac_8c_acc46bdddee59bd8c5ad662b3fd445e9f}{lspmac\_getPosition}( \hyperlink{lspmac_8c_ac8070dc568ad974a3db42b51eca828cc}{phi}));
 
@@ -1065,7 +1072,7 @@ Tell the database about the time we went through omega=zero.
 
 This should trigger the video feed server to starting making a movie. 
 
-Definition at line 692 of file md2cmds.\-c.
+Definition at line 699 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1078,7 +1085,7 @@ Definition at line 692 of file md2cmds.\-c.
   \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_rotate\_cb: Here I am"});
 
   usecs = \hyperlink{lspmac_8c_ae6631a094accc469661805bdf80fc6d8}{omega\_zero\_time}.tv\_nsec / 1000;
-  \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"SELECT px.trigcam('%d-%d-%d
+  \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"SELECT px.trigcam('%d-%d-%d
        %d:%d:%d.%06d', %d, 0.0, 90.0)"},
                    t.tm\_year+1900, t.tm\_mon+1, t.tm\_mday, t.tm\_hour, t.tm\_min, 
       t.tm\_sec, usecs,
@@ -1099,7 +1106,7 @@ Start up the thread.
 
 
 
-Definition at line 785 of file md2cmds.\-c.
+Definition at line 792 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1147,7 +1154,7 @@ Fix up xscale and yscale when zoom changes.
 
 
 
-Definition at line 719 of file md2cmds.\-c.
+Definition at line 726 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1155,7 +1162,7 @@ Definition at line 719 of file md2cmds.\-c.
   \textcolor{keywordtype}{int} mag;
 
   mag = \hyperlink{lspmac_8c_acc46bdddee59bd8c5ad662b3fd445e9f}{lspmac\_getPosition}( \hyperlink{lspmac_8c_ad53a42cfaa04eff0336a44c8c9986333}{zoom});
-  \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"SELECT pmac.md2\_set\_scales( %d)"}, mag)
+  \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"SELECT pmac.md2\_set\_scales( %d)"}, mag)
       ;
 \}
 \end{DoxyCode}
@@ -1199,7 +1206,7 @@ Our worker thread.
 \end{DoxyParams}
 
 
-Definition at line 737 of file md2cmds.\-c.
+Definition at line 744 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}

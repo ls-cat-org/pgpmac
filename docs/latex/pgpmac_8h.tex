@@ -26,9 +26,13 @@ Headers for the entire pgpmac project.
 {\ttfamily \#include $<$time.\-h$>$}\\*
 {\ttfamily \#include $<$getopt.\-h$>$}\\*
 {\ttfamily \#include $<$regex.\-h$>$}\\*
+{\ttfamily \#include $<$hiredis/hiredis.\-h$>$}\\*
+{\ttfamily \#include $<$hiredis/async.\-h$>$}\\*
 \subsection*{Data Structures}
 \begin{DoxyCompactItemize}
 \item 
+struct \hyperlink{structlsredis__obj__struct}{lsredis\-\_\-obj\-\_\-struct}
+\begin{DoxyCompactList}\small\item\em Redis Object Basic object whose value is sychronized with our redis db. \end{DoxyCompactList}\item 
 struct \hyperlink{structtagEthernetCmd}{tag\-Ethernet\-Cmd}
 \begin{DoxyCompactList}\small\item\em P\-M\-A\-C ethernet packet definition. \end{DoxyCompactList}\item 
 struct \hyperlink{structlspmac__cmd__queue__struct}{lspmac\-\_\-cmd\-\_\-queue\-\_\-struct}
@@ -61,6 +65,8 @@ struct \hyperlink{structlspg__nextshot__struct}{lspg\-\_\-nextshot\-\_\-struct}
 \subsection*{Typedefs}
 \begin{DoxyCompactItemize}
 \item 
+typedef struct \hyperlink{structlsredis__obj__struct}{lsredis\-\_\-obj\-\_\-struct} \hyperlink{pgpmac_8h_ad449de06d02791adf2498d2a1e1f909c}{lsredis\-\_\-obj\-\_\-t}
+\begin{DoxyCompactList}\small\item\em Redis Object Basic object whose value is sychronized with our redis db. \end{DoxyCompactList}\item 
 typedef struct \hyperlink{structtagEthernetCmd}{tag\-Ethernet\-Cmd} \hyperlink{pgpmac_8h_a2d163436571135a457f4a4e2fbd09633}{pmac\-\_\-cmd\-\_\-t}
 \begin{DoxyCompactList}\small\item\em P\-M\-A\-C ethernet packet definition. \end{DoxyCompactList}\item 
 typedef struct \\*
@@ -134,11 +140,17 @@ void \hyperlink{pgpmac_8h_a8cd37a8fb0f061456456a5d79bdd5189}{lstimer\-\_\-init} 
 void \hyperlink{pgpmac_8h_a0b918acc1a4bf737cb62b5a70f8b553a}{lstimer\-\_\-run} ()
 \begin{DoxyCompactList}\small\item\em Start up our thread. \end{DoxyCompactList}\item 
 void \hyperlink{pgpmac_8h_af712dd2e9419026eff2762ba062eeaf1}{lstimer\-\_\-add\-\_\-timer} (char $\ast$, int, unsigned long int, unsigned long int)
-\item 
+\begin{DoxyCompactList}\small\item\em Create a timer. \end{DoxyCompactList}\item 
 void \hyperlink{pgpmac_8h_ac1a924903bc31ef067c08e5152e1b2eb}{lskvs\-\_\-regcomp} (regex\-\_\-t $\ast$preg, int cflags, char $\ast$fmt,...)
 \begin{DoxyCompactList}\small\item\em Utility wrapper for regcomp providing printf style formating. \end{DoxyCompactList}\item 
 double \hyperlink{pgpmac_8h_ad676b373a9a8a2938578c0decf9bd04b}{lskvs\-\_\-find\-\_\-preset\-\_\-position} (\hyperlink{pgpmac_8h_aa5067fcbaabc5bbfdc52492495518c96}{lspmac\-\_\-motor\-\_\-t} $\ast$mp, char $\ast$name, int $\ast$err)
-\begin{DoxyCompactList}\small\item\em find a postion for a given preset name \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{DoxyCompactList}\small\item\em find a postion for a given preset name \end{DoxyCompactList}\item 
+void \hyperlink{pgpmac_8h_aef0f12fda57e476a50b14acdc9f30b58}{lsredis\-\_\-init} (char $\ast$pub, char $\ast$re, char $\ast$head)
+\begin{DoxyCompactList}\small\item\em Initialize this module, that is, set up the connections. \end{DoxyCompactList}\item 
+void \hyperlink{pgpmac_8h_ad438e4368d86bbe15a93dcf86deaded5}{lsredis\-\_\-run} ()
+\item 
+\hyperlink{pgpmac_8h_ad449de06d02791adf2498d2a1e1f909c}{lsredis\-\_\-obj\-\_\-t} $\ast$ \hyperlink{pgpmac_8h_a6d9f550b9ba36acd237925164abe3ffc}{lsredis\-\_\-get\-\_\-obj} (char $\ast$,...)
+\end{DoxyCompactItemize}
 \subsection*{Variables}
 \begin{DoxyCompactItemize}
 \item 
@@ -276,7 +288,7 @@ Number of status box rows.
 
 
 
-Definition at line 30 of file pgpmac.\-h.
+Definition at line 52 of file pgpmac.\-h.
 
 \hypertarget{pgpmac_8h_a1f96754f00a1f82414cebc66f75ded78}{\index{pgpmac.\-h@{pgpmac.\-h}!L\-S\-\_\-\-D\-I\-S\-P\-L\-A\-Y\-\_\-\-W\-I\-N\-D\-O\-W\-\_\-\-W\-I\-D\-T\-H@{L\-S\-\_\-\-D\-I\-S\-P\-L\-A\-Y\-\_\-\-W\-I\-N\-D\-O\-W\-\_\-\-W\-I\-D\-T\-H}}
 \index{L\-S\-\_\-\-D\-I\-S\-P\-L\-A\-Y\-\_\-\-W\-I\-N\-D\-O\-W\-\_\-\-W\-I\-D\-T\-H@{L\-S\-\_\-\-D\-I\-S\-P\-L\-A\-Y\-\_\-\-W\-I\-N\-D\-O\-W\-\_\-\-W\-I\-D\-T\-H}!pgpmac.h@{pgpmac.\-h}}
@@ -287,7 +299,7 @@ Number of status box columns.
 
 
 
-Definition at line 34 of file pgpmac.\-h.
+Definition at line 56 of file pgpmac.\-h.
 
 \hypertarget{pgpmac_8h_a3a8ef1b4b5994d6dd12bf74454ea891b}{\index{pgpmac.\-h@{pgpmac.\-h}!L\-S\-\_\-\-P\-G\-\_\-\-Q\-U\-E\-R\-Y\-\_\-\-S\-T\-R\-I\-N\-G\-\_\-\-L\-E\-N\-G\-T\-H@{L\-S\-\_\-\-P\-G\-\_\-\-Q\-U\-E\-R\-Y\-\_\-\-S\-T\-R\-I\-N\-G\-\_\-\-L\-E\-N\-G\-T\-H}}
 \index{L\-S\-\_\-\-P\-G\-\_\-\-Q\-U\-E\-R\-Y\-\_\-\-S\-T\-R\-I\-N\-G\-\_\-\-L\-E\-N\-G\-T\-H@{L\-S\-\_\-\-P\-G\-\_\-\-Q\-U\-E\-R\-Y\-\_\-\-S\-T\-R\-I\-N\-G\-\_\-\-L\-E\-N\-G\-T\-H}!pgpmac.h@{pgpmac.\-h}}
@@ -298,7 +310,7 @@ Fixed length postgresql query strings. Queries should all be function calls so t
 
 
 
-Definition at line 37 of file pgpmac.\-h.
+Definition at line 59 of file pgpmac.\-h.
 
 \hypertarget{pgpmac_8h_ab61d790b5572f116e091babfda53627b}{\index{pgpmac.\-h@{pgpmac.\-h}!L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-E\-V\-E\-N\-T\-\_\-\-L\-E\-N\-G\-T\-H@{L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-E\-V\-E\-N\-T\-\_\-\-L\-E\-N\-G\-T\-H}}
 \index{L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-E\-V\-E\-N\-T\-\_\-\-L\-E\-N\-G\-T\-H@{L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-E\-V\-E\-N\-T\-\_\-\-L\-E\-N\-G\-T\-H}!pgpmac.h@{pgpmac.\-h}}
@@ -309,14 +321,14 @@ Fixed length for event names\-: simplifies string handling.
 
 
 
-Definition at line 40 of file pgpmac.\-h.
+Definition at line 62 of file pgpmac.\-h.
 
 \hypertarget{pgpmac_8h_a30f0f377b0f0695284145d420ea51846}{\index{pgpmac.\-h@{pgpmac.\-h}!M\-D2\-C\-M\-D\-S\-\_\-\-C\-M\-D\-\_\-\-L\-E\-N\-G\-T\-H@{M\-D2\-C\-M\-D\-S\-\_\-\-C\-M\-D\-\_\-\-L\-E\-N\-G\-T\-H}}
 \index{M\-D2\-C\-M\-D\-S\-\_\-\-C\-M\-D\-\_\-\-L\-E\-N\-G\-T\-H@{M\-D2\-C\-M\-D\-S\-\_\-\-C\-M\-D\-\_\-\-L\-E\-N\-G\-T\-H}!pgpmac.h@{pgpmac.\-h}}
 \subsubsection[{M\-D2\-C\-M\-D\-S\-\_\-\-C\-M\-D\-\_\-\-L\-E\-N\-G\-T\-H}]{\setlength{\rightskip}{0pt plus 5cm}\#define M\-D2\-C\-M\-D\-S\-\_\-\-C\-M\-D\-\_\-\-L\-E\-N\-G\-T\-H~32}}\label{pgpmac_8h_a30f0f377b0f0695284145d420ea51846}
 
 
-Definition at line 385 of file pgpmac.\-h.
+Definition at line 407 of file pgpmac.\-h.
 
 
 
@@ -363,7 +375,14 @@ Storage for binary inputs.
 
 Motor information. 
 
-A catchall for motors and motor like objects. Not all members are used by all objects. \hypertarget{pgpmac_8h_a99c275e32ad897dca34d196b91f038cb}{\index{pgpmac.\-h@{pgpmac.\-h}!pmac\-\_\-cmd\-\_\-queue\-\_\-t@{pmac\-\_\-cmd\-\_\-queue\-\_\-t}}
+A catchall for motors and motor like objects. Not all members are used by all objects. \hypertarget{pgpmac_8h_ad449de06d02791adf2498d2a1e1f909c}{\index{pgpmac.\-h@{pgpmac.\-h}!lsredis\-\_\-obj\-\_\-t@{lsredis\-\_\-obj\-\_\-t}}
+\index{lsredis\-\_\-obj\-\_\-t@{lsredis\-\_\-obj\-\_\-t}!pgpmac.h@{pgpmac.\-h}}
+\subsubsection[{lsredis\-\_\-obj\-\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf lsredis\-\_\-obj\-\_\-struct}  {\bf lsredis\-\_\-obj\-\_\-t}}}\label{pgpmac_8h_ad449de06d02791adf2498d2a1e1f909c}
+
+
+Redis Object Basic object whose value is sychronized with our redis db. 
+
+\hypertarget{pgpmac_8h_a99c275e32ad897dca34d196b91f038cb}{\index{pgpmac.\-h@{pgpmac.\-h}!pmac\-\_\-cmd\-\_\-queue\-\_\-t@{pmac\-\_\-cmd\-\_\-queue\-\_\-t}}
 \index{pmac\-\_\-cmd\-\_\-queue\-\_\-t@{pmac\-\_\-cmd\-\_\-queue\-\_\-t}!pgpmac.h@{pgpmac.\-h}}
 \subsubsection[{pmac\-\_\-cmd\-\_\-queue\-\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf lspmac\-\_\-cmd\-\_\-queue\-\_\-struct}  {\bf pmac\-\_\-cmd\-\_\-queue\-\_\-t}}}\label{pgpmac_8h_a99c275e32ad897dca34d196b91f038cb}
 
@@ -401,12 +420,17 @@ Add a callback routine to listen for a specific event.
 \end{DoxyParams}
 
 
-Definition at line 76 of file lsevents.\-c.
+Definition at line 77 of file lsevents.\-c.
 
 
 \begin{DoxyCode}
                                                              \{
   \hyperlink{structlsevents__listener__struct}{lsevents\_listener\_t} *\textcolor{keyword}{new};
+  \textcolor{keywordtype}{int} err;
+  \textcolor{keywordtype}{char} *errbuf;
+  \textcolor{keywordtype}{int} nerrbuf;
+
+
 
   \textcolor{keyword}{new} = calloc( 1, \textcolor{keyword}{sizeof}( \hyperlink{structlsevents__listener__struct}{lsevents\_listener\_t}));
   \textcolor{keywordflow}{if}( \textcolor{keyword}{new} == NULL) \{
@@ -415,8 +439,24 @@ Definition at line 76 of file lsevents.\-c.
     exit( -1);
   \}
 
-  strncpy( new->event, event, \hyperlink{pgpmac_8h_ab61d790b5572f116e091babfda53627b}{LSEVENTS\_EVENT\_LENGTH});
-  \textcolor{keyword}{new}->event[\hyperlink{pgpmac_8h_ab61d790b5572f116e091babfda53627b}{LSEVENTS\_EVENT\_LENGTH}-1] = 0;
+  err = regcomp( &new->re, event, REG\_EXTENDED | REG\_NOSUB);
+  \textcolor{keywordflow}{if}( err != 0) \{
+    nerrbuf = regerror( err, &new->re, NULL, 0);
+    errbuf = calloc( nerrbuf, \textcolor{keyword}{sizeof}( \textcolor{keywordtype}{char}));
+    \textcolor{keywordflow}{if}( errbuf == NULL) \{
+      \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lsevents\_add\_listener: out
+       of memory (re)"});
+      exit( -1);
+    \}
+    regerror( err, &new->re, errbuf, nerrbuf);
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lsevents\_add\_listener: %s"}, 
+      errbuf);
+    free( errbuf);
+    free( \textcolor{keyword}{new});
+    \textcolor{keywordflow}{return};
+  \}
+
+  \textcolor{keyword}{new}->raw\_regexp = strdup( event);
   \textcolor{keyword}{new}->cb   = cb;
 
   pthread\_mutex\_lock( &\hyperlink{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{lsevents\_listener\_mutex});
@@ -442,7 +482,7 @@ Initialize this module.
 
 
 
-Definition at line 187 of file lsevents.\-c.
+Definition at line 206 of file lsevents.\-c.
 
 
 \begin{DoxyCode}
@@ -473,7 +513,7 @@ Remove a listener previously added with lsevents\-\_\-add\-\_\-listener.
 \end{DoxyParams}
 
 
-Definition at line 102 of file lsevents.\-c.
+Definition at line 122 of file lsevents.\-c.
 
 
 \begin{DoxyCode}
@@ -489,7 +529,7 @@ Definition at line 102 of file lsevents.\-c.
   last = NULL;
   \textcolor{keywordflow}{for}( current = \hyperlink{lsevents_8c_a300dc3edfa8546d75e9f8bab8fa06c5c}{lsevents\_listeners\_p}; current != NULL; 
       current = current->\hyperlink{structlsevents__listener__struct_a8aed9196b0deab84e018b96c0cc59305}{next}) \{
-    \textcolor{keywordflow}{if}( strcmp( last->\hyperlink{structlsevents__listener__struct_a270117dccadeda0164592c753dae15a1}{event}, event) == 0 && last->\hyperlink{structlsevents__listener__struct_a005906c1c9f0647e6ed1fb4592d8c5d0}{cb} == cb) \{
+    \textcolor{keywordflow}{if}( strcmp( last->\hyperlink{structlsevents__listener__struct_afffe7a6889fda47a3a7a91beefed9168}{raw\_regexp}, event) == 0 && last->\hyperlink{structlsevents__listener__struct_a005906c1c9f0647e6ed1fb4592d8c5d0}{cb} == cb) \{
       \textcolor{keywordflow}{if}( last == NULL) \{
         \hyperlink{lsevents_8c_a300dc3edfa8546d75e9f8bab8fa06c5c}{lsevents\_listeners\_p} = current->\hyperlink{structlsevents__listener__struct_a8aed9196b0deab84e018b96c0cc59305}{next};
       \} \textcolor{keywordflow}{else} \{
@@ -502,13 +542,10 @@ Definition at line 102 of file lsevents.\-c.
 
   \textcolor{comment}{//}
   \textcolor{comment}{// Now remove it}
-  \textcolor{comment}{// TODO: use saner memory management where we allocate many listeners at a
-       time}
-  \textcolor{comment}{// as an array and then just flag the ones that are used}
   \textcolor{comment}{//}
   \textcolor{keywordflow}{if}( current != NULL) \{
-    \textcolor{keywordflow}{if}( current->\hyperlink{structlsevents__listener__struct_a270117dccadeda0164592c753dae15a1}{event} != NULL)
-      free( current->\hyperlink{structlsevents__listener__struct_a270117dccadeda0164592c753dae15a1}{event});
+    \textcolor{keywordflow}{if}( current->\hyperlink{structlsevents__listener__struct_afffe7a6889fda47a3a7a91beefed9168}{raw\_regexp} != NULL)
+      free( current->\hyperlink{structlsevents__listener__struct_afffe7a6889fda47a3a7a91beefed9168}{raw\_regexp});
     free(current);
   \}
 \}
@@ -526,7 +563,7 @@ Start up the thread and get out of the way.
 
 
 
-Definition at line 195 of file lsevents.\-c.
+Definition at line 214 of file lsevents.\-c.
 
 
 \begin{DoxyCode}
@@ -556,7 +593,7 @@ Call the callback routines for the given event.
 \end{DoxyParams}
 
 
-Definition at line 44 of file lsevents.\-c.
+Definition at line 45 of file lsevents.\-c.
 
 
 \begin{DoxyCode}
@@ -791,7 +828,7 @@ Initiallize the lspg module.
 
 
 
-Definition at line 1664 of file lspg.\-c.
+Definition at line 1666 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -818,7 +855,7 @@ Start 'er runnin'.
 
 
 
-Definition at line 1676 of file lspg.\-c.
+Definition at line 1678 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -865,7 +902,7 @@ Convinence function to call seq run prep.
 \end{DoxyParams}
 
 
-Definition at line 984 of file lspg.\-c.
+Definition at line 986 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -901,7 +938,7 @@ get the motor position (with locking)
 \end{DoxyParams}
 
 
-Definition at line 1227 of file lspmac.\-c.
+Definition at line 1230 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -927,7 +964,7 @@ Initialize this module.
 
 
 
-Definition at line 2557 of file lspmac.\-c.
+Definition at line 2578 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1098,7 +1135,7 @@ Use jog to move motor to requested position.
 
 
 
-Definition at line 2289 of file lspmac.\-c.
+Definition at line 2308 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1123,7 +1160,7 @@ move using a preset value
 
 
 
-Definition at line 2258 of file lspmac.\-c.
+Definition at line 2277 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1165,7 +1202,7 @@ Use coordinate system motion program, if available, to move motor to requested p
 
 
 
-Definition at line 2279 of file lspmac.\-c.
+Definition at line 2298 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1188,7 +1225,7 @@ Start up the lspmac thread.
 
 
 
-Definition at line 2771 of file lspmac.\-c.
+Definition at line 2792 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1250,31 +1287,189 @@ Definition at line 957 of file lspmac.\-c.
       \hyperlink{lspmac_8c_ac89b615b3ecb738c902c3c090d7c1dc3}{lspmac\_GetShortReplyCB}, 0);
 \}
 \end{DoxyCode}
+\hypertarget{pgpmac_8h_a6d9f550b9ba36acd237925164abe3ffc}{\index{pgpmac.\-h@{pgpmac.\-h}!lsredis\-\_\-get\-\_\-obj@{lsredis\-\_\-get\-\_\-obj}}
+\index{lsredis\-\_\-get\-\_\-obj@{lsredis\-\_\-get\-\_\-obj}!pgpmac.h@{pgpmac.\-h}}
+\subsubsection[{lsredis\-\_\-get\-\_\-obj}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lsredis\-\_\-obj\-\_\-t}$\ast$ lsredis\-\_\-get\-\_\-obj (
+\begin{DoxyParamCaption}
+\item[{char $\ast$}]{, }
+\item[{}]{...}
+\end{DoxyParamCaption}
+)}}\label{pgpmac_8h_a6d9f550b9ba36acd237925164abe3ffc}
+
+
+Definition at line 297 of file lsredis.\-c.
+
+
+\begin{DoxyCode}
+                                                \{
+  \hyperlink{structlsredis__obj__struct}{lsredis\_obj\_t} *rtn;
+  va\_list arg\_ptr;
+  \textcolor{keywordtype}{char} k[512];
+  \textcolor{keywordtype}{char} *kp;
+  \textcolor{keywordtype}{int} nkp;
+
+  va\_start( arg\_ptr, fmt);
+  vsnprintf( k, \textcolor{keyword}{sizeof}(k)-1, fmt, arg\_ptr);
+  k[\textcolor{keyword}{sizeof}(k)-1] = 0;
+  va\_end( arg\_ptr);
+
+  nkp = strlen(k) + strlen( \hyperlink{lsredis_8c_acdca9095c7a3288d7febe9f4c440a6e9}{lsredis\_head}) + 16;             \textcolor{comment}{// 16
+       is overkill, I know.  get over it.}
+  kp = calloc( nkp, \textcolor{keyword}{sizeof}( \textcolor{keywordtype}{char}));
+  \textcolor{keywordflow}{if}( kp == NULL) \{
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lsredis\_get\_obj: Out of memory
+      "});
+    exit( -1);
+  \}
+  
+  snprintf( kp, nkp-1, \textcolor{stringliteral}{"%s.%s"}, \hyperlink{lsredis_8c_acdca9095c7a3288d7febe9f4c440a6e9}{lsredis\_head}, k);
+  kp[nkp-1] = 0;
+  rtn = \hyperlink{lsredis_8c_ac3fb8589e280bfa18ecbca6619fea637}{\_lsredis\_get\_obj}( kp);
+  free( kp);
+  \textcolor{keywordflow}{return} rtn;
+\}
+\end{DoxyCode}
+\hypertarget{pgpmac_8h_aef0f12fda57e476a50b14acdc9f30b58}{\index{pgpmac.\-h@{pgpmac.\-h}!lsredis\-\_\-init@{lsredis\-\_\-init}}
+\index{lsredis\-\_\-init@{lsredis\-\_\-init}!pgpmac.h@{pgpmac.\-h}}
+\subsubsection[{lsredis\-\_\-init}]{\setlength{\rightskip}{0pt plus 5cm}void lsredis\-\_\-init (
+\begin{DoxyParamCaption}
+\item[{char $\ast$}]{pub, }
+\item[{char $\ast$}]{re, }
+\item[{char $\ast$}]{head}
+\end{DoxyParamCaption}
+)}}\label{pgpmac_8h_aef0f12fda57e476a50b14acdc9f30b58}
+
+
+Initialize this module, that is, set up the connections. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em pub} & Publish under this (unique) name \\
+\hline
+{\em re} & Regular expression to select keys we want to mirror \\
+\hline
+{\em head} & Prepend this (+ a dot) to the beginning of requested objects \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 601 of file lsredis.\-c.
+
+
+\begin{DoxyCode}
+                                                    \{
+
+  \hyperlink{lsredis_8c_acdca9095c7a3288d7febe9f4c440a6e9}{lsredis\_head} = strdup( head);
+  \hyperlink{lsredis_8c_a0c81dce2e75584eeb14ab7d9dd86c72e}{lsredis\_publisher} = strdup( pub);
+
+  pthread\_mutex\_init( &\hyperlink{lsredis_8c_ab3ace99b8775e2366da0cfe053b68607}{lsredis\_objs\_mutex}, NULL);
+  pthread\_mutex\_init( &\hyperlink{lsredis_8c_a4a3806596ef0d2baac37257033008ff2}{lsredis\_ro\_mutex}, NULL);
+  pthread\_mutex\_init( &\hyperlink{lsredis_8c_ad650f89eb0d4fe24a32ea352ac404b27}{lsredis\_wr\_mutex}, NULL);
+
+  \hyperlink{lsredis_8c_a4d65536cb1094fb5deda0a852b181232}{subac} = redisAsyncConnect(\textcolor{stringliteral}{"127.0.0.1"}, 6379);
+  \textcolor{keywordflow}{if}( \hyperlink{lsredis_8c_a4d65536cb1094fb5deda0a852b181232}{subac}->err) \{
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"Error: %s"}, \hyperlink{lsredis_8c_a4d65536cb1094fb5deda0a852b181232}{subac}->errstr
+      );
+  \}
+
+  \hyperlink{lsredis_8c_a0cd3bdc79d035eb1595371c845d14367}{subfd}.fd           = \hyperlink{lsredis_8c_a4d65536cb1094fb5deda0a852b181232}{subac}->c.fd;
+  \hyperlink{lsredis_8c_a0cd3bdc79d035eb1595371c845d14367}{subfd}.events       = 0;
+  \hyperlink{lsredis_8c_a4d65536cb1094fb5deda0a852b181232}{subac}->ev.data     = &\hyperlink{lsredis_8c_a0cd3bdc79d035eb1595371c845d14367}{subfd};
+  \hyperlink{lsredis_8c_a4d65536cb1094fb5deda0a852b181232}{subac}->ev.addRead  = \hyperlink{lsredis_8c_adee3bccecc86dd531ac5f89491632439}{lsredis\_addRead};
+  \hyperlink{lsredis_8c_a4d65536cb1094fb5deda0a852b181232}{subac}->ev.delRead  = \hyperlink{lsredis_8c_a2e1f2258b3cc864ce3eef4eda556e2a6}{lsredis\_delRead};
+  \hyperlink{lsredis_8c_a4d65536cb1094fb5deda0a852b181232}{subac}->ev.addWrite = \hyperlink{lsredis_8c_a3cb6eda5c8ae80019e7a1c078940e9e9}{lsredis\_addWrite};
+  \hyperlink{lsredis_8c_a4d65536cb1094fb5deda0a852b181232}{subac}->ev.delWrite = \hyperlink{lsredis_8c_a04f0119cfa1156dc34d35b237358822a}{lsredis\_delWrite};
+  \hyperlink{lsredis_8c_a4d65536cb1094fb5deda0a852b181232}{subac}->ev.cleanup  = \hyperlink{lsredis_8c_a45f946a5262c23b362be17c2cb0310c2}{lsredis\_cleanup};
+
+  \hyperlink{lsredis_8c_afc92245910ec04f9a341c092def45564}{roac} = redisAsyncConnect(\textcolor{stringliteral}{"127.0.0.1"}, 6379);
+  \textcolor{keywordflow}{if}( \hyperlink{lsredis_8c_afc92245910ec04f9a341c092def45564}{roac}->err) \{
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"Error: %s"}, \hyperlink{lsredis_8c_afc92245910ec04f9a341c092def45564}{roac}->errstr);
+  \}
+
+  \hyperlink{lsredis_8c_add819e43a356d0575ec64c346c6fed57}{rofd}.fd           = \hyperlink{lsredis_8c_afc92245910ec04f9a341c092def45564}{roac}->c.fd;
+  \hyperlink{lsredis_8c_add819e43a356d0575ec64c346c6fed57}{rofd}.events       = 0;
+  \hyperlink{lsredis_8c_afc92245910ec04f9a341c092def45564}{roac}->ev.data     = &\hyperlink{lsredis_8c_add819e43a356d0575ec64c346c6fed57}{rofd};
+  \hyperlink{lsredis_8c_afc92245910ec04f9a341c092def45564}{roac}->ev.addRead  = \hyperlink{lsredis_8c_adee3bccecc86dd531ac5f89491632439}{lsredis\_addRead};
+  \hyperlink{lsredis_8c_afc92245910ec04f9a341c092def45564}{roac}->ev.delRead  = \hyperlink{lsredis_8c_a2e1f2258b3cc864ce3eef4eda556e2a6}{lsredis\_delRead};
+  \hyperlink{lsredis_8c_afc92245910ec04f9a341c092def45564}{roac}->ev.addWrite = \hyperlink{lsredis_8c_a3cb6eda5c8ae80019e7a1c078940e9e9}{lsredis\_addWrite};
+  \hyperlink{lsredis_8c_afc92245910ec04f9a341c092def45564}{roac}->ev.delWrite = \hyperlink{lsredis_8c_a04f0119cfa1156dc34d35b237358822a}{lsredis\_delWrite};
+  \hyperlink{lsredis_8c_afc92245910ec04f9a341c092def45564}{roac}->ev.cleanup  = \hyperlink{lsredis_8c_a45f946a5262c23b362be17c2cb0310c2}{lsredis\_cleanup};
+
+  \hyperlink{lsredis_8c_a7ea13129ad9e41a0ed2fc19fa75ffb0d}{wrac} = redisAsyncConnect(\textcolor{stringliteral}{"10.1.0.3"}, 6379);
+  \textcolor{keywordflow}{if}( \hyperlink{lsredis_8c_a7ea13129ad9e41a0ed2fc19fa75ffb0d}{wrac}->err) \{
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"Error: %s"}, \hyperlink{lsredis_8c_a7ea13129ad9e41a0ed2fc19fa75ffb0d}{wrac}->errstr);
+  \}
+
+  \hyperlink{lsredis_8c_a13acbee14dbe8cdb98e238abb921d048}{wrfd}.fd           = \hyperlink{lsredis_8c_a7ea13129ad9e41a0ed2fc19fa75ffb0d}{wrac}->c.fd;
+  \hyperlink{lsredis_8c_a13acbee14dbe8cdb98e238abb921d048}{wrfd}.events       = 0;
+  \hyperlink{lsredis_8c_a7ea13129ad9e41a0ed2fc19fa75ffb0d}{wrac}->ev.data     = &\hyperlink{lsredis_8c_a13acbee14dbe8cdb98e238abb921d048}{wrfd};
+  \hyperlink{lsredis_8c_a7ea13129ad9e41a0ed2fc19fa75ffb0d}{wrac}->ev.addRead  = \hyperlink{lsredis_8c_adee3bccecc86dd531ac5f89491632439}{lsredis\_addRead};
+  \hyperlink{lsredis_8c_a7ea13129ad9e41a0ed2fc19fa75ffb0d}{wrac}->ev.delRead  = \hyperlink{lsredis_8c_a2e1f2258b3cc864ce3eef4eda556e2a6}{lsredis\_delRead};
+  \hyperlink{lsredis_8c_a7ea13129ad9e41a0ed2fc19fa75ffb0d}{wrac}->ev.addWrite = \hyperlink{lsredis_8c_a3cb6eda5c8ae80019e7a1c078940e9e9}{lsredis\_addWrite};
+  \hyperlink{lsredis_8c_a7ea13129ad9e41a0ed2fc19fa75ffb0d}{wrac}->ev.delWrite = \hyperlink{lsredis_8c_a04f0119cfa1156dc34d35b237358822a}{lsredis\_delWrite};
+  \hyperlink{lsredis_8c_a7ea13129ad9e41a0ed2fc19fa75ffb0d}{wrac}->ev.cleanup  = \hyperlink{lsredis_8c_a45f946a5262c23b362be17c2cb0310c2}{lsredis\_cleanup};
+
+  \hyperlink{lsredis_8c_a07dc95184cac704740bfe16fe4c6a4f0}{lsredis\_select}( re);
+\}
+\end{DoxyCode}
+\hypertarget{pgpmac_8h_ad438e4368d86bbe15a93dcf86deaded5}{\index{pgpmac.\-h@{pgpmac.\-h}!lsredis\-\_\-run@{lsredis\-\_\-run}}
+\index{lsredis\-\_\-run@{lsredis\-\_\-run}!pgpmac.h@{pgpmac.\-h}}
+\subsubsection[{lsredis\-\_\-run}]{\setlength{\rightskip}{0pt plus 5cm}void lsredis\-\_\-run (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{pgpmac_8h_ad438e4368d86bbe15a93dcf86deaded5}
+
+
+Definition at line 731 of file lsredis.\-c.
+
+
+\begin{DoxyCode}
+                   \{
+  pthread\_create( &\hyperlink{lsredis_8c_a79c33eb11ad6819247930ade3a25671f}{lsredis\_thread}, NULL, \hyperlink{lsredis_8c_ade7b1ddfdc88c6964a4c90513e360f75}{lsredis\_worker}
+      , NULL);
+\}
+\end{DoxyCode}
 \hypertarget{pgpmac_8h_af712dd2e9419026eff2762ba062eeaf1}{\index{pgpmac.\-h@{pgpmac.\-h}!lstimer\-\_\-add\-\_\-timer@{lstimer\-\_\-add\-\_\-timer}}
 \index{lstimer\-\_\-add\-\_\-timer@{lstimer\-\_\-add\-\_\-timer}!pgpmac.h@{pgpmac.\-h}}
 \subsubsection[{lstimer\-\_\-add\-\_\-timer}]{\setlength{\rightskip}{0pt plus 5cm}void lstimer\-\_\-add\-\_\-timer (
 \begin{DoxyParamCaption}
-\item[{char $\ast$}]{, }
-\item[{int}]{, }
-\item[{unsigned long}]{int, }
-\item[{unsigned long}]{int}
+\item[{char $\ast$}]{event, }
+\item[{int}]{shots, }
+\item[{unsigned long int}]{secs, }
+\item[{unsigned long int}]{nsecs}
 \end{DoxyParamCaption}
 )}}\label{pgpmac_8h_af712dd2e9419026eff2762ba062eeaf1}
 
 
-Definition at line 44 of file lstimer.\-c.
+Create a timer. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em event} & Name of the event to send when the timer goes off \\
+\hline
+{\em shots} & Number of times to run. 0 means never, -\/1 means forever \\
+\hline
+{\em secs} & Number of seconds to wait \\
+\hline
+{\em nsecs} & Number of nano-\/seconds to run in addition to secs \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 50 of file lstimer.\-c.
 
 
 \begin{DoxyCode}
                                                                                
                         \{
   \textcolor{keywordtype}{int} i;
-  \textcolor{keyword}{struct }timespec \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now};
+  \textcolor{keyword}{struct }timespec \hyperlink{kvredis_8c_ad40ac52086f6b774928af45b09d54c6e}{now};
 
 
   \textcolor{comment}{// Time we were called.  Delay is based on call time, not queued time}
   \textcolor{comment}{//}
-  clock\_gettime( CLOCK\_REALTIME, &\hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now});
+  clock\_gettime( CLOCK\_REALTIME, &\hyperlink{kvredis_8c_ad40ac52086f6b774928af45b09d54c6e}{now});
   
 
   pthread\_mutex\_lock( &\hyperlink{lstimer_8c_a170993cbed9b9ec8bc64b6642a3ed581}{lstimer\_mutex});
@@ -1301,16 +1496,16 @@ Definition at line 44 of file lstimer.\-c.
   \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_a237da48d81b7e039c54901296aeee18e}{delay\_secs}   = secs;
   \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_acb0c6a1600c4168e5dfb2d477a685b29}{delay\_nsecs}  = nsecs;
 
-  \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_af0dcaad37472462c9f27d54ed0ceb75d}{next\_secs}    = secs + \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_sec + (
-      \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_nsec + nsecs) / 1000000000;
-  \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_ab115115d5be7933f98a094b46b6583bb}{next\_nsecs}   = (\hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_nsec + nsecs)
+  \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_af0dcaad37472462c9f27d54ed0ceb75d}{next\_secs}    = secs + \hyperlink{kvredis_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_sec + (
+      \hyperlink{kvredis_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_nsec + nsecs) / 1000000000;
+  \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_ab115115d5be7933f98a094b46b6583bb}{next\_nsecs}   = (\hyperlink{kvredis_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_nsec + nsecs)
        % 1000000000;
   \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_ab0ac2907735701cb24ec9af95a1cc787}{last\_secs}    = 0;
   \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_a19acf5aa7f57aa7ce60537c3d3d6a6af}{last\_nsecs}   = 0;
   
   \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_aa56c5b8ce7fa0ae93132cb9908195836}{ncalls}       = 0;
-  \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_a1222c76d49b149725467aa698abb7fb1}{init\_secs}    = \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_sec;
-  \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_ad5bb7fa7d669b7ebbe34d8ed2bdb257a}{init\_nsecs}   = \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_nsec;
+  \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_a1222c76d49b149725467aa698abb7fb1}{init\_secs}    = \hyperlink{kvredis_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_sec;
+  \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].\hyperlink{structlstimer__list__struct_ad5bb7fa7d669b7ebbe34d8ed2bdb257a}{init\_nsecs}   = \hyperlink{kvredis_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_nsec;
 
   \textcolor{keywordflow}{if}( shots != 0) \{
     \hyperlink{lstimer_8c_a1a47dadbec1776920ab83409234c1833}{lstimer\_active\_timers}++;
@@ -1334,7 +1529,7 @@ Initialize the timer list and pthread stuff.
 
 
 
-Definition at line 256 of file lstimer.\-c.
+Definition at line 262 of file lstimer.\-c.
 
 
 \begin{DoxyCode}
@@ -1363,7 +1558,7 @@ Start up our thread.
 
 
 
-Definition at line 270 of file lstimer.\-c.
+Definition at line 276 of file lstimer.\-c.
 
 
 \begin{DoxyCode}
@@ -1427,7 +1622,7 @@ Initialize the md2cmds module.
 
 
 
-Definition at line 771 of file md2cmds.\-c.
+Definition at line 778 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1456,7 +1651,7 @@ Start up the thread.
 
 
 
-Definition at line 785 of file md2cmds.\-c.
+Definition at line 792 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}

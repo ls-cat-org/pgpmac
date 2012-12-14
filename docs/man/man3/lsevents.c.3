@@ -1,4 +1,4 @@
-.TH "lsevents.c" 3 "Thu Nov 29 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lsevents.c" 3 "Fri Dec 14 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -163,11 +163,16 @@ Add a callback routine to listen for a specific event\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 76 of file lsevents\&.c\&.
+Definition at line 77 of file lsevents\&.c\&.
 .PP
 .nf
                                                              {
   lsevents_listener_t *new;
+  int err;
+  char *errbuf;
+  int nerrbuf;
+
+
 
   new = calloc( 1, sizeof( lsevents_listener_t));
   if( new == NULL) {
@@ -175,8 +180,22 @@ Definition at line 76 of file lsevents\&.c\&.
     exit( -1);
   }
 
-  strncpy( new->event, event, LSEVENTS_EVENT_LENGTH);
-  new->event[LSEVENTS_EVENT_LENGTH-1] = 0;
+  err = regcomp( &new->re, event, REG_EXTENDED | REG_NOSUB);
+  if( err != 0) {
+    nerrbuf = regerror( err, &new->re, NULL, 0);
+    errbuf = calloc( nerrbuf, sizeof( char));
+    if( errbuf == NULL) {
+      lslogging_log_message( 'lsevents_add_listener: out of memory (re)');
+      exit( -1);
+    }
+    regerror( err, &new->re, errbuf, nerrbuf);
+    lslogging_log_message( 'lsevents_add_listener: %s', errbuf);
+    free( errbuf);
+    free( new);
+    return;
+  }
+
+  new->raw_regexp = strdup( event);
   new->cb   = cb;
 
   pthread_mutex_lock( &lsevents_listener_mutex);
@@ -193,7 +212,7 @@ Definition at line 76 of file lsevents\&.c\&.
 .PP
 Initialize this module\&. 
 .PP
-Definition at line 187 of file lsevents\&.c\&.
+Definition at line 206 of file lsevents\&.c\&.
 .PP
 .nf
                      {
@@ -214,7 +233,7 @@ Remove a listener previously added with lsevents_add_listener\&. \fBParameters:\
 .PP
 
 .PP
-Definition at line 102 of file lsevents\&.c\&.
+Definition at line 122 of file lsevents\&.c\&.
 .PP
 .nf
                                                                 {
@@ -228,7 +247,7 @@ Definition at line 102 of file lsevents\&.c\&.
   pthread_mutex_lock( &lsevents_listener_mutex);
   last = NULL;
   for( current = lsevents_listeners_p; current != NULL; current = current->next) {
-    if( strcmp( last->event, event) == 0 && last->cb == cb) {
+    if( strcmp( last->raw_regexp, event) == 0 && last->cb == cb) {
       if( last == NULL) {
         lsevents_listeners_p = current->next;
       } else {
@@ -241,12 +260,10 @@ Definition at line 102 of file lsevents\&.c\&.
 
   //
   // Now remove it
-  // TODO: use saner memory management where we allocate many listeners at a time
-  // as an array and then just flag the ones that are used
   //
   if( current != NULL) {
-    if( current->event != NULL)
-      free( current->event);
+    if( current->raw_regexp != NULL)
+      free( current->raw_regexp);
     free(current);
   }
 }
@@ -256,7 +273,7 @@ Definition at line 102 of file lsevents\&.c\&.
 .PP
 Start up the thread and get out of the way\&. 
 .PP
-Definition at line 195 of file lsevents\&.c\&.
+Definition at line 214 of file lsevents\&.c\&.
 .PP
 .nf
                     {
@@ -275,7 +292,7 @@ Call the callback routines for the given event\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 44 of file lsevents\&.c\&.
+Definition at line 45 of file lsevents\&.c\&.
 .PP
 .nf
                                           {
@@ -315,12 +332,12 @@ Our worker\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 139 of file lsevents\&.c\&.
+Definition at line 157 of file lsevents\&.c\&.
 .PP
 .nf
                        {
   
-  char event[LSEVENTS_EVENT_LENGTH];
+  char *event;
   lsevents_queue_t *ep;
   lsevents_listener_t *p;
 
@@ -338,7 +355,7 @@ Definition at line 139 of file lsevents\&.c\&.
     // we unlock the mutex
     //
     ep = &(lsevents_queue[(lsevents_queue_off++) % LSEVENTS_QUEUE_LENGTH]);
-    strncpy( event, ep->event, LSEVENTS_EVENT_LENGTH);
+    event = strndup( ep->event, LSEVENTS_EVENT_LENGTH-1);
     event[LSEVENTS_EVENT_LENGTH-1] = 0;
 
     //
@@ -352,10 +369,11 @@ Definition at line 139 of file lsevents\&.c\&.
     //
     pthread_mutex_lock( &lsevents_listener_mutex);
     for( p = lsevents_listeners_p; p != NULL; p = p->next) {
-      if( strcmp( event, p->event) == 0) {
-        p->cb( p->event);
+      if( regexec( &p->re, event, 0, NULL, 0) == 0) {
+        p->cb( event);
       }
     }
+    free( event);
 
     pthread_mutex_unlock( &lsevents_listener_mutex);
   }
@@ -369,13 +387,13 @@ Definition at line 139 of file lsevents\&.c\&.
 .PP
 mutex to protect the listener linked list 
 .PP
-Definition at line 36 of file lsevents\&.c\&.
+Definition at line 37 of file lsevents\&.c\&.
 .SS "\fBlsevents_listener_t\fP* lsevents_listeners_p = NULL\fC [static]\fP"
 
 .PP
 Pointer to the first item in the link list of listeners\&. 
 .PP
-Definition at line 33 of file lsevents\&.c\&.
+Definition at line 34 of file lsevents\&.c\&.
 .SS "\fBlsevents_queue_t\fP lsevents_queue[\fBLSEVENTS_QUEUE_LENGTH\fP]\fC [static]\fP"
 
 .PP
@@ -387,13 +405,13 @@ Definition at line 21 of file lsevents\&.c\&.
 .PP
 condition to pause the queue if needed 
 .PP
-Definition at line 38 of file lsevents\&.c\&.
+Definition at line 39 of file lsevents\&.c\&.
 .SS "pthread_mutex_t lsevents_queue_mutex\fC [static]\fP"
 
 .PP
 mutex to protect the event queue 
 .PP
-Definition at line 37 of file lsevents\&.c\&.
+Definition at line 38 of file lsevents\&.c\&.
 .SS "unsigned int lsevents_queue_off = 0\fC [static]\fP"
 
 .PP
@@ -411,7 +429,7 @@ Definition at line 22 of file lsevents\&.c\&.
 .PP
 thread to run the event queue 
 .PP
-Definition at line 35 of file lsevents\&.c\&.
+Definition at line 36 of file lsevents\&.c\&.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for LS-CAT PGPMAC from the source code\&.

@@ -35,7 +35,7 @@ var structlspmac__motor__struct =
     [ "status2", "structlspmac__motor__struct.html#a6a412224c09268c1dc92de9c2a1a2512", null ],
     [ "status2_p", "structlspmac__motor__struct.html#a2b33ef6e12717459c1e9967cc6e659c6", null ],
     [ "statuss", "structlspmac__motor__struct.html#ae4a6f54a98e7758d66228efebe8f3baa", null ],
-    [ "u2c", "structlspmac__motor__struct.html#a61415627ab2dc0f438b190d117e532db", null ],
+    [ "u2c", "structlspmac__motor__struct.html#a8838915ebb6f9989944117c8197d5e86", null ],
     [ "units", "structlspmac__motor__struct.html#a82bceff2ae698b4b9618360b446aec08", null ],
     [ "update_format", "structlspmac__motor__struct.html#a514ee9ed48c7171157d579623f7de23f", null ],
     [ "update_resolution", "structlspmac__motor__struct.html#a18386126b724d9c7f72364db126f5b93", null ],
