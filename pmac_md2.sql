@@ -115,18 +115,6 @@ CREATE OR REPLACE FUNCTION pmac.md2_init( the_stn int) returns void as $$
     -- EXECUTE 'NOTIFY ' || ntfy_kvs;      -- Immediately call this notify so the md2 can update its kv list
 
 
-    ntfy_kvsa := ('{' || ntfy_kvs || '}')::text[];
-    --
-    -- Remove our previous notifies on the off chance we changed which ones we are interested in
-    --
-    UPDATE px.kvs SET kvnotify = pmac.array_pop( kvnotify, ntfy_kvs) WHERE kvnotify @> ntfy_kvsa;
-
-    --
-    -- Now add the ones we want back in
-    --
-    -- UPDATE px.kvs SET kvnotify = kvnotify || ntfy_kvsa WHERE kvname ~ (E'stns\\.' || the_stn || E'\\..*\\.presets\\.[0-9]+\\.(name|position)');
-
-
     -- Log the fact that we are connecting
     --
     INSERT INTO pmac.md2_registration (mr_stn) values (the_stn);
@@ -194,26 +182,6 @@ CREATE OR REPLACE FUNCTION pmac.md2_queue_next() returns text as $$
   SELECT pmac.md2_queue_next( px.getstation());
 $$ LANGUAGE SQL SECURITY DEFINER;
 ALTER FUNCTION pmac.md2_queue_next() OWNER TO lsadmin;
-
-
-
-CREATE OR REPLACE FUNCTION pmac.md2_set_scales( the_stn int, zoom int) returns void as $$
-  DECLARE
-  BEGIN
-    IF zoom is null or zoom < 1 or zoom > 10 THEN
-      RAISE NOTICE 'pmac.md2_set_scales: called with bad zoom value.  zoom = "%"', zoom;
-      return;
-    END IF;
-    PERFORM px.kvset2( the_stn, 'cam.xScale', px.kvget( the_stn, 'cam.zoom.' || zoom || '.ScaleX'));
-    PERFORM px.kvset2( the_stn, 'cam.yScale', px.kvget( the_stn, 'cam.zoom.' || zoom || '.ScaleY'));
-  END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-ALTER FUNCTION pmac.md2_set_scales( int, int) OWNER TO lsadmin;
-
-CREATE OR REPLACE FUNCTION pmac.md2_set_scales( zoom int) returns void as $$
-  SELECT pmac.md2_set_scales( px.getstation(), $1);
-$$ LANGUAGE SQL SECURITY DEFINER;
-ALTER FUNCTION pmac.md2_set_scales( int) OWNER TO lsadmin;
 
 
 COMMIT;
