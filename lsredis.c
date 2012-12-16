@@ -25,23 +25,6 @@ static struct pollfd subfd;
 static struct pollfd rofd;
 static struct pollfd wrfd;
 
-int lsredis_isvalid( lsredis_obj_t *p) {
-  int rtn;
-  
-  pthread_mutex_lock( &p->mutex);
-  rtn = p->valid;
-  pthread_mutex_unlock( &p->mutex);
-
-  return rtn;
-}
-
-void lsredis_set_invalid( lsredis_obj_t *p) {
-  pthread_mutex_lock( &p->mutex);
-  p->valid = 0;
-  lsevents_send_event( "%s Invalid", p->events_name);
-  pthread_mutex_unlock( &p->mutex);
-}
-
 /** set_value and setstr helper funciton
  *  p->mutex must be locked before calling
  */
@@ -59,8 +42,39 @@ void _lsredis_set_value( lsredis_obj_t *p, char *v) {
   }
   strcpy( p->value, v);
   p->value[p->value_length-1] = 0;
+  p->dvalue = strtod( p->value, NULL);
+  p->lvalue = strtol( p->value, NULL, 10);
+  
+  if( p->avalue != NULL) {
+    char **zz;
+    for( zz = p->avalue; *zz != NULL; zz++)
+      free( zz);
+    free( p->avalue);
+  }
+  p->avalue = lspg_array2ptrs( p->value);
+  switch( *(p->value)) {
+      case 'T':
+      case 't':
+      case 'Y':
+      case 'y':
+      case '1':
+	p->bvalue = 1;
+      break;
+
+      case 'F':
+      case 'f':
+      case 'N':
+      case 'n':
+      case '0':
+	p->bvalue = 0;
+      break;
+
+      default:
+	p->bvalue = -1;		// a little unusual for a null value to be -1
+    }
 
   p->valid = 1;
+
   lsevents_send_event( "%s Valid", p->events_name);
 }
 
@@ -164,12 +178,8 @@ double lsredis_getd( lsredis_obj_t *p) {
   while( p->valid == 0)
     pthread_cond_wait( &p->cond, &p->mutex);
 
-  errno = 0;
-  rtn = strtod( p->value, NULL);
+  rtn = p->dvalue;
   pthread_mutex_unlock( &p->mutex);
-  
-  if( errno != 0)
-    lslogging_log_message( "lsredis_getd: %s", strerror);
   
   return rtn;
 }
@@ -181,12 +191,34 @@ long int lsredis_getl( lsredis_obj_t *p) {
   while( p->valid == 0)
     pthread_cond_wait( &p->cond, &p->mutex);
 
-  errno = 0;
-  rtn = strtol( p->value, NULL, 10);
+  rtn = p->lvalue;
   pthread_mutex_unlock( &p->mutex);
   
-  if( errno != 0)
-    lslogging_log_message( "lsredis_getd: %s", strerror);
+  return rtn;
+}  
+
+char **lsredis_get_string_array( lsredis_obj_t *p) {
+  char **rtn;
+
+  pthread_mutex_lock( &p->mutex);
+  while( p->valid == 0)
+    pthread_cond_wait( &p->cond, &p->mutex);
+
+  rtn = p->avalue;
+  pthread_mutex_unlock( &p->mutex);
+  
+  return rtn;
+}
+
+int lsredis_getb( lsredis_obj_t *p) {
+  int rtn;
+
+  pthread_mutex_lock( &p->mutex);
+  while( p->valid == 0)
+    pthread_cond_wait( &p->cond, &p->mutex);
+
+  rtn = p->bvalue;
+  pthread_mutex_unlock( &p->mutex);
   
   return rtn;
 }  
@@ -199,6 +231,16 @@ void lsredis_hgetCB( redisAsyncContext *ac, void *reply, void *privdata) {
   p =  privdata;
 
   lslogging_log_message( "hgetCB: %s %s", p == NULL ? "<NULL>" : p->key, r->type == REDIS_REPLY_STRING ? r->str : "Non-string value.  Why?");
+
+  //
+  // Apparently this item does not exist
+  // Just set it to an empty string so at least other apps will have the same behaviour as us
+  // TODO: figure out a better way to deal with missing key/values
+  //
+  if( p != NULL && r->type == REDIS_REPLY_NIL) {
+    lsredis_setstr( p, "");
+    return;
+  }
 
   if( p != NULL && r->type == REDIS_REPLY_STRING && r->str != NULL) {
     pthread_mutex_lock( &p->mutex);

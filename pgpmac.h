@@ -42,6 +42,10 @@ typedef struct lsredis_obj_struct {
   char *events_name;					//!< Name used to generate events (normally key without the station id)
   int value_length;					//!< Number of bytes allocated for value (not value's string length)
   char *value;						//!< our value
+  double dvalue;					//!< our value as a double
+  long int lvalue;					//!< our value as a long
+  char **avalue;					//!< our value as an array of strings
+  int bvalue;						//!< our value as a boolean (1 or 0) -1 means we couldn't figure it out
   char *(*getstr)( struct lsredis_obj_struct *);	//!< return a string representation of this object
   double (*getd)( struct lsredis_obj_struct *);		//!< return a double floating point version
   long int (*getl)( struct lsredis_obj_struct *);	//!< return a long value
@@ -117,14 +121,12 @@ typedef struct lspmac_motor_struct {
   pthread_mutex_t mutex;	//!< coordinate waiting for motor to be done
   pthread_cond_t cond;		//!< used to signal when a motor is done moving
   int not_done;			//!< set to 1 when request is queued, zero after motion has toggled
-  int lspg_initialized;		//!< bit flags: bit 0 = motor initialized by database, bit 1 = px.kvs value initialized
   lskvs_kvs_list_t *presets;	//!< list of preset positions
   regex_t preset_regex;		//!< buffer used by regex routines to find preset positions for this motor
   void (*read)( struct lspmac_motor_struct *);		//!< method to read the motor status and position
   int motion_seen;		//!< set to 1 when motion has been verified to have started
   struct lspmac_cmd_queue_struct *pq;	//!< the queue item requesting motion.  Used to check time request was made
 
-  char **home;			//!< pmac commands to home motor
   int homing;			//!< Homing routine started
   int requested_pos_cnts;	//!< requested position
   int *actual_pos_cnts_p;	//!< pointer to the md2_status structure to the actual position
@@ -132,20 +134,26 @@ typedef struct lspmac_motor_struct {
   double position;		//!< scaled position
   double reported_position;	//!< previous position reported to the database
   double requested_position;	//!< The position as requested by the user
-  double update_resolution;	//!< Change needs to be at least this big to report as a new position to the database
-  char   *update_format;	//!< special format string to create text array for px.kvs update (lsupdate)
   int *status1_p;		//!< First 24 bit PMAC motor status word
   int status1;			//!< local copy of status1
   int *status2_p;		//!< Sectond 24 bit PMAC motor status word
   int status2;			//!< local copy of status2
   char statuss[64];		//!< short text summarizing status
-  int motor_num;		//!< pmac motor number
-  int coord_num;		//!< coordinate system this motor belongs to (0 if none)
-  char *axis;			//!< the axis (X, Y, Z, etc) or null if not in a coordinate system
   char *dac_mvar;		//!< controlling mvariable as a string
   char *name;			//!< Name of motor as refered by ls database kvs table
-  char *units;			//!< string to use as the units
-  char *format;			//!< printf format
+  lsredis_obj_t *unit;		//!< string to use as the units
+  lsredis_obj_t *printf_fmt;	//!< printf format
+  lsredis_obj_t *redis_fmt;	//!< special format string to create text array for putting the position back into redis
+  lsredis_obj_t *max_speed;	//!< our maximum speed (cts/msec)
+  lsredis_obj_t *max_accel;	//!< our maximum acceleration (cts/msec^2)
+  lsredis_obj_t *motor_num;	//!< pmac motor number
+  lsredis_obj_t *coord_num;	//!< coordinate system this motor belongs to (0 if none)
+  lsredis_obj_t *update_resolution;	//!< Change needs to be at least this big to report as a new position to the database
+  lsredis_obj_t *axis;		//!< the axis (X, Y, Z, etc) or null if not in a coordinate system
+  lsredis_obj_t *home;		//!< pmac commands to home motor
+  lsredis_obj_t *active;	//!< Use the motor ("true") or not ("false")
+  lsredis_obj_t *active_init;	//!< pmac commands to make this motor active
+  lsredis_obj_t *inactive_init;	//!< pmac commands to inactivate the motor
   char *write_fmt;		//!< Format string to write requested position to PMAC used for binary io
   int *read_ptr;		//!< With read_mask finds bit to read for binary i/o
   int read_mask;		//!< WIth read_ptr find bit to read for binary i/o
@@ -153,8 +161,6 @@ typedef struct lspmac_motor_struct {
   lsredis_obj_t *u2c;		//!< conversion from counts to units: 0.0 means not loaded yet
   double *lut;			//!< lookup table (instead of u2c)
   int  nlut;			//!< length of lut
-  double max_speed;		//!< our maximum speed (cts/msec)
-  double max_accel;		//!< our maximum acceleration (cts/msec^2)
   WINDOW *win;			//!< our ncurses window
 } lspmac_motor_t;
 
@@ -410,6 +416,7 @@ extern char md2cmds_cmd[];			// our command;
 
 extern void PmacSockSendline( char *s);
 extern void pgpmac_printf( char *fmt, ...);
+extern char **lspg_array2ptrs( char *);
 extern void lspg_init();
 extern void lspg_run();
 extern void lspg_seq_run_prep_all( long long skey, double kappa, double phi, double cx, double cy, double ax, double ay, double az);
@@ -438,3 +445,8 @@ extern double lskvs_find_preset_position( lspmac_motor_t *mp, char *name, int *e
 extern void lsredis_init( char *pub, char *re, char *head);
 extern void lsredis_run();
 extern lsredis_obj_t *lsredis_get_obj( char *, ...);
+extern char *lsredis_getstr( lsredis_obj_t *p);
+extern double lsredis_getd( lsredis_obj_t *p);
+extern long int lsredis_getl( lsredis_obj_t *p);
+extern char **lsredis_get_string_array( lsredis_obj_t *p);
+extern int lsredis_getb( lsredis_obj_t *p);

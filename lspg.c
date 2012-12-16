@@ -286,12 +286,8 @@ void lspg_init_motors_cb(
 			 PGresult *pgr				/**< [in] The postgresql result object			*/
 			 ) {
   int i, j;
-  uint32_t  motor_number, motor_number_column, max_speed_column, max_accel_column, home_column;
-  uint32_t units_column, coord_column, name_column, axis_column;
-  uint32_t u2c_column;
-  uint32_t format_column;
-  uint32_t update_resolution_column;
-  uint32_t update_format_column;
+  //  uint32_t home_column;
+  uint32_t name_column;
   char *sp;
   lspmac_motor_t *lsdp;
   
@@ -299,17 +295,7 @@ void lspg_init_motors_cb(
   if( name_column == -1)
     return;
 
-  motor_number_column      = PQfnumber( pgr, "mm_motor");
-  coord_column		   = PQfnumber( pgr, "mm_coord");
-  units_column             = PQfnumber( pgr, "mm_unit");
-  axis_column		   = PQfnumber( pgr, "mm_axis");
-  u2c_column               = PQfnumber( pgr, "mm_u2c");
-  format_column            = PQfnumber( pgr, "mm_printf");
-  max_speed_column         = PQfnumber( pgr, "mm_max_speed");
-  max_accel_column         = PQfnumber( pgr, "mm_max_speed");
-  update_resolution_column = PQfnumber( pgr, "mm_update_resolution");
-  update_format_column     = PQfnumber( pgr, "mm_update_format");
-  home_column		   = PQfnumber( pgr, "mm_home");
+  //  home_column		   = PQfnumber( pgr, "mm_home");
 
   for( i=0; i<PQntuples( pgr); i++) {
 
@@ -317,34 +303,14 @@ void lspg_init_motors_cb(
     for( j=0; j<lspmac_nmotors; j++) {
       if( strcmp(lspmac_motors[j].name, PQgetvalue( pgr, i, name_column)) == 0) {
 	lsdp                    = &(lspmac_motors[j]);
-	lsdp->motor_num         = atoi(PQgetvalue( pgr, i, motor_number_column));
-	lsdp->coord_num         = atoi( PQgetvalue( pgr, i, coord_column));
-	lsdp->units             = strdup( PQgetvalue( pgr, i, units_column));
-	lsdp->format            = strdup( PQgetvalue( pgr, i, format_column));
-	// lsdp->u2c               = atof(PQgetvalue( pgr, i, u2c_column));
-	lsdp->max_speed         = atof(PQgetvalue( pgr, i, max_speed_column));
-	lsdp->max_accel         = atof(PQgetvalue( pgr, i, max_accel_column));
-	lsdp->update_resolution = atof(PQgetvalue( pgr, i, update_resolution_column));
-	lsdp->update_format     = strdup( PQgetvalue( pgr, i, update_format_column));
 
-	if( PQgetisnull( pgr, i, axis_column))
-	  lsdp->axis            = NULL;
-	else
-	  lsdp->axis            = strdup(PQgetvalue( pgr, i, axis_column));
-
-	lsdp->home              = lspg_array2ptrs( PQgetvalue( pgr, i, home_column));
-
-	lsdp->lspg_initialized  = 1;
+	//	lsdp->home              = lspg_array2ptrs( PQgetvalue( pgr, i, home_column));
+	//	lsdp->lspg_initialized  = 1;
 	break;
       }
     }
     if( lsdp == NULL)
       continue;
-
-    /*
-    if( fabs(lsdp->u2c) <= 1.0e-9)
-      lsdp->u2c = 1.0;
-    */
   }
 }
 

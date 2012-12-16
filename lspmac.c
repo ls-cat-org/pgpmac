@@ -50,6 +50,8 @@
 #define LS_PMAC_STATE_WGB      12
 static int ls_pmac_state = LS_PMAC_STATE_DETACHED;	//!< Current state of the PMAC communications state machine
 
+static lsredis_obj_t *lspmac_md2_init;
+
 int lspmac_shutter_state;			//!< State of the shutter, used to detect changes
 int lspmac_shutter_has_opened;			//!< Indicates that the shutter had opened, perhaps briefly even if the state did not change
 pthread_mutex_t lspmac_shutter_mutex;		//!< Coordinates threads reading shutter status
@@ -1109,23 +1111,20 @@ void lspmac_home1_queue(
   char openloops[32];
   char *sp;
   int i;
+  int motor_num;
+  int coord_num;
+  char **home;
 
   pthread_mutex_lock( &(mp->mutex));
 
+  motor_num = lsredis_getl( mp->motor_num);
+  coord_num = lsredis_getl( mp->coord_num);
+  home      = lsredis_get_string_array( mp->home);
   
-  // We got here before the initialization routine finished
-  // TODO: arrange to retry or at least indicated we haven't run
-  //
-  if( (mp->lspg_initialized & 1) == 0) {
-    pthread_mutex_unlock( &(mp->mutex));
-    return;
-  }    
-
-
   // Each of the motors should have this defined
   // but let's not seg fault if home is missing
   //
-  if( mp->home == NULL || *(mp->home) == NULL) {
+  if( home == NULL || *home == NULL) {
     //
     // Note we are already initialized
     // so if we are here there is something wrong.
@@ -1149,11 +1148,11 @@ void lspmac_home1_queue(
   // It's possible to write the homing program to home all the motors in the coordinate
   // system.
   //
-  if( mp->coord_num > 0) {
+  if( coord_num > 0) {
     for( i=0; i<lspmac_nmotors; i++) {
       if( &(lspmac_motors[i]) == mp)
 	continue;
-      if( lspmac_motors[i].coord_num == mp->coord_num) {
+      if( lsredis_getl(lspmac_motors[i].coord_num) == coord_num) {
 	if( lspmac_motors[i].homing) {
 	  pthread_mutex_unlock( &(mp->mutex));
 	  return;
@@ -1173,7 +1172,7 @@ void lspmac_home1_queue(
   // before the open loop command is dequeued and acted on.
   //
   if( ~(mp->status1) & 0x040000) {
-    snprintf( openloops, sizeof(openloops)-1, "#%d$*", mp->motor_num);
+    snprintf( openloops, sizeof(openloops)-1, "#%d$*", motor_num);
     openloops[sizeof(openloops)-1] = 0;
     lspmac_SockSendline( openloops);
   }
@@ -1189,6 +1188,7 @@ void lspmac_home2_queue(
 			) {
 
   char **spp;
+  char **home;
 
   //
   // At this point we are in open loop.
@@ -1196,6 +1196,9 @@ void lspmac_home2_queue(
   //
 
   pthread_mutex_lock( &(mp->mutex));
+
+  home = lsredis_get_string_array( mp->home);
+
   //
   // We don't have any motors that have a null home text array so 
   // there is currently no need to worry about this case other than
@@ -1203,12 +1206,12 @@ void lspmac_home2_queue(
   //
   // Also, Only go on if the first homing phase has been started
   //
-  if( mp->home == NULL || mp->homing != 1) {
+  if( home == NULL || mp->homing != 1) {
     pthread_mutex_unlock( &(mp->mutex));
     return;
   }
 
-  for( spp = mp->home; *spp != NULL; spp++) {
+  for( spp = home; *spp != NULL; spp++) {
 
     pthread_mutex_lock( &ncurses_mutex);
     wprintw( term_output, "home2 is queuing '%s'\n", *spp);
@@ -1244,6 +1247,7 @@ void lspmac_pmacmotor_read(
   char s[512], *sp;
   int homing1, homing2;
   double u2c;
+  int motor_num;
 
   pthread_mutex_lock( &(mp->mutex));
 
@@ -1284,11 +1288,15 @@ void lspmac_pmacmotor_read(
     lsevents_send_event( "%s %s", mp->name, (*mp->status2_p & 0x000001) ? "In Position" : "Moving");
   }
 
+  // Get some values we might need later
+  //
+  u2c       = lsredis_getd( mp->u2c);
+  motor_num = lsredis_getl( mp->motor_num);
 
   //
   // maybe look for omega zero crossing
   //
-  if( mp->motor_num == 1 && omega_zero_search && *mp->actual_pos_cnts_p >=0 && mp->actual_pos_cnts < 0) {
+  if( motor_num == 1 && omega_zero_search && *mp->actual_pos_cnts_p >=0 && mp->actual_pos_cnts < 0) {
     int secs, nsecs;
 
     if( omega_zero_velocity > 0.0) {
@@ -1305,7 +1313,8 @@ void lspmac_pmacmotor_read(
       omega_zero_time.tv_nsec -= nsecs;
 
       lsevents_send_event( "omega crossed zero");
-      lslogging_log_message("lspmac_motor_read: omega zero secs %d  nsecs %d ozt.tv_sec %ld  ozt.tv_nsec  %ld, motor cnts %d", secs, nsecs, omega_zero_time.tv_sec, omega_zero_time.tv_nsec, *mp->actual_pos_cnts_p);
+      lslogging_log_message("lspmac_motor_read: omega zero secs %d  nsecs %d ozt.tv_sec %ld  ozt.tv_nsec  %ld, motor cnts %d",
+			    secs, nsecs, omega_zero_time.tv_sec, omega_zero_time.tv_nsec, *mp->actual_pos_cnts_p);
     }
     omega_zero_search = 0;
   }
@@ -1345,8 +1354,6 @@ void lspmac_pmacmotor_read(
   mvwprintw( mp->win, 2, 1, "%*d cts", LS_DISPLAY_WINDOW_WIDTH-6, mp->actual_pos_cnts);
   mvwprintw( mp->win, 3, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, " ");
 
-  u2c = lsredis_getd( mp->u2c);
-
   if( mp->nlut >0 && mp->lut != NULL) {
     mp->position = lspmac_rlut( mp->nlut, mp->lut, mp->actual_pos_cnts);
   } else {
@@ -1356,7 +1363,7 @@ void lspmac_pmacmotor_read(
       mp->position = mp->actual_pos_cnts;
     }
   }
-  snprintf( s, sizeof(s)-1, mp->format, 8, mp->position);
+  snprintf( s, sizeof(s)-1, lsredis_getstr(mp->printf_fmt), 8, mp->position);
 
   // set flag if we are not homed
   homing1 = 0;
@@ -1883,7 +1890,11 @@ void lspmac_movezoom_queue(
 			   ) {
   char s[512];
   double y;
+  int motor_num;
+
   pthread_mutex_lock( &(mp->mutex));
+
+  motor_num = lsredis_getl( mp->motor_num);
 
   mp->requested_position = requested_position;
 
@@ -1895,7 +1906,7 @@ void lspmac_movezoom_queue(
     mp->motion_seen = 0;
 
 
-    snprintf( s, sizeof(s)-1, "#%d j=%d", mp->motor_num, mp->requested_pos_cnts);
+    snprintf( s, sizeof(s)-1, "#%d j=%d", motor_num, mp->requested_pos_cnts);
     mp->pq = lspmac_SockSendline_nr( s);
 
   }
@@ -2049,13 +2060,17 @@ void lspmac_moveabs_timed_queue(
   int coord_num; // our coordinate number
   char s[512];	 // PMAC command string buffer
   double u2c;
+  double max_accel;
 
   pthread_mutex_lock( &(mp->mutex));
 
-  u2c = lsredis_getd( mp->u2c);
-  if( u2c == 0.0 || time <= 0.0) {
+  u2c       = lsredis_getd( mp->u2c);
+  max_accel = lsredis_getd( mp->max_accel);
+  coord_num = lsredis_getl( mp->coord_num);
+
+  if( u2c == 0.0 || time <= 0.0 || max_accel <= 0.0) {
     //
-    // Shouldn't try moving a motor that has no units defined
+    // Shouldn't try moving a motor that has bad motion parameters
     //
     pthread_mutex_unlock( &(mp->mutex));
     return;
@@ -2069,8 +2084,8 @@ void lspmac_moveabs_timed_queue(
   q10 = mp->requested_pos_cnts;
   q11 = u2c * delta;
   q12 = 1000 * time;
-  q13 = q11 / q12 / mp->max_accel;
-  q100 = 1 << (mp->coord_num - 1);
+  q13 = q11 / q12 / max_accel;
+  q100 = 1 << (coord_num - 1);
   pthread_mutex_unlock( &(mp->mutex));
 
   snprintf( s, sizeof(s)-1, "&%d Q10=%d Q11=%d Q12=%d Q13=%d Q100=%d B240R", coord_num, q10, q11, q12, q13, q100);
@@ -2103,7 +2118,7 @@ void lspmac_moveabs_flight_factor_queue( lspmac_motor_t *mp, double pos) {
 
     pthread_mutex_lock( &(flight->mutex));
 
-    lsredis_setstr( flight->u2c, lsredis_getstr(flight->format), pos / 100.0);
+    lsredis_setstr( flight->u2c, lsredis_getstr(flight->redis_fmt), pos / 100.0);
 
     pthread_mutex_unlock( &(flight->mutex));
 
@@ -2120,7 +2135,7 @@ void lspmac_moveabs_blight_factor_queue( lspmac_motor_t *mp, double pos) {
     pthread_mutex_unlock( &(mp->mutex));
 
     pthread_mutex_lock( &(blight->mutex));
-    lsredis_setstr( blight->u2c, lsredis_getstr(blight->format), pos / 100.0);
+    lsredis_setstr( blight->u2c, lsredis_getstr(blight->redis_fmt), pos / 100.0);
     pthread_mutex_unlock( &(blight->mutex));
 
     blight->moveAbs( blight, lspmac_getPosition( zoom));
@@ -2168,11 +2183,15 @@ void lspmac_move_or_jog_abs_queue(
   int q100;			//!< coordinate system bit
   int requested_pos_cnts;	//!< the requested position in units of "counts"
   int coord_num, motor_num;	//!< motor and coordinate system;
-  char axis;			//!< our axis
+  char *axis;			//!< our axis
   double u2c;
 
   pthread_mutex_lock( &(mp->mutex));
-  u2c = lsredis_getd( mp->u2c);
+
+  u2c       = lsredis_getd(   mp->u2c);
+  motor_num = lsredis_getl(   mp->motor_num);
+  coord_num = lsredis_getl(   mp->coord_num);
+  axis      = lsredis_getstr( mp->axis);
 
   if( u2c == 0.0) {
     //
@@ -2186,15 +2205,12 @@ void lspmac_move_or_jog_abs_queue(
   mp->motion_seen = 0;
   mp->requested_pos_cnts = u2c * requested_position;  
   requested_pos_cnts = mp->requested_pos_cnts;
-  coord_num = mp->coord_num;
-  motor_num = mp->motor_num;
 
-  if( use_jog || mp->axis == NULL || *(mp->axis) == 0) {
+  if( use_jog || axis == NULL || *axis == 0) {
     use_jog = 1;
   } else {
     use_jog = 0;
-    axis = *(mp->axis);
-    q100 = 1 << (mp->coord_num -1);
+    q100 = 1 << (coord_num -1);
   }
 
   pthread_mutex_unlock( &(mp->mutex));
@@ -2220,7 +2236,7 @@ void lspmac_move_or_jog_abs_queue(
     //
     lspmac_SockSendline( "M5075=(M5075 | %d)", q100);
     
-    switch( axis) {
+    switch( *axis) {
     case 'A':
       snprintf( s, sizeof(s)-1, "&%d Q16=%d Q100=%d B146R", coord_num, requested_pos_cnts, q100);
       break;
@@ -2381,20 +2397,9 @@ void lspmac_moveabs_wait(
 
 }
 
-/** Initialize a pmac stepper or servo motor
+/** Helper funciton for the init calls
  */
-lspmac_motor_t *lspmac_motor_init(
-				  lspmac_motor_t *d,				/**< [in,out] An uninitialize motor object		*/
-				  int motor_number,				/**< [in] The PMAC motor number				*/
-				  int wy,					/**< [in] Curses status window row index		*/
-				  int wx,					/**< [in] Curses status window column index		*/
-				  int *posp,					/**< [in] Pointer to position status			*/
-				  int *stat1p,					/**< [in] Pointer to 1st status word			*/
-				  int *stat2p,					/**< [in] Pointer to 2nd status word			*/
-				  char *wtitle,					/**< [in] Title for this motor (to display)		*/
-				  char *name,					/**< [in] Name of this motor (to match database)	*/
-				  void (*moveAbs)(lspmac_motor_t *,double)	/**< [in] Method to use to move this motor		*/
-				  ) {
+void _lspmac_motor_init( lspmac_motor_t *d, char *name) {
   lspmac_nmotors++;
 
   pthread_mutex_init( &(d->mutex), NULL);
@@ -2402,24 +2407,60 @@ lspmac_motor_t *lspmac_motor_init(
 
   lskvs_regcomp( &(d->preset_regex), REG_EXTENDED, LSPMAC_PRESET_REGEX, name);
 
-  d->u2c                 = lsredis_get_obj( "%s.u2c", name);
-  d->presets             = NULL;
   d->name                = strdup(name);
-  d->moveAbs             = moveAbs;
-  d->read                = lspmac_pmacmotor_read;
+  d->u2c                 = lsredis_get_obj( "%s.u2c",               d->name);
+  d->printf_fmt		 = lsredis_get_obj( "%s.printf",            d->name);
+  d->redis_fmt		 = lsredis_get_obj( "%s.format",            d->name);
+  d->unit		 = lsredis_get_obj( "%s.unit",              d->name);
+  d->max_speed		 = lsredis_get_obj( "%s.max_speed",         d->name);
+  d->max_accel		 = lsredis_get_obj( "%s.max_accel",         d->name);
+  d->motor_num		 = lsredis_get_obj( "%s.motor_num",         d->name);
+  d->coord_num		 = lsredis_get_obj( "%s.coord_num",         d->name);
+  d->axis		 = lsredis_get_obj( "%s.axis",	            d->name);
+  d->home		 = lsredis_get_obj( "%s.home",	            d->name);
+  d->active		 = lsredis_get_obj( "%s.active",	    d->name);
+  d->active_init	 = lsredis_get_obj( "%s.active_init",	    d->name);
+  d->inactive_init	 = lsredis_get_obj( "%s.inactive_init",	    d->name);
+
+  d->update_resolution   = lsredis_get_obj( "%s.update_resolution", d->name);
+  d->presets             = NULL;
   d->lut                 = NULL;
   d->nlut                = 0;
+  d->homing              = 0;
+  d->dac_mvar            = NULL;
+  d->actual_pos_cnts_p   = NULL;
+  d->status1_p           = NULL;
+  d->status2_p           = NULL;
+  d->win                 = NULL;
+  d->read                = NULL;
+}
+
+
+/** Initialize a pmac stepper or servo motor
+ */
+lspmac_motor_t *lspmac_motor_init(
+				  lspmac_motor_t *d,				/**< [in,out] An uninitialize motor object		*/
+				  int wy,					/**< [in] Curses status window row index		*/
+				  int wx,					/**< [in] Curses status window column index		*/
+				  int *posp,					/**< [in] Pointer to position status			*/
+				  int *stat1p,					/**< [in] Pointer to 1st status word			*/
+				  int *stat2p,					/**< [in] Pointer to 2nd status word			*/
+				  char *wtitle,					/**< [in] Title for this motor (to display)		*/
+				  char *name,					/**< [in] This motor's name		                */
+				  void (*moveAbs)(lspmac_motor_t *,double)	/**< [in] Method to use to move this motor		*/
+				  ) {
+
+  _lspmac_motor_init( d, name);
+
+  d->moveAbs             = moveAbs;
+  d->read                = lspmac_pmacmotor_read;
   d->actual_pos_cnts_p   = posp;
   d->status1_p           = stat1p;
   d->status2_p           = stat2p;
-  d->motor_num           = motor_number;
-  d->dac_mvar            = NULL;
   d->win = newwin( LS_DISPLAY_WINDOW_HEIGHT, LS_DISPLAY_WINDOW_WIDTH, wy*LS_DISPLAY_WINDOW_HEIGHT, wx*LS_DISPLAY_WINDOW_WIDTH);
   box( d->win, 0, 0);
   mvwprintw( d->win, 1, 1, "%s", wtitle);
   wnoutrefresh( d->win);
-  d->homing              = 0;
-  d->lspg_initialized    = 0;
 
   return d;
 }
@@ -2429,30 +2470,14 @@ lspmac_motor_t *lspmac_motor_init(
 lspmac_motor_t *lspmac_fshut_init(
 				  lspmac_motor_t *d		/**< [in] Our uninitialized motor object	*/
 				  ) {
-  lspmac_nmotors++;
 
-  d->presets           = NULL;
-  d->name              = strdup("fastShutter");
-  d->u2c                 = lsredis_get_obj( "%s.u2c", d->name);
-  lskvs_regcomp( &(d->preset_regex), REG_EXTENDED, LSPMAC_PRESET_REGEX, d->name);
+  _lspmac_motor_init( d, "fastShutter");
+
   d->moveAbs           = lspmac_moveabs_fshut_queue;
   d->read              = lspmac_shutter_read;
-  d->lut               = NULL;
-  d->nlut              = 0;
-  d->actual_pos_cnts_p = NULL;
-  d->status1_p         = NULL;
-  d->status2_p         = NULL;
-  d->motor_num         = -1;
-  d->dac_mvar          = NULL;
-  d->homing            = 0;
-  d->win               = NULL;
 
-  d->lspg_initialized = 0;
   return d;
 }
-
-
-
 
 
 /** Initialize binary i/o motor
@@ -2465,29 +2490,15 @@ lspmac_motor_t *lspmac_bo_init(
 				int *read_ptr,			/**< [in] Pointer to byte in md2_status to find position		*/
 				int read_mask			/**< [in] Bitmask to find position in *read_ptr				*/
 				) {
-  lspmac_nmotors++;
 
-  lskvs_regcomp( &(d->preset_regex), REG_EXTENDED, LSPMAC_PRESET_REGEX, name);
-  d->presets           = NULL;
-  d->name              = strdup( name);
+  _lspmac_motor_init( d, name);
+
   d->moveAbs           = lspmac_moveabs_bo_queue;
   d->read              = lspmac_bo_read;
-  d->lut               = NULL;
-  d->nlut              = 0;
-  d->actual_pos_cnts_p = NULL;
-  d->status1_p         = NULL;
-  d->status2_p         = NULL;
-  d->motor_num         = -1;
-  d->dac_mvar          = NULL;
-  d->win               = NULL;
   d->write_fmt         = strdup( write_fmt);
   d->read_ptr	       = read_ptr;
   d->read_mask         = read_mask;
-  d->homing            = 0;
-  d->win               = NULL;
-  d->u2c               = lsredis_get_obj( "%s.u2c", name);
 
-  d->lspg_initialized = 0;
   return d;
 }
 
@@ -2502,30 +2513,17 @@ lspmac_motor_t *lspmac_dac_init(
 				/**< [out] Returns the (almost) initialized motor object			*/
 				lspmac_motor_t *d,		/**< [in,out] unitintialized motor		*/
 				int *posp,			/**< [in] Location of current position		*/
-				double scale,			/**< [in] Scale factor (units)			*/
 				char *mvar,			/**< [in] M variable, ie, "M1200"		*/
 				char *name,			/**< [in] name to coordinate with DB		*/
 				void (*moveAbs)(lspmac_motor_t *,double)	/**< [in] Method to use to move this motor		*/
 				) {
-  lspmac_nmotors++;
-  lskvs_regcomp( &(d->preset_regex), REG_EXTENDED, LSPMAC_PRESET_REGEX, name);
-  d->presets           = NULL;
 
-  d->name              = strdup( name);
+  _lspmac_motor_init( d, name);
   d->moveAbs           = moveAbs;
   d->read              = lspmac_dac_read;
-  d->lut               = NULL;
-  d->nlut              = 0;
   d->actual_pos_cnts_p = posp;
-  d->status1_p         = NULL;
-  d->status2_p         = NULL;
-  d->motor_num         = -1;
   d->dac_mvar          = strdup(mvar);
-  d->u2c               = lsredis_get_obj( "%s.u2c", name);
-  d->homing            = 0;
-  d->win               = NULL;
 
-  d->lspg_initialized = 0;
   return d;
 }
 
@@ -2536,26 +2534,14 @@ void lspmac_soft_motor_read( lspmac_motor_t *p) {
 }
 
 
-lspmac_motor_t *lspmac_soft_motor_init( lspmac_motor_t *d, char *name, double scale, void (*moveAbs)(lspmac_motor_t *, double)) {
+lspmac_motor_t *lspmac_soft_motor_init( lspmac_motor_t *d, char *name, void (*moveAbs)(lspmac_motor_t *, double)) {
 
-  lspmac_nmotors++;
-  lskvs_regcomp( &(d->preset_regex), REG_EXTENDED, LSPMAC_PRESET_REGEX, name);
-  d->presets      = NULL;
-  d->name         = strdup(name);
+  _lspmac_motor_init( d, name);
+
   d->moveAbs      = moveAbs;
   d->read         = lspmac_soft_motor_read;
-  d->u2c          = lsredis_get_obj( "%s.u2c", name);
-  d->lut          = NULL;
-  d->nlut         = 0;
   d->actual_pos_cnts_p = calloc( sizeof(int), 1);
   *d->actual_pos_cnts_p = 0;
-  d->status1_p    = NULL;
-  d->status2_p    = NULL;
-  d->motor_num    = -1;
-  d->dac_mvar     = NULL;
-  d->win          = NULL;
-  d->homing       = 0;
-  d->lspg_initialized = 0;
 }
 
 
@@ -2589,39 +2575,44 @@ void lspmac_init(
   pthread_mutex_init( &md2_status_mutex, NULL);
 
   //
+  // Get the MD2 initialization strings
+  //
+  lspmac_md2_init = lsredis_get_obj( "md2_pmac.init");
+
+  //
   // Initialize the motor objects
   //
 
   p = &md2_status;
 
-  omega  = lspmac_motor_init( &(lspmac_motors[ 0]),  1, 0, 0, &p->omega_act_pos,     &p->omega_status_1,     &p->omega_status_2,     "Omega   #1 &1 A", "omega",       lspmac_moveabs_queue);
-  alignx = lspmac_motor_init( &(lspmac_motors[ 1]),  2, 0, 1, &p->alignx_act_pos,    &p->alignx_status_1,    &p->alignx_status_2,    "Align X #2 &3 X", "align.x",     lspmac_moveabs_queue);
-  aligny = lspmac_motor_init( &(lspmac_motors[ 2]),  3, 0, 2, &p->aligny_act_pos,    &p->aligny_status_1,    &p->aligny_status_2,    "Align Y #3 &3 Y", "align.y",     lspmac_moveabs_queue);
-  alignz = lspmac_motor_init( &(lspmac_motors[ 3]),  4, 0, 3, &p->alignz_act_pos,    &p->alignz_status_1,    &p->alignz_status_2,    "Align Z #4 &3 Z", "align.z",     lspmac_moveabs_queue);
-  anal   = lspmac_motor_init( &(lspmac_motors[ 4]),  5, 0, 4, &p->analyzer_act_pos,  &p->analyzer_status_1,  &p->analyzer_status_2,  "Anal    #5",      "lightPolar",  lspmac_moveabs_queue);
-  zoom   = lspmac_motor_init( &(lspmac_motors[ 5]),  6, 1, 0, &p->zoom_act_pos,      &p->zoom_status_1,      &p->zoom_status_2,      "Zoom    #6 &4 Z", "cam.zoom",    lspmac_movezoom_queue);
-  apery  = lspmac_motor_init( &(lspmac_motors[ 6]),  7, 1, 1, &p->aperturey_act_pos, &p->aperturey_status_1, &p->aperturey_status_2, "Aper Y  #7 &5 Y", "appy",        lspmac_moveabs_queue);
-  aperz  = lspmac_motor_init( &(lspmac_motors[ 7]),  8, 1, 2, &p->aperturez_act_pos, &p->aperturez_status_1, &p->aperturez_status_2, "Aper Z  #8 &5 Z", "appz",        lspmac_moveabs_queue);
-  capy   = lspmac_motor_init( &(lspmac_motors[ 8]),  9, 1, 3, &p->capy_act_pos,      &p->capy_status_1,      &p->capy_status_2,      "Cap Y   #9 &5 U", "capy",        lspmac_moveabs_queue);
-  capz   = lspmac_motor_init( &(lspmac_motors[ 9]), 10, 1, 4, &p->capz_act_pos,      &p->capz_status_1,      &p->capz_status_2,      "Cap Z  #10 &5 V", "capz",        lspmac_moveabs_queue);
-  scint  = lspmac_motor_init( &(lspmac_motors[10]), 11, 2, 0, &p->scint_act_pos,     &p->scint_status_1,     &p->scint_status_2,     "Scin Z #11 &5 W", "scint",       lspmac_moveabs_queue);
-  cenx   = lspmac_motor_init( &(lspmac_motors[11]), 17, 2, 1, &p->centerx_act_pos,   &p->centerx_status_1,   &p->centerx_status_2,   "Cen X  #17 &2 X", "centering.x", lspmac_moveabs_queue);
-  ceny   = lspmac_motor_init( &(lspmac_motors[12]), 18, 2, 2, &p->centery_act_pos,   &p->centery_status_1,   &p->centery_status_2,   "Cen Y  #18 &2 Y", "centering.y", lspmac_moveabs_queue);
-  kappa  = lspmac_motor_init( &(lspmac_motors[13]), 19, 2, 3, &p->kappa_act_pos,     &p->kappa_status_1,     &p->kappa_status_2,     "Kappa  #19 &7 X", "kappa",       lspmac_moveabs_queue);
-  phi    = lspmac_motor_init( &(lspmac_motors[14]), 20, 2, 4, &p->phi_act_pos,       &p->phi_status_1,       &p->phi_status_2,       "Phi    #20 &7 Y", "phi",         lspmac_moveabs_queue);
+  omega  = lspmac_motor_init( &(lspmac_motors[ 0]), 0, 0, &p->omega_act_pos,     &p->omega_status_1,     &p->omega_status_2,     "Omega   #1 &1 A", "omega",       lspmac_moveabs_queue);
+  alignx = lspmac_motor_init( &(lspmac_motors[ 1]), 0, 1, &p->alignx_act_pos,    &p->alignx_status_1,    &p->alignx_status_2,    "Align X #2 &3 X", "align.x",     lspmac_moveabs_queue);
+  aligny = lspmac_motor_init( &(lspmac_motors[ 2]), 0, 2, &p->aligny_act_pos,    &p->aligny_status_1,    &p->aligny_status_2,    "Align Y #3 &3 Y", "align.y",     lspmac_moveabs_queue);
+  alignz = lspmac_motor_init( &(lspmac_motors[ 3]), 0, 3, &p->alignz_act_pos,    &p->alignz_status_1,    &p->alignz_status_2,    "Align Z #4 &3 Z", "align.z",     lspmac_moveabs_queue);
+  anal   = lspmac_motor_init( &(lspmac_motors[ 4]), 0, 4, &p->analyzer_act_pos,  &p->analyzer_status_1,  &p->analyzer_status_2,  "Anal    #5",      "lightPolar",  lspmac_moveabs_queue);
+  zoom   = lspmac_motor_init( &(lspmac_motors[ 5]), 1, 0, &p->zoom_act_pos,      &p->zoom_status_1,      &p->zoom_status_2,      "Zoom    #6 &4 Z", "cam.zoom",    lspmac_movezoom_queue);
+  apery  = lspmac_motor_init( &(lspmac_motors[ 6]), 1, 1, &p->aperturey_act_pos, &p->aperturey_status_1, &p->aperturey_status_2, "Aper Y  #7 &5 Y", "appy",        lspmac_moveabs_queue);
+  aperz  = lspmac_motor_init( &(lspmac_motors[ 7]), 1, 2, &p->aperturez_act_pos, &p->aperturez_status_1, &p->aperturez_status_2, "Aper Z  #8 &5 Z", "appz",        lspmac_moveabs_queue);
+  capy   = lspmac_motor_init( &(lspmac_motors[ 8]), 1, 3, &p->capy_act_pos,      &p->capy_status_1,      &p->capy_status_2,      "Cap Y   #9 &5 U", "capy",        lspmac_moveabs_queue);
+  capz   = lspmac_motor_init( &(lspmac_motors[ 9]), 1, 4, &p->capz_act_pos,      &p->capz_status_1,      &p->capz_status_2,      "Cap Z  #10 &5 V", "capz",        lspmac_moveabs_queue);
+  scint  = lspmac_motor_init( &(lspmac_motors[10]), 2, 0, &p->scint_act_pos,     &p->scint_status_1,     &p->scint_status_2,     "Scin Z #11 &5 W", "scint",       lspmac_moveabs_queue);
+  cenx   = lspmac_motor_init( &(lspmac_motors[11]), 2, 1, &p->centerx_act_pos,   &p->centerx_status_1,   &p->centerx_status_2,   "Cen X  #17 &2 X", "centering.x", lspmac_moveabs_queue);
+  ceny   = lspmac_motor_init( &(lspmac_motors[12]), 2, 2, &p->centery_act_pos,   &p->centery_status_1,   &p->centery_status_2,   "Cen Y  #18 &2 Y", "centering.y", lspmac_moveabs_queue);
+  kappa  = lspmac_motor_init( &(lspmac_motors[13]), 2, 3, &p->kappa_act_pos,     &p->kappa_status_1,     &p->kappa_status_2,     "Kappa  #19 &7 X", "kappa",       lspmac_moveabs_queue);
+  phi    = lspmac_motor_init( &(lspmac_motors[14]), 2, 4, &p->phi_act_pos,       &p->phi_status_1,       &p->phi_status_2,       "Phi    #20 &7 Y", "phi",         lspmac_moveabs_queue);
 
   fshut  = lspmac_fshut_init( &(lspmac_motors[15]));
-  flight = lspmac_dac_init( &(lspmac_motors[16]), &p->front_dac,   160.0, "M1200", "frontLight.intensity", lspmac_movedac_queue);
-  blight = lspmac_dac_init( &(lspmac_motors[17]), &p->back_dac,    160.0, "M1201", "backLight.intensity",  lspmac_movedac_queue);
-  fscint = lspmac_dac_init( &(lspmac_motors[18]), &p->scint_piezo, 320.0, "M1203", "scint.focus",          lspmac_movedac_queue);
+  flight = lspmac_dac_init( &(lspmac_motors[16]), &p->front_dac,   "M1200", "frontLight.intensity", lspmac_movedac_queue);
+  blight = lspmac_dac_init( &(lspmac_motors[17]), &p->back_dac,    "M1201", "backLight.intensity",  lspmac_movedac_queue);
+  fscint = lspmac_dac_init( &(lspmac_motors[18]), &p->scint_piezo, "M1203", "scint.focus",          lspmac_movedac_queue);
 
   blight_ud = lspmac_bo_init( &(lspmac_motors[19]), "backLight",  "M1101=%d", &(md2_status.acc11c_5), 0x02);
   cryo      = lspmac_bo_init( &(lspmac_motors[20]), "cryo",       "M1102=%d", &(md2_status.acc11c_5), 0x04);
   dryer     = lspmac_bo_init( &(lspmac_motors[21]), "dryer",      "M1103=%d", &(md2_status.acc11c_5), 0x08);
   fluo      = lspmac_bo_init( &(lspmac_motors[22]), "fluo",       "M1008=%d", &(md2_status.acc11c_2), 0x01);
-  flight_oo = lspmac_soft_motor_init( &(lspmac_motors[23]), "frontLight",        1.0, lspmac_moveabs_frontlight_oo_queue);
-  blight_f  = lspmac_soft_motor_init( &(lspmac_motors[24]), "backLight.factor",  1.0, lspmac_moveabs_blight_factor_queue);
-  flight_f  = lspmac_soft_motor_init( &(lspmac_motors[25]), "frontLight.factor", 1.0, lspmac_moveabs_flight_factor_queue);
+  flight_oo = lspmac_soft_motor_init( &(lspmac_motors[23]), "frontLight",        lspmac_moveabs_frontlight_oo_queue);
+  blight_f  = lspmac_soft_motor_init( &(lspmac_motors[24]), "backLight.factor",  lspmac_moveabs_blight_factor_queue);
+  flight_f  = lspmac_soft_motor_init( &(lspmac_motors[25]), "frontLight.factor", lspmac_moveabs_flight_factor_queue);
 
   cryo_switch = lspmac_bi_init( &(lspmac_bis[0]), &(md2_status.acc11c_1), 0x04, "CryoSwitchChanged", "CryoSwitchChanged");
 
@@ -2790,12 +2781,59 @@ void lspmac_newKV_cb( char *event) {
 /** Start up the lspmac thread
  */
 void lspmac_run() {
+  char **inits;
+  lspmac_motor_t *mp;
+  int i;
+  int active;
+
   pthread_create( &pmac_thread, NULL, lspmac_worker, NULL);
-  lsevents_add_listener( "NewKV", lspmac_newKV_cb);
-  lsevents_add_listener( "CryoSwitchChanged", lspmac_cryoSwitchChanged_cb);
-  lsevents_add_listener( "scint In Position", lspmac_scint_inPosition_cb);
-  lsevents_add_listener( "scintDried",        lspmac_scint_dried_cb);
-  lsevents_add_listener( "backLight 1",	      lspmac_backLight_up_cb);
-  lsevents_add_listener( "backLight 0",	      lspmac_backLight_down_cb);
-  lsevents_add_listener( "cam.zoom In Position",  lspmac_light_zoom_cb);
+
+  lsevents_add_listener( "NewKV",                lspmac_newKV_cb);
+  lsevents_add_listener( "CryoSwitchChanged",    lspmac_cryoSwitchChanged_cb);
+  lsevents_add_listener( "scint In Position",    lspmac_scint_inPosition_cb);
+  lsevents_add_listener( "scintDried",           lspmac_scint_dried_cb);
+  lsevents_add_listener( "backLight 1",	         lspmac_backLight_up_cb);
+  lsevents_add_listener( "backLight 0",	         lspmac_backLight_down_cb);
+  lsevents_add_listener( "cam.zoom In Position", lspmac_light_zoom_cb);
+
+  //
+  // Initialize the MD2 pmac (ie, turn on the right plcc's etc)
+  //
+  for( inits = lsredis_get_string_array(lspmac_md2_init); *inits != NULL; inits++) {
+    lspmac_SockSendline( *inits);
+    lslogging_log_message( "lspmac_init: pmac init '%s'", *inits);
+  }
+  
+  //
+  // Initialize the pmac's support for each motor
+  // (ie, set the various flag for when a motor is active or not)
+  //
+  for( i=0; i<lspmac_nmotors; i++) {
+    mp = &(lspmac_motors[i]);
+    active = lsredis_getb( mp->active);
+
+    // if there is a problem with "active" then don't do anything
+    // On the other hand, various combinations of yes/no true/fals 1/0 should work
+    //
+    switch( active) {
+    case 1:
+      inits = lsredis_get_string_array( mp->active_init);
+      break;
+
+    case 0:
+      inits = lsredis_get_string_array( mp->active_init);
+      break;
+
+    default:
+      inits = NULL;
+    }
+
+    if( inits != NULL) {
+      while( *inits != NULL) {
+	lspmac_SockSendline( *inits);
+	lslogging_log_message( "lspmac_init: %s init '%s'", mp->name, *inits);
+	inits++;
+      }
+    }
+  }
 }

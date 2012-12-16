@@ -52,9 +52,10 @@ void lsevents_send_event( char *fmt, ...) {
   event[sizeof(event)-1]=0;
   va_end( arg_ptr);
 
+  pthread_mutex_lock( &lsevents_queue_mutex);
+
   lslogging_log_message( "lsevents_send_event: %s", event);
 
-  pthread_mutex_lock( &lsevents_queue_mutex);
 
   // maybe wait for room on the queue
   while( lsevents_queue_on + 1 == lsevents_queue_off)

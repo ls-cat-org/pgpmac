@@ -428,9 +428,11 @@ void md2cmds_collect() {
   double p180;	// exposure time (msec)
   int center_request;
   double u2c;
+  double max_accel;
 
 
-  u2c = lsredis_getd( omega->u2c);
+  u2c       = lsredis_getd( omega->u2c);
+  max_accel = lsredis_getd( omega->max_accel);
 
   //
   // reset shutter has opened flag
@@ -501,7 +503,7 @@ void md2cmds_collect() {
     //    p171 = u2c * ( lspg_nextshot.sstart + lspg_nextshot.dsowidth);
     p171 = u2c * lspg_nextshot.dsowidth;
     p173 = fabs(p180) < 1.e-4 ? 0.0 : u2c * lspg_nextshot.dsowidth / p180;
-    p175 = p173/omega->max_accel;
+    p175 = p173/max_accel;
 
 
     //
