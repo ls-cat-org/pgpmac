@@ -32,7 +32,6 @@ var lspg_8c =
     [ "lspg_getcenter_wait", "lspg_8c.html#a3e0e4b3cb9fa03961ee0c104e0b06754", null ],
     [ "lspg_init", "lspg_8c.html#a8a77972df14166e05c94ed0792baa09b", null ],
     [ "lspg_init_motors_cb", "lspg_8c.html#a329a7fdfa5025a403ea2779e178fd3ed", null ],
-    [ "lspg_kvs_cb", "lspg_8c.html#a6de3621552c9265950a0df573429c519", null ],
     [ "lspg_lock_detector_all", "lspg_8c.html#aff93d2f5ac31aa249a0bef40a3837c84", null ],
     [ "lspg_lock_detector_call", "lspg_8c.html#a5f71a20cc297684b2afe28e7bd8e8383", null ],
     [ "lspg_lock_detector_cb", "lspg_8c.html#aa760191c2b443170cebbcbf5ea5345f3", null ],

@@ -1,0 +1,1335 @@
+.TH "lsredis.c" 3 "Sun Dec 16 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+lsredis.c \- 
+.PP
+Support redis hash synchronization\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'pgpmac\&.h'\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fB_lsredis_set_value\fP (\fBlsredis_obj_t\fP *p, char *v)"
+.br
+.RI "\fIset_value and setstr helper funciton p->mutex must be locked before calling \fP"
+.ti -1c
+.RI "void \fBlsredis_set_value\fP (\fBlsredis_obj_t\fP *p, char *fmt,\&.\&.\&.)"
+.br
+.RI "\fISet the value of a redis object and make it valid\&. \fP"
+.ti -1c
+.RI "int \fBlsredis_cmpstr\fP (\fBlsredis_obj_t\fP *p, char *s)"
+.br
+.ti -1c
+.RI "int \fBlsredis_cmpnstr\fP (\fBlsredis_obj_t\fP *p, char *s, int n)"
+.br
+.ti -1c
+.RI "int \fBlsredis_regexec\fP (const regex_t *preg, \fBlsredis_obj_t\fP *p, size_t nmatch, regmatch_t *pmatch, int eflags)"
+.br
+.ti -1c
+.RI "char * \fBlsredis_getstr\fP (\fBlsredis_obj_t\fP *p)"
+.br
+.RI "\fIreturn a copy of the key's string value \fP"
+.ti -1c
+.RI "void \fBlsredis_setstr\fP (\fBlsredis_obj_t\fP *p, char *fmt,\&.\&.\&.)"
+.br
+.RI "\fISet the value and update redis\&. \fP"
+.ti -1c
+.RI "double \fBlsredis_getd\fP (\fBlsredis_obj_t\fP *p)"
+.br
+.ti -1c
+.RI "long int \fBlsredis_getl\fP (\fBlsredis_obj_t\fP *p)"
+.br
+.ti -1c
+.RI "char ** \fBlsredis_get_string_array\fP (\fBlsredis_obj_t\fP *p)"
+.br
+.ti -1c
+.RI "int \fBlsredis_getb\fP (\fBlsredis_obj_t\fP *p)"
+.br
+.ti -1c
+.RI "char \fBlsredis_getc\fP (\fBlsredis_obj_t\fP *p)"
+.br
+.ti -1c
+.RI "void \fBlsredis_hgetCB\fP (redisAsyncContext *ac, void *reply, void *privdata)"
+.br
+.ti -1c
+.RI "\fBlsredis_obj_t\fP * \fB_lsredis_get_obj\fP (char *key)"
+.br
+.RI "\fIMaybe add a new object Used internally for this module\&. \fP"
+.ti -1c
+.RI "\fBlsredis_obj_t\fP * \fBlsredis_get_obj\fP (char *fmt,\&.\&.\&.)"
+.br
+.ti -1c
+.RI "void \fBredisDisconnectCB\fP (const redisAsyncContext *ac, int status)"
+.br
+.RI "\fIcall back in case a redis server becomes disconnected TODO: reconnect \fP"
+.ti -1c
+.RI "void \fBlsredis_addRead\fP (void *data)"
+.br
+.RI "\fIhook to mange read events \fP"
+.ti -1c
+.RI "void \fBlsredis_delRead\fP (void *data)"
+.br
+.RI "\fIhook to manage 'don't need to read' events \fP"
+.ti -1c
+.RI "void \fBlsredis_addWrite\fP (void *data)"
+.br
+.RI "\fIhook to manage write events \fP"
+.ti -1c
+.RI "void \fBlsredis_delWrite\fP (void *data)"
+.br
+.RI "\fIhook to manage 'don't need to write anymore' events \fP"
+.ti -1c
+.RI "void \fBlsredis_cleanup\fP (void *data)"
+.br
+.RI "\fIhook to clean up TODO: figure out what we are supposed to do here and do it \fP"
+.ti -1c
+.RI "void \fBlsredis_debugCB\fP (redisAsyncContext *ac, void *reply, void *privdata)"
+.br
+.RI "\fILog the reply\&. \fP"
+.ti -1c
+.RI "void \fBlsredis_subCB\fP (redisAsyncContext *ac, void *reply, void *privdata)"
+.br
+.RI "\fIUse the publication to request the new value\&. \fP"
+.ti -1c
+.RI "void \fBlsredis_maybe_add_key\fP (char *k)"
+.br
+.ti -1c
+.RI "void \fBlsredis_keysCB\fP (redisAsyncContext *ac, void *reply, void *privdata)"
+.br
+.RI "\fISift through the keys to find ones we like\&. \fP"
+.ti -1c
+.RI "int \fBlsredis_find_preset\fP (char *base, char *preset_name, double *dval)"
+.br
+.ti -1c
+.RI "void \fBlsredis_select\fP (char *re)"
+.br
+.RI "\fIset regexp to select variables we are interested in following \fP"
+.ti -1c
+.RI "void \fBlsredis_init\fP (char *pub, char *re, char *head)"
+.br
+.RI "\fIInitialize this module, that is, set up the connections\&. \fP"
+.ti -1c
+.RI "void \fBlsredis_fd_service\fP (struct pollfd *evt)"
+.br
+.RI "\fIservice the socket requests \fP"
+.ti -1c
+.RI "void * \fBlsredis_worker\fP (void *dummy)"
+.br
+.RI "\fIsubscribe to changes and service sockets \fP"
+.ti -1c
+.RI "void \fBlsredis_run\fP ()"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "static pthread_t \fBlsredis_thread\fP"
+.br
+.ti -1c
+.RI "static \fBlsredis_obj_t\fP * \fBlsredis_objs\fP = NULL"
+.br
+.ti -1c
+.RI "static struct hsearch_data \fBlsredis_htab\fP"
+.br
+.ti -1c
+.RI "static pthread_mutex_t \fBlsredis_objs_mutex\fP"
+.br
+.ti -1c
+.RI "static pthread_mutex_t \fBlsredis_ro_mutex\fP"
+.br
+.RI "\fIkeep from having more than one thread send a rediscommand to the read/only server \fP"
+.ti -1c
+.RI "static pthread_mutex_t \fBlsredis_wr_mutex\fP"
+.br
+.RI "\fIkeep from having more than one thread send a rediscommand to the write/read server \fP"
+.ti -1c
+.RI "static redisAsyncContext * \fBsubac\fP"
+.br
+.ti -1c
+.RI "static redisAsyncContext * \fBroac\fP"
+.br
+.ti -1c
+.RI "static redisAsyncContext * \fBwrac\fP"
+.br
+.ti -1c
+.RI "static char * \fBlsredis_publisher\fP = NULL"
+.br
+.ti -1c
+.RI "static regex_t \fBlsredis_key_select_regex\fP"
+.br
+.ti -1c
+.RI "static char * \fBlsredis_head\fP = NULL"
+.br
+.ti -1c
+.RI "static struct pollfd \fBsubfd\fP"
+.br
+.ti -1c
+.RI "static struct pollfd \fBrofd\fP"
+.br
+.ti -1c
+.RI "static struct pollfd \fBwrfd\fP"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Support redis hash synchronization\&. 
+
+\fBDate:\fP
+.RS 4
+2012 
+.RE
+.PP
+\fBAuthor:\fP
+.RS 4
+Keith Brister 
+.RE
+.PP
+\fBCopyright:\fP
+.RS 4
+All Rights Reserved 
+.RE
+.PP
+
+.PP
+Definition in file \fBlsredis\&.c\fP\&.
+.SH "Function Documentation"
+.PP 
+.SS "\fBlsredis_obj_t\fP* _lsredis_get_obj (char *key)"
+
+.PP
+Maybe add a new object Used internally for this module\&. 
+.PP
+Definition at line 308 of file lsredis\&.c\&.
+.PP
+.nf
+                                            {
+  lsredis_obj_t *p;
+  regmatch_t pmatch[2];
+  int err;
+  char *name;
+  ENTRY htab_input, *htab_output;
+
+  // Dispense with obviously bad keys straight away
+  // unless p->valid == 0 in which case we call HGET first
+  //
+  // TODO: review logic: is there ever a time when valid is zero for a preexisting p and HGET has not been called?
+  //       If not then we should just return p without checking for validity\&.
+  //
+  if( key == NULL || *key == 0 || strchr( key, ' ') != NULL) {
+    lslogging_log_message( '_lsredis_get_obj: bad key '%s'', key == NULL ? '<NULL>' : key);
+    return NULL;
+  }
+
+  //  printf( '_lsredis_get_obj: received key '%s'', key);
+  //  fflush( stdout);
+
+  pthread_mutex_lock( &lsredis_objs_mutex);
+  // If the key is already there then just return it
+  //
+
+  htab_input\&.key  = key;
+  htab_input\&.data = NULL;
+  errno = 0;
+  err = hsearch_r( htab_input, FIND, &htab_output, &lsredis_htab);
+
+  if( err == 0)
+    p = NULL;
+  else
+    p = htab_output->data;
+
+
+  if( p != NULL) {
+    pthread_mutex_unlock( &lsredis_objs_mutex);
+    return p;
+  } else {
+    // make a new one\&.
+    p = calloc( 1, sizeof( lsredis_obj_t));
+    if( p == NULL) {
+      lslogging_log_message( '_lsredis_get_obj: Out of memory');
+      exit( -1);
+    }
+    
+    err = regexec( &lsredis_key_select_regex, key, 2, pmatch, 0);
+    if( err == 0 && pmatch[1]\&.rm_so != -1) {
+      p->events_name = strndup( key+pmatch[1]\&.rm_so, pmatch[1]\&.rm_eo - pmatch[1]\&.rm_so);
+    } else {
+      p->events_name = strdup( key);
+    }
+    if( p->events_name == NULL) {
+      lslogging_log_message( '_lsredis_get_obj: Out of memory (events_name)');
+      exit( -1);
+    }
+
+    pthread_mutex_init( &p->mutex, NULL);
+    pthread_cond_init(  &p->cond, NULL);
+    p->value = NULL;
+    p->valid = 0;
+    lsevents_send_event( '%s Invalid', p->events_name);
+    p->wait_for_me = 0;
+    p->key = strdup( key);
+    p->hits = 0;
+  
+    htab_input\&.key  = p->key;
+    htab_input\&.data = p;
+
+    errno = 0;
+    err = hsearch_r( htab_input, ENTER, &htab_output, &lsredis_htab);
+    if( err == 0) {
+      lslogging_log_message( '_lsredis_get_obj: hseach error on enter\&.  errno=%d', errno);
+    } else {
+      lslogging_log_message( '_lsredis_get_obj: added %s', key);
+    }
+
+    //
+    // Shouldn't need the linked list unless we need to rebuild the hash table when, for example, we run out of room\&.
+    // TODO: resize hash table when needed\&.
+    //
+    p->next = lsredis_objs;
+    lsredis_objs = p;
+
+    pthread_mutex_unlock( &lsredis_objs_mutex);
+
+  }
+  //
+  // We arrive here with the valid flag lowered\&.  Go ahead and request the latest value\&.
+  //
+  pthread_mutex_lock( &lsredis_ro_mutex);
+  redisAsyncCommand( roac, lsredis_hgetCB, p, 'HGET %s VALUE', key);
+  pthread_mutex_unlock( &lsredis_ro_mutex);
+
+  return p;
+}
+.fi
+.SS "void _lsredis_set_value (\fBlsredis_obj_t\fP *p, char *v)"
+
+.PP
+set_value and setstr helper funciton p->mutex must be locked before calling 
+.PP
+Definition at line 32 of file lsredis\&.c\&.
+.PP
+.nf
+                                                    {
+
+  if( strlen(v) >= p->value_length) {
+    if( p->value != NULL)
+      free( p->value);
+    p->value_length = strlen(v) + 256;
+    p->value = calloc( p->value_length, sizeof( char));
+    if( p->value == NULL) {
+      lslogging_log_message( '_lsredis_set_value: out of memory');
+      exit( -1);
+    }
+  }
+  strcpy( p->value, v);
+  p->value[p->value_length-1] = 0;
+  p->dvalue = strtod( p->value, NULL);
+  p->lvalue = strtol( p->value, NULL, 10);
+  
+  if( p->avalue != NULL) {
+    char **zz;
+    for( zz = p->avalue; *zz != NULL; zz++)
+      free( zz);
+    free( p->avalue);
+  }
+  p->avalue = lspg_array2ptrs( p->value);
+  switch( *(p->value)) {
+      case 'T':
+      case 't':
+      case 'Y':
+      case 'y':
+      case '1':
+        p->bvalue = 1;
+      break;
+
+      case 'F':
+      case 'f':
+      case 'N':
+      case 'n':
+      case '0':
+        p->bvalue = 0;
+      break;
+
+      default:
+        p->bvalue = -1;         // a little unusual for a null value to be -1
+    }
+
+  p->cvalue = *(p->value);
+  p->valid = 1;
+
+  lsevents_send_event( '%s Valid', p->events_name);
+}
+.fi
+.SS "void lsredis_addRead (void *data)"
+
+.PP
+hook to mange read events 
+.PP
+Definition at line 444 of file lsredis\&.c\&.
+.PP
+.nf
+                                  {
+  struct pollfd *pfd;
+  pfd = (struct pollfd *)data;
+  pfd->events |= POLLIN;
+}
+.fi
+.SS "void lsredis_addWrite (void *data)"
+
+.PP
+hook to manage write events 
+.PP
+Definition at line 460 of file lsredis\&.c\&.
+.PP
+.nf
+                                   {
+  struct pollfd *pfd;
+  pfd = (struct pollfd *)data;
+  pfd->events |= POLLOUT;
+}
+.fi
+.SS "void lsredis_cleanup (void *data)"
+
+.PP
+hook to clean up TODO: figure out what we are supposed to do here and do it 
+.PP
+Definition at line 477 of file lsredis\&.c\&.
+.PP
+.nf
+                                  {
+  struct pollfd *pfd;
+  pfd = (struct pollfd *)data;
+  pfd->events &= ~(POLLOUT | POLLIN);
+  pfd->fd = -1;
+}
+.fi
+.SS "int lsredis_cmpnstr (\fBlsredis_obj_t\fP *p, char *s, intn)"
+
+.PP
+Definition at line 117 of file lsredis\&.c\&.
+.PP
+.nf
+                                                       {
+  int rtn;
+  pthread_mutex_lock( &p->mutex);
+  while( p->valid == 0)
+    pthread_cond_wait( &p->cond, &p->mutex);
+  
+  rtn = strncmp( p->value, s, n);
+  pthread_mutex_unlock( &p->mutex);
+  return rtn;
+}
+.fi
+.SS "int lsredis_cmpstr (\fBlsredis_obj_t\fP *p, char *s)"
+
+.PP
+Definition at line 106 of file lsredis\&.c\&.
+.PP
+.nf
+                                               {
+  int rtn;
+  pthread_mutex_lock( &p->mutex);
+  while( p->valid == 0)
+    pthread_cond_wait( &p->cond, &p->mutex);
+  
+  rtn = strcmp( p->value, s);
+  pthread_mutex_unlock( &p->mutex);
+  return rtn;
+}
+.fi
+.SS "void lsredis_debugCB (redisAsyncContext *ac, void *reply, void *privdata)"
+
+.PP
+Log the reply\&. 
+.PP
+Definition at line 487 of file lsredis\&.c\&.
+.PP
+.nf
+                                                                          {
+  static int indentlevel = 0;
+  redisReply *r;
+  int i;
+
+  r = (redisReply *)reply;
+
+  if( r == NULL) {
+    lslogging_log_message( 'Null reply\&.  Odd');
+    return;
+  }
+
+  switch( r->type) {
+  case REDIS_REPLY_STATUS:
+    lslogging_log_message( '%*sSTATUS: %s', indentlevel*4,'', r->str);
+    break;
+
+  case REDIS_REPLY_ERROR:
+    lslogging_log_message( '%*sERROR: %s', indentlevel*4, '', r->str);
+    break;
+
+  case REDIS_REPLY_INTEGER:
+    lslogging_log_message( '%*sInteger: %lld', indentlevel*4, '', r->integer);
+    break;
+
+  case REDIS_REPLY_NIL:
+    lslogging_log_message( '%*s(nil)', indentlevel*4, '');
+    break;
+
+  case REDIS_REPLY_STRING:
+    lslogging_log_message( '%*sSTRING: %s', indentlevel*4, '', r->str);
+    break;
+
+  case REDIS_REPLY_ARRAY:
+    lslogging_log_message( '%*sARRAY of %d elements', indentlevel*4, '', (int)r->elements);
+    indentlevel++;
+    for( i=0; i<r->elements; i++)
+      lsredis_debugCB( ac, r->element[i], NULL);
+    indentlevel--;
+    break;
+
+  default:
+    lslogging_log_message( '%*sUnknown type %d', indentlevel*4,'', r->type);
+
+  }
+}
+.fi
+.SS "void lsredis_delRead (void *data)"
+
+.PP
+hook to manage 'don't need to read' events 
+.PP
+Definition at line 452 of file lsredis\&.c\&.
+.PP
+.nf
+                                  {
+  struct pollfd *pfd;
+  pfd = (struct pollfd *)data;
+  pfd->events &= ~POLLIN;
+}
+.fi
+.SS "void lsredis_delWrite (void *data)"
+
+.PP
+hook to manage 'don't need to write anymore' events 
+.PP
+Definition at line 468 of file lsredis\&.c\&.
+.PP
+.nf
+                                   {
+  struct pollfd *pfd;
+  pfd = (struct pollfd *)data;
+  pfd->events &= ~POLLOUT;
+}
+.fi
+.SS "void lsredis_fd_service (struct pollfd *evt)"
+
+.PP
+service the socket requests 
+.PP
+Definition at line 843 of file lsredis\&.c\&.
+.PP
+.nf
+                                             {
+  if( evt->fd == subac->c\&.fd) {
+    if( evt->revents & POLLIN)
+      redisAsyncHandleRead( subac);
+    if( evt->revents & POLLOUT)
+      redisAsyncHandleWrite( subac);
+  }
+  if( evt->fd == roac->c\&.fd) {
+    if( evt->revents & POLLIN)
+      redisAsyncHandleRead( roac);
+    if( evt->revents & POLLOUT)
+      redisAsyncHandleWrite( roac);
+  }
+  if( evt->fd == wrac->c\&.fd) {
+    if( evt->revents & POLLIN)
+      redisAsyncHandleRead( wrac);
+    if( evt->revents & POLLOUT)
+      redisAsyncHandleWrite( wrac);
+  }
+}
+.fi
+.SS "int lsredis_find_preset (char *base, char *preset_name, double *dval)"
+
+.PP
+Definition at line 694 of file lsredis\&.c\&.
+.PP
+.nf
+                                                                      {
+  char s[512];
+  int i;
+  int err;
+  ENTRY htab_input, *htab_output;
+  lsredis_obj_t *p;
+
+  i = 0;
+  for( i=0; i<1024; i++) {
+    snprintf( s, sizeof( s)-1, '%s\&.%s\&.presets\&.%d\&.name', lsredis_head, base, i);
+    s[sizeof(s)-1] = 0;
+    htab_input\&.key  = s;
+    htab_input\&.data = NULL;
+    err = hsearch_r( htab_input, FIND, &htab_output, &lsredis_htab);
+    if( err == 0) {
+      // We've run out of names to look for: done
+      lslogging_log_message( 'lsredis_find_preset: no preset for motor %s named '%s'', base, preset_name);
+      *dval = 0\&.0;
+      return 0;
+    }
+
+    // Check if we have a match
+    p = htab_output->data;
+    if( lsredis_cmpstr( p, preset_name)==0) {
+      // got a match, now look for the position
+      snprintf( s, sizeof( s)-1, '%s\&.%s\&.presets\&.%d\&.position', lsredis_head, base, i);
+      s[sizeof(s)-1] = 0;
+      htab_input\&.key = s;
+      htab_input\&.data = NULL;
+      err = hsearch_r( htab_input, FIND, &htab_output, &lsredis_htab);
+      if( err == 0) {
+        // Name but not position? odd\&.
+        lslogging_log_message( 'lsredis_find_preset: Error, motor %s preset '%s' has no position defined', base, preset_name);
+        *dval = 0\&.0;
+        return 0;
+      }
+      p = htab_output->data;
+      *dval = lsredis_getd( p);
+      return 1;
+    }
+  }
+  // How'd we get here?
+  // did someone really define that many presets?  And then looked for one that's not there?
+  *dval = 0;
+  return 0;
+}
+.fi
+.SS "\fBlsredis_obj_t\fP* lsredis_get_obj (char *fmt, \&.\&.\&.)"
+
+.PP
+Definition at line 407 of file lsredis\&.c\&.
+.PP
+.nf
+                                                {
+  lsredis_obj_t *rtn;
+  va_list arg_ptr;
+  char k[512];
+  char *kp;
+  int nkp;
+
+  va_start( arg_ptr, fmt);
+  vsnprintf( k, sizeof(k)-1, fmt, arg_ptr);
+  k[sizeof(k)-1] = 0;
+  va_end( arg_ptr);
+
+  nkp = strlen(k) + strlen( lsredis_head) + 16;         // 16 is overkill\&. I know\&. Get over it\&.
+  kp = calloc( nkp, sizeof( char));
+  if( kp == NULL) {
+    lslogging_log_message( 'lsredis_get_obj: Out of memory');
+    exit( -1);
+  }
+  
+  snprintf( kp, nkp-1, '%s\&.%s', lsredis_head, k);
+  kp[nkp-1] = 0;
+  rtn = _lsredis_get_obj( kp);
+  free( kp);
+  return rtn;
+}
+.fi
+.SS "char** lsredis_get_string_array (\fBlsredis_obj_t\fP *p)"
+
+.PP
+Definition at line 236 of file lsredis\&.c\&.
+.PP
+.nf
+                                                   {
+  char **rtn;
+
+  pthread_mutex_lock( &p->mutex);
+  while( p->valid == 0)
+    pthread_cond_wait( &p->cond, &p->mutex);
+
+  rtn = p->avalue;
+  pthread_mutex_unlock( &p->mutex);
+  
+  return rtn;
+}
+.fi
+.SS "int lsredis_getb (\fBlsredis_obj_t\fP *p)"
+
+.PP
+Definition at line 249 of file lsredis\&.c\&.
+.PP
+.nf
+                                    {
+  int rtn;
+
+  pthread_mutex_lock( &p->mutex);
+  while( p->valid == 0)
+    pthread_cond_wait( &p->cond, &p->mutex);
+
+  rtn = p->bvalue;
+  pthread_mutex_unlock( &p->mutex);
+  
+  return rtn;
+}  
+.fi
+.SS "char lsredis_getc (\fBlsredis_obj_t\fP *p)"
+
+.PP
+Definition at line 262 of file lsredis\&.c\&.
+.PP
+.nf
+                                     {
+  int rtn;
+
+  pthread_mutex_lock( &p->mutex);
+  while( p->valid == 0)
+    pthread_cond_wait( &p->cond, &p->mutex);
+
+  rtn = p->cvalue;
+  pthread_mutex_unlock( &p->mutex);
+  
+  return rtn;
+}  
+.fi
+.SS "double lsredis_getd (\fBlsredis_obj_t\fP *p)"
+
+.PP
+Definition at line 210 of file lsredis\&.c\&.
+.PP
+.nf
+                                       {
+  double rtn;
+
+  pthread_mutex_lock( &p->mutex);
+  while( p->valid == 0)
+    pthread_cond_wait( &p->cond, &p->mutex);
+
+  rtn = p->dvalue;
+  pthread_mutex_unlock( &p->mutex);
+  
+  return rtn;
+}
+.fi
+.SS "long int lsredis_getl (\fBlsredis_obj_t\fP *p)"
+
+.PP
+Definition at line 223 of file lsredis\&.c\&.
+.PP
+.nf
+                                         {
+  long int rtn;
+
+  pthread_mutex_lock( &p->mutex);
+  while( p->valid == 0)
+    pthread_cond_wait( &p->cond, &p->mutex);
+
+  rtn = p->lvalue;
+  pthread_mutex_unlock( &p->mutex);
+  
+  return rtn;
+}  
+.fi
+.SS "char* lsredis_getstr (\fBlsredis_obj_t\fP *p)"
+
+.PP
+return a copy of the key's string value 
+.PP
+Definition at line 141 of file lsredis\&.c\&.
+.PP
+.nf
+                                        {
+  char *rtn;
+
+  //
+  // Have to use strdup since we cannot guarantee that p->value won't be freed while the caller is still using it
+  //
+  pthread_mutex_lock( &p->mutex);
+  while( p->valid == 0)
+    pthread_cond_wait( &p->cond, &p->mutex);
+
+  rtn = strdup(p->value);
+  pthread_mutex_unlock( &p->mutex);
+  return rtn;
+}
+.fi
+.SS "void lsredis_hgetCB (redisAsyncContext *ac, void *reply, void *privdata)"
+
+.PP
+Definition at line 275 of file lsredis\&.c\&.
+.PP
+.nf
+                                                                         {
+  redisReply *r;
+  lsredis_obj_t *p;
+
+  r = reply;
+  p =  privdata;
+
+  lslogging_log_message( 'hgetCB: %s %s', p == NULL ? '<NULL>' : p->key, r->type == REDIS_REPLY_STRING ? r->str : 'Non-string value\&.  Why?');
+
+  //
+  // Apparently this item does not exist
+  // Just set it to an empty string so at least other apps will have the same behaviour as us
+  // TODO: figure out a better way to deal with missing key/values
+  //
+  if( p != NULL && r->type == REDIS_REPLY_NIL) {
+    lsredis_setstr( p, '');
+    return;
+  }
+
+  if( p != NULL && r->type == REDIS_REPLY_STRING && r->str != NULL) {
+    pthread_mutex_lock( &p->mutex);
+
+    _lsredis_set_value( p, r->str);
+
+    pthread_cond_signal( &p->cond);
+    pthread_mutex_unlock( &p->mutex);
+  }
+}
+.fi
+.SS "void lsredis_init (char *pub, char *re, char *head)"
+
+.PP
+Initialize this module, that is, set up the connections\&. \fBParameters:\fP
+.RS 4
+\fIpub\fP Publish under this (unique) name 
+.br
+\fIre\fP Regular expression to select keys we want to mirror 
+.br
+\fIhead\fP Prepend this (+ a dot) to the beginning of requested objects 
+.RE
+.PP
+
+.PP
+Definition at line 775 of file lsredis\&.c\&.
+.PP
+.nf
+                                                    {
+
+  int err;
+
+  err = hcreate_r( 8192, &lsredis_htab);
+  if( err == 0) {
+    lslogging_log_message( 'lsredis_init: Cannot create hash table\&.  Really bad things are going to happen\&.  hcreate_r returnd %d', err);
+  }
+
+
+
+  lsredis_head = strdup( head);
+  lsredis_publisher = strdup( pub);
+
+  pthread_mutex_init( &lsredis_objs_mutex, NULL);
+  pthread_mutex_init( &lsredis_ro_mutex, NULL);
+  pthread_mutex_init( &lsredis_wr_mutex, NULL);
+
+  subac = redisAsyncConnect('127\&.0\&.0\&.1', 6379);
+  if( subac->err) {
+    lslogging_log_message( 'Error: %s', subac->errstr);
+  }
+
+  subfd\&.fd           = subac->c\&.fd;
+  subfd\&.events       = 0;
+  subac->ev\&.data     = &subfd;
+  subac->ev\&.addRead  = lsredis_addRead;
+  subac->ev\&.delRead  = lsredis_delRead;
+  subac->ev\&.addWrite = lsredis_addWrite;
+  subac->ev\&.delWrite = lsredis_delWrite;
+  subac->ev\&.cleanup  = lsredis_cleanup;
+
+  roac = redisAsyncConnect('127\&.0\&.0\&.1', 6379);
+  if( roac->err) {
+    lslogging_log_message( 'Error: %s', roac->errstr);
+  }
+
+  rofd\&.fd           = roac->c\&.fd;
+  rofd\&.events       = 0;
+  roac->ev\&.data     = &rofd;
+  roac->ev\&.addRead  = lsredis_addRead;
+  roac->ev\&.delRead  = lsredis_delRead;
+  roac->ev\&.addWrite = lsredis_addWrite;
+  roac->ev\&.delWrite = lsredis_delWrite;
+  roac->ev\&.cleanup  = lsredis_cleanup;
+
+  wrac = redisAsyncConnect('10\&.1\&.0\&.3', 6379);
+  if( wrac->err) {
+    lslogging_log_message( 'Error: %s', wrac->errstr);
+  }
+
+  wrfd\&.fd           = wrac->c\&.fd;
+  wrfd\&.events       = 0;
+  wrac->ev\&.data     = &wrfd;
+  wrac->ev\&.addRead  = lsredis_addRead;
+  wrac->ev\&.delRead  = lsredis_delRead;
+  wrac->ev\&.addWrite = lsredis_addWrite;
+  wrac->ev\&.delWrite = lsredis_delWrite;
+  wrac->ev\&.cleanup  = lsredis_cleanup;
+
+  lsredis_select( re);
+}
+.fi
+.SS "void lsredis_keysCB (redisAsyncContext *ac, void *reply, void *privdata)"
+
+.PP
+Sift through the keys to find ones we like\&. Add them to our list of followed objects 
+.PP
+Definition at line 673 of file lsredis\&.c\&.
+.PP
+.nf
+                                                                         {
+  redisReply *r;
+  int i;
+  
+  r = reply;
+  if( r->type != REDIS_REPLY_ARRAY) {
+    lslogging_log_message( 'lsredis_keysCB: exepected array\&.\&.\&.');
+    lsredis_debugCB( ac, reply, privdata);
+    return;
+  }
+  
+  for( i=0; i<r->elements; i++) {
+    if( r->element[i]->type != REDIS_REPLY_STRING) {
+      lslogging_log_message( 'lsredis_keysCB: exected string\&.\&.\&.');
+      lsredis_debugCB( ac, r->element[i], privdata);
+    } else {
+      lsredis_maybe_add_key( r->element[i]->str);
+    }
+  }
+}
+.fi
+.SS "void lsredis_maybe_add_key (char *k)"
+
+.PP
+Definition at line 665 of file lsredis\&.c\&.
+.PP
+.nf
+                                     {
+  if( regexec( &lsredis_key_select_regex, k, 0, NULL, 0) == 0) {
+    _lsredis_get_obj( k);
+  }
+}
+.fi
+.SS "int lsredis_regexec (const regex_t *preg, \fBlsredis_obj_t\fP *p, size_tnmatch, regmatch_t *pmatch, inteflags)"
+
+.PP
+Definition at line 128 of file lsredis\&.c\&.
+.PP
+.nf
+                                                                                                           {
+  int rtn;
+
+  pthread_mutex_lock( &p->mutex);
+  while( p->valid == 0) 
+    pthread_cond_wait( &p->cond, &p->mutex);
+
+  rtn = regexec( preg, p->value, nmatch, pmatch, eflags);
+
+  pthread_mutex_unlock( &p->mutex);
+}
+.fi
+.SS "void lsredis_run ()"
+
+.PP
+Definition at line 916 of file lsredis\&.c\&.
+.PP
+.nf
+                   {
+  pthread_create( &lsredis_thread, NULL, lsredis_worker, NULL);
+}
+.fi
+.SS "void lsredis_select (char *re)"
+
+.PP
+set regexp to select variables we are interested in following Note that redis only supports glob matching while we'd prefer something a tad more useful\&. See http://xkcd.com/208 
+.PP
+Definition at line 749 of file lsredis\&.c\&.
+.PP
+.nf
+                               {
+  int err;
+  char *errmsg;
+  int  nerrmsg;
+
+  err = regcomp( &lsredis_key_select_regex, re, REG_EXTENDED);
+  if( err != 0) {
+    nerrmsg = regerror( err, &lsredis_key_select_regex, NULL, 0);
+    if( nerrmsg > 0) {
+      errmsg = calloc( nerrmsg, sizeof( char));
+      nerrmsg = regerror( err, &lsredis_key_select_regex, errmsg, nerrmsg);
+      lslogging_log_message( 'lsredis_select: %s', errmsg);
+      free( errmsg);
+    }
+  }
+  
+  pthread_mutex_lock( &lsredis_ro_mutex);
+  redisAsyncCommand( roac, lsredis_keysCB, NULL, 'KEYS *');
+  pthread_mutex_unlock( &lsredis_ro_mutex);
+}
+.fi
+.SS "void lsredis_set_value (\fBlsredis_obj_t\fP *p, char *fmt, \&.\&.\&.)"
+
+.PP
+Set the value of a redis object and make it valid\&. Called by mgetCB to set the value as it is in redis Maybe TODO: we've arbitrarily set the maximum size of a value here\&. Although I cannot imagine needed bigger values it would not be a big deal to enable it\&. 
+.PP
+Definition at line 88 of file lsredis\&.c\&.
+.PP
+.nf
+                                                          {
+  va_list arg_ptr;
+  char v[512];
+  
+  va_start( arg_ptr, fmt);
+  vsnprintf( v, sizeof(v)-1, fmt, arg_ptr);
+  va_end( arg_ptr);
+
+  v[sizeof(v)-1] = 0;
+
+  pthread_mutex_lock( &p->mutex);
+
+  _lsredis_set_value( p, v);
+
+  pthread_cond_signal( &p->cond);
+  pthread_mutex_unlock( &p->mutex);
+}
+.fi
+.SS "void lsredis_setstr (\fBlsredis_obj_t\fP *p, char *fmt, \&.\&.\&.)"
+
+.PP
+Set the value and update redis\&. Note that lsredis_set_value sets the value based on redis while here we set redis based on the value Arbitray maximum string length set here\&. TODO: Probably this limit should be removed at some point\&.
+.PP
+redisAsyncCommandArgv used instead of redisAsyncCommand 'cause it's easier (and possible) to deal with strings that would otherwise cause hiredis to emit a bad command, like those containing spaces\&. < invalidate the current value: set_value will fix this and signal waiting threads
+.PP
+< up the count of times we need to see ourselves published before we start listening to others again
+.PP
+< key is 'immutable' (not really a C feature)\&. In any case no one is going to be changing it so it's cool to read it without mutex protection\&.
+.PP
+< redisAsyncCommandArgv shouldn't need to access this after it's made up it's packet (before it returns) so we should be OK with this location disappearing soon\&. 
+.PP
+Definition at line 166 of file lsredis\&.c\&.
+.PP
+.nf
+                                                       {
+  va_list arg_ptr;
+  char v[512];
+  char *argv[4];
+
+  va_start( arg_ptr, fmt);
+  vsnprintf( v, sizeof(v)-1, fmt, arg_ptr);
+  v[sizeof(v)-1] = 0;
+  va_end( arg_ptr);
+  
+  pthread_mutex_lock(   &p->mutex);
+
+  if( p->valid && strcmp( v, p->value) == 0) {
+    // nothing to do
+    pthread_mutex_unlock( &p->mutex);
+    return;
+  }
+
+  p->valid       = 0;                                           
+  lsevents_send_event( '%s Invalid', p->events_name);
+  p->wait_for_me++;                                             
+
+
+  argv[0] = 'HSET';
+  argv[1] = p->key;     
+  argv[2] = 'VALUE';
+  argv[3] = v;          
+
+  pthread_mutex_lock( &lsredis_wr_mutex);
+  redisAsyncCommand( wrac, NULL, NULL, 'MULTI');
+  redisAsyncCommandArgv( wrac, NULL, NULL, 4, (const char **)argv, NULL);
+
+  redisAsyncCommand( wrac, NULL, NULL, 'PUBLISH %s %s', lsredis_publisher, p->key);
+  redisAsyncCommand( wrac, NULL, NULL, 'EXEC');
+  pthread_mutex_unlock( &lsredis_wr_mutex);
+
+  // Assume redis will take exactly the value we sent it
+  //
+  _lsredis_set_value( p, v);
+  pthread_cond_signal( &p->cond);
+  pthread_mutex_unlock( &p->mutex);
+}
+.fi
+.SS "void lsredis_subCB (redisAsyncContext *ac, void *reply, void *privdata)"
+
+.PP
+Use the publication to request the new value\&. 
+.PP
+Definition at line 539 of file lsredis\&.c\&.
+.PP
+.nf
+                                                                        {
+  redisReply *r;
+  lsredis_obj_t *p, *last, *last2;
+  char *k;
+  char *publisher;
+  ENTRY htab_input, *htab_output;
+  int err;
+
+  r = (redisReply *)reply;
+
+  // Ignore our psubscribe reply
+  //
+  if( r->type == REDIS_REPLY_ARRAY && r->elements == 3 && r->element[0]->type == REDIS_REPLY_STRING && strcmp( r->element[0]->str, 'psubscribe')==0)
+    return;
+
+  // But log other stuff we don't understand
+  //
+  if( r->type != REDIS_REPLY_ARRAY ||
+      r->elements != 4 ||
+      r->element[3]->type != REDIS_REPLY_STRING ||
+      r->element[2]->type != REDIS_REPLY_STRING) {
+
+    lslogging_log_message( 'lsredis_subCB: unexpected reply');
+    lsredis_debugCB( ac, reply, privdata);
+    return;
+  }
+
+  //
+  // Ignore obvious junk
+  //
+  k = r->element[3]->str;
+
+  if( k == NULL || *k == 0)
+    return;
+  
+  //
+  // see if we care
+  //
+  if( regexec( &lsredis_key_select_regex, k, 0, NULL, 0) == 0) {
+    //
+    // We should know about this one
+    //
+    pthread_mutex_lock( &lsredis_objs_mutex);
+
+    
+    htab_input\&.key  = k;
+    htab_input\&.data = NULL;
+
+    errno = 0;
+    err = hsearch_r( htab_input, FIND, &htab_output, &lsredis_htab);
+    if( err == 0 && errno == ESRCH)
+      p = NULL;
+    else
+      p = htab_output->data;
+      
+    /*  
+    last  = NULL;
+    last2 = NULL;
+    for( p=lsredis_objs; p != NULL; p = p->next) {
+      if( strcmp( p->key, k) == 0) {
+        p->hits++;
+        //
+        // Maybe reorder our list so the most often updated objects
+        // eventually bump up to the beginning of the list\&.
+        // That 'hits+4' keeps us from oscillating when objects are accessed equally
+        //
+        if( last != NULL && last->hits < p->hits+4) {
+          last->next = p->next;
+          p->next    = last;
+          if( last2 != NULL)
+            last2->next = p;
+          else
+            lsredis_objs = p;
+        }
+        break;
+      }
+      last2 = last;
+      last  = p;
+    } 
+    */
+   
+    pthread_mutex_unlock( &lsredis_objs_mutex);
+
+    if( p == NULL) {
+      //
+      // Regardless of who the publisher is, apparently there is a key we've not seen before
+      //
+      _lsredis_get_obj( k);
+    } else {
+      // Look who's talk'n
+      publisher = r->element[2]->str;
+
+      pthread_mutex_lock( &p->mutex);
+      if( p->wait_for_me) {
+        //
+        // see if we are done waiting
+        //
+        if( strcmp( publisher, lsredis_publisher)==0)
+          p->wait_for_me--;
+
+        pthread_mutex_unlock( &p->mutex);
+        //
+        // Don't get a new value, either we set it last or we are still waiting for redis to report
+        // our publication
+        //
+        return;
+      }
+
+      // Here we know our value is out of date
+      //
+      p->valid = 0;
+      lsevents_send_event( '%s Invalid', p->events_name);
+      pthread_mutex_unlock( &p->mutex);
+
+      //
+      // We shouldn't get here if wait_for_me is zero and we are the publisher\&.
+      // If somehow we did (ie we did an hset with out incrementing wait_for_me or if we published too many times), it shouldn't hurt to get the value again\&.
+      //
+      pthread_mutex_lock( &lsredis_ro_mutex);
+      redisAsyncCommand( roac, lsredis_hgetCB, p, 'HGET %s VALUE', k);
+      pthread_mutex_unlock( &lsredis_ro_mutex);
+    }
+  }
+}
+.fi
+.SS "void* lsredis_worker (void *dummy)"
+
+.PP
+subscribe to changes and service sockets < array of pollfd's for the poll function, one entry per connection
+.PP
+< number of active elements in fda
+.PP
+< poll timeout, in millisecs (of course) 
+.PP
+Definition at line 867 of file lsredis\&.c\&.
+.PP
+.nf
+                                    {
+  static struct pollfd fda[3];          
+  static int nfda = 0;                  
+  static int poll_timeout_ms = -1;      
+  int pollrtn;
+  int i;
+
+  pthread_mutex_lock( &lsredis_ro_mutex);
+  if( redisAsyncCommand( subac, lsredis_subCB, NULL, 'PSUBSCRIBE REDIS_KV_CONNECTOR UI*') == REDIS_ERR) {
+    lslogging_log_message( 'Error sending PSUBSCRIBE command');
+  }
+  pthread_mutex_unlock( &lsredis_ro_mutex);
+
+  
+  while(1) {
+    nfda = 0;
+
+    if( subfd\&.fd != -1) {
+      fda[nfda]\&.fd      = subfd\&.fd;
+      fda[nfda]\&.events  = subfd\&.events;
+      fda[nfda]\&.revents = 0;
+      nfda++;
+    }
+
+    if( rofd\&.fd != -1) {
+      fda[nfda]\&.fd      = rofd\&.fd;
+      fda[nfda]\&.events  = rofd\&.events;
+      fda[nfda]\&.revents = 0; 
+     nfda++;
+    }
+
+    if( wrfd\&.fd != -1) {
+      fda[nfda]\&.fd      = wrfd\&.fd;
+      fda[nfda]\&.events  = wrfd\&.events;
+      fda[nfda]\&.revents = 0;
+      nfda++;
+    }
+
+    pollrtn = poll( fda, nfda, poll_timeout_ms);
+
+    for( i=0; i<nfda; i++) {
+      if( fda[i]\&.revents) {
+        lsredis_fd_service( &(fda[i]));
+      }
+    }
+  }
+}
+.fi
+.SS "void redisDisconnectCB (const redisAsyncContext *ac, intstatus)"
+
+.PP
+call back in case a redis server becomes disconnected TODO: reconnect 
+.PP
+Definition at line 436 of file lsredis\&.c\&.
+.PP
+.nf
+                                                                {
+  if( status != REDIS_OK) {
+    lslogging_log_message( 'lsredis: Disconnected with status %d', status);
+  }
+}
+.fi
+.SH "Variable Documentation"
+.PP 
+.SS "char* lsredis_head = NULL\fC [static]\fP"
+
+.PP
+Definition at line 23 of file lsredis\&.c\&.
+.SS "struct hsearch_data lsredis_htab\fC [static]\fP"
+
+.PP
+Definition at line 12 of file lsredis\&.c\&.
+.SS "regex_t lsredis_key_select_regex\fC [static]\fP"
+
+.PP
+Definition at line 22 of file lsredis\&.c\&.
+.SS "\fBlsredis_obj_t\fP* lsredis_objs = NULL\fC [static]\fP"
+
+.PP
+Definition at line 11 of file lsredis\&.c\&.
+.SS "pthread_mutex_t lsredis_objs_mutex\fC [static]\fP"
+
+.PP
+Definition at line 13 of file lsredis\&.c\&.
+.SS "char* lsredis_publisher = NULL\fC [static]\fP"
+
+.PP
+Definition at line 21 of file lsredis\&.c\&.
+.SS "pthread_mutex_t lsredis_ro_mutex\fC [static]\fP"
+
+.PP
+keep from having more than one thread send a rediscommand to the read/only server 
+.PP
+Definition at line 14 of file lsredis\&.c\&.
+.SS "pthread_t lsredis_thread\fC [static]\fP"
+
+.PP
+Definition at line 9 of file lsredis\&.c\&.
+.SS "pthread_mutex_t lsredis_wr_mutex\fC [static]\fP"
+
+.PP
+keep from having more than one thread send a rediscommand to the write/read server 
+.PP
+Definition at line 15 of file lsredis\&.c\&.
+.SS "redisAsyncContext* roac\fC [static]\fP"
+
+.PP
+Definition at line 18 of file lsredis\&.c\&.
+.SS "struct pollfd rofd\fC [static]\fP"
+
+.PP
+Definition at line 26 of file lsredis\&.c\&.
+.SS "redisAsyncContext* subac\fC [static]\fP"
+
+.PP
+Definition at line 17 of file lsredis\&.c\&.
+.SS "struct pollfd subfd\fC [static]\fP"
+
+.PP
+Definition at line 25 of file lsredis\&.c\&.
+.SS "redisAsyncContext* wrac\fC [static]\fP"
+
+.PP
+Definition at line 19 of file lsredis\&.c\&.
+.SS "struct pollfd wrfd\fC [static]\fP"
+
+.PP
+Definition at line 27 of file lsredis\&.c\&.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for LS-CAT PGPMAC from the source code\&.

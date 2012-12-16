@@ -1,4 +1,4 @@
-.TH "md2cmds.c" 3 "Fri Dec 14 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "md2cmds.c" 3 "Sun Dec 16 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -150,7 +150,7 @@ Definition in file \fBmd2cmds\&.c\fP\&.
 .PP
 Move centering and alignment tables as requested TODO: Implement\&. 
 .PP
-Definition at line 737 of file md2cmds\&.c\&.
+Definition at line 739 of file md2cmds\&.c\&.
 .PP
 .nf
                       {
@@ -173,9 +173,11 @@ Definition at line 422 of file md2cmds\&.c\&.
   double p180;  // exposure time (msec)
   int center_request;
   double u2c;
+  double max_accel;
 
 
-  u2c = lsredis_getd( omega->u2c);
+  u2c       = lsredis_getd( omega->u2c);
+  max_accel = lsredis_getd( omega->max_accel);
 
   //
   // reset shutter has opened flag
@@ -246,7 +248,7 @@ Definition at line 422 of file md2cmds\&.c\&.
     //    p171 = u2c * ( lspg_nextshot\&.sstart + lspg_nextshot\&.dsowidth);
     p171 = u2c * lspg_nextshot\&.dsowidth;
     p173 = fabs(p180) < 1\&.e-4 ? 0\&.0 : u2c * lspg_nextshot\&.dsowidth / p180;
-    p175 = p173/omega->max_accel;
+    p175 = p173/max_accel;
 
 
     //
@@ -345,7 +347,7 @@ Definition at line 422 of file md2cmds\&.c\&.
 .PP
 Initialize the md2cmds module\&. 
 .PP
-Definition at line 778 of file md2cmds\&.c\&.
+Definition at line 780 of file md2cmds\&.c\&.
 .PP
 .nf
                     {
@@ -399,7 +401,7 @@ Definition at line 394 of file md2cmds\&.c\&.
 .PP
 Now that we are done with the 360 rotation lets rehome right quick\&. 
 .PP
-Definition at line 716 of file md2cmds\&.c\&.
+Definition at line 718 of file md2cmds\&.c\&.
 .PP
 .nf
                                                 {
@@ -818,7 +820,7 @@ Definition at line 313 of file md2cmds\&.c\&.
 .PP
 Spin 360 and make a video (recenter first, maybe) < velocity (cnts/msec) for omega 
 .PP
-Definition at line 601 of file md2cmds\&.c\&.
+Definition at line 603 of file md2cmds\&.c\&.
 .PP
 .nf
                       {
@@ -921,7 +923,7 @@ Definition at line 601 of file md2cmds\&.c\&.
 .PP
 Tell the database about the time we went through omega=zero\&. This should trigger the video feed server to starting making a movie\&. 
 .PP
-Definition at line 699 of file md2cmds\&.c\&.
+Definition at line 701 of file md2cmds\&.c\&.
 .PP
 .nf
                                      {
@@ -944,7 +946,7 @@ Definition at line 699 of file md2cmds\&.c\&.
 .PP
 Start up the thread\&. 
 .PP
-Definition at line 792 of file md2cmds\&.c\&.
+Definition at line 794 of file md2cmds\&.c\&.
 .PP
 .nf
                    {
@@ -969,7 +971,7 @@ Definition at line 792 of file md2cmds\&.c\&.
 .PP
 Fix up xscale and yscale when zoom changes\&. 
 .PP
-Definition at line 726 of file md2cmds\&.c\&.
+Definition at line 728 of file md2cmds\&.c\&.
 .PP
 .nf
                                         {
@@ -1005,7 +1007,7 @@ Our worker thread\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 744 of file md2cmds\&.c\&.
+Definition at line 746 of file md2cmds\&.c\&.
 .PP
 .nf
                        {

@@ -1,0 +1,1190 @@
+.TH "kvredis.c" 3 "Sun Dec 16 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+kvredis.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <hiredis/hiredis\&.h>\fP
+.br
+\fC#include <hiredis/async\&.h>\fP
+.br
+\fC#include <poll\&.h>\fP
+.br
+\fC#include <postgresql/libpq-fe\&.h>\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBlspgQueryQueueStruct\fP"
+.br
+.RI "\fIStore each query along with it's callback function\&. \fP"
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBLS_PG_QUERY_QUEUE_LENGTH\fP   512"
+.br
+.ti -1c
+.RI "#define \fBLS_PG_QUERY_STRING_LENGTH\fP   512"
+.br
+.ti -1c
+.RI "#define \fBLS_PG_STATE_INIT\fP   -4"
+.br
+.ti -1c
+.RI "#define \fBLS_PG_STATE_INIT_POLL\fP   -3"
+.br
+.ti -1c
+.RI "#define \fBLS_PG_STATE_RESET\fP   -2"
+.br
+.ti -1c
+.RI "#define \fBLS_PG_STATE_RESET_POLL\fP   -1"
+.br
+.ti -1c
+.RI "#define \fBLS_PG_STATE_IDLE\fP   1"
+.br
+.ti -1c
+.RI "#define \fBLS_PG_STATE_SEND\fP   2"
+.br
+.ti -1c
+.RI "#define \fBLS_PG_STATE_SEND_FLUSH\fP   3"
+.br
+.ti -1c
+.RI "#define \fBLS_PG_STATE_RECV\fP   4"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBlspgQueryQueueStruct\fP \fBlspg_query_queue_t\fP"
+.br
+.RI "\fIStore each query along with it's callback function\&. \fP"
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBredisDisconnectCB\fP (const redisAsyncContext *ac, int status)"
+.br
+.ti -1c
+.RI "void \fBdebugCB\fP (redisAsyncContext *ac, void *reply, void *privdata)"
+.br
+.ti -1c
+.RI "void \fBaddRead\fP (void *data)"
+.br
+.ti -1c
+.RI "void \fBdelRead\fP (void *data)"
+.br
+.ti -1c
+.RI "void \fBaddWrite\fP (void *data)"
+.br
+.ti -1c
+.RI "void \fBdelWrite\fP (void *data)"
+.br
+.ti -1c
+.RI "void \fBcleanup\fP (void *data)"
+.br
+.ti -1c
+.RI "void \fBlspg_allkvs_cb\fP (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
+.br
+.ti -1c
+.RI "PQnoticeProcessor \fBlspg_notice_processor\fP (void *arg, const char *msg)"
+.br
+.ti -1c
+.RI "\fBlspg_query_queue_t\fP * \fBlspg_query_next\fP ()"
+.br
+.RI "\fIReturn the next item in the postgresql queue\&. \fP"
+.ti -1c
+.RI "void \fBlspg_query_reply_next\fP ()"
+.br
+.RI "\fIRemove the oldest item in the queue\&. \fP"
+.ti -1c
+.RI "\fBlspg_query_queue_t\fP * \fBlspg_query_reply_peek\fP ()"
+.br
+.RI "\fIReturn the next item in the reply queue but don't pop it since we may need it more than once\&. \fP"
+.ti -1c
+.RI "void \fBlspg_query_push\fP (void(*cb)(\fBlspg_query_queue_t\fP *, PGresult *), char *fmt,\&.\&.\&.)"
+.br
+.RI "\fIPlace a query on the queue\&. \fP"
+.ti -1c
+.RI "void \fBlspg_receive\fP ()"
+.br
+.RI "\fIReceive a result of a query\&. \fP"
+.ti -1c
+.RI "void \fBlspg_pg_connect\fP ()"
+.br
+.RI "\fIConnect to the pg server\&. \fP"
+.ti -1c
+.RI "void \fBlspg_flush\fP ()"
+.br
+.RI "\fIFlush psql output buffer (ie, send the query) \fP"
+.ti -1c
+.RI "void \fBlspg_next_state\fP ()"
+.br
+.RI "\fIImplements our state machine Does not strictly only set the next state as it also calls some functions that, perhaps, alters the state mid-function\&. \fP"
+.ti -1c
+.RI "void \fBlspg_send_next_query\fP ()"
+.br
+.RI "\fIsend the next queued query to the DB server \fP"
+.ti -1c
+.RI "void \fBlspg_pg_service\fP (struct pollfd *evt)"
+.br
+.RI "\fII/O control to/from the postgresql server\&. \fP"
+.ti -1c
+.RI "void \fBfd_service\fP (struct pollfd *evt)"
+.br
+.ti -1c
+.RI "\fBmain\fP ()"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "static redisAsyncContext * \fBsubac\fP"
+.br
+.ti -1c
+.RI "static redisAsyncContext * \fBcmdac\fP"
+.br
+.ti -1c
+.RI "static int \fBls_pg_state\fP = \fBLS_PG_STATE_INIT\fP"
+.br
+.RI "\fIState of the lspg state machine\&. \fP"
+.ti -1c
+.RI "static struct timeval 
+.br
+lspg_time_sent \fBnow\fP"
+.br
+.RI "\fIused to ensure we do not inundate the db server with connection requests \fP"
+.ti -1c
+.RI "static int \fBkvseq\fP = 0"
+.br
+.RI "\fIused to synchronize pg\&.kvs and redis \fP"
+.ti -1c
+.RI "static \fBlspg_query_queue_t\fP \fBlspg_query_queue\fP [\fBLS_PG_QUERY_QUEUE_LENGTH\fP]"
+.br
+.RI "\fIOur query queue\&. \fP"
+.ti -1c
+.RI "static unsigned int \fBlspg_query_queue_on\fP = 0"
+.br
+.RI "\fINext position to add something to the queue\&. \fP"
+.ti -1c
+.RI "static unsigned int \fBlspg_query_queue_off\fP = 0"
+.br
+.RI "\fIThe last item still being used (on == off means nothing in queue) \fP"
+.ti -1c
+.RI "static unsigned int \fBlspg_query_queue_reply\fP = 0"
+.br
+.RI "\fIThe current item being digested\&. \fP"
+.ti -1c
+.RI "static PGconn * \fBq\fP = NULL"
+.br
+.RI "\fIDatabase connector\&. \fP"
+.ti -1c
+.RI "static PostgresPollingStatusType \fBlspg_connectPoll_response\fP"
+.br
+.RI "\fIUsed to determine state while connecting\&. \fP"
+.ti -1c
+.RI "static PostgresPollingStatusType \fBlspg_resetPoll_response\fP"
+.br
+.RI "\fIUsed to determine state while reconnecting\&. \fP"
+.ti -1c
+.RI "static struct pollfd \fBlspgfd\fP"
+.br
+.RI "\fIour poll info \fP"
+.ti -1c
+.RI "static struct pollfd \fBsubfd\fP"
+.br
+.RI "\fIpoll info for redis subscribe channel \fP"
+.ti -1c
+.RI "static struct pollfd \fBcmdfd\fP"
+.br
+.RI "\fIpoll info for redis command channel \fP"
+.in -1c
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define LS_PG_QUERY_QUEUE_LENGTH   512"
+
+.PP
+Definition at line 12 of file kvredis\&.c\&.
+.SS "#define LS_PG_QUERY_STRING_LENGTH   512"
+
+.PP
+Definition at line 13 of file kvredis\&.c\&.
+.SS "#define LS_PG_STATE_IDLE   1"
+
+.PP
+Definition at line 19 of file kvredis\&.c\&.
+.SS "#define LS_PG_STATE_INIT   -4"
+
+.PP
+Definition at line 15 of file kvredis\&.c\&.
+.SS "#define LS_PG_STATE_INIT_POLL   -3"
+
+.PP
+Definition at line 16 of file kvredis\&.c\&.
+.SS "#define LS_PG_STATE_RECV   4"
+
+.PP
+Definition at line 22 of file kvredis\&.c\&.
+.SS "#define LS_PG_STATE_RESET   -2"
+
+.PP
+Definition at line 17 of file kvredis\&.c\&.
+.SS "#define LS_PG_STATE_RESET_POLL   -1"
+
+.PP
+Definition at line 18 of file kvredis\&.c\&.
+.SS "#define LS_PG_STATE_SEND   2"
+
+.PP
+Definition at line 20 of file kvredis\&.c\&.
+.SS "#define LS_PG_STATE_SEND_FLUSH   3"
+
+.PP
+Definition at line 21 of file kvredis\&.c\&.
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBlspgQueryQueueStruct\fP  \fBlspg_query_queue_t\fP"
+
+.PP
+Store each query along with it's callback function\&. All calls are asynchronous 
+.SH "Function Documentation"
+.PP 
+.SS "void addRead (void *data)"
+
+.PP
+Definition at line 111 of file kvredis\&.c\&.
+.PP
+.nf
+                          {
+  struct pollfd *pfd;
+  pfd = (struct pollfd *)data;
+  pfd->events |= POLLIN;
+}
+.fi
+.SS "void addWrite (void *data)"
+
+.PP
+Definition at line 121 of file kvredis\&.c\&.
+.PP
+.nf
+                           {
+  struct pollfd *pfd;
+  pfd = (struct pollfd *)data;
+  pfd->events |= POLLOUT;
+}
+.fi
+.SS "void cleanup (void *data)"
+
+.PP
+Definition at line 131 of file kvredis\&.c\&.
+.PP
+.nf
+                          {
+  struct pollfd *pfd;
+  pfd = (struct pollfd *)data;
+  pfd->events &= ~(POLLOUT | POLLIN);
+}
+.fi
+.SS "void debugCB (redisAsyncContext *ac, void *reply, void *privdata)"
+
+.PP
+Definition at line 63 of file kvredis\&.c\&.
+.PP
+.nf
+                                                                  {
+  static int indentlevel = 0;
+  redisReply *r;
+  int i;
+
+  r = (redisReply *)reply;
+
+  if( r == NULL) {
+    printf( 'Null reply\&.  Odd\n');
+    return;
+  }
+  
+  switch( r->type) {
+  case REDIS_REPLY_STATUS:
+    printf( '%*sSTATUS: %s\n', indentlevel*4,'', r->str);
+    break;
+
+  case REDIS_REPLY_ERROR:
+    printf( '%*sERROR: %s\n', indentlevel*4, '', r->str);
+    break;
+
+  case REDIS_REPLY_INTEGER:
+    printf( '%*sInteger: %lld\n', indentlevel*4, '', r->integer);
+    break;
+
+  case REDIS_REPLY_NIL:
+    printf( '%*s(nil)\n', indentlevel*4, '');
+    break;
+
+  case REDIS_REPLY_STRING:
+    printf( '%*sSTRING: %s\n', indentlevel*4, '', r->str);
+    break;
+
+  case REDIS_REPLY_ARRAY:
+    printf( '%*sARRAY of %d elements\n', indentlevel*4, '', (int)r->elements);
+    indentlevel++;
+    for( i=0; i<r->elements; i++) {
+      debugCB( ac, r->element[i], NULL);
+    }
+    indentlevel--;
+    break;
+    
+  default:
+    printf( '%*sUnknown type %d\n', indentlevel*4,'', r->type);
+    
+  }
+}
+.fi
+.SS "void delRead (void *data)"
+
+.PP
+Definition at line 116 of file kvredis\&.c\&.
+.PP
+.nf
+                          {
+  struct pollfd *pfd;
+  pfd = (struct pollfd *)data;
+  pfd->events &= ~POLLIN;
+}
+.fi
+.SS "void delWrite (void *data)"
+
+.PP
+Definition at line 126 of file kvredis\&.c\&.
+.PP
+.nf
+                           {
+  struct pollfd *pfd;
+  pfd = (struct pollfd *)data;
+  pfd->events &= ~POLLOUT;
+}
+.fi
+.SS "void fd_service (struct pollfd *evt)"
+
+.PP
+Definition at line 636 of file kvredis\&.c\&.
+.PP
+.nf
+                                     {
+  if( evt->fd == subac->c\&.fd) {
+    if( evt->revents & POLLIN)
+      redisAsyncHandleRead( subac);
+    if( evt->revents & POLLOUT)
+      redisAsyncHandleWrite( subac);
+  }
+  if( evt->fd == cmdac->c\&.fd) {
+    if( evt->revents & POLLIN)
+      redisAsyncHandleRead( cmdac);
+    if( evt->revents & POLLOUT)
+      redisAsyncHandleWrite( cmdac);
+  }
+  if( q && evt->fd == PQsocket( q))
+    lspg_pg_service( evt);
+}
+.fi
+.SS "void lspg_allkvs_cb (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
+
+.PP
+Definition at line 137 of file kvredis\&.c\&.
+.PP
+.nf
+                                                             {
+  int kvname_col, kvvalue_col, kvseq_col, kvdbrtype_col;
+  int i;
+  int seq;
+  char *argv[8];
+  
+  kvname_col    = PQfnumber( pgr, 'rname');
+  kvvalue_col   = PQfnumber( pgr, 'rvalue');
+  kvseq_col     = PQfnumber( pgr, 'rseq');
+  kvdbrtype_col = PQfnumber( pgr, 'rdbrtype');
+  
+  if( kvname_col == -1 || kvvalue_col == -1 || kvseq_col == -1 || kvdbrtype_col == -1) {
+    fprintf( stderr, 'lspg_allkvs_cb: bad column number(s)\n');
+    return;
+  }
+
+  redisAsyncCommand( cmdac, NULL, NULL, 'MULTI');
+  for( i=0; i<PQntuples( pgr); i++) {
+    seq = atoi( PQgetvalue( pgr, i, kvseq_col));
+    kvseq = kvseq < seq ? seq : kvseq;
+
+    argv[0] = 'HMSET';
+    argv[1] = PQgetvalue( pgr, i, kvname_col);
+    argv[2] = 'VALUE';
+    argv[3] = PQgetvalue( pgr, i, kvvalue_col);
+    argv[4] = 'SEQ';
+    argv[5] = PQgetvalue( pgr, i, kvseq_col);
+    argv[6] = 'DBRTYPE';
+    argv[7] = PQgetvalue( pgr, i, kvdbrtype_col);
+    redisAsyncCommandArgv( cmdac, NULL, NULL, 8, (const char **)argv, NULL);
+
+    argv[0] = 'PUBLISH';
+    argv[1] = 'REDIS_KV_CONNECTOR';
+    argv[2] = PQgetvalue( pgr, i, kvname_col);
+    redisAsyncCommandArgv( cmdac, NULL, NULL, 3, (const char **)argv, NULL);
+  }
+
+  redisAsyncCommand( cmdac, NULL, NULL, 'SET redis\&.kvseq %d', kvseq);
+
+  redisAsyncCommand( cmdac, NULL, NULL, 'EXEC');
+  
+}
+.fi
+.SS "void lspg_flush ()"
+
+.PP
+Flush psql output buffer (ie, send the query) 
+.PP
+Definition at line 412 of file kvredis\&.c\&.
+.PP
+.nf
+                  {
+  int err;
+
+  err = PQflush( q);
+  switch( err) {
+  case -1:
+    // an error occured
+
+    fprintf( stderr, 'flush failed: %s\n', PQerrorMessage( q));
+
+    ls_pg_state = LS_PG_STATE_IDLE;
+    //
+    // We should probably reset the connection and start from scratch\&.  Probably the connection died\&.
+    //
+    break;
+          
+  case 0:
+    // goodness and joy\&.
+    ls_pg_state = LS_PG_STATE_RECV;
+    break;
+
+  case 1:
+    // more sending to do
+    ls_pg_state = LS_PG_STATE_SEND_FLUSH;
+    break;
+  }
+}
+.fi
+.SS "void lspg_next_state ()"
+
+.PP
+Implements our state machine Does not strictly only set the next state as it also calls some functions that, perhaps, alters the state mid-function\&. 
+.PP
+Definition at line 444 of file kvredis\&.c\&.
+.PP
+.nf
+                       {
+  //
+  // connect to the database
+  //
+  if( q == NULL ||
+      ls_pg_state == LS_PG_STATE_INIT ||
+      ls_pg_state == LS_PG_STATE_RESET ||
+      ls_pg_state == LS_PG_STATE_INIT_POLL ||
+      ls_pg_state == LS_PG_STATE_RESET_POLL)
+    lspg_pg_connect( lspgfd);
+
+
+  if( ls_pg_state == LS_PG_STATE_IDLE && lspg_query_queue_on != lspg_query_queue_off)
+    ls_pg_state = LS_PG_STATE_SEND;
+
+  switch( ls_pg_state) {
+  case LS_PG_STATE_INIT_POLL:
+    if( lspg_connectPoll_response == PGRES_POLLING_WRITING)
+      lspgfd\&.events = POLLOUT;
+    else if( lspg_connectPoll_response == PGRES_POLLING_READING)
+      lspgfd\&.events = POLLIN;
+    else
+      lspgfd\&.events = 0;
+    break;
+      
+  case LS_PG_STATE_RESET_POLL:
+    if( lspg_resetPoll_response == PGRES_POLLING_WRITING)
+      lspgfd\&.events = POLLOUT;
+    else if( lspg_resetPoll_response == PGRES_POLLING_READING)
+      lspgfd\&.events = POLLIN;
+    else
+      lspgfd\&.events = 0;
+    break;
+
+  case LS_PG_STATE_IDLE:
+  case LS_PG_STATE_RECV:
+    lspgfd\&.events = POLLIN;
+    break;
+
+  case LS_PG_STATE_SEND:
+  case LS_PG_STATE_SEND_FLUSH:
+    lspgfd\&.events = POLLOUT;
+    break;
+
+  default:
+    lspgfd\&.events = 0;
+  }
+}
+.fi
+.SS "PQnoticeProcessor lspg_notice_processor (void *arg, const char *msg)"
+
+.PP
+Definition at line 182 of file kvredis\&.c\&.
+.PP
+.nf
+                                                                     {
+  fprintf( stderr, 'lspg: %s', msg);
+}
+.fi
+.SS "void lspg_pg_connect ()"
+
+.PP
+Connect to the pg server\&. 
+.PP
+Definition at line 325 of file kvredis\&.c\&.
+.PP
+.nf
+                       {
+  PGresult *pgr;
+  int wait_interval = 1;
+  int connection_init = 0;
+  int i, err;
+
+  if( q == NULL)
+    ls_pg_state = LS_PG_STATE_INIT;
+
+  switch( ls_pg_state) {
+  case LS_PG_STATE_INIT:
+
+    if( lspg_time_sent\&.tv_sec != 0) {
+      //
+      // Reality check: if it's less the about 10 seconds since the last failed attempt
+      // the just chill\&.
+      //
+      gettimeofday( &now, NULL);
+      if( now\&.tv_sec - lspg_time_sent\&.tv_sec < 10) {
+        return;
+      }
+    }
+
+    q = PQconnectStart( 'dbname=ls user=lsuser hostaddr=10\&.1\&.0\&.3');
+    if( q == NULL) {
+      fprintf( stderr, 'Out of memory (lspg_pg_connect)');
+      exit( -1);
+    }
+
+    err = PQstatus( q);
+    if( err == CONNECTION_BAD) {
+      fprintf( stderr, 'Trouble connecting to database');
+
+      gettimeofday( &lspg_time_sent, NULL);
+      return;
+    }
+    err = PQsetnonblocking( q, 1);
+    if( err != 0) {
+      fprintf( stderr, 'Odd, could not set database connection to nonblocking');
+    }
+
+    ls_pg_state = LS_PG_STATE_INIT_POLL;
+    lspg_connectPoll_response = PGRES_POLLING_WRITING;
+    //
+    // set up the connection for poll
+    //
+    lspgfd\&.fd = PQsocket( q);
+    break;
+
+  case LS_PG_STATE_INIT_POLL:
+    if( lspg_connectPoll_response == PGRES_POLLING_FAILED) {
+      PQfinish( q);
+      q = NULL;
+      ls_pg_state = LS_PG_STATE_INIT;
+    } else if( lspg_connectPoll_response == PGRES_POLLING_OK) {
+      PQsetNoticeProcessor( q, (PQnoticeProcessor)lspg_notice_processor, NULL);
+
+      ls_pg_state = LS_PG_STATE_IDLE;
+    }
+    break;
+
+  case LS_PG_STATE_RESET:
+    err = PQresetStart( q);
+    if( err == 0) {
+      PQfinish( q);
+      q = NULL;
+      ls_pg_state = LS_PG_STATE_INIT;
+    } else {
+      ls_pg_state = LS_PG_STATE_RESET_POLL;
+      lspg_resetPoll_response = PGRES_POLLING_WRITING;
+    }
+    break;
+
+  case LS_PG_STATE_RESET_POLL:
+    if( lspg_resetPoll_response == PGRES_POLLING_FAILED) {
+      PQfinish( q);
+      q = NULL;
+      ls_pg_state = LS_PG_STATE_INIT;
+    } else if( lspg_resetPoll_response == PGRES_POLLING_OK) {
+      ls_pg_state = LS_PG_STATE_IDLE;
+    }
+    break;
+  }
+}
+.fi
+.SS "void lspg_pg_service (struct pollfd *evt)"
+
+.PP
+I/O control to/from the postgresql server\&. \fBParameters:\fP
+.RS 4
+\fIevt\fP The pollfd object that we are responding to 
+.RE
+.PP
+
+.PP
+Definition at line 543 of file kvredis\&.c\&.
+.PP
+.nf
+                       {
+  //
+  // Currently just used to check for notifies
+  // Other socket communication is done syncronously
+  //
+
+  if( evt->revents & POLLIN) {
+    int err;
+
+    if( ls_pg_state == LS_PG_STATE_INIT_POLL) {
+      lspg_connectPoll_response = PQconnectPoll( q);
+      if( lspg_connectPoll_response == PGRES_POLLING_FAILED) {
+        ls_pg_state = LS_PG_STATE_RESET;
+      }
+      return;
+    }
+
+    if( ls_pg_state == LS_PG_STATE_RESET_POLL) {
+      lspg_resetPoll_response = PQresetPoll( q);
+      if( lspg_resetPoll_response == PGRES_POLLING_FAILED) {
+        ls_pg_state = LS_PG_STATE_RESET;
+      }
+      return;
+    }
+
+
+    //
+    // if in IDLE or RECV we need to call consumeInput first
+    //
+    if( ls_pg_state == LS_PG_STATE_IDLE) {
+      err = PQconsumeInput( q);
+      if( err != 1) {
+        fprintf( stderr, 'consume input failed: %s', PQerrorMessage( q));
+        ls_pg_state == LS_PG_STATE_RESET;
+        return;
+      }
+    }      
+
+    if( ls_pg_state == LS_PG_STATE_RECV) {
+      lspg_receive();
+    }
+
+    //
+    // Check for notifies regardless of our state
+    // Push as many requests as we have notifies\&.
+    //
+    {
+      PGnotify *pgn;
+
+      while( 1) {
+        pgn = PQnotifies( q);
+        if( pgn == NULL)
+          break;
+        
+        lspg_query_push( lspg_allkvs_cb, 'SELECT * FROM px\&.redis_kv_update(%d)', kvseq);
+
+        PQfreemem( pgn);
+      }
+    }
+  }
+
+  if( evt->revents & POLLOUT) {
+
+    if( ls_pg_state == LS_PG_STATE_INIT_POLL) {
+      lspg_connectPoll_response = PQconnectPoll( q);
+      if( lspg_connectPoll_response == PGRES_POLLING_FAILED) {
+        ls_pg_state = LS_PG_STATE_RESET;
+      }
+      return;
+    }
+
+    if( ls_pg_state == LS_PG_STATE_RESET_POLL) {
+      lspg_resetPoll_response = PQresetPoll( q);
+      if( lspg_resetPoll_response == PGRES_POLLING_FAILED) {
+        ls_pg_state = LS_PG_STATE_RESET;
+      }
+      return;
+    }
+
+
+    if( ls_pg_state == LS_PG_STATE_SEND) {
+      lspg_send_next_query();
+    }
+
+    if( ls_pg_state == LS_PG_STATE_SEND_FLUSH) {
+      lspg_flush();
+    }
+  }
+}
+.fi
+.SS "\fBlspg_query_queue_t\fP* lspg_query_next ()"
+
+.PP
+Return the next item in the postgresql queue\&. If there is an item left in the queue then it is returned\&. Otherwise, NULL is returned\&. 
+.PP
+Definition at line 191 of file kvredis\&.c\&.
+.PP
+.nf
+                                      {
+  lspg_query_queue_t *rtn;
+  
+  if( lspg_query_queue_off == lspg_query_queue_on)
+    // Queue is empty
+    rtn = NULL;
+  else {
+    rtn = &(lspg_query_queue[(lspg_query_queue_off++) % LS_PG_QUERY_QUEUE_LENGTH]); 
+
+  }
+  return rtn;
+}
+.fi
+.SS "void lspg_query_push (void(*)(\fBlspg_query_queue_t\fP *, PGresult *)cb, char *fmt, \&.\&.\&.)"
+
+.PP
+Place a query on the queue\&. \fBParameters:\fP
+.RS 4
+\fIcb\fP Our callback function that deals with the response 
+.br
+\fIfmt\fP Printf style function to generate the query 
+.RE
+.PP
+
+.PP
+Definition at line 234 of file kvredis\&.c\&.
+.PP
+.nf
+                       {
+  int idx;
+  va_list arg_ptr;
+
+
+  //
+  // Pause the thread while we service the queue
+  //
+  if( lspg_query_queue_on + 1 == lspg_query_queue_off) {
+    fprintf( stderr, 'lspg_query_push: queue is full\&.  Ignoring query \'%s\'\n', fmt);
+    return;
+  }
+
+  idx = lspg_query_queue_on % LS_PG_QUERY_QUEUE_LENGTH;
+
+  va_start( arg_ptr, fmt);
+  vsnprintf( lspg_query_queue[idx]\&.qs, LS_PG_QUERY_STRING_LENGTH-1, fmt, arg_ptr);
+  va_end( arg_ptr);
+
+  lspg_query_queue[idx]\&.qs[LS_PG_QUERY_STRING_LENGTH - 1] = 0;
+  lspg_query_queue[idx]\&.onResponse = cb;
+  lspg_query_queue_on++;
+
+};
+.fi
+.SS "void lspg_query_reply_next ()"
+
+.PP
+Remove the oldest item in the queue\&. this is called only when there is nothing else to service the reply: this pop does not return anything\&. We use the \&.\&.\&.reply_peek function to return the next item in the reply queue 
+.PP
+Definition at line 211 of file kvredis\&.c\&.
+.PP
+.nf
+                             {
+
+  if( lspg_query_queue_reply != lspg_query_queue_on)
+    lspg_query_queue_reply++;
+
+}
+.fi
+.SS "\fBlspg_query_queue_t\fP* lspg_query_reply_peek ()"
+
+.PP
+Return the next item in the reply queue but don't pop it since we may need it more than once\&. Call \fBlspg_query_reply_next()\fP when done\&. 
+.PP
+Definition at line 221 of file kvredis\&.c\&.
+.PP
+.nf
+                                            {
+  lspg_query_queue_t *rtn;
+
+  if( lspg_query_queue_reply == lspg_query_queue_on)
+    rtn = NULL;
+  else
+    rtn = &(lspg_query_queue[(lspg_query_queue_reply) % LS_PG_QUERY_QUEUE_LENGTH]);
+
+  return rtn;
+}
+.fi
+.SS "void lspg_receive ()"
+
+.PP
+Receive a result of a query\&. 
+.PP
+Definition at line 266 of file kvredis\&.c\&.
+.PP
+.nf
+                    {
+  PGresult *pgr;
+  lspg_query_queue_t *qqp;
+  int err;
+
+  err = PQconsumeInput( q);
+  if( err != 1) {
+    fprintf( stderr, 'consume input failed: %s', PQerrorMessage( q));
+    ls_pg_state == LS_PG_STATE_RESET;
+    return;
+  }
+
+  //
+  // We must call PQgetResult until it returns NULL before sending the next query
+  // This implies that only one query can ever be active at a time and our queue
+  // management should be simple
+  //
+  // We should be in the LS_PG_STATE_RECV here
+  //
+
+  while( !PQisBusy( q)) {
+    pgr = PQgetResult( q);
+    if( pgr == NULL) {
+      lspg_query_reply_next();
+      //
+      // we are now done reading the response from the database
+      //
+      ls_pg_state = LS_PG_STATE_IDLE;
+      break;
+    } else {
+      ExecStatusType es;
+
+      qqp = lspg_query_reply_peek();
+      es = PQresultStatus( pgr);
+
+      if( es != PGRES_COMMAND_OK && es != PGRES_TUPLES_OK) {
+        char *emess;
+        emess = PQresultErrorMessage( pgr);
+        if( emess != NULL && emess[0] != 0) {
+          fprintf( stderr, 'Error from query '%s':\n%s', qqp->qs, emess);
+        }
+      } else {
+        //
+        // Deal with the response
+        //
+        // If the response is likely to take awhile we should probably
+        // add a new state and put something in the main look to run the onResponse
+        // routine in the main loop\&.  For now, though, we only expect very brief onResponse routines
+        //
+        if( qqp != NULL && qqp->onResponse != NULL)
+          qqp->onResponse( qqp, pgr);
+      }
+      PQclear( pgr);
+    }
+  }
+}
+.fi
+.SS "void lspg_send_next_query ()"
+
+.PP
+send the next queued query to the DB server 
+.PP
+Definition at line 496 of file kvredis\&.c\&.
+.PP
+.nf
+                            {
+  //
+  // Normally we should be in the 'send' state
+  // but we can also send if we are servicing
+  // a reply
+  //
+
+  lspg_query_queue_t *qqp;
+  int err;
+
+  qqp = lspg_query_next();
+  if( qqp == NULL) {
+    //
+    // A send without a query?  Should never happen\&.
+    // But at least we shouldn't segfault if it does\&.
+    //
+    return;
+  }
+
+  if( qqp->qs[0] == 0) {
+    //
+    // Do we really have to check this case?
+    // It would only come up if we stupidly pushed an empty query string
+    // or ran off the end of the queue
+    //
+    fprintf( stderr, 'Popped empty query string\&.  Probably bad things are going on\&.\n');
+
+    lspg_query_reply_next();
+    ls_pg_state = LS_PG_STATE_IDLE;
+  } else {
+    err = PQsendQuery( q, qqp->qs);
+    if( err == 0) {
+      fprintf( stderr, 'query failed: %s\n', PQerrorMessage( q));
+
+      //
+      // Don't wait for a reply, just reset the connection
+      //
+      lspg_query_reply_next();
+      ls_pg_state == LS_PG_STATE_RESET;
+    } else {
+      ls_pg_state = LS_PG_STATE_SEND_FLUSH;
+    }
+  }
+}
+.fi
+.SS "main ()"
+
+.PP
+Definition at line 655 of file kvredis\&.c\&.
+.PP
+.nf
+       {
+  static struct pollfd fda[3];
+  static int nfda = 0;
+  int pollrtn;
+  int poll_timeout_ms;
+  int i;
+
+  subac = redisAsyncConnect('127\&.0\&.0\&.1', 6379);
+  if( subac->err) {
+    fprintf( stderr, 'Error: %s\n', subac->errstr);
+    exit( -1);
+  }
+
+  cmdac = redisAsyncConnect('127\&.0\&.0\&.1', 6379);
+  if( cmdac->err) {
+    fprintf( stderr, 'Error: %s\n', cmdac->errstr);
+    exit( -1);
+  }
+
+  if( redisAsyncSetDisconnectCallback( subac, redisDisconnectCB) == REDIS_ERR) {
+    fprintf( stderr, 'Error: could not set disconnect callback\n');
+    exit( -1);
+  }
+
+  if( redisAsyncSetDisconnectCallback( cmdac, redisDisconnectCB) == REDIS_ERR) {
+    fprintf( stderr, 'Error: could not set disconnect callback\n');
+    exit( -1);
+  }
+
+  // Set up redis events
+  //
+  subfd\&.fd           = subac->c\&.fd;
+  subfd\&.events       = 0;
+  subac->ev\&.data     = &subfd;
+  subac->ev\&.addRead  = addRead;
+  subac->ev\&.delRead  = delRead;
+  subac->ev\&.addWrite = addWrite;
+  subac->ev\&.delWrite = delWrite;
+  subac->ev\&.cleanup  = cleanup;
+
+  cmdfd\&.fd           = cmdac->c\&.fd;
+  cmdfd\&.events       = 0;
+  cmdac->ev\&.data     = &cmdfd;
+  cmdac->ev\&.addRead  = addRead;
+  cmdac->ev\&.delRead  = delRead;
+  cmdac->ev\&.addWrite = addWrite;
+  cmdac->ev\&.delWrite = delWrite;
+  cmdac->ev\&.cleanup  = cleanup;
+
+
+  lspgfd\&.fd = -1;
+
+  if( redisAsyncCommand( cmdac, NULL, NULL, 'KEYS *') == REDIS_ERR) {
+    fprintf( stderr, 'Error sending KEYS command\n');
+    exit( -1);
+  }
+
+  if( redisAsyncCommand( subac, debugCB, NULL, 'PSUBSCRIBE MD2* UI*') == REDIS_ERR) {
+    fprintf( stderr, 'Error sending PSUBSCRIBE command\n');
+    exit( -1);
+  }
+
+
+  lspg_query_push( lspg_allkvs_cb, 'SELECT * FROM px\&.redis_kv_init()');
+  lspg_query_push( NULL, 'LISTEN REDIS_KV_CONNECTOR');
+
+  while( 1) {
+    nfda = 0;
+    if( subfd\&.fd != -1) {
+      fda[nfda]\&.fd      = subfd\&.fd;
+      fda[nfda]\&.events  = subfd\&.events;
+      fda[nfda]\&.revents = 0;
+
+      nfda++;
+    }
+    if( cmdfd\&.fd != -1) {
+      fda[nfda]\&.fd      = cmdfd\&.fd;
+      fda[nfda]\&.events  = cmdfd\&.events;
+      fda[nfda]\&.revents = 0;
+      
+      nfda++;
+    }
+    poll_timeout_ms = -1;
+
+    lspg_next_state();
+
+    if( lspgfd\&.fd == -1) {
+      //
+      // Here a connection to the database is not established\&.
+      // Periodicaly try again\&.  Should possibly arrange to reconnect
+      // to signalfd but that's unlikely to be nessesary\&.
+      //
+      poll_timeout_ms = 10000;
+    } else {
+      //
+      // Arrange to peacfully do nothing until either the pg server sends us something
+      // or someone pushs something onto our queue
+      //
+      fda[nfda]\&.fd      = lspgfd\&.fd;
+      fda[nfda]\&.events  = lspgfd\&.events;
+      fda[nfda]\&.revents = 0;
+      nfda++;
+      poll_timeout_ms = -1;
+    }
+
+
+    pollrtn = poll( fda, nfda, poll_timeout_ms);
+
+    for( i=0; i<nfda; i++) {
+      if( fda[i]\&.revents) {
+        fd_service( &(fda[i]));
+      }
+    }
+  }
+}
+.fi
+.SS "void redisDisconnectCB (const redisAsyncContext *ac, intstatus)"
+
+.PP
+Definition at line 54 of file kvredis\&.c\&.
+.PP
+.nf
+                                                                {
+  if( status == REDIS_OK) {
+    printf( 'OK, that was fun\&.\n');
+    exit( 0);
+  }
+  fprintf( stderr, 'Opps, Disconnected with status %d\n', status);
+  exit( -1);
+}
+.fi
+.SH "Variable Documentation"
+.PP 
+.SS "redisAsyncContext * cmdac\fC [static]\fP"
+
+.PP
+Definition at line 9 of file kvredis\&.c\&.
+.SS "struct pollfd cmdfd\fC [static]\fP"
+
+.PP
+poll info for redis command channel 
+.PP
+Definition at line 50 of file kvredis\&.c\&.
+.SS "int kvseq = 0\fC [static]\fP"
+
+.PP
+used to synchronize pg\&.kvs and redis 
+.PP
+Definition at line 26 of file kvredis\&.c\&.
+.SS "int ls_pg_state = \fBLS_PG_STATE_INIT\fP\fC [static]\fP"
+
+.PP
+State of the lspg state machine\&. 
+.PP
+Definition at line 24 of file kvredis\&.c\&.
+.SS "PostgresPollingStatusType lspg_connectPoll_response\fC [static]\fP"
+
+.PP
+Used to determine state while connecting\&. 
+.PP
+Definition at line 46 of file kvredis\&.c\&.
+.SS "\fBlspg_query_queue_t\fP lspg_query_queue[\fBLS_PG_QUERY_QUEUE_LENGTH\fP]\fC [static]\fP"
+
+.PP
+Our query queue\&. 
+.PP
+Definition at line 37 of file kvredis\&.c\&.
+.SS "unsigned int lspg_query_queue_off = 0\fC [static]\fP"
+
+.PP
+The last item still being used (on == off means nothing in queue) 
+.PP
+Definition at line 39 of file kvredis\&.c\&.
+.SS "unsigned int lspg_query_queue_on = 0\fC [static]\fP"
+
+.PP
+Next position to add something to the queue\&. 
+.PP
+Definition at line 38 of file kvredis\&.c\&.
+.SS "unsigned int lspg_query_queue_reply = 0\fC [static]\fP"
+
+.PP
+The current item being digested\&. Normally off <= reply <= on\&. Corner case of queue wrap arround works because we only increment and compare for equality\&. 
+.PP
+Definition at line 40 of file kvredis\&.c\&.
+.SS "PostgresPollingStatusType lspg_resetPoll_response\fC [static]\fP"
+
+.PP
+Used to determine state while reconnecting\&. 
+.PP
+Definition at line 47 of file kvredis\&.c\&.
+.SS "struct pollfd lspgfd\fC [static]\fP"
+
+.PP
+our poll info 
+.PP
+Definition at line 48 of file kvredis\&.c\&.
+.SS "struct timeval lspg_time_sent now\fC [static]\fP"
+
+.PP
+used to ensure we do not inundate the db server with connection requests 
+.PP
+Definition at line 25 of file kvredis\&.c\&.
+.SS "PGconn* q = NULL\fC [static]\fP"
+
+.PP
+Database connector\&. 
+.PP
+Definition at line 45 of file kvredis\&.c\&.
+.SS "redisAsyncContext* subac\fC [static]\fP"
+
+.PP
+Definition at line 9 of file kvredis\&.c\&.
+.SS "struct pollfd subfd\fC [static]\fP"
+
+.PP
+poll info for redis subscribe channel 
+.PP
+Definition at line 49 of file kvredis\&.c\&.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for LS-CAT PGPMAC from the source code\&.

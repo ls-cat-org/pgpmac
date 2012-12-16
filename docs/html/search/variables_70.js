@@ -13,8 +13,7 @@ var searchData=
   ['pmacfd',['pmacfd',['../lspmac_8c.html#adba7f5f4bbeabc4dac859221d4c684ba',1,'lspmac.c']]],
   ['position',['position',['../structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411',1,'lspmac_motor_struct']]],
   ['pq',['pq',['../structlspmac__motor__struct.html#ae0a0c9264f49f51bf72168c3b62f8723',1,'lspmac_motor_struct']]],
-  ['preset_5fregex',['preset_regex',['../structlspmac__motor__struct.html#a1df97b771d18bc9a6eed78f3a66fd15c',1,'lspmac_motor_struct']]],
-  ['presets',['presets',['../structlspmac__motor__struct.html#a7c913e6abf9b203584c477ac49fdd517',1,'lspmac_motor_struct']]],
   ['previous',['previous',['../structlspmac__bi__struct.html#a00f09cb3d7bdbe1058fb56bb8c2b0fa3',1,'lspmac_bi_struct']]],
+  ['printf_5ffmt',['printf_fmt',['../structlspmac__motor__struct.html#a25b13b65baf1b28c34012850809b0a3a',1,'lspmac_motor_struct']]],
   ['ptr',['ptr',['../structlspmac__bi__struct.html#ae201bf05130bcb6985704ea42efabeb3',1,'lspmac_bi_struct']]]
 ];

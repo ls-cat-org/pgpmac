@@ -97,7 +97,7 @@ Move centering and alignment tables as requested T\-O\-D\-O\-: Implement.
 
 
 
-Definition at line 737 of file md2cmds.\-c.
+Definition at line 739 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -130,9 +130,11 @@ Definition at line 422 of file md2cmds.\-c.
   \textcolor{keywordtype}{double} p180;  \textcolor{comment}{// exposure time (msec)}
   \textcolor{keywordtype}{int} center\_request;
   \textcolor{keywordtype}{double} u2c;
+  \textcolor{keywordtype}{double} max\_accel;
 
 
-  u2c = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( \hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega}->\hyperlink{structlspmac__motor__struct_a8838915ebb6f9989944117c8197d5e86}{u2c});
+  u2c       = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( \hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega}->\hyperlink{structlspmac__motor__struct_a8838915ebb6f9989944117c8197d5e86}{u2c});
+  max\_accel = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( \hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega}->\hyperlink{structlspmac__motor__struct_a50cf4c0711cea164e332bc34705a1a68}{max\_accel});
 
   \textcolor{comment}{//}
   \textcolor{comment}{// reset shutter has opened flag}
@@ -214,7 +216,7 @@ Definition at line 422 of file md2cmds.\-c.
     p171 = u2c * \hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_nextshot}.\hyperlink{structlspg__nextshot__struct_ad5a8f568a04aa6a13767933062b28f19}{dsowidth};
     p173 = fabs(p180) < 1.e-4 ? 0.0 : u2c * \hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_nextshot}.\hyperlink{structlspg__nextshot__struct_ad5a8f568a04aa6a13767933062b28f19}{dsowidth}
        / p180;
-    p175 = p173/\hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega}->\hyperlink{structlspmac__motor__struct_afec8dc1d4b97ba9c1d6e4f7a088342e4}{max\_accel};
+    p175 = p173/max\_accel;
 
 
     \textcolor{comment}{//}
@@ -335,7 +337,7 @@ Initialize the md2cmds module.
 
 
 
-Definition at line 778 of file md2cmds.\-c.
+Definition at line 780 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -408,7 +410,7 @@ Now that we are done with the 360 rotation lets rehome right quick.
 
 
 
-Definition at line 716 of file md2cmds.\-c.
+Definition at line 718 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -510,7 +512,7 @@ Definition at line 35 of file md2cmds.\-c.
     \textcolor{comment}{// Maybe we have a preset.  Give it a whirl}
     \textcolor{comment}{// In any case we are done here.}
     \textcolor{comment}{//}
-    \hyperlink{lspmac_8c_a290212c160e6ef1f560c9df9fc8f58e4}{lspmac\_move\_preset\_queue}( mp, pos);
+    \hyperlink{lspmac_8c_a6f5751d89f83b4b436c6f8bc636e4156}{lspmac\_move\_preset\_queue}( mp, pos);
     free( cmd);
     \textcolor{keywordflow}{return};
   \}
@@ -943,7 +945,7 @@ Spin 360 and make a video (recenter first, maybe)
 
 $<$ velocity (cnts/msec) for omega 
 
-Definition at line 601 of file md2cmds.\-c.
+Definition at line 603 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1072,7 +1074,7 @@ Tell the database about the time we went through omega=zero.
 
 This should trigger the video feed server to starting making a movie. 
 
-Definition at line 699 of file md2cmds.\-c.
+Definition at line 701 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1106,7 +1108,7 @@ Start up the thread.
 
 
 
-Definition at line 792 of file md2cmds.\-c.
+Definition at line 794 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1154,7 +1156,7 @@ Fix up xscale and yscale when zoom changes.
 
 
 
-Definition at line 726 of file md2cmds.\-c.
+Definition at line 728 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1206,7 +1208,7 @@ Our worker thread.
 \end{DoxyParams}
 
 
-Definition at line 744 of file md2cmds.\-c.
+Definition at line 746 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}

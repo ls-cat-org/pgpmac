@@ -2,8 +2,6 @@ var searchData=
 [
   ['lsevents_5flistener_5fstruct',['lsevents_listener_struct',['../structlsevents__listener__struct.html',1,'']]],
   ['lsevents_5fqueue_5fstruct',['lsevents_queue_struct',['../structlsevents__queue__struct.html',1,'']]],
-  ['lskvs_5fkvs_5flist_5fstruct',['lskvs_kvs_list_struct',['../structlskvs__kvs__list__struct.html',1,'']]],
-  ['lskvs_5fkvs_5fstruct',['lskvs_kvs_struct',['../structlskvs__kvs__struct.html',1,'']]],
   ['lslogging_5fqueue_5fstruct',['lslogging_queue_struct',['../structlslogging__queue__struct.html',1,'']]],
   ['lspg_5fgetcenter_5fstruct',['lspg_getcenter_struct',['../structlspg__getcenter__struct.html',1,'']]],
   ['lspg_5flock_5fdetector_5fstruct',['lspg_lock_detector_struct',['../structlspg__lock__detector__struct.html',1,'']]],

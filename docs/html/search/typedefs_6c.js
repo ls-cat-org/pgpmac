@@ -2,8 +2,6 @@ var searchData=
 [
   ['lsevents_5flistener_5ft',['lsevents_listener_t',['../lsevents_8c.html#a8be5b9ff7269a3b057e354536cf9b0aa',1,'lsevents.c']]],
   ['lsevents_5fqueue_5ft',['lsevents_queue_t',['../lsevents_8c.html#a82bd12b9e91198e33f44262d324616c4',1,'lsevents.c']]],
-  ['lskvs_5fkvs_5flist_5ft',['lskvs_kvs_list_t',['../pgpmac_8h.html#a47bb31b9c285a4b3e73874070fa8af0c',1,'pgpmac.h']]],
-  ['lskvs_5fkvs_5ft',['lskvs_kvs_t',['../pgpmac_8h.html#a54bd386f945edb8a0311a20199e8f793',1,'pgpmac.h']]],
   ['lslogging_5fqueue_5ft',['lslogging_queue_t',['../lslogging_8c.html#a953a02b9db989cbb60724b06bd33b038',1,'lslogging.c']]],
   ['lspg_5fgetcenter_5ft',['lspg_getcenter_t',['../pgpmac_8h.html#a48b627e412dd038c1f17cdb0501eec33',1,'pgpmac.h']]],
   ['lspg_5flock_5fdetector_5ft',['lspg_lock_detector_t',['../lspg_8c.html#a3442e66a1f05457eb22a0d4a5d295f3a',1,'lspg.c']]],

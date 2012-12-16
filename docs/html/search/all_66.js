@@ -6,7 +6,6 @@ var searchData=
   ['flight_5ff',['flight_f',['../lspmac_8c.html#aabf4ec595b5183c1777d029ca56134b0',1,'flight_f():&#160;lspmac.c'],['../pgpmac_8h.html#aabf4ec595b5183c1777d029ca56134b0',1,'flight_f():&#160;lspmac.c']]],
   ['flight_5foo',['flight_oo',['../lspmac_8c.html#a6630442dc65ce8a30a24ed718b301971',1,'flight_oo():&#160;lspmac.c'],['../pgpmac_8h.html#a6630442dc65ce8a30a24ed718b301971',1,'flight_oo():&#160;lspmac.c']]],
   ['fluo',['fluo',['../lspmac_8c.html#addb26c80065506faa1de3c1b468fe03f',1,'fluo():&#160;lspmac.c'],['../pgpmac_8h.html#addb26c80065506faa1de3c1b468fe03f',1,'fluo():&#160;lspmac.c']]],
-  ['format',['format',['../structlspmac__motor__struct.html#aba3d9d00271187128506bbbb1d77da19',1,'lspmac_motor_struct']]],
   ['front_5fdac',['front_dac',['../structmd2StatusStruct.html#a3be73c48b09190241a2bcb801af5b97c',1,'md2StatusStruct']]],
   ['fs_5fhas_5fopened',['fs_has_opened',['../structmd2StatusStruct.html#ab961c2ba24a1a8c95a88dec25319e712',1,'md2StatusStruct']]],
   ['fs_5fhas_5fopened_5fglobally',['fs_has_opened_globally',['../structmd2StatusStruct.html#ac95696b7ed35ccfdfb6aeeee879bdb65',1,'md2StatusStruct']]],

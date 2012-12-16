@@ -2,8 +2,6 @@ var annotated =
 [
     [ "lsevents_listener_struct", "structlsevents__listener__struct.html", "structlsevents__listener__struct" ],
     [ "lsevents_queue_struct", "structlsevents__queue__struct.html", "structlsevents__queue__struct" ],
-    [ "lskvs_kvs_list_struct", "structlskvs__kvs__list__struct.html", "structlskvs__kvs__list__struct" ],
-    [ "lskvs_kvs_struct", "structlskvs__kvs__struct.html", "structlskvs__kvs__struct" ],
     [ "lslogging_queue_struct", "structlslogging__queue__struct.html", "structlslogging__queue__struct" ],
     [ "lspg_getcenter_struct", "structlspg__getcenter__struct.html", "structlspg__getcenter__struct" ],
     [ "lspg_lock_detector_struct", "structlspg__lock__detector__struct.html", "structlspg__lock__detector__struct" ],

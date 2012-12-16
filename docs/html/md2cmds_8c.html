@@ -216,7 +216,7 @@ Variables</h2></td></tr>
 
 <p>Move centering and alignment tables as requested TODO: Implement. </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00737">737</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00739">739</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                      {</div>
 <div class="line">}</div>
 </div><!-- fragment -->
@@ -247,9 +247,11 @@ Variables</h2></td></tr>
 <div class="line">  <span class="keywordtype">double</span> p180;  <span class="comment">// exposure time (msec)</span></div>
 <div class="line">  <span class="keywordtype">int</span> center_request;</div>
 <div class="line">  <span class="keywordtype">double</span> u2c;</div>
+<div class="line">  <span class="keywordtype">double</span> max_accel;</div>
 <div class="line"></div>
 <div class="line"></div>
-<div class="line">  u2c = <a class="code" href="lsredis_8c.html#aa8daf63b794b6b6341018feec205cb7d">lsredis_getd</a>( <a class="code" href="lspmac_8c.html#a8237e646ce032a840637a4ef7bff49b9" title="MD2 omega axis (the air bearing)">omega</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a8838915ebb6f9989944117c8197d5e86" title="conversion from counts to units: 0.0 means not loaded yet">u2c</a>);</div>
+<div class="line">  u2c       = <a class="code" href="lsredis_8c.html#aa8daf63b794b6b6341018feec205cb7d">lsredis_getd</a>( <a class="code" href="lspmac_8c.html#a8237e646ce032a840637a4ef7bff49b9" title="MD2 omega axis (the air bearing)">omega</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a8838915ebb6f9989944117c8197d5e86" title="conversion from counts to units: 0.0 means not loaded yet">u2c</a>);</div>
+<div class="line">  max_accel = <a class="code" href="lsredis_8c.html#aa8daf63b794b6b6341018feec205cb7d">lsredis_getd</a>( <a class="code" href="lspmac_8c.html#a8237e646ce032a840637a4ef7bff49b9" title="MD2 omega axis (the air bearing)">omega</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a50cf4c0711cea164e332bc34705a1a68" title="our maximum acceleration (cts/msec^2)">max_accel</a>);</div>
 <div class="line"></div>
 <div class="line">  <span class="comment">//</span></div>
 <div class="line">  <span class="comment">// reset shutter has opened flag</span></div>
@@ -320,7 +322,7 @@ Variables</h2></td></tr>
 <div class="line">    <span class="comment">//    p171 = u2c * ( lspg_nextshot.sstart + lspg_nextshot.dsowidth);</span></div>
 <div class="line">    p171 = u2c * <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#ad5a8f568a04aa6a13767933062b28f19" title="dataset defined oscillation width">dsowidth</a>;</div>
 <div class="line">    p173 = fabs(p180) &lt; 1.e-4 ? 0.0 : u2c * <a class="code" href="lspg_8c.html#ad8d8e2f578ca79189a80c1fd5b60cefd" title="the nextshot object">lspg_nextshot</a>.<a class="code" href="structlspg__nextshot__struct.html#ad5a8f568a04aa6a13767933062b28f19" title="dataset defined oscillation width">dsowidth</a> / p180;</div>
-<div class="line">    p175 = p173/<a class="code" href="lspmac_8c.html#a8237e646ce032a840637a4ef7bff49b9" title="MD2 omega axis (the air bearing)">omega</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#afec8dc1d4b97ba9c1d6e4f7a088342e4" title="our maximum acceleration (cts/msec^2)">max_accel</a>;</div>
+<div class="line">    p175 = p173/max_accel;</div>
 <div class="line"></div>
 <div class="line"></div>
 <div class="line">    <span class="comment">//</span></div>
@@ -431,7 +433,7 @@ Variables</h2></td></tr>
 
 <p>Initialize the md2cmds module. </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00778">778</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00780">780</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                    {</div>
 <div class="line">  memset( <a class="code" href="md2cmds_8c.html#a5f0fe1e2dfa92cf345b8c29134ab1ede" title="our command;">md2cmds_cmd</a>, 0, <span class="keyword">sizeof</span>( <a class="code" href="md2cmds_8c.html#a5f0fe1e2dfa92cf345b8c29134ab1ede" title="our command;">md2cmds_cmd</a>));</div>
 <div class="line"></div>
@@ -507,7 +509,7 @@ Variables</h2></td></tr>
 
 <p>Now that we are done with the 360 rotation lets rehome right quick. </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00716">716</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00718">718</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                                                {</div>
 <div class="line">  <span class="keywordflow">if</span>( <a class="code" href="md2cmds_8c.html#aaa6eb2d46be8d5e17a511591dd5a1271" title="flag: when omega is in position after a rotate we want to re-home omega">rotating</a>) {</div>
 <div class="line">    <a class="code" href="md2cmds_8c.html#aaa6eb2d46be8d5e17a511591dd5a1271" title="flag: when omega is in position after a rotate we want to re-home omega">rotating</a> = 0;</div>
@@ -605,7 +607,7 @@ Variables</h2></td></tr>
 <div class="line">    <span class="comment">// Maybe we have a preset.  Give it a whirl</span></div>
 <div class="line">    <span class="comment">// In any case we are done here.</span></div>
 <div class="line">    <span class="comment">//</span></div>
-<div class="line">    <a class="code" href="lspmac_8c.html#a290212c160e6ef1f560c9df9fc8f58e4" title="Move a given motor to one of its preset positions.">lspmac_move_preset_queue</a>( mp, pos);</div>
+<div class="line">    <a class="code" href="lspmac_8c.html#a6f5751d89f83b4b436c6f8bc636e4156" title="Move a given motor to one of its preset positions.">lspmac_move_preset_queue</a>( mp, pos);</div>
 <div class="line">    free( cmd);</div>
 <div class="line">    <span class="keywordflow">return</span>;</div>
 <div class="line">  }</div>
@@ -1037,7 +1039,7 @@ Variables</h2></td></tr>
 <p>Spin 360 and make a video (recenter first, maybe) </p>
 <p>&lt; velocity (cnts/msec) for omega </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00601">601</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00603">603</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                      {</div>
 <div class="line">  <span class="keywordtype">int</span> v;                </div>
 <div class="line">  <span class="keywordtype">double</span> cx, cy, ax, ay, az;</div>
@@ -1152,7 +1154,7 @@ Variables</h2></td></tr>
 <p>Tell the database about the time we went through omega=zero. </p>
 <p>This should trigger the video feed server to starting making a movie. </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00699">699</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00701">701</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                                     {</div>
 <div class="line">  <span class="keyword">struct </span>tm t;</div>
 <div class="line">  <span class="keywordtype">int</span> usecs;</div>
@@ -1185,7 +1187,7 @@ Variables</h2></td></tr>
 
 <p>Start up the thread. </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00792">792</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00794">794</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                   {</div>
 <div class="line">  pthread_create( &amp;<a class="code" href="md2cmds_8c.html#aa230921945149692de98fff15c01962f">md2cmds_thread</a>, NULL,            <a class="code" href="md2cmds_8c.html#ae967e769d23555a631f615e630f25b00" title="Our worker thread.">md2cmds_worker</a>, NULL);</div>
 <div class="line">  <a class="code" href="lsevents_8c.html#ab0617d3f0594b51d10e34bf397096654" title="Add a callback routine to listen for a specific event.">lsevents_add_listener</a>( <span class="stringliteral">&quot;omega crossed zero&quot;</span>,      <a class="code" href="md2cmds_8c.html#aa43887b7c9799bc88d51df13745d0e5c" title="Tell the database about the time we went through omega=zero.">md2cmds_rotate_cb</a>);</div>
@@ -1221,7 +1223,7 @@ Variables</h2></td></tr>
 
 <p>Fix up xscale and yscale when zoom changes. </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00726">726</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00728">728</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                                        {</div>
 <div class="line">  <span class="keywordtype">int</span> mag;</div>
 <div class="line"></div>
@@ -1277,7 +1279,7 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00744">744</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00746">746</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                       {</div>
 <div class="line"></div>
 <div class="line">  pthread_mutex_lock( &amp;<a class="code" href="md2cmds_8c.html#ad67304bb851dc6268b0cda2f40fc5aa8" title="mutex for the condition">md2cmds_mutex</a>);</div>
@@ -1472,7 +1474,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="md2cmds_8c.html">md2cmds.c</a></li>
-    <li class="footer">Generated on Fri Dec 14 2012 16:43:04 for LS-CAT PGPMAC by
+    <li class="footer">Generated on Sun Dec 16 2012 15:48:51 for LS-CAT PGPMAC by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.2 </li>
   </ul>

@@ -67,5 +67,6 @@ var searchData=
   ['dummy8',['dummy8',['../structmd2StatusStruct.html#a17f44367cfa4c66ec3ee481863ef4960',1,'md2StatusStruct']]],
   ['dummy9',['dummy9',['../structmd2StatusStruct.html#aa5aadda5a5cb98c6028f8b45e16cd084',1,'md2StatusStruct']]],
   ['dummya',['dummyA',['../structmd2StatusStruct.html#a9fc7dc802d00c22463dd7ddd531e06d7',1,'md2StatusStruct']]],
-  ['dummyb',['dummyB',['../structmd2StatusStruct.html#aab597be69a8dcc140778d9aeb8a50eee',1,'md2StatusStruct']]]
+  ['dummyb',['dummyB',['../structmd2StatusStruct.html#aab597be69a8dcc140778d9aeb8a50eee',1,'md2StatusStruct']]],
+  ['dvalue',['dvalue',['../structlsredis__obj__struct.html#ab60d0a71cabad6b921b6edb5a8f68996',1,'lsredis_obj_struct']]]
 ];

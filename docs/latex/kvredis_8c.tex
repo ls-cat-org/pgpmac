@@ -215,7 +215,7 @@ All calls are asynchronous
 )}}\label{kvredis_8c_a95668f6d7a4b8882c6a502af3b0a4705}
 
 
-Definition at line 108 of file kvredis.\-c.
+Definition at line 111 of file kvredis.\-c.
 
 
 \begin{DoxyCode}
@@ -234,7 +234,7 @@ Definition at line 108 of file kvredis.\-c.
 )}}\label{kvredis_8c_aacb58922ba249c3e15491826e682023c}
 
 
-Definition at line 118 of file kvredis.\-c.
+Definition at line 121 of file kvredis.\-c.
 
 
 \begin{DoxyCode}
@@ -253,7 +253,7 @@ Definition at line 118 of file kvredis.\-c.
 )}}\label{kvredis_8c_a93a6e6dd9f422d01eeaa03d6ba4738a0}
 
 
-Definition at line 128 of file kvredis.\-c.
+Definition at line 131 of file kvredis.\-c.
 
 
 \begin{DoxyCode}
@@ -279,6 +279,7 @@ Definition at line 63 of file kvredis.\-c.
 
 \begin{DoxyCode}
                                                                   \{
+  \textcolor{keyword}{static} \textcolor{keywordtype}{int} indentlevel = 0;
   redisReply *r;
   \textcolor{keywordtype}{int} i;
 
@@ -291,36 +292,38 @@ Definition at line 63 of file kvredis.\-c.
   
   \textcolor{keywordflow}{switch}( r->type) \{
   \textcolor{keywordflow}{case} REDIS\_REPLY\_STATUS:
-    printf( \textcolor{stringliteral}{"STATUS: %s\(\backslash\)n"}, r->str);
+    printf( \textcolor{stringliteral}{"%*sSTATUS: %s\(\backslash\)n"}, indentlevel*4,\textcolor{stringliteral}{""}, r->str);
     \textcolor{keywordflow}{break};
 
   \textcolor{keywordflow}{case} REDIS\_REPLY\_ERROR:
-    printf( \textcolor{stringliteral}{"ERROR: %s\(\backslash\)n"}, r->str);
+    printf( \textcolor{stringliteral}{"%*sERROR: %s\(\backslash\)n"}, indentlevel*4, \textcolor{stringliteral}{""}, r->str);
     \textcolor{keywordflow}{break};
 
   \textcolor{keywordflow}{case} REDIS\_REPLY\_INTEGER:
-    printf( \textcolor{stringliteral}{"Integer: %lld\(\backslash\)n"}, r->integer);
+    printf( \textcolor{stringliteral}{"%*sInteger: %lld\(\backslash\)n"}, indentlevel*4, \textcolor{stringliteral}{""}, r->integer);
     \textcolor{keywordflow}{break};
 
   \textcolor{keywordflow}{case} REDIS\_REPLY\_NIL:
-    printf( \textcolor{stringliteral}{"(nil)\(\backslash\)n"});
+    printf( \textcolor{stringliteral}{"%*s(nil)\(\backslash\)n"}, indentlevel*4, \textcolor{stringliteral}{""});
     \textcolor{keywordflow}{break};
 
   \textcolor{keywordflow}{case} REDIS\_REPLY\_STRING:
-    printf( \textcolor{stringliteral}{"STRING: %s\(\backslash\)n"}, r->str);
+    printf( \textcolor{stringliteral}{"%*sSTRING: %s\(\backslash\)n"}, indentlevel*4, \textcolor{stringliteral}{""}, r->str);
     \textcolor{keywordflow}{break};
 
   \textcolor{keywordflow}{case} REDIS\_REPLY\_ARRAY:
-    printf( \textcolor{stringliteral}{"ARRAY of %d elements\(\backslash\)n"}, (\textcolor{keywordtype}{int})r->elements);
-    \textcolor{keywordflow}{for}( i=0; i<r->elements; i++)
+    printf( \textcolor{stringliteral}{"%*sARRAY of %d elements\(\backslash\)n"}, indentlevel*4, \textcolor{stringliteral}{""}, (\textcolor{keywordtype}{int})r->elements);
+    indentlevel++;
+    \textcolor{keywordflow}{for}( i=0; i<r->elements; i++) \{
       \hyperlink{kvredis_8c_a5dbdf77c680c97996882abbb6a142321}{debugCB}( ac, r->element[i], NULL);
+    \}
+    indentlevel--;
     \textcolor{keywordflow}{break};
     
   \textcolor{keywordflow}{default}:
-    printf( \textcolor{stringliteral}{"Unknown type %d\(\backslash\)n"}, r->type);
+    printf( \textcolor{stringliteral}{"%*sUnknown type %d\(\backslash\)n"}, indentlevel*4,\textcolor{stringliteral}{""}, r->type);
     
   \}
-
 \}
 \end{DoxyCode}
 \hypertarget{kvredis_8c_ad3f87d428857a2d8e526e2443fadd410}{\index{kvredis.\-c@{kvredis.\-c}!del\-Read@{del\-Read}}
@@ -332,7 +335,7 @@ Definition at line 63 of file kvredis.\-c.
 )}}\label{kvredis_8c_ad3f87d428857a2d8e526e2443fadd410}
 
 
-Definition at line 113 of file kvredis.\-c.
+Definition at line 116 of file kvredis.\-c.
 
 
 \begin{DoxyCode}
@@ -351,7 +354,7 @@ Definition at line 113 of file kvredis.\-c.
 )}}\label{kvredis_8c_a5d4f324dd0beeea83848e05550b5cf39}
 
 
-Definition at line 123 of file kvredis.\-c.
+Definition at line 126 of file kvredis.\-c.
 
 
 \begin{DoxyCode}
@@ -370,7 +373,7 @@ Definition at line 123 of file kvredis.\-c.
 )}}\label{kvredis_8c_a79856d1a06c278688563be6e5219cee5}
 
 
-Definition at line 634 of file kvredis.\-c.
+Definition at line 636 of file kvredis.\-c.
 
 
 \begin{DoxyCode}
@@ -401,15 +404,15 @@ Definition at line 634 of file kvredis.\-c.
 )}}\label{kvredis_8c_afb8d1ff1e0f4fcdc85ad9c684271cb3d}
 
 
-Definition at line 134 of file kvredis.\-c.
+Definition at line 137 of file kvredis.\-c.
 
 
 \begin{DoxyCode}
                                                              \{
   \textcolor{keywordtype}{int} kvname\_col, kvvalue\_col, kvseq\_col, kvdbrtype\_col;
   \textcolor{keywordtype}{int} i;
-  \textcolor{keywordtype}{int} need\_quotes;
   \textcolor{keywordtype}{int} seq;
+  \textcolor{keywordtype}{char} *argv[8];
   
   kvname\_col    = PQfnumber( pgr, \textcolor{stringliteral}{"rname"});
   kvvalue\_col   = PQfnumber( pgr, \textcolor{stringliteral}{"rvalue"});
@@ -422,37 +425,33 @@ Definition at line 134 of file kvredis.\-c.
     \textcolor{keywordflow}{return};
   \}
 
-  redisAsyncCommand( \hyperlink{kvredis_8c_a498efb0426f0d925e6cab0e7104812ae}{cmdac}, \hyperlink{kvredis_8c_a5dbdf77c680c97996882abbb6a142321}{debugCB}, NULL, \textcolor{stringliteral}{"MULTI"});
+  redisAsyncCommand( \hyperlink{kvredis_8c_a498efb0426f0d925e6cab0e7104812ae}{cmdac}, NULL, NULL, \textcolor{stringliteral}{"MULTI"});
   \textcolor{keywordflow}{for}( i=0; i<PQntuples( pgr); i++) \{
     seq = atoi( PQgetvalue( pgr, i, kvseq\_col));
     \hyperlink{kvredis_8c_a6b15f24b2416f362a9e0039efc586fbb}{kvseq} = \hyperlink{kvredis_8c_a6b15f24b2416f362a9e0039efc586fbb}{kvseq} < seq ? seq : \hyperlink{kvredis_8c_a6b15f24b2416f362a9e0039efc586fbb}{kvseq};
 
-    need\_quotes = strchr( PQgetvalue( pgr, i, kvvalue\_col), \textcolor{charliteral}{' '}) == NULL ? 0 : 
-      1;
-    redisAsyncCommand( \hyperlink{kvredis_8c_a498efb0426f0d925e6cab0e7104812ae}{cmdac}, \hyperlink{kvredis_8c_a5dbdf77c680c97996882abbb6a142321}{debugCB}, NULL, \textcolor{stringliteral}{"HMSET %s VALUE %s%s%s
-       SEQ %d DBRTYPE %d"},
-                       PQgetvalue( pgr, i, kvname\_col),
-                       need\_quotes ? \textcolor{stringliteral}{"\(\backslash\)0x42"} : \textcolor{stringliteral}{""},
-                       PQgetvalue( pgr, i, kvvalue\_col),
-                       need\_quotes ? \textcolor{stringliteral}{"\(\backslash\)0x42"} : \textcolor{stringliteral}{""},
-                       atoi(PQgetvalue( pgr, i, kvseq\_col)),
-                       atoi(PQgetvalue( pgr, i, kvdbrtype\_col))
-                       );
-    \textcolor{keywordflow}{if}( need\_quotes)
-      fprintf( stderr, \textcolor{stringliteral}{"lspg\_allkvs\_cb: %s %s\(\backslash\)n"}, PQgetvalue( pgr, i, 
-      kvname\_col), PQgetvalue( pgr, i, kvvalue\_col));
+    argv[0] = \textcolor{stringliteral}{"HMSET"};
+    argv[1] = PQgetvalue( pgr, i, kvname\_col);
+    argv[2] = \textcolor{stringliteral}{"VALUE"};
+    argv[3] = PQgetvalue( pgr, i, kvvalue\_col);
+    argv[4] = \textcolor{stringliteral}{"SEQ"};
+    argv[5] = PQgetvalue( pgr, i, kvseq\_col);
+    argv[6] = \textcolor{stringliteral}{"DBRTYPE"};
+    argv[7] = PQgetvalue( pgr, i, kvdbrtype\_col);
+    redisAsyncCommandArgv( \hyperlink{kvredis_8c_a498efb0426f0d925e6cab0e7104812ae}{cmdac}, NULL, NULL, 8, (\textcolor{keyword}{const} \textcolor{keywordtype}{char} **)argv, NULL
+      );
 
-
+    argv[0] = \textcolor{stringliteral}{"PUBLISH"};
+    argv[1] = \textcolor{stringliteral}{"REDIS\_KV\_CONNECTOR"};
+    argv[2] = PQgetvalue( pgr, i, kvname\_col);
+    redisAsyncCommandArgv( \hyperlink{kvredis_8c_a498efb0426f0d925e6cab0e7104812ae}{cmdac}, NULL, NULL, 3, (\textcolor{keyword}{const} \textcolor{keywordtype}{char} **)argv, NULL
+      );
   \}
 
   redisAsyncCommand( \hyperlink{kvredis_8c_a498efb0426f0d925e6cab0e7104812ae}{cmdac}, NULL, NULL, \textcolor{stringliteral}{"SET redis.kvseq %d"}, \hyperlink{kvredis_8c_a6b15f24b2416f362a9e0039efc586fbb}{kvseq});
-  redisAsyncCommand( \hyperlink{kvredis_8c_a498efb0426f0d925e6cab0e7104812ae}{cmdac}, \hyperlink{kvredis_8c_a5dbdf77c680c97996882abbb6a142321}{debugCB}, NULL, \textcolor{stringliteral}{"EXEC"});
+
+  redisAsyncCommand( \hyperlink{kvredis_8c_a498efb0426f0d925e6cab0e7104812ae}{cmdac}, NULL, NULL, \textcolor{stringliteral}{"EXEC"});
   
-  \textcolor{keywordflow}{for}( i=0; i<PQntuples( pgr); i++) \{
-    redisAsyncCommand( \hyperlink{kvredis_8c_a498efb0426f0d925e6cab0e7104812ae}{cmdac}, \hyperlink{kvredis_8c_a5dbdf77c680c97996882abbb6a142321}{debugCB}, NULL, \textcolor{stringliteral}{"PUBLISH
-       REDIS\_KV\_CONNECTOR '%s %s'"}, PQgetvalue( pgr, i, kvname\_col), PQgetvalue( pgr, i, kvseq\_col))
-      ;
-  \}
 \}
 \end{DoxyCode}
 \hypertarget{kvredis_8c_af6485ac1749c5de3008dd0e0badaa09c}{\index{kvredis.\-c@{kvredis.\-c}!lspg\-\_\-flush@{lspg\-\_\-flush}}
@@ -468,7 +467,7 @@ Flush psql output buffer (ie, send the query)
 
 
 
-Definition at line 410 of file kvredis.\-c.
+Definition at line 412 of file kvredis.\-c.
 
 
 \begin{DoxyCode}
@@ -514,7 +513,7 @@ Implements our state machine Does not strictly only set the next state as it als
 
 
 
-Definition at line 442 of file kvredis.\-c.
+Definition at line 444 of file kvredis.\-c.
 
 
 \begin{DoxyCode}
@@ -583,7 +582,7 @@ Definition at line 442 of file kvredis.\-c.
 )}}\label{kvredis_8c_a62b110949d206fb22789191207e1d066}
 
 
-Definition at line 180 of file kvredis.\-c.
+Definition at line 182 of file kvredis.\-c.
 
 
 \begin{DoxyCode}
@@ -604,7 +603,7 @@ Connect to the pg server.
 
 
 
-Definition at line 323 of file kvredis.\-c.
+Definition at line 325 of file kvredis.\-c.
 
 
 \begin{DoxyCode}
@@ -718,7 +717,7 @@ I/\-O control to/from the postgresql server.
 \end{DoxyParams}
 
 
-Definition at line 541 of file kvredis.\-c.
+Definition at line 543 of file kvredis.\-c.
 
 
 \begin{DoxyCode}
@@ -833,7 +832,7 @@ Return the next item in the postgresql queue.
 
 If there is an item left in the queue then it is returned. Otherwise, N\-U\-L\-L is returned. 
 
-Definition at line 189 of file kvredis.\-c.
+Definition at line 191 of file kvredis.\-c.
 
 
 \begin{DoxyCode}
@@ -874,7 +873,7 @@ Place a query on the queue.
 \end{DoxyParams}
 
 
-Definition at line 232 of file kvredis.\-c.
+Definition at line 234 of file kvredis.\-c.
 
 
 \begin{DoxyCode}
@@ -921,7 +920,7 @@ Remove the oldest item in the queue.
 
 this is called only when there is nothing else to service the reply\-: this pop does not return anything. We use the ...reply\-\_\-peek function to return the next item in the reply queue 
 
-Definition at line 209 of file kvredis.\-c.
+Definition at line 211 of file kvredis.\-c.
 
 
 \begin{DoxyCode}
@@ -946,7 +945,7 @@ Return the next item in the reply queue but don't pop it since we may need it mo
 
 Call \hyperlink{kvredis_8c_a3847589e641f7e16a0cd68ef30e37cca}{lspg\-\_\-query\-\_\-reply\-\_\-next()} when done. 
 
-Definition at line 219 of file kvredis.\-c.
+Definition at line 221 of file kvredis.\-c.
 
 
 \begin{DoxyCode}
@@ -976,7 +975,7 @@ Receive a result of a query.
 
 
 
-Definition at line 264 of file kvredis.\-c.
+Definition at line 266 of file kvredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1054,7 +1053,7 @@ send the next queued query to the D\-B server
 
 
 
-Definition at line 494 of file kvredis.\-c.
+Definition at line 496 of file kvredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1113,7 +1112,7 @@ Definition at line 494 of file kvredis.\-c.
 )}}\label{kvredis_8c_a51af30a60f9f02777c6396b8247e356f}
 
 
-Definition at line 653 of file kvredis.\-c.
+Definition at line 655 of file kvredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1171,14 +1170,13 @@ Definition at line 653 of file kvredis.\-c.
 
   \hyperlink{kvredis_8c_af3f897b8ffa020ca54289bc5b28cb64d}{lspgfd}.fd = -1;
 
-  \textcolor{keywordflow}{if}( redisAsyncCommand( \hyperlink{kvredis_8c_a498efb0426f0d925e6cab0e7104812ae}{cmdac}, \hyperlink{kvredis_8c_a5dbdf77c680c97996882abbb6a142321}{debugCB}, NULL, \textcolor{stringliteral}{"KEYS *"}) == 
-      REDIS\_ERR) \{
+  \textcolor{keywordflow}{if}( redisAsyncCommand( \hyperlink{kvredis_8c_a498efb0426f0d925e6cab0e7104812ae}{cmdac}, NULL, NULL, \textcolor{stringliteral}{"KEYS *"}) == REDIS\_ERR) \{
     fprintf( stderr, \textcolor{stringliteral}{"Error sending KEYS command\(\backslash\)n"});
     exit( -1);
   \}
 
-  \textcolor{keywordflow}{if}( redisAsyncCommand( \hyperlink{kvredis_8c_a4d65536cb1094fb5deda0a852b181232}{subac}, \hyperlink{kvredis_8c_a5dbdf77c680c97996882abbb6a142321}{debugCB}, NULL, \textcolor{stringliteral}{"PSUBSCRIBE MD2*
-       UI**"}) == REDIS\_ERR) \{
+  \textcolor{keywordflow}{if}( redisAsyncCommand( \hyperlink{kvredis_8c_a4d65536cb1094fb5deda0a852b181232}{subac}, \hyperlink{kvredis_8c_a5dbdf77c680c97996882abbb6a142321}{debugCB}, NULL, \textcolor{stringliteral}{"PSUBSCRIBE MD2* UI*
+      "}) == REDIS\_ERR) \{
     fprintf( stderr, \textcolor{stringliteral}{"Error sending PSUBSCRIBE command\(\backslash\)n"});
     exit( -1);
   \}
@@ -1228,8 +1226,6 @@ Definition at line 653 of file kvredis.\-c.
       poll\_timeout\_ms = -1;
     \}
 
-
-    fprintf( stderr, \textcolor{stringliteral}{"nfda: %d\(\backslash\)n"}, nfda);
 
     pollrtn = poll( fda, nfda, poll\_timeout\_ms);
 

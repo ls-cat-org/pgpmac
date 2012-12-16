@@ -274,7 +274,7 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00077">77</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
+<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00078">78</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
 <div class="fragment"><div class="line">                                                             {</div>
 <div class="line">  <a class="code" href="structlsevents__listener__struct.html" title="Linked list of event listeners.">lsevents_listener_t</a> *<span class="keyword">new</span>;</div>
 <div class="line">  <span class="keywordtype">int</span> err;</div>
@@ -333,7 +333,7 @@ Variables</h2></td></tr>
 
 <p>Initialize this module. </p>
 
-<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00206">206</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
+<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00207">207</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
 <div class="fragment"><div class="line">                     {</div>
 <div class="line">  pthread_mutex_init( &amp;<a class="code" href="lsevents_8c.html#ab46f4ebda5e926a213faedac1a545ec1" title="mutex to protect the event queue">lsevents_queue_mutex</a>, NULL);</div>
 <div class="line">  pthread_cond_init(  &amp;<a class="code" href="lsevents_8c.html#a8079d9fb8c35db3ca5f83be5aeb2a747" title="condition to pause the queue if needed">lsevents_queue_cond</a>, NULL);</div>
@@ -375,7 +375,7 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00122">122</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
+<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00123">123</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
 <div class="fragment"><div class="line">                                                                {</div>
 <div class="line">  </div>
 <div class="line">  <a class="code" href="structlsevents__listener__struct.html" title="Linked list of event listeners.">lsevents_listener_t</a> *last, *current;</div>
@@ -425,7 +425,7 @@ Variables</h2></td></tr>
 
 <p>Start up the thread and get out of the way. </p>
 
-<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00214">214</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
+<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00215">215</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
 <div class="fragment"><div class="line">                    {</div>
 <div class="line">  pthread_create( &amp;<a class="code" href="lsevents_8c.html#a314640d7c3cb4fa90823ab2418fbac9b" title="thread to run the event queue">lsevents_thread</a>, NULL, <a class="code" href="lsevents_8c.html#a48e8f9dee00710bbe293b4bbded37a39" title="Our worker.">lsevents_worker</a>, NULL);</div>
 <div class="line">}</div>
@@ -476,9 +476,10 @@ Variables</h2></td></tr>
 <div class="line">  <span class="keyword">event</span>[<span class="keyword">sizeof</span>(event)-1]=0;</div>
 <div class="line">  va_end( arg_ptr);</div>
 <div class="line"></div>
+<div class="line">  pthread_mutex_lock( &amp;<a class="code" href="lsevents_8c.html#ab46f4ebda5e926a213faedac1a545ec1" title="mutex to protect the event queue">lsevents_queue_mutex</a>);</div>
+<div class="line"></div>
 <div class="line">  <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lsevents_send_event: %s&quot;</span>, event);</div>
 <div class="line"></div>
-<div class="line">  pthread_mutex_lock( &amp;<a class="code" href="lsevents_8c.html#ab46f4ebda5e926a213faedac1a545ec1" title="mutex to protect the event queue">lsevents_queue_mutex</a>);</div>
 <div class="line"></div>
 <div class="line">  <span class="comment">// maybe wait for room on the queue</span></div>
 <div class="line">  <span class="keywordflow">while</span>( <a class="code" href="lsevents_8c.html#a3bccf603d56d5b2f4a92fad341d37e2c" title="next queue location to write">lsevents_queue_on</a> + 1 == <a class="code" href="lsevents_8c.html#a50ad47e12cc4fc2d88659230b2fd44ff" title="next queue location to read">lsevents_queue_off</a>)</div>
@@ -517,7 +518,7 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00157">157</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
+<p>Definition at line <a class="el" href="lsevents_8c_source.html#l00158">158</a> of file <a class="el" href="lsevents_8c_source.html">lsevents.c</a>.</p>
 <div class="fragment"><div class="line">                       {</div>
 <div class="line">  </div>
 <div class="line">  <span class="keywordtype">char</span> *event;</div>
@@ -764,7 +765,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="lsevents_8c.html">lsevents.c</a></li>
-    <li class="footer">Generated on Fri Dec 14 2012 16:43:03 for LS-CAT PGPMAC by
+    <li class="footer">Generated on Sun Dec 16 2012 15:48:51 for LS-CAT PGPMAC by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.2 </li>
   </ul>
