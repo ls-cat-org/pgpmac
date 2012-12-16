@@ -1,6 +1,5 @@
 var NAVTREEINDEX2 =
 {
-"lsredis_8c.html#ad650f89eb0d4fe24a32ea352ac404b27":[2,0,5,39],
 "lsredis_8c.html#add819e43a356d0575ec64c346c6fed57":[2,0,5,41],
 "lsredis_8c.html#ade7b1ddfdc88c6964a4c90513e360f75":[2,0,5,29],
 "lsredis_8c.html#adee3bccecc86dd531ac5f89491632439":[2,0,5,2],
@@ -249,5 +248,6 @@ var NAVTREEINDEX2 =
 "structlspg__nextshot__struct.html#a7ca4fbc86974d1b75a681ba5ecaaf5af":[1,0,6,71],
 "structlspg__nextshot__struct.html#a7f57874223897ab7d9c7531a9522904d":[1,0,6,4],
 "structlspg__nextshot__struct.html#a7fce65f4719a4a8110006f8b72eec3f7":[1,0,6,29],
-"structlspg__nextshot__struct.html#a8445cbd2206dc6d62b6bd433f5218c98":[1,0,6,75]
+"structlspg__nextshot__struct.html#a8445cbd2206dc6d62b6bd433f5218c98":[1,0,6,75],
+"structlspg__nextshot__struct.html#a846845b0b9ecf6517ef85554771ec71d":[1,0,6,6]
 };

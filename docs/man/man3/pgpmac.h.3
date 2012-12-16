@@ -190,7 +190,7 @@ Headers for the entire pgpmac project\&.
 .ti -1c
 .RI "void \fBlspmac_run\fP ()"
 .br
-.RI "\fIfind a postion for a given preset name \fP"
+.RI "\fIStart up the lspmac thread\&. \fP"
 .ti -1c
 .RI "void \fBlspmac_move_or_jog_queue\fP (\fBlspmac_motor_t\fP *, double, int)"
 .br
@@ -891,7 +891,7 @@ Definition at line 165 of file lspg\&.c\&.
 .PP
 Initiallize the lspg module\&. 
 .PP
-Definition at line 1615 of file lspg\&.c\&.
+Definition at line 1471 of file lspg\&.c\&.
 .PP
 .nf
                  {
@@ -909,7 +909,7 @@ Definition at line 1615 of file lspg\&.c\&.
 .PP
 Start 'er runnin'\&. 
 .PP
-Definition at line 1627 of file lspg\&.c\&.
+Definition at line 1483 of file lspg\&.c\&.
 .PP
 .nf
                 {
@@ -940,7 +940,7 @@ Convinence function to call seq run prep\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 952 of file lspg\&.c\&.
+Definition at line 815 of file lspg\&.c\&.
 .PP
 .nf
                              {
@@ -1124,18 +1124,9 @@ Definition at line 2281 of file lspmac\&.c\&.
 .SS "void lspmac_run ()"
 
 .PP
-find a postion for a given preset name \fBParameters:\fP
-.RS 4
-\fImp\fP Motor pointer 
-.br
-\fIname\fP The preset to search for 
-.br
-\fIerr\fP set to non-zero on error, ignored if nullStart up the lspmac thread 
-.RE
+Start up the lspmac thread\&. 
 .PP
-
-.PP
-Definition at line 2714 of file lspmac\&.c\&.
+Definition at line 2822 of file lspmac\&.c\&.
 .PP
 .nf
                   {
@@ -1153,12 +1144,16 @@ Definition at line 2714 of file lspmac\&.c\&.
   lsevents_add_listener( 'backLight 0',          lspmac_backLight_down_cb);
   lsevents_add_listener( 'cam\&.zoom In Position', lspmac_light_zoom_cb);
 
+  lspmac_zoom_lut_setup();
+  lspmac_flight_lut_setup();
+  lspmac_blight_lut_setup();
+  lspmac_fscint_lut_setup();
+
   //
   // Initialize the MD2 pmac (ie, turn on the right plcc's etc)
   //
   for( inits = lsredis_get_string_array(lspmac_md2_init); *inits != NULL; inits++) {
     lspmac_SockSendline( *inits);
-    //    lslogging_log_message( 'lspmac_init: pmac init '%s'', *inits);
   }
   
   //
@@ -1188,7 +1183,6 @@ Definition at line 2714 of file lspmac\&.c\&.
     if( inits != NULL) {
       while( *inits != NULL) {
         lspmac_SockSendline( *inits);
-        //      lslogging_log_message( 'lspmac_init: %s init '%s'', mp->name, *inits);
         inits++;
       }
     }
@@ -1657,7 +1651,7 @@ Definition at line 276 of file lstimer\&.c\&.
 .PP
 Initialize the md2cmds module\&. 
 .PP
-Definition at line 780 of file md2cmds\&.c\&.
+Definition at line 799 of file md2cmds\&.c\&.
 .PP
 .nf
                     {
@@ -1677,7 +1671,7 @@ Definition at line 780 of file md2cmds\&.c\&.
 .PP
 Start up the thread\&. 
 .PP
-Definition at line 794 of file md2cmds\&.c\&.
+Definition at line 813 of file md2cmds\&.c\&.
 .PP
 .nf
                    {

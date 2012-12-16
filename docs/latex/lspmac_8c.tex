@@ -235,8 +235,16 @@ void \hyperlink{lspmac_8c_a55791bd8a07e5ca1dd2aeedf3c23942c}{lspmac\-\_\-light\-
 \begin{DoxyCompactList}\small\item\em Set the backlight intensity whenever the zoom is changed (and the backlight is up) \end{DoxyCompactList}\item 
 void \hyperlink{lspmac_8c_a585676eb411025c7b44da958d4e98eb2}{lspmac\-\_\-scint\-\_\-dried\-\_\-cb} (char $\ast$event)
 \begin{DoxyCompactList}\small\item\em Turn off the dryer. \end{DoxyCompactList}\item 
+void \hyperlink{lspmac_8c_a3816a9a1a3bb5bb89fcec8a30d863970}{lspmac\-\_\-zoom\-\_\-lut\-\_\-setup} ()
+\begin{DoxyCompactList}\small\item\em Set up lookup table for zoom. \end{DoxyCompactList}\item 
+void \hyperlink{lspmac_8c_ad52a5dbc2f06247eca7619195936b85f}{lspmac\-\_\-flight\-\_\-lut\-\_\-setup} ()
+\begin{DoxyCompactList}\small\item\em Set up lookup table for flight. \end{DoxyCompactList}\item 
+void \hyperlink{lspmac_8c_a4aa8c178a56276eb64138d52fe65dc8c}{lspmac\-\_\-blight\-\_\-lut\-\_\-setup} ()
+\begin{DoxyCompactList}\small\item\em Set up lookup table for blight. \end{DoxyCompactList}\item 
+void \hyperlink{lspmac_8c_a54ceac41b127ad8bbad07bd90c6729dc}{lspmac\-\_\-fscint\-\_\-lut\-\_\-setup} ()
+\begin{DoxyCompactList}\small\item\em Set up lookup table for fscint. \end{DoxyCompactList}\item 
 void \hyperlink{lspmac_8c_a3a7fb93fb3fb9c4454613f30bfb0b1ee}{lspmac\-\_\-run} ()
-\begin{DoxyCompactList}\small\item\em find a postion for a given preset name \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{DoxyCompactList}\small\item\em Start up the lspmac thread. \end{DoxyCompactList}\end{DoxyCompactItemize}
 \subsection*{Variables}
 \begin{DoxyCompactItemize}
 \item 
@@ -1019,6 +1027,54 @@ Definition at line 2514 of file lspmac.\-c.
   d->\hyperlink{structlspmac__bi__struct_a814978c33dc99e7911faa4ddb12bfd90}{first\_time}     = 1;
 \}
 \end{DoxyCode}
+\hypertarget{lspmac_8c_a4aa8c178a56276eb64138d52fe65dc8c}{\index{lspmac.\-c@{lspmac.\-c}!lspmac\-\_\-blight\-\_\-lut\-\_\-setup@{lspmac\-\_\-blight\-\_\-lut\-\_\-setup}}
+\index{lspmac\-\_\-blight\-\_\-lut\-\_\-setup@{lspmac\-\_\-blight\-\_\-lut\-\_\-setup}!lspmac.c@{lspmac.\-c}}
+\subsubsection[{lspmac\-\_\-blight\-\_\-lut\-\_\-setup}]{\setlength{\rightskip}{0pt plus 5cm}void lspmac\-\_\-blight\-\_\-lut\-\_\-setup (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{lspmac_8c_a4aa8c178a56276eb64138d52fe65dc8c}
+
+
+Set up lookup table for blight. 
+
+
+
+Definition at line 2768 of file lspmac.\-c.
+
+
+\begin{DoxyCode}
+                               \{
+  \textcolor{keywordtype}{int} i;
+  \hyperlink{structlsredis__obj__struct}{lsredis\_obj\_t} *p;
+  \textcolor{keywordtype}{double} *dp;
+
+  pthread\_mutex\_lock( &\hyperlink{lspmac_8c_a85d6eaa4b4a82bb3112574f458d1dc50}{blight}->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex});
+
+  \hyperlink{lspmac_8c_a85d6eaa4b4a82bb3112574f458d1dc50}{blight}->\hyperlink{structlspmac__motor__struct_a11cbc6f50c150ed446e9a901cf7cc12b}{nlut} = 11;
+  \hyperlink{lspmac_8c_a85d6eaa4b4a82bb3112574f458d1dc50}{blight}->\hyperlink{structlspmac__motor__struct_a7b43671f7f3e06521f6cf91fb9ac707d}{lut} = calloc( 2 * \hyperlink{lspmac_8c_a85d6eaa4b4a82bb3112574f458d1dc50}{blight}->\hyperlink{structlspmac__motor__struct_a11cbc6f50c150ed446e9a901cf7cc12b}{nlut}, \textcolor{keyword}{sizeof}( \textcolor{keywordtype}{double}));
+  \textcolor{keywordflow}{if}( \hyperlink{lspmac_8c_a85d6eaa4b4a82bb3112574f458d1dc50}{blight}->\hyperlink{structlspmac__motor__struct_a7b43671f7f3e06521f6cf91fb9ac707d}{lut} == NULL) \{
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_blight\_lut\_setup: out
+       of memory"});
+    exit( -1);
+  \}
+
+  \textcolor{keywordflow}{for}( i=0, dp = \hyperlink{lspmac_8c_a85d6eaa4b4a82bb3112574f458d1dc50}{blight}->\hyperlink{structlspmac__motor__struct_a7b43671f7f3e06521f6cf91fb9ac707d}{lut}; i<blight->nlut; i++, dp += 2) \{
+    p = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"cam.zoom.%d.LightIntensity"}, i);
+    \textcolor{keywordflow}{if}( p==NULL || strlen( \hyperlink{lsredis_8c_ac1994e56114b2315294527d76311f829}{lsredis\_getstr}(p)) == 0) \{
+      free( \hyperlink{lspmac_8c_a85d6eaa4b4a82bb3112574f458d1dc50}{blight}->\hyperlink{structlspmac__motor__struct_a7b43671f7f3e06521f6cf91fb9ac707d}{lut});
+      \hyperlink{lspmac_8c_a85d6eaa4b4a82bb3112574f458d1dc50}{blight}->\hyperlink{structlspmac__motor__struct_a11cbc6f50c150ed446e9a901cf7cc12b}{nlut} = 0;
+      pthread\_mutex\_unlock( &\hyperlink{lspmac_8c_a85d6eaa4b4a82bb3112574f458d1dc50}{blight}->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex});
+      \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_blight\_lut\_setup:
+       cannot find MotorPosition element for cam.blight level %d"}, i);
+      \textcolor{keywordflow}{return};
+    \}
+    *dp = i;
+    *(dp+1) = 20000.0 * \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( p) / 100.0;
+  \}
+  pthread\_mutex\_unlock( &\hyperlink{lspmac_8c_a85d6eaa4b4a82bb3112574f458d1dc50}{blight}->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex});
+\}
+\end{DoxyCode}
 \hypertarget{lspmac_8c_aeaa263af25d139f249d8b825a058d0ce}{\index{lspmac.\-c@{lspmac.\-c}!lspmac\-\_\-bo\-\_\-init@{lspmac\-\_\-bo\-\_\-init}}
 \index{lspmac\-\_\-bo\-\_\-init@{lspmac\-\_\-bo\-\_\-init}!lspmac.c@{lspmac.\-c}}
 \subsubsection[{lspmac\-\_\-bo\-\_\-init}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lspmac\-\_\-motor\-\_\-t}$\ast$ lspmac\-\_\-bo\-\_\-init (
@@ -1269,6 +1325,92 @@ Definition at line 669 of file lspmac.\-c.
     \}
   \}
   \hyperlink{lspmac_8c_aaedae34bc18ac1742a232117c125d7b9}{lspmac\_Reset}();
+\}
+\end{DoxyCode}
+\hypertarget{lspmac_8c_ad52a5dbc2f06247eca7619195936b85f}{\index{lspmac.\-c@{lspmac.\-c}!lspmac\-\_\-flight\-\_\-lut\-\_\-setup@{lspmac\-\_\-flight\-\_\-lut\-\_\-setup}}
+\index{lspmac\-\_\-flight\-\_\-lut\-\_\-setup@{lspmac\-\_\-flight\-\_\-lut\-\_\-setup}!lspmac.c@{lspmac.\-c}}
+\subsubsection[{lspmac\-\_\-flight\-\_\-lut\-\_\-setup}]{\setlength{\rightskip}{0pt plus 5cm}void lspmac\-\_\-flight\-\_\-lut\-\_\-setup (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{lspmac_8c_ad52a5dbc2f06247eca7619195936b85f}
+
+
+Set up lookup table for flight. 
+
+
+
+Definition at line 2737 of file lspmac.\-c.
+
+
+\begin{DoxyCode}
+                               \{
+  \textcolor{keywordtype}{int} i;
+  \hyperlink{structlsredis__obj__struct}{lsredis\_obj\_t} *p;
+  \textcolor{keywordtype}{double} *dp;
+
+  pthread\_mutex\_lock( &\hyperlink{lspmac_8c_aeb09895663eff333b7a75acb319a9fc1}{flight}->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex});
+
+  \hyperlink{lspmac_8c_aeb09895663eff333b7a75acb319a9fc1}{flight}->\hyperlink{structlspmac__motor__struct_a11cbc6f50c150ed446e9a901cf7cc12b}{nlut} = 11;
+  \hyperlink{lspmac_8c_aeb09895663eff333b7a75acb319a9fc1}{flight}->\hyperlink{structlspmac__motor__struct_a7b43671f7f3e06521f6cf91fb9ac707d}{lut} = calloc( 2 * \hyperlink{lspmac_8c_aeb09895663eff333b7a75acb319a9fc1}{flight}->\hyperlink{structlspmac__motor__struct_a11cbc6f50c150ed446e9a901cf7cc12b}{nlut}, \textcolor{keyword}{sizeof}( \textcolor{keywordtype}{double}));
+  \textcolor{keywordflow}{if}( \hyperlink{lspmac_8c_aeb09895663eff333b7a75acb319a9fc1}{flight}->\hyperlink{structlspmac__motor__struct_a7b43671f7f3e06521f6cf91fb9ac707d}{lut} == NULL) \{
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_flight\_lut\_setup: out
+       of memory"});
+    exit( -1);
+  \}
+
+  \textcolor{keywordflow}{for}( i=0, dp = \hyperlink{lspmac_8c_aeb09895663eff333b7a75acb319a9fc1}{flight}->\hyperlink{structlspmac__motor__struct_a7b43671f7f3e06521f6cf91fb9ac707d}{lut}; i<flight->nlut; i++, dp += 2) \{
+    p = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"cam.zoom.%d.FrontLightIntensity"}, i);
+    \textcolor{keywordflow}{if}( p==NULL || strlen( \hyperlink{lsredis_8c_ac1994e56114b2315294527d76311f829}{lsredis\_getstr}(p)) == 0) \{
+      free( \hyperlink{lspmac_8c_aeb09895663eff333b7a75acb319a9fc1}{flight}->\hyperlink{structlspmac__motor__struct_a7b43671f7f3e06521f6cf91fb9ac707d}{lut});
+      \hyperlink{lspmac_8c_aeb09895663eff333b7a75acb319a9fc1}{flight}->\hyperlink{structlspmac__motor__struct_a11cbc6f50c150ed446e9a901cf7cc12b}{nlut} = 0;
+      pthread\_mutex\_unlock( &\hyperlink{lspmac_8c_aeb09895663eff333b7a75acb319a9fc1}{flight}->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex});
+      \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_flight\_lut\_setup:
+       cannot find MotorPosition element for cam.flight level %d"}, i);
+      \textcolor{keywordflow}{return};
+    \}
+    *dp = i;
+    *(dp+1) = 32767.0 * \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( p) / 100.0;
+  \}
+  pthread\_mutex\_unlock( &\hyperlink{lspmac_8c_aeb09895663eff333b7a75acb319a9fc1}{flight}->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex});
+\}
+\end{DoxyCode}
+\hypertarget{lspmac_8c_a54ceac41b127ad8bbad07bd90c6729dc}{\index{lspmac.\-c@{lspmac.\-c}!lspmac\-\_\-fscint\-\_\-lut\-\_\-setup@{lspmac\-\_\-fscint\-\_\-lut\-\_\-setup}}
+\index{lspmac\-\_\-fscint\-\_\-lut\-\_\-setup@{lspmac\-\_\-fscint\-\_\-lut\-\_\-setup}!lspmac.c@{lspmac.\-c}}
+\subsubsection[{lspmac\-\_\-fscint\-\_\-lut\-\_\-setup}]{\setlength{\rightskip}{0pt plus 5cm}void lspmac\-\_\-fscint\-\_\-lut\-\_\-setup (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{lspmac_8c_a54ceac41b127ad8bbad07bd90c6729dc}
+
+
+Set up lookup table for fscint. 
+
+
+
+Definition at line 2799 of file lspmac.\-c.
+
+
+\begin{DoxyCode}
+                               \{
+  \textcolor{keywordtype}{int} i;
+  \textcolor{keywordtype}{double} *dp;
+
+  pthread\_mutex\_lock( &\hyperlink{lspmac_8c_a8a3ca6fcf5e24dcc26170736843e53b2}{fscint}->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex});
+
+  \hyperlink{lspmac_8c_a8a3ca6fcf5e24dcc26170736843e53b2}{fscint}->\hyperlink{structlspmac__motor__struct_a11cbc6f50c150ed446e9a901cf7cc12b}{nlut} = 101;
+  \hyperlink{lspmac_8c_a8a3ca6fcf5e24dcc26170736843e53b2}{fscint}->\hyperlink{structlspmac__motor__struct_a7b43671f7f3e06521f6cf91fb9ac707d}{lut} = calloc( 2 * \hyperlink{lspmac_8c_a8a3ca6fcf5e24dcc26170736843e53b2}{fscint}->\hyperlink{structlspmac__motor__struct_a11cbc6f50c150ed446e9a901cf7cc12b}{nlut}, \textcolor{keyword}{sizeof}( \textcolor{keywordtype}{double}));
+  \textcolor{keywordflow}{if}( \hyperlink{lspmac_8c_a8a3ca6fcf5e24dcc26170736843e53b2}{fscint}->\hyperlink{structlspmac__motor__struct_a7b43671f7f3e06521f6cf91fb9ac707d}{lut} == NULL) \{
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_fscint\_lut\_setup: out
+       of memory"});
+    exit( -1);
+  \}
+
+  \textcolor{keywordflow}{for}( i=0, dp = \hyperlink{lspmac_8c_a8a3ca6fcf5e24dcc26170736843e53b2}{fscint}->\hyperlink{structlspmac__motor__struct_a7b43671f7f3e06521f6cf91fb9ac707d}{lut}; i<fscint->nlut; i++, dp += 2) \{
+    *(dp)   = i;
+    *(dp+1) = 320.0 * i;
+  \}
+  pthread\_mutex\_unlock( &\hyperlink{lspmac_8c_a8a3ca6fcf5e24dcc26170736843e53b2}{fscint}->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex});
 \}
 \end{DoxyCode}
 \hypertarget{lspmac_8c_a40aa4aeb5c799a6a3a089137da4fd6a8}{\index{lspmac.\-c@{lspmac.\-c}!lspmac\-\_\-fshut\-\_\-init@{lspmac\-\_\-fshut\-\_\-init}}
@@ -3712,20 +3854,11 @@ Definition at line 368 of file lspmac.\-c.
 )}}\label{lspmac_8c_a3a7fb93fb3fb9c4454613f30bfb0b1ee}
 
 
-find a postion for a given preset name 
+Start up the lspmac thread. 
 
 
-\begin{DoxyParams}{Parameters}
-{\em mp} & Motor pointer \\
-\hline
-{\em name} & The preset to search for \\
-\hline
-{\em err} & set to non-\/zero on error, ignored if null\-Start up the lspmac thread \\
-\hline
-\end{DoxyParams}
 
-
-Definition at line 2714 of file lspmac.\-c.
+Definition at line 2822 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3751,13 +3884,17 @@ Definition at line 2714 of file lspmac.\-c.
   \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"cam.zoom In Position"}, 
       \hyperlink{lspmac_8c_a55791bd8a07e5ca1dd2aeedf3c23942c}{lspmac\_light\_zoom\_cb});
 
+  \hyperlink{lspmac_8c_a3816a9a1a3bb5bb89fcec8a30d863970}{lspmac\_zoom\_lut\_setup}();
+  \hyperlink{lspmac_8c_ad52a5dbc2f06247eca7619195936b85f}{lspmac\_flight\_lut\_setup}();
+  \hyperlink{lspmac_8c_a4aa8c178a56276eb64138d52fe65dc8c}{lspmac\_blight\_lut\_setup}();
+  \hyperlink{lspmac_8c_a54ceac41b127ad8bbad07bd90c6729dc}{lspmac\_fscint\_lut\_setup}();
+
   \textcolor{comment}{//}
   \textcolor{comment}{// Initialize the MD2 pmac (ie, turn on the right plcc's etc)}
   \textcolor{comment}{//}
   \textcolor{keywordflow}{for}( inits = \hyperlink{lsredis_8c_abe31d0e11c41b2235307612c963bb652}{lsredis\_get\_string\_array}(\hyperlink{lspmac_8c_a45e8803dd459ea079a96fcbfb4709885}{lspmac\_md2\_init}
       ); *inits != NULL; inits++) \{
     \hyperlink{lspmac_8c_aaa442d9bc7a3cdee39adea0724f0e18c}{lspmac\_SockSendline}( *inits);
-    \textcolor{comment}{//    lslogging\_log\_message( "lspmac\_init: pmac init '%s'", *inits);}
   \}
   
   \textcolor{comment}{//}
@@ -3790,8 +3927,6 @@ Definition at line 2714 of file lspmac.\-c.
     \textcolor{keywordflow}{if}( inits != NULL) \{
       \textcolor{keywordflow}{while}( *inits != NULL) \{
         \hyperlink{lspmac_8c_aaa442d9bc7a3cdee39adea0724f0e18c}{lspmac\_SockSendline}( *inits);
-        \textcolor{comment}{//      lslogging\_log\_message( "lspmac\_init: %s init '%s'", mp->name,
-       *inits);}
         inits++;
       \}
     \}
@@ -4640,6 +4775,54 @@ Definition at line 1824 of file lspmac.\-c.
       \hyperlink{lspmac_8c_af3fa79868ba88f7c37f7b8f7d53149ff}{lspmac\_Service}( &\hyperlink{lspmac_8c_adba7f5f4bbeabc4dac859221d4c684ba}{pmacfd});
     \}
   \}
+\}
+\end{DoxyCode}
+\hypertarget{lspmac_8c_a3816a9a1a3bb5bb89fcec8a30d863970}{\index{lspmac.\-c@{lspmac.\-c}!lspmac\-\_\-zoom\-\_\-lut\-\_\-setup@{lspmac\-\_\-zoom\-\_\-lut\-\_\-setup}}
+\index{lspmac\-\_\-zoom\-\_\-lut\-\_\-setup@{lspmac\-\_\-zoom\-\_\-lut\-\_\-setup}!lspmac.c@{lspmac.\-c}}
+\subsubsection[{lspmac\-\_\-zoom\-\_\-lut\-\_\-setup}]{\setlength{\rightskip}{0pt plus 5cm}void lspmac\-\_\-zoom\-\_\-lut\-\_\-setup (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{lspmac_8c_a3816a9a1a3bb5bb89fcec8a30d863970}
+
+
+Set up lookup table for zoom. 
+
+
+
+Definition at line 2706 of file lspmac.\-c.
+
+
+\begin{DoxyCode}
+                             \{
+  \textcolor{keywordtype}{int} i;
+  \hyperlink{structlsredis__obj__struct}{lsredis\_obj\_t} *p;
+  \textcolor{keywordtype}{double} *dp;
+
+  pthread\_mutex\_lock( &\hyperlink{lspmac_8c_ad53a42cfaa04eff0336a44c8c9986333}{zoom}->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex});
+
+  \hyperlink{lspmac_8c_ad53a42cfaa04eff0336a44c8c9986333}{zoom}->\hyperlink{structlspmac__motor__struct_a11cbc6f50c150ed446e9a901cf7cc12b}{nlut} = 10;
+  \hyperlink{lspmac_8c_ad53a42cfaa04eff0336a44c8c9986333}{zoom}->\hyperlink{structlspmac__motor__struct_a7b43671f7f3e06521f6cf91fb9ac707d}{lut} = calloc( 2 * \hyperlink{lspmac_8c_ad53a42cfaa04eff0336a44c8c9986333}{zoom}->\hyperlink{structlspmac__motor__struct_a11cbc6f50c150ed446e9a901cf7cc12b}{nlut}, \textcolor{keyword}{sizeof}( \textcolor{keywordtype}{double}));
+  \textcolor{keywordflow}{if}( \hyperlink{lspmac_8c_ad53a42cfaa04eff0336a44c8c9986333}{zoom}->\hyperlink{structlspmac__motor__struct_a7b43671f7f3e06521f6cf91fb9ac707d}{lut} == NULL) \{
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_zoom\_lut\_setup: out of
+       memory"});
+    exit( -1);
+  \}
+
+  \textcolor{keywordflow}{for}( i=1, dp = \hyperlink{lspmac_8c_ad53a42cfaa04eff0336a44c8c9986333}{zoom}->\hyperlink{structlspmac__motor__struct_a7b43671f7f3e06521f6cf91fb9ac707d}{lut}; i<=zoom->nlut; i++, dp += 2) \{
+    p = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"cam.zoom.%d.MotorPosition"}, i);
+    \textcolor{keywordflow}{if}( p==NULL || strlen( \hyperlink{lsredis_8c_ac1994e56114b2315294527d76311f829}{lsredis\_getstr}(p)) == 0) \{
+      free( \hyperlink{lspmac_8c_ad53a42cfaa04eff0336a44c8c9986333}{zoom}->\hyperlink{structlspmac__motor__struct_a7b43671f7f3e06521f6cf91fb9ac707d}{lut});
+      \hyperlink{lspmac_8c_ad53a42cfaa04eff0336a44c8c9986333}{zoom}->\hyperlink{structlspmac__motor__struct_a11cbc6f50c150ed446e9a901cf7cc12b}{nlut} = 0;
+      pthread\_mutex\_unlock( &\hyperlink{lspmac_8c_ad53a42cfaa04eff0336a44c8c9986333}{zoom}->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex});
+      \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_zoom\_lut\_setup:
+       cannot find MotorPosition element for cam.zoom level %d"}, i);
+      \textcolor{keywordflow}{return};
+    \}
+    *dp = i;
+    *(dp+1) = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( p);
+  \}
+  pthread\_mutex\_unlock( &\hyperlink{lspmac_8c_ad53a42cfaa04eff0336a44c8c9986333}{zoom}->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex});
 \}
 \end{DoxyCode}
 

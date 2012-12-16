@@ -102,7 +102,7 @@ void \hyperlink{pgpmac_8h_a95e3fd7c1685d7e6ab6d0a295ab42f78}{lspg\-\_\-zoom\-\_\
 void \hyperlink{pgpmac_8h_ae3e30b0ba9b5d5a291fa29b77ba920d8}{lspmac\-\_\-init} (int, int)
 \begin{DoxyCompactList}\small\item\em Initialize this module. \end{DoxyCompactList}\item 
 void \hyperlink{pgpmac_8h_a3a7fb93fb3fb9c4454613f30bfb0b1ee}{lspmac\-\_\-run} ()
-\begin{DoxyCompactList}\small\item\em find a postion for a given preset name \end{DoxyCompactList}\item 
+\begin{DoxyCompactList}\small\item\em Start up the lspmac thread. \end{DoxyCompactList}\item 
 void \hyperlink{pgpmac_8h_a6809c317931c4af226e0a0217764afae}{lspmac\-\_\-move\-\_\-or\-\_\-jog\-\_\-queue} (\hyperlink{pgpmac_8h_aa5067fcbaabc5bbfdc52492495518c96}{lspmac\-\_\-motor\-\_\-t} $\ast$, double, int)
 \item 
 void \hyperlink{pgpmac_8h_adeec17e53dfc490f2a954b97fe95f0a7}{lspmac\-\_\-move\-\_\-or\-\_\-jog\-\_\-preset\-\_\-queue} (\hyperlink{pgpmac_8h_aa5067fcbaabc5bbfdc52492495518c96}{lspmac\-\_\-motor\-\_\-t} $\ast$, char $\ast$, int)
@@ -775,7 +775,7 @@ Initiallize the lspg module.
 
 
 
-Definition at line 1615 of file lspg.\-c.
+Definition at line 1471 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -802,7 +802,7 @@ Start 'er runnin'.
 
 
 
-Definition at line 1627 of file lspg.\-c.
+Definition at line 1483 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -849,7 +849,7 @@ Convinence function to call seq run prep.
 \end{DoxyParams}
 
 
-Definition at line 952 of file lspg.\-c.
+Definition at line 815 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1173,20 +1173,11 @@ Definition at line 2281 of file lspmac.\-c.
 )}}\label{pgpmac_8h_a3a7fb93fb3fb9c4454613f30bfb0b1ee}
 
 
-find a postion for a given preset name 
+Start up the lspmac thread. 
 
 
-\begin{DoxyParams}{Parameters}
-{\em mp} & Motor pointer \\
-\hline
-{\em name} & The preset to search for \\
-\hline
-{\em err} & set to non-\/zero on error, ignored if null\-Start up the lspmac thread \\
-\hline
-\end{DoxyParams}
 
-
-Definition at line 2714 of file lspmac.\-c.
+Definition at line 2822 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1212,13 +1203,17 @@ Definition at line 2714 of file lspmac.\-c.
   \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"cam.zoom In Position"}, 
       \hyperlink{lspmac_8c_a55791bd8a07e5ca1dd2aeedf3c23942c}{lspmac\_light\_zoom\_cb});
 
+  \hyperlink{lspmac_8c_a3816a9a1a3bb5bb89fcec8a30d863970}{lspmac\_zoom\_lut\_setup}();
+  \hyperlink{lspmac_8c_ad52a5dbc2f06247eca7619195936b85f}{lspmac\_flight\_lut\_setup}();
+  \hyperlink{lspmac_8c_a4aa8c178a56276eb64138d52fe65dc8c}{lspmac\_blight\_lut\_setup}();
+  \hyperlink{lspmac_8c_a54ceac41b127ad8bbad07bd90c6729dc}{lspmac\_fscint\_lut\_setup}();
+
   \textcolor{comment}{//}
   \textcolor{comment}{// Initialize the MD2 pmac (ie, turn on the right plcc's etc)}
   \textcolor{comment}{//}
   \textcolor{keywordflow}{for}( inits = \hyperlink{lsredis_8c_abe31d0e11c41b2235307612c963bb652}{lsredis\_get\_string\_array}(\hyperlink{lspmac_8c_a45e8803dd459ea079a96fcbfb4709885}{lspmac\_md2\_init}
       ); *inits != NULL; inits++) \{
     \hyperlink{lspmac_8c_aaa442d9bc7a3cdee39adea0724f0e18c}{lspmac\_SockSendline}( *inits);
-    \textcolor{comment}{//    lslogging\_log\_message( "lspmac\_init: pmac init '%s'", *inits);}
   \}
   
   \textcolor{comment}{//}
@@ -1251,8 +1246,6 @@ Definition at line 2714 of file lspmac.\-c.
     \textcolor{keywordflow}{if}( inits != NULL) \{
       \textcolor{keywordflow}{while}( *inits != NULL) \{
         \hyperlink{lspmac_8c_aaa442d9bc7a3cdee39adea0724f0e18c}{lspmac\_SockSendline}( *inits);
-        \textcolor{comment}{//      lslogging\_log\_message( "lspmac\_init: %s init '%s'", mp->name,
-       *inits);}
         inits++;
       \}
     \}
@@ -1902,7 +1895,7 @@ Initialize the md2cmds module.
 
 
 
-Definition at line 780 of file md2cmds.\-c.
+Definition at line 799 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1931,7 +1924,7 @@ Start up the thread.
 
 
 
-Definition at line 794 of file md2cmds.\-c.
+Definition at line 813 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}

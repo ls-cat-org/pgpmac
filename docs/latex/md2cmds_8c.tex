@@ -97,7 +97,7 @@ Move centering and alignment tables as requested T\-O\-D\-O\-: Implement.
 
 
 
-Definition at line 739 of file md2cmds.\-c.
+Definition at line 758 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -337,7 +337,7 @@ Initialize the md2cmds module.
 
 
 
-Definition at line 780 of file md2cmds.\-c.
+Definition at line 799 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1108,7 +1108,7 @@ Start up the thread.
 
 
 
-Definition at line 794 of file md2cmds.\-c.
+Definition at line 813 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1162,8 +1162,27 @@ Definition at line 728 of file md2cmds.\-c.
 \begin{DoxyCode}
                                         \{
   \textcolor{keywordtype}{int} mag;
+  \hyperlink{structlsredis__obj__struct}{lsredis\_obj\_t} *p1, *p2;
+  \textcolor{keywordtype}{char} fmt;
+  \textcolor{keywordtype}{char} *vp;
 
   mag = \hyperlink{lspmac_8c_acc46bdddee59bd8c5ad662b3fd445e9f}{lspmac\_getPosition}( \hyperlink{lspmac_8c_ad53a42cfaa04eff0336a44c8c9986333}{zoom});
+  
+
+  p1  = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"cam.xScale"});
+  p2  = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"cam.zoom.%d.ScaleX"}, mag);
+
+  vp = \hyperlink{lsredis_8c_ac1994e56114b2315294527d76311f829}{lsredis\_getstr}( p2);
+  \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( p2, vp);
+  free( vp);
+
+  p1  = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"cam.yScale"});
+  p2  = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"cam.zoom.%d.ScaleY"}, mag);
+
+  vp = \hyperlink{lsredis_8c_ac1994e56114b2315294527d76311f829}{lsredis\_getstr}( p2);
+  \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( p2, vp);
+  free( vp);
+
   \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"SELECT pmac.md2\_set\_scales( %d)"}, mag)
       ;
 \}
@@ -1208,7 +1227,7 @@ Our worker thread.
 \end{DoxyParams}
 
 
-Definition at line 746 of file md2cmds.\-c.
+Definition at line 765 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}

@@ -124,25 +124,6 @@ Postgresql support for the LS-CAT pgpmac project\&.
 .br
 .RI "\fIreturns a null terminated list of strings parsed from postgresql array \fP"
 .ti -1c
-.RI "void \fBlspg_init_motors_cb\fP (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
-.br
-.RI "\fIMotor initialization callback\&. \fP"
-.ti -1c
-.RI "void \fBlspg_zoom_lut_cb\fP (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
-.br
-.RI "\fIZoom motor look up table callback\&. \fP"
-.ti -1c
-.RI "void \fBlspg_scint_lut_cb\fP (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
-.br
-.ti -1c
-.RI "void \fBlspg_flight_lut_cb\fP (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
-.br
-.RI "\fIFront Light Lookup table query callback Install the lookup table for the Front Light\&. \fP"
-.ti -1c
-.RI "void \fBlspg_blight_lut_cb\fP (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
-.br
-.RI "\fIBack Light Lookup Table Callback Install the lookup table for the Back Light\&. \fP"
-.ti -1c
 .RI "void \fBlspg_nextshot_cb\fP (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
 .br
 .RI "\fINext Shot Callback\&. \fP"
@@ -642,42 +623,6 @@ Definition at line 165 of file lspg\&.c\&.
   return( rtn);
 }
 .fi
-.SS "void lspg_blight_lut_cb (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
-
-.PP
-Back Light Lookup Table Callback Install the lookup table for the Back Light\&. \fBParameters:\fP
-.RS 4
-\fIqqp\fP Our query 
-.br
-\fIpgr\fP The query's result 
-.RE
-.PP
-
-.PP
-Definition at line 394 of file lspg\&.c\&.
-.PP
-.nf
-                          {
-  int i;
-  
-  pthread_mutex_lock( &(blight->mutex));
-
-  blight->nlut = PQntuples( pgr)/2;
-  blight->lut  = calloc( 2*blight->nlut, sizeof(double));
-  if( blight->lut == NULL) {
-    lslogging_log_message( 'Out of memmory (lspg_blight_lut_cb)');
-    pthread_mutex_unlock( &(blight->mutex));
-    return;
-  }
-  
-  for( i=0; i<PQntuples( pgr); i++) {
-    blight->lut[i] = strtod( PQgetvalue( pgr, i, 0), NULL);
-  }
-
-  pthread_mutex_unlock( &(blight->mutex));
-
-}
-.fi
 .SS "void lspg_cmd_cb (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
 
 .PP
@@ -690,7 +635,7 @@ Send strings directly to PMAC queue\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1095 of file lspg\&.c\&.
+Definition at line 958 of file lspg\&.c\&.
 .PP
 .nf
                    {
@@ -716,48 +661,12 @@ Definition at line 1095 of file lspg\&.c\&.
   }
 }
 .fi
-.SS "void lspg_flight_lut_cb (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
-
-.PP
-Front Light Lookup table query callback Install the lookup table for the Front Light\&. \fBParameters:\fP
-.RS 4
-\fIqqp\fP Our query 
-.br
-\fIpgr\fP Our result object 
-.RE
-.PP
-
-.PP
-Definition at line 366 of file lspg\&.c\&.
-.PP
-.nf
-                          {
-  int i;
-  
-  pthread_mutex_lock( &(flight->mutex));
-
-  flight->nlut = PQntuples( pgr)/2;
-  flight->lut  = calloc( 2*flight->nlut, sizeof(double));
-  if( flight->lut == NULL) {
-    lslogging_log_message( 'Out of memmory (lspg_flight_lut_cb)');
-    pthread_mutex_unlock( &(flight->mutex));
-    return;
-  }
-  
-  for( i=0; i<PQntuples( pgr); i++) {
-    flight->lut[i] = strtod( PQgetvalue( pgr, i, 0), NULL);
-  }
-
-  pthread_mutex_unlock( &(flight->mutex));
-
-}
-.fi
 .SS "void lspg_flush ()"
 
 .PP
 Flush psql output buffer (ie, send the query) 
 .PP
-Definition at line 1124 of file lspg\&.c\&.
+Definition at line 987 of file lspg\&.c\&.
 .PP
 .nf
                   {
@@ -793,7 +702,7 @@ Definition at line 1124 of file lspg\&.c\&.
 .PP
 Convenience function to complete synchronous getcenter query\&. 
 .PP
-Definition at line 1058 of file lspg\&.c\&.
+Definition at line 921 of file lspg\&.c\&.
 .PP
 .nf
                           {
@@ -807,7 +716,7 @@ Definition at line 1058 of file lspg\&.c\&.
 .PP
 Request a getcenter query\&. 
 .PP
-Definition at line 1034 of file lspg\&.c\&.
+Definition at line 897 of file lspg\&.c\&.
 .PP
 .nf
                            {
@@ -823,7 +732,7 @@ Definition at line 1034 of file lspg\&.c\&.
 .PP
 Retrieve the data to center the crystal\&. 
 .PP
-Definition at line 969 of file lspg\&.c\&.
+Definition at line 832 of file lspg\&.c\&.
 .PP
 .nf
                                                                 {
@@ -886,7 +795,7 @@ Definition at line 969 of file lspg\&.c\&.
 .PP
 Done with getcenter query\&. 
 .PP
-Definition at line 1052 of file lspg\&.c\&.
+Definition at line 915 of file lspg\&.c\&.
 .PP
 .nf
                            {
@@ -898,7 +807,7 @@ Definition at line 1052 of file lspg\&.c\&.
 .PP
 Initialize getcenter object\&. 
 .PP
-Definition at line 1026 of file lspg\&.c\&.
+Definition at line 889 of file lspg\&.c\&.
 .PP
 .nf
                            {
@@ -912,7 +821,7 @@ Definition at line 1026 of file lspg\&.c\&.
 .PP
 Wait for a getcenter query to return\&. 
 .PP
-Definition at line 1044 of file lspg\&.c\&.
+Definition at line 907 of file lspg\&.c\&.
 .PP
 .nf
                            {
@@ -926,7 +835,7 @@ Definition at line 1044 of file lspg\&.c\&.
 .PP
 Initiallize the lspg module\&. 
 .PP
-Definition at line 1615 of file lspg\&.c\&.
+Definition at line 1471 of file lspg\&.c\&.
 .PP
 .nf
                  {
@@ -939,57 +848,12 @@ Definition at line 1615 of file lspg\&.c\&.
   lspg_lock_detector_init();
 }
 .fi
-.SS "void lspg_init_motors_cb (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
-
-.PP
-Motor initialization callback\&. \fBParameters:\fP
-.RS 4
-\fIqqp\fP The query queue item used to call us 
-.br
-\fIpgr\fP The postgresql result object 
-.RE
-.PP
-
-.PP
-Definition at line 284 of file lspg\&.c\&.
-.PP
-.nf
-                           {
-  int i, j;
-  //  uint32_t home_column;
-  uint32_t name_column;
-  char *sp;
-  lspmac_motor_t *lsdp;
-  
-  name_column              = PQfnumber( pgr, 'mm_name');
-  if( name_column == -1)
-    return;
-
-  //  home_column                  = PQfnumber( pgr, 'mm_home');
-
-  for( i=0; i<PQntuples( pgr); i++) {
-
-    lsdp = NULL;
-    for( j=0; j<lspmac_nmotors; j++) {
-      if( strcmp(lspmac_motors[j]\&.name, PQgetvalue( pgr, i, name_column)) == 0) {
-        lsdp                    = &(lspmac_motors[j]);
-
-        //      lsdp->home              = lspg_array2ptrs( PQgetvalue( pgr, i, home_column));
-        //      lsdp->lspg_initialized  = 1;
-        break;
-      }
-    }
-    if( lsdp == NULL)
-      continue;
-  }
-}
-.fi
 .SS "void lspg_lock_detector_all ()"
 
 .PP
 Detector lock convinence function\&. 
 .PP
-Definition at line 881 of file lspg\&.c\&.
+Definition at line 744 of file lspg\&.c\&.
 .PP
 .nf
                               {
@@ -1003,7 +867,7 @@ Definition at line 881 of file lspg\&.c\&.
 .PP
 Request (demand) a detector lock\&. 
 .PP
-Definition at line 857 of file lspg\&.c\&.
+Definition at line 720 of file lspg\&.c\&.
 .PP
 .nf
                                {
@@ -1019,7 +883,7 @@ Definition at line 857 of file lspg\&.c\&.
 .PP
 Callback for when the detector lock has be grabbed\&. 
 .PP
-Definition at line 848 of file lspg\&.c\&.
+Definition at line 711 of file lspg\&.c\&.
 .PP
 .nf
                                                                     {
@@ -1034,7 +898,7 @@ Definition at line 848 of file lspg\&.c\&.
 .PP
 Finish waiting\&. 
 .PP
-Definition at line 875 of file lspg\&.c\&.
+Definition at line 738 of file lspg\&.c\&.
 .PP
 .nf
                                {
@@ -1046,7 +910,7 @@ Definition at line 875 of file lspg\&.c\&.
 .PP
 Initialize detector lock object\&. 
 .PP
-Definition at line 840 of file lspg\&.c\&.
+Definition at line 703 of file lspg\&.c\&.
 .PP
 .nf
                                {
@@ -1060,7 +924,7 @@ Definition at line 840 of file lspg\&.c\&.
 .PP
 Wait for the detector lock\&. 
 .PP
-Definition at line 867 of file lspg\&.c\&.
+Definition at line 730 of file lspg\&.c\&.
 .PP
 .nf
                                {
@@ -1074,7 +938,7 @@ Definition at line 867 of file lspg\&.c\&.
 .PP
 Convience function that combines lock diffractometer calls\&. 
 .PP
-Definition at line 822 of file lspg\&.c\&.
+Definition at line 685 of file lspg\&.c\&.
 .PP
 .nf
                                     {
@@ -1088,7 +952,7 @@ Definition at line 822 of file lspg\&.c\&.
 .PP
 Request that the database grab the diffractometer lock\&. 
 .PP
-Definition at line 798 of file lspg\&.c\&.
+Definition at line 661 of file lspg\&.c\&.
 .PP
 .nf
                                      {
@@ -1104,7 +968,7 @@ Definition at line 798 of file lspg\&.c\&.
 .PP
 Callback routine for a lock diffractometer query\&. 
 .PP
-Definition at line 789 of file lspg\&.c\&.
+Definition at line 652 of file lspg\&.c\&.
 .PP
 .nf
                                                                           {
@@ -1119,7 +983,7 @@ Definition at line 789 of file lspg\&.c\&.
 .PP
 Finish up the lock diffractometer call\&. 
 .PP
-Definition at line 816 of file lspg\&.c\&.
+Definition at line 679 of file lspg\&.c\&.
 .PP
 .nf
                                      {
@@ -1131,7 +995,7 @@ Definition at line 816 of file lspg\&.c\&.
 .PP
 initialize the diffractometer locking object 
 .PP
-Definition at line 781 of file lspg\&.c\&.
+Definition at line 644 of file lspg\&.c\&.
 .PP
 .nf
                                      {
@@ -1145,7 +1009,7 @@ Definition at line 781 of file lspg\&.c\&.
 .PP
 Wait for the diffractometer lock\&. 
 .PP
-Definition at line 808 of file lspg\&.c\&.
+Definition at line 671 of file lspg\&.c\&.
 .PP
 .nf
                                      {
@@ -1159,7 +1023,7 @@ Definition at line 808 of file lspg\&.c\&.
 .PP
 Implements our state machine Does not strictly only set the next state as it also calls some functions that, perhaps, alters the state mid-function\&. 
 .PP
-Definition at line 1484 of file lspg\&.c\&.
+Definition at line 1340 of file lspg\&.c\&.
 .PP
 .nf
                        {
@@ -1223,7 +1087,7 @@ Queue the next MD2 instruction\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1067 of file lspg\&.c\&.
+Definition at line 930 of file lspg\&.c\&.
 .PP
 .nf
                           {
@@ -1252,7 +1116,7 @@ Definition at line 1067 of file lspg\&.c\&.
 .PP
 Queue up a nextshot query\&. 
 .PP
-Definition at line 681 of file lspg\&.c\&.
+Definition at line 544 of file lspg\&.c\&.
 .PP
 .nf
                           {
@@ -1275,7 +1139,7 @@ Next Shot Callback\&. This is a long and tedious routine as there are a large nu
 .PP
 
 .PP
-Definition at line 426 of file lspg\&.c\&.
+Definition at line 289 of file lspg\&.c\&.
 .PP
 .nf
                         {
@@ -1525,7 +1389,7 @@ Definition at line 426 of file lspg\&.c\&.
 .PP
 Called when the next shot query has been processed\&. 
 .PP
-Definition at line 699 of file lspg\&.c\&.
+Definition at line 562 of file lspg\&.c\&.
 .PP
 .nf
                           {
@@ -1537,7 +1401,7 @@ Definition at line 699 of file lspg\&.c\&.
 .PP
 Initialize the nextshot variable, mutex, and condition\&. 
 .PP
-Definition at line 673 of file lspg\&.c\&.
+Definition at line 536 of file lspg\&.c\&.
 .PP
 .nf
                           {
@@ -1551,7 +1415,7 @@ Definition at line 673 of file lspg\&.c\&.
 .PP
 Wait for the next shot query to get processed\&. 
 .PP
-Definition at line 691 of file lspg\&.c\&.
+Definition at line 554 of file lspg\&.c\&.
 .PP
 .nf
                           {
@@ -1563,7 +1427,7 @@ Definition at line 691 of file lspg\&.c\&.
 .SS "PQnoticeProcessor lspg_notice_processor (void *arg, const char *msg)"
 
 .PP
-Definition at line 1379 of file lspg\&.c\&.
+Definition at line 1242 of file lspg\&.c\&.
 .PP
 .nf
                                                                      {
@@ -1575,7 +1439,7 @@ Definition at line 1379 of file lspg\&.c\&.
 .PP
 Connect to the pg server\&. 
 .PP
-Definition at line 1385 of file lspg\&.c\&.
+Definition at line 1248 of file lspg\&.c\&.
 .PP
 .nf
                        {
@@ -1634,13 +1498,7 @@ Definition at line 1385 of file lspg\&.c\&.
       ls_pg_state = LS_PG_STATE_INIT;
     } else if( lspg_connectPoll_response == PGRES_POLLING_OK) {
       PQsetNoticeProcessor( q, (PQnoticeProcessor)lspg_notice_processor, NULL);
-      lspg_query_push( lspg_init_motors_cb, 'select * from pmac\&.md2_getmotors()');
       lspg_query_push( NULL, 'select pmac\&.md2_init()');
-      lspg_query_push( lspg_zoom_lut_cb, 'SELECT * FROM pmac\&.md2_zoom_lut()');
-      lspg_query_push( lspg_flight_lut_cb, 'SELECT * FROM pmac\&.md2_flight_lut()');
-      lspg_query_push( lspg_blight_lut_cb, 'SELECT * FROM pmac\&.md2_blight_lut()');
-      lspg_query_push( lspg_scint_lut_cb,      'SELECT * FROM pmac\&.md2_scint_lut()');
-
       ls_pg_state = LS_PG_STATE_IDLE;
     }
     break;
@@ -1663,7 +1521,6 @@ Definition at line 1385 of file lspg\&.c\&.
       q = NULL;
       ls_pg_state = LS_PG_STATE_INIT;
     } else if( lspg_resetPoll_response == PGRES_POLLING_OK) {
-      lspg_query_push( lspg_init_motors_cb, 'select * from pmac\&.md2_getmotors()');
       lspg_query_push( NULL, 'select pmac\&.md2_init()');
       ls_pg_state = LS_PG_STATE_IDLE;
     }
@@ -1681,7 +1538,7 @@ I/O control to/from the postgresql server\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1284 of file lspg\&.c\&.
+Definition at line 1147 of file lspg\&.c\&.
 .PP
 .nf
                        {
@@ -1889,7 +1746,7 @@ Definition at line 116 of file lspg\&.c\&.
 .PP
 Receive a result of a query\&. 
 .PP
-Definition at line 1201 of file lspg\&.c\&.
+Definition at line 1064 of file lspg\&.c\&.
 .PP
 .nf
                     {
@@ -1954,42 +1811,11 @@ Definition at line 1201 of file lspg\&.c\&.
 .PP
 Start 'er runnin'\&. 
 .PP
-Definition at line 1627 of file lspg\&.c\&.
+Definition at line 1483 of file lspg\&.c\&.
 .PP
 .nf
                 {
   pthread_create( &lspg_thread, NULL, lspg_worker, NULL);
-}
-.fi
-.SS "void lspg_scint_lut_cb (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
-\fBParameters:\fP
-.RS 4
-\fIqqp\fP Our query 
-.br
-\fIpgr\fP Our result object 
-.RE
-.PP
-
-.PP
-Definition at line 342 of file lspg\&.c\&.
-.PP
-.nf
-                          {
-  int i;
-  pthread_mutex_lock( &(fscint->mutex));
-  
-  fscint->nlut = PQntuples( pgr)/2;
-  fscint->lut  = calloc( 2*fscint->nlut, sizeof( double));
-  if( fscint->lut == NULL) {
-    lslogging_log_message( 'lspg_scint_lut_cb: Out of memory');
-    pthread_mutex_unlock( &(fscint->mutex));
-  }
-  
-  for( i=0; i<PQntuples( pgr); i++) {
-    fscint->lut[i] = strtod( PQgetvalue( pgr, i, 0), NULL);
-  }
-
-  pthread_mutex_unlock( &(fscint->mutex));
 }
 .fi
 .SS "void lspg_send_next_query ()"
@@ -1997,7 +1823,7 @@ Definition at line 342 of file lspg\&.c\&.
 .PP
 send the next queued query to the DB server 
 .PP
-Definition at line 1154 of file lspg\&.c\&.
+Definition at line 1017 of file lspg\&.c\&.
 .PP
 .nf
                             {
@@ -2069,7 +1895,7 @@ Convinence function to call seq run prep\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 952 of file lspg\&.c\&.
+Definition at line 815 of file lspg\&.c\&.
 .PP
 .nf
                              {
@@ -2102,7 +1928,7 @@ queue up the seq_run_prep query \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 918 of file lspg\&.c\&.
+Definition at line 781 of file lspg\&.c\&.
 .PP
 .nf
                               {
@@ -2126,7 +1952,7 @@ Callback for the seq_run_prep query\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 906 of file lspg\&.c\&.
+Definition at line 769 of file lspg\&.c\&.
 .PP
 .nf
                             {
@@ -2141,7 +1967,7 @@ Definition at line 906 of file lspg\&.c\&.
 .PP
 Indicate we are done waiting\&. 
 .PP
-Definition at line 946 of file lspg\&.c\&.
+Definition at line 809 of file lspg\&.c\&.
 .PP
 .nf
                               {
@@ -2153,7 +1979,7 @@ Definition at line 946 of file lspg\&.c\&.
 .PP
 Initialize the data collection object\&. 
 .PP
-Definition at line 898 of file lspg\&.c\&.
+Definition at line 761 of file lspg\&.c\&.
 .PP
 .nf
                               {
@@ -2167,7 +1993,7 @@ Definition at line 898 of file lspg\&.c\&.
 .PP
 Wait for seq run prep query to return\&. 
 .PP
-Definition at line 938 of file lspg\&.c\&.
+Definition at line 801 of file lspg\&.c\&.
 .PP
 .nf
                               {
@@ -2186,7 +2012,7 @@ Service a signal Signals here are treated as file descriptors and fits into our 
 .PP
 
 .PP
-Definition at line 1262 of file lspg\&.c\&.
+Definition at line 1125 of file lspg\&.c\&.
 .PP
 .nf
                         {
@@ -2212,7 +2038,7 @@ Definition at line 1262 of file lspg\&.c\&.
 .PP
 Combined call to wait for the detector\&. 
 .PP
-Definition at line 762 of file lspg\&.c\&.
+Definition at line 625 of file lspg\&.c\&.
 .PP
 .nf
                                   {
@@ -2226,7 +2052,7 @@ Definition at line 762 of file lspg\&.c\&.
 .PP
 initiate the wait for detector query 
 .PP
-Definition at line 736 of file lspg\&.c\&.
+Definition at line 599 of file lspg\&.c\&.
 .PP
 .nf
                                    {
@@ -2242,7 +2068,7 @@ Definition at line 736 of file lspg\&.c\&.
 .PP
 Callback for the wait for detector query\&. 
 .PP
-Definition at line 727 of file lspg\&.c\&.
+Definition at line 590 of file lspg\&.c\&.
 .PP
 .nf
                                                                         {
@@ -2257,7 +2083,7 @@ Definition at line 727 of file lspg\&.c\&.
 .PP
 Done waiting for the detector\&. 
 .PP
-Definition at line 755 of file lspg\&.c\&.
+Definition at line 618 of file lspg\&.c\&.
 .PP
 .nf
                                    {
@@ -2269,7 +2095,7 @@ Definition at line 755 of file lspg\&.c\&.
 .PP
 initialize the detector timing object 
 .PP
-Definition at line 719 of file lspg\&.c\&.
+Definition at line 582 of file lspg\&.c\&.
 .PP
 .nf
                                    {
@@ -2283,7 +2109,7 @@ Definition at line 719 of file lspg\&.c\&.
 .PP
 Pause the calling thread until the detector is ready Called by the MD2 thread\&. 
 .PP
-Definition at line 747 of file lspg\&.c\&.
+Definition at line 610 of file lspg\&.c\&.
 .PP
 .nf
                                    {
@@ -2302,7 +2128,7 @@ The main loop for the lspg thread\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1535 of file lspg\&.c\&.
+Definition at line 1391 of file lspg\&.c\&.
 .PP
 .nf
                     {
@@ -2380,41 +2206,6 @@ Definition at line 1535 of file lspg\&.c\&.
   }
 }
 .fi
-.SS "void lspg_zoom_lut_cb (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
-
-.PP
-Zoom motor look up table callback\&. \fBParameters:\fP
-.RS 4
-\fIqqp\fP the queue item responsible for calling us 
-.br
-\fIpgr\fP The Postgresql result object 
-.RE
-.PP
-
-.PP
-Definition at line 319 of file lspg\&.c\&.
-.PP
-.nf
-                        {
-  int i;
-  
-  pthread_mutex_lock( &(zoom->mutex));
-
-  zoom->nlut = PQntuples( pgr)/2;
-  zoom->lut  = calloc( 2*zoom->nlut, sizeof(double));
-  if( zoom->lut == NULL) {
-    lslogging_log_message( 'Out of memmory (lspg_zoom_lut_cb)');
-    pthread_mutex_unlock( &(zoom->mutex));
-    return;
-  }
-  
-  for( i=0; i<PQntuples( pgr); i++) {
-    zoom->lut[i] = strtod( PQgetvalue( pgr, i, 0), NULL);
-  }
-
-  pthread_mutex_unlock( &(zoom->mutex));
-}
-.fi
 .SH "Variable Documentation"
 .PP 
 .SS "int ls_pg_state = \fBLS_PG_STATE_INIT\fP\fC [static]\fP"
@@ -2438,11 +2229,11 @@ Definition at line 73 of file lspg\&.c\&.
 .SS "\fBlspg_lock_detector_t\fP lspg_lock_detector\fC [static]\fP"
 
 .PP
-Definition at line 836 of file lspg\&.c\&.
+Definition at line 699 of file lspg\&.c\&.
 .SS "\fBlspg_lock_diffractometer_t\fP lspg_lock_diffractometer\fC [static]\fP"
 
 .PP
-Definition at line 777 of file lspg\&.c\&.
+Definition at line 640 of file lspg\&.c\&.
 .SS "\fBlspg_nextshot_t\fP lspg_nextshot"
 
 .PP
@@ -2494,7 +2285,7 @@ Definition at line 70 of file lspg\&.c\&.
 .SS "\fBlspg_seq_run_prep_t\fP lspg_seq_run_prep\fC [static]\fP"
 
 .PP
-Definition at line 894 of file lspg\&.c\&.
+Definition at line 757 of file lspg\&.c\&.
 .SS "pthread_t lspg_thread\fC [static]\fP"
 
 .PP
@@ -2506,7 +2297,7 @@ Definition at line 42 of file lspg\&.c\&.
 .PP
 Instance of the detector timing object\&. 
 .PP
-Definition at line 715 of file lspg\&.c\&.
+Definition at line 578 of file lspg\&.c\&.
 .SS "struct pollfd lspgfd\fC [static]\fP"
 
 .PP
