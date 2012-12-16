@@ -1,4 +1,4 @@
-VERSION= 0.1
+VERSION= 0.2
 # 
 # Makefile for pgpmac project
 # (C) 2012 by Keith Brister and Northwesern University
@@ -6,9 +6,6 @@ VERSION= 0.1
 #
 pgpmac: pgpmac.c pgpmac.h lspg.o lsredis.o lspmac.o md2cmds.o lslogging.o lsevents.o lstimer.o Makefile
 	gcc -g -pthread -o pgpmac pgpmac.c md2cmds.o lspmac.o lspg.o lsredis.o lslogging.o lsevents.o lstimer.o -lpq -lncurses -lpthread -lrt -lhiredis
-
-tarball:
-	tar ycvf md2pmac.tbz2 Makefile *.c pgpmac.h pmac_md2.sql pmac_md2_ls-cat.pmc 
 
 dist:
 	ln -fs . ls-cat-pgpmac-$(VERSION)
