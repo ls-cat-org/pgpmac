@@ -727,8 +727,27 @@ void md2cmds_maybe_rotate_done_cb( char *event) {
  */
 void md2cmds_set_scale_cb( char *event) {
   int mag;
+  lsredis_obj_t *p1, *p2;
+  char fmt;
+  char *vp;
 
   mag = lspmac_getPosition( zoom);
+  
+
+  p1  = lsredis_get_obj( "cam.xScale");
+  p2  = lsredis_get_obj( "cam.zoom.%d.ScaleX", mag);
+
+  vp = lsredis_getstr( p2);
+  lsredis_setstr( p2, vp);
+  free( vp);
+
+  p1  = lsredis_get_obj( "cam.yScale");
+  p2  = lsredis_get_obj( "cam.zoom.%d.ScaleY", mag);
+
+  vp = lsredis_getstr( p2);
+  lsredis_setstr( p2, vp);
+  free( vp);
+
   lspg_query_push( NULL, "SELECT pmac.md2_set_scales( %d)", mag);
 }
 

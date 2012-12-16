@@ -279,143 +279,6 @@ char **lspg_array2ptrs( char *a) {
   return( rtn);
 }
 
-/** Motor initialization callback
- */
-void lspg_init_motors_cb(
-			 lspg_query_queue_t *qqp,		/**< [in] The query queue item used to call us		*/
-			 PGresult *pgr				/**< [in] The postgresql result object			*/
-			 ) {
-  int i, j;
-  //  uint32_t home_column;
-  uint32_t name_column;
-  char *sp;
-  lspmac_motor_t *lsdp;
-  
-  name_column              = PQfnumber( pgr, "mm_name");
-  if( name_column == -1)
-    return;
-
-  //  home_column		   = PQfnumber( pgr, "mm_home");
-
-  for( i=0; i<PQntuples( pgr); i++) {
-
-    lsdp = NULL;
-    for( j=0; j<lspmac_nmotors; j++) {
-      if( strcmp(lspmac_motors[j].name, PQgetvalue( pgr, i, name_column)) == 0) {
-	lsdp                    = &(lspmac_motors[j]);
-
-	//	lsdp->home              = lspg_array2ptrs( PQgetvalue( pgr, i, home_column));
-	//	lsdp->lspg_initialized  = 1;
-	break;
-      }
-    }
-    if( lsdp == NULL)
-      continue;
-  }
-}
-
-/** Zoom motor look up table callback
- */
-void lspg_zoom_lut_cb(
-		      lspg_query_queue_t *qqp,		/**< [in] the queue item responsible for calling us	*/
-		      PGresult *pgr			/**< [in] The Postgresql result object			*/
-		      ) {
-  int i;
-  
-  pthread_mutex_lock( &(zoom->mutex));
-
-  zoom->nlut = PQntuples( pgr)/2;
-  zoom->lut  = calloc( 2*zoom->nlut, sizeof(double));
-  if( zoom->lut == NULL) {
-    lslogging_log_message( "Out of memmory (lspg_zoom_lut_cb)");
-    pthread_mutex_unlock( &(zoom->mutex));
-    return;
-  }
-  
-  for( i=0; i<PQntuples( pgr); i++) {
-    zoom->lut[i] = strtod( PQgetvalue( pgr, i, 0), NULL);
-  }
-
-  pthread_mutex_unlock( &(zoom->mutex));
-}
-
-void lspg_scint_lut_cb(
-			lspg_query_queue_t *qqp,		/**< [in] Our query			*/
-			PGresult *pgr				/**< [in] Our result object		*/
-			) {
-  int i;
-  pthread_mutex_lock( &(fscint->mutex));
-  
-  fscint->nlut = PQntuples( pgr)/2;
-  fscint->lut  = calloc( 2*fscint->nlut, sizeof( double));
-  if( fscint->lut == NULL) {
-    lslogging_log_message( "lspg_scint_lut_cb: Out of memory");
-    pthread_mutex_unlock( &(fscint->mutex));
-  }
-  
-  for( i=0; i<PQntuples( pgr); i++) {
-    fscint->lut[i] = strtod( PQgetvalue( pgr, i, 0), NULL);
-  }
-
-  pthread_mutex_unlock( &(fscint->mutex));
-}
-
-/** Front Light Lookup table query callback
- * Install the lookup table for the Front Light
- */
-void lspg_flight_lut_cb(
-			lspg_query_queue_t *qqp,		/**< [in] Our query			*/
-			PGresult *pgr				/**< [in] Our result object		*/
-			) {
-  int i;
-  
-  pthread_mutex_lock( &(flight->mutex));
-
-  flight->nlut = PQntuples( pgr)/2;
-  flight->lut  = calloc( 2*flight->nlut, sizeof(double));
-  if( flight->lut == NULL) {
-    lslogging_log_message( "Out of memmory (lspg_flight_lut_cb)");
-    pthread_mutex_unlock( &(flight->mutex));
-    return;
-  }
-  
-  for( i=0; i<PQntuples( pgr); i++) {
-    flight->lut[i] = strtod( PQgetvalue( pgr, i, 0), NULL);
-  }
-
-  pthread_mutex_unlock( &(flight->mutex));
-
-}
-
-
-/** Back Light Lookup Table Callback
- *  Install the lookup table for the Back Light
- */
-void lspg_blight_lut_cb(
-			lspg_query_queue_t *qqp,		/**< [in] Our query			*/
-			PGresult *pgr				/**< [in] The query's result		*/
-			) {
-  int i;
-  
-  pthread_mutex_lock( &(blight->mutex));
-
-  blight->nlut = PQntuples( pgr)/2;
-  blight->lut  = calloc( 2*blight->nlut, sizeof(double));
-  if( blight->lut == NULL) {
-    lslogging_log_message( "Out of memmory (lspg_blight_lut_cb)");
-    pthread_mutex_unlock( &(blight->mutex));
-    return;
-  }
-  
-  for( i=0; i<PQntuples( pgr); i++) {
-    blight->lut[i] = strtod( PQgetvalue( pgr, i, 0), NULL);
-  }
-
-  pthread_mutex_unlock( &(blight->mutex));
-
-}
-
-
 
 /** Next Shot Callback.
  *  This is a long and tedious routine as there are a large
@@ -1438,13 +1301,7 @@ void lspg_pg_connect() {
       ls_pg_state = LS_PG_STATE_INIT;
     } else if( lspg_connectPoll_response == PGRES_POLLING_OK) {
       PQsetNoticeProcessor( q, (PQnoticeProcessor)lspg_notice_processor, NULL);
-      lspg_query_push( lspg_init_motors_cb, "select * from pmac.md2_getmotors()");
       lspg_query_push( NULL, "select pmac.md2_init()");
-      lspg_query_push( lspg_zoom_lut_cb, "SELECT * FROM pmac.md2_zoom_lut()");
-      lspg_query_push( lspg_flight_lut_cb, "SELECT * FROM pmac.md2_flight_lut()");
-      lspg_query_push( lspg_blight_lut_cb, "SELECT * FROM pmac.md2_blight_lut()");
-      lspg_query_push( lspg_scint_lut_cb,      "SELECT * FROM pmac.md2_scint_lut()");
-
       ls_pg_state = LS_PG_STATE_IDLE;
     }
     break;
@@ -1467,7 +1324,6 @@ void lspg_pg_connect() {
       q = NULL;
       ls_pg_state = LS_PG_STATE_INIT;
     } else if( lspg_resetPoll_response == PGRES_POLLING_OK) {
-      lspg_query_push( lspg_init_motors_cb, "select * from pmac.md2_getmotors()");
       lspg_query_push( NULL, "select pmac.md2_init()");
       ls_pg_state = LS_PG_STATE_IDLE;
     }

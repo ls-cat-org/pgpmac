@@ -2701,12 +2701,120 @@ void lspmac_scint_dried_cb( char *event) {
 }
 
 
-/** find a postion for a given preset name
- *
- * \param mp Motor pointer
- * \param name The preset to search for
- * \param err set to non-zero on error, ignored if null
+/** Set up lookup table for zoom
  */
+void lspmac_zoom_lut_setup() {
+  int i;
+  lsredis_obj_t *p;
+  double *dp;
+
+  pthread_mutex_lock( &zoom->mutex);
+
+  zoom->nlut = 10;
+  zoom->lut = calloc( 2 * zoom->nlut, sizeof( double));
+  if( zoom->lut == NULL) {
+    lslogging_log_message( "lspmac_zoom_lut_setup: out of memory");
+    exit( -1);
+  }
+
+  for( i=1, dp = zoom->lut; i<=zoom->nlut; i++, dp += 2) {
+    p = lsredis_get_obj( "cam.zoom.%d.MotorPosition", i);
+    if( p==NULL || strlen( lsredis_getstr(p)) == 0) {
+      free( zoom->lut);
+      zoom->nlut = 0;
+      pthread_mutex_unlock( &zoom->mutex);
+      lslogging_log_message( "lspmac_zoom_lut_setup: cannot find MotorPosition element for cam.zoom level %d", i);
+      return;
+    }
+    *dp = i;
+    *(dp+1) = lsredis_getd( p);
+  }
+  pthread_mutex_unlock( &zoom->mutex);
+}
+
+/** Set up lookup table for flight
+ */
+void lspmac_flight_lut_setup() {
+  int i;
+  lsredis_obj_t *p;
+  double *dp;
+
+  pthread_mutex_lock( &flight->mutex);
+
+  flight->nlut = 11;
+  flight->lut = calloc( 2 * flight->nlut, sizeof( double));
+  if( flight->lut == NULL) {
+    lslogging_log_message( "lspmac_flight_lut_setup: out of memory");
+    exit( -1);
+  }
+
+  for( i=0, dp = flight->lut; i<flight->nlut; i++, dp += 2) {
+    p = lsredis_get_obj( "cam.zoom.%d.FrontLightIntensity", i);
+    if( p==NULL || strlen( lsredis_getstr(p)) == 0) {
+      free( flight->lut);
+      flight->nlut = 0;
+      pthread_mutex_unlock( &flight->mutex);
+      lslogging_log_message( "lspmac_flight_lut_setup: cannot find MotorPosition element for cam.flight level %d", i);
+      return;
+    }
+    *dp = i;
+    *(dp+1) = 32767.0 * lsredis_getd( p) / 100.0;
+  }
+  pthread_mutex_unlock( &flight->mutex);
+}
+
+/** Set up lookup table for blight
+ */
+void lspmac_blight_lut_setup() {
+  int i;
+  lsredis_obj_t *p;
+  double *dp;
+
+  pthread_mutex_lock( &blight->mutex);
+
+  blight->nlut = 11;
+  blight->lut = calloc( 2 * blight->nlut, sizeof( double));
+  if( blight->lut == NULL) {
+    lslogging_log_message( "lspmac_blight_lut_setup: out of memory");
+    exit( -1);
+  }
+
+  for( i=0, dp = blight->lut; i<blight->nlut; i++, dp += 2) {
+    p = lsredis_get_obj( "cam.zoom.%d.LightIntensity", i);
+    if( p==NULL || strlen( lsredis_getstr(p)) == 0) {
+      free( blight->lut);
+      blight->nlut = 0;
+      pthread_mutex_unlock( &blight->mutex);
+      lslogging_log_message( "lspmac_blight_lut_setup: cannot find MotorPosition element for cam.blight level %d", i);
+      return;
+    }
+    *dp = i;
+    *(dp+1) = 20000.0 * lsredis_getd( p) / 100.0;
+  }
+  pthread_mutex_unlock( &blight->mutex);
+}
+
+/** Set up lookup table for fscint
+ */
+void lspmac_fscint_lut_setup() {
+  int i;
+  double *dp;
+
+  pthread_mutex_lock( &fscint->mutex);
+
+  fscint->nlut = 101;
+  fscint->lut = calloc( 2 * fscint->nlut, sizeof( double));
+  if( fscint->lut == NULL) {
+    lslogging_log_message( "lspmac_fscint_lut_setup: out of memory");
+    exit( -1);
+  }
+
+  for( i=0, dp = fscint->lut; i<fscint->nlut; i++, dp += 2) {
+    *(dp)   = i;
+    *(dp+1) = 320.0 * i;
+  }
+  pthread_mutex_unlock( &fscint->mutex);
+}
 
 
 /** Start up the lspmac thread
@@ -2726,12 +2834,16 @@ void lspmac_run() {
   lsevents_add_listener( "backLight 0",	         lspmac_backLight_down_cb);
   lsevents_add_listener( "cam.zoom In Position", lspmac_light_zoom_cb);
 
+  lspmac_zoom_lut_setup();
+  lspmac_flight_lut_setup();
+  lspmac_blight_lut_setup();
+  lspmac_fscint_lut_setup();
+
   //
   // Initialize the MD2 pmac (ie, turn on the right plcc's etc)
   //
   for( inits = lsredis_get_string_array(lspmac_md2_init); *inits != NULL; inits++) {
     lspmac_SockSendline( *inits);
-    //    lslogging_log_message( "lspmac_init: pmac init '%s'", *inits);
   }
   
   //
@@ -2761,7 +2873,6 @@ void lspmac_run() {
     if( inits != NULL) {
       while( *inits != NULL) {
 	lspmac_SockSendline( *inits);
-	//	lslogging_log_message( "lspmac_init: %s init '%s'", mp->name, *inits);
 	inits++;
       }
     }
