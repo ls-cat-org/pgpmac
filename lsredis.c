@@ -9,6 +9,7 @@
 static pthread_t lsredis_thread;
 
 static lsredis_obj_t *lsredis_objs = NULL;
+static struct hsearch_data lsredis_htab;
 static pthread_mutex_t lsredis_objs_mutex;
 static pthread_mutex_t lsredis_ro_mutex;	//!< keep from having more than one thread send a rediscommand to the read/only  server
 static pthread_mutex_t lsredis_wr_mutex;	//!< keep from having more than one thread send a rediscommand to the write/read server
@@ -73,6 +74,7 @@ void _lsredis_set_value( lsredis_obj_t *p, char *v) {
 	p->bvalue = -1;		// a little unusual for a null value to be -1
     }
 
+  p->cvalue = *(p->value);
   p->valid = 1;
 
   lsevents_send_event( "%s Valid", p->events_name);
@@ -101,6 +103,39 @@ void lsredis_set_value( lsredis_obj_t *p, char *fmt, ...) {
   pthread_mutex_unlock( &p->mutex);
 }
 
+int lsredis_cmpstr( lsredis_obj_t *p, char *s) {
+  int rtn;
+  pthread_mutex_lock( &p->mutex);
+  while( p->valid == 0)
+    pthread_cond_wait( &p->cond, &p->mutex);
+  
+  rtn = strcmp( p->value, s);
+  pthread_mutex_unlock( &p->mutex);
+  return rtn;
+}
+
+int lsredis_cmpnstr( lsredis_obj_t *p, char *s, int n) {
+  int rtn;
+  pthread_mutex_lock( &p->mutex);
+  while( p->valid == 0)
+    pthread_cond_wait( &p->cond, &p->mutex);
+  
+  rtn = strncmp( p->value, s, n);
+  pthread_mutex_unlock( &p->mutex);
+  return rtn;
+}
+
+int lsredis_regexec( const regex_t *preg, lsredis_obj_t *p, size_t nmatch, regmatch_t *pmatch, int eflags) {
+  int rtn;
+
+  pthread_mutex_lock( &p->mutex);
+  while( p->valid == 0) 
+    pthread_cond_wait( &p->cond, &p->mutex);
+
+  rtn = regexec( preg, p->value, nmatch, pmatch, eflags);
+
+  pthread_mutex_unlock( &p->mutex);
+}
 /** return a copy of the key's string value
  */
 char *lsredis_getstr( lsredis_obj_t *p) {
@@ -117,6 +152,7 @@ char *lsredis_getstr( lsredis_obj_t *p) {
   pthread_mutex_unlock( &p->mutex);
   return rtn;
 }
+
 
 /** Set the value and update redis.
  *  Note that lsredis_set_value sets the value based on redis
@@ -223,6 +259,19 @@ int lsredis_getb( lsredis_obj_t *p) {
   return rtn;
 }  
 
+char lsredis_getc( lsredis_obj_t *p) {
+  int rtn;
+
+  pthread_mutex_lock( &p->mutex);
+  while( p->valid == 0)
+    pthread_cond_wait( &p->cond, &p->mutex);
+
+  rtn = p->cvalue;
+  pthread_mutex_unlock( &p->mutex);
+  
+  return rtn;
+}  
+
 void lsredis_hgetCB( redisAsyncContext *ac, void *reply, void *privdata) {
   redisReply *r;
   lsredis_obj_t *p;
@@ -261,6 +310,7 @@ lsredis_obj_t *_lsredis_get_obj( char *key) {
   regmatch_t pmatch[2];
   int err;
   char *name;
+  ENTRY htab_input, *htab_output;
 
   // Dispense with obviously bad keys straight away
   // unless p->valid == 0 in which case we call HGET first
@@ -279,11 +329,17 @@ lsredis_obj_t *_lsredis_get_obj( char *key) {
   pthread_mutex_lock( &lsredis_objs_mutex);
   // If the key is already there then just return it
   //
-  for( p = lsredis_objs; p != NULL; p = p->next) {
-    if( strcmp( key, p->key) == 0) {
-      break;
-    }
-  }
+
+  htab_input.key  = key;
+  htab_input.data = NULL;
+  errno = 0;
+  err = hsearch_r( htab_input, FIND, &htab_output, &lsredis_htab);
+
+  if( err == 0)
+    p = NULL;
+  else
+    p = htab_output->data;
+
 
   if( p != NULL) {
     pthread_mutex_unlock( &lsredis_objs_mutex);
@@ -303,27 +359,39 @@ lsredis_obj_t *_lsredis_get_obj( char *key) {
       p->events_name = strdup( key);
     }
     if( p->events_name == NULL) {
-      lslogging_log_message( "_lsredis_get_obj: Out of memory (evetns_name)");
+      lslogging_log_message( "_lsredis_get_obj: Out of memory (events_name)");
       exit( -1);
     }
 
     pthread_mutex_init( &p->mutex, NULL);
     pthread_cond_init(  &p->cond, NULL);
+    p->value = NULL;
     p->valid = 0;
     lsevents_send_event( "%s Invalid", p->events_name);
     p->wait_for_me = 0;
     p->key = strdup( key);
-    p->getstr = lsredis_getstr;
-    p->getd = lsredis_getd;
-    p->getl = lsredis_getl;
     p->hits = 0;
   
+    htab_input.key  = p->key;
+    htab_input.data = p;
+
+    errno = 0;
+    err = hsearch_r( htab_input, ENTER, &htab_output, &lsredis_htab);
+    if( err == 0) {
+      lslogging_log_message( "_lsredis_get_obj: hseach error on enter.  errno=%d", errno);
+    } else {
+      lslogging_log_message( "_lsredis_get_obj: added %s", key);
+    }
+
+    //
+    // Shouldn't need the linked list unless we need to rebuild the hash table when, for example, we run out of room.
+    // TODO: resize hash table when needed.
+    //
     p->next = lsredis_objs;
     lsredis_objs = p;
 
     pthread_mutex_unlock( &lsredis_objs_mutex);
 
-    lslogging_log_message( "_lsredis_get_obj: added %s", key);
   }
   //
   // We arrive here with the valid flag lowered.  Go ahead and request the latest value.
@@ -348,7 +416,7 @@ lsredis_obj_t *lsredis_get_obj( char *fmt, ...) {
   k[sizeof(k)-1] = 0;
   va_end( arg_ptr);
 
-  nkp = strlen(k) + strlen( lsredis_head) + 16;		// 16 is overkill, I know.  get over it.
+  nkp = strlen(k) + strlen( lsredis_head) + 16;		// 16 is overkill. I know. Get over it.
   kp = calloc( nkp, sizeof( char));
   if( kp == NULL) {
     lslogging_log_message( "lsredis_get_obj: Out of memory");
@@ -362,7 +430,7 @@ lsredis_obj_t *lsredis_get_obj( char *fmt, ...) {
   return rtn;
 }
 
-/** call back incase a redis server becomes disconnected
+/** call back in case a redis server becomes disconnected
  *  TODO: reconnect
  */
 void redisDisconnectCB(const redisAsyncContext *ac, int status) {
@@ -473,6 +541,8 @@ void lsredis_subCB( redisAsyncContext *ac, void *reply, void *privdata) {
   lsredis_obj_t *p, *last, *last2;
   char *k;
   char *publisher;
+  ENTRY htab_input, *htab_output;
+  int err;
 
   r = (redisReply *)reply;
 
@@ -509,6 +579,19 @@ void lsredis_subCB( redisAsyncContext *ac, void *reply, void *privdata) {
     // We should know about this one
     //
     pthread_mutex_lock( &lsredis_objs_mutex);
+
+    
+    htab_input.key  = k;
+    htab_input.data = NULL;
+
+    errno = 0;
+    err = hsearch_r( htab_input, FIND, &htab_output, &lsredis_htab);
+    if( err == 0 && errno == ESRCH)
+      p = NULL;
+    else
+      p = htab_output->data;
+      
+    /*	
     last  = NULL;
     last2 = NULL;
     for( p=lsredis_objs; p != NULL; p = p->next) {
@@ -531,7 +614,9 @@ void lsredis_subCB( redisAsyncContext *ac, void *reply, void *privdata) {
       }
       last2 = last;
       last  = p;
-    }    
+    } 
+    */
+   
     pthread_mutex_unlock( &lsredis_objs_mutex);
 
     if( p == NULL) {
@@ -606,6 +691,53 @@ void lsredis_keysCB( redisAsyncContext *ac, void *reply, void *privdata) {
   }
 }
 
+int lsredis_find_preset( char *base, char *preset_name, double *dval) {
+  char s[512];
+  int i;
+  int err;
+  ENTRY htab_input, *htab_output;
+  lsredis_obj_t *p;
+
+  i = 0;
+  for( i=0; i<1024; i++) {
+    snprintf( s, sizeof( s)-1, "%s.%s.presets.%d.name", lsredis_head, base, i);
+    s[sizeof(s)-1] = 0;
+    htab_input.key  = s;
+    htab_input.data = NULL;
+    err = hsearch_r( htab_input, FIND, &htab_output, &lsredis_htab);
+    if( err == 0) {
+      // We've run out of names to look for: done
+      lslogging_log_message( "lsredis_find_preset: no preset for motor %s named '%s'", base, preset_name);
+      *dval = 0.0;
+      return 0;
+    }
+
+    // Check if we have a match
+    p = htab_output->data;
+    if( lsredis_cmpstr( p, preset_name)==0) {
+      // got a match, now look for the position
+      snprintf( s, sizeof( s)-1, "%s.%s.presets.%d.position", lsredis_head, base, i);
+      s[sizeof(s)-1] = 0;
+      htab_input.key = s;
+      htab_input.data = NULL;
+      err = hsearch_r( htab_input, FIND, &htab_output, &lsredis_htab);
+      if( err == 0) {
+	// Name but not position? odd.
+	lslogging_log_message( "lsredis_find_preset: Error, motor %s preset '%s' has no position defined", base, preset_name);
+	*dval = 0.0;
+	return 0;
+      }
+      p = htab_output->data;
+      *dval = lsredis_getd( p);
+      return 1;
+    }
+  }
+  // How'd we get here?
+  // did someone really define that many presets?  And then looked for one that's not there?
+  *dval = 0;
+  return 0;
+}
+
 
 
 /** set regexp to select variables we are interested in following
@@ -641,6 +773,15 @@ void lsredis_select( char *re) {
  *  \param head Prepend this (+ a dot) to the beginning of requested objects
  */
 void lsredis_init( char *pub, char *re, char *head) {
+
+  int err;
+
+  err = hcreate_r( 8192, &lsredis_htab);
+  if( err == 0) {
+    lslogging_log_message( "lsredis_init: Cannot create hash table.  Really bad things are going to happen.  hcreate_r returnd %d", err);
+  }
+
+
 
   lsredis_head = strdup( head);
   lsredis_publisher = strdup( pub);
@@ -693,6 +834,8 @@ void lsredis_init( char *pub, char *re, char *head) {
 
   lsredis_select( re);
 }
+
+
 
 
 /** service the socket requests
@@ -748,8 +891,8 @@ void *lsredis_worker(  void *dummy) {
     if( rofd.fd != -1) {
       fda[nfda].fd      = rofd.fd;
       fda[nfda].events  = rofd.events;
-      fda[nfda].revents = 0;
-      nfda++;
+      fda[nfda].revents = 0; 
+     nfda++;
     }
 
     if( wrfd.fd != -1) {

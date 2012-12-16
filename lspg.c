@@ -1088,23 +1088,8 @@ void lspg_nextaction_cb(
   }
 }
 
-/** retrieve kv pairs with new values
- */
-void lspg_kvs_cb(
-		 lspg_query_queue_t *qqp,		/**< [in] Our query					*/
-		 PGresult *pgr				/**< [in] Our result					*/
-		 ) {
-  int i;
 
-  lslogging_log_message( "lspg_kvs_cb: %d tuples", PQntuples(pgr));
 
-  // Even i is key  (the name)
-  // Odd  i is value
-  //
-  for( i=0; i<PQntuples(pgr)/2; i++) {
-    lskvs_set( PQgetvalue( pgr, 2*i, 0), PQgetvalue( pgr, 2*i+1, 0));
-  }
-}
 /** Send strings directly to PMAC queue
  */
 void lspg_cmd_cb(
@@ -1356,9 +1341,7 @@ void lspg_pg_service(
 	  lspg_query_push( lspg_cmd_cb, "SELECT pmac.md2_queue_next()");
 	} else if (strstr( pgn->relname, "_diff") != NULL) {
 	  lspg_query_push( lspg_nextaction_cb, "SELECT action FROM px.nextaction()");
-	} else if (strstr( pgn->relname, "_kvs") != NULL) {
-	  lspg_query_push( lspg_kvs_cb, "SELECT pmac.getkvs()");
-	}
+	} 
 	PQfreemem( pgn);
       }
     }

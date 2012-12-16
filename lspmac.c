@@ -783,7 +783,10 @@ void lspmac_Service(
 	lslogging_log_message( "Out of memory");
 	exit( -1);
       }
-      memcpy( newbuff, receiveBuffer, receiveBufferIn);
+      if( receiveBuffer != NULL) {
+	memcpy( newbuff, receiveBuffer, receiveBufferIn);
+	free(receiveBuffer);
+      }
       receiveBuffer = newbuff;
     }
 
@@ -1248,7 +1251,7 @@ void lspmac_pmacmotor_read(
   int homing1, homing2;
   double u2c;
   int motor_num;
-
+  char *fmt;
   pthread_mutex_lock( &(mp->mutex));
 
   //
@@ -1363,7 +1366,10 @@ void lspmac_pmacmotor_read(
       mp->position = mp->actual_pos_cnts;
     }
   }
-  snprintf( s, sizeof(s)-1, lsredis_getstr(mp->printf_fmt), 8, mp->position);
+
+  fmt = lsredis_getstr( mp->printf_fmt);
+  snprintf( s, sizeof(s)-1, fmt, 8, mp->position);
+  free( fmt);
 
   // set flag if we are not homed
   homing1 = 0;
@@ -1919,64 +1925,18 @@ void lspmac_movezoom_queue(
  *  \param mp lspmac motor pointer
  *  \param name Name of the preset to use
  */
-void lspmac_move_preset_queue( lspmac_motor_t *mp, char *name) {
-  lskvs_kvs_list_t *q, *r;
-  regmatch_t q_pmatch[4];	//!< 0 = stns.2.appy.preset, for example, 1 = index, 2 = "position" or "name"
-  regmatch_t r_pmatch[4];	//!< 0 = stns.2.appy.preset, for example, 1 = index, 2 = "position" or "name"
+void lspmac_move_preset_queue( lspmac_motor_t *mp, char *preset_name) {
   double pos;
+  int err;
 
-  lslogging_log_message( "lspmac_move_preset_queue: Called with motor %s and preset named '%s'", mp->name, name);
+  lslogging_log_message( "lspmac_move_preset_queue: Called with motor %s and preset named '%s'", mp->name, preset_name);
 
-  //
-  // This checks both the ".name" and the ".position" entries
-  // but as long as no one gives names like "1.23" to their presets
-  // we should be OK.
-  //
-  for( q=mp->presets; q != NULL; q = q->next) {
-    if( strcmp( name, q->kvs->v) == 0)
-      break;
-  }
-  if( q == NULL) {
-    lslogging_log_message( "lspmac_move_preset_queue: no preset named %s found for motor %s", name, mp->name);
+  err = lsredis_find_preset( mp->name, preset_name, &pos);
+  if( err == 0)
     return;
-  }
-  if( regexec( &(mp->preset_regex), q->kvs->k, 4, q_pmatch, 0) != 0 || q_pmatch[2].rm_so == -1 || q_pmatch[2].rm_eo == -1) {
-    lslogging_log_message( "lspmac_move_preset_queue: Could not parse %s (q)", q->kvs->k);
-    return;
-  }
-  
-  //
-  // find the position entry.  Note we are assuming that we've already found the name and only the position is left with the sample index
-  //
-  for( r=mp->presets; r != NULL; r = r->next) {
-    if( r == q)
-      continue;
-    if( regexec( &(mp->preset_regex), r->kvs->k, 4, r_pmatch, 0) != 0 || r_pmatch[2].rm_so == -1 || r_pmatch[2].rm_eo == -1) {
-      lslogging_log_message( "lspmac_move_preset_queue: Could not parse %s (r)", r->kvs->k);
-      return;
-    }
 
-    //
-    // Make sure everything matches up to (and through) the array index
-    //
-    if( strncmp( q->kvs->k, r->kvs->k, q_pmatch[2].rm_eo + 1) == 0) {
-      break;
-    }
-  }
-
-  if( r == NULL) {
-    lslogging_log_message( "lspmac_move_preset_queue: Could not find position for preset '%s' for motor '%s'", name, mp->name);
-    return;
-  }
-
-  errno = 0;
-  pos = strtod( r->kvs->v, NULL);
-  if( errno != 0) {
-    lslogging_log_message( "lspmac_move_preset_queue: Could not parse preset position '%s' for motor '%s'", r->kvs->v, mp->name);
-    return;
-  }
   mp->moveAbs( mp, pos);
-  lslogging_log_message( "lspmac_move_preset_queue: moving %s to preset '%s' (%f)", mp->name, name, pos);
+  lslogging_log_message( "lspmac_move_preset_queue: moving %s to preset '%s' (%f)", mp->name, preset_name, pos);
 }
 
 
@@ -2109,7 +2069,8 @@ void lspmac_moveabs_frontlight_oo_queue( lspmac_motor_t *mp, double pos) {
 }
 
 void lspmac_moveabs_flight_factor_queue( lspmac_motor_t *mp, double pos) {
-  
+  char *fmt;
+
   if( pos >= 60 && pos <= 140) {
     pthread_mutex_lock( &(mp->mutex));
     *mp->actual_pos_cnts_p = pos;
@@ -2118,7 +2079,9 @@ void lspmac_moveabs_flight_factor_queue( lspmac_motor_t *mp, double pos) {
 
     pthread_mutex_lock( &(flight->mutex));
 
-    lsredis_setstr( flight->u2c, lsredis_getstr(flight->redis_fmt), pos / 100.0);
+    fmt = lsredis_getstr( flight->redis_fmt);
+    lsredis_setstr( flight->u2c, fmt, pos / 100.0);
+    free( fmt);
 
     pthread_mutex_unlock( &(flight->mutex));
 
@@ -2127,7 +2090,8 @@ void lspmac_moveabs_flight_factor_queue( lspmac_motor_t *mp, double pos) {
 }
 
 void lspmac_moveabs_blight_factor_queue( lspmac_motor_t *mp, double pos) {
-  
+  char *fmt;
+
   if( pos >= 60 && pos <= 140) {
     pthread_mutex_lock( &(mp->mutex));
     *mp->actual_pos_cnts_p = pos;
@@ -2135,7 +2099,9 @@ void lspmac_moveabs_blight_factor_queue( lspmac_motor_t *mp, double pos) {
     pthread_mutex_unlock( &(mp->mutex));
 
     pthread_mutex_lock( &(blight->mutex));
-    lsredis_setstr( blight->u2c, lsredis_getstr(blight->redis_fmt), pos / 100.0);
+    fmt = lsredis_getstr( blight->redis_fmt);
+    lsredis_setstr( blight->u2c, fmt, pos / 100.0);
+    free( fmt);
     pthread_mutex_unlock( &(blight->mutex));
 
     blight->moveAbs( blight, lspmac_getPosition( zoom));
@@ -2286,6 +2252,8 @@ void lspmac_move_or_jog_abs_queue(
   pthread_mutex_lock( &(mp->mutex));
   mp->pq = lspmac_SockSendline_nr( s);
   pthread_mutex_unlock( &(mp->mutex));
+
+  free( axis);
 }
 
 /** move using a preset value
@@ -2301,11 +2269,10 @@ void lspmac_move_or_jog_preset_queue(
   if( preset == NULL || *preset == 0)
     return;
 
-  pthread_mutex_lock( &(mp->mutex));
-  pos = lskvs_find_preset_position( mp, preset, &err);
-  pthread_mutex_unlock( &(mp->mutex));
+  err = lsredis_find_preset( mp->name, preset, &pos);
 
-  lspmac_move_or_jog_abs_queue( mp, pos, use_jog);
+  if( err != 0)
+    lspmac_move_or_jog_abs_queue( mp, pos, use_jog);
 }
 
 
@@ -2405,8 +2372,6 @@ void _lspmac_motor_init( lspmac_motor_t *d, char *name) {
   pthread_mutex_init( &(d->mutex), NULL);
   pthread_cond_init(  &(d->cond), NULL);
 
-  lskvs_regcomp( &(d->preset_regex), REG_EXTENDED, LSPMAC_PRESET_REGEX, name);
-
   d->name                = strdup(name);
   d->u2c                 = lsredis_get_obj( "%s.u2c",               d->name);
   d->printf_fmt		 = lsredis_get_obj( "%s.printf",            d->name);
@@ -2423,7 +2388,6 @@ void _lspmac_motor_init( lspmac_motor_t *d, char *name) {
   d->inactive_init	 = lsredis_get_obj( "%s.inactive_init",	    d->name);
 
   d->update_resolution   = lsredis_get_obj( "%s.update_resolution", d->name);
-  d->presets             = NULL;
   d->lut                 = NULL;
   d->nlut                = 0;
   d->homing              = 0;
@@ -2677,12 +2641,12 @@ void lspmac_scint_inPosition_cb( char *event) {
 
   pthread_mutex_lock( &(scint->mutex));
   pos = scint->position;
-  cover = lskvs_find_preset_position( scint, "Cover", &err);
+  err = lsredis_find_preset( scint->name, "Cover", &pos);
   pthread_mutex_unlock( &(scint->mutex));
 
   lslogging_log_message( "lspmac_scint_inPosition_cb: pos %f, cover %f, diff %f, err %d", pos, cover, fabs( pos-cover), err);
 
-  if( err != 0)
+  if( err == 0)
     return;
 
   if( fabs( pos - cover) <= 0.1) {
@@ -2737,46 +2701,13 @@ void lspmac_scint_dried_cb( char *event) {
 }
 
 
-void lspmac_newKV_cb( char *event) {
-  lspmac_motor_t   *d;
-  lskvs_kvs_t      *p;
-  lskvs_kvs_list_t *q;
-  lskvs_kvs_list_t *r;
-  int i;
+/** find a postion for a given preset name
+ *
+ * \param mp Motor pointer
+ * \param name The preset to search for
+ * \param err set to non-zero on error, ignored if null
+ */
 
-  pthread_rwlock_rdlock( &lskvs_rwlock);
-  p = lskvs_kvs;
-  pthread_rwlock_unlock( &lskvs_rwlock);  
-
-  while( p != NULL) {
-    for( i=0; i<lspmac_nmotors; i++) {
-      d = &(lspmac_motors[i]);
-
-      if( regexec( &(d->preset_regex), p->k, 0, NULL, 0) == 0) {
-	for( q = d->presets; q != NULL; q = q->next)
-	  if( strcmp( q->kvs->k, p->k) == 0)
-	    break;
-	if( q == NULL) {
-	  //
-	  // We don't know about this preset yet.  Add it to our list.
-	  //
-	  r = calloc( 1, sizeof( *r));
-	  if( r == NULL) {
-	    lslogging_log_message( "lspmac_newKV_cb: Out of memory for kv %s", p->k);
-	    exit( -1);
-	  }
-	  r->kvs = p;
-	  pthread_mutex_lock( &(d->mutex));
-	  r->next    = d->presets;
-	  d->presets = r;
-	  pthread_mutex_unlock( &(d->mutex));
-	  lslogging_log_message( "lspmac_newKV_cb: added '%s' with value '%s' to motor '%s'", p->k, p->v, d->name);
-	}
-      }
-    }
-    p = p->next;
-  }
-}
 
 /** Start up the lspmac thread
  */
@@ -2788,7 +2719,6 @@ void lspmac_run() {
 
   pthread_create( &pmac_thread, NULL, lspmac_worker, NULL);
 
-  lsevents_add_listener( "NewKV",                lspmac_newKV_cb);
   lsevents_add_listener( "CryoSwitchChanged",    lspmac_cryoSwitchChanged_cb);
   lsevents_add_listener( "scint In Position",    lspmac_scint_inPosition_cb);
   lsevents_add_listener( "scintDried",           lspmac_scint_dried_cb);
@@ -2801,7 +2731,7 @@ void lspmac_run() {
   //
   for( inits = lsredis_get_string_array(lspmac_md2_init); *inits != NULL; inits++) {
     lspmac_SockSendline( *inits);
-    lslogging_log_message( "lspmac_init: pmac init '%s'", *inits);
+    //    lslogging_log_message( "lspmac_init: pmac init '%s'", *inits);
   }
   
   //
@@ -2831,7 +2761,7 @@ void lspmac_run() {
     if( inits != NULL) {
       while( *inits != NULL) {
 	lspmac_SockSendline( *inits);
-	lslogging_log_message( "lspmac_init: %s init '%s'", mp->name, *inits);
+	//	lslogging_log_message( "lspmac_init: %s init '%s'", mp->name, *inits);
 	inits++;
       }
     }

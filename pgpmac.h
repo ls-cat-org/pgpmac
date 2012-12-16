@@ -4,6 +4,7 @@
  *  \author Keith Brister
  *  \copyright All Rights Reserved
  */
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -27,6 +28,7 @@
 #include <regex.h>
 #include <hiredis/hiredis.h>
 #include <hiredis/async.h>
+#include <search.h>
 
 
 /** Redis Object
@@ -46,9 +48,7 @@ typedef struct lsredis_obj_struct {
   long int lvalue;					//!< our value as a long
   char **avalue;					//!< our value as an array of strings
   int bvalue;						//!< our value as a boolean (1 or 0) -1 means we couldn't figure it out
-  char *(*getstr)( struct lsredis_obj_struct *);	//!< return a string representation of this object
-  double (*getd)( struct lsredis_obj_struct *);		//!< return a double floating point version
-  long int (*getl)( struct lsredis_obj_struct *);	//!< return a long value
+  char cvalue;						//!< just the first character of our value
   int hits;						//!< number of times we've searched for this key
 } lsredis_obj_t;
 
@@ -90,27 +90,7 @@ typedef struct lspmac_cmd_queue_struct {
   void (*onResponse)(struct lspmac_cmd_queue_struct *,int, unsigned char *);	//!< function to call when response is received.  args are (int fd, nreturned, buffer)
 } pmac_cmd_queue_t;
 
-/** Storage for the key value pairs
- *
- * the k's and v's are strings and to keep the memory management less crazy
- * we'll calloc some space for these strings and only free and re-calloc if we need
- * more space later.  Only the values are ever going to be resized.
- */
-typedef struct lskvs_kvs_struct {
-  struct lskvs_kvs_struct *next;	//!< the next kvpair
-  pthread_rwlock_t l;			//!< our lock
-  char *k;				//!< the key
-  char *v;				//!< the value
-  int   vl;				//!< the length of the calloced v
-} lskvs_kvs_t;
 
-/** A second linked list type to handle private lists of KVs.
- *  Developed to support lists of preset motor positions.
- */
-typedef struct lskvs_kvs_list_struct {
-  struct lskvs_kvs_list_struct * next;	//!< next item
-  lskvs_kvs_t *kvs;			//!< the KV
-} lskvs_kvs_list_t;
 
 /** Motor information.
  *
@@ -121,8 +101,6 @@ typedef struct lspmac_motor_struct {
   pthread_mutex_t mutex;	//!< coordinate waiting for motor to be done
   pthread_cond_t cond;		//!< used to signal when a motor is done moving
   int not_done;			//!< set to 1 when request is queued, zero after motion has toggled
-  lskvs_kvs_list_t *presets;	//!< list of preset positions
-  regex_t preset_regex;		//!< buffer used by regex routines to find preset positions for this motor
   void (*read)( struct lspmac_motor_struct *);		//!< method to read the motor status and position
   int motion_seen;		//!< set to 1 when motion has been verified to have started
   struct lspmac_cmd_queue_struct *pq;	//!< the queue item requesting motion.  Used to check time request was made
@@ -348,9 +326,6 @@ typedef struct lspg_nextshot_struct {
 
 extern lspg_nextshot_t lspg_nextshot;
 
-extern lskvs_kvs_t     *lskvs_kvs;
-extern pthread_rwlock_t lskvs_rwlock;
-
 extern lspmac_motor_t lspmac_motors[];
 extern lspmac_motor_t *omega;
 extern lspmac_motor_t *alignx;
@@ -440,8 +415,6 @@ extern void lsevents_remove_listener( char *, void (*cb)(char *));
 extern void lstimer_init();
 extern void lstimer_run();
 extern void lstimer_add_timer( char *, int, unsigned long int, unsigned long int);
-extern void lskvs_regcomp( regex_t *preg, int cflags, char *fmt, ...);
-extern double lskvs_find_preset_position( lspmac_motor_t *mp, char *name, int *err);
 extern void lsredis_init( char *pub, char *re, char *head);
 extern void lsredis_run();
 extern lsredis_obj_t *lsredis_get_obj( char *, ...);
@@ -450,3 +423,7 @@ extern double lsredis_getd( lsredis_obj_t *p);
 extern long int lsredis_getl( lsredis_obj_t *p);
 extern char **lsredis_get_string_array( lsredis_obj_t *p);
 extern int lsredis_getb( lsredis_obj_t *p);
+extern int lsredis_cmpstr( lsredis_obj_t *p, char *s);
+extern int lsredis_regexec( const regex_t *preg, lsredis_obj_t *p, size_t nmatch, regmatch_t *pmatch, int eflags);
+extern int lsredis_cmpnstr( lsredis_obj_t *p, char *s, int n);
+extern int lsredis_find_preset( char *base, char *preset_name, double *dval);

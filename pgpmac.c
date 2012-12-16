@@ -37,7 +37,7 @@
  * <pre>
  *  lsevents.c		Simple event queue
  *
- *  lskvs.c		Receive key value pair updates from the px.kvs table in our database
+ *  lsredis.c		Receive key value pair updates from redis databases
  *
  *  lslogging.c		A logging utility to simplify debugging
  *
@@ -404,8 +404,6 @@ int main(
   lstimer_init();
   lspmac_init( ivars, mvars);
   lspg_init();
-  //  lsupdate_init();
-  lskvs_init();
   md2cmds_init();
 
   term_status = newwin( LS_DISPLAY_WINDOW_HEIGHT, LS_DISPLAY_WINDOW_WIDTH, 3*LS_DISPLAY_WINDOW_HEIGHT, 0*LS_DISPLAY_WINDOW_WIDTH);
@@ -435,7 +433,6 @@ int main(
   lstimer_run();
   lspmac_run();
   lspg_run();
-  //  lsupdate_run();
   md2cmds_run();
 
   while( 1) {

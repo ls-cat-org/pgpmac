@@ -3,17 +3,14 @@
 # (C) 2012 by Keith Brister and Northwesern University
 # All Rights Reserved
 #
-pgpmac: pgpmac.c pgpmac.h lspg.o lsredis.o lspmac.o md2cmds.o lslogging.o lsevents.o lstimer.o lskvs.o Makefile
-	gcc -g -pthread -o pgpmac pgpmac.c md2cmds.o lspmac.o lspg.o lsredis.o lslogging.o lsevents.o lstimer.o lskvs.o -lpq -lncurses -lpthread -lrt -lhiredis
+pgpmac: pgpmac.c pgpmac.h lspg.o lsredis.o lspmac.o md2cmds.o lslogging.o lsevents.o lstimer.o Makefile
+	gcc -g -pthread -o pgpmac pgpmac.c md2cmds.o lspmac.o lspg.o lsredis.o lslogging.o lsevents.o lstimer.o -lpq -lncurses -lpthread -lrt -lhiredis
 
 clean:
 	rm *.o pgpmac
 
 docs:
 	doxygen
-
-lskvs.o: lskvs.c pgpmac.h Makefile
-	gcc -g -pthread -c lskvs.c
 
 lstimer.o: lstimer.c pgpmac.h Makefile
 	gcc -g -pthread -c lstimer.c
