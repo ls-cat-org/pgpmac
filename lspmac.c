@@ -780,7 +780,7 @@ void lspmac_Service(
       receiveBufferSize += 1400;
       newbuff = calloc( receiveBufferSize, sizeof( unsigned char));
       if( newbuff == NULL) {
-	lslogging_log_message( "Out of memory");
+	lslogging_log_message( "lspmac_Service: Out of memory");
 	exit( -1);
       }
       if( receiveBuffer != NULL) {
@@ -1027,8 +1027,6 @@ void lspmac_bo_read(
   changed = pos != mp->position;
   mp->position = pos;
 
-  // Not sure what kind of status makes sense to report
-  mp->statuss[0] = 0;
   pthread_mutex_unlock( &(mp->mutex));
 
   if( changed)
@@ -1058,9 +1056,6 @@ void lspmac_dac_read(
       mp->position = mp->actual_pos_cnts;
     }
   }
-
-  // Not sure what kind of status makes sense to report
-  mp->statuss[0] = 0;
 
   pthread_mutex_unlock( &(mp->mutex));
 }
@@ -1099,9 +1094,6 @@ void lspmac_shutter_read(
     mvwprintw( term_status2, 1, 1, "Shutter Closed");
     mp->position = 0;
   }
-
-  // Not sure what kind of status makes sense to report
-  mp->statuss[0] = 0;
 
   pthread_mutex_unlock( &lspmac_shutter_mutex);
 }
@@ -1252,6 +1244,9 @@ void lspmac_pmacmotor_read(
   double u2c;
   int motor_num;
   char *fmt;
+  int status_changed;
+
+
   pthread_mutex_lock( &(mp->mutex));
 
   //
@@ -1316,7 +1311,7 @@ void lspmac_pmacmotor_read(
       omega_zero_time.tv_nsec -= nsecs;
 
       lsevents_send_event( "omega crossed zero");
-      lslogging_log_message("lspmac_motor_read: omega zero secs %d  nsecs %d ozt.tv_sec %ld  ozt.tv_nsec  %ld, motor cnts %d",
+      lslogging_log_message("lspmac_pmacmotor_read: omega zero secs %d  nsecs %d ozt.tv_sec %ld  ozt.tv_nsec  %ld, motor cnts %d",
 			    secs, nsecs, omega_zero_time.tv_sec, omega_zero_time.tv_nsec, *mp->actual_pos_cnts_p);
     }
     omega_zero_search = 0;
@@ -1326,8 +1321,13 @@ void lspmac_pmacmotor_read(
   // Make local copies so we can inspect them in other threads
   // without having to grab the status mutex
   //
-  mp->status1 = *mp->status1_p;
-  mp->status2 = *mp->status2_p;
+  if( mp->status1 != *mp->status1_p || mp->status2 != *mp->status2_p) {
+    mp->status1 = *mp->status1_p;
+    mp->status2 = *mp->status2_p;
+    status_changed = 1;
+  } else {
+    status_changed = 0;
+  }
   mp->actual_pos_cnts = *mp->actual_pos_cnts_p;
 
   //
@@ -1367,8 +1367,16 @@ void lspmac_pmacmotor_read(
     }
   }
 
+  if( fabs(mp->reported_position - mp->position) >= lsredis_getd(mp->update_resolution)) {
+    fmt = lsredis_getstr(mp->redis_fmt);
+    lsredis_setstr( mp->redis_position, fmt, mp->position);
+    free(fmt);
+    mp->reported_position = mp->position;
+  }
+
   fmt = lsredis_getstr( mp->printf_fmt);
   snprintf( s, sizeof(s)-1, fmt, 8, mp->position);
+  s[sizeof(s)-1] = 0;
   free( fmt);
 
   // set flag if we are not homed
@@ -1393,41 +1401,44 @@ void lspmac_pmacmotor_read(
   s[sizeof(s)-1] = 0;
   mvwprintw( mp->win, 3, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-6, s);
 
-  mvwprintw( mp->win, 4, 1, "%*x", LS_DISPLAY_WINDOW_WIDTH-2, mp->status1);
-  mvwprintw( mp->win, 5, 1, "%*x", LS_DISPLAY_WINDOW_WIDTH-2, mp->status2);
-  sp = "";
-  if( mp->status2 & 0x000002)
-    sp = "Following Warning";
-  else if( mp->status2 & 0x000004)
-    sp = "Following Error";
-  else if( mp->status2 & 0x000020)
-    sp = "I2T Amp Fault";
-  else if( mp->status2 & 0x000008)
-    sp = "Amp. Fault";
-  else if( mp->status2 & 0x000800)
-    sp = "Stopped on Limit";
-  else if( mp->status1 & 0x040000)
-    sp = "Open Loop";
-  else if( ~(mp->status1) & 0x080000)
-    sp = "Motor Disabled";
-  else if( mp->status1 & 0x000400)
-    sp = "Homing";
-  else if( (mp->status1 & 0x600000) == 0x600000)
-    sp = "Both Limits Tripped";
-  else if( mp->status1 & 0x200000)
-    sp = "Positive Limit";
-  else if( mp->status1 & 0x400000)
-    sp = "Negative Limit";
-  else if( ~(mp->status2) & 0x000400)
-    sp = "Not Homed";
-  else if( mp->status2 & 0x000001)
-    sp = "In Position";
+  if( status_changed) {
+    mvwprintw( mp->win, 4, 1, "%*x", LS_DISPLAY_WINDOW_WIDTH-2, mp->status1);
+    mvwprintw( mp->win, 5, 1, "%*x", LS_DISPLAY_WINDOW_WIDTH-2, mp->status2);
+    sp = "";
+    if( mp->status2 & 0x000002)
+      sp = "Following Warning";
+    else if( mp->status2 & 0x000004)
+      sp = "Following Error";
+    else if( mp->status2 & 0x000020)
+      sp = "I2T Amp Fault";
+    else if( mp->status2 & 0x000008)
+      sp = "Amp. Fault";
+    else if( mp->status2 & 0x000800)
+      sp = "Stopped on Limit";
+    else if( mp->status1 & 0x040000)
+      sp = "Open Loop";
+    else if( ~(mp->status1) & 0x080000)
+      sp = "Motor Disabled";
+    else if( mp->status1 & 0x000400)
+      sp = "Homing";
+    else if( (mp->status1 & 0x600000) == 0x600000)
+      sp = "Both Limits Tripped";
+    else if( mp->status1 & 0x200000)
+      sp = "Positive Limit";
+    else if( mp->status1 & 0x400000)
+      sp = "Negative Limit";
+    else if( ~(mp->status2) & 0x000400)
+      sp = "Not Homed";
+    else if( mp->status1 & 0x020000)
+      sp = "Moving";
+    else if( mp->status2 & 0x000001)
+      sp = "In Position";
 
-  mvwprintw( mp->win, 6, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, sp);
-  wnoutrefresh( mp->win);
+    mvwprintw( mp->win, 6, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, sp);
   
-  strncpy( mp->statuss, sp, sizeof( mp->statuss)-1);
-  mp->statuss[sizeof(mp->statuss)-1] = 0;
+    lsredis_setstr( mp->status_str, sp);
+  }
+  wnoutrefresh( mp->win);
 
   pthread_mutex_unlock( &(mp->mutex));
 
@@ -2373,6 +2384,7 @@ void _lspmac_motor_init( lspmac_motor_t *d, char *name) {
   pthread_cond_init(  &(d->cond), NULL);
 
   d->name                = strdup(name);
+  d->redis_position      = lsredis_get_obj( "%s.position",          d->name);
   d->u2c                 = lsredis_get_obj( "%s.u2c",               d->name);
   d->printf_fmt		 = lsredis_get_obj( "%s.printf",            d->name);
   d->redis_fmt		 = lsredis_get_obj( "%s.format",            d->name);
@@ -2386,8 +2398,8 @@ void _lspmac_motor_init( lspmac_motor_t *d, char *name) {
   d->active		 = lsredis_get_obj( "%s.active",	    d->name);
   d->active_init	 = lsredis_get_obj( "%s.active_init",	    d->name);
   d->inactive_init	 = lsredis_get_obj( "%s.inactive_init",	    d->name);
-
   d->update_resolution   = lsredis_get_obj( "%s.update_resolution", d->name);
+  d->status_str          = lsredis_get_obj( "%s.status_str",        d->name);
   d->lut                 = NULL;
   d->nlut                = 0;
   d->homing              = 0;
@@ -2397,6 +2409,7 @@ void _lspmac_motor_init( lspmac_motor_t *d, char *name) {
   d->status2_p           = NULL;
   d->win                 = NULL;
   d->read                = NULL;
+  d->reported_position   = INFINITY;
 }
 
 
@@ -2706,7 +2719,6 @@ void lspmac_scint_dried_cb( char *event) {
 void lspmac_zoom_lut_setup() {
   int i;
   lsredis_obj_t *p;
-  double *dp;
 
   pthread_mutex_lock( &zoom->mutex);
 
@@ -2717,17 +2729,18 @@ void lspmac_zoom_lut_setup() {
     exit( -1);
   }
 
-  for( i=1, dp = zoom->lut; i<=zoom->nlut; i++, dp += 2) {
-    p = lsredis_get_obj( "cam.zoom.%d.MotorPosition", i);
+  for( i=0; i < zoom->nlut; i++) {
+    p = lsredis_get_obj( "cam.zoom.%d.MotorPosition", i+1);
     if( p==NULL || strlen( lsredis_getstr(p)) == 0) {
       free( zoom->lut);
+      zoom->lut  = NULL;
       zoom->nlut = 0;
       pthread_mutex_unlock( &zoom->mutex);
-      lslogging_log_message( "lspmac_zoom_lut_setup: cannot find MotorPosition element for cam.zoom level %d", i);
+      lslogging_log_message( "lspmac_zoom_lut_setup: cannot find MotorPosition element for cam.zoom level %d", i+1);
       return;
     }
-    *dp = i;
-    *(dp+1) = lsredis_getd( p);
+    zoom->lut[2*i]   = i+1;
+    zoom->lut[2*i+1] = lsredis_getd( p);
   }
   pthread_mutex_unlock( &zoom->mutex);
 }
@@ -2737,7 +2750,6 @@ void lspmac_zoom_lut_setup() {
 void lspmac_flight_lut_setup() {
   int i;
   lsredis_obj_t *p;
-  double *dp;
 
   pthread_mutex_lock( &flight->mutex);
 
@@ -2748,17 +2760,20 @@ void lspmac_flight_lut_setup() {
     exit( -1);
   }
 
-  for( i=0, dp = flight->lut; i<flight->nlut; i++, dp += 2) {
+  flight->lut[0] = 0;
+  flight->lut[1] = 0;
+  for( i=1; i < flight->nlut; i++) {
     p = lsredis_get_obj( "cam.zoom.%d.FrontLightIntensity", i);
     if( p==NULL || strlen( lsredis_getstr(p)) == 0) {
       free( flight->lut);
+      flight->lut  = NULL;
       flight->nlut = 0;
       pthread_mutex_unlock( &flight->mutex);
       lslogging_log_message( "lspmac_flight_lut_setup: cannot find MotorPosition element for cam.flight level %d", i);
       return;
     }
-    *dp = i;
-    *(dp+1) = 32767.0 * lsredis_getd( p) / 100.0;
+    flight->lut[2*i]   = i;
+    flight->lut[2*i+1] = 32767.0 * lsredis_getd( p) / 100.0;
   }
   pthread_mutex_unlock( &flight->mutex);
 }
@@ -2768,7 +2783,6 @@ void lspmac_flight_lut_setup() {
 void lspmac_blight_lut_setup() {
   int i;
   lsredis_obj_t *p;
-  double *dp;
 
   pthread_mutex_lock( &blight->mutex);
 
@@ -2779,17 +2793,21 @@ void lspmac_blight_lut_setup() {
     exit( -1);
   }
 
-  for( i=0, dp = blight->lut; i<blight->nlut; i++, dp += 2) {
+  blight->lut[0] = 0;
+  blight->lut[1] = 0;
+
+  for( i=1; i<blight->nlut; i++) {
     p = lsredis_get_obj( "cam.zoom.%d.LightIntensity", i);
     if( p==NULL || strlen( lsredis_getstr(p)) == 0) {
       free( blight->lut);
+      blight->lut = NULL;
       blight->nlut = 0;
       pthread_mutex_unlock( &blight->mutex);
       lslogging_log_message( "lspmac_blight_lut_setup: cannot find MotorPosition element for cam.blight level %d", i);
       return;
     }
-    *dp = i;
-    *(dp+1) = 20000.0 * lsredis_getd( p) / 100.0;
+    blight->lut[2*i]   = i;
+    blight->lut[2*i+1] = 20000.0 * lsredis_getd( p) / 100.0;
   }
   pthread_mutex_unlock( &blight->mutex);
 }
@@ -2798,7 +2816,6 @@ void lspmac_blight_lut_setup() {
  */
 void lspmac_fscint_lut_setup() {
   int i;
-  double *dp;
 
   pthread_mutex_lock( &fscint->mutex);
 
@@ -2809,9 +2826,9 @@ void lspmac_fscint_lut_setup() {
     exit( -1);
   }
 
-  for( i=0, dp = fscint->lut; i<fscint->nlut; i++, dp += 2) {
-    *(dp)   = i;
-    *(dp+1) = 320.0 * i;
+  for( i=0; i<fscint->nlut; i++) {
+    fscint->lut[2*i] = i;
+    fscint->lut[2*i+1] = 320.0 * i;
   }
   pthread_mutex_unlock( &fscint->mutex);
 }

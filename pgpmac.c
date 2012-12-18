@@ -401,6 +401,7 @@ int main(
   lslogging_init();
   lsevents_init();
   lsredis_init( "MD2-21-ID-E", "redis\\.kvseq|stns\\.2\\.(.+)", "stns.2");
+  lsredis_run();
   lstimer_init();
   lspmac_init( ivars, mvars);
   lspg_init();
@@ -429,7 +430,6 @@ int main(
 
   lslogging_run();
   lsevents_run();
-  lsredis_run();
   lstimer_run();
   lspmac_run();
   lspg_run();

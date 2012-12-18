@@ -63,7 +63,7 @@ typedef struct lsredis_obj_struct {
 #define LS_PG_QUERY_STRING_LENGTH 1024
 
 //! Fixed length for event names: simplifies string handling
-#define LSEVENTS_EVENT_LENGTH   32
+#define LSEVENTS_EVENT_LENGTH   256
 
 /** PMAC ethernet packet definition.
  *
@@ -116,7 +116,6 @@ typedef struct lspmac_motor_struct {
   int status1;			//!< local copy of status1
   int *status2_p;		//!< Sectond 24 bit PMAC motor status word
   int status2;			//!< local copy of status2
-  char statuss[64];		//!< short text summarizing status
   char *dac_mvar;		//!< controlling mvariable as a string
   char *name;			//!< Name of motor as refered by ls database kvs table
   lsredis_obj_t *unit;		//!< string to use as the units
@@ -132,6 +131,8 @@ typedef struct lspmac_motor_struct {
   lsredis_obj_t *active;	//!< Use the motor ("true") or not ("false")
   lsredis_obj_t *active_init;	//!< pmac commands to make this motor active
   lsredis_obj_t *inactive_init;	//!< pmac commands to inactivate the motor
+  lsredis_obj_t *redis_position;//!< how we report our position to the world
+  lsredis_obj_t *status_str;	//!< A talky version of the status
   char *write_fmt;		//!< Format string to write requested position to PMAC used for binary io
   int *read_ptr;		//!< With read_mask finds bit to read for binary i/o
   int read_mask;		//!< WIth read_ptr find bit to read for binary i/o

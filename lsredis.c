@@ -8,11 +8,13 @@
 
 static pthread_t lsredis_thread;
 
+static pthread_mutex_t lsredis_mutex;
+static pthread_cond_t  lsredis_cond;
+static int lsredis_running = 0;
+
+
 static lsredis_obj_t *lsredis_objs = NULL;
 static struct hsearch_data lsredis_htab;
-static pthread_mutex_t lsredis_objs_mutex;
-static pthread_mutex_t lsredis_ro_mutex;	//!< keep from having more than one thread send a rediscommand to the read/only  server
-static pthread_mutex_t lsredis_wr_mutex;	//!< keep from having more than one thread send a rediscommand to the write/read server
 
 static redisAsyncContext *subac;
 static redisAsyncContext *roac;
@@ -25,6 +27,55 @@ static char *lsredis_head = NULL;
 static struct pollfd subfd;
 static struct pollfd rofd;
 static struct pollfd wrfd;
+
+/** Log the reply
+ */
+void lsredis_debugCB( redisAsyncContext *ac, void *reply, void *privdata) {
+  static int indentlevel = 0;
+  redisReply *r;
+  int i;
+
+  r = (redisReply *)reply;
+
+  if( r == NULL) {
+    lslogging_log_message( "Null reply.  Odd");
+    return;
+  }
+
+  switch( r->type) {
+  case REDIS_REPLY_STATUS:
+    lslogging_log_message( "%*sSTATUS: %s", indentlevel*4,"", r->str);
+    break;
+
+  case REDIS_REPLY_ERROR:
+    lslogging_log_message( "%*sERROR: %s", indentlevel*4, "", r->str);
+    break;
+
+  case REDIS_REPLY_INTEGER:
+    lslogging_log_message( "%*sInteger: %lld", indentlevel*4, "", r->integer);
+    break;
+
+  case REDIS_REPLY_NIL:
+    lslogging_log_message( "%*s(nil)", indentlevel*4, "");
+    break;
+
+  case REDIS_REPLY_STRING:
+    lslogging_log_message( "%*sSTRING: %s", indentlevel*4, "", r->str);
+    break;
+
+  case REDIS_REPLY_ARRAY:
+    lslogging_log_message( "%*sARRAY of %d elements", indentlevel*4, "", (int)r->elements);
+    indentlevel++;
+    for( i=0; i<r->elements; i++)
+      lsredis_debugCB( ac, r->element[i], NULL);
+    indentlevel--;
+    break;
+
+  default:
+    lslogging_log_message( "%*sUnknown type %d", indentlevel*4,"", r->type);
+
+  }
+}
 
 /** set_value and setstr helper funciton
  *  p->mutex must be locked before calling
@@ -41,18 +92,21 @@ void _lsredis_set_value( lsredis_obj_t *p, char *v) {
       exit( -1);
     }
   }
-  strcpy( p->value, v);
+  strncpy( p->value, v, p->value_length - 1);
   p->value[p->value_length-1] = 0;
   p->dvalue = strtod( p->value, NULL);
   p->lvalue = strtol( p->value, NULL, 10);
-  
+
   if( p->avalue != NULL) {
-    char **zz;
-    for( zz = p->avalue; *zz != NULL; zz++)
-      free( zz);
+    int i;
+    for( i=0; (p->avalue)[i] != NULL; i++)
+      free( (p->avalue)[i]);
     free( p->avalue);
+    p->avalue = NULL;
   }
+
   p->avalue = lspg_array2ptrs( p->value);
+
   switch( *(p->value)) {
       case 'T':
       case 't':
@@ -71,13 +125,15 @@ void _lsredis_set_value( lsredis_obj_t *p, char *v) {
       break;
 
       default:
-	p->bvalue = -1;		// a little unusual for a null value to be -1
+	p->bvalue = -1;		// nil is -1 here in our world
     }
 
   p->cvalue = *(p->value);
-  p->valid = 1;
 
-  lsevents_send_event( "%s Valid", p->events_name);
+  if( !(p->valid)) {
+    p->valid = 1;
+    lsevents_send_event( "%s Valid", p->events_name);
+  }
 }
 
 /** Set the value of a redis object and make it valid.  Called by mgetCB to set the value as it is in redis
@@ -173,31 +229,35 @@ void lsredis_setstr( lsredis_obj_t *p, char *fmt, ...) {
   v[sizeof(v)-1] = 0;
   va_end( arg_ptr);
   
-  pthread_mutex_lock(   &p->mutex);
+  pthread_mutex_lock( &p->mutex);
 
+  //
+  // Don't send an update if a good value has not changed
+  //
   if( p->valid && strcmp( v, p->value) == 0) {
     // nothing to do
     pthread_mutex_unlock( &p->mutex);
     return;
   }
 
-  p->valid       = 0;						//!< invalidate the current value: set_value will fix this and signal waiting threads
-  lsevents_send_event( "%s Invalid", p->events_name);
   p->wait_for_me++;						//!< up the count of times we need to see ourselves published before we start listening to others again
 
 
   argv[0] = "HSET";
-  argv[1] = p->key;	//!< key is "immutable" (not really a C feature).  In any case no one is going to be changing it so it's cool to read it without mutex protection.
+  argv[1] = p->key;
   argv[2] = "VALUE";
   argv[3] = v;		//!< redisAsyncCommandArgv shouldn't need to access this after it's made up it's packet (before it returns) so we should be OK with this location disappearing soon.
 
-  pthread_mutex_lock( &lsredis_wr_mutex);
+  pthread_mutex_lock( &lsredis_mutex);
+  while( lsredis_running == 0)
+    pthread_cond_wait( &lsredis_cond, &lsredis_mutex);
+
   redisAsyncCommand( wrac, NULL, NULL, "MULTI");
   redisAsyncCommandArgv( wrac, NULL, NULL, 4, (const char **)argv, NULL);
 
   redisAsyncCommand( wrac, NULL, NULL, "PUBLISH %s %s", lsredis_publisher, p->key);
   redisAsyncCommand( wrac, NULL, NULL, "EXEC");
-  pthread_mutex_unlock( &lsredis_wr_mutex);
+  pthread_mutex_unlock( &lsredis_mutex);
 
   // Assume redis will take exactly the value we sent it
   //
@@ -304,6 +364,7 @@ void lsredis_hgetCB( redisAsyncContext *ac, void *reply, void *privdata) {
 
 /** Maybe add a new object
  *  Used internally for this module
+ * Must be called with lsredis_mutex locked
  */
 lsredis_obj_t *_lsredis_get_obj( char *key) {
   lsredis_obj_t *p;
@@ -323,10 +384,6 @@ lsredis_obj_t *_lsredis_get_obj( char *key) {
     return NULL;
   }
 
-  //  printf( "_lsredis_get_obj: received key '%s'", key);
-  //  fflush( stdout);
-
-  pthread_mutex_lock( &lsredis_objs_mutex);
   // If the key is already there then just return it
   //
 
@@ -342,7 +399,6 @@ lsredis_obj_t *_lsredis_get_obj( char *key) {
 
 
   if( p != NULL) {
-    pthread_mutex_unlock( &lsredis_objs_mutex);
     return p;
   } else {
     // make a new one.
@@ -389,16 +445,11 @@ lsredis_obj_t *_lsredis_get_obj( char *key) {
     //
     p->next = lsredis_objs;
     lsredis_objs = p;
-
-    pthread_mutex_unlock( &lsredis_objs_mutex);
-
   }
   //
   // We arrive here with the valid flag lowered.  Go ahead and request the latest value.
   //
-  pthread_mutex_lock( &lsredis_ro_mutex);
   redisAsyncCommand( roac, lsredis_hgetCB, p, "HGET %s VALUE", key);
-  pthread_mutex_unlock( &lsredis_ro_mutex);
 
   return p;
 }
@@ -425,7 +476,14 @@ lsredis_obj_t *lsredis_get_obj( char *fmt, ...) {
   
   snprintf( kp, nkp-1, "%s.%s", lsredis_head, k);
   kp[nkp-1] = 0;
+
+  pthread_mutex_lock( &lsredis_mutex);
+  while( lsredis_running == 0)
+    pthread_cond_wait( &lsredis_cond, &lsredis_mutex);
+
   rtn = _lsredis_get_obj( kp);
+  pthread_mutex_unlock( &lsredis_mutex);
+
   free( kp);
   return rtn;
 }
@@ -444,7 +502,11 @@ void redisDisconnectCB(const redisAsyncContext *ac, int status) {
 void lsredis_addRead( void *data) {
   struct pollfd *pfd;
   pfd = (struct pollfd *)data;
-  pfd->events |= POLLIN;
+
+  if( (pfd->events & POLLIN) == 0) {
+    pfd->events |= POLLIN;
+    pthread_kill( lsredis_thread, SIGUSR1);
+  }
 }
 
 /** hook to manage "don't need to read" events
@@ -452,7 +514,11 @@ void lsredis_addRead( void *data) {
 void lsredis_delRead( void *data) {
   struct pollfd *pfd;
   pfd = (struct pollfd *)data;
-  pfd->events &= ~POLLIN;
+
+  if( (pfd->events & POLLIN) != 0) {
+    pfd->events &= ~POLLIN;
+    pthread_kill( lsredis_thread, SIGUSR1);
+  }
 }
 
 /** hook to manage write events
@@ -460,7 +526,11 @@ void lsredis_delRead( void *data) {
 void lsredis_addWrite( void *data) {
   struct pollfd *pfd;
   pfd = (struct pollfd *)data;
-  pfd->events |= POLLOUT;
+
+  if( (pfd->events & POLLOUT) == 0) {
+    pfd->events |= POLLOUT;
+    pthread_kill( lsredis_thread, SIGUSR1);
+  }
 }
 
 /** hook to manage "don't need to write anymore" events
@@ -468,7 +538,11 @@ void lsredis_addWrite( void *data) {
 void lsredis_delWrite( void *data) {
   struct pollfd *pfd;
   pfd = (struct pollfd *)data;
-  pfd->events &= ~POLLOUT;
+
+  if( (pfd->events & POLLOUT) != 0) {
+    pfd->events &= ~POLLOUT;
+    pthread_kill( lsredis_thread, SIGUSR1);
+  }
 }
 
 /** hook to clean up
@@ -477,59 +551,15 @@ void lsredis_delWrite( void *data) {
 void lsredis_cleanup( void *data) {
   struct pollfd *pfd;
   pfd = (struct pollfd *)data;
-  pfd->events &= ~(POLLOUT | POLLIN);
+
   pfd->fd = -1;
-}
 
-
-/** Log the reply
- */
-void lsredis_debugCB( redisAsyncContext *ac, void *reply, void *privdata) {
-  static int indentlevel = 0;
-  redisReply *r;
-  int i;
-
-  r = (redisReply *)reply;
-
-  if( r == NULL) {
-    lslogging_log_message( "Null reply.  Odd");
-    return;
-  }
-
-  switch( r->type) {
-  case REDIS_REPLY_STATUS:
-    lslogging_log_message( "%*sSTATUS: %s", indentlevel*4,"", r->str);
-    break;
-
-  case REDIS_REPLY_ERROR:
-    lslogging_log_message( "%*sERROR: %s", indentlevel*4, "", r->str);
-    break;
-
-  case REDIS_REPLY_INTEGER:
-    lslogging_log_message( "%*sInteger: %lld", indentlevel*4, "", r->integer);
-    break;
-
-  case REDIS_REPLY_NIL:
-    lslogging_log_message( "%*s(nil)", indentlevel*4, "");
-    break;
-
-  case REDIS_REPLY_STRING:
-    lslogging_log_message( "%*sSTRING: %s", indentlevel*4, "", r->str);
-    break;
-
-  case REDIS_REPLY_ARRAY:
-    lslogging_log_message( "%*sARRAY of %d elements", indentlevel*4, "", (int)r->elements);
-    indentlevel++;
-    for( i=0; i<r->elements; i++)
-      lsredis_debugCB( ac, r->element[i], NULL);
-    indentlevel--;
-    break;
-
-  default:
-    lslogging_log_message( "%*sUnknown type %d", indentlevel*4,"", r->type);
-
+  if( (pfd->events & (POLLOUT | POLLIN)) != 0) {
+    pfd->events &= ~(POLLOUT | POLLIN);
+    pthread_kill( lsredis_thread, SIGUSR1);
   }
 }
+
 
 
 
@@ -578,8 +608,6 @@ void lsredis_subCB( redisAsyncContext *ac, void *reply, void *privdata) {
     //
     // We should know about this one
     //
-    pthread_mutex_lock( &lsredis_objs_mutex);
-
     
     htab_input.key  = k;
     htab_input.data = NULL;
@@ -616,13 +644,8 @@ void lsredis_subCB( redisAsyncContext *ac, void *reply, void *privdata) {
       last  = p;
     } 
     */
-   
-    pthread_mutex_unlock( &lsredis_objs_mutex);
 
     if( p == NULL) {
-      //
-      // Regardless of who the publisher is, apparently there is a key we've not seen before
-      //
       _lsredis_get_obj( k);
     } else {
       // Look who's talk'n
@@ -654,9 +677,7 @@ void lsredis_subCB( redisAsyncContext *ac, void *reply, void *privdata) {
       // We shouldn't get here if wait_for_me is zero and we are the publisher.
       // If somehow we did (ie we did an hset with out incrementing wait_for_me or if we published too many times), it shouldn't hurt to get the value again.
       //
-      pthread_mutex_lock( &lsredis_ro_mutex);
       redisAsyncCommand( roac, lsredis_hgetCB, p, "HGET %s VALUE", k);
-      pthread_mutex_unlock( &lsredis_ro_mutex);
     }
   }
 }
@@ -740,55 +761,29 @@ int lsredis_find_preset( char *base, char *preset_name, double *dval) {
 
 
 
-/** set regexp to select variables we are interested in following
- *
- *  Note that redis only supports glob matching while we'd prefer something a tad more
- *  useful.  See http://xkcd.com/208
- *
- */
-void lsredis_select( char *re) {
-  int err;
-  char *errmsg;
-  int  nerrmsg;
-
-  err = regcomp( &lsredis_key_select_regex, re, REG_EXTENDED);
-  if( err != 0) {
-    nerrmsg = regerror( err, &lsredis_key_select_regex, NULL, 0);
-    if( nerrmsg > 0) {
-      errmsg = calloc( nerrmsg, sizeof( char));
-      nerrmsg = regerror( err, &lsredis_key_select_regex, errmsg, nerrmsg);
-      lslogging_log_message( "lsredis_select: %s", errmsg);
-      free( errmsg);
-    }
-  }
-  
-  pthread_mutex_lock( &lsredis_ro_mutex);
-  redisAsyncCommand( roac, lsredis_keysCB, NULL, "KEYS *");
-  pthread_mutex_unlock( &lsredis_ro_mutex);
-}
-
 /** Initialize this module, that is, set up the connections
  *  \param pub  Publish under this (unique) name
  *  \param re   Regular expression to select keys we want to mirror
  *  \param head Prepend this (+ a dot) to the beginning of requested objects
  */
 void lsredis_init( char *pub, char *re, char *head) {
-
   int err;
+  int nerrmsg;
+  char *errmsg;
 
+  //
+  // set up hash map to store redis objects
+  //
   err = hcreate_r( 8192, &lsredis_htab);
   if( err == 0) {
     lslogging_log_message( "lsredis_init: Cannot create hash table.  Really bad things are going to happen.  hcreate_r returnd %d", err);
   }
 
-
-
-  lsredis_head = strdup( head);
+  lsredis_head      = strdup( head);
   lsredis_publisher = strdup( pub);
 
-  pthread_mutex_init( &lsredis_objs_mutex, NULL);
-  pthread_mutex_init( &lsredis_ro_mutex, NULL);
-  pthread_mutex_init( &lsredis_wr_mutex, NULL);
+  pthread_mutex_init( &lsredis_mutex, NULL);
+  pthread_cond_init( &lsredis_cond, NULL);
 
   subac = redisAsyncConnect("127.0.0.1", 6379);
   if( subac->err) {
@@ -832,7 +827,16 @@ void lsredis_init( char *pub, char *re, char *head) {
   wrac->ev.delWrite = lsredis_delWrite;
   wrac->ev.cleanup  = lsredis_cleanup;
 
-  lsredis_select( re);
+  err = regcomp( &lsredis_key_select_regex, re, REG_EXTENDED);
+  if( err != 0) {
+    nerrmsg = regerror( err, &lsredis_key_select_regex, NULL, 0);
+    if( nerrmsg > 0) {
+      errmsg = calloc( nerrmsg, sizeof( char));
+      nerrmsg = regerror( err, &lsredis_key_select_regex, errmsg, nerrmsg);
+      lslogging_log_message( "lsredis_select: %s", errmsg);
+      free( errmsg);
+    }
+  }
 }
 
 
@@ -841,6 +845,7 @@ void lsredis_init( char *pub, char *re, char *head) {
 /** service the socket requests
  */
 void lsredis_fd_service( struct pollfd *evt) {
+  pthread_mutex_lock( &lsredis_mutex);
   if( evt->fd == subac->c.fd) {
     if( evt->revents & POLLIN)
       redisAsyncHandleRead( subac);
@@ -859,28 +864,74 @@ void lsredis_fd_service( struct pollfd *evt) {
     if( evt->revents & POLLOUT)
       redisAsyncHandleWrite( wrac);
   }
+  pthread_mutex_unlock( &lsredis_mutex);
 }
 
+
+void lsredis_sig_service(
+		      struct pollfd *evt		/**< [in] The pollfd object that triggered this call	*/
+		      ) {
+  struct signalfd_siginfo fdsi;
+
+  //
+  // Really, we don't care about the signal,
+  // it's just used to drop out of the poll
+  // function when there is something for us
+  // to do.
+  //
+
+
+  read( evt->fd, &fdsi, sizeof( struct signalfd_siginfo));
+
+}
 
 /** subscribe to changes and service sockets
  */
 void *lsredis_worker(  void *dummy) {
-  static struct pollfd fda[3];		//!< array of pollfd's for the poll function, one entry per connection
+  static int poll_timeout_ms = 100;	//!< poll timeout, in millisecs (of course)
+  static struct pollfd fda[4];		//!< array of pollfd's for the poll function, one entry per connection
   static int nfda = 0;			//!< number of active elements in fda
-  static int poll_timeout_ms = -1;	//!< poll timeout, in millisecs (of course)
+  static sigset_t our_sigset;
   int pollrtn;
   int i;
+  int sigfd;
 
-  pthread_mutex_lock( &lsredis_ro_mutex);
-  if( redisAsyncCommand( subac, lsredis_subCB, NULL, "PSUBSCRIBE REDIS_KV_CONNECTOR UI*") == REDIS_ERR) {
+
+  pthread_mutex_lock( &lsredis_mutex);
+  //
+  // block ordinary signal mechanism
+  //
+  sigemptyset( &our_sigset);
+  sigaddset( &our_sigset, SIGUSR1);
+  pthread_sigmask( SIG_BLOCK, &our_sigset, NULL);
+
+  // Set up fd mechanism
+  //
+  fda[0].fd = signalfd( -1, &our_sigset, SFD_NONBLOCK);
+  if( fda[0].fd == -1) {
+    char *es;
+
+    es = strerror( errno);
+    lslogging_log_message( "lsredis_worker: Signalfd trouble '%s'", es);
+  }
+  fda[0].events = POLLIN;
+  nfda = 1;
+
+  lsredis_running = 1;
+
+  if( redisAsyncCommand( subac, lsredis_subCB, NULL, "PSUBSCRIBE REDIS_KV_CONNECTOR UI* MD2-*") == REDIS_ERR) {
     lslogging_log_message( "Error sending PSUBSCRIBE command");
   }
-  pthread_mutex_unlock( &lsredis_ro_mutex);
 
-  
+  redisAsyncCommand( roac, lsredis_keysCB, NULL, "KEYS *");
+  pthread_cond_signal( &lsredis_cond);
+  pthread_mutex_unlock( &lsredis_mutex);
+
+
   while(1) {
-    nfda = 0;
+    nfda = 1;
 
+    pthread_mutex_lock( &lsredis_mutex);
     if( subfd.fd != -1) {
       fda[nfda].fd      = subfd.fd;
       fda[nfda].events  = subfd.events;
@@ -901,10 +952,16 @@ void *lsredis_worker(  void *dummy) {
       fda[nfda].revents = 0;
       nfda++;
     }
+    pthread_mutex_unlock( &lsredis_mutex);
 
     pollrtn = poll( fda, nfda, poll_timeout_ms);
 
-    for( i=0; i<nfda; i++) {
+    if( pollrtn && fda[0].revents) {
+      lsredis_sig_service( &(fda[0]));
+      pollrtn--;
+    } 
+
+    for( i=1; i<nfda; i++) {
       if( fda[i].revents) {
         lsredis_fd_service( &(fda[i]));
       }

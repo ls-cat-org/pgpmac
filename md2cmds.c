@@ -747,8 +747,6 @@ void md2cmds_set_scale_cb( char *event) {
   vp = lsredis_getstr( p2);
   lsredis_setstr( p2, vp);
   free( vp);
-
-  lspg_query_push( NULL, "SELECT pmac.md2_set_scales( %d)", mag);
 }
 
 

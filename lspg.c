@@ -171,7 +171,7 @@ char **lspg_array2ptrs( char *a) {
   havebackslash = 0;
 
   // Despense with the null input condition before we complicate the code below
-  if( a == NULL || a[0] == 0)
+  if( a == NULL || a[0] != '{' || a[strlen(a)-1] != '}')
     return NULL;
 
   // Count the maximum number of strings
@@ -190,8 +190,7 @@ char **lspg_array2ptrs( char *a) {
   // This is the accumulation string to make up the array elements
   acums = (char *)calloc( mxsz, sizeof( char));
   if( acums == NULL) {
-    // TODO: print or otherwise log this condition
-    // out of memory
+    lslogging_log_message( "lspg_array2ptrs: out of memory (acums)");
     exit( 1);
   }
   
@@ -200,8 +199,7 @@ char **lspg_array2ptrs( char *a) {
   //
   rtn = (char **)calloc( n+1, sizeof( char *));
   if( rtn == NULL) {
-    // TODO: print or otherwise log this condition
-    // out of memory
+    lslogging_log_message( "lspg_array2ptrs: out of memory (rtn)");
     exit( 1);
   }
   rtni = 0;
@@ -209,11 +207,7 @@ char **lspg_array2ptrs( char *a) {
   // Go through and create the individual strings
   sp = acums;
   *sp = 0;
-  if( a[0] != '{') {
-    // oh no!  This isn't an array after all!
-    // Zounds!
-    return NULL;
-  }
+
   inquote = 0;
   havebackslash = 0;
   for( i=1; a[i] != 0; i++) {
@@ -260,6 +254,7 @@ char **lspg_array2ptrs( char *a) {
       } else {
 	rtn[rtni++] = strdup( acums);
 	rtn[rtni]   = NULL;
+	free( acums);
 	return( rtn);
       }
       break;
@@ -273,9 +268,11 @@ char **lspg_array2ptrs( char *a) {
   //
   // Getting here means the final '}' was missing
   // Probably we should throw an error or log it or something.
+  // Through out the last entry since this there is not resonable expectation that
+  // we should be parsing it anyway.
   //
-  rtn[rtni++] = strdup( acums);
   rtn[rtni]   = NULL;
+  free( acums);
   return( rtn);
 }
 
@@ -1403,7 +1400,7 @@ void *lspg_worker(
   //
   // block ordinary signal mechanism
   //
-  sigprocmask(SIG_BLOCK, &our_sigset, NULL);
+  pthread_sigmask(SIG_BLOCK, &our_sigset, NULL);
 
     
   fda[0].fd = signalfd( -1, &our_sigset, SFD_NONBLOCK);
@@ -1458,10 +1455,6 @@ void *lspg_worker(
       lspg_pg_service( &(fda[1]));
       pollrtn--;
     } 
-
-
-
-
   }
 }
 

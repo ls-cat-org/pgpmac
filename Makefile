@@ -5,7 +5,7 @@ VERSION= 0.2
 # All Rights Reserved
 #
 pgpmac: pgpmac.c pgpmac.h lspg.o lsredis.o lspmac.o md2cmds.o lslogging.o lsevents.o lstimer.o Makefile
-	gcc -g -pthread -o pgpmac pgpmac.c md2cmds.o lspmac.o lspg.o lsredis.o lslogging.o lsevents.o lstimer.o -lpq -lncurses -lpthread -lrt -lhiredis
+	gcc -g -pthread -o pgpmac pgpmac.c md2cmds.o lspmac.o lspg.o lsredis.o lslogging.o lsevents.o lstimer.o -lpq -lncurses -lpthread -lrt -lhiredis -lm
 
 dist:
 	ln -fs . ls-cat-pgpmac-$(VERSION)
