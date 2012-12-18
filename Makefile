@@ -1,4 +1,4 @@
-VERSION= 0.2
+VERSION= 0.3
 # 
 # Makefile for pgpmac project
 # (C) 2012 by Keith Brister and Northwesern University
