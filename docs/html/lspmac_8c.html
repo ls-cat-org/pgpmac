@@ -1251,7 +1251,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Helper funciton for the init calls. </p>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02369">2369</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02380">2380</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                                        {</div>
 <div class="line">  <a class="code" href="lspmac_8c.html#a56260f012c50a591ee7f97e500f16994" title="The number of motors we manage.">lspmac_nmotors</a>++;</div>
 <div class="line"></div>
@@ -1259,6 +1259,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 <div class="line">  pthread_cond_init(  &amp;(d-&gt;<a class="code" href="structlspmac__motor__struct.html#aa0ea4108b8fed5b41ff91ca7266f3d84" title="used to signal when a motor is done moving">cond</a>), NULL);</div>
 <div class="line"></div>
 <div class="line">  d-&gt;<a class="code" href="structlspmac__motor__struct.html#aa90af2f6f1489f1befe1d0891e51575a" title="Name of motor as refered by ls database kvs table.">name</a>                = strdup(name);</div>
+<div class="line">  d-&gt;<a class="code" href="structlspmac__motor__struct.html#af94a0b2611136058ead4948fd7c858e3" title="how we report our position to the world">redis_position</a>      = <a class="code" href="lsredis_8c.html#ad3bb3ebbae1ffbd03e062ecdd663cc6a">lsredis_get_obj</a>( <span class="stringliteral">&quot;%s.position&quot;</span>,          d-&gt;<a class="code" href="structlspmac__motor__struct.html#aa90af2f6f1489f1befe1d0891e51575a" title="Name of motor as refered by ls database kvs table.">name</a>);</div>
 <div class="line">  d-&gt;<a class="code" href="structlspmac__motor__struct.html#a8838915ebb6f9989944117c8197d5e86" title="conversion from counts to units: 0.0 means not loaded yet">u2c</a>                 = <a class="code" href="lsredis_8c.html#ad3bb3ebbae1ffbd03e062ecdd663cc6a">lsredis_get_obj</a>( <span class="stringliteral">&quot;%s.u2c&quot;</span>,               d-&gt;<a class="code" href="structlspmac__motor__struct.html#aa90af2f6f1489f1befe1d0891e51575a" title="Name of motor as refered by ls database kvs table.">name</a>);</div>
 <div class="line">  d-&gt;<a class="code" href="structlspmac__motor__struct.html#a25b13b65baf1b28c34012850809b0a3a" title="printf format">printf_fmt</a>          = <a class="code" href="lsredis_8c.html#ad3bb3ebbae1ffbd03e062ecdd663cc6a">lsredis_get_obj</a>( <span class="stringliteral">&quot;%s.printf&quot;</span>,            d-&gt;<a class="code" href="structlspmac__motor__struct.html#aa90af2f6f1489f1befe1d0891e51575a" title="Name of motor as refered by ls database kvs table.">name</a>);</div>
 <div class="line">  d-&gt;<a class="code" href="structlspmac__motor__struct.html#a91c38b2072d878b71f4e77de2f1375a4" title="special format string to create text array for putting the position back into redis">redis_fmt</a>           = <a class="code" href="lsredis_8c.html#ad3bb3ebbae1ffbd03e062ecdd663cc6a">lsredis_get_obj</a>( <span class="stringliteral">&quot;%s.format&quot;</span>,            d-&gt;<a class="code" href="structlspmac__motor__struct.html#aa90af2f6f1489f1befe1d0891e51575a" title="Name of motor as refered by ls database kvs table.">name</a>);</div>
@@ -1272,8 +1273,8 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 <div class="line">  d-&gt;<a class="code" href="structlspmac__motor__struct.html#aed4998885bcd5a2a30069637180f58e3" title="Use the motor (&quot;true&quot;) or not (&quot;false&quot;)">active</a>              = <a class="code" href="lsredis_8c.html#ad3bb3ebbae1ffbd03e062ecdd663cc6a">lsredis_get_obj</a>( <span class="stringliteral">&quot;%s.active&quot;</span>,            d-&gt;<a class="code" href="structlspmac__motor__struct.html#aa90af2f6f1489f1befe1d0891e51575a" title="Name of motor as refered by ls database kvs table.">name</a>);</div>
 <div class="line">  d-&gt;<a class="code" href="structlspmac__motor__struct.html#ac2a02f137e4a35db816bc728290d3558" title="pmac commands to make this motor active">active_init</a>         = <a class="code" href="lsredis_8c.html#ad3bb3ebbae1ffbd03e062ecdd663cc6a">lsredis_get_obj</a>( <span class="stringliteral">&quot;%s.active_init&quot;</span>,       d-&gt;<a class="code" href="structlspmac__motor__struct.html#aa90af2f6f1489f1befe1d0891e51575a" title="Name of motor as refered by ls database kvs table.">name</a>);</div>
 <div class="line">  d-&gt;<a class="code" href="structlspmac__motor__struct.html#ab329ce9b277eca9984c18417dece7bf7" title="pmac commands to inactivate the motor">inactive_init</a>       = <a class="code" href="lsredis_8c.html#ad3bb3ebbae1ffbd03e062ecdd663cc6a">lsredis_get_obj</a>( <span class="stringliteral">&quot;%s.inactive_init&quot;</span>,     d-&gt;<a class="code" href="structlspmac__motor__struct.html#aa90af2f6f1489f1befe1d0891e51575a" title="Name of motor as refered by ls database kvs table.">name</a>);</div>
-<div class="line"></div>
 <div class="line">  d-&gt;<a class="code" href="structlspmac__motor__struct.html#aefa84c7592369090eec8b211caaa3a51" title="Change needs to be at least this big to report as a new position to the database.">update_resolution</a>   = <a class="code" href="lsredis_8c.html#ad3bb3ebbae1ffbd03e062ecdd663cc6a">lsredis_get_obj</a>( <span class="stringliteral">&quot;%s.update_resolution&quot;</span>, d-&gt;<a class="code" href="structlspmac__motor__struct.html#aa90af2f6f1489f1befe1d0891e51575a" title="Name of motor as refered by ls database kvs table.">name</a>);</div>
+<div class="line">  d-&gt;<a class="code" href="structlspmac__motor__struct.html#aa0a6bed8379c5b1f90a4eb826cde9136" title="A talky version of the status.">status_str</a>          = <a class="code" href="lsredis_8c.html#ad3bb3ebbae1ffbd03e062ecdd663cc6a">lsredis_get_obj</a>( <span class="stringliteral">&quot;%s.status_str&quot;</span>,        d-&gt;<a class="code" href="structlspmac__motor__struct.html#aa90af2f6f1489f1befe1d0891e51575a" title="Name of motor as refered by ls database kvs table.">name</a>);</div>
 <div class="line">  d-&gt;<a class="code" href="structlspmac__motor__struct.html#a7b43671f7f3e06521f6cf91fb9ac707d" title="lookup table (instead of u2c)">lut</a>                 = NULL;</div>
 <div class="line">  d-&gt;<a class="code" href="structlspmac__motor__struct.html#a11cbc6f50c150ed446e9a901cf7cc12b" title="length of lut">nlut</a>                = 0;</div>
 <div class="line">  d-&gt;<a class="code" href="structlspmac__motor__struct.html#aa74108855693f94fc2ff76333c9fb6ac" title="Homing routine started.">homing</a>              = 0;</div>
@@ -1283,6 +1284,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 <div class="line">  d-&gt;<a class="code" href="structlspmac__motor__struct.html#a2b33ef6e12717459c1e9967cc6e659c6" title="Sectond 24 bit PMAC motor status word.">status2_p</a>           = NULL;</div>
 <div class="line">  d-&gt;<a class="code" href="structlspmac__motor__struct.html#a133775154b0e008f3a2fde6f53bc0eff" title="our ncurses window">win</a>                 = NULL;</div>
 <div class="line">  d-&gt;<a class="code" href="structlspmac__motor__struct.html#ac62692eb939c04ca35e939d1c3acfe8f" title="method to read the motor status and position">read</a>                = NULL;</div>
+<div class="line">  d-&gt;<a class="code" href="structlspmac__motor__struct.html#ae5f1f605a0f587500e627332ad4e5e7e" title="previous position reported to the database">reported_position</a>   = INFINITY;</div>
 <div class="line">}</div>
 </div><!-- fragment -->
 </div>
@@ -1485,7 +1487,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02671">2671</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02684">2684</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                            {</div>
 <div class="line">  <a class="code" href="lspmac_8c.html#a85d6eaa4b4a82bb3112574f458d1dc50" title="Back Light DAC.">blight</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a20db3de86854b627815b3d940555ea75" title="function to move the motor">moveAbs</a>( <a class="code" href="lspmac_8c.html#a85d6eaa4b4a82bb3112574f458d1dc50" title="Back Light DAC.">blight</a>, 0.0);</div>
 <div class="line">}</div>
@@ -1514,7 +1516,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02662">2662</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02675">2675</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                          {</div>
 <div class="line">  <span class="keywordtype">int</span> z;</div>
 <div class="line"></div>
@@ -1567,7 +1569,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Initialize binary input. </p>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02514">2514</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02527">2527</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                                                                                {</div>
 <div class="line">  <a class="code" href="lspmac_8c.html#a33c5ed169a5437cb59ab904ffa3e3ffe" title="number of active binary inputs">lspmac_nbis</a>++;</div>
 <div class="line">  pthread_mutex_init( &amp;(d-&gt;<a class="code" href="structlspmac__bi__struct.html#a58053a98fa4696b56d674e775b3b4690" title="so we don&#39;t get confused">mutex</a>), NULL);</div>
@@ -1595,11 +1597,10 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Set up lookup table for blight. </p>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02768">2768</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02783">2783</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                               {</div>
 <div class="line">  <span class="keywordtype">int</span> i;</div>
 <div class="line">  <a class="code" href="structlsredis__obj__struct.html" title="Redis Object Basic object whose value is sychronized with our redis db.">lsredis_obj_t</a> *p;</div>
-<div class="line">  <span class="keywordtype">double</span> *dp;</div>
 <div class="line"></div>
 <div class="line">  pthread_mutex_lock( &amp;<a class="code" href="lspmac_8c.html#a85d6eaa4b4a82bb3112574f458d1dc50" title="Back Light DAC.">blight</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>);</div>
 <div class="line"></div>
@@ -1610,17 +1611,21 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 <div class="line">    exit( -1);</div>
 <div class="line">  }</div>
 <div class="line"></div>
-<div class="line">  <span class="keywordflow">for</span>( i=0, dp = <a class="code" href="lspmac_8c.html#a85d6eaa4b4a82bb3112574f458d1dc50" title="Back Light DAC.">blight</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a7b43671f7f3e06521f6cf91fb9ac707d" title="lookup table (instead of u2c)">lut</a>; i&lt;blight-&gt;nlut; i++, dp += 2) {</div>
+<div class="line">  <a class="code" href="lspmac_8c.html#a85d6eaa4b4a82bb3112574f458d1dc50" title="Back Light DAC.">blight</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a7b43671f7f3e06521f6cf91fb9ac707d" title="lookup table (instead of u2c)">lut</a>[0] = 0;</div>
+<div class="line">  <a class="code" href="lspmac_8c.html#a85d6eaa4b4a82bb3112574f458d1dc50" title="Back Light DAC.">blight</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a7b43671f7f3e06521f6cf91fb9ac707d" title="lookup table (instead of u2c)">lut</a>[1] = 0;</div>
+<div class="line"></div>
+<div class="line">  <span class="keywordflow">for</span>( i=1; i&lt;<a class="code" href="lspmac_8c.html#a85d6eaa4b4a82bb3112574f458d1dc50" title="Back Light DAC.">blight</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a11cbc6f50c150ed446e9a901cf7cc12b" title="length of lut">nlut</a>; i++) {</div>
 <div class="line">    p = <a class="code" href="lsredis_8c.html#ad3bb3ebbae1ffbd03e062ecdd663cc6a">lsredis_get_obj</a>( <span class="stringliteral">&quot;cam.zoom.%d.LightIntensity&quot;</span>, i);</div>
 <div class="line">    <span class="keywordflow">if</span>( p==NULL || strlen( <a class="code" href="lsredis_8c.html#ac1994e56114b2315294527d76311f829" title="return a copy of the key&#39;s string value">lsredis_getstr</a>(p)) == 0) {</div>
 <div class="line">      free( <a class="code" href="lspmac_8c.html#a85d6eaa4b4a82bb3112574f458d1dc50" title="Back Light DAC.">blight</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a7b43671f7f3e06521f6cf91fb9ac707d" title="lookup table (instead of u2c)">lut</a>);</div>
+<div class="line">      <a class="code" href="lspmac_8c.html#a85d6eaa4b4a82bb3112574f458d1dc50" title="Back Light DAC.">blight</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a7b43671f7f3e06521f6cf91fb9ac707d" title="lookup table (instead of u2c)">lut</a> = NULL;</div>
 <div class="line">      <a class="code" href="lspmac_8c.html#a85d6eaa4b4a82bb3112574f458d1dc50" title="Back Light DAC.">blight</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a11cbc6f50c150ed446e9a901cf7cc12b" title="length of lut">nlut</a> = 0;</div>
 <div class="line">      pthread_mutex_unlock( &amp;<a class="code" href="lspmac_8c.html#a85d6eaa4b4a82bb3112574f458d1dc50" title="Back Light DAC.">blight</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>);</div>
 <div class="line">      <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lspmac_blight_lut_setup: cannot find MotorPosition element for cam.blight level %d&quot;</span>, i);</div>
 <div class="line">      <span class="keywordflow">return</span>;</div>
 <div class="line">    }</div>
-<div class="line">    *dp = i;</div>
-<div class="line">    *(dp+1) = 20000.0 * <a class="code" href="lsredis_8c.html#aa8daf63b794b6b6341018feec205cb7d">lsredis_getd</a>( p) / 100.0;</div>
+<div class="line">    <a class="code" href="lspmac_8c.html#a85d6eaa4b4a82bb3112574f458d1dc50" title="Back Light DAC.">blight</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a7b43671f7f3e06521f6cf91fb9ac707d" title="lookup table (instead of u2c)">lut</a>[2*i]   = i;</div>
+<div class="line">    <a class="code" href="lspmac_8c.html#a85d6eaa4b4a82bb3112574f458d1dc50" title="Back Light DAC.">blight</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a7b43671f7f3e06521f6cf91fb9ac707d" title="lookup table (instead of u2c)">lut</a>[2*i+1] = 20000.0 * <a class="code" href="lsredis_8c.html#aa8daf63b794b6b6341018feec205cb7d">lsredis_getd</a>( p) / 100.0;</div>
 <div class="line">  }</div>
 <div class="line">  pthread_mutex_unlock( &amp;<a class="code" href="lspmac_8c.html#a85d6eaa4b4a82bb3112574f458d1dc50" title="Back Light DAC.">blight</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>);</div>
 <div class="line">}</div>
@@ -1681,7 +1686,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02450">2450</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02463">2463</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                  {</div>
 <div class="line"></div>
 <div class="line">  <a class="code" href="lspmac_8c.html#afd005045e9cc3f4bb93d424fe50eb733" title="Helper funciton for the init calls.">_lspmac_motor_init</a>( d, name);</div>
@@ -1731,8 +1736,6 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 <div class="line">  changed = pos != mp-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>;</div>
 <div class="line">  mp-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a> = pos;</div>
 <div class="line"></div>
-<div class="line">  <span class="comment">// Not sure what kind of status makes sense to report</span></div>
-<div class="line">  mp-&gt;<a class="code" href="structlspmac__motor__struct.html#ae4a6f54a98e7758d66228efebe8f3baa" title="short text summarizing status">statuss</a>[0] = 0;</div>
 <div class="line">  pthread_mutex_unlock( &amp;(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));</div>
 <div class="line"></div>
 <div class="line">  <span class="keywordflow">if</span>( changed)</div>
@@ -1755,7 +1758,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02624">2624</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02637">2637</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                               {</div>
 <div class="line">  <span class="keywordtype">int</span> pos;</div>
 <div class="line"></div>
@@ -1823,7 +1826,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02476">2476</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02489">2489</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                  {</div>
 <div class="line"></div>
 <div class="line">  <a class="code" href="lspmac_8c.html#afd005045e9cc3f4bb93d424fe50eb733" title="Helper funciton for the init calls.">_lspmac_motor_init</a>( d, name);</div>
@@ -1859,7 +1862,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01040">1040</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01038">1038</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                       {</div>
 <div class="line">  <span class="keywordtype">int</span> pos;</div>
 <div class="line">  <span class="keywordtype">double</span> u2c;</div>
@@ -1879,9 +1882,6 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 <div class="line">      mp-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a> = mp-&gt;<a class="code" href="structlspmac__motor__struct.html#ae5c7aea45b9637a1817be246688fd980" title="local copy of actual counts so only our mutex is needed to read">actual_pos_cnts</a>;</div>
 <div class="line">    }</div>
 <div class="line">  }</div>
-<div class="line"></div>
-<div class="line">  <span class="comment">// Not sure what kind of status makes sense to report</span></div>
-<div class="line">  mp-&gt;<a class="code" href="structlspmac__motor__struct.html#ae4a6f54a98e7758d66228efebe8f3baa" title="short text summarizing status">statuss</a>[0] = 0;</div>
 <div class="line"></div>
 <div class="line">  pthread_mutex_unlock( &amp;(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));</div>
 <div class="line">}</div>
@@ -1952,11 +1952,10 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Set up lookup table for flight. </p>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02737">2737</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02750">2750</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                               {</div>
 <div class="line">  <span class="keywordtype">int</span> i;</div>
 <div class="line">  <a class="code" href="structlsredis__obj__struct.html" title="Redis Object Basic object whose value is sychronized with our redis db.">lsredis_obj_t</a> *p;</div>
-<div class="line">  <span class="keywordtype">double</span> *dp;</div>
 <div class="line"></div>
 <div class="line">  pthread_mutex_lock( &amp;<a class="code" href="lspmac_8c.html#aeb09895663eff333b7a75acb319a9fc1" title="Front Light DAC.">flight</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>);</div>
 <div class="line"></div>
@@ -1967,17 +1966,20 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 <div class="line">    exit( -1);</div>
 <div class="line">  }</div>
 <div class="line"></div>
-<div class="line">  <span class="keywordflow">for</span>( i=0, dp = <a class="code" href="lspmac_8c.html#aeb09895663eff333b7a75acb319a9fc1" title="Front Light DAC.">flight</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a7b43671f7f3e06521f6cf91fb9ac707d" title="lookup table (instead of u2c)">lut</a>; i&lt;flight-&gt;nlut; i++, dp += 2) {</div>
+<div class="line">  <a class="code" href="lspmac_8c.html#aeb09895663eff333b7a75acb319a9fc1" title="Front Light DAC.">flight</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a7b43671f7f3e06521f6cf91fb9ac707d" title="lookup table (instead of u2c)">lut</a>[0] = 0;</div>
+<div class="line">  <a class="code" href="lspmac_8c.html#aeb09895663eff333b7a75acb319a9fc1" title="Front Light DAC.">flight</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a7b43671f7f3e06521f6cf91fb9ac707d" title="lookup table (instead of u2c)">lut</a>[1] = 0;</div>
+<div class="line">  <span class="keywordflow">for</span>( i=1; i &lt; <a class="code" href="lspmac_8c.html#aeb09895663eff333b7a75acb319a9fc1" title="Front Light DAC.">flight</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a11cbc6f50c150ed446e9a901cf7cc12b" title="length of lut">nlut</a>; i++) {</div>
 <div class="line">    p = <a class="code" href="lsredis_8c.html#ad3bb3ebbae1ffbd03e062ecdd663cc6a">lsredis_get_obj</a>( <span class="stringliteral">&quot;cam.zoom.%d.FrontLightIntensity&quot;</span>, i);</div>
 <div class="line">    <span class="keywordflow">if</span>( p==NULL || strlen( <a class="code" href="lsredis_8c.html#ac1994e56114b2315294527d76311f829" title="return a copy of the key&#39;s string value">lsredis_getstr</a>(p)) == 0) {</div>
 <div class="line">      free( <a class="code" href="lspmac_8c.html#aeb09895663eff333b7a75acb319a9fc1" title="Front Light DAC.">flight</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a7b43671f7f3e06521f6cf91fb9ac707d" title="lookup table (instead of u2c)">lut</a>);</div>
+<div class="line">      <a class="code" href="lspmac_8c.html#aeb09895663eff333b7a75acb319a9fc1" title="Front Light DAC.">flight</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a7b43671f7f3e06521f6cf91fb9ac707d" title="lookup table (instead of u2c)">lut</a>  = NULL;</div>
 <div class="line">      <a class="code" href="lspmac_8c.html#aeb09895663eff333b7a75acb319a9fc1" title="Front Light DAC.">flight</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a11cbc6f50c150ed446e9a901cf7cc12b" title="length of lut">nlut</a> = 0;</div>
 <div class="line">      pthread_mutex_unlock( &amp;<a class="code" href="lspmac_8c.html#aeb09895663eff333b7a75acb319a9fc1" title="Front Light DAC.">flight</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>);</div>
 <div class="line">      <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lspmac_flight_lut_setup: cannot find MotorPosition element for cam.flight level %d&quot;</span>, i);</div>
 <div class="line">      <span class="keywordflow">return</span>;</div>
 <div class="line">    }</div>
-<div class="line">    *dp = i;</div>
-<div class="line">    *(dp+1) = 32767.0 * <a class="code" href="lsredis_8c.html#aa8daf63b794b6b6341018feec205cb7d">lsredis_getd</a>( p) / 100.0;</div>
+<div class="line">    <a class="code" href="lspmac_8c.html#aeb09895663eff333b7a75acb319a9fc1" title="Front Light DAC.">flight</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a7b43671f7f3e06521f6cf91fb9ac707d" title="lookup table (instead of u2c)">lut</a>[2*i]   = i;</div>
+<div class="line">    <a class="code" href="lspmac_8c.html#aeb09895663eff333b7a75acb319a9fc1" title="Front Light DAC.">flight</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a7b43671f7f3e06521f6cf91fb9ac707d" title="lookup table (instead of u2c)">lut</a>[2*i+1] = 32767.0 * <a class="code" href="lsredis_8c.html#aa8daf63b794b6b6341018feec205cb7d">lsredis_getd</a>( p) / 100.0;</div>
 <div class="line">  }</div>
 <div class="line">  pthread_mutex_unlock( &amp;<a class="code" href="lspmac_8c.html#aeb09895663eff333b7a75acb319a9fc1" title="Front Light DAC.">flight</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>);</div>
 <div class="line">}</div>
@@ -1999,10 +2001,9 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Set up lookup table for fscint. </p>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02799">2799</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02817">2817</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                               {</div>
 <div class="line">  <span class="keywordtype">int</span> i;</div>
-<div class="line">  <span class="keywordtype">double</span> *dp;</div>
 <div class="line"></div>
 <div class="line">  pthread_mutex_lock( &amp;<a class="code" href="lspmac_8c.html#a8a3ca6fcf5e24dcc26170736843e53b2" title="Scintillator Piezo DAC.">fscint</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>);</div>
 <div class="line"></div>
@@ -2013,9 +2014,9 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 <div class="line">    exit( -1);</div>
 <div class="line">  }</div>
 <div class="line"></div>
-<div class="line">  <span class="keywordflow">for</span>( i=0, dp = <a class="code" href="lspmac_8c.html#a8a3ca6fcf5e24dcc26170736843e53b2" title="Scintillator Piezo DAC.">fscint</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a7b43671f7f3e06521f6cf91fb9ac707d" title="lookup table (instead of u2c)">lut</a>; i&lt;fscint-&gt;nlut; i++, dp += 2) {</div>
-<div class="line">    *(dp)   = i;</div>
-<div class="line">    *(dp+1) = 320.0 * i;</div>
+<div class="line">  <span class="keywordflow">for</span>( i=0; i&lt;<a class="code" href="lspmac_8c.html#a8a3ca6fcf5e24dcc26170736843e53b2" title="Scintillator Piezo DAC.">fscint</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a11cbc6f50c150ed446e9a901cf7cc12b" title="length of lut">nlut</a>; i++) {</div>
+<div class="line">    <a class="code" href="lspmac_8c.html#a8a3ca6fcf5e24dcc26170736843e53b2" title="Scintillator Piezo DAC.">fscint</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a7b43671f7f3e06521f6cf91fb9ac707d" title="lookup table (instead of u2c)">lut</a>[2*i] = i;</div>
+<div class="line">    <a class="code" href="lspmac_8c.html#a8a3ca6fcf5e24dcc26170736843e53b2" title="Scintillator Piezo DAC.">fscint</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a7b43671f7f3e06521f6cf91fb9ac707d" title="lookup table (instead of u2c)">lut</a>[2*i+1] = 320.0 * i;</div>
 <div class="line">  }</div>
 <div class="line">  pthread_mutex_unlock( &amp;<a class="code" href="lspmac_8c.html#a8a3ca6fcf5e24dcc26170736843e53b2" title="Scintillator Piezo DAC.">fscint</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>);</div>
 <div class="line">}</div>
@@ -2044,7 +2045,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02434">2434</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02447">2447</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                    {</div>
 <div class="line"></div>
 <div class="line">  <a class="code" href="lspmac_8c.html#afd005045e9cc3f4bb93d424fe50eb733" title="Helper funciton for the init calls.">_lspmac_motor_init</a>( d, <span class="stringliteral">&quot;fastShutter&quot;</span>);</div>
@@ -2072,7 +2073,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Request a status update from the PMAC. </p>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01619">1619</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01630">1630</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                         {</div>
 <div class="line">  <a class="code" href="lspmac_8c.html#a1e472a11df3765763c2fe92dd358bf0c" title="Compose a packet and send it to the PMAC.">lspmac_send_command</a>( <a class="code" href="lspmac_8c.html#a5485d08fdc80533b5cebadff63696ed2">VR_UPLOAD</a>, <a class="code" href="lspmac_8c.html#af9c53e7c5b2681a5ca1c5410a914a2dc">VR_PMAC_GETMEM</a>, 0x400, 0, <span class="keyword">sizeof</span>(<a class="code" href="structmd2StatusStruct.html" title="The block of memory retrieved in a status request.">md2_status_t</a>), NULL, <a class="code" href="lspmac_8c.html#ad060fd55c9e2411fd4fd4e946aff23c6" title="Service routing for status upate This updates positions and status information.">lspmac_get_status_cb</a>, 0);</div>
 <div class="line">}</div>
@@ -2119,7 +2120,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01447">1447</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01458">1458</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                            {</div>
 <div class="line">  <span class="keyword">static</span> <span class="keywordtype">int</span> cnt = 0;</div>
 <div class="line">  <span class="keyword">static</span> <span class="keywordtype">char</span> s[256];</div>
@@ -2303,7 +2304,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Request the values of all the I variables. </p>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01644">1644</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01655">1655</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                          {</div>
 <div class="line">  <span class="keyword">static</span> <span class="keywordtype">char</span> *cmds = <span class="stringliteral">&quot;I0..8191&quot;</span>;</div>
 <div class="line">  <a class="code" href="lspmac_8c.html#a1e472a11df3765763c2fe92dd358bf0c" title="Compose a packet and send it to the PMAC.">lspmac_send_command</a>( <a class="code" href="lspmac_8c.html#af24ecdc10723dc8fd6320fef416ae514">VR_DOWNLOAD</a>, <a class="code" href="lspmac_8c.html#a772b2ea2ad93989ae4275c79a93525ee">VR_PMAC_SENDLINE</a>, 0, 0, strlen( cmds), cmds, <a class="code" href="lspmac_8c.html#add86d60f9d192563fc9a357dc90f7f75" title="Receive the values of all the I variables Update our Postgresql database with the results...">lspmac_GetAllIVarsCB</a>, 0);</div>
@@ -2351,7 +2352,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01627">1627</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01638">1638</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                            {</div>
 <div class="line">  <span class="keyword">static</span> <span class="keywordtype">char</span> qs[<a class="code" href="kvredis_8c.html#a3a8ef1b4b5994d6dd12bf74454ea891b">LS_PG_QUERY_STRING_LENGTH</a>];</div>
 <div class="line">  <span class="keywordtype">char</span> *sp;</div>
@@ -2380,7 +2381,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Request the values of all the M variables. </p>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01669">1669</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01680">1680</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                          {</div>
 <div class="line">  <span class="keyword">static</span> <span class="keywordtype">char</span> *cmds = <span class="stringliteral">&quot;M0..8191-&gt;&quot;</span>;</div>
 <div class="line">  <a class="code" href="lspmac_8c.html#a1e472a11df3765763c2fe92dd358bf0c" title="Compose a packet and send it to the PMAC.">lspmac_send_command</a>( <a class="code" href="lspmac_8c.html#af24ecdc10723dc8fd6320fef416ae514">VR_DOWNLOAD</a>, <a class="code" href="lspmac_8c.html#a772b2ea2ad93989ae4275c79a93525ee">VR_PMAC_SENDLINE</a>, 0, 0, strlen( cmds), cmds, <a class="code" href="lspmac_8c.html#ac585cd63a433c86843eb51b15017c3da" title="Receive the values of all the M variables Update our database with the results.">lspmac_GetAllMVarsCB</a>, 0);</div>
@@ -2428,7 +2429,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01652">1652</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01663">1663</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                            {</div>
 <div class="line">  <span class="keyword">static</span> <span class="keywordtype">char</span> qs[<a class="code" href="kvredis_8c.html#a3a8ef1b4b5994d6dd12bf74454ea891b">LS_PG_QUERY_STRING_LENGTH</a>];</div>
 <div class="line">  <span class="keywordtype">char</span> *sp;</div>
@@ -2542,7 +2543,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01236">1236</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01228">1228</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                               {</div>
 <div class="line">  <span class="keywordtype">double</span> rtn;</div>
 <div class="line">  pthread_mutex_lock( &amp;(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));</div>
@@ -2644,7 +2645,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01111">1111</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01103">1103</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                          {</div>
 <div class="line">  <span class="keywordtype">char</span> openloops[32];</div>
 <div class="line">  <span class="keywordtype">char</span> *sp;</div>
@@ -2742,7 +2743,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01189">1189</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01181">1181</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                          {</div>
 <div class="line"></div>
 <div class="line">  <span class="keywordtype">char</span> **spp;</div>
@@ -2820,7 +2821,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02528">2528</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02541">2541</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                   {</div>
 <div class="line">  <a class="code" href="structmd2StatusStruct.html" title="The block of memory retrieved in a status request.">md2_status_t</a> *p;</div>
 <div class="line"></div>
@@ -2948,7 +2949,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02291">2291</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02302">2302</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                            {</div>
 <div class="line">  </div>
 <div class="line">  <a class="code" href="lspmac_8c.html#a4ccd25a1a3a83cd7c9187975e52a9484" title="Move method for normal stepper and servo motor objects.">lspmac_move_or_jog_abs_queue</a>( mp, requested_position, 1);</div>
@@ -2978,7 +2979,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02678">2678</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02691">2691</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                        {</div>
 <div class="line">  <span class="keywordtype">double</span> z;</div>
 <div class="line"></div>
@@ -3177,7 +3178,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02405">2405</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02418">2418</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                    {</div>
 <div class="line"></div>
 <div class="line">  <a class="code" href="lspmac_8c.html#afd005045e9cc3f4bb93d424fe50eb733" title="Helper funciton for the init calls.">_lspmac_motor_init</a>( d, name);</div>
@@ -3242,7 +3243,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02143">2143</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02154">2154</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                            {</div>
 <div class="line">  <span class="keywordtype">char</span> s[512];                  </div>
 <div class="line">  <span class="keywordtype">int</span> q100;                     </div>
@@ -3397,7 +3398,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02261">2261</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02272">2272</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                       {</div>
 <div class="line">  <span class="keywordtype">double</span> pos;</div>
 <div class="line">  <span class="keywordtype">int</span> err;</div>
@@ -3447,7 +3448,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01928">1928</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01939">1939</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                                                      {</div>
 <div class="line">  <span class="keywordtype">double</span> pos;</div>
 <div class="line">  <span class="keywordtype">int</span> err;</div>
@@ -3488,7 +3489,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02092">2092</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02103">2103</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                                                         {</div>
 <div class="line">  <span class="keywordtype">char</span> *fmt;</div>
 <div class="line"></div>
@@ -3543,7 +3544,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01976">1976</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01987">1987</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                {</div>
 <div class="line"></div>
 <div class="line"></div>
@@ -3586,7 +3587,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02071">2071</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02082">2082</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                                                         {</div>
 <div class="line">  <span class="keywordtype">char</span> *fmt;</div>
 <div class="line"></div>
@@ -3636,7 +3637,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>"move" frontlight on/off </p>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02059">2059</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02070">2070</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                                                         {</div>
 <div class="line">  pthread_mutex_lock( &amp;(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));</div>
 <div class="line">  *mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a312047bb71def5cd2443fecd875eaea5" title="pointer to the md2_status structure to the actual position">actual_pos_cnts_p</a> = pos;</div>
@@ -3685,7 +3686,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01949">1949</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01960">1960</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                  {</div>
 <div class="line">  pthread_mutex_lock( &amp;(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));</div>
 <div class="line"></div>
@@ -3743,7 +3744,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02281">2281</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02292">2292</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                            {</div>
 <div class="line">  </div>
 <div class="line">  <a class="code" href="lspmac_8c.html#a4ccd25a1a3a83cd7c9187975e52a9484" title="Move method for normal stepper and servo motor objects.">lspmac_move_or_jog_abs_queue</a>( mp, requested_position, 0);</div>
@@ -3799,7 +3800,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 </dl>
 <p>&lt; Flags needed for wait routine </p>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02002">2002</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02013">2013</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                  {</div>
 <div class="line">  <span class="comment">// 240                LS-CAT Timed X move</span></div>
 <div class="line">  <span class="comment">//            Q10    = Starting X value (cnts)</span></div>
@@ -3875,7 +3876,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02303">2303</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02314">2314</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                           {</div>
 <div class="line">  <span class="keyword">struct </span>timespec wt;</div>
 <div class="line">  <span class="keywordtype">int</span> return_code;</div>
@@ -3973,7 +3974,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01858">1858</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01869">1869</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                            {</div>
 <div class="line">  <span class="keywordtype">char</span> s[512];</div>
 <div class="line">  <span class="keywordtype">double</span> y;</div>
@@ -4038,7 +4039,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01893">1893</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01904">1904</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                             {</div>
 <div class="line">  <span class="keywordtype">char</span> s[512];</div>
 <div class="line">  <span class="keywordtype">double</span> y;</div>
@@ -4084,7 +4085,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 <p>State machine logic. </p>
 <p>Given the current state, generate the next one </p>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01717">1717</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01728">1728</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                         {</div>
 <div class="line"></div>
 <div class="line"></div>
@@ -4213,13 +4214,16 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01247">1247</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01239">1239</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                             {</div>
 <div class="line">  <span class="keywordtype">char</span> s[512], *sp;</div>
 <div class="line">  <span class="keywordtype">int</span> homing1, homing2;</div>
 <div class="line">  <span class="keywordtype">double</span> u2c;</div>
 <div class="line">  <span class="keywordtype">int</span> motor_num;</div>
 <div class="line">  <span class="keywordtype">char</span> *fmt;</div>
+<div class="line">  <span class="keywordtype">int</span> status_changed;</div>
+<div class="line"></div>
+<div class="line"></div>
 <div class="line">  pthread_mutex_lock( &amp;(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));</div>
 <div class="line"></div>
 <div class="line">  <span class="comment">//</span></div>
@@ -4284,7 +4288,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 <div class="line">      <a class="code" href="lspmac_8c.html#ae6631a094accc469661805bdf80fc6d8" title="Time we believe that omega crossed zero.">omega_zero_time</a>.tv_nsec -= nsecs;</div>
 <div class="line"></div>
 <div class="line">      <a class="code" href="lsevents_8c.html#a5c6f122382dea3dcc231b772e5e75b46" title="Call the callback routines for the given event.">lsevents_send_event</a>( <span class="stringliteral">&quot;omega crossed zero&quot;</span>);</div>
-<div class="line">      <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>(<span class="stringliteral">&quot;lspmac_motor_read: omega zero secs %d  nsecs %d ozt.tv_sec %ld  ozt.tv_nsec  %ld, motor cnts %d&quot;</span>,</div>
+<div class="line">      <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>(<span class="stringliteral">&quot;lspmac_pmacmotor_read: omega zero secs %d  nsecs %d ozt.tv_sec %ld  ozt.tv_nsec  %ld, motor cnts %d&quot;</span>,</div>
 <div class="line">                            secs, nsecs, <a class="code" href="lspmac_8c.html#ae6631a094accc469661805bdf80fc6d8" title="Time we believe that omega crossed zero.">omega_zero_time</a>.tv_sec, <a class="code" href="lspmac_8c.html#ae6631a094accc469661805bdf80fc6d8" title="Time we believe that omega crossed zero.">omega_zero_time</a>.tv_nsec, *mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a312047bb71def5cd2443fecd875eaea5" title="pointer to the md2_status structure to the actual position">actual_pos_cnts_p</a>);</div>
 <div class="line">    }</div>
 <div class="line">    <a class="code" href="lspmac_8c.html#ae06d2291c1996ffb7dcf7d132e25b038" title="Indicate we&#39;d really like to know when omega crosses zero.">omega_zero_search</a> = 0;</div>
@@ -4294,8 +4298,13 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 <div class="line">  <span class="comment">// Make local copies so we can inspect them in other threads</span></div>
 <div class="line">  <span class="comment">// without having to grab the status mutex</span></div>
 <div class="line">  <span class="comment">//</span></div>
-<div class="line">  mp-&gt;<a class="code" href="structlspmac__motor__struct.html#acb52b612b9237e8eec0b97fb1e76a35d" title="local copy of status1">status1</a> = *mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a56c41875faf19c643e97c10519e6eb8c" title="First 24 bit PMAC motor status word.">status1_p</a>;</div>
-<div class="line">  mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a6a412224c09268c1dc92de9c2a1a2512" title="local copy of status2">status2</a> = *mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a2b33ef6e12717459c1e9967cc6e659c6" title="Sectond 24 bit PMAC motor status word.">status2_p</a>;</div>
+<div class="line">  <span class="keywordflow">if</span>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#acb52b612b9237e8eec0b97fb1e76a35d" title="local copy of status1">status1</a> != *mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a56c41875faf19c643e97c10519e6eb8c" title="First 24 bit PMAC motor status word.">status1_p</a> || mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a6a412224c09268c1dc92de9c2a1a2512" title="local copy of status2">status2</a> != *mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a2b33ef6e12717459c1e9967cc6e659c6" title="Sectond 24 bit PMAC motor status word.">status2_p</a>) {</div>
+<div class="line">    mp-&gt;<a class="code" href="structlspmac__motor__struct.html#acb52b612b9237e8eec0b97fb1e76a35d" title="local copy of status1">status1</a> = *mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a56c41875faf19c643e97c10519e6eb8c" title="First 24 bit PMAC motor status word.">status1_p</a>;</div>
+<div class="line">    mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a6a412224c09268c1dc92de9c2a1a2512" title="local copy of status2">status2</a> = *mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a2b33ef6e12717459c1e9967cc6e659c6" title="Sectond 24 bit PMAC motor status word.">status2_p</a>;</div>
+<div class="line">    status_changed = 1;</div>
+<div class="line">  } <span class="keywordflow">else</span> {</div>
+<div class="line">    status_changed = 0;</div>
+<div class="line">  }</div>
 <div class="line">  mp-&gt;<a class="code" href="structlspmac__motor__struct.html#ae5c7aea45b9637a1817be246688fd980" title="local copy of actual counts so only our mutex is needed to read">actual_pos_cnts</a> = *mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a312047bb71def5cd2443fecd875eaea5" title="pointer to the md2_status structure to the actual position">actual_pos_cnts_p</a>;</div>
 <div class="line"></div>
 <div class="line">  <span class="comment">//</span></div>
@@ -4335,8 +4344,16 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 <div class="line">    }</div>
 <div class="line">  }</div>
 <div class="line"></div>
+<div class="line">  <span class="keywordflow">if</span>( fabs(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#ae5f1f605a0f587500e627332ad4e5e7e" title="previous position reported to the database">reported_position</a> - mp-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>) &gt;= <a class="code" href="lsredis_8c.html#aa8daf63b794b6b6341018feec205cb7d">lsredis_getd</a>(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#aefa84c7592369090eec8b211caaa3a51" title="Change needs to be at least this big to report as a new position to the database.">update_resolution</a>)) {</div>
+<div class="line">    fmt = <a class="code" href="lsredis_8c.html#ac1994e56114b2315294527d76311f829" title="return a copy of the key&#39;s string value">lsredis_getstr</a>(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a91c38b2072d878b71f4e77de2f1375a4" title="special format string to create text array for putting the position back into redis">redis_fmt</a>);</div>
+<div class="line">    <a class="code" href="lsredis_8c.html#a9b9c64f883c7ded60badfe89cb15fa78" title="Set the value and update redis.">lsredis_setstr</a>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#af94a0b2611136058ead4948fd7c858e3" title="how we report our position to the world">redis_position</a>, fmt, mp-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>);</div>
+<div class="line">    free(fmt);</div>
+<div class="line">    mp-&gt;<a class="code" href="structlspmac__motor__struct.html#ae5f1f605a0f587500e627332ad4e5e7e" title="previous position reported to the database">reported_position</a> = mp-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>;</div>
+<div class="line">  }</div>
+<div class="line"></div>
 <div class="line">  fmt = <a class="code" href="lsredis_8c.html#ac1994e56114b2315294527d76311f829" title="return a copy of the key&#39;s string value">lsredis_getstr</a>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a25b13b65baf1b28c34012850809b0a3a" title="printf format">printf_fmt</a>);</div>
 <div class="line">  snprintf( s, <span class="keyword">sizeof</span>(s)-1, fmt, 8, mp-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a>);</div>
+<div class="line">  s[<span class="keyword">sizeof</span>(s)-1] = 0;</div>
 <div class="line">  free( fmt);</div>
 <div class="line"></div>
 <div class="line">  <span class="comment">// set flag if we are not homed</span></div>
@@ -4361,41 +4378,44 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 <div class="line">  s[<span class="keyword">sizeof</span>(s)-1] = 0;</div>
 <div class="line">  mvwprintw( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a133775154b0e008f3a2fde6f53bc0eff" title="our ncurses window">win</a>, 3, 1, <span class="stringliteral">&quot;%*s&quot;</span>, <a class="code" href="pgpmac_8h.html#a1f96754f00a1f82414cebc66f75ded78" title="Number of status box columns.">LS_DISPLAY_WINDOW_WIDTH</a>-6, s);</div>
 <div class="line"></div>
-<div class="line">  mvwprintw( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a133775154b0e008f3a2fde6f53bc0eff" title="our ncurses window">win</a>, 4, 1, <span class="stringliteral">&quot;%*x&quot;</span>, <a class="code" href="pgpmac_8h.html#a1f96754f00a1f82414cebc66f75ded78" title="Number of status box columns.">LS_DISPLAY_WINDOW_WIDTH</a>-2, mp-&gt;<a class="code" href="structlspmac__motor__struct.html#acb52b612b9237e8eec0b97fb1e76a35d" title="local copy of status1">status1</a>);</div>
-<div class="line">  mvwprintw( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a133775154b0e008f3a2fde6f53bc0eff" title="our ncurses window">win</a>, 5, 1, <span class="stringliteral">&quot;%*x&quot;</span>, <a class="code" href="pgpmac_8h.html#a1f96754f00a1f82414cebc66f75ded78" title="Number of status box columns.">LS_DISPLAY_WINDOW_WIDTH</a>-2, mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a6a412224c09268c1dc92de9c2a1a2512" title="local copy of status2">status2</a>);</div>
-<div class="line">  sp = <span class="stringliteral">&quot;&quot;</span>;</div>
-<div class="line">  <span class="keywordflow">if</span>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a6a412224c09268c1dc92de9c2a1a2512" title="local copy of status2">status2</a> &amp; 0x000002)</div>
-<div class="line">    sp = <span class="stringliteral">&quot;Following Warning&quot;</span>;</div>
-<div class="line">  <span class="keywordflow">else</span> <span class="keywordflow">if</span>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a6a412224c09268c1dc92de9c2a1a2512" title="local copy of status2">status2</a> &amp; 0x000004)</div>
-<div class="line">    sp = <span class="stringliteral">&quot;Following Error&quot;</span>;</div>
-<div class="line">  <span class="keywordflow">else</span> <span class="keywordflow">if</span>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a6a412224c09268c1dc92de9c2a1a2512" title="local copy of status2">status2</a> &amp; 0x000020)</div>
-<div class="line">    sp = <span class="stringliteral">&quot;I2T Amp Fault&quot;</span>;</div>
-<div class="line">  <span class="keywordflow">else</span> <span class="keywordflow">if</span>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a6a412224c09268c1dc92de9c2a1a2512" title="local copy of status2">status2</a> &amp; 0x000008)</div>
-<div class="line">    sp = <span class="stringliteral">&quot;Amp. Fault&quot;</span>;</div>
-<div class="line">  <span class="keywordflow">else</span> <span class="keywordflow">if</span>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a6a412224c09268c1dc92de9c2a1a2512" title="local copy of status2">status2</a> &amp; 0x000800)</div>
-<div class="line">    sp = <span class="stringliteral">&quot;Stopped on Limit&quot;</span>;</div>
-<div class="line">  <span class="keywordflow">else</span> <span class="keywordflow">if</span>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#acb52b612b9237e8eec0b97fb1e76a35d" title="local copy of status1">status1</a> &amp; 0x040000)</div>
-<div class="line">    sp = <span class="stringliteral">&quot;Open Loop&quot;</span>;</div>
-<div class="line">  <span class="keywordflow">else</span> <span class="keywordflow">if</span>( ~(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#acb52b612b9237e8eec0b97fb1e76a35d" title="local copy of status1">status1</a>) &amp; 0x080000)</div>
-<div class="line">    sp = <span class="stringliteral">&quot;Motor Disabled&quot;</span>;</div>
-<div class="line">  <span class="keywordflow">else</span> <span class="keywordflow">if</span>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#acb52b612b9237e8eec0b97fb1e76a35d" title="local copy of status1">status1</a> &amp; 0x000400)</div>
-<div class="line">    sp = <span class="stringliteral">&quot;Homing&quot;</span>;</div>
-<div class="line">  <span class="keywordflow">else</span> <span class="keywordflow">if</span>( (mp-&gt;<a class="code" href="structlspmac__motor__struct.html#acb52b612b9237e8eec0b97fb1e76a35d" title="local copy of status1">status1</a> &amp; 0x600000) == 0x600000)</div>
-<div class="line">    sp = <span class="stringliteral">&quot;Both Limits Tripped&quot;</span>;</div>
-<div class="line">  <span class="keywordflow">else</span> <span class="keywordflow">if</span>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#acb52b612b9237e8eec0b97fb1e76a35d" title="local copy of status1">status1</a> &amp; 0x200000)</div>
-<div class="line">    sp = <span class="stringliteral">&quot;Positive Limit&quot;</span>;</div>
-<div class="line">  <span class="keywordflow">else</span> <span class="keywordflow">if</span>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#acb52b612b9237e8eec0b97fb1e76a35d" title="local copy of status1">status1</a> &amp; 0x400000)</div>
-<div class="line">    sp = <span class="stringliteral">&quot;Negative Limit&quot;</span>;</div>
-<div class="line">  <span class="keywordflow">else</span> <span class="keywordflow">if</span>( ~(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a6a412224c09268c1dc92de9c2a1a2512" title="local copy of status2">status2</a>) &amp; 0x000400)</div>
-<div class="line">    sp = <span class="stringliteral">&quot;Not Homed&quot;</span>;</div>
-<div class="line">  <span class="keywordflow">else</span> <span class="keywordflow">if</span>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a6a412224c09268c1dc92de9c2a1a2512" title="local copy of status2">status2</a> &amp; 0x000001)</div>
-<div class="line">    sp = <span class="stringliteral">&quot;In Position&quot;</span>;</div>
+<div class="line">  <span class="keywordflow">if</span>( status_changed) {</div>
+<div class="line">    mvwprintw( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a133775154b0e008f3a2fde6f53bc0eff" title="our ncurses window">win</a>, 4, 1, <span class="stringliteral">&quot;%*x&quot;</span>, <a class="code" href="pgpmac_8h.html#a1f96754f00a1f82414cebc66f75ded78" title="Number of status box columns.">LS_DISPLAY_WINDOW_WIDTH</a>-2, mp-&gt;<a class="code" href="structlspmac__motor__struct.html#acb52b612b9237e8eec0b97fb1e76a35d" title="local copy of status1">status1</a>);</div>
+<div class="line">    mvwprintw( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a133775154b0e008f3a2fde6f53bc0eff" title="our ncurses window">win</a>, 5, 1, <span class="stringliteral">&quot;%*x&quot;</span>, <a class="code" href="pgpmac_8h.html#a1f96754f00a1f82414cebc66f75ded78" title="Number of status box columns.">LS_DISPLAY_WINDOW_WIDTH</a>-2, mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a6a412224c09268c1dc92de9c2a1a2512" title="local copy of status2">status2</a>);</div>
+<div class="line">    sp = <span class="stringliteral">&quot;&quot;</span>;</div>
+<div class="line">    <span class="keywordflow">if</span>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a6a412224c09268c1dc92de9c2a1a2512" title="local copy of status2">status2</a> &amp; 0x000002)</div>
+<div class="line">      sp = <span class="stringliteral">&quot;Following Warning&quot;</span>;</div>
+<div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a6a412224c09268c1dc92de9c2a1a2512" title="local copy of status2">status2</a> &amp; 0x000004)</div>
+<div class="line">      sp = <span class="stringliteral">&quot;Following Error&quot;</span>;</div>
+<div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a6a412224c09268c1dc92de9c2a1a2512" title="local copy of status2">status2</a> &amp; 0x000020)</div>
+<div class="line">      sp = <span class="stringliteral">&quot;I2T Amp Fault&quot;</span>;</div>
+<div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a6a412224c09268c1dc92de9c2a1a2512" title="local copy of status2">status2</a> &amp; 0x000008)</div>
+<div class="line">      sp = <span class="stringliteral">&quot;Amp. Fault&quot;</span>;</div>
+<div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a6a412224c09268c1dc92de9c2a1a2512" title="local copy of status2">status2</a> &amp; 0x000800)</div>
+<div class="line">      sp = <span class="stringliteral">&quot;Stopped on Limit&quot;</span>;</div>
+<div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#acb52b612b9237e8eec0b97fb1e76a35d" title="local copy of status1">status1</a> &amp; 0x040000)</div>
+<div class="line">      sp = <span class="stringliteral">&quot;Open Loop&quot;</span>;</div>
+<div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span>( ~(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#acb52b612b9237e8eec0b97fb1e76a35d" title="local copy of status1">status1</a>) &amp; 0x080000)</div>
+<div class="line">      sp = <span class="stringliteral">&quot;Motor Disabled&quot;</span>;</div>
+<div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#acb52b612b9237e8eec0b97fb1e76a35d" title="local copy of status1">status1</a> &amp; 0x000400)</div>
+<div class="line">      sp = <span class="stringliteral">&quot;Homing&quot;</span>;</div>
+<div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span>( (mp-&gt;<a class="code" href="structlspmac__motor__struct.html#acb52b612b9237e8eec0b97fb1e76a35d" title="local copy of status1">status1</a> &amp; 0x600000) == 0x600000)</div>
+<div class="line">      sp = <span class="stringliteral">&quot;Both Limits Tripped&quot;</span>;</div>
+<div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#acb52b612b9237e8eec0b97fb1e76a35d" title="local copy of status1">status1</a> &amp; 0x200000)</div>
+<div class="line">      sp = <span class="stringliteral">&quot;Positive Limit&quot;</span>;</div>
+<div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#acb52b612b9237e8eec0b97fb1e76a35d" title="local copy of status1">status1</a> &amp; 0x400000)</div>
+<div class="line">      sp = <span class="stringliteral">&quot;Negative Limit&quot;</span>;</div>
+<div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span>( ~(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a6a412224c09268c1dc92de9c2a1a2512" title="local copy of status2">status2</a>) &amp; 0x000400)</div>
+<div class="line">      sp = <span class="stringliteral">&quot;Not Homed&quot;</span>;</div>
+<div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#acb52b612b9237e8eec0b97fb1e76a35d" title="local copy of status1">status1</a> &amp; 0x020000)</div>
+<div class="line">      sp = <span class="stringliteral">&quot;Moving&quot;</span>;</div>
+<div class="line">    <span class="keywordflow">else</span> <span class="keywordflow">if</span>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a6a412224c09268c1dc92de9c2a1a2512" title="local copy of status2">status2</a> &amp; 0x000001)</div>
+<div class="line">      sp = <span class="stringliteral">&quot;In Position&quot;</span>;</div>
 <div class="line"></div>
-<div class="line">  mvwprintw( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a133775154b0e008f3a2fde6f53bc0eff" title="our ncurses window">win</a>, 6, 1, <span class="stringliteral">&quot;%*s&quot;</span>, <a class="code" href="pgpmac_8h.html#a1f96754f00a1f82414cebc66f75ded78" title="Number of status box columns.">LS_DISPLAY_WINDOW_WIDTH</a>-2, sp);</div>
-<div class="line">  wnoutrefresh( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a133775154b0e008f3a2fde6f53bc0eff" title="our ncurses window">win</a>);</div>
+<div class="line">    mvwprintw( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a133775154b0e008f3a2fde6f53bc0eff" title="our ncurses window">win</a>, 6, 1, <span class="stringliteral">&quot;%*s&quot;</span>, <a class="code" href="pgpmac_8h.html#a1f96754f00a1f82414cebc66f75ded78" title="Number of status box columns.">LS_DISPLAY_WINDOW_WIDTH</a>-2, sp);</div>
 <div class="line">  </div>
-<div class="line">  strncpy( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#ae4a6f54a98e7758d66228efebe8f3baa" title="short text summarizing status">statuss</a>, sp, <span class="keyword">sizeof</span>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#ae4a6f54a98e7758d66228efebe8f3baa" title="short text summarizing status">statuss</a>)-1);</div>
-<div class="line">  mp-&gt;<a class="code" href="structlspmac__motor__struct.html#ae4a6f54a98e7758d66228efebe8f3baa" title="short text summarizing status">statuss</a>[<span class="keyword">sizeof</span>(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#ae4a6f54a98e7758d66228efebe8f3baa" title="short text summarizing status">statuss</a>)-1] = 0;</div>
+<div class="line">    <a class="code" href="lsredis_8c.html#a9b9c64f883c7ded60badfe89cb15fa78" title="Set the value and update redis.">lsredis_setstr</a>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#aa0a6bed8379c5b1f90a4eb826cde9136" title="A talky version of the status.">status_str</a>, sp);</div>
+<div class="line">  }</div>
+<div class="line">  wnoutrefresh( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a133775154b0e008f3a2fde6f53bc0eff" title="our ncurses window">win</a>);</div>
 <div class="line"></div>
 <div class="line">  pthread_mutex_unlock( &amp;(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>));</div>
 <div class="line"></div>
@@ -4647,7 +4667,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Start up the lspmac thread. </p>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02822">2822</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02839">2839</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                  {</div>
 <div class="line">  <span class="keywordtype">char</span> **inits;</div>
 <div class="line">  <a class="code" href="structlspmac__motor__struct.html" title="Motor information.">lspmac_motor_t</a> *mp;</div>
@@ -4732,7 +4752,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02698">2698</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02711">2711</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                         {</div>
 <div class="line">  <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lspmac_scint_dried_cb: Stopping dryer&quot;</span>);</div>
 <div class="line">  <a class="code" href="lspmac_8c.html#a9d9c5030d817483ca9518027c91adac4" title="blow air on the scintilator to dry it off">dryer</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a20db3de86854b627815b3d940555ea75" title="function to move the motor">moveAbs</a>( <a class="code" href="lspmac_8c.html#a9d9c5030d817483ca9518027c91adac4" title="blow air on the scintilator to dry it off">dryer</a>, 0.0);</div>
@@ -4762,7 +4782,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02637">2637</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02650">2650</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                              {</div>
 <div class="line">  <span class="keywordtype">double</span> pos;</div>
 <div class="line">  <span class="keywordtype">double</span> cover;</div>
@@ -4943,7 +4963,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01697">1697</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01708">1708</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                          {</div>
 <div class="line">  <span class="keyword">static</span> <span class="keywordtype">char</span> tmps[1024];</div>
 <div class="line">  va_list arg_ptr;</div>
@@ -4990,7 +5010,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01678">1678</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01689">1689</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                           {</div>
 <div class="line">  <span class="keyword">static</span> <span class="keywordtype">char</span> tmps[1024];</div>
 <div class="line">  va_list arg_ptr;</div>
@@ -5165,7 +5185,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 <div class="line">      receiveBufferSize += 1400;</div>
 <div class="line">      newbuff = calloc( receiveBufferSize, <span class="keyword">sizeof</span>( <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>));</div>
 <div class="line">      <span class="keywordflow">if</span>( newbuff == NULL) {</div>
-<div class="line">        <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;Out of memory&quot;</span>);</div>
+<div class="line">        <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lspmac_Service: Out of memory&quot;</span>);</div>
 <div class="line">        exit( -1);</div>
 <div class="line">      }</div>
 <div class="line">      <span class="keywordflow">if</span>( receiveBuffer != NULL) {</div>
@@ -5284,7 +5304,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01074">1074</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01069">1069</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                           {</div>
 <div class="line">  <span class="comment">//</span></div>
 <div class="line">  <span class="comment">// track the shutter state and signal if it has changed</span></div>
@@ -5311,9 +5331,6 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 <div class="line">    mvwprintw( <a class="code" href="pgpmac_8c.html#ae2d7da3afeb756716e6e4ee9cab78f8a" title="shutter, lamp, air, etc status">term_status2</a>, 1, 1, <span class="stringliteral">&quot;Shutter Closed&quot;</span>);</div>
 <div class="line">    mp-&gt;<a class="code" href="structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411" title="scaled position">position</a> = 0;</div>
 <div class="line">  }</div>
-<div class="line"></div>
-<div class="line">  <span class="comment">// Not sure what kind of status makes sense to report</span></div>
-<div class="line">  mp-&gt;<a class="code" href="structlspmac__motor__struct.html#ae4a6f54a98e7758d66228efebe8f3baa" title="short text summarizing status">statuss</a>[0] = 0;</div>
 <div class="line"></div>
 <div class="line">  pthread_mutex_unlock( &amp;<a class="code" href="lspmac_8c.html#a1b78a13c654409333569815e1c109d38" title="Coordinates threads reading shutter status.">lspmac_shutter_mutex</a>);</div>
 <div class="line">}</div>
@@ -5542,7 +5559,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02501">2501</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02514">2514</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                                                                                                  {</div>
 <div class="line"></div>
 <div class="line">  <a class="code" href="lspmac_8c.html#afd005045e9cc3f4bb93d424fe50eb733" title="Helper funciton for the init calls.">_lspmac_motor_init</a>( d, name);</div>
@@ -5571,7 +5588,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Dummy routine to read a soft motor. </p>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02496">2496</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02509">2509</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                                {</div>
 <div class="line"></div>
 <div class="line">}</div>
@@ -5594,7 +5611,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Special motion program to collect centering video. </p>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02114">2114</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02125">2125</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                       {</div>
 <div class="line">  <span class="keywordtype">double</span> q10;           <span class="comment">// starting position (counts)</span></div>
 <div class="line">  <span class="keywordtype">double</span> q11;           <span class="comment">// delta counts</span></div>
@@ -5645,7 +5662,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01824">1824</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l01835">1835</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                      {</div>
 <div class="line"></div>
 <div class="line">  <span class="keywordflow">while</span>( 1) {</div>
@@ -5689,11 +5706,10 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 
 <p>Set up lookup table for zoom. </p>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02706">2706</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02719">2719</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                             {</div>
 <div class="line">  <span class="keywordtype">int</span> i;</div>
 <div class="line">  <a class="code" href="structlsredis__obj__struct.html" title="Redis Object Basic object whose value is sychronized with our redis db.">lsredis_obj_t</a> *p;</div>
-<div class="line">  <span class="keywordtype">double</span> *dp;</div>
 <div class="line"></div>
 <div class="line">  pthread_mutex_lock( &amp;<a class="code" href="lspmac_8c.html#ad53a42cfaa04eff0336a44c8c9986333" title="Optical zoom.">zoom</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>);</div>
 <div class="line"></div>
@@ -5704,17 +5720,18 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 <div class="line">    exit( -1);</div>
 <div class="line">  }</div>
 <div class="line"></div>
-<div class="line">  <span class="keywordflow">for</span>( i=1, dp = <a class="code" href="lspmac_8c.html#ad53a42cfaa04eff0336a44c8c9986333" title="Optical zoom.">zoom</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a7b43671f7f3e06521f6cf91fb9ac707d" title="lookup table (instead of u2c)">lut</a>; i&lt;=zoom-&gt;nlut; i++, dp += 2) {</div>
-<div class="line">    p = <a class="code" href="lsredis_8c.html#ad3bb3ebbae1ffbd03e062ecdd663cc6a">lsredis_get_obj</a>( <span class="stringliteral">&quot;cam.zoom.%d.MotorPosition&quot;</span>, i);</div>
+<div class="line">  <span class="keywordflow">for</span>( i=0; i &lt; <a class="code" href="lspmac_8c.html#ad53a42cfaa04eff0336a44c8c9986333" title="Optical zoom.">zoom</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a11cbc6f50c150ed446e9a901cf7cc12b" title="length of lut">nlut</a>; i++) {</div>
+<div class="line">    p = <a class="code" href="lsredis_8c.html#ad3bb3ebbae1ffbd03e062ecdd663cc6a">lsredis_get_obj</a>( <span class="stringliteral">&quot;cam.zoom.%d.MotorPosition&quot;</span>, i+1);</div>
 <div class="line">    <span class="keywordflow">if</span>( p==NULL || strlen( <a class="code" href="lsredis_8c.html#ac1994e56114b2315294527d76311f829" title="return a copy of the key&#39;s string value">lsredis_getstr</a>(p)) == 0) {</div>
 <div class="line">      free( <a class="code" href="lspmac_8c.html#ad53a42cfaa04eff0336a44c8c9986333" title="Optical zoom.">zoom</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a7b43671f7f3e06521f6cf91fb9ac707d" title="lookup table (instead of u2c)">lut</a>);</div>
+<div class="line">      <a class="code" href="lspmac_8c.html#ad53a42cfaa04eff0336a44c8c9986333" title="Optical zoom.">zoom</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a7b43671f7f3e06521f6cf91fb9ac707d" title="lookup table (instead of u2c)">lut</a>  = NULL;</div>
 <div class="line">      <a class="code" href="lspmac_8c.html#ad53a42cfaa04eff0336a44c8c9986333" title="Optical zoom.">zoom</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a11cbc6f50c150ed446e9a901cf7cc12b" title="length of lut">nlut</a> = 0;</div>
 <div class="line">      pthread_mutex_unlock( &amp;<a class="code" href="lspmac_8c.html#ad53a42cfaa04eff0336a44c8c9986333" title="Optical zoom.">zoom</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>);</div>
-<div class="line">      <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lspmac_zoom_lut_setup: cannot find MotorPosition element for cam.zoom level %d&quot;</span>, i);</div>
+<div class="line">      <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lspmac_zoom_lut_setup: cannot find MotorPosition element for cam.zoom level %d&quot;</span>, i+1);</div>
 <div class="line">      <span class="keywordflow">return</span>;</div>
 <div class="line">    }</div>
-<div class="line">    *dp = i;</div>
-<div class="line">    *(dp+1) = <a class="code" href="lsredis_8c.html#aa8daf63b794b6b6341018feec205cb7d">lsredis_getd</a>( p);</div>
+<div class="line">    <a class="code" href="lspmac_8c.html#ad53a42cfaa04eff0336a44c8c9986333" title="Optical zoom.">zoom</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a7b43671f7f3e06521f6cf91fb9ac707d" title="lookup table (instead of u2c)">lut</a>[2*i]   = i+1;</div>
+<div class="line">    <a class="code" href="lspmac_8c.html#ad53a42cfaa04eff0336a44c8c9986333" title="Optical zoom.">zoom</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a7b43671f7f3e06521f6cf91fb9ac707d" title="lookup table (instead of u2c)">lut</a>[2*i+1] = <a class="code" href="lsredis_8c.html#aa8daf63b794b6b6341018feec205cb7d">lsredis_getd</a>( p);</div>
 <div class="line">  }</div>
 <div class="line">  pthread_mutex_unlock( &amp;<a class="code" href="lspmac_8c.html#ad53a42cfaa04eff0336a44c8c9986333" title="Optical zoom.">zoom</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>);</div>
 <div class="line">}</div>
@@ -6968,7 +6985,7 @@ pmac_time_sent&#160;</td><td class="memItemRight" valign="bottom"><a class="el" 
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="lspmac_8c.html">lspmac.c</a></li>
-    <li class="footer">Generated on Sun Dec 16 2012 17:35:48 for LS-CAT PGPMAC by
+    <li class="footer">Generated on Tue Dec 18 2012 07:11:15 for LS-CAT PGPMAC by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.2 </li>
   </ul>

@@ -57,7 +57,7 @@ struct \hyperlink{structlspg__nextshot__struct}{lspg\-\_\-nextshot\-\_\-struct}
 \begin{DoxyCompactList}\small\item\em Number of status box columns. \end{DoxyCompactList}\item 
 \#define \hyperlink{pgpmac_8h_a3a8ef1b4b5994d6dd12bf74454ea891b}{L\-S\-\_\-\-P\-G\-\_\-\-Q\-U\-E\-R\-Y\-\_\-\-S\-T\-R\-I\-N\-G\-\_\-\-L\-E\-N\-G\-T\-H}~1024
 \begin{DoxyCompactList}\small\item\em Fixed length postgresql query strings. Queries should all be function calls so this is not as weird as one might think. \end{DoxyCompactList}\item 
-\#define \hyperlink{pgpmac_8h_ab61d790b5572f116e091babfda53627b}{L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-E\-V\-E\-N\-T\-\_\-\-L\-E\-N\-G\-T\-H}~32
+\#define \hyperlink{pgpmac_8h_ab61d790b5572f116e091babfda53627b}{L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-E\-V\-E\-N\-T\-\_\-\-L\-E\-N\-G\-T\-H}~256
 \begin{DoxyCompactList}\small\item\em Fixed length for event names\-: simplifies string handling. \end{DoxyCompactList}\item 
 \#define \hyperlink{pgpmac_8h_a30f0f377b0f0695284145d420ea51846}{M\-D2\-C\-M\-D\-S\-\_\-\-C\-M\-D\-\_\-\-L\-E\-N\-G\-T\-H}~32
 \end{DoxyCompactItemize}
@@ -327,7 +327,7 @@ Definition at line 63 of file pgpmac.\-h.
 
 \hypertarget{pgpmac_8h_ab61d790b5572f116e091babfda53627b}{\index{pgpmac.\-h@{pgpmac.\-h}!L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-E\-V\-E\-N\-T\-\_\-\-L\-E\-N\-G\-T\-H@{L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-E\-V\-E\-N\-T\-\_\-\-L\-E\-N\-G\-T\-H}}
 \index{L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-E\-V\-E\-N\-T\-\_\-\-L\-E\-N\-G\-T\-H@{L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-E\-V\-E\-N\-T\-\_\-\-L\-E\-N\-G\-T\-H}!pgpmac.h@{pgpmac.\-h}}
-\subsubsection[{L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-E\-V\-E\-N\-T\-\_\-\-L\-E\-N\-G\-T\-H}]{\setlength{\rightskip}{0pt plus 5cm}\#define L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-E\-V\-E\-N\-T\-\_\-\-L\-E\-N\-G\-T\-H~32}}\label{pgpmac_8h_ab61d790b5572f116e091babfda53627b}
+\subsubsection[{L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-E\-V\-E\-N\-T\-\_\-\-L\-E\-N\-G\-T\-H}]{\setlength{\rightskip}{0pt plus 5cm}\#define L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-E\-V\-E\-N\-T\-\_\-\-L\-E\-N\-G\-T\-H~256}}\label{pgpmac_8h_ab61d790b5572f116e091babfda53627b}
 
 
 Fixed length for event names\-: simplifies string handling. 
@@ -341,7 +341,7 @@ Definition at line 66 of file pgpmac.\-h.
 \subsubsection[{M\-D2\-C\-M\-D\-S\-\_\-\-C\-M\-D\-\_\-\-L\-E\-N\-G\-T\-H}]{\setlength{\rightskip}{0pt plus 5cm}\#define M\-D2\-C\-M\-D\-S\-\_\-\-C\-M\-D\-\_\-\-L\-E\-N\-G\-T\-H~32}}\label{pgpmac_8h_a30f0f377b0f0695284145d420ea51846}
 
 
-Definition at line 388 of file pgpmac.\-h.
+Definition at line 389 of file pgpmac.\-h.
 
 
 
@@ -654,7 +654,7 @@ Definition at line 165 of file lspg.\-c.
   havebackslash = 0;
 
   \textcolor{comment}{// Despense with the null input condition before we complicate the code below}
-  \textcolor{keywordflow}{if}( a == NULL || a[0] == 0)
+  \textcolor{keywordflow}{if}( a == NULL || a[0] != \textcolor{charliteral}{'\{'} || a[strlen(a)-1] != \textcolor{charliteral}{'\}'})
     \textcolor{keywordflow}{return} NULL;
 
   \textcolor{comment}{// Count the maximum number of strings}
@@ -673,8 +673,8 @@ Definition at line 165 of file lspg.\-c.
   \textcolor{comment}{// This is the accumulation string to make up the array elements}
   acums = (\textcolor{keywordtype}{char} *)calloc( mxsz, \textcolor{keyword}{sizeof}( \textcolor{keywordtype}{char}));
   \textcolor{keywordflow}{if}( acums == NULL) \{
-    \textcolor{comment}{// TODO: print or otherwise log this condition}
-    \textcolor{comment}{// out of memory}
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspg\_array2ptrs: out of memory
+       (acums)"});
     exit( 1);
   \}
   
@@ -683,8 +683,8 @@ Definition at line 165 of file lspg.\-c.
   \textcolor{comment}{//}
   rtn = (\textcolor{keywordtype}{char} **)calloc( n+1, \textcolor{keyword}{sizeof}( \textcolor{keywordtype}{char} *));
   \textcolor{keywordflow}{if}( rtn == NULL) \{
-    \textcolor{comment}{// TODO: print or otherwise log this condition}
-    \textcolor{comment}{// out of memory}
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspg\_array2ptrs: out of memory
+       (rtn)"});
     exit( 1);
   \}
   rtni = 0;
@@ -692,11 +692,7 @@ Definition at line 165 of file lspg.\-c.
   \textcolor{comment}{// Go through and create the individual strings}
   sp = acums;
   *sp = 0;
-  \textcolor{keywordflow}{if}( a[0] != \textcolor{charliteral}{'\{'}) \{
-    \textcolor{comment}{// oh no!  This isn't an array after all!}
-    \textcolor{comment}{// Zounds!}
-    \textcolor{keywordflow}{return} NULL;
-  \}
+
   inquote = 0;
   havebackslash = 0;
   \textcolor{keywordflow}{for}( i=1; a[i] != 0; i++) \{
@@ -743,6 +739,7 @@ Definition at line 165 of file lspg.\-c.
       \} \textcolor{keywordflow}{else} \{
         rtn[rtni++] = strdup( acums);
         rtn[rtni]   = NULL;
+        free( acums);
         \textcolor{keywordflow}{return}( rtn);
       \}
       \textcolor{keywordflow}{break};
@@ -756,9 +753,12 @@ Definition at line 165 of file lspg.\-c.
   \textcolor{comment}{//}
   \textcolor{comment}{// Getting here means the final '\}' was missing}
   \textcolor{comment}{// Probably we should throw an error or log it or something.}
+  \textcolor{comment}{// Through out the last entry since this there is not resonable expectation
+       that}
+  \textcolor{comment}{// we should be parsing it anyway.}
   \textcolor{comment}{//}
-  rtn[rtni++] = strdup( acums);
   rtn[rtni]   = NULL;
+  free( acums);
   \textcolor{keywordflow}{return}( rtn);
 \}
 \end{DoxyCode}
@@ -775,7 +775,7 @@ Initiallize the lspg module.
 
 
 
-Definition at line 1471 of file lspg.\-c.
+Definition at line 1464 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -802,7 +802,7 @@ Start 'er runnin'.
 
 
 
-Definition at line 1483 of file lspg.\-c.
+Definition at line 1476 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -849,7 +849,7 @@ Convinence function to call seq run prep.
 \end{DoxyParams}
 
 
-Definition at line 815 of file lspg.\-c.
+Definition at line 812 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -885,7 +885,7 @@ get the motor position (with locking)
 \end{DoxyParams}
 
 
-Definition at line 1236 of file lspmac.\-c.
+Definition at line 1228 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -911,7 +911,7 @@ Initialize this module.
 
 
 
-Definition at line 2528 of file lspmac.\-c.
+Definition at line 2541 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1088,7 +1088,7 @@ Use jog to move motor to requested position.
 
 
 
-Definition at line 2291 of file lspmac.\-c.
+Definition at line 2302 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1113,7 +1113,7 @@ move using a preset value
 
 
 
-Definition at line 2261 of file lspmac.\-c.
+Definition at line 2272 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1154,7 +1154,7 @@ Use coordinate system motion program, if available, to move motor to requested p
 
 
 
-Definition at line 2281 of file lspmac.\-c.
+Definition at line 2292 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1177,7 +1177,7 @@ Start up the lspmac thread.
 
 
 
-Definition at line 2822 of file lspmac.\-c.
+Definition at line 2839 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1302,7 +1302,7 @@ Definition at line 962 of file lspmac.\-c.
 )}}\label{pgpmac_8h_ac356cd43e46799929242dcf5214df7f6}
 
 
-Definition at line 117 of file lsredis.\-c.
+Definition at line 235 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1327,7 +1327,7 @@ Definition at line 117 of file lsredis.\-c.
 )}}\label{pgpmac_8h_a9fc8fd0db4c71c5eae68682b43103078}
 
 
-Definition at line 106 of file lsredis.\-c.
+Definition at line 224 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1353,7 +1353,7 @@ Definition at line 106 of file lsredis.\-c.
 )}}\label{pgpmac_8h_a1ad60526a09ca679f39174ce5d773abe}
 
 
-Definition at line 694 of file lsredis.\-c.
+Definition at line 777 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1421,7 +1421,7 @@ Definition at line 694 of file lsredis.\-c.
 )}}\label{pgpmac_8h_a6d9f550b9ba36acd237925164abe3ffc}
 
 
-Definition at line 407 of file lsredis.\-c.
+Definition at line 520 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1448,7 +1448,14 @@ Definition at line 407 of file lsredis.\-c.
   
   snprintf( kp, nkp-1, \textcolor{stringliteral}{"%s.%s"}, \hyperlink{lsredis_8c_acdca9095c7a3288d7febe9f4c440a6e9}{lsredis\_head}, k);
   kp[nkp-1] = 0;
+
+  pthread\_mutex\_lock( &\hyperlink{lsredis_8c_a390e8acf789b0fa41b43a794dd27e28f}{lsredis\_mutex});
+  \textcolor{keywordflow}{while}( \hyperlink{lsredis_8c_a7461eb2b5974a2ffac2189007d39193c}{lsredis\_running} == 0)
+    pthread\_cond\_wait( &\hyperlink{lsredis_8c_a2f63408d16b5603541b124a78f36a5a8}{lsredis\_cond}, &\hyperlink{lsredis_8c_a390e8acf789b0fa41b43a794dd27e28f}{lsredis\_mutex});
+
   rtn = \hyperlink{lsredis_8c_ac3fb8589e280bfa18ecbca6619fea637}{\_lsredis\_get\_obj}( kp);
+  pthread\_mutex\_unlock( &\hyperlink{lsredis_8c_a390e8acf789b0fa41b43a794dd27e28f}{lsredis\_mutex});
+
   free( kp);
   \textcolor{keywordflow}{return} rtn;
 \}
@@ -1462,7 +1469,7 @@ Definition at line 407 of file lsredis.\-c.
 )}}\label{pgpmac_8h_abe31d0e11c41b2235307612c963bb652}
 
 
-Definition at line 236 of file lsredis.\-c.
+Definition at line 358 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1488,7 +1495,7 @@ Definition at line 236 of file lsredis.\-c.
 )}}\label{pgpmac_8h_abbb4e5ece19ebd130e1be18036752a08}
 
 
-Definition at line 249 of file lsredis.\-c.
+Definition at line 371 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1514,7 +1521,7 @@ Definition at line 249 of file lsredis.\-c.
 )}}\label{pgpmac_8h_aa8daf63b794b6b6341018feec205cb7d}
 
 
-Definition at line 210 of file lsredis.\-c.
+Definition at line 332 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1540,7 +1547,7 @@ Definition at line 210 of file lsredis.\-c.
 )}}\label{pgpmac_8h_a1923f998441f4f451204dfd214d52218}
 
 
-Definition at line 223 of file lsredis.\-c.
+Definition at line 345 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1570,7 +1577,7 @@ return a copy of the key's string value
 
 
 
-Definition at line 141 of file lsredis.\-c.
+Definition at line 259 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1614,28 +1621,29 @@ Initialize this module, that is, set up the connections.
 \end{DoxyParams}
 
 
-Definition at line 775 of file lsredis.\-c.
+Definition at line 831 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
                                                     \{
-
   \textcolor{keywordtype}{int} err;
+  \textcolor{keywordtype}{int} nerrmsg;
+  \textcolor{keywordtype}{char} *errmsg;
 
+  \textcolor{comment}{//}
+  \textcolor{comment}{// set up hash map to store redis objects}
+  \textcolor{comment}{//}
   err = hcreate\_r( 8192, &\hyperlink{lsredis_8c_a42aec6aa74072797ec0344847b0e9e39}{lsredis\_htab});
   \textcolor{keywordflow}{if}( err == 0) \{
     \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lsredis\_init: Cannot create
        hash table.  Really bad things are going to happen.  hcreate\_r returnd %d"}, err);
   \}
 
-
-
-  \hyperlink{lsredis_8c_acdca9095c7a3288d7febe9f4c440a6e9}{lsredis\_head} = strdup( head);
+  \hyperlink{lsredis_8c_acdca9095c7a3288d7febe9f4c440a6e9}{lsredis\_head}      = strdup( head);
   \hyperlink{lsredis_8c_a0c81dce2e75584eeb14ab7d9dd86c72e}{lsredis\_publisher} = strdup( pub);
 
-  pthread\_mutex\_init( &\hyperlink{lsredis_8c_ab3ace99b8775e2366da0cfe053b68607}{lsredis\_objs\_mutex}, NULL);
-  pthread\_mutex\_init( &\hyperlink{lsredis_8c_a4a3806596ef0d2baac37257033008ff2}{lsredis\_ro\_mutex}, NULL);
-  pthread\_mutex\_init( &\hyperlink{lsredis_8c_ad650f89eb0d4fe24a32ea352ac404b27}{lsredis\_wr\_mutex}, NULL);
+  pthread\_mutex\_init( &\hyperlink{lsredis_8c_a390e8acf789b0fa41b43a794dd27e28f}{lsredis\_mutex}, NULL);
+  pthread\_cond\_init( &\hyperlink{lsredis_8c_a2f63408d16b5603541b124a78f36a5a8}{lsredis\_cond}, NULL);
 
   \hyperlink{lsredis_8c_a4d65536cb1094fb5deda0a852b181232}{subac} = redisAsyncConnect(\textcolor{stringliteral}{"127.0.0.1"}, 6379);
   \textcolor{keywordflow}{if}( \hyperlink{lsredis_8c_a4d65536cb1094fb5deda0a852b181232}{subac}->err) \{
@@ -1680,7 +1688,20 @@ Definition at line 775 of file lsredis.\-c.
   \hyperlink{lsredis_8c_a7ea13129ad9e41a0ed2fc19fa75ffb0d}{wrac}->ev.delWrite = \hyperlink{lsredis_8c_a04f0119cfa1156dc34d35b237358822a}{lsredis\_delWrite};
   \hyperlink{lsredis_8c_a7ea13129ad9e41a0ed2fc19fa75ffb0d}{wrac}->ev.cleanup  = \hyperlink{lsredis_8c_a45f946a5262c23b362be17c2cb0310c2}{lsredis\_cleanup};
 
-  \hyperlink{lsredis_8c_a07dc95184cac704740bfe16fe4c6a4f0}{lsredis\_select}( re);
+  err = regcomp( &\hyperlink{lsredis_8c_abee04898347f9b2551fa0435b1cc597e}{lsredis\_key\_select\_regex}, re, 
+      REG\_EXTENDED);
+  \textcolor{keywordflow}{if}( err != 0) \{
+    nerrmsg = regerror( err, &\hyperlink{lsredis_8c_abee04898347f9b2551fa0435b1cc597e}{lsredis\_key\_select\_regex},
+       NULL, 0);
+    \textcolor{keywordflow}{if}( nerrmsg > 0) \{
+      errmsg = calloc( nerrmsg, \textcolor{keyword}{sizeof}( \textcolor{keywordtype}{char}));
+      nerrmsg = regerror( err, &\hyperlink{lsredis_8c_abee04898347f9b2551fa0435b1cc597e}{lsredis\_key\_select\_regex}
+      , errmsg, nerrmsg);
+      \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lsredis\_select: %s"}, errmsg)
+      ;
+      free( errmsg);
+    \}
+  \}
 \}
 \end{DoxyCode}
 \hypertarget{pgpmac_8h_ac58fca47533e695c8775e0d2b9128766}{\index{pgpmac.\-h@{pgpmac.\-h}!lsredis\-\_\-regexec@{lsredis\-\_\-regexec}}
@@ -1696,7 +1717,7 @@ Definition at line 775 of file lsredis.\-c.
 )}}\label{pgpmac_8h_ac58fca47533e695c8775e0d2b9128766}
 
 
-Definition at line 128 of file lsredis.\-c.
+Definition at line 246 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1722,7 +1743,7 @@ Definition at line 128 of file lsredis.\-c.
 )}}\label{pgpmac_8h_ad438e4368d86bbe15a93dcf86deaded5}
 
 
-Definition at line 916 of file lsredis.\-c.
+Definition at line 1035 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1895,7 +1916,7 @@ Initialize the md2cmds module.
 
 
 
-Definition at line 799 of file md2cmds.\-c.
+Definition at line 797 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1924,7 +1945,7 @@ Start up the thread.
 
 
 
-Definition at line 813 of file md2cmds.\-c.
+Definition at line 811 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}

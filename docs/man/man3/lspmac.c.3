@@ -1,4 +1,4 @@
-.TH "lspmac.c" 3 "Sun Dec 16 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lspmac.c" 3 "Tue Dec 18 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -901,7 +901,7 @@ The block of memory retrieved in a status request\&.
 .PP
 Helper funciton for the init calls\&. 
 .PP
-Definition at line 2369 of file lspmac\&.c\&.
+Definition at line 2380 of file lspmac\&.c\&.
 .PP
 .nf
                                                         {
@@ -911,6 +911,7 @@ Definition at line 2369 of file lspmac\&.c\&.
   pthread_cond_init(  &(d->cond), NULL);
 
   d->name                = strdup(name);
+  d->redis_position      = lsredis_get_obj( '%s\&.position',          d->name);
   d->u2c                 = lsredis_get_obj( '%s\&.u2c',               d->name);
   d->printf_fmt          = lsredis_get_obj( '%s\&.printf',            d->name);
   d->redis_fmt           = lsredis_get_obj( '%s\&.format',            d->name);
@@ -924,8 +925,8 @@ Definition at line 2369 of file lspmac\&.c\&.
   d->active              = lsredis_get_obj( '%s\&.active',     d->name);
   d->active_init         = lsredis_get_obj( '%s\&.active_init',        d->name);
   d->inactive_init       = lsredis_get_obj( '%s\&.inactive_init',      d->name);
-
   d->update_resolution   = lsredis_get_obj( '%s\&.update_resolution', d->name);
+  d->status_str          = lsredis_get_obj( '%s\&.status_str',        d->name);
   d->lut                 = NULL;
   d->nlut                = 0;
   d->homing              = 0;
@@ -935,6 +936,7 @@ Definition at line 2369 of file lspmac\&.c\&.
   d->status2_p           = NULL;
   d->win                 = NULL;
   d->read                = NULL;
+  d->reported_position   = INFINITY;
 }
 .fi
 .SS "void cleanstr (char *s)"
@@ -1075,7 +1077,7 @@ Turn off the backlight whenever it goes down\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 2671 of file lspmac\&.c\&.
+Definition at line 2684 of file lspmac\&.c\&.
 .PP
 .nf
                                             {
@@ -1092,7 +1094,7 @@ Turn on the backlight whenever it goes up\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 2662 of file lspmac\&.c\&.
+Definition at line 2675 of file lspmac\&.c\&.
 .PP
 .nf
                                           {
@@ -1106,7 +1108,7 @@ Definition at line 2662 of file lspmac\&.c\&.
 .PP
 Initialize binary input\&. 
 .PP
-Definition at line 2514 of file lspmac\&.c\&.
+Definition at line 2527 of file lspmac\&.c\&.
 .PP
 .nf
                                                                                                 {
@@ -1124,13 +1126,12 @@ Definition at line 2514 of file lspmac\&.c\&.
 .PP
 Set up lookup table for blight\&. 
 .PP
-Definition at line 2768 of file lspmac\&.c\&.
+Definition at line 2783 of file lspmac\&.c\&.
 .PP
 .nf
                                {
   int i;
   lsredis_obj_t *p;
-  double *dp;
 
   pthread_mutex_lock( &blight->mutex);
 
@@ -1141,17 +1142,21 @@ Definition at line 2768 of file lspmac\&.c\&.
     exit( -1);
   }
 
-  for( i=0, dp = blight->lut; i<blight->nlut; i++, dp += 2) {
+  blight->lut[0] = 0;
+  blight->lut[1] = 0;
+
+  for( i=1; i<blight->nlut; i++) {
     p = lsredis_get_obj( 'cam\&.zoom\&.%d\&.LightIntensity', i);
     if( p==NULL || strlen( lsredis_getstr(p)) == 0) {
       free( blight->lut);
+      blight->lut = NULL;
       blight->nlut = 0;
       pthread_mutex_unlock( &blight->mutex);
       lslogging_log_message( 'lspmac_blight_lut_setup: cannot find MotorPosition element for cam\&.blight level %d', i);
       return;
     }
-    *dp = i;
-    *(dp+1) = 20000\&.0 * lsredis_getd( p) / 100\&.0;
+    blight->lut[2*i]   = i;
+    blight->lut[2*i+1] = 20000\&.0 * lsredis_getd( p) / 100\&.0;
   }
   pthread_mutex_unlock( &blight->mutex);
 }
@@ -1174,7 +1179,7 @@ Initialize binary i/o motor\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 2450 of file lspmac\&.c\&.
+Definition at line 2463 of file lspmac\&.c\&.
 .PP
 .nf
                                   {
@@ -1214,8 +1219,6 @@ Definition at line 1017 of file lspmac\&.c\&.
   changed = pos != mp->position;
   mp->position = pos;
 
-  // Not sure what kind of status makes sense to report
-  mp->statuss[0] = 0;
   pthread_mutex_unlock( &(mp->mutex));
 
   if( changed)
@@ -1225,7 +1228,7 @@ Definition at line 1017 of file lspmac\&.c\&.
 .SS "void lspmac_cryoSwitchChanged_cb (char *event)"
 
 .PP
-Definition at line 2624 of file lspmac\&.c\&.
+Definition at line 2637 of file lspmac\&.c\&.
 .PP
 .nf
                                                {
@@ -1256,7 +1259,7 @@ Initialize DAC motor Note that some motors require further initialization from a
 .PP
 
 .PP
-Definition at line 2476 of file lspmac\&.c\&.
+Definition at line 2489 of file lspmac\&.c\&.
 .PP
 .nf
                                   {
@@ -1280,7 +1283,7 @@ Read a DAC motor position\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1040 of file lspmac\&.c\&.
+Definition at line 1038 of file lspmac\&.c\&.
 .PP
 .nf
                        {
@@ -1302,9 +1305,6 @@ Definition at line 1040 of file lspmac\&.c\&.
       mp->position = mp->actual_pos_cnts;
     }
   }
-
-  // Not sure what kind of status makes sense to report
-  mp->statuss[0] = 0;
 
   pthread_mutex_unlock( &(mp->mutex));
 }
@@ -1350,13 +1350,12 @@ Definition at line 669 of file lspmac\&.c\&.
 .PP
 Set up lookup table for flight\&. 
 .PP
-Definition at line 2737 of file lspmac\&.c\&.
+Definition at line 2750 of file lspmac\&.c\&.
 .PP
 .nf
                                {
   int i;
   lsredis_obj_t *p;
-  double *dp;
 
   pthread_mutex_lock( &flight->mutex);
 
@@ -1367,17 +1366,20 @@ Definition at line 2737 of file lspmac\&.c\&.
     exit( -1);
   }
 
-  for( i=0, dp = flight->lut; i<flight->nlut; i++, dp += 2) {
+  flight->lut[0] = 0;
+  flight->lut[1] = 0;
+  for( i=1; i < flight->nlut; i++) {
     p = lsredis_get_obj( 'cam\&.zoom\&.%d\&.FrontLightIntensity', i);
     if( p==NULL || strlen( lsredis_getstr(p)) == 0) {
       free( flight->lut);
+      flight->lut  = NULL;
       flight->nlut = 0;
       pthread_mutex_unlock( &flight->mutex);
       lslogging_log_message( 'lspmac_flight_lut_setup: cannot find MotorPosition element for cam\&.flight level %d', i);
       return;
     }
-    *dp = i;
-    *(dp+1) = 32767\&.0 * lsredis_getd( p) / 100\&.0;
+    flight->lut[2*i]   = i;
+    flight->lut[2*i+1] = 32767\&.0 * lsredis_getd( p) / 100\&.0;
   }
   pthread_mutex_unlock( &flight->mutex);
 }
@@ -1387,12 +1389,11 @@ Definition at line 2737 of file lspmac\&.c\&.
 .PP
 Set up lookup table for fscint\&. 
 .PP
-Definition at line 2799 of file lspmac\&.c\&.
+Definition at line 2817 of file lspmac\&.c\&.
 .PP
 .nf
                                {
   int i;
-  double *dp;
 
   pthread_mutex_lock( &fscint->mutex);
 
@@ -1403,9 +1404,9 @@ Definition at line 2799 of file lspmac\&.c\&.
     exit( -1);
   }
 
-  for( i=0, dp = fscint->lut; i<fscint->nlut; i++, dp += 2) {
-    *(dp)   = i;
-    *(dp+1) = 320\&.0 * i;
+  for( i=0; i<fscint->nlut; i++) {
+    fscint->lut[2*i] = i;
+    fscint->lut[2*i+1] = 320\&.0 * i;
   }
   pthread_mutex_unlock( &fscint->mutex);
 }
@@ -1420,7 +1421,7 @@ Initalize the fast shutter motor\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 2434 of file lspmac\&.c\&.
+Definition at line 2447 of file lspmac\&.c\&.
 .PP
 .nf
                                     {
@@ -1438,7 +1439,7 @@ Definition at line 2434 of file lspmac\&.c\&.
 .PP
 Request a status update from the PMAC\&. 
 .PP
-Definition at line 1619 of file lspmac\&.c\&.
+Definition at line 1630 of file lspmac\&.c\&.
 .PP
 .nf
                          {
@@ -1459,7 +1460,7 @@ Service routing for status upate This updates positions and status information\&
 .PP
 
 .PP
-Definition at line 1447 of file lspmac\&.c\&.
+Definition at line 1458 of file lspmac\&.c\&.
 .PP
 .nf
                             {
@@ -1633,7 +1634,7 @@ Definition at line 1447 of file lspmac\&.c\&.
 .PP
 Request the values of all the I variables\&. 
 .PP
-Definition at line 1644 of file lspmac\&.c\&.
+Definition at line 1655 of file lspmac\&.c\&.
 .PP
 .nf
                           {
@@ -1655,7 +1656,7 @@ Receive the values of all the I variables Update our Postgresql database with th
 .PP
 
 .PP
-Definition at line 1627 of file lspmac\&.c\&.
+Definition at line 1638 of file lspmac\&.c\&.
 .PP
 .nf
                             {
@@ -1674,7 +1675,7 @@ Definition at line 1627 of file lspmac\&.c\&.
 .PP
 Request the values of all the M variables\&. 
 .PP
-Definition at line 1669 of file lspmac\&.c\&.
+Definition at line 1680 of file lspmac\&.c\&.
 .PP
 .nf
                           {
@@ -1696,7 +1697,7 @@ Receive the values of all the M variables Update our database with the results\&
 .PP
 
 .PP
-Definition at line 1652 of file lspmac\&.c\&.
+Definition at line 1663 of file lspmac\&.c\&.
 .PP
 .nf
                             {
@@ -1763,7 +1764,7 @@ get the motor position (with locking) \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1236 of file lspmac\&.c\&.
+Definition at line 1228 of file lspmac\&.c\&.
 .PP
 .nf
                                                {
@@ -1827,7 +1828,7 @@ Home the motor\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1111 of file lspmac\&.c\&.
+Definition at line 1103 of file lspmac\&.c\&.
 .PP
 .nf
                           {
@@ -1913,7 +1914,7 @@ Second stage of homing\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1189 of file lspmac\&.c\&.
+Definition at line 1181 of file lspmac\&.c\&.
 .PP
 .nf
                           {
@@ -1970,7 +1971,7 @@ Initialize this module\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 2528 of file lspmac\&.c\&.
+Definition at line 2541 of file lspmac\&.c\&.
 .PP
 .nf
                    {
@@ -2077,7 +2078,7 @@ Use jog to move motor to requested position\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 2291 of file lspmac\&.c\&.
+Definition at line 2302 of file lspmac\&.c\&.
 .PP
 .nf
                             {
@@ -2095,7 +2096,7 @@ Set the backlight intensity whenever the zoom is changed (and the backlight is u
 .PP
 
 .PP
-Definition at line 2678 of file lspmac\&.c\&.
+Definition at line 2691 of file lspmac\&.c\&.
 .PP
 .nf
                                         {
@@ -2211,7 +2212,7 @@ Initialize a pmac stepper or servo motor\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 2405 of file lspmac\&.c\&.
+Definition at line 2418 of file lspmac\&.c\&.
 .PP
 .nf
                                     {
@@ -2253,7 +2254,7 @@ Move method for normal stepper and servo motor objects\&. < buffer to send to pm
 .PP
 
 .PP
-Definition at line 2143 of file lspmac\&.c\&.
+Definition at line 2154 of file lspmac\&.c\&.
 .PP
 .nf
                             {
@@ -2382,7 +2383,7 @@ move using a preset value \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 2261 of file lspmac\&.c\&.
+Definition at line 2272 of file lspmac\&.c\&.
 .PP
 .nf
                                        {
@@ -2412,7 +2413,7 @@ Move a given motor to one of its preset positions\&. No movement if the preset i
 .PP
 
 .PP
-Definition at line 1928 of file lspmac\&.c\&.
+Definition at line 1939 of file lspmac\&.c\&.
 .PP
 .nf
                                                                       {
@@ -2432,7 +2433,7 @@ Definition at line 1928 of file lspmac\&.c\&.
 .SS "void lspmac_moveabs_blight_factor_queue (\fBlspmac_motor_t\fP *mp, doublepos)"
 
 .PP
-Definition at line 2092 of file lspmac\&.c\&.
+Definition at line 2103 of file lspmac\&.c\&.
 .PP
 .nf
                                                                          {
@@ -2466,7 +2467,7 @@ Move method for binary i/o motor objects\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1976 of file lspmac\&.c\&.
+Definition at line 1987 of file lspmac\&.c\&.
 .PP
 .nf
                                 {
@@ -2488,7 +2489,7 @@ Definition at line 1976 of file lspmac\&.c\&.
 .SS "void lspmac_moveabs_flight_factor_queue (\fBlspmac_motor_t\fP *mp, doublepos)"
 
 .PP
-Definition at line 2071 of file lspmac\&.c\&.
+Definition at line 2082 of file lspmac\&.c\&.
 .PP
 .nf
                                                                          {
@@ -2517,7 +2518,7 @@ Definition at line 2071 of file lspmac\&.c\&.
 .PP
 'move' frontlight on/off 
 .PP
-Definition at line 2059 of file lspmac\&.c\&.
+Definition at line 2070 of file lspmac\&.c\&.
 .PP
 .nf
                                                                          {
@@ -2544,7 +2545,7 @@ Move method for the fast shutter\&. Slightly more complicated than a binary io a
 .PP
 
 .PP
-Definition at line 1949 of file lspmac\&.c\&.
+Definition at line 1960 of file lspmac\&.c\&.
 .PP
 .nf
                                   {
@@ -2581,7 +2582,7 @@ Use coordinate system motion program, if available, to move motor to requested p
 .PP
 
 .PP
-Definition at line 2281 of file lspmac\&.c\&.
+Definition at line 2292 of file lspmac\&.c\&.
 .PP
 .nf
                             {
@@ -2605,7 +2606,7 @@ timed motor move \fBParameters:\fP
 .PP
 < Flags needed for wait routine 
 .PP
-Definition at line 2002 of file lspmac\&.c\&.
+Definition at line 2013 of file lspmac\&.c\&.
 .PP
 .nf
                                   {
@@ -2668,7 +2669,7 @@ Wait for motor to finish moving\&. Assume motion already queued, now just wait \
 .PP
 
 .PP
-Definition at line 2303 of file lspmac\&.c\&.
+Definition at line 2314 of file lspmac\&.c\&.
 .PP
 .nf
                            {
@@ -2745,7 +2746,7 @@ Move method for dac motor objects (ie, lights) \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1858 of file lspmac\&.c\&.
+Definition at line 1869 of file lspmac\&.c\&.
 .PP
 .nf
                             {
@@ -2789,7 +2790,7 @@ Move method for the zoom motor\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1893 of file lspmac\&.c\&.
+Definition at line 1904 of file lspmac\&.c\&.
 .PP
 .nf
                              {
@@ -2824,7 +2825,7 @@ Definition at line 1893 of file lspmac\&.c\&.
 .PP
 State machine logic\&. Given the current state, generate the next one 
 .PP
-Definition at line 1717 of file lspmac\&.c\&.
+Definition at line 1728 of file lspmac\&.c\&.
 .PP
 .nf
                          {
@@ -2941,7 +2942,7 @@ Read the position and status of a normal PMAC motor\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1247 of file lspmac\&.c\&.
+Definition at line 1239 of file lspmac\&.c\&.
 .PP
 .nf
                              {
@@ -2950,6 +2951,9 @@ Definition at line 1247 of file lspmac\&.c\&.
   double u2c;
   int motor_num;
   char *fmt;
+  int status_changed;
+
+
   pthread_mutex_lock( &(mp->mutex));
 
   //
@@ -3014,7 +3018,7 @@ Definition at line 1247 of file lspmac\&.c\&.
       omega_zero_time\&.tv_nsec -= nsecs;
 
       lsevents_send_event( 'omega crossed zero');
-      lslogging_log_message('lspmac_motor_read: omega zero secs %d  nsecs %d ozt\&.tv_sec %ld  ozt\&.tv_nsec  %ld, motor cnts %d',
+      lslogging_log_message('lspmac_pmacmotor_read: omega zero secs %d  nsecs %d ozt\&.tv_sec %ld  ozt\&.tv_nsec  %ld, motor cnts %d',
                             secs, nsecs, omega_zero_time\&.tv_sec, omega_zero_time\&.tv_nsec, *mp->actual_pos_cnts_p);
     }
     omega_zero_search = 0;
@@ -3024,8 +3028,13 @@ Definition at line 1247 of file lspmac\&.c\&.
   // Make local copies so we can inspect them in other threads
   // without having to grab the status mutex
   //
-  mp->status1 = *mp->status1_p;
-  mp->status2 = *mp->status2_p;
+  if( mp->status1 != *mp->status1_p || mp->status2 != *mp->status2_p) {
+    mp->status1 = *mp->status1_p;
+    mp->status2 = *mp->status2_p;
+    status_changed = 1;
+  } else {
+    status_changed = 0;
+  }
   mp->actual_pos_cnts = *mp->actual_pos_cnts_p;
 
   //
@@ -3065,8 +3074,16 @@ Definition at line 1247 of file lspmac\&.c\&.
     }
   }
 
+  if( fabs(mp->reported_position - mp->position) >= lsredis_getd(mp->update_resolution)) {
+    fmt = lsredis_getstr(mp->redis_fmt);
+    lsredis_setstr( mp->redis_position, fmt, mp->position);
+    free(fmt);
+    mp->reported_position = mp->position;
+  }
+
   fmt = lsredis_getstr( mp->printf_fmt);
   snprintf( s, sizeof(s)-1, fmt, 8, mp->position);
+  s[sizeof(s)-1] = 0;
   free( fmt);
 
   // set flag if we are not homed
@@ -3091,41 +3108,44 @@ Definition at line 1247 of file lspmac\&.c\&.
   s[sizeof(s)-1] = 0;
   mvwprintw( mp->win, 3, 1, '%*s', LS_DISPLAY_WINDOW_WIDTH-6, s);
 
-  mvwprintw( mp->win, 4, 1, '%*x', LS_DISPLAY_WINDOW_WIDTH-2, mp->status1);
-  mvwprintw( mp->win, 5, 1, '%*x', LS_DISPLAY_WINDOW_WIDTH-2, mp->status2);
-  sp = '';
-  if( mp->status2 & 0x000002)
-    sp = 'Following Warning';
-  else if( mp->status2 & 0x000004)
-    sp = 'Following Error';
-  else if( mp->status2 & 0x000020)
-    sp = 'I2T Amp Fault';
-  else if( mp->status2 & 0x000008)
-    sp = 'Amp\&. Fault';
-  else if( mp->status2 & 0x000800)
-    sp = 'Stopped on Limit';
-  else if( mp->status1 & 0x040000)
-    sp = 'Open Loop';
-  else if( ~(mp->status1) & 0x080000)
-    sp = 'Motor Disabled';
-  else if( mp->status1 & 0x000400)
-    sp = 'Homing';
-  else if( (mp->status1 & 0x600000) == 0x600000)
-    sp = 'Both Limits Tripped';
-  else if( mp->status1 & 0x200000)
-    sp = 'Positive Limit';
-  else if( mp->status1 & 0x400000)
-    sp = 'Negative Limit';
-  else if( ~(mp->status2) & 0x000400)
-    sp = 'Not Homed';
-  else if( mp->status2 & 0x000001)
-    sp = 'In Position';
+  if( status_changed) {
+    mvwprintw( mp->win, 4, 1, '%*x', LS_DISPLAY_WINDOW_WIDTH-2, mp->status1);
+    mvwprintw( mp->win, 5, 1, '%*x', LS_DISPLAY_WINDOW_WIDTH-2, mp->status2);
+    sp = '';
+    if( mp->status2 & 0x000002)
+      sp = 'Following Warning';
+    else if( mp->status2 & 0x000004)
+      sp = 'Following Error';
+    else if( mp->status2 & 0x000020)
+      sp = 'I2T Amp Fault';
+    else if( mp->status2 & 0x000008)
+      sp = 'Amp\&. Fault';
+    else if( mp->status2 & 0x000800)
+      sp = 'Stopped on Limit';
+    else if( mp->status1 & 0x040000)
+      sp = 'Open Loop';
+    else if( ~(mp->status1) & 0x080000)
+      sp = 'Motor Disabled';
+    else if( mp->status1 & 0x000400)
+      sp = 'Homing';
+    else if( (mp->status1 & 0x600000) == 0x600000)
+      sp = 'Both Limits Tripped';
+    else if( mp->status1 & 0x200000)
+      sp = 'Positive Limit';
+    else if( mp->status1 & 0x400000)
+      sp = 'Negative Limit';
+    else if( ~(mp->status2) & 0x000400)
+      sp = 'Not Homed';
+    else if( mp->status1 & 0x020000)
+      sp = 'Moving';
+    else if( mp->status2 & 0x000001)
+      sp = 'In Position';
 
-  mvwprintw( mp->win, 6, 1, '%*s', LS_DISPLAY_WINDOW_WIDTH-2, sp);
-  wnoutrefresh( mp->win);
+    mvwprintw( mp->win, 6, 1, '%*s', LS_DISPLAY_WINDOW_WIDTH-2, sp);
   
-  strncpy( mp->statuss, sp, sizeof( mp->statuss)-1);
-  mp->statuss[sizeof(mp->statuss)-1] = 0;
+    lsredis_setstr( mp->status_str, sp);
+  }
+  wnoutrefresh( mp->win);
 
   pthread_mutex_unlock( &(mp->mutex));
 
@@ -3294,7 +3314,7 @@ Definition at line 368 of file lspmac\&.c\&.
 .PP
 Start up the lspmac thread\&. 
 .PP
-Definition at line 2822 of file lspmac\&.c\&.
+Definition at line 2839 of file lspmac\&.c\&.
 .PP
 .nf
                   {
@@ -3367,7 +3387,7 @@ Turn off the dryer\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 2698 of file lspmac\&.c\&.
+Definition at line 2711 of file lspmac\&.c\&.
 .PP
 .nf
                                          {
@@ -3385,7 +3405,7 @@ Maybe start drying off the scintilator\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 2637 of file lspmac\&.c\&.
+Definition at line 2650 of file lspmac\&.c\&.
 .PP
 .nf
                                               {
@@ -3487,7 +3507,7 @@ PMAC command with call back\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1697 of file lspmac\&.c\&.
+Definition at line 1708 of file lspmac\&.c\&.
 .PP
 .nf
                           {
@@ -3512,7 +3532,7 @@ Send a command that does not need to deal with the reply\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1678 of file lspmac\&.c\&.
+Definition at line 1689 of file lspmac\&.c\&.
 .PP
 .nf
                            {
@@ -3650,7 +3670,7 @@ Definition at line 700 of file lspmac\&.c\&.
       receiveBufferSize += 1400;
       newbuff = calloc( receiveBufferSize, sizeof( unsigned char));
       if( newbuff == NULL) {
-        lslogging_log_message( 'Out of memory');
+        lslogging_log_message( 'lspmac_Service: Out of memory');
         exit( -1);
       }
       if( receiveBuffer != NULL) {
@@ -3754,7 +3774,7 @@ Fast shutter read routine The shutter is mildly complicated in that we need to t
 .PP
 
 .PP
-Definition at line 1074 of file lspmac\&.c\&.
+Definition at line 1069 of file lspmac\&.c\&.
 .PP
 .nf
                            {
@@ -3783,9 +3803,6 @@ Definition at line 1074 of file lspmac\&.c\&.
     mvwprintw( term_status2, 1, 1, 'Shutter Closed');
     mp->position = 0;
   }
-
-  // Not sure what kind of status makes sense to report
-  mp->statuss[0] = 0;
 
   pthread_mutex_unlock( &lspmac_shutter_mutex);
 }
@@ -3895,7 +3912,7 @@ Definition at line 981 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* lspmac_soft_motor_init (\fBlspmac_motor_t\fP *d, char *name, void(*)(\fBlspmac_motor_t\fP *, double)moveAbs)"
 
 .PP
-Definition at line 2501 of file lspmac\&.c\&.
+Definition at line 2514 of file lspmac\&.c\&.
 .PP
 .nf
                                                                                                                   {
@@ -3913,7 +3930,7 @@ Definition at line 2501 of file lspmac\&.c\&.
 .PP
 Dummy routine to read a soft motor\&. 
 .PP
-Definition at line 2496 of file lspmac\&.c\&.
+Definition at line 2509 of file lspmac\&.c\&.
 .PP
 .nf
                                                 {
@@ -3925,7 +3942,7 @@ Definition at line 2496 of file lspmac\&.c\&.
 .PP
 Special motion program to collect centering video\&. 
 .PP
-Definition at line 2114 of file lspmac\&.c\&.
+Definition at line 2125 of file lspmac\&.c\&.
 .PP
 .nf
                                        {
@@ -3964,7 +3981,7 @@ Our lspmac worker thread\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1824 of file lspmac\&.c\&.
+Definition at line 1835 of file lspmac\&.c\&.
 .PP
 .nf
                       {
@@ -3998,13 +4015,12 @@ Definition at line 1824 of file lspmac\&.c\&.
 .PP
 Set up lookup table for zoom\&. 
 .PP
-Definition at line 2706 of file lspmac\&.c\&.
+Definition at line 2719 of file lspmac\&.c\&.
 .PP
 .nf
                              {
   int i;
   lsredis_obj_t *p;
-  double *dp;
 
   pthread_mutex_lock( &zoom->mutex);
 
@@ -4015,17 +4031,18 @@ Definition at line 2706 of file lspmac\&.c\&.
     exit( -1);
   }
 
-  for( i=1, dp = zoom->lut; i<=zoom->nlut; i++, dp += 2) {
-    p = lsredis_get_obj( 'cam\&.zoom\&.%d\&.MotorPosition', i);
+  for( i=0; i < zoom->nlut; i++) {
+    p = lsredis_get_obj( 'cam\&.zoom\&.%d\&.MotorPosition', i+1);
     if( p==NULL || strlen( lsredis_getstr(p)) == 0) {
       free( zoom->lut);
+      zoom->lut  = NULL;
       zoom->nlut = 0;
       pthread_mutex_unlock( &zoom->mutex);
-      lslogging_log_message( 'lspmac_zoom_lut_setup: cannot find MotorPosition element for cam\&.zoom level %d', i);
+      lslogging_log_message( 'lspmac_zoom_lut_setup: cannot find MotorPosition element for cam\&.zoom level %d', i+1);
       return;
     }
-    *dp = i;
-    *(dp+1) = lsredis_getd( p);
+    zoom->lut[2*i]   = i+1;
+    zoom->lut[2*i+1] = lsredis_getd( p);
   }
   pthread_mutex_unlock( &zoom->mutex);
 }

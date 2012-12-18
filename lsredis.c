@@ -4,6 +4,68 @@
  *  \date 2012
  *  \author Keith Brister
  *  \copyright All Rights Reserved
+ *
+ * \details
+ *
+ * Redis support for redis in pgpmac.
+ *
+ *  Values in redis are assumed to be hashs with at list one field "VALUE".
+ *  At startup the initialization routine is passed a regular expression to select which keys
+ *  we'd like to duplicate locally as a lsredis_obj_t.  It is assumed that the following construct
+ *  in redis is used to change a value:
+ *
+ <pre>
+    MULTI
+    HSET key VALUE value
+    PUBLISH publisher key
+    EXEC
+</pre>
+ *
+ * Where "publisher" is a unique name in the following format:
+<pre>
+         MD2-*
+   or    UI-*
+   or    REDIS_KV_CONNECTOR
+</pre>
+ * (this last value is used to support the now depreciated px.kvs table in the LS-CAT postgresql server).
+ * We assume that all publisher that we are listening to ONLY publish key names that have changed.
+ *
+ * When someone else changes a value we invalidate our internal copy and issue a "HGET key VALUE" command.  Other threads
+ * that request the value of our lsredis_obj_t will pause until the new value has been received and processed.
+ *
+ * When a value changes locally this module changes it in redis as shown above.  At this point we refuse
+ * other publishers attempt to change the value until we've seen all of our PUBLISH messages.  That is, we ignore
+ * changes that in redis happened before our change.
+ *
+ * You'll need an lsredis_obj_t to do anything with redis in the pgpmac project:
+ * <pre>
+ * lsredis_obj_t *lsredis_get_obj( char *fmt, ...)  where fmt is a printf style formatting string to interpret the rest of the arguments (if any)
+ *                                                  During initialization a "head" string is passed that is prepended to form the redis key.
+ *                                                  For example, "omega.position" might refer to the key "stns.2.omega.position" at LS-CAT.
+ * </pre>
+ *
+ * To set a redis value use
+ * <pre>
+ *  void lsredis_setstr( lsredis_obj_t *p, char *fmt, ...)  where fmt is a printf style formatting string to interpret the rest of the arguments (if any)
+ * </pre>
+ *
+ * When a new value is seen we immediately parse it and make it available through the following functions:
+ * <pre>
+ *
+ *   char    *lsredis_getstr( lsredis_obj_t *p)            Returns a copy of the VALUE field.  Use "free" on the retured value when done using it.
+ *
+ *   double   lsredis_getd( lsredis_obj_t *p)              Returns a double.  If the value was not a number it returns 0.
+ *
+ *   long int lsredis_getl( lsredis_obj_t *p)              Returns a long int.  If the value was not a number it returns 0.
+ *
+ *   char   **lsredis_get_string_array( lsredis_obj_t *p)  Returns an array of string pointers.  Value is assumed formated as a postgresql array, ie, {here,"I am","for example"}.
+ *                                                or NULL if the value could not be parsed
+ *
+ *   int      lsredis_getb( lsredis_obj_t *p)              Returns 1, 0, or -1 based on the fist character of the string. 1 for T,t,Y,y, or 1, 0 for F,f,N,n or 0, -1 for anything else.
+ *
+ *   char     lsredis_getc( lsredis_obj_t *p)              Returns the first character of VALUE
+ *
+ *   
  */
 
 static pthread_t lsredis_thread;

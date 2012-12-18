@@ -22,7 +22,7 @@ var searchData=
   ['status1_5fp',['status1_p',['../structlspmac__motor__struct.html#a56c41875faf19c643e97c10519e6eb8c',1,'lspmac_motor_struct']]],
   ['status2',['status2',['../structlspmac__motor__struct.html#a6a412224c09268c1dc92de9c2a1a2512',1,'lspmac_motor_struct']]],
   ['status2_5fp',['status2_p',['../structlspmac__motor__struct.html#a2b33ef6e12717459c1e9967cc6e659c6',1,'lspmac_motor_struct']]],
-  ['statuss',['statuss',['../structlspmac__motor__struct.html#ae4a6f54a98e7758d66228efebe8f3baa',1,'lspmac_motor_struct']]],
+  ['status_5fstr',['status_str',['../structlspmac__motor__struct.html#aa0a6bed8379c5b1f90a4eb826cde9136',1,'lspmac_motor_struct']]],
   ['stdinfda',['stdinfda',['../pgpmac_8c.html#a6dc08e82e698d914ccb09077dd33668a',1,'pgpmac.c']]],
   ['stype',['stype',['../structlspg__nextshot__struct.html#ab5a70b189c2fe516ca0c84bd06f3e564',1,'lspg_nextshot_struct']]],
   ['stype2',['stype2',['../structlspg__nextshot__struct.html#ae08ef74ea76e6e099a3ff6c7f845d337',1,'lspg_nextshot_struct']]],
