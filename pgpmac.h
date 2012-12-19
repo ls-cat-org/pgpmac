@@ -104,7 +104,6 @@ typedef struct lspmac_motor_struct {
   void (*read)( struct lspmac_motor_struct *);		//!< method to read the motor status and position
   int motion_seen;		//!< set to 1 when motion has been verified to have started
   struct lspmac_cmd_queue_struct *pq;	//!< the queue item requesting motion.  Used to check time request was made
-
   int homing;			//!< Homing routine started
   int requested_pos_cnts;	//!< requested position
   int *actual_pos_cnts_p;	//!< pointer to the md2_status structure to the actual position
@@ -133,11 +132,11 @@ typedef struct lspmac_motor_struct {
   lsredis_obj_t *inactive_init;	//!< pmac commands to inactivate the motor
   lsredis_obj_t *redis_position;//!< how we report our position to the world
   lsredis_obj_t *status_str;	//!< A talky version of the status
+  lsredis_obj_t *u2c;		//!< conversion from counts to units: 0.0 means not loaded yet
   char *write_fmt;		//!< Format string to write requested position to PMAC used for binary io
   int *read_ptr;		//!< With read_mask finds bit to read for binary i/o
-  int read_mask;		//!< WIth read_ptr find bit to read for binary i/o
+  int read_mask;		//!< With read_ptr find bit to read for binary i/o
   void (*moveAbs)( struct lspmac_motor_struct *, double);	//!< function to move the motor
-  lsredis_obj_t *u2c;		//!< conversion from counts to units: 0.0 means not loaded yet
   double *lut;			//!< lookup table (instead of u2c)
   int  nlut;			//!< length of lut
   WINDOW *win;			//!< our ncurses window
@@ -389,6 +388,7 @@ extern pthread_mutex_t md2_status_mutex;
 #define MD2CMDS_CMD_LENGTH  32
 extern char md2cmds_cmd[];			// our command;
 
+extern lsredis_obj_t *md2cmds_md_status_code;
 
 extern void PmacSockSendline( char *s);
 extern void pgpmac_printf( char *fmt, ...);
