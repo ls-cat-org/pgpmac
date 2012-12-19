@@ -18,6 +18,8 @@ int md2cmds_moving_count = 0;
 
 char md2cmds_cmd[MD2CMDS_CMD_LENGTH];	//!< our command;
 
+lsredis_obj_t *md2cmds_md_status_code;
+
 static pthread_t md2cmds_thread;
 
 static int rotating = 0;		//!< flag: when omega is in position after a rotate we want to re-home omega
@@ -411,6 +413,8 @@ void md2cmds_maybe_done_moving_cb( char *event) {
       md2cmds_moving_count--;
   }
 
+  lsredis_setstr( md2cmds_md_status_code, "%s", md2cmds_moving_count ? "4" : "3");
+  
   if( md2cmds_moving_count == 0)
     pthread_cond_signal( &md2cmds_moving_cond);
   pthread_mutex_unlock( &md2cmds_moving_mutex);
@@ -749,7 +753,6 @@ void md2cmds_set_scale_cb( char *event) {
   free( vp);
 }
 
-
 /** Move centering and alignment tables as requested
  *  TODO: Implement
  */
@@ -803,7 +806,8 @@ void md2cmds_init() {
   pthread_mutex_init( &md2cmds_moving_mutex, NULL);
   pthread_cond_init(  &md2cmds_moving_cond, NULL);
 
-
+  md2cmds_md_status_code = lsredis_get_obj( "md2_status_code");
+  lsredis_setstr( md2cmds_md_status_code, "7");
 }
 
 /** Start up the thread
@@ -811,6 +815,7 @@ void md2cmds_init() {
 void md2cmds_run() {
   pthread_create( &md2cmds_thread, NULL,            md2cmds_worker, NULL);
   lsevents_add_listener( "omega crossed zero",      md2cmds_rotate_cb);
+  /*
   lsevents_add_listener( "omega In Position",       md2cmds_maybe_rotate_done_cb);
   lsevents_add_listener( "align.x In Position",     md2cmds_maybe_done_moving_cb);
   lsevents_add_listener( "align.y In Position",     md2cmds_maybe_done_moving_cb);
@@ -823,4 +828,6 @@ void md2cmds_run() {
   lsevents_add_listener( "centering.x Moving",      md2cmds_maybe_done_moving_cb);
   lsevents_add_listener( "centering.y Moving",      md2cmds_maybe_done_moving_cb);
   lsevents_add_listener( "cam.zoom In Position",    md2cmds_set_scale_cb);
+  */
+  lsevents_add_listener( ".+ (Moving|In Position)", md2cmds_maybe_done_moving_cb);
 }
