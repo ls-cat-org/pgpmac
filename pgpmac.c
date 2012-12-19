@@ -399,10 +399,14 @@ int main(
   // that everyone is initiallized before anyone runs
   //
   lslogging_init();
+  lslogging_run();
   lsevents_init();
+  lsevents_run();
+  lstimer_init();
+  lstimer_run();
   lsredis_init( "MD2-21-ID-E", "redis\\.kvseq|stns\\.2\\.(.+)", "stns.2");
   lsredis_run();
-  lstimer_init();
+
   lspmac_init( ivars, mvars);
   lspg_init();
   md2cmds_init();
@@ -428,9 +432,6 @@ int main(
 						      
   doupdate();					      
 
-  lslogging_run();
-  lsevents_run();
-  lstimer_run();
   lspmac_run();
   lspg_run();
   md2cmds_run();
