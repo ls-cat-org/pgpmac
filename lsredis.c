@@ -401,7 +401,7 @@ void lsredis_hgetCB( redisAsyncContext *ac, void *reply, void *privdata) {
   r = reply;
   p =  privdata;
 
-  lslogging_log_message( "hgetCB: %s %s", p == NULL ? "<NULL>" : p->key, r->type == REDIS_REPLY_STRING ? r->str : "Non-string value.  Why?");
+  //  lslogging_log_message( "hgetCB: %s %s", p == NULL ? "<NULL>" : p->key, r->type == REDIS_REPLY_STRING ? r->str : "Non-string value.  Why?");
 
   //
   // Apparently this item does not exist
@@ -497,8 +497,6 @@ lsredis_obj_t *_lsredis_get_obj( char *key) {
     err = hsearch_r( htab_input, ENTER, &htab_output, &lsredis_htab);
     if( err == 0) {
       lslogging_log_message( "_lsredis_get_obj: hseach error on enter.  errno=%d", errno);
-    } else {
-      lslogging_log_message( "_lsredis_get_obj: added %s", key);
     }
 
     //
