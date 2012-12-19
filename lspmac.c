@@ -1103,7 +1103,6 @@ void lspmac_shutter_read(
 void lspmac_home1_queue(
 			lspmac_motor_t *mp			/**< [in] motor we are concerned about		*/
 			) {
-  char openloops[32];
   char *sp;
   int i;
   int motor_num;
@@ -1167,9 +1166,7 @@ void lspmac_home1_queue(
   // before the open loop command is dequeued and acted on.
   //
   if( ~(mp->status1) & 0x040000) {
-    snprintf( openloops, sizeof(openloops)-1, "#%d$*", motor_num);
-    openloops[sizeof(openloops)-1] = 0;
-    lspmac_SockSendline( openloops);
+    lspmac_SockSendline( "#%d$*", motor_num);
   }
 
   pthread_mutex_unlock( &(mp->mutex));
@@ -1870,7 +1867,6 @@ void lspmac_movedac_queue(
 			  lspmac_motor_t *mp,		/**< [in] Our motor						*/
 			  double requested_position	/**< [in] Desired x postion (look up and send y position)	*/
 			  ) {
-  char s[512];
   double y;
   double u2c;
 
@@ -1880,18 +1876,18 @@ void lspmac_movedac_queue(
   mp->requested_position = requested_position;
 
   if( mp->nlut > 0 && mp->lut != NULL) {
+    //
+    // u2c scales the lookup table value
+    //
     mp->requested_pos_cnts = u2c * lspmac_lut( mp->nlut, mp->lut, requested_position);
+
+    lslogging_log_message( "lspmac_movedac_queue: motor %s requested position %f  requested counts %d  u2c %f",
+			   mp->name, mp->requested_position, mp->requested_pos_cnts, u2c);
+
     mp->not_done    = 1;
     mp->motion_seen = 0;
 
-
-    //
-    //  By convention requested_pos_cnts scales from 0 to 100
-    //  for the lights u2c converts this to 0 to 16,000
-    //  for the scintilator focus this is   0 to 32,000
-    //
-    snprintf( s, sizeof(s)-1, "%s=%d", mp->dac_mvar, mp->requested_pos_cnts);
-    mp->pq = lspmac_SockSendline_nr( s);
+    mp->pq = lspmac_SockSendline_nr( "%s=%d", mp->dac_mvar, mp->requested_pos_cnts);
 
   }
 
@@ -1905,7 +1901,6 @@ void lspmac_movezoom_queue(
 			   lspmac_motor_t *mp,			/**< [in] the zoom motor		*/
 			   double requested_position		/**< [in] our desired zoom		*/
 			   ) {
-  char s[512];
   double y;
   int motor_num;
 
@@ -1923,8 +1918,7 @@ void lspmac_movezoom_queue(
     mp->motion_seen = 0;
 
 
-    snprintf( s, sizeof(s)-1, "#%d j=%d", motor_num, mp->requested_pos_cnts);
-    mp->pq = lspmac_SockSendline_nr( s);
+    mp->pq = lspmac_SockSendline_nr( "#%d j=%d", motor_num, mp->requested_pos_cnts);
 
   }
   pthread_mutex_unlock( &(mp->mutex));
@@ -2029,7 +2023,6 @@ void lspmac_moveabs_timed_queue(
   int q13;	 // Acceleration time (msecs)
   int q100;	 // 1 << (coord sys no - 1)
   int coord_num; // our coordinate number
-  char s[512];	 // PMAC command string buffer
   double u2c;
   double max_accel;
 
@@ -2059,9 +2052,8 @@ void lspmac_moveabs_timed_queue(
   q100 = 1 << (coord_num - 1);
   pthread_mutex_unlock( &(mp->mutex));
 
-  snprintf( s, sizeof(s)-1, "&%d Q10=%d Q11=%d Q12=%d Q13=%d Q100=%d B240R", coord_num, q10, q11, q12, q13, q100);
   pthread_mutex_lock( &(mp->mutex));
-  mp->pq = lspmac_SockSendline_nr( s);
+  mp->pq = lspmac_SockSendline_nr( "&%d Q10=%d Q11=%d Q12=%d Q13=%d Q100=%d B240R", coord_num, q10, q11, q12, q13, q100);
   pthread_mutex_unlock( &(mp->mutex));
 }
 
@@ -2156,7 +2148,7 @@ void lspmac_move_or_jog_abs_queue(
 			  double requested_position,		/**< [in] Where to move it			*/
 			  int use_jog				/**< [in] 1 to force jog, 0 for motion prog	*/
 			  ) {
-  char s[512];			//!< buffer to send to pmac
+  char *fmt;			//!< format string for coordinate system move
   int q100;			//!< coordinate system bit
   int requested_pos_cnts;	//!< the requested position in units of "counts"
   int coord_num, motor_num;	//!< motor and coordinate system;
@@ -2192,10 +2184,7 @@ void lspmac_move_or_jog_abs_queue(
 
   pthread_mutex_unlock( &(mp->mutex));
 
-  if( use_jog) {
-    snprintf( s, sizeof(s)-1, "#%d j=%d", motor_num, requested_pos_cnts);
-  } else {
-
+  if( !use_jog) {
     //
     // Make sure the coordinate system is not moving something, wait if it is
     // TODO: put in a timeout so we have a way out if something goes wrong
@@ -2215,38 +2204,38 @@ void lspmac_move_or_jog_abs_queue(
     
     switch( *axis) {
     case 'A':
-      snprintf( s, sizeof(s)-1, "&%d Q16=%d Q100=%d B146R", coord_num, requested_pos_cnts, q100);
+      fmt = "&%d Q16=%d Q100=%d B146R";
       break;
 
     case 'B':
-      snprintf( s, sizeof(s)-1, "&%d Q17=%d Q100=%d B147R", coord_num, requested_pos_cnts, q100);
+      fmt = "&%d Q17=%d Q100=%d B147R";
       break;
 
     case 'C':
-      snprintf( s, sizeof(s)-1, "&%d Q18=%d Q100=%d B148R", coord_num, requested_pos_cnts, q100);
+      fmt = "&%d Q18=%d Q100=%d B148R";
       break;
     case 'X':
-      snprintf( s, sizeof(s)-1, "&%d Q10=%d Q100=%d B140R", coord_num, requested_pos_cnts, q100);
+      fmt = "&%d Q10=%d Q100=%d B140R";
       break;
 
     case 'Y':
-      snprintf( s, sizeof(s)-1, "&%d Q11=%d Q100=%d B141R", coord_num, requested_pos_cnts, q100);
+      fmt = "&%d Q11=%d Q100=%d B141R";
       break;
 
     case 'Z':
-      snprintf( s, sizeof(s)-1, "&%d Q12=%d Q100=%d B142R", coord_num, requested_pos_cnts, q100);
+      fmt = "&%d Q12=%d Q100=%d B142R";
       break;
 
     case 'U':
-      snprintf( s, sizeof(s)-1, "&%d Q13=%d Q100=%d B143R", coord_num, requested_pos_cnts, q100);
+      fmt = "&%d Q13=%d Q100=%d B143R";
       break;
 
     case 'V':
-      snprintf( s, sizeof(s)-1, "&%d Q14=%d Q100=%d B144R", coord_num, requested_pos_cnts, q100);
+      fmt = "&%d Q14=%d Q100=%d B144R";
       break;
 
     case 'W':
-      snprintf( s, sizeof(s)-1, "&%d Q15=%d Q100=%d B145R", coord_num, requested_pos_cnts, q100);
+      fmt = "&%d Q15=%d Q100=%d B145R";
       break;
     }
 
@@ -2261,7 +2250,10 @@ void lspmac_move_or_jog_abs_queue(
     lslogging_log_message( "lspmac_moveabs_queue: Done.  lspmac_moving_flags = %0x", lspmac_moving_flags);
   }
   pthread_mutex_lock( &(mp->mutex));
-  mp->pq = lspmac_SockSendline_nr( s);
+  if( use_jog)
+    mp->pq = lspmac_SockSendline_nr( "#%d j=%d", motor_num, requested_pos_cnts);
+  else
+    mp->pq = lspmac_SockSendline_nr( fmt, coord_num, requested_pos_cnts, q100);
   pthread_mutex_unlock( &(mp->mutex));
 
   free( axis);
@@ -2654,7 +2646,7 @@ void lspmac_scint_inPosition_cb( char *event) {
 
   pthread_mutex_lock( &(scint->mutex));
   pos = scint->position;
-  err = lsredis_find_preset( scint->name, "Cover", &pos);
+  err = lsredis_find_preset( scint->name, "Cover", &cover);
   pthread_mutex_unlock( &(scint->mutex));
 
   lslogging_log_message( "lspmac_scint_inPosition_cb: pos %f, cover %f, diff %f, err %d", pos, cover, fabs( pos-cover), err);
@@ -2689,16 +2681,19 @@ void lspmac_backLight_down_cb( char *event) {
  *  \param event Name of the event that calledus
  */
 void lspmac_light_zoom_cb( char *event) {
-  double z;
+  int z;
 
   z = lspmac_getPosition( zoom);
+
+  lslogging_log_message( "lspmac_light_zoom_cb: zoom = %d", z);
+
   if( lspmac_getPosition( flight_oo) != 0.0) {
-      flight->moveAbs( flight, z);
+    flight->moveAbs( flight, (double)z);
     } else {
       flight->moveAbs( flight, 0.0);
     }
   if( lspmac_getPosition( blight_ud) != 0.0) {
-    blight->moveAbs( blight, z);
+    blight->moveAbs( blight, (double)z);
   } else {
     blight->moveAbs( blight, 0.0);
   }
@@ -2809,6 +2804,13 @@ void lspmac_blight_lut_setup() {
     blight->lut[2*i]   = i;
     blight->lut[2*i+1] = 20000.0 * lsredis_getd( p) / 100.0;
   }
+  for( i=0; i<blight->nlut; i++) {
+    lslogging_log_message( "lspmac_blight_lut_setup:  i: %d  x: %f  y: %f  y(lut): %f  x(rlut): %f",
+			   i, blight->lut[2*i], blight->lut[2*i+1],
+			   lspmac_lut( blight->nlut, blight->lut, blight->lut[2*i]),
+			   lspmac_rlut( blight->nlut, blight->lut, blight->lut[2*i+1])
+			   );
+  }
   pthread_mutex_unlock( &blight->mutex);
 }
 
@@ -2880,7 +2882,7 @@ void lspmac_run() {
       break;
 
     case 0:
-      inits = lsredis_get_string_array( mp->active_init);
+      inits = lsredis_get_string_array( mp->inactive_init);
       break;
 
     default:
