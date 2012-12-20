@@ -243,7 +243,7 @@ void lspg_query_push(
   //
   // Pause the thread while we service the queue
   //
-  if( lspg_query_queue_on + 1 == lspg_query_queue_off) {
+  if( (lspg_query_queue_on + 1) % LS_PG_QUERY_QUEUE_LENGTH == lspg_query_queue_off % LS_PG_QUERY_QUEUE_LENGTH) {
     fprintf( stderr, "lspg_query_push: queue is full.  Ignoring query \"%s\"\n", fmt);
     return;
   }

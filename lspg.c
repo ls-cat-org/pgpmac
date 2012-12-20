@@ -142,7 +142,7 @@ void lspg_query_push(
   //
   // Pause the thread while we service the queue
   //
-  while( lspg_query_queue_on + 1 == lspg_query_queue_off) {
+  while( (lspg_query_queue_on + 1) % LS_PG_QUERY_QUEUE_LENGTH == lspg_query_queue_off % LS_PG_QUERY_QUEUE_LENGTH) {
     pthread_cond_wait( &lspg_queue_cond, &lspg_queue_mutex);
   }
 
@@ -543,7 +543,7 @@ void lspg_nextshot_call() {
   lspg_nextshot.new_value_ready = 0;
   pthread_mutex_unlock( &(lspg_nextshot.mutex));
   
-  lspg_query_push( lspg_nextshot_cb, "SELECT * FROM px.nextshot()");
+  lspg_query_push( lspg_nextshot_cb, "SELECT * FROM px.nextshot2()");
 }
 
 /** Wait for the next shot query to get processed
