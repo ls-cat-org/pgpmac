@@ -58,7 +58,7 @@ void lsevents_send_event( char *fmt, ...) {
 
 
   // maybe wait for room on the queue
-  while( lsevents_queue_on + 1 == lsevents_queue_off)
+  while( (lsevents_queue_on + 1) % LSEVENTS_QUEUE_LENGTH == lsevents_queue_off % LSEVENTS_QUEUE_LENGTH)
     pthread_cond_wait( &lsevents_queue_cond, &lsevents_queue_mutex);
   
   sp = lsevents_queue[(lsevents_queue_on++) % LSEVENTS_QUEUE_LENGTH].event;
