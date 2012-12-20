@@ -111,10 +111,6 @@ CREATE OR REPLACE FUNCTION pmac.md2_init( the_stn int) returns void as $$
     EXECUTE 'LISTEN ' || ntfy_pmac;     -- A raw PMAC command is in the queue
     EXECUTE 'LISTEN ' || ntfy_diff;     -- A diffractometer command awaits
 
-    -- EXECUTE 'LISTEN ' || ntfy_kvs;      -- Learn of changed KV's
-    -- EXECUTE 'NOTIFY ' || ntfy_kvs;      -- Immediately call this notify so the md2 can update its kv list
-
-
     -- Log the fact that we are connecting
     --
     INSERT INTO pmac.md2_registration (mr_stn) values (the_stn);
