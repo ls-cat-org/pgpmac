@@ -230,89 +230,7 @@ void md2cmds_phase_change( const char *ccmd) {
 }
 
 
-/** Sets up a centering table and alignment table move
- *  Ensures that when we issue the move command that
- *  we can detect that the move happened.
- */
-void md2cmds_mvcenter_prep() {
-  pmac_cmd_queue_t *pq;
-  int flag;
-
-  pthread_mutex_lock( &lspmac_moving_mutex);
-  flag = (lspmac_moving_flags & 6) != 0;
-  pthread_mutex_unlock( &lspmac_moving_mutex);
-
-  //
-  // Only wait for the all clear if it's not all clear already
-  // Otherwise we may get confused
-  //
-  if( flag) {
-    //
-    // Clears the motion flags for coordinate systems 2 and 3
-    // Then sets them.
-    // Each time we wait until we've read back
-    // the changed values
-    //
-    // This guarantees that when we are waiting for motion to stop that it did, in fact, start
-    //
-    
-    //
-    // Clear the centering and alignment stage flags
-    //
-    pq = lspmac_SockSendline( "M5075=(M5075 | 6) ^ 6");
-    
-    pthread_mutex_lock( &pmac_queue_mutex);
-    //
-    // wait for the command to be sent
-    //
-    while( pq->time_sent.tv_sec==0)
-      pthread_cond_wait( &pmac_queue_cond, &pmac_queue_mutex);
-    pthread_mutex_unlock( &pmac_queue_mutex);
-    
-    //
-    // Make sure the command propagates back to the status
-    //
-    pthread_mutex_lock( &lspmac_moving_mutex);
-    while( (lspmac_moving_flags & 6) != 0)
-      pthread_cond_wait( &lspmac_moving_cond, &lspmac_moving_mutex);
-
-    lslogging_log_message( "md2cmds_mvcenter_prep: lspmac_moving_flags = %d", lspmac_moving_flags);
-    pthread_mutex_unlock( &lspmac_moving_mutex);
-  }
-
-
-  //
-  // set a flag so the event listener doesn't send a callback too soon
-  //
-  pthread_mutex_lock( &md2cmds_moving_mutex);
-  md2cmds_moving_count = -1;
-  pthread_mutex_unlock( &md2cmds_moving_mutex);
-
-  //
-  // Now set the centering and alignment stage flags
-  //
-  pq = lspmac_SockSendline( "M5075=(M5075 | 6)");
-
-  pthread_mutex_lock( &pmac_queue_mutex);
-  //
-  // wait for the command to be sent
-  //
-  while( pq->time_sent.tv_sec==0)
-    pthread_cond_wait( &pmac_queue_cond, &pmac_queue_mutex);
-  pthread_mutex_unlock( &pmac_queue_mutex);
-
-  //
-  // Make sure it propagates
-  //
-  pthread_mutex_lock( &lspmac_moving_mutex);
-  while( (lspmac_moving_flags & 6) != 6)
-    pthread_cond_wait( &lspmac_moving_cond, &lspmac_moving_mutex);
-
-  lslogging_log_message( "md2cmds_mvcenter_prep: lspmac_moving_flags = %d", lspmac_moving_flags);
-  pthread_mutex_unlock( &lspmac_moving_mutex);
-}
-
-double md2cmds_prep_motion( lspmac_motor_t *mp, double pos) {
+double md2cmds_prep_axis( lspmac_motor_t *mp, double pos) {
   double rtn;
   double u2c;
 
@@ -327,37 +245,87 @@ double md2cmds_prep_motion( lspmac_motor_t *mp, double pos) {
   return rtn;
 }
 
-/** Move the centering and alignment tables
- */
-void md2cmds_mvcenter_move(
-			   double cx,	/**< [in] Requested Centering Table X		*/
-			   double cy,	/**< [in] Requested Centering Table Y		*/
-			   double ax,	/**< [in] Requested Alignment Table X		*/
-			   double ay,	/**< [in] Requested Alignment Table Y		*/
-			   double az	/**< [in] Requested Alignment Table Z		*/
-			   ) {
-  
-  //
-  // centering stage is coordinate system 2
-  // alignment stage is coordinate system 3
-  //
-  
-  double cx_cts, cy_cts, ax_cts, ay_cts, az_cts;
+void md2cmds_move_prep( int mmask) {
+  pmac_cmd_queue_t *pq;
+  int flag;
 
-  cx_cts = md2cmds_prep_motion( cenx, cx);
-  cy_cts = md2cmds_prep_motion( ceny, cy);
-  ax_cts = md2cmds_prep_motion( alignx, ax);
-  ay_cts = md2cmds_prep_motion( aligny, ay);
-  az_cts = md2cmds_prep_motion( alignz, az);
+  pthread_mutex_lock( &lspmac_moving_mutex);
+  flag = (lspmac_moving_flags & mmask) != 0;
+  pthread_mutex_unlock( &lspmac_moving_mutex);
 
-  lspmac_SockSendline( "&2 Q100=2 Q20=%.1f Q21=%.1f B150R", cx_cts, cy_cts);
-  md2cmds_moving_pq = lspmac_SockSendline( "&3 Q100=4 Q30=%.1f Q31=%.1f Q32=%.1f B160R", ax_cts, ay_cts, az_cts);
-  
+  //
+  // Only wait for the all clear if it's not all clear already
+  //
+  if( flag) {
+    //
+    // Clear the motion flags for the given coordinate system(s)
+    // Then set them.
+    // Each time we wait until we've read back
+    // the changed values
+    //
+    // This guarantees that when we are waiting for motion to stop that it did, in fact, start
+    //
+    
+    //
+    // Clear the centering and alignment stage flags
+    //
+    pq = lspmac_SockSendline( "M5075=(M5075 | %d) ^ %d", mmask, mmask);
+    
+    pthread_mutex_lock( &pmac_queue_mutex);
+    //
+    // wait for the command to be sent
+    //
+    while( pq->time_sent.tv_sec==0)
+      pthread_cond_wait( &pmac_queue_cond, &pmac_queue_mutex);
+    pthread_mutex_unlock( &pmac_queue_mutex);
+    
+    //
+    // Make sure the command propagates back to the status
+    //
+    pthread_mutex_lock( &lspmac_moving_mutex);
+    while( (lspmac_moving_flags & mmask) != 0)
+      pthread_cond_wait( &lspmac_moving_cond, &lspmac_moving_mutex);
+
+    lslogging_log_message( "md2cmds_move_prep: lspmac_moving_flags = %d", lspmac_moving_flags);
+    pthread_mutex_unlock( &lspmac_moving_mutex);
+  }
+
+
+  //
+  // set a flag so the event listener doesn't look at zero motion before we start and think we are done
+  //
+  pthread_mutex_lock( &md2cmds_moving_mutex);
+  if( md2cmds_moving_count > 0)
+    md2cmds_moving_count = -1;
+  pthread_mutex_unlock( &md2cmds_moving_mutex);
+
+  //
+  // Now set the given motion flags
+  //
+  pq = lspmac_SockSendline( "M5075=(M5075 | %d)", mmask);
+
+  pthread_mutex_lock( &pmac_queue_mutex);
+  //
+  // wait for the command to be sent
+  //
+  while( pq->time_sent.tv_sec==0)
+    pthread_cond_wait( &pmac_queue_cond, &pmac_queue_mutex);
+  pthread_mutex_unlock( &pmac_queue_mutex);
+
+  //
+  // Make sure it propagates
+  //
+  pthread_mutex_lock( &lspmac_moving_mutex);
+  while( (lspmac_moving_flags & mmask) != mmask)
+    pthread_cond_wait( &lspmac_moving_cond, &lspmac_moving_mutex);
+
+  lslogging_log_message( "md2cmds_move_prep: lspmac_moving_flags = %d", lspmac_moving_flags);
+  pthread_mutex_unlock( &lspmac_moving_mutex);
 }
 
-/** Wait for the centering and alignment tables to stop moving
+/** Wait for the movement to stop
  */
-void md2cmds_mvcenter_wait() {
+void md2cmds_move_wait( int mmask) {
   //
   // Just wait until the motion flags are lowered
   // Note this does not mean the motors are done moving,
@@ -379,17 +347,52 @@ void md2cmds_mvcenter_wait() {
   pthread_mutex_unlock( &pmac_queue_mutex);
 
 
+  //
+  // Wait for the motion programs to finish
+  //
   pthread_mutex_lock( &lspmac_moving_mutex);
-  while( lspmac_moving_flags & 6)
+  while( lspmac_moving_flags & mmask)
     pthread_cond_wait( &lspmac_moving_cond, &lspmac_moving_mutex);
   pthread_mutex_unlock( &lspmac_moving_mutex);
 
+  //
+  // Wait for the In Position events
+  //
   pthread_mutex_lock( &md2cmds_moving_mutex);
   while( md2cmds_moving_count > 0)
     pthread_cond_wait( &md2cmds_moving_cond, &md2cmds_moving_mutex);
   pthread_mutex_unlock( &md2cmds_moving_mutex);
 }
 
+
+
+/** Move the centering and alignment tables
+ */
+void md2cmds_mvcenter_move(
+			   double cx,	/**< [in] Requested Centering Table X		*/
+			   double cy,	/**< [in] Requested Centering Table Y		*/
+			   double ax,	/**< [in] Requested Alignment Table X		*/
+			   double ay,	/**< [in] Requested Alignment Table Y		*/
+			   double az	/**< [in] Requested Alignment Table Z		*/
+			   ) {
+  
+  //
+  // centering stage is coordinate system 2
+  // alignment stage is coordinate system 3
+  //
+  
+  double cx_cts, cy_cts, ax_cts, ay_cts, az_cts;
+
+  cx_cts = md2cmds_prep_axis( cenx, cx);
+  cy_cts = md2cmds_prep_axis( ceny, cy);
+  ax_cts = md2cmds_prep_axis( alignx, ax);
+  ay_cts = md2cmds_prep_axis( aligny, ay);
+  az_cts = md2cmds_prep_axis( alignz, az);
+
+  lspmac_SockSendline( "&2 Q100=2 Q20=%.1f Q21=%.1f B150R", cx_cts, cy_cts);
+  md2cmds_moving_pq = lspmac_SockSendline( "&3 Q100=4 Q30=%.1f Q31=%.1f Q32=%.1f B160R", ax_cts, ay_cts, az_cts);
+  
+}
 
 /** Track how many motors are moving
  */
@@ -406,8 +409,6 @@ void md2cmds_maybe_done_moving_cb( char *event) {
       md2cmds_moving_count++;
   } else {
     //
-    // Shouldn't need this but just in case a move was not finished before we're ready
-    // this might take care of the problem
     //
     if( md2cmds_moving_count > 0)
       md2cmds_moving_count--;
@@ -421,19 +422,112 @@ void md2cmds_maybe_done_moving_cb( char *event) {
   
 }
 
+
+
+void md2cmds_organs_prep() {
+  //
+  // we are coordinate system 5,  mask is 1 << (cs - 1)
+  //
+  md2cmds_move_prep( 16);
+}
+
+
+void md2cmds_kappaphi_move( double kappa_deg, double phi_deg) {
+  int kc, pc;
+
+  // coordinate system 7
+  // 1 << (coord sys no - 1) = 64
+
+  kc = md2cmds_prep_axis( kappa, kappa_deg);
+  pc = md2cmds_prep_axis( kappa, phi_deg);
+
+  //  ;150		LS-CAT Move X, Y Absolute
+  //  ;			Q20    = X Value
+  //  ;			Q21    = Y Value
+  //  ;			Q100   = 1 << (coord sys no  - 1)
+
+  md2cmds_moving_pq = lspmac_SockSendline( "&7 Q20=%d Q21=%d Q100=64", kc, pc);
+
+}
+
+void md2cmds_organs_move_presets( char *pay, char *paz, char *pcy, char *pcz, char *psz) {
+  double ay,   az,  cy,  cz,  sz;
+  int    cay, caz, ccy, ccz, csz;
+  int err;
+
+  err = lsredis_find_preset( apery->name, pay, &ay);
+  if( err == 0) {
+    lslogging_log_message( "md2cmds_move_organs_presets: no preset '%s' for motor '%s'", pay, apery->name);
+    return;
+  }
+  
+  err = lsredis_find_preset( aperz->name, paz, &az);
+  if( err == 0) {
+    lslogging_log_message( "md2cmds_move_organs_presets: no preset '%s' for motor '%s'", paz, aperz->name);
+    return;
+  }
+  
+  err = lsredis_find_preset( capy->name, pcy, &cy);
+  if( err == 0) {
+    lslogging_log_message( "md2cmds_organs_move_presets: no preset '%s' for motor '%s'", pcy, capy->name);
+    return;
+  }
+
+  err = lsredis_find_preset( capz->name, pcz, &cz);
+  if( err == 0) {
+    lslogging_log_message( "md2cmds_organs_move_presets: no preset '%s' for motor '%s'", pcz, capz->name);
+    return;
+  }
+
+  err = lsredis_find_preset( scint->name, psz, &sz);
+  if( err == 0) {
+    lslogging_log_message( "md2cmds_organs_move_presets: no preset '%s' for motor '%s'", psz, scint->name);
+    return;
+  }
+
+  cay = md2cmds_prep_axis( apery, ay);
+  caz = md2cmds_prep_axis( aperz, az);
+  ccy = md2cmds_prep_axis( capy,  cy);
+  ccz = md2cmds_prep_axis( capz,  cz);
+  csz = md2cmds_prep_axis( scint, sz);
+  
+  //
+  // 170          LS-CAT Move U, V, W, X, Y, Z Absolute
+  // 	       	      Q40     = X Value
+  //		      Q41     = Y Value
+  // 		      Q42     = Z Value
+  //		      Q43     = U Value
+  //		      Q44     = V Value
+  //		      Q45     = W Value
+  //
+  
+  md2cmds_moving_pq = lspmac_SockSendline( "&5 Q40=0 Q41=%d Q42=%d Q43=%d Q44=%d Q45=%d Q100=16 B170R", cay, caz, ccy, ccz, csz);
+
+}
+
+void md2cmds_organs_wait() {
+  //
+  // we are coordinate system 5,  mask is 1 << (cs - 1)
+  //
+  md2cmds_move_wait( 16);
+}
+
+
 /** Collect some data
  */
 void md2cmds_collect() {
-  long long skey;
-  double p170;	// start cnts
-  double p171;	// end cnts
-  double p173;	// omega velocity cnts/msec
-  double p175;	// acceleration time (msec)
-  double p180;	// exposure time (msec)
-  int center_request;
-  double u2c;
-  double max_accel;
-
+  long long skey;	//!< index of shot to be taken
+  double p170;		//!< start cnts
+  double p171;		//!< delta cnts
+  double p173;		//!< omega velocity cnts/msec
+  double p175;		//!< acceleration time (msec)
+  double p180;		//!< exposure time (msec)
+  int center_request;	//!< one of the stages, at least, needs to be moved
+  double u2c;		//!< unit to counts conversion
+  double max_accel;	//!< maximum acceleration allowed for omega
+  double kappa_pos;	//!< current kappa position in case we need to move phi only
+  double phi_pos;	//!< current phi position in case we need to move kappa only
+  int motion_mask;	//!< combined motion mask to set up waiting
 
   u2c       = lsredis_getd( omega->u2c);
   max_accel = lsredis_getd( omega->max_accel);
@@ -443,13 +537,19 @@ void md2cmds_collect() {
   //
   lspmac_SockSendline( "P3001=0 P3002=0");
 
-
   while( 1) {
     lspg_nextshot_call();
 
+    motion_mask = 0;
+
     //
-    // This is where we'd tell the md2 to move the organs into position
+    // Put the organs into position
     //
+    motion_mask = 16;
+
+    md2cmds_move_prep( motion_mask);
+    md2cmds_organs_move_presets( "In", "In", "In", "In", "Cover");
+
     lspg_nextshot_wait();
 
     if( lspg_nextshot.no_rows_returned) {
@@ -463,48 +563,43 @@ void md2cmds_collect() {
     center_request = 0;
     if( lspg_nextshot.active) {
       if(
+	 //
+	 // Don't move if we are within 0.1 microns of our destination
+	 //
 	 (fabs( lspg_nextshot.cx - cenx->position) > 0.1) ||
 	 (fabs( lspg_nextshot.cy - ceny->position) > 0.1) ||
 	 (fabs( lspg_nextshot.ax - alignx->position) > 0.1) ||
 	 (fabs( lspg_nextshot.ay - aligny->position) > 0.1) ||
 	 (fabs( lspg_nextshot.az - alignz->position) > 0.1)) {
 
+	motion_mask |= 6;
 	center_request = 1;
-	md2cmds_mvcenter_prep();
+	md2cmds_move_prep( 6);
 	md2cmds_mvcenter_move( lspg_nextshot.cx, lspg_nextshot.cy, lspg_nextshot.ax, lspg_nextshot.ay, lspg_nextshot.az);
       }
     }
 
-    if( !lspg_nextshot.dsphi_isnull) {
-      lspmac_moveabs_queue( phi, lspg_nextshot.dsphi);
-    }
-  
-    if( !lspg_nextshot.dskappa_isnull) {
-      lspmac_moveabs_queue( kappa, lspg_nextshot.dskappa);
+    // Maybe move kappa and/or phi
+    //
+    if( !lspg_nextshot.dsphi_isnull || !lspg_nextshot.dskappa_isnull) {
+
+      kappa_pos = lspg_nextshot.dskappa_isnull ? lspmac_getPosition( kappa) : lspg_nextshot.dskappa;
+      phi_pos   = lspg_nextshot.dsphi_isnull   ? lspmac_getPosition( phi)   : lspg_nextshot.dsphi;
+
+      motion_mask |= 64;
+      md2cmds_move_prep( 64);
+      md2cmds_kappaphi_move( kappa_pos, phi_pos);
     }
 
   
-    //
-    // Wait for all those motors to stop
-    //
-    if( center_request) {
-      md2cmds_mvcenter_wait();
-    }
-
-    if( !lspg_nextshot.dsphi_isnull) {
-      lspmac_moveabs_wait( phi);
-    }
-  
-    if( !lspg_nextshot.dskappa_isnull) {
-      lspmac_moveabs_wait( kappa);
-    }
+    if( motion_mask)
+      md2cmds_move_wait( motion_mask);
 
     //
     // Calculate the parameters we'll need to run the scan
     //
     p180 = lspg_nextshot.dsexp * 1000.0;
     p170 = u2c * lspg_nextshot.sstart;
-    //    p171 = u2c * ( lspg_nextshot.sstart + lspg_nextshot.dsowidth);
     p171 = u2c * lspg_nextshot.dsowidth;
     p173 = fabs(p180) < 1.e-4 ? 0.0 : u2c * lspg_nextshot.dsowidth / p180;
     p175 = p173/max_accel;
@@ -543,8 +638,8 @@ void md2cmds_collect() {
     //
     // Start the exposure
     //
-    lspmac_SockSendline( "P170=%.1f P171=%.1f P173=%.1f P174=0 P175=%.1f P176=0 P177=1 P178=0 P180=%.1f M431=1 &1B131R",
-			 p170,      p171,     p173,            p175,                          p180);
+    lspmac_SockSendline( "&1 P170=%.1f P171=%.1f P173=%.1f P174=0 P175=%.1f P176=0 P177=1 P178=0 P180=%.1f M431=1 &1B131R",
+			     p170,     p171,     p173,            p175,                          p180);
 
 
 
@@ -564,20 +659,28 @@ void md2cmds_collect() {
     pthread_mutex_unlock( &lspmac_shutter_mutex);
 
 
+    //
+    // Signal the detector to start reading out
+    //
     lspg_query_push( NULL, "SELECT px.unlock_diffractometer()");
 
+    //
+    // Update the shot status
+    //
     lspg_query_push( NULL, "SELECT px.shots_set_state(%lld, 'Writing')", skey);
 
     //
     // reset shutter has opened flag
     //
     lspmac_SockSendline( "P3001=0");
-    //
-    // TODO:
-    // wait for omega to stop moving then position it for the next frame
-    //
 
-
+    //
+    // Move the center/alignment stages to the next position
+    //
+    // TODO: position omega for the next shot.  During data collection the motion program
+    // makes a good guess but for ortho snaps it is wrong.  Either we should add an argument to the motion program
+    // or put a move command here.
+    //
     if( !lspg_nextshot.active2_isnull && lspg_nextshot.active2) {
       if(
 	 (fabs( lspg_nextshot.cx2 - cenx->position) > 0.1) ||
@@ -587,9 +690,9 @@ void md2cmds_collect() {
 	 (fabs( lspg_nextshot.az2 - alignz->position) > 0.1)) {
 
 	center_request = 1;
-	md2cmds_mvcenter_prep();
+	md2cmds_move_prep( 6);
 	md2cmds_mvcenter_move( lspg_nextshot.cx, lspg_nextshot.cy, lspg_nextshot.ax, lspg_nextshot.ay, lspg_nextshot.az);
-	md2cmds_mvcenter_wait();
+	md2cmds_move_wait(6);
 	lspmac_moveabs_wait( cenx);
 	lspmac_moveabs_wait( ceny);
 	lspmac_moveabs_wait( alignx);
@@ -597,7 +700,6 @@ void md2cmds_collect() {
 	lspmac_moveabs_wait( alignz);
       }
     }
-
   }
 }
 
@@ -669,13 +771,13 @@ void md2cmds_rotate() {
 			  
     lslogging_log_message( "md2cmds_rotate: requested positions cx %f, cy %f, ax %f, ay %f, az %f", cx, cy, ax, ay, az);
 
-    md2cmds_mvcenter_prep();
+    md2cmds_move_prep( 6);
     lslogging_log_message( "md2cmds_rotate: moving center");
     md2cmds_mvcenter_move( cx, cy, ax, ay, az);
 
 
     lslogging_log_message( "md2cmds_rotate: waiting for center move");
-    md2cmds_mvcenter_wait();
+    md2cmds_move_wait(6);
     lslogging_log_message( "md2cmds_rotate: done waiting");
   }
   lspg_getcenter_done();
@@ -815,19 +917,5 @@ void md2cmds_init() {
 void md2cmds_run() {
   pthread_create( &md2cmds_thread, NULL,            md2cmds_worker, NULL);
   lsevents_add_listener( "omega crossed zero",      md2cmds_rotate_cb);
-  /*
-  lsevents_add_listener( "omega In Position",       md2cmds_maybe_rotate_done_cb);
-  lsevents_add_listener( "align.x In Position",     md2cmds_maybe_done_moving_cb);
-  lsevents_add_listener( "align.y In Position",     md2cmds_maybe_done_moving_cb);
-  lsevents_add_listener( "align.z In Position",     md2cmds_maybe_done_moving_cb);
-  lsevents_add_listener( "centering.x In Position", md2cmds_maybe_done_moving_cb);
-  lsevents_add_listener( "centering.y In Position", md2cmds_maybe_done_moving_cb);
-  lsevents_add_listener( "align.x Moving",          md2cmds_maybe_done_moving_cb);
-  lsevents_add_listener( "align.y Moving",          md2cmds_maybe_done_moving_cb);
-  lsevents_add_listener( "align.z Moving",          md2cmds_maybe_done_moving_cb);
-  lsevents_add_listener( "centering.x Moving",      md2cmds_maybe_done_moving_cb);
-  lsevents_add_listener( "centering.y Moving",      md2cmds_maybe_done_moving_cb);
-  lsevents_add_listener( "cam.zoom In Position",    md2cmds_set_scale_cb);
-  */
   lsevents_add_listener( ".+ (Moving|In Position)", md2cmds_maybe_done_moving_cb);
 }
