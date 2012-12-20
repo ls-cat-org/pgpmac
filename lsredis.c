@@ -873,7 +873,8 @@ void lsredis_init( char *pub, char *re, char *head) {
   roac->ev.delWrite = lsredis_delWrite;
   roac->ev.cleanup  = lsredis_cleanup;
 
-  wrac = redisAsyncConnect("10.1.0.3", 6379);
+  //wrac = redisAsyncConnect("10.1.0.3", 6379);
+  wrac = redisAsyncConnect("127.0.0.1", 6379);
   if( wrac->err) {
     lslogging_log_message( "Error: %s", wrac->errstr);
   }
