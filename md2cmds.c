@@ -533,6 +533,15 @@ void md2cmds_collect() {
   max_accel = lsredis_getd( omega->max_accel);
 
   //
+  // Put the organs into position
+  //
+  motion_mask = 16;
+
+  md2cmds_move_prep( motion_mask);
+  md2cmds_organs_move_presets( "In", "In", "In", "In", "Cover");
+  md2cmds_move_wait( motion_mask);
+
+  //
   // reset shutter has opened flag
   //
   lspmac_SockSendline( "P3001=0 P3002=0");
@@ -541,14 +550,6 @@ void md2cmds_collect() {
     lspg_nextshot_call();
 
     motion_mask = 0;
-
-    //
-    // Put the organs into position
-    //
-    motion_mask = 16;
-
-    md2cmds_move_prep( motion_mask);
-    md2cmds_organs_move_presets( "In", "In", "In", "In", "Cover");
 
     lspg_nextshot_wait();
 
@@ -678,9 +679,10 @@ void md2cmds_collect() {
     // Move the center/alignment stages to the next position
     //
     // TODO: position omega for the next shot.  During data collection the motion program
-    // makes a good guess but for ortho snaps it is wrong.  Either we should add an argument to the motion program
-    // or put a move command here.
+    // makes a good guess but for ortho snaps it is wrong.  We should add an argument to the motion program
     //
+
+      
     if( !lspg_nextshot.active2_isnull && lspg_nextshot.active2) {
       if(
 	 (fabs( lspg_nextshot.cx2 - cenx->position) > 0.1) ||
@@ -693,11 +695,6 @@ void md2cmds_collect() {
 	md2cmds_move_prep( 6);
 	md2cmds_mvcenter_move( lspg_nextshot.cx, lspg_nextshot.cy, lspg_nextshot.ax, lspg_nextshot.ay, lspg_nextshot.az);
 	md2cmds_move_wait(6);
-	lspmac_moveabs_wait( cenx);
-	lspmac_moveabs_wait( ceny);
-	lspmac_moveabs_wait( alignx);
-	lspmac_moveabs_wait( aligny);
-	lspmac_moveabs_wait( alignz);
       }
     }
   }
