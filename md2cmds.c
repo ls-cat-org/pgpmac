@@ -24,11 +24,59 @@ static pthread_t md2cmds_thread;
 
 static int rotating = 0;		//!< flag: when omega is in position after a rotate we want to re-home omega
 
+static double md2cmds_capz_moving_time = NAN;
 
 /** Transfer a sample
  *  TODO: Implement
  */
 void md2cmds_transfer() {
+  int nextsample;
+  double ax, ay, az, cx, cy, horz, vert, oref;
+
+  lspg_nextsample_call();
+  lspg_nextsample_wait();
+
+  if( lspg_nextsample.no_rows_returned) {
+    // shouldn't ever happen
+    lspg_nextsample_done();
+    return;
+  }
+
+  if( lspg_nextsample.nextsample_isnull) {
+    lslogging_log_message( "md2cmds_transfer: no sample requested to be transfered, false alarm");
+    lspg_nextsample_done();
+    return;
+  }
+  
+  nextsample = lspg_nextsample.nextsample;
+  lspg_nextsample_done();
+
+  //
+  // BLUMax sets up an abort dialogbox here.  Probably we should figure out how we are going to handle that.
+  //
+
+  // Wait for everything to stop moving
+  // TODO: timeout and abort if we are moving forever
+  //
+  pthread_mutex_lock( &md2cmds_moving_mutex);
+  while( md2cmds_moving_count > 0)
+    pthread_cond_wait( &md2cmds_moving_cond, &md2cmds_moving_mutex);
+  pthread_mutex_unlock( &md2cmds_moving_mutex);
+  
+  //
+  // get positions we'll be needed to report to postgres
+  //
+  ax = lspmac_getPosition(alignx);
+  ay = lspmac_getPosition(aligny);
+  az = lspmac_getPosition(alignz);
+  cx = lspmac_getPosition(cenx);
+  cy = lspmac_getPosition(ceny);
+  oref = lsredis_getd(lsredis_get_obj( "omega.reference")) * M_PI/180.;
+
+  horz = cx * cos(oref) + cy * sin(oref);
+  vert = cx * sin(oref) - cy * cos(oref);
+
+  
 }
 
 
@@ -295,7 +343,7 @@ void md2cmds_move_prep( int mmask) {
   // set a flag so the event listener doesn't look at zero motion before we start and think we are done
   //
   pthread_mutex_lock( &md2cmds_moving_mutex);
-  if( md2cmds_moving_count > 0)
+  if( md2cmds_moving_count == 0)
     md2cmds_moving_count = -1;
   pthread_mutex_unlock( &md2cmds_moving_mutex);
 
@@ -858,7 +906,27 @@ void md2cmds_set_scale_cb( char *event) {
 void md2cmds_center() {
 }
 
+/** Time the capillary motion for the transfer routine
+ */
+void md2cmds_time_capz_cb( char *event) {
+  static struct timespec capz_timestarted;	//!< track the time spent moving capz
+  struct timespec now;
+  int nsec, sec;
 
+  if( strstr( event, "Moving") != NULL) {
+    clock_gettime( CLOCK_REALTIME, &capz_timestarted);
+  } else {
+    clock_gettime( CLOCK_REALTIME, &now);
+
+    sec = now.tv_sec - capz_timestarted.tv_sec;
+    if( now.tv_nsec > capz_timestarted.tv_nsec) {
+      sec--;
+      nsec += 1000000000;
+    }
+    nsec += now.tv_nsec - capz_timestarted.tv_nsec;
+    md2cmds_capz_moving_time = sec + nsec / 1000000000.;
+  }
+}
 
 /** Our worker thread
  */
@@ -912,7 +980,8 @@ void md2cmds_init() {
 /** Start up the thread
  */
 void md2cmds_run() {
-  pthread_create( &md2cmds_thread, NULL,            md2cmds_worker, NULL);
-  lsevents_add_listener( "omega crossed zero",      md2cmds_rotate_cb);
-  lsevents_add_listener( ".+ (Moving|In Position)", md2cmds_maybe_done_moving_cb);
+  pthread_create( &md2cmds_thread, NULL,              md2cmds_worker, NULL);
+  lsevents_add_listener( "omega crossed zero",        md2cmds_rotate_cb);
+  lsevents_add_listener( ".+ (Moving|In Position)",   md2cmds_maybe_done_moving_cb);
+  lsevents_add_listener( "capz (Moving|In Position)", md2cmds_time_capz_cb);
 }
