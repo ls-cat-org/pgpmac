@@ -1364,7 +1364,7 @@ void lspmac_pmacmotor_read(
     }
   }
 
-  if( fabs(mp->reported_position - mp->position) >= lsredis_getd(mp->update_resolution)) {
+  if( status_changed || fabs(mp->reported_position - mp->position) >= lsredis_getd(mp->update_resolution)) {
     fmt = lsredis_getstr(mp->redis_fmt);
     lsredis_setstr( mp->redis_position, fmt, mp->position);
     free(fmt);
