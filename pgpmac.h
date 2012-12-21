@@ -190,6 +190,21 @@ typedef struct lspg_getcenter_struct {
 
 extern lspg_getcenter_t lspg_getcenter;
 
+/** Returns the next sample number
+ *  Just a 32 bit int (Ha, take that, nextshot!)
+ */
+typedef struct lspg_nextsample_struct {
+  pthread_mutex_t mutex;	//!< Our mutex
+  pthread_cond_t cond;		//!< Our condition
+  int new_value_ready;		//!< flag for our condition
+  int no_rows_returned;		//!< just in case, though this query should always return an integer, perhaps 0
+
+  unsigned int nextsample;	//!< sample number (4 8-bit segments: station, dewar (lid), puck, and position in the puck)
+  int nextsample_isnull;	//!< shouldn't ever be set, but if we change the logic of this call in PG then we are ready for it here.
+} lspg_nextsample_t;
+
+extern lspg_nextsample_t lspg_nextsample;
+
 /** Storage definition for nextshot query.
  *
  * The next shot query returns all the information needed to collect the next data frame.
@@ -348,15 +363,35 @@ extern lspmac_motor_t *flight;
 extern lspmac_motor_t *blight;
 extern lspmac_motor_t *fscint;
 
+extern lspmac_motor_t *smart_mag_oo;
 extern lspmac_motor_t *blight_ud;
-extern lspmac_motor_t *flight_oo;
-extern lspmac_motor_t *blight_f;
-extern lspmac_motor_t *flight_f;
 extern lspmac_motor_t *cryo;
 extern lspmac_motor_t *dryer;
 extern lspmac_motor_t *fluo;
+extern lspmac_motor_t *flight_oo;
+extern lspmac_motor_t *blight_f;
+extern lspmac_motor_t *flight_f;
 
 extern int lspmac_nmotors;
+
+extern lspmac_bi_t    *lp_air;
+extern lspmac_bi_t    *hp_air;
+extern lspmac_bi_t    *cryo_switch;
+extern lspmac_bi_t    *blight_down;
+extern lspmac_bi_t    *blight_up;
+extern lspmac_bi_t    *cryo_back;
+extern lspmac_bi_t    *fluor_back;
+extern lspmac_bi_t    *sample_detected;
+extern lspmac_bi_t    *etel_ready;
+extern lspmac_bi_t    *etel_on;
+extern lspmac_bi_t    *etel_init_ok;
+extern lspmac_bi_t    *minikappa_ok;
+extern lspmac_bi_t    *smart_mag_on;
+extern lspmac_bi_t    *arm_parked;
+extern lspmac_bi_t    *shutter_open;
+extern lspmac_bi_t    *smart_mag_off;
+extern lspmac_bi_t    *smart_mag_err;
+
 extern struct timespec omega_zero_time;
 
 extern double lspmac_getPosition( lspmac_motor_t *);

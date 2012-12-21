@@ -74,7 +74,7 @@ static struct pollfd pmacfd;		        //!< our poll structure
 static int getivars = 0;			//!< flag set at initialization to send i vars to db
 static int getmvars = 0;			//!< flag set at initialization to send m vars to db
 
-lspmac_bi_t lspmac_bis[16];			//!< array of binary inputs
+lspmac_bi_t lspmac_bis[32];			//!< array of binary inputs
 int lspmac_nbis = 0;				//!< number of active binary inputs
 
 lspmac_motor_t lspmac_motors[48];		//!< All our motors
@@ -100,15 +100,34 @@ lspmac_motor_t *flight;				//!< Front Light DAC
 lspmac_motor_t *blight;				//!< Back Light DAC
 lspmac_motor_t *fscint;				//!< Scintillator Piezo DAC
 
+lspmac_motor_t *smart_mag_oo;			//!< Smart Magnet on/off
 lspmac_motor_t *blight_ud;			//!< Back light Up/Down actuator
-lspmac_motor_t *flight_oo;			//!< Turn front light on/off
-lspmac_motor_t *blight_f;			//!< Back light scale factor
-lspmac_motor_t *flight_f;			//!< Front light scale factor
 lspmac_motor_t *cryo;				//!< Move the cryostream towards or away from the crystal
 lspmac_motor_t *dryer;				//!< blow air on the scintilator to dry it off
 lspmac_motor_t *fluo;				//!< Move the fluorescence detector in/out
+lspmac_motor_t *flight_oo;			//!< Turn front light on/off
+lspmac_motor_t *blight_f;			//!< Back light scale factor
+lspmac_motor_t *flight_f;			//!< Front light scale factor
 
+
+lspmac_bi_t    *lp_air;				//!< Low pressure air OK
+lspmac_bi_t    *hp_air;				//!< High pressure air OK
 lspmac_bi_t    *cryo_switch;			//!< that little toggle switch for the cryo
+lspmac_bi_t    *blight_down;			//!< Backlight is down
+lspmac_bi_t    *blight_up;			//!< Backlight is up
+lspmac_bi_t    *cryo_back;			//!< cryo is in the back position
+lspmac_bi_t    *fluor_back;			//!< fluor is in the back position
+lspmac_bi_t    *sample_detected;		//!< smart magnet detected sample
+lspmac_bi_t    *etel_ready;			//!< ETEL is ready
+lspmac_bi_t    *etel_on;			//!< ETEL is on
+lspmac_bi_t    *etel_init_ok;			//!< ETEL initialized OK
+lspmac_bi_t    *minikappa_ok;			//!< Minikappa is OK (whatever that means)
+lspmac_bi_t    *smart_mag_on;			//!< smart magnet is on
+lspmac_bi_t    *arm_parked;			//!< (whose arm?  parked where?)
+lspmac_bi_t    *shutter_open;			//!< shutter is open (note in pmc says this is a slow input)
+lspmac_bi_t    *smart_mag_err;			//!< smart magnet error (coil broken perhaps)
+lspmac_bi_t    *smart_mag_off;			//!< smart magnet is off
+
 
 //! Regex to pick out preset name and corresponding position
 #define LSPMAC_PRESET_REGEX "(.*\\.%s\\.presets)\\.([0-9]+)\\.(name|position)"
@@ -1526,27 +1545,27 @@ void lspmac_get_status_cb(
 
   pthread_mutex_lock( &ncurses_mutex);
 
-  // acc11c_1
+  // acc11c_1	INPUTS
   // mask  bit
-  // 0x01  0	Air pressure OK
-  // 0x02  1	Air bearing OK
-  // 0x04  2	Cryo switch
-  // 0x08  3
-  // 0x10  4
+  // 0x01  0	M1000	Air pressure OK
+  // 0x02  1	M1001	Air bearing OK
+  // 0x04  2	M1002	Cryo switch
+  // 0x08  3    M1003	Backlight Down
+  // 0x10  4    M1004	Backlight Up
   // 0x20  5
-  // 0x40  6	Cryo is back
+  // 0x40  6	M1006	Cryo is back
 
   //
-  // acc11c_2
+  // acc11c_2	INPUTS
   // mask  bit
-  // 0x01  0	Fluor Dector back
-  // 0x02  1	Sample Detected
-  // 0x04  2
-  // 0x08  3
-  // 0x10  4
-  // 0x20  5	Etel Ready
-  // 0x40  6	Etel On
-  // 0x80  7	Etel Init OK
+  // 0x01  0	M1008	Fluor Dector back
+  // 0x02  1	M1009	Sample Detected
+  // 0x04  2	M1020	{SC load request}
+  // 0x08  3	M1021	{SC move cryo back request}
+  // 0x10  4	M1022	{SC sample magnet control}
+  // 0x20  5	M1013	Etel Ready
+  // 0x40  6	M1014	Etel On
+  // 0x80  7	M1015	Etel Init OK
 
   if( md2_status.acc11c_2 & 0x01)
     mvwprintw( term_status2, 3, 10, "%*s", -8, "Fluor Out");
@@ -1565,22 +1584,36 @@ void lspmac_get_status_cb(
   wnoutrefresh( term_status2);
 
 
-  // acc11c_3
+  // acc11c_3	INPUTS
   // mask  bit
-  // 0x01  0	Minikappa OK
-  // 0x02  1
-  // 0x04  2
-  // 0x08  3	Arm Parked
-
-  // acc11c_5
-  // mask  bit
-  // 0x01  0    Mag Off
-  // 0x02  1    Condenser Out
-  // 0x04  2    Cryo Back
-  // 0x08  3    Dryer On
-  // 0x10  4    FluoDet Out
+  // 0x01  0	M1025	Minikappa OK
+  // 0x02  1    M1023	{SC unload request}
+  // 0x04  2    M1024	Smartmagnet is on (note in pmc saying this is not used in VB interface)
+  // 0x08  3	M1027	Arm Parked
+  // 0x10  4    M1031	Smartmagnet error (coil is broken)
   // 0x20  5
-  // 0x40  6    1=SmartMag, 0=Permanent Mag
+  // 0x40  6
+  // 0x80  7
+  // 0x100 8    M1048	Shutter is open (note in pmc says: slow input !!!)
+
+  // acc11c_4	INPUTS
+  // mask  bit
+  // 0x01  0    M1031	{laser mirror is back}
+  // 0x02  1    M1032	{laser PSS OK}
+  // 0x04  2    M1033	{laser shutter open}
+
+  
+
+
+  // acc11c_5	OUTPUTS
+  // mask  bit
+  // 0x01  0    M1100	Mag Off
+  // 0x02  1    M1191	Condenser Out
+  // 0x04  2    M1102	Cryo Back
+  // 0x08  3    M1103	Dryer On
+  // 0x10  4    M1104	FluoDet Out
+  // 0x20  5    M1105	{smartmagnet on/off: note in pmc says this is not used}
+  // 0x40  6    M1106	1=SmartMag, 0=Permanent Mag
   //
 
   if( md2_status.acc11c_5 & 0x04)
@@ -1588,14 +1621,25 @@ void lspmac_get_status_cb(
   else
     mvwprintw( term_status2, 3, 1, "%*s", -8, "Cryo In ");
 
-  // acc11c_6
+  // acc11c_6	OUTPUTS
   // mask   bit
-  // 0x0080   7   Etel Enable
-  // 0x0100   8   Fast Shutter Enable
-  // 0x0200   9   Fast Shutter Manual Enable
-  // 0x0400  10   Fast Shutter On
-
-
+  // 0x0001   0	M1040   {SC Sample transfer is on}
+  // 0x0002   1
+  // 0x0004   2
+  // 0x0008   3
+  // 0x0010   4
+  // 0x0020   5
+  // 0x0040   6
+  // 0x0080   7	M1115   Etel Enable
+  // 0x0100   8 M1124   Fast Shutter Enable
+  // 0x0200   9 M1125   Fast Shutter Manual Enable
+  // 0x0400  10 M1126   Fast Shutter On
+  // 0x0800  11  
+  // 0x1000  12 M1128   ADC1 gain bit 0
+  // 0x2000  13 M1129   ADC1 gain bit 1
+  // 0x4000  14 M1130   ADC2 gain bit 0
+  // 0x8000  15 M1131   ADC2 gain bit 1
+  //
 
   if( md2_status.acc11c_5 & 0x02)
     mvwprintw( term_status,  3, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Backlight Up");
@@ -2575,15 +2619,33 @@ void lspmac_init(
   blight = lspmac_dac_init( &(lspmac_motors[17]), &p->back_dac,    "M1201", "backLight.intensity",  lspmac_movedac_queue);
   fscint = lspmac_dac_init( &(lspmac_motors[18]), &p->scint_piezo, "M1203", "scint.focus",          lspmac_movedac_queue);
 
-  blight_ud = lspmac_bo_init( &(lspmac_motors[19]), "backLight",  "M1101=%d", &(md2_status.acc11c_5), 0x02);
-  cryo      = lspmac_bo_init( &(lspmac_motors[20]), "cryo",       "M1102=%d", &(md2_status.acc11c_5), 0x04);
-  dryer     = lspmac_bo_init( &(lspmac_motors[21]), "dryer",      "M1103=%d", &(md2_status.acc11c_5), 0x08);
-  fluo      = lspmac_bo_init( &(lspmac_motors[22]), "fluo",       "M1008=%d", &(md2_status.acc11c_2), 0x01);
-  flight_oo = lspmac_soft_motor_init( &(lspmac_motors[23]), "frontLight",        lspmac_moveabs_frontlight_oo_queue);
-  blight_f  = lspmac_soft_motor_init( &(lspmac_motors[24]), "backLight.factor",  lspmac_moveabs_blight_factor_queue);
-  flight_f  = lspmac_soft_motor_init( &(lspmac_motors[25]), "frontLight.factor", lspmac_moveabs_flight_factor_queue);
+  smart_mag_oo  = lspmac_bo_init( &(lspmac_motors[19]), "smartMagnet","M1100=%d", &(md2_status.acc11c_5), 0x01);
+  blight_ud     = lspmac_bo_init( &(lspmac_motors[20]), "backLight",  "M1101=%d", &(md2_status.acc11c_5), 0x02);
+  cryo          = lspmac_bo_init( &(lspmac_motors[21]), "cryo",       "M1102=%d", &(md2_status.acc11c_5), 0x04);
+  dryer         = lspmac_bo_init( &(lspmac_motors[22]), "dryer",      "M1103=%d", &(md2_status.acc11c_5), 0x08);
+  fluo          = lspmac_bo_init( &(lspmac_motors[23]), "fluo",       "M1104=%d", &(md2_status.acc11c_5), 0x10);
+  flight_oo     = lspmac_soft_motor_init( &(lspmac_motors[24]), "frontLight",        lspmac_moveabs_frontlight_oo_queue);
+  blight_f      = lspmac_soft_motor_init( &(lspmac_motors[25]), "backLight.factor",  lspmac_moveabs_blight_factor_queue);
+  flight_f      = lspmac_soft_motor_init( &(lspmac_motors[26]), "frontLight.factor", lspmac_moveabs_flight_factor_queue);
 
-  cryo_switch = lspmac_bi_init( &(lspmac_bis[0]), &(md2_status.acc11c_1), 0x04, "CryoSwitchChanged", "CryoSwitchChanged");
+  lp_air          = lspmac_bi_init( &(lspmac_bis[ 0]), &(md2_status.acc11c_1),  0x01, "Low Pressure Air OK",  "Low Pressure Air Failed");
+  hp_air          = lspmac_bi_init( &(lspmac_bis[ 1]), &(md2_status.acc11c_1),  0x02, "High Pressure Air OK", "High Pressure Air Failed");
+  cryo_switch     = lspmac_bi_init( &(lspmac_bis[ 2]), &(md2_status.acc11c_1),  0x04, "CryoSwitchChanged",    "CryoSwitchChanged");
+  blight_down     = lspmac_bi_init( &(lspmac_bis[ 3]), &(md2_status.acc11c_1),  0x08, "Backlight Down",       "Backlight Not Down");
+  blight_up       = lspmac_bi_init( &(lspmac_bis[ 4]), &(md2_status.acc11c_1),  0x10, "Backlight Up",         "Backlight Not Up");
+  cryo_back       = lspmac_bi_init( &(lspmac_bis[ 5]), &(md2_status.acc11c_1),  0x40, "Cryo Back",            "Cryo Not Back");
+  fluor_back	  = lspmac_bi_init( &(lspmac_bis[ 6]), &(md2_status.acc11c_2),  0x01, "Fluor. Det. Parked",   "Fluor. Det. Not Parked");
+  sample_detected = lspmac_bi_init( &(lspmac_bis[ 7]), &(md2_status.acc11c_2),  0x02, "SamplePresent",        "SampleAbsent");
+  etel_ready      = lspmac_bi_init( &(lspmac_bis[ 8]), &(md2_status.acc11c_2),  0x20, "ETEL Ready",           "ETEL Not Ready");
+  etel_on         = lspmac_bi_init( &(lspmac_bis[ 9]), &(md2_status.acc11c_2),  0x40, "ETEL On",              "ETEL Off");
+  etel_init_ok    = lspmac_bi_init( &(lspmac_bis[10]), &(md2_status.acc11c_2),  0x80, "ETEL Init OK",         "ETEL Init Not OK");
+  minikappa_ok    = lspmac_bi_init( &(lspmac_bis[11]), &(md2_status.acc11c_3),  0x01, "Minikappa OK",         "Minikappa Not OK");
+  smart_mag_on    = lspmac_bi_init( &(lspmac_bis[12]), &(md2_status.acc11c_3),  0x04, "Smart Magnet On",      "Smart Magnet Not On");
+  arm_parked      = lspmac_bi_init( &(lspmac_bis[13]), &(md2_status.acc11c_3),  0x08, "Arm Parked",           "Arm Not Parked");
+  smart_mag_err   = lspmac_bi_init( &(lspmac_bis[14]), &(md2_status.acc11c_3),  0x10, "Smart Magnet Error",   "Smart Magnet OK");
+  shutter_open    = lspmac_bi_init( &(lspmac_bis[15]), &(md2_status.acc11c_3), 0x100, "Shutter Open",         "Shutter Not Open");
+  smart_mag_off   = lspmac_bi_init( &(lspmac_bis[16]), &(md2_status.acc11c_5),  0x01, "Smart Magnet Off",     "Smart Magnet Not Off");
+  
 
   //
   // Initialize several commands that get called, perhaps, alot
