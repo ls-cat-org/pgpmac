@@ -69,6 +69,7 @@ static PGconn *q = NULL;						//!< Database connector
 static PostgresPollingStatusType lspg_connectPoll_response;		//!< Used to determine state while connecting
 static PostgresPollingStatusType lspg_resetPoll_response;		//!< Used to determine state while reconnecting
 
+lspg_nextsample_t lspg_nextsample;					//!< the very next sample
 lspg_nextshot_t  lspg_nextshot;						//!< the nextshot object
 lspg_getcenter_t lspg_getcenter;					//!< the getcenter object
 
@@ -274,6 +275,71 @@ char **lspg_array2ptrs( char *a) {
   rtn[rtni]   = NULL;
   free( acums);
   return( rtn);
+}
+
+/** Next Sample
+ */
+void lspg_nextsample_cb( 
+		      lspg_query_queue_t *qqp,		/**< [in] Our nextsample query			*/
+		      PGresult *pgr			/**< [in] result of the query			*/
+		      ) {
+  static int got_columns = 0;
+  static int nextsample_col;
+  pthread_mutex_lock( &(lspg_nextsample.mutex));
+
+  lspg_nextsample.no_rows_returned = PQntuples( pgr) <= 0;
+  if( lspg_nextsample.no_rows_returned) {
+    lslogging_log_message( "lspg_nextsample_cb: no rows returned.  This should never happen.");
+    lspg_nextsample.new_value_ready = 1;
+    pthread_cond_signal( &(lspg_nextsample.cond));
+    pthread_mutex_unlock( &(lspg_nextsample.mutex));
+    return;
+  }
+
+  if( got_columns == 0) {
+    nextsample_col = PQfnumber( pgr, "nextsample");
+    got_columns = 1;
+  }
+
+  lspg_nextsample.nextsample_isnull = PQgetisnull( pgr, 0, nextsample_col);
+  if( lspg_nextsample.nextsample_isnull == 0)
+    lspg_nextsample.nextsample = strtol( PQgetvalue( pgr, 0, nextsample_col), NULL, 0);
+
+  lspg_nextsample.new_value_ready = 1;
+  pthread_cond_signal( &(lspg_nextsample.cond));
+  pthread_mutex_unlock( &(lspg_nextsample.mutex));
+}
+
+/** Initialize the nextsample variable, mutex, and condition
+ */
+void lspg_nextsample_init() {
+  memset( &lspg_nextsample, 0, sizeof( lspg_nextsample));
+  pthread_mutex_init( &(lspg_nextsample.mutex), NULL);
+  pthread_cond_init( &(lspg_nextsample.cond), NULL);
+}
+
+/** Queue up a nextsample query
+ */
+void lspg_nextsample_call() {
+  pthread_mutex_lock( &(lspg_nextsample.mutex));
+  lspg_nextsample.new_value_ready = 0;
+  pthread_mutex_unlock( &(lspg_nextsample.mutex));
+  
+  lspg_query_push( lspg_nextsample_cb, "SELECT nextsample FROM px.nextsample()");
+}
+
+/** Wait for the nextsample query to get processed
+ */
+void lspg_nextsample_wait() {
+  pthread_mutex_lock( &(lspg_nextsample.mutex));
+  while( lspg_nextsample.new_value_ready == 0)
+    pthread_cond_wait( &(lspg_nextsample.cond), &(lspg_nextsample.mutex));
+}
+
+/** Called when the next shot query has been processed
+ */
+void lspg_nextsample_done() {
+  pthread_mutex_unlock( &(lspg_nextsample.mutex));
 }
 
 
@@ -1395,13 +1461,11 @@ void *lspg_worker(
   static sigset_t our_sigset;
   int sigfd;
 
-  sigemptyset( &our_sigset);
-  sigaddset( &our_sigset, SIGUSR1);
-
-
   //
   // block ordinary signal mechanism
   //
+  sigemptyset( &our_sigset);
+  sigaddset( &our_sigset, SIGUSR1);
   pthread_sigmask(SIG_BLOCK, &our_sigset, NULL);
 
     
