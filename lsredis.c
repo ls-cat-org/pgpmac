@@ -949,7 +949,7 @@ void lsredis_sig_service(
 /** subscribe to changes and service sockets
  */
 void *lsredis_worker(  void *dummy) {
-  static int poll_timeout_ms = 100;	//!< poll timeout, in millisecs (of course)
+  static int poll_timeout_ms = -1;	//!< poll timeout, in millisecs (of course)
   static struct pollfd fda[4];		//!< array of pollfd's for the poll function, one entry per connection
   static int nfda = 0;			//!< number of active elements in fda
   static sigset_t our_sigset;
