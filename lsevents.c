@@ -15,7 +15,7 @@
  *  or two.
  */
 typedef struct lsevents_queue_struct {
-  char event[LSEVENTS_EVENT_LENGTH];	//!< name of the event
+  char *evp;				//!< name of the event
 } lsevents_queue_t;
 
 static lsevents_queue_t lsevents_queue[LSEVENTS_QUEUE_LENGTH];		//!< simple list of events
@@ -44,7 +44,6 @@ static pthread_cond_t  lsevents_queue_cond;		//!< condition to pause the queue i
  */
 void lsevents_send_event( char *fmt, ...) {
   char event[LSEVENTS_EVENT_LENGTH];
-  char *sp;
   va_list arg_ptr;
 
   va_start( arg_ptr, fmt);
@@ -61,9 +60,7 @@ void lsevents_send_event( char *fmt, ...) {
   while( (lsevents_queue_on + 1) % LSEVENTS_QUEUE_LENGTH == lsevents_queue_off % LSEVENTS_QUEUE_LENGTH)
     pthread_cond_wait( &lsevents_queue_cond, &lsevents_queue_mutex);
   
-  sp = lsevents_queue[(lsevents_queue_on++) % LSEVENTS_QUEUE_LENGTH].event;
-  strncpy( sp, event, LSEVENTS_EVENT_LENGTH);
-  sp[LSEVENTS_EVENT_LENGTH - 1] = 0;
+  lsevents_queue[(lsevents_queue_on++) % LSEVENTS_QUEUE_LENGTH].evp = strdup(event);
 
   pthread_cond_signal(  &lsevents_queue_cond);
   pthread_mutex_unlock( &lsevents_queue_mutex);
@@ -159,7 +156,7 @@ void *lsevents_worker(
 		     void *dummy
 		     ) {
   
-  char *event;
+  //  char *event;
   lsevents_queue_t *ep;
   lsevents_listener_t *p;
 
@@ -177,8 +174,6 @@ void *lsevents_worker(
     // we unlock the mutex
     //
     ep = &(lsevents_queue[(lsevents_queue_off++) % LSEVENTS_QUEUE_LENGTH]);
-    event = strndup( ep->event, LSEVENTS_EVENT_LENGTH-1);
-    event[LSEVENTS_EVENT_LENGTH-1] = 0;
 
     //
     // let the send event process know there is room on the queue again
@@ -191,12 +186,12 @@ void *lsevents_worker(
     //
     pthread_mutex_lock( &lsevents_listener_mutex);
     for( p = lsevents_listeners_p; p != NULL; p = p->next) {
-      if( regexec( &p->re, event, 0, NULL, 0) == 0) {
-	p->cb( event);
+      if( regexec( &p->re, ep->evp, 0, NULL, 0) == 0) {
+	p->cb( ep->evp);
       }
     }
-    free( event);
-
+    free( ep->evp);
+    
     pthread_mutex_unlock( &lsevents_listener_mutex);
   }
   return NULL;
