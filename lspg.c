@@ -1196,10 +1196,12 @@ void lspg_pg_service(
 	pgn = PQnotifies( q);
 	if( pgn == NULL)
 	  break;
+
+	lslogging_log_message( "lspg_pg_service: notify recieved %s", pgn->relname);
 	
 	if( strstr( pgn->relname, "_pmac") != NULL) {
 	  lspg_query_push( lspg_cmd_cb, "SELECT pmac.md2_queue_next()");
-	} else if (strstr( pgn->relname, "_diff") != NULL) {
+	} else if (strstr( pgn->relname, "_diff") != NULL || strstr( pgn->relname, "_run") != NULL) {
 	  lspg_query_push( lspg_nextaction_cb, "SELECT action FROM px.nextaction()");
 	} 
 	PQfreemem( pgn);
