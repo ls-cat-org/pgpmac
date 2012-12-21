@@ -184,6 +184,18 @@ void *lsevents_worker(
     //
     // Find the callbacks and, well, call them back
     //
+    // TODO:
+    //
+    // Yes, this is O(N).
+    //
+    // Plan to make this O(1):
+    //  track actual event names from send_event
+    //  match listeners for new event names
+    //  store matchs in hash table
+    //
+    // That makes send_event for new events O(N)
+    // but O(1) otherwise, O(N) for add_listener, and O(1) here.
+    //
     pthread_mutex_lock( &lsevents_listener_mutex);
     for( p = lsevents_listeners_p; p != NULL; p = p->next) {
       if( regexec( &p->re, ep->evp, 0, NULL, 0) == 0) {
