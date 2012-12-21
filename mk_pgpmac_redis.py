@@ -75,7 +75,7 @@ motor_dict = {
                       "minPosition" :  "-2.56","maxPosition" :  "2.496"
                      },
     "centering.y" : {"motor_num" : "18","max_accel" : "0.5",  "max_speed" : "150", "coord_num" : "2", "u2c" : "182400",
-                     "home" : '{M48=0,&2#18->0,"M700=M700 | $020000"}', "active_init" : 'M48=1,&2#18->Y,"M700=(M700 | $020000) ^ $020000"}',
+                     "home" : '{#18$,M418=1,&2E,#18&2B18R}', "active_init" : 'M48=1,&2#18->Y,"M700=(M700 | $020000) ^ $020000"}',
                      "inactive_init" : '{M48=0,&2#18->0,"M700=M700 | $020000"}',"smallStep" :  "0.001",
                      "axis" :  "Y","format" :  "%.3f",
                      "minPosition" :  "-2.58","maxPosition" :  "2.4"
@@ -267,8 +267,8 @@ for m in motor_dict.keys():
 # light and zoom settings
 
 for lev, f, b, p, x, y in zoom_settings:
-    print "HSET %s.cam.zoom.%d.FrontLightIntensity VALUE %s" % (head, lev, f)
-    print "HSET %s.cam.zoom.%d.LightIntensity VALUE %s"      % (head, lev, b)
-    print "HSET %s.cam.zoom.%d.MotorPosition VALUE %s"       % (head, lev, p)
-    print "HSET %s.cam.zoom.%d.ScaleX VALUE %s"              % (head, lev, x)
-    print "HSET %s.cam.zoom.%d.ScaleY VALUE %s"              % (head, lev, y)
+    print "HSETNX %s.cam.zoom.%d.FrontLightIntensity VALUE %s" % (head, lev, f)
+    print "HSETNX %s.cam.zoom.%d.LightIntensity VALUE %s"      % (head, lev, b)
+    print "HSETNX %s.cam.zoom.%d.MotorPosition VALUE %s"       % (head, lev, p)
+    print "HSETNX %s.cam.zoom.%d.ScaleX VALUE %s"              % (head, lev, x)
+    print "HSETNX %s.cam.zoom.%d.ScaleY VALUE %s"              % (head, lev, y)
