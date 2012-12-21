@@ -124,7 +124,10 @@ motor_dict = {
                            },
     "frontLight.factor" : { "canHome" :  "false","type" :  "DAC",
                             "update_resolution" :  "0.5","canStop" :  "false"
-                            }
+                            },
+    "smartMagnet"  : { "canHome" :  "false","type" :  "BO",
+                     "update_resolution" :  "0.5","canStop" :  "false"
+                        }
     }
 
 # DBR TYPES
