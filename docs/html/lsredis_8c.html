@@ -42,6 +42,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
+      <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li><a href="annotated.html"><span>Data&#160;Structures</span></a></li>
       <li class="current"><a href="files.html"><span>Files</span></a></li>
       <li>
@@ -88,7 +89,7 @@ $(document).ready(function(){initNavTree('lsredis_8c.html','');});
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Data Structures</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Macros</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Data Structures</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Macros</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Pages</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -277,12 +278,11 @@ Variables</h2></td></tr>
 
 <p>Maybe add a new object Used internally for this module Must be called with lsredis_mutex locked. </p>
 
-<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00431">431</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
+<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00434">434</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
 <div class="fragment"><div class="line">                                            {</div>
 <div class="line">  <a class="code" href="structlsredis__obj__struct.html" title="Redis Object Basic object whose value is sychronized with our redis db.">lsredis_obj_t</a> *p;</div>
 <div class="line">  regmatch_t pmatch[2];</div>
 <div class="line">  <span class="keywordtype">int</span> err;</div>
-<div class="line">  <span class="keywordtype">char</span> *name;</div>
 <div class="line">  ENTRY htab_input, *htab_output;</div>
 <div class="line"></div>
 <div class="line">  <span class="comment">// Dispense with obviously bad keys straight away</span></div>
@@ -347,8 +347,6 @@ Variables</h2></td></tr>
 <div class="line">    err = hsearch_r( htab_input, ENTER, &amp;htab_output, &amp;<a class="code" href="lsredis_8c.html#a42aec6aa74072797ec0344847b0e9e39">lsredis_htab</a>);</div>
 <div class="line">    <span class="keywordflow">if</span>( err == 0) {</div>
 <div class="line">      <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;_lsredis_get_obj: hseach error on enter.  errno=%d&quot;</span>, errno);</div>
-<div class="line">    } <span class="keywordflow">else</span> {</div>
-<div class="line">      <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;_lsredis_get_obj: added %s&quot;</span>, key);</div>
 <div class="line">    }</div>
 <div class="line"></div>
 <div class="line">    <span class="comment">//</span></div>
@@ -397,25 +395,25 @@ Variables</h2></td></tr>
 <p>Definition at line <a class="el" href="lsredis_8c_source.html#l00145">145</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
 <div class="fragment"><div class="line">                                                    {</div>
 <div class="line"></div>
-<div class="line">  <span class="keywordflow">if</span>( strlen(v) &gt;= p-&gt;<a class="code" href="structlsredis__obj__struct.html#a664f0eaafb8dffc0dbde126e0340efb9" title="Number of bytes allocated for value (not value&#39;s string length)">value_length</a>) {</div>
+<div class="line">  <span class="keywordflow">if</span>( strlen(<a class="code" href="namespacemk__pgpmac__redis.html#a5f3a2bd9ec25ae16b9b4af04dabb504c">v</a>) &gt;= (<span class="keywordtype">unsigned</span> <span class="keywordtype">int</span>) p-&gt;<a class="code" href="structlsredis__obj__struct.html#a664f0eaafb8dffc0dbde126e0340efb9" title="Number of bytes allocated for value (not value&#39;s string length)">value_length</a>) {</div>
 <div class="line">    <span class="keywordflow">if</span>( p-&gt;<a class="code" href="structlsredis__obj__struct.html#a0465c65288e8101805a6f91049164517" title="our value">value</a> != NULL)</div>
 <div class="line">      free( p-&gt;<a class="code" href="structlsredis__obj__struct.html#a0465c65288e8101805a6f91049164517" title="our value">value</a>);</div>
-<div class="line">    p-&gt;<a class="code" href="structlsredis__obj__struct.html#a664f0eaafb8dffc0dbde126e0340efb9" title="Number of bytes allocated for value (not value&#39;s string length)">value_length</a> = strlen(v) + 256;</div>
+<div class="line">    p-&gt;<a class="code" href="structlsredis__obj__struct.html#a664f0eaafb8dffc0dbde126e0340efb9" title="Number of bytes allocated for value (not value&#39;s string length)">value_length</a> = strlen(<a class="code" href="namespacemk__pgpmac__redis.html#a5f3a2bd9ec25ae16b9b4af04dabb504c">v</a>) + 256;</div>
 <div class="line">    p-&gt;<a class="code" href="structlsredis__obj__struct.html#a0465c65288e8101805a6f91049164517" title="our value">value</a> = calloc( p-&gt;<a class="code" href="structlsredis__obj__struct.html#a664f0eaafb8dffc0dbde126e0340efb9" title="Number of bytes allocated for value (not value&#39;s string length)">value_length</a>, <span class="keyword">sizeof</span>( <span class="keywordtype">char</span>));</div>
 <div class="line">    <span class="keywordflow">if</span>( p-&gt;<a class="code" href="structlsredis__obj__struct.html#a0465c65288e8101805a6f91049164517" title="our value">value</a> == NULL) {</div>
 <div class="line">      <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;_lsredis_set_value: out of memory&quot;</span>);</div>
 <div class="line">      exit( -1);</div>
 <div class="line">    }</div>
 <div class="line">  }</div>
-<div class="line">  strncpy( p-&gt;<a class="code" href="structlsredis__obj__struct.html#a0465c65288e8101805a6f91049164517" title="our value">value</a>, v, p-&gt;<a class="code" href="structlsredis__obj__struct.html#a664f0eaafb8dffc0dbde126e0340efb9" title="Number of bytes allocated for value (not value&#39;s string length)">value_length</a> - 1);</div>
+<div class="line">  strncpy( p-&gt;<a class="code" href="structlsredis__obj__struct.html#a0465c65288e8101805a6f91049164517" title="our value">value</a>, <a class="code" href="namespacemk__pgpmac__redis.html#a5f3a2bd9ec25ae16b9b4af04dabb504c">v</a>, p-&gt;<a class="code" href="structlsredis__obj__struct.html#a664f0eaafb8dffc0dbde126e0340efb9" title="Number of bytes allocated for value (not value&#39;s string length)">value_length</a> - 1);</div>
 <div class="line">  p-&gt;<a class="code" href="structlsredis__obj__struct.html#a0465c65288e8101805a6f91049164517" title="our value">value</a>[p-&gt;<a class="code" href="structlsredis__obj__struct.html#a664f0eaafb8dffc0dbde126e0340efb9" title="Number of bytes allocated for value (not value&#39;s string length)">value_length</a>-1] = 0;</div>
 <div class="line">  p-&gt;<a class="code" href="structlsredis__obj__struct.html#ab60d0a71cabad6b921b6edb5a8f68996" title="our value as a double">dvalue</a> = strtod( p-&gt;<a class="code" href="structlsredis__obj__struct.html#a0465c65288e8101805a6f91049164517" title="our value">value</a>, NULL);</div>
-<div class="line">  p-&gt;<a class="code" href="structlsredis__obj__struct.html#a26211a0ab3fc02e7776e24dbc1f1256c" title="our value as a long">lvalue</a> = strtol( p-&gt;<a class="code" href="structlsredis__obj__struct.html#a0465c65288e8101805a6f91049164517" title="our value">value</a>, NULL, 10);</div>
+<div class="line">  p-&gt;<a class="code" href="structlsredis__obj__struct.html#a26211a0ab3fc02e7776e24dbc1f1256c" title="our value as a long">lvalue</a> = p-&gt;<a class="code" href="structlsredis__obj__struct.html#ab60d0a71cabad6b921b6edb5a8f68996" title="our value as a double">dvalue</a>;</div>
 <div class="line"></div>
 <div class="line">  <span class="keywordflow">if</span>( p-&gt;<a class="code" href="structlsredis__obj__struct.html#ac065eeede0e08f25bcfedd45022fe593" title="our value as an array of strings">avalue</a> != NULL) {</div>
-<div class="line">    <span class="keywordtype">int</span> i;</div>
+<div class="line">    <span class="keywordtype">int</span> <a class="code" href="namespacemk__pgpmac__redis.html#afa643a23a5984fe44c2182ada3dfa401">i</a>;</div>
 <div class="line">    <span class="keywordflow">for</span>( i=0; (p-&gt;<a class="code" href="structlsredis__obj__struct.html#ac065eeede0e08f25bcfedd45022fe593" title="our value as an array of strings">avalue</a>)[i] != NULL; i++)</div>
-<div class="line">      free( (p-&gt;<a class="code" href="structlsredis__obj__struct.html#ac065eeede0e08f25bcfedd45022fe593" title="our value as an array of strings">avalue</a>)[i]);</div>
+<div class="line">      free( (p-&gt;<a class="code" href="structlsredis__obj__struct.html#ac065eeede0e08f25bcfedd45022fe593" title="our value as an array of strings">avalue</a>)[<a class="code" href="namespacemk__pgpmac__redis.html#afa643a23a5984fe44c2182ada3dfa401">i</a>]);</div>
 <div class="line">    free( p-&gt;<a class="code" href="structlsredis__obj__struct.html#ac065eeede0e08f25bcfedd45022fe593" title="our value as an array of strings">avalue</a>);</div>
 <div class="line">    p-&gt;<a class="code" href="structlsredis__obj__struct.html#ac065eeede0e08f25bcfedd45022fe593" title="our value as an array of strings">avalue</a> = NULL;</div>
 <div class="line">  }</div>
@@ -660,7 +658,7 @@ Variables</h2></td></tr>
 <div class="fragment"><div class="line">                                                                          {</div>
 <div class="line">  <span class="keyword">static</span> <span class="keywordtype">int</span> indentlevel = 0;</div>
 <div class="line">  redisReply *r;</div>
-<div class="line">  <span class="keywordtype">int</span> i;</div>
+<div class="line">  <span class="keywordtype">int</span> <a class="code" href="namespacemk__pgpmac__redis.html#afa643a23a5984fe44c2182ada3dfa401">i</a>;</div>
 <div class="line"></div>
 <div class="line">  r = (redisReply *)reply;</div>
 <div class="line"></div>
@@ -693,7 +691,7 @@ Variables</h2></td></tr>
 <div class="line">  <span class="keywordflow">case</span> REDIS_REPLY_ARRAY:</div>
 <div class="line">    <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;%*sARRAY of %d elements&quot;</span>, indentlevel*4, <span class="stringliteral">&quot;&quot;</span>, (<span class="keywordtype">int</span>)r-&gt;elements);</div>
 <div class="line">    indentlevel++;</div>
-<div class="line">    <span class="keywordflow">for</span>( i=0; i&lt;r-&gt;elements; i++)</div>
+<div class="line">    <span class="keywordflow">for</span>( i=0; i&lt;(int)r-&gt;elements; i++)</div>
 <div class="line">      <a class="code" href="lsredis_8c.html#a8268fd06bda0e2c327b057a880b97b59" title="Log the reply.">lsredis_debugCB</a>( ac, r-&gt;element[i], NULL);</div>
 <div class="line">    indentlevel--;</div>
 <div class="line">    <span class="keywordflow">break</span>;</div>
@@ -780,7 +778,7 @@ Variables</h2></td></tr>
 
 <p>service the socket requests </p>
 
-<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00909">909</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
+<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00885">885</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
 <div class="fragment"><div class="line">                                             {</div>
 <div class="line">  pthread_mutex_lock( &amp;<a class="code" href="lsredis_8c.html#a390e8acf789b0fa41b43a794dd27e28f">lsredis_mutex</a>);</div>
 <div class="line">  <span class="keywordflow">if</span>( evt-&gt;fd == <a class="code" href="lsredis_8c.html#a4d65536cb1094fb5deda0a852b181232">subac</a>-&gt;c.fd) {</div>
@@ -836,10 +834,10 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00777">777</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
+<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00752">752</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
 <div class="fragment"><div class="line">                                                                      {</div>
 <div class="line">  <span class="keywordtype">char</span> s[512];</div>
-<div class="line">  <span class="keywordtype">int</span> i;</div>
+<div class="line">  <span class="keywordtype">int</span> <a class="code" href="namespacemk__pgpmac__redis.html#afa643a23a5984fe44c2182ada3dfa401">i</a>;</div>
 <div class="line">  <span class="keywordtype">int</span> err;</div>
 <div class="line">  ENTRY htab_input, *htab_output;</div>
 <div class="line">  <a class="code" href="structlsredis__obj__struct.html" title="Redis Object Basic object whose value is sychronized with our redis db.">lsredis_obj_t</a> *p;</div>
@@ -960,7 +958,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00358">358</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
+<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00361">361</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
 <div class="fragment"><div class="line">                                                   {</div>
 <div class="line">  <span class="keywordtype">char</span> **rtn;</div>
 <div class="line"></div>
@@ -990,7 +988,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00371">371</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
+<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00374">374</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
 <div class="fragment"><div class="line">                                    {</div>
 <div class="line">  <span class="keywordtype">int</span> rtn;</div>
 <div class="line"></div>
@@ -1020,7 +1018,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00384">384</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
+<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00387">387</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
 <div class="fragment"><div class="line">                                     {</div>
 <div class="line">  <span class="keywordtype">int</span> rtn;</div>
 <div class="line"></div>
@@ -1050,7 +1048,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00332">332</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
+<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00335">335</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
 <div class="fragment"><div class="line">                                       {</div>
 <div class="line">  <span class="keywordtype">double</span> rtn;</div>
 <div class="line"></div>
@@ -1080,7 +1078,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00345">345</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
+<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00348">348</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
 <div class="fragment"><div class="line">                                         {</div>
 <div class="line">  <span class="keywordtype">long</span> <span class="keywordtype">int</span> rtn;</div>
 <div class="line"></div>
@@ -1112,7 +1110,7 @@ Variables</h2></td></tr>
 
 <p>return a copy of the key's string value </p>
 
-<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00259">259</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
+<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00262">262</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
 <div class="fragment"><div class="line">                                        {</div>
 <div class="line">  <span class="keywordtype">char</span> *rtn;</div>
 <div class="line"></div>
@@ -1160,7 +1158,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00397">397</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
+<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00400">400</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
 <div class="fragment"><div class="line">                                                                         {</div>
 <div class="line">  redisReply *r;</div>
 <div class="line">  <a class="code" href="structlsredis__obj__struct.html" title="Redis Object Basic object whose value is sychronized with our redis db.">lsredis_obj_t</a> *p;</div>
@@ -1168,7 +1166,7 @@ Variables</h2></td></tr>
 <div class="line">  r = reply;</div>
 <div class="line">  p =  privdata;</div>
 <div class="line"></div>
-<div class="line">  <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;hgetCB: %s %s&quot;</span>, p == NULL ? <span class="stringliteral">&quot;&lt;NULL&gt;&quot;</span> : p-&gt;<a class="code" href="structlsredis__obj__struct.html#aa8c5a453b9424e5666320b8675a42f5c" title="The redis key for this object.">key</a>, r-&gt;type == REDIS_REPLY_STRING ? r-&gt;str : <span class="stringliteral">&quot;Non-string value.  Why?&quot;</span>);</div>
+<div class="line">  <span class="comment">//  lslogging_log_message( &quot;hgetCB: %s %s&quot;, p == NULL ? &quot;&lt;NULL&gt;&quot; : p-&gt;key, r-&gt;type == REDIS_REPLY_STRING ? r-&gt;str : &quot;Non-string value.  Why?&quot;);</span></div>
 <div class="line"></div>
 <div class="line">  <span class="comment">//</span></div>
 <div class="line">  <span class="comment">// Apparently this item does not exist</span></div>
@@ -1232,7 +1230,7 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00831">831</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
+<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00806">806</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
 <div class="fragment"><div class="line">                                                    {</div>
 <div class="line">  <span class="keywordtype">int</span> err;</div>
 <div class="line">  <span class="keywordtype">int</span> nerrmsg;</div>
@@ -1246,7 +1244,7 @@ Variables</h2></td></tr>
 <div class="line">    <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lsredis_init: Cannot create hash table.  Really bad things are going to happen.  hcreate_r returnd %d&quot;</span>, err);</div>
 <div class="line">  }</div>
 <div class="line"></div>
-<div class="line">  <a class="code" href="lsredis_8c.html#acdca9095c7a3288d7febe9f4c440a6e9">lsredis_head</a>      = strdup( head);</div>
+<div class="line">  <a class="code" href="lsredis_8c.html#acdca9095c7a3288d7febe9f4c440a6e9">lsredis_head</a>      = strdup( <a class="code" href="namespacemk__pgpmac__redis.html#a3a09e1c5bb44c0bb2175c311655d1b15">head</a>);</div>
 <div class="line">  <a class="code" href="lsredis_8c.html#a0c81dce2e75584eeb14ab7d9dd86c72e">lsredis_publisher</a> = strdup( pub);</div>
 <div class="line"></div>
 <div class="line">  pthread_mutex_init( &amp;<a class="code" href="lsredis_8c.html#a390e8acf789b0fa41b43a794dd27e28f">lsredis_mutex</a>, NULL);</div>
@@ -1280,7 +1278,8 @@ Variables</h2></td></tr>
 <div class="line">  <a class="code" href="lsredis_8c.html#afc92245910ec04f9a341c092def45564">roac</a>-&gt;ev.delWrite = <a class="code" href="lsredis_8c.html#a04f0119cfa1156dc34d35b237358822a" title="hook to manage &quot;don&#39;t need to write anymore&quot; events">lsredis_delWrite</a>;</div>
 <div class="line">  <a class="code" href="lsredis_8c.html#afc92245910ec04f9a341c092def45564">roac</a>-&gt;ev.cleanup  = <a class="code" href="lsredis_8c.html#a45f946a5262c23b362be17c2cb0310c2" title="hook to clean up TODO: figure out what we are supposed to do here and do it">lsredis_cleanup</a>;</div>
 <div class="line"></div>
-<div class="line">  <a class="code" href="lsredis_8c.html#a7ea13129ad9e41a0ed2fc19fa75ffb0d">wrac</a> = redisAsyncConnect(<span class="stringliteral">&quot;10.1.0.3&quot;</span>, 6379);</div>
+<div class="line">  <span class="comment">//wrac = redisAsyncConnect(&quot;10.1.0.3&quot;, 6379);</span></div>
+<div class="line">  <a class="code" href="lsredis_8c.html#a7ea13129ad9e41a0ed2fc19fa75ffb0d">wrac</a> = redisAsyncConnect(<span class="stringliteral">&quot;127.0.0.1&quot;</span>, 6379);</div>
 <div class="line">  <span class="keywordflow">if</span>( <a class="code" href="lsredis_8c.html#a7ea13129ad9e41a0ed2fc19fa75ffb0d">wrac</a>-&gt;err) {</div>
 <div class="line">    <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;Error: %s&quot;</span>, <a class="code" href="lsredis_8c.html#a7ea13129ad9e41a0ed2fc19fa75ffb0d">wrac</a>-&gt;errstr);</div>
 <div class="line">  }</div>
@@ -1341,10 +1340,10 @@ Variables</h2></td></tr>
 <p>Sift through the keys to find ones we like. </p>
 <p>Add them to our list of followed objects </p>
 
-<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00756">756</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
+<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00731">731</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
 <div class="fragment"><div class="line">                                                                         {</div>
 <div class="line">  redisReply *r;</div>
-<div class="line">  <span class="keywordtype">int</span> i;</div>
+<div class="line">  <span class="keywordtype">int</span> <a class="code" href="namespacemk__pgpmac__redis.html#afa643a23a5984fe44c2182ada3dfa401">i</a>;</div>
 <div class="line">  </div>
 <div class="line">  r = reply;</div>
 <div class="line">  <span class="keywordflow">if</span>( r-&gt;type != REDIS_REPLY_ARRAY) {</div>
@@ -1353,7 +1352,7 @@ Variables</h2></td></tr>
 <div class="line">    <span class="keywordflow">return</span>;</div>
 <div class="line">  }</div>
 <div class="line">  </div>
-<div class="line">  <span class="keywordflow">for</span>( i=0; i&lt;r-&gt;elements; i++) {</div>
+<div class="line">  <span class="keywordflow">for</span>( i=0; i&lt; (int)r-&gt;elements; i++) {</div>
 <div class="line">    <span class="keywordflow">if</span>( r-&gt;element[i]-&gt;type != REDIS_REPLY_STRING) {</div>
 <div class="line">      <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lsredis_keysCB: exected string...&quot;</span>);</div>
 <div class="line">      <a class="code" href="lsredis_8c.html#a8268fd06bda0e2c327b057a880b97b59" title="Log the reply.">lsredis_debugCB</a>( ac, r-&gt;element[i], privdata);</div>
@@ -1379,7 +1378,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00748">748</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
+<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00723">723</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
 <div class="fragment"><div class="line">                                     {</div>
 <div class="line">  <span class="keywordflow">if</span>( regexec( &amp;<a class="code" href="lsredis_8c.html#abee04898347f9b2551fa0435b1cc597e">lsredis_key_select_regex</a>, k, 0, NULL, 0) == 0) {</div>
 <div class="line">    <a class="code" href="lsredis_8c.html#ac3fb8589e280bfa18ecbca6619fea637" title="Maybe add a new object Used internally for this module Must be called with lsredis_mutex locked...">_lsredis_get_obj</a>( k);</div>
@@ -1441,6 +1440,8 @@ Variables</h2></td></tr>
 <div class="line">  rtn = regexec( preg, p-&gt;<a class="code" href="structlsredis__obj__struct.html#a0465c65288e8101805a6f91049164517" title="our value">value</a>, nmatch, pmatch, eflags);</div>
 <div class="line"></div>
 <div class="line">  pthread_mutex_unlock( &amp;p-&gt;<a class="code" href="structlsredis__obj__struct.html#a0da18e7d0f7d52459bbc6fbc696d5252" title="Don&#39;t let anyone use an old value.">mutex</a>);</div>
+<div class="line"></div>
+<div class="line">  <span class="keywordflow">return</span> rtn;</div>
 <div class="line">}</div>
 </div><!-- fragment -->
 </div>
@@ -1458,7 +1459,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="lsredis_8c_source.html#l01035">1035</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
+<p>Definition at line <a class="el" href="lsredis_8c_source.html#l01010">1010</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
 <div class="fragment"><div class="line">                   {</div>
 <div class="line">  pthread_create( &amp;<a class="code" href="lsredis_8c.html#a79c33eb11ad6819247930ade3a25671f">lsredis_thread</a>, NULL, <a class="code" href="lsredis_8c.html#ade7b1ddfdc88c6964a4c90513e360f75" title="subscribe to changes and service sockets">lsredis_worker</a>, NULL);</div>
 <div class="line">}</div>
@@ -1501,13 +1502,13 @@ Variables</h2></td></tr>
 <p>Definition at line <a class="el" href="lsredis_8c_source.html#l00206">206</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
 <div class="fragment"><div class="line">                                                          {</div>
 <div class="line">  va_list arg_ptr;</div>
-<div class="line">  <span class="keywordtype">char</span> v[512];</div>
+<div class="line">  <span class="keywordtype">char</span> <a class="code" href="namespacemk__pgpmac__redis.html#a5f3a2bd9ec25ae16b9b4af04dabb504c">v</a>[512];</div>
 <div class="line">  </div>
 <div class="line">  va_start( arg_ptr, fmt);</div>
 <div class="line">  vsnprintf( v, <span class="keyword">sizeof</span>(v)-1, fmt, arg_ptr);</div>
 <div class="line">  va_end( arg_ptr);</div>
 <div class="line"></div>
-<div class="line">  v[<span class="keyword">sizeof</span>(v)-1] = 0;</div>
+<div class="line">  v[<span class="keyword">sizeof</span>(<a class="code" href="namespacemk__pgpmac__redis.html#a5f3a2bd9ec25ae16b9b4af04dabb504c">v</a>)-1] = 0;</div>
 <div class="line"></div>
 <div class="line">  pthread_mutex_lock( &amp;p-&gt;<a class="code" href="structlsredis__obj__struct.html#a0da18e7d0f7d52459bbc6fbc696d5252" title="Don&#39;t let anyone use an old value.">mutex</a>);</div>
 <div class="line"></div>
@@ -1555,15 +1556,15 @@ Variables</h2></td></tr>
 <p>&lt; up the count of times we need to see ourselves published before we start listening to others again</p>
 <p>&lt; redisAsyncCommandArgv shouldn't need to access this after it's made up it's packet (before it returns) so we should be OK with this location disappearing soon. </p>
 
-<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00284">284</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
+<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00287">287</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
 <div class="fragment"><div class="line">                                                       {</div>
 <div class="line">  va_list arg_ptr;</div>
-<div class="line">  <span class="keywordtype">char</span> v[512];</div>
+<div class="line">  <span class="keywordtype">char</span> <a class="code" href="namespacemk__pgpmac__redis.html#a5f3a2bd9ec25ae16b9b4af04dabb504c">v</a>[512];</div>
 <div class="line">  <span class="keywordtype">char</span> *argv[4];</div>
 <div class="line"></div>
 <div class="line">  va_start( arg_ptr, fmt);</div>
 <div class="line">  vsnprintf( v, <span class="keyword">sizeof</span>(v)-1, fmt, arg_ptr);</div>
-<div class="line">  v[<span class="keyword">sizeof</span>(v)-1] = 0;</div>
+<div class="line">  v[<span class="keyword">sizeof</span>(<a class="code" href="namespacemk__pgpmac__redis.html#a5f3a2bd9ec25ae16b9b4af04dabb504c">v</a>)-1] = 0;</div>
 <div class="line">  va_end( arg_ptr);</div>
 <div class="line">  </div>
 <div class="line">  pthread_mutex_lock( &amp;p-&gt;<a class="code" href="structlsredis__obj__struct.html#a0da18e7d0f7d52459bbc6fbc696d5252" title="Don&#39;t let anyone use an old value.">mutex</a>);</div>
@@ -1583,7 +1584,7 @@ Variables</h2></td></tr>
 <div class="line">  argv[0] = <span class="stringliteral">&quot;HSET&quot;</span>;</div>
 <div class="line">  argv[1] = p-&gt;<a class="code" href="structlsredis__obj__struct.html#aa8c5a453b9424e5666320b8675a42f5c" title="The redis key for this object.">key</a>;</div>
 <div class="line">  argv[2] = <span class="stringliteral">&quot;VALUE&quot;</span>;</div>
-<div class="line">  argv[3] = v;          </div>
+<div class="line">  argv[3] = <a class="code" href="namespacemk__pgpmac__redis.html#a5f3a2bd9ec25ae16b9b4af04dabb504c">v</a>;          </div>
 <div class="line"></div>
 <div class="line">  pthread_mutex_lock( &amp;<a class="code" href="lsredis_8c.html#a390e8acf789b0fa41b43a794dd27e28f">lsredis_mutex</a>);</div>
 <div class="line">  <span class="keywordflow">while</span>( <a class="code" href="lsredis_8c.html#a7461eb2b5974a2ffac2189007d39193c">lsredis_running</a> == 0)</div>
@@ -1625,7 +1626,7 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00933">933</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
+<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00909">909</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
 <div class="fragment"><div class="line">                        {</div>
 <div class="line">  <span class="keyword">struct </span>signalfd_siginfo fdsi;</div>
 <div class="line"></div>
@@ -1678,7 +1679,7 @@ Variables</h2></td></tr>
 <p>Definition at line <a class="el" href="lsredis_8c_source.html#l00631">631</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
 <div class="fragment"><div class="line">                                                                        {</div>
 <div class="line">  redisReply *r;</div>
-<div class="line">  <a class="code" href="structlsredis__obj__struct.html" title="Redis Object Basic object whose value is sychronized with our redis db.">lsredis_obj_t</a> *p, *last, *last2;</div>
+<div class="line">  <a class="code" href="structlsredis__obj__struct.html" title="Redis Object Basic object whose value is sychronized with our redis db.">lsredis_obj_t</a> *p;</div>
 <div class="line">  <span class="keywordtype">char</span> *k;</div>
 <div class="line">  <span class="keywordtype">char</span> *publisher;</div>
 <div class="line">  ENTRY htab_input, *htab_output;</div>
@@ -1729,31 +1730,6 @@ Variables</h2></td></tr>
 <div class="line">    <span class="keywordflow">else</span></div>
 <div class="line">      p = htab_output-&gt;data;</div>
 <div class="line">      </div>
-<div class="line">    <span class="comment">/*  </span></div>
-<div class="line"><span class="comment">    last  = NULL;</span></div>
-<div class="line"><span class="comment">    last2 = NULL;</span></div>
-<div class="line"><span class="comment">    for( p=lsredis_objs; p != NULL; p = p-&gt;next) {</span></div>
-<div class="line"><span class="comment">      if( strcmp( p-&gt;key, k) == 0) {</span></div>
-<div class="line"><span class="comment">        p-&gt;hits++;</span></div>
-<div class="line"><span class="comment">        //</span></div>
-<div class="line"><span class="comment">        // Maybe reorder our list so the most often updated objects</span></div>
-<div class="line"><span class="comment">        // eventually bump up to the beginning of the list.</span></div>
-<div class="line"><span class="comment">        // That &quot;hits+4&quot; keeps us from oscillating when objects are accessed equally</span></div>
-<div class="line"><span class="comment">        //</span></div>
-<div class="line"><span class="comment">        if( last != NULL &amp;&amp; last-&gt;hits &lt; p-&gt;hits+4) {</span></div>
-<div class="line"><span class="comment">          last-&gt;next = p-&gt;next;</span></div>
-<div class="line"><span class="comment">          p-&gt;next    = last;</span></div>
-<div class="line"><span class="comment">          if( last2 != NULL)</span></div>
-<div class="line"><span class="comment">            last2-&gt;next = p;</span></div>
-<div class="line"><span class="comment">          else</span></div>
-<div class="line"><span class="comment">            lsredis_objs = p;</span></div>
-<div class="line"><span class="comment">        }</span></div>
-<div class="line"><span class="comment">        break;</span></div>
-<div class="line"><span class="comment">      }</span></div>
-<div class="line"><span class="comment">      last2 = last;</span></div>
-<div class="line"><span class="comment">      last  = p;</span></div>
-<div class="line"><span class="comment">    } </span></div>
-<div class="line"><span class="comment">    */</span></div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">if</span>( p == NULL) {</div>
 <div class="line">      <a class="code" href="lsredis_8c.html#ac3fb8589e280bfa18ecbca6619fea637" title="Maybe add a new object Used internally for this module Must be called with lsredis_mutex locked...">_lsredis_get_obj</a>( k);</div>
@@ -1813,15 +1789,14 @@ Variables</h2></td></tr>
 <p>&lt; array of pollfd's for the poll function, one entry per connection</p>
 <p>&lt; number of active elements in fda </p>
 
-<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00952">952</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
+<p>Definition at line <a class="el" href="lsredis_8c_source.html#l00928">928</a> of file <a class="el" href="lsredis_8c_source.html">lsredis.c</a>.</p>
 <div class="fragment"><div class="line">                                    {</div>
-<div class="line">  <span class="keyword">static</span> <span class="keywordtype">int</span> poll_timeout_ms = 100;     </div>
+<div class="line">  <span class="keyword">static</span> <span class="keywordtype">int</span> poll_timeout_ms = -1;      </div>
 <div class="line">  <span class="keyword">static</span> <span class="keyword">struct </span>pollfd fda[4];          </div>
 <div class="line">  <span class="keyword">static</span> <span class="keywordtype">int</span> nfda = 0;                  </div>
 <div class="line">  <span class="keyword">static</span> sigset_t our_sigset;</div>
 <div class="line">  <span class="keywordtype">int</span> pollrtn;</div>
-<div class="line">  <span class="keywordtype">int</span> i;</div>
-<div class="line">  <span class="keywordtype">int</span> sigfd;</div>
+<div class="line">  <span class="keywordtype">int</span> <a class="code" href="namespacemk__pgpmac__redis.html#afa643a23a5984fe44c2182ada3dfa401">i</a>;</div>
 <div class="line"></div>
 <div class="line"></div>
 <div class="line">  pthread_mutex_lock( &amp;<a class="code" href="lsredis_8c.html#a390e8acf789b0fa41b43a794dd27e28f">lsredis_mutex</a>);</div>
@@ -2270,7 +2245,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="lsredis_8c.html">lsredis.c</a></li>
-    <li class="footer">Generated on Tue Dec 18 2012 07:11:15 for LS-CAT PGPMAC by
+    <li class="footer">Generated on Mon Dec 24 2012 18:43:19 for LS-CAT PGPMAC by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.2 </li>
   </ul>

@@ -2,6 +2,13 @@ var NAVTREE =
 [
   [ "LS-CAT PGPMAC", "index.html", [
     [ "The LS-CAT pgpmac Project", "index.html", null ],
+    [ "Namespaces", null, [
+      [ "Namespace List", "namespaces.html", "namespaces" ],
+      [ "Namespace Members", "namespacemembers.html", [
+        [ "All", "namespacemembers.html", null ],
+        [ "Variables", "namespacemembers_vars.html", null ]
+      ] ]
+    ] ],
     [ "Data Structures", null, [
       [ "Data Structures", "annotated.html", "annotated" ],
       [ "Data Fields", "functions.html", [
@@ -25,9 +32,10 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"lspg_8c.html#aaf4fadd2943fa3a2ecb5d840e84d68fa",
-"lsredis_8c.html#add819e43a356d0575ec64c346c6fed57",
-"structlspg__nextshot__struct.html#a84ae35abfa725d1bdbff5403f6384ee4"
+"lspg_8c.html#a6f7cd0a06f6a266ef65b3604cf33d6c4",
+"lspmac_8c.html#af55c51d52c4586b647114f95d7ac1f42",
+"pgpmac_8h.html#abb29b117ad38156ba16fcf44eeb427af",
+"structlspmac__motor__struct.html#ab329ce9b277eca9984c18417dece7bf7"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

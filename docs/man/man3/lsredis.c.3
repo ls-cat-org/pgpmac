@@ -1,4 +1,4 @@
-.TH "lsredis.c" 3 "Tue Dec 18 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lsredis.c" 3 "Mon Dec 24 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -289,14 +289,13 @@ Definition in file \fBlsredis\&.c\fP\&.
 .PP
 Maybe add a new object Used internally for this module Must be called with lsredis_mutex locked\&. 
 .PP
-Definition at line 431 of file lsredis\&.c\&.
+Definition at line 434 of file lsredis\&.c\&.
 .PP
 .nf
                                             {
   lsredis_obj_t *p;
   regmatch_t pmatch[2];
   int err;
-  char *name;
   ENTRY htab_input, *htab_output;
 
   // Dispense with obviously bad keys straight away
@@ -361,8 +360,6 @@ Definition at line 431 of file lsredis\&.c\&.
     err = hsearch_r( htab_input, ENTER, &htab_output, &lsredis_htab);
     if( err == 0) {
       lslogging_log_message( '_lsredis_get_obj: hseach error on enter\&.  errno=%d', errno);
-    } else {
-      lslogging_log_message( '_lsredis_get_obj: added %s', key);
     }
 
     //
@@ -390,7 +387,7 @@ Definition at line 145 of file lsredis\&.c\&.
 .nf
                                                     {
 
-  if( strlen(v) >= p->value_length) {
+  if( strlen(v) >= (unsigned int) p->value_length) {
     if( p->value != NULL)
       free( p->value);
     p->value_length = strlen(v) + 256;
@@ -403,7 +400,7 @@ Definition at line 145 of file lsredis\&.c\&.
   strncpy( p->value, v, p->value_length - 1);
   p->value[p->value_length-1] = 0;
   p->dvalue = strtod( p->value, NULL);
-  p->lvalue = strtol( p->value, NULL, 10);
+  p->lvalue = p->dvalue;
 
   if( p->avalue != NULL) {
     int i;
@@ -578,7 +575,7 @@ Definition at line 95 of file lsredis\&.c\&.
   case REDIS_REPLY_ARRAY:
     lslogging_log_message( '%*sARRAY of %d elements', indentlevel*4, '', (int)r->elements);
     indentlevel++;
-    for( i=0; i<r->elements; i++)
+    for( i=0; i<(int)r->elements; i++)
       lsredis_debugCB( ac, r->element[i], NULL);
     indentlevel--;
     break;
@@ -630,7 +627,7 @@ Definition at line 600 of file lsredis\&.c\&.
 .PP
 service the socket requests 
 .PP
-Definition at line 909 of file lsredis\&.c\&.
+Definition at line 885 of file lsredis\&.c\&.
 .PP
 .nf
                                              {
@@ -659,7 +656,7 @@ Definition at line 909 of file lsredis\&.c\&.
 .SS "int lsredis_find_preset (char *base, char *preset_name, double *dval)"
 
 .PP
-Definition at line 777 of file lsredis\&.c\&.
+Definition at line 752 of file lsredis\&.c\&.
 .PP
 .nf
                                                                       {
@@ -751,7 +748,7 @@ Definition at line 520 of file lsredis\&.c\&.
 .SS "char** lsredis_get_string_array (\fBlsredis_obj_t\fP *p)"
 
 .PP
-Definition at line 358 of file lsredis\&.c\&.
+Definition at line 361 of file lsredis\&.c\&.
 .PP
 .nf
                                                    {
@@ -770,7 +767,7 @@ Definition at line 358 of file lsredis\&.c\&.
 .SS "int lsredis_getb (\fBlsredis_obj_t\fP *p)"
 
 .PP
-Definition at line 371 of file lsredis\&.c\&.
+Definition at line 374 of file lsredis\&.c\&.
 .PP
 .nf
                                     {
@@ -789,7 +786,7 @@ Definition at line 371 of file lsredis\&.c\&.
 .SS "char lsredis_getc (\fBlsredis_obj_t\fP *p)"
 
 .PP
-Definition at line 384 of file lsredis\&.c\&.
+Definition at line 387 of file lsredis\&.c\&.
 .PP
 .nf
                                      {
@@ -808,7 +805,7 @@ Definition at line 384 of file lsredis\&.c\&.
 .SS "double lsredis_getd (\fBlsredis_obj_t\fP *p)"
 
 .PP
-Definition at line 332 of file lsredis\&.c\&.
+Definition at line 335 of file lsredis\&.c\&.
 .PP
 .nf
                                        {
@@ -827,7 +824,7 @@ Definition at line 332 of file lsredis\&.c\&.
 .SS "long int lsredis_getl (\fBlsredis_obj_t\fP *p)"
 
 .PP
-Definition at line 345 of file lsredis\&.c\&.
+Definition at line 348 of file lsredis\&.c\&.
 .PP
 .nf
                                          {
@@ -848,7 +845,7 @@ Definition at line 345 of file lsredis\&.c\&.
 .PP
 return a copy of the key's string value 
 .PP
-Definition at line 259 of file lsredis\&.c\&.
+Definition at line 262 of file lsredis\&.c\&.
 .PP
 .nf
                                         {
@@ -869,7 +866,7 @@ Definition at line 259 of file lsredis\&.c\&.
 .SS "void lsredis_hgetCB (redisAsyncContext *ac, void *reply, void *privdata)"
 
 .PP
-Definition at line 397 of file lsredis\&.c\&.
+Definition at line 400 of file lsredis\&.c\&.
 .PP
 .nf
                                                                          {
@@ -879,7 +876,7 @@ Definition at line 397 of file lsredis\&.c\&.
   r = reply;
   p =  privdata;
 
-  lslogging_log_message( 'hgetCB: %s %s', p == NULL ? '<NULL>' : p->key, r->type == REDIS_REPLY_STRING ? r->str : 'Non-string value\&.  Why?');
+  //  lslogging_log_message( 'hgetCB: %s %s', p == NULL ? '<NULL>' : p->key, r->type == REDIS_REPLY_STRING ? r->str : 'Non-string value\&.  Why?');
 
   //
   // Apparently this item does not exist
@@ -915,7 +912,7 @@ Initialize this module, that is, set up the connections\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 831 of file lsredis\&.c\&.
+Definition at line 806 of file lsredis\&.c\&.
 .PP
 .nf
                                                     {
@@ -965,7 +962,8 @@ Definition at line 831 of file lsredis\&.c\&.
   roac->ev\&.delWrite = lsredis_delWrite;
   roac->ev\&.cleanup  = lsredis_cleanup;
 
-  wrac = redisAsyncConnect('10\&.1\&.0\&.3', 6379);
+  //wrac = redisAsyncConnect('10\&.1\&.0\&.3', 6379);
+  wrac = redisAsyncConnect('127\&.0\&.0\&.1', 6379);
   if( wrac->err) {
     lslogging_log_message( 'Error: %s', wrac->errstr);
   }
@@ -996,7 +994,7 @@ Definition at line 831 of file lsredis\&.c\&.
 .PP
 Sift through the keys to find ones we like\&. Add them to our list of followed objects 
 .PP
-Definition at line 756 of file lsredis\&.c\&.
+Definition at line 731 of file lsredis\&.c\&.
 .PP
 .nf
                                                                          {
@@ -1010,7 +1008,7 @@ Definition at line 756 of file lsredis\&.c\&.
     return;
   }
   
-  for( i=0; i<r->elements; i++) {
+  for( i=0; i< (int)r->elements; i++) {
     if( r->element[i]->type != REDIS_REPLY_STRING) {
       lslogging_log_message( 'lsredis_keysCB: exected string\&.\&.\&.');
       lsredis_debugCB( ac, r->element[i], privdata);
@@ -1023,7 +1021,7 @@ Definition at line 756 of file lsredis\&.c\&.
 .SS "void lsredis_maybe_add_key (char *k)"
 
 .PP
-Definition at line 748 of file lsredis\&.c\&.
+Definition at line 723 of file lsredis\&.c\&.
 .PP
 .nf
                                      {
@@ -1048,12 +1046,14 @@ Definition at line 246 of file lsredis\&.c\&.
   rtn = regexec( preg, p->value, nmatch, pmatch, eflags);
 
   pthread_mutex_unlock( &p->mutex);
+
+  return rtn;
 }
 .fi
 .SS "void lsredis_run ()"
 
 .PP
-Definition at line 1035 of file lsredis\&.c\&.
+Definition at line 1010 of file lsredis\&.c\&.
 .PP
 .nf
                    {
@@ -1095,7 +1095,7 @@ redisAsyncCommandArgv used instead of redisAsyncCommand 'cause it's easier (and 
 .PP
 < redisAsyncCommandArgv shouldn't need to access this after it's made up it's packet (before it returns) so we should be OK with this location disappearing soon\&. 
 .PP
-Definition at line 284 of file lsredis\&.c\&.
+Definition at line 287 of file lsredis\&.c\&.
 .PP
 .nf
                                                        {
@@ -1153,7 +1153,7 @@ Definition at line 284 of file lsredis\&.c\&.
 .PP
 
 .PP
-Definition at line 933 of file lsredis\&.c\&.
+Definition at line 909 of file lsredis\&.c\&.
 .PP
 .nf
                         {
@@ -1181,7 +1181,7 @@ Definition at line 631 of file lsredis\&.c\&.
 .nf
                                                                         {
   redisReply *r;
-  lsredis_obj_t *p, *last, *last2;
+  lsredis_obj_t *p;
   char *k;
   char *publisher;
   ENTRY htab_input, *htab_output;
@@ -1232,31 +1232,6 @@ Definition at line 631 of file lsredis\&.c\&.
     else
       p = htab_output->data;
       
-    /*  
-    last  = NULL;
-    last2 = NULL;
-    for( p=lsredis_objs; p != NULL; p = p->next) {
-      if( strcmp( p->key, k) == 0) {
-        p->hits++;
-        //
-        // Maybe reorder our list so the most often updated objects
-        // eventually bump up to the beginning of the list\&.
-        // That 'hits+4' keeps us from oscillating when objects are accessed equally
-        //
-        if( last != NULL && last->hits < p->hits+4) {
-          last->next = p->next;
-          p->next    = last;
-          if( last2 != NULL)
-            last2->next = p;
-          else
-            lsredis_objs = p;
-        }
-        break;
-      }
-      last2 = last;
-      last  = p;
-    } 
-    */
 
     if( p == NULL) {
       _lsredis_get_obj( k);
@@ -1304,17 +1279,16 @@ subscribe to changes and service sockets < poll timeout, in millisecs (of course
 .PP
 < number of active elements in fda 
 .PP
-Definition at line 952 of file lsredis\&.c\&.
+Definition at line 928 of file lsredis\&.c\&.
 .PP
 .nf
                                     {
-  static int poll_timeout_ms = 100;     
+  static int poll_timeout_ms = -1;      
   static struct pollfd fda[4];          
   static int nfda = 0;                  
   static sigset_t our_sigset;
   int pollrtn;
   int i;
-  int sigfd;
 
 
   pthread_mutex_lock( &lsredis_mutex);

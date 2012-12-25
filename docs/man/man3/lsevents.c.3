@@ -1,4 +1,4 @@
-.TH "lsevents.c" 3 "Tue Dec 18 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lsevents.c" 3 "Mon Dec 24 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -28,7 +28,7 @@ event subsystem for inter-pgpmac communication
 
 .in +1c
 .ti -1c
-.RI "#define \fBLSEVENTS_QUEUE_LENGTH\fP   2096"
+.RI "#define \fBLSEVENTS_QUEUE_LENGTH\fP   256"
 .br
 .in -1c
 .SS "Typedefs"
@@ -135,7 +135,7 @@ All Rights Reserved
 Definition in file \fBlsevents\&.c\fP\&.
 .SH "Macro Definition Documentation"
 .PP 
-.SS "#define LSEVENTS_QUEUE_LENGTH   2096"
+.SS "#define LSEVENTS_QUEUE_LENGTH   256"
 
 .PP
 Definition at line 10 of file lsevents\&.c\&.
@@ -163,7 +163,7 @@ Add a callback routine to listen for a specific event\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 78 of file lsevents\&.c\&.
+Definition at line 75 of file lsevents\&.c\&.
 .PP
 .nf
                                                              {
@@ -212,7 +212,7 @@ Definition at line 78 of file lsevents\&.c\&.
 .PP
 Initialize this module\&. 
 .PP
-Definition at line 207 of file lsevents\&.c\&.
+Definition at line 214 of file lsevents\&.c\&.
 .PP
 .nf
                      {
@@ -233,7 +233,7 @@ Remove a listener previously added with lsevents_add_listener\&. \fBParameters:\
 .PP
 
 .PP
-Definition at line 123 of file lsevents\&.c\&.
+Definition at line 120 of file lsevents\&.c\&.
 .PP
 .nf
                                                                 {
@@ -273,7 +273,7 @@ Definition at line 123 of file lsevents\&.c\&.
 .PP
 Start up the thread and get out of the way\&. 
 .PP
-Definition at line 215 of file lsevents\&.c\&.
+Definition at line 222 of file lsevents\&.c\&.
 .PP
 .nf
                     {
@@ -297,7 +297,6 @@ Definition at line 45 of file lsevents\&.c\&.
 .nf
                                           {
   char event[LSEVENTS_EVENT_LENGTH];
-  char *sp;
   va_list arg_ptr;
 
   va_start( arg_ptr, fmt);
@@ -311,12 +310,10 @@ Definition at line 45 of file lsevents\&.c\&.
 
 
   // maybe wait for room on the queue
-  while( lsevents_queue_on + 1 == lsevents_queue_off)
+  while( (lsevents_queue_on + 1) % LSEVENTS_QUEUE_LENGTH == lsevents_queue_off % LSEVENTS_QUEUE_LENGTH)
     pthread_cond_wait( &lsevents_queue_cond, &lsevents_queue_mutex);
   
-  sp = lsevents_queue[(lsevents_queue_on++) % LSEVENTS_QUEUE_LENGTH]\&.event;
-  strncpy( sp, event, LSEVENTS_EVENT_LENGTH);
-  sp[LSEVENTS_EVENT_LENGTH - 1] = 0;
+  lsevents_queue[(lsevents_queue_on++) % LSEVENTS_QUEUE_LENGTH]\&.evp = strdup(event);
 
   pthread_cond_signal(  &lsevents_queue_cond);
   pthread_mutex_unlock( &lsevents_queue_mutex);
@@ -333,12 +330,12 @@ Our worker\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 158 of file lsevents\&.c\&.
+Definition at line 155 of file lsevents\&.c\&.
 .PP
 .nf
                        {
   
-  char *event;
+  //  char *event;
   lsevents_queue_t *ep;
   lsevents_listener_t *p;
 
@@ -356,8 +353,6 @@ Definition at line 158 of file lsevents\&.c\&.
     // we unlock the mutex
     //
     ep = &(lsevents_queue[(lsevents_queue_off++) % LSEVENTS_QUEUE_LENGTH]);
-    event = strndup( ep->event, LSEVENTS_EVENT_LENGTH-1);
-    event[LSEVENTS_EVENT_LENGTH-1] = 0;
 
     //
     // let the send event process know there is room on the queue again
@@ -368,14 +363,26 @@ Definition at line 158 of file lsevents\&.c\&.
     //
     // Find the callbacks and, well, call them back
     //
+    // TODO:
+    //
+    // Yes, this is O(N)\&.
+    //
+    // Plan to make this O(1):
+    //  track actual event names from send_event
+    //  match listeners for new event names
+    //  store matchs in hash table
+    //
+    // That makes send_event for new events O(N)
+    // but O(1) otherwise, O(N) for add_listener, and O(1) here\&.
+    //
     pthread_mutex_lock( &lsevents_listener_mutex);
     for( p = lsevents_listeners_p; p != NULL; p = p->next) {
-      if( regexec( &p->re, event, 0, NULL, 0) == 0) {
-        p->cb( event);
+      if( regexec( &p->re, ep->evp, 0, NULL, 0) == 0) {
+        p->cb( ep->evp);
       }
     }
-    free( event);
-
+    free( ep->evp);
+    
     pthread_mutex_unlock( &lsevents_listener_mutex);
   }
   return NULL;

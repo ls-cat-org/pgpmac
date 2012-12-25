@@ -7,5 +7,5 @@ var searchData=
   ['omega_5fzero_5fsearch',['omega_zero_search',['../lspmac_8c.html#ae06d2291c1996ffb7dcf7d132e25b038',1,'lspmac.c']]],
   ['omega_5fzero_5ftime',['omega_zero_time',['../lspmac_8c.html#ae6631a094accc469661805bdf80fc6d8',1,'omega_zero_time():&#160;lspmac.c'],['../pgpmac_8h.html#ae6631a094accc469661805bdf80fc6d8',1,'omega_zero_time():&#160;lspmac.c']]],
   ['omega_5fzero_5fvelocity',['omega_zero_velocity',['../lspmac_8c.html#aea11895d2ec4a3324f4baa9d24cd192d',1,'lspmac.c']]],
-  ['onresponse',['onResponse',['../structlspgQueryQueueStruct.html#a53bac5ae4cab775423940bff5092a831',1,'lspgQueryQueueStruct::onResponse()'],['../structlspmac__cmd__queue__struct.html#afe92c0bab9f124314a6f3d8104c94364',1,'lspmac_cmd_queue_struct::onResponse()']]]
+  ['onresponse',['onResponse',['../structlspgQueryQueueStruct.html#a53bac5ae4cab775423940bff5092a831',1,'lspgQueryQueueStruct::onResponse()'],['../structlspmac__cmd__queue__struct.html#a08f734865cf7ba341b8666da35ba7d84',1,'lspmac_cmd_queue_struct::onResponse()']]]
 ];

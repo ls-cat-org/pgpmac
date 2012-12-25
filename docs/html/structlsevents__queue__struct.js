@@ -1,4 +1,4 @@
 var structlsevents__queue__struct =
 [
-    [ "event", "structlsevents__queue__struct.html#a945691e4f4afbca101722840a891581e", null ]
+    [ "evp", "structlsevents__queue__struct.html#a3ac2148f21e4a23ce6df588374749bda", null ]
 ];

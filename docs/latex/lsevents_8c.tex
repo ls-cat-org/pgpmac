@@ -17,7 +17,7 @@ struct \hyperlink{structlsevents__listener__struct}{lsevents\-\_\-listener\-\_\-
 \subsection*{Macros}
 \begin{DoxyCompactItemize}
 \item 
-\#define \hyperlink{lsevents_8c_a75469307c70790f04b9b2bfcb1473a48}{L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H}~2096
+\#define \hyperlink{lsevents_8c_a75469307c70790f04b9b2bfcb1473a48}{L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H}~256
 \end{DoxyCompactItemize}
 \subsection*{Typedefs}
 \begin{DoxyCompactItemize}
@@ -83,7 +83,7 @@ Definition in file \hyperlink{lsevents_8c_source}{lsevents.\-c}.
 \subsection{Macro Definition Documentation}
 \hypertarget{lsevents_8c_a75469307c70790f04b9b2bfcb1473a48}{\index{lsevents.\-c@{lsevents.\-c}!L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H@{L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H}}
 \index{L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H@{L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H}!lsevents.c@{lsevents.\-c}}
-\subsubsection[{L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H}]{\setlength{\rightskip}{0pt plus 5cm}\#define L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H~2096}}\label{lsevents_8c_a75469307c70790f04b9b2bfcb1473a48}
+\subsubsection[{L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H}]{\setlength{\rightskip}{0pt plus 5cm}\#define L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H~256}}\label{lsevents_8c_a75469307c70790f04b9b2bfcb1473a48}
 
 
 Definition at line 10 of file lsevents.\-c.
@@ -129,7 +129,7 @@ Add a callback routine to listen for a specific event.
 \end{DoxyParams}
 
 
-Definition at line 78 of file lsevents.\-c.
+Definition at line 75 of file lsevents.\-c.
 
 
 \begin{DoxyCode}
@@ -191,7 +191,7 @@ Initialize this module.
 
 
 
-Definition at line 207 of file lsevents.\-c.
+Definition at line 214 of file lsevents.\-c.
 
 
 \begin{DoxyCode}
@@ -222,7 +222,7 @@ Remove a listener previously added with lsevents\-\_\-add\-\_\-listener.
 \end{DoxyParams}
 
 
-Definition at line 123 of file lsevents.\-c.
+Definition at line 120 of file lsevents.\-c.
 
 
 \begin{DoxyCode}
@@ -272,7 +272,7 @@ Start up the thread and get out of the way.
 
 
 
-Definition at line 215 of file lsevents.\-c.
+Definition at line 222 of file lsevents.\-c.
 
 
 \begin{DoxyCode}
@@ -308,7 +308,6 @@ Definition at line 45 of file lsevents.\-c.
 \begin{DoxyCode}
                                           \{
   \textcolor{keywordtype}{char} \textcolor{keyword}{event}[\hyperlink{pgpmac_8h_ab61d790b5572f116e091babfda53627b}{LSEVENTS\_EVENT\_LENGTH}];
-  \textcolor{keywordtype}{char} *sp;
   va\_list arg\_ptr;
 
   va\_start( arg\_ptr, fmt);
@@ -323,15 +322,14 @@ Definition at line 45 of file lsevents.\-c.
 
 
   \textcolor{comment}{// maybe wait for room on the queue}
-  \textcolor{keywordflow}{while}( \hyperlink{lsevents_8c_a3bccf603d56d5b2f4a92fad341d37e2c}{lsevents\_queue\_on} + 1 == \hyperlink{lsevents_8c_a50ad47e12cc4fc2d88659230b2fd44ff}{lsevents\_queue\_off}
+  \textcolor{keywordflow}{while}( (\hyperlink{lsevents_8c_a3bccf603d56d5b2f4a92fad341d37e2c}{lsevents\_queue\_on} + 1) % \hyperlink{lsevents_8c_a75469307c70790f04b9b2bfcb1473a48}{LSEVENTS\_QUEUE\_LENGTH}
+       == \hyperlink{lsevents_8c_a50ad47e12cc4fc2d88659230b2fd44ff}{lsevents\_queue\_off} % \hyperlink{lsevents_8c_a75469307c70790f04b9b2bfcb1473a48}{LSEVENTS\_QUEUE\_LENGTH}
       )
     pthread\_cond\_wait( &\hyperlink{lsevents_8c_a8079d9fb8c35db3ca5f83be5aeb2a747}{lsevents\_queue\_cond}, &
       \hyperlink{lsevents_8c_ab46f4ebda5e926a213faedac1a545ec1}{lsevents\_queue\_mutex});
   
-  sp = \hyperlink{lsevents_8c_ad1ff5e895b4016113c8414d9a5daa2f2}{lsevents\_queue}[(\hyperlink{lsevents_8c_a3bccf603d56d5b2f4a92fad341d37e2c}{lsevents\_queue\_on}++) % 
-      \hyperlink{lsevents_8c_a75469307c70790f04b9b2bfcb1473a48}{LSEVENTS\_QUEUE\_LENGTH}].event;
-  strncpy( sp, event, \hyperlink{pgpmac_8h_ab61d790b5572f116e091babfda53627b}{LSEVENTS\_EVENT\_LENGTH});
-  sp[\hyperlink{pgpmac_8h_ab61d790b5572f116e091babfda53627b}{LSEVENTS\_EVENT\_LENGTH} - 1] = 0;
+  \hyperlink{lsevents_8c_ad1ff5e895b4016113c8414d9a5daa2f2}{lsevents\_queue}[(\hyperlink{lsevents_8c_a3bccf603d56d5b2f4a92fad341d37e2c}{lsevents\_queue\_on}++) % 
+      LSEVENTS\_QUEUE\_LENGTH].evp = strdup(event);
 
   pthread\_cond\_signal(  &\hyperlink{lsevents_8c_a8079d9fb8c35db3ca5f83be5aeb2a747}{lsevents\_queue\_cond});
   pthread\_mutex\_unlock( &\hyperlink{lsevents_8c_ab46f4ebda5e926a213faedac1a545ec1}{lsevents\_queue\_mutex});
@@ -356,13 +354,13 @@ Our worker.
 \end{DoxyParams}
 
 
-Definition at line 158 of file lsevents.\-c.
+Definition at line 155 of file lsevents.\-c.
 
 
 \begin{DoxyCode}
                        \{
   
-  \textcolor{keywordtype}{char} *event;
+  \textcolor{comment}{//  char *event;}
   \hyperlink{structlsevents__queue__struct}{lsevents\_queue\_t} *ep;
   \hyperlink{structlsevents__listener__struct}{lsevents\_listener\_t} *p;
 
@@ -383,9 +381,6 @@ Definition at line 158 of file lsevents.\-c.
     \textcolor{comment}{//}
     ep = &(\hyperlink{lsevents_8c_ad1ff5e895b4016113c8414d9a5daa2f2}{lsevents\_queue}[(\hyperlink{lsevents_8c_a50ad47e12cc4fc2d88659230b2fd44ff}{lsevents\_queue\_off}++
       ) % \hyperlink{lsevents_8c_a75469307c70790f04b9b2bfcb1473a48}{LSEVENTS\_QUEUE\_LENGTH}]);
-    \textcolor{keyword}{event} = strndup( ep->\hyperlink{structlsevents__queue__struct_a945691e4f4afbca101722840a891581e}{event}, \hyperlink{pgpmac_8h_ab61d790b5572f116e091babfda53627b}{LSEVENTS\_EVENT\_LENGTH}
-      -1);
-    \textcolor{keyword}{event}[\hyperlink{pgpmac_8h_ab61d790b5572f116e091babfda53627b}{LSEVENTS\_EVENT\_LENGTH}-1] = 0;
 
     \textcolor{comment}{//}
     \textcolor{comment}{// let the send event process know there is room on the queue again}
@@ -396,15 +391,27 @@ Definition at line 158 of file lsevents.\-c.
     \textcolor{comment}{//}
     \textcolor{comment}{// Find the callbacks and, well, call them back}
     \textcolor{comment}{//}
+    \textcolor{comment}{// TODO:}
+    \textcolor{comment}{//}
+    \textcolor{comment}{// Yes, this is O(N).}
+    \textcolor{comment}{//}
+    \textcolor{comment}{// Plan to make this O(1):}
+    \textcolor{comment}{//  track actual event names from send\_event}
+    \textcolor{comment}{//  match listeners for new event names}
+    \textcolor{comment}{//  store matchs in hash table}
+    \textcolor{comment}{//}
+    \textcolor{comment}{// That makes send\_event for new events O(N)}
+    \textcolor{comment}{// but O(1) otherwise, O(N) for add\_listener, and O(1) here.}
+    \textcolor{comment}{//}
     pthread\_mutex\_lock( &\hyperlink{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{lsevents\_listener\_mutex});
     \textcolor{keywordflow}{for}( p = \hyperlink{lsevents_8c_a300dc3edfa8546d75e9f8bab8fa06c5c}{lsevents\_listeners\_p}; p != NULL; p = p->\hyperlink{structlsevents__listener__struct_a8aed9196b0deab84e018b96c0cc59305}{next}
       ) \{
-      \textcolor{keywordflow}{if}( regexec( &p->\hyperlink{structlsevents__listener__struct_a60b0f9e188a08e6101c494af89052d3f}{re}, event, 0, NULL, 0) == 0) \{
-        p->\hyperlink{structlsevents__listener__struct_a005906c1c9f0647e6ed1fb4592d8c5d0}{cb}( event);
+      \textcolor{keywordflow}{if}( regexec( &p->\hyperlink{structlsevents__listener__struct_a60b0f9e188a08e6101c494af89052d3f}{re}, ep->\hyperlink{structlsevents__queue__struct_a3ac2148f21e4a23ce6df588374749bda}{evp}, 0, NULL, 0) == 0) \{
+        p->\hyperlink{structlsevents__listener__struct_a005906c1c9f0647e6ed1fb4592d8c5d0}{cb}( ep->\hyperlink{structlsevents__queue__struct_a3ac2148f21e4a23ce6df588374749bda}{evp});
       \}
     \}
-    free( event);
-
+    free( ep->\hyperlink{structlsevents__queue__struct_a3ac2148f21e4a23ce6df588374749bda}{evp});
+    
     pthread\_mutex\_unlock( &\hyperlink{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{lsevents\_listener\_mutex});
   \}
   \textcolor{keywordflow}{return} NULL;

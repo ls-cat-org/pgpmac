@@ -201,7 +201,7 @@ Maybe add a new object Used internally for this module Must be called with lsred
 
 
 
-Definition at line 431 of file lsredis.\-c.
+Definition at line 434 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -209,7 +209,6 @@ Definition at line 431 of file lsredis.\-c.
   \hyperlink{structlsredis__obj__struct}{lsredis\_obj\_t} *p;
   regmatch\_t pmatch[2];
   \textcolor{keywordtype}{int} err;
-  \textcolor{keywordtype}{char} *name;
   ENTRY htab\_input, *htab\_output;
 
   \textcolor{comment}{// Dispense with obviously bad keys straight away}
@@ -283,9 +282,6 @@ Definition at line 431 of file lsredis.\-c.
     \textcolor{keywordflow}{if}( err == 0) \{
       \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"\_lsredis\_get\_obj: hseach
        error on enter.  errno=%d"}, errno);
-    \} \textcolor{keywordflow}{else} \{
-      \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"\_lsredis\_get\_obj: added %s"},
-       key);
     \}
 
     \textcolor{comment}{//}
@@ -326,10 +322,10 @@ Definition at line 145 of file lsredis.\-c.
 \begin{DoxyCode}
                                                     \{
 
-  \textcolor{keywordflow}{if}( strlen(v) >= p->\hyperlink{structlsredis__obj__struct_a664f0eaafb8dffc0dbde126e0340efb9}{value\_length}) \{
+  \textcolor{keywordflow}{if}( strlen(\hyperlink{namespacemk__pgpmac__redis_a5f3a2bd9ec25ae16b9b4af04dabb504c}{v}) >= (\textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int}) p->\hyperlink{structlsredis__obj__struct_a664f0eaafb8dffc0dbde126e0340efb9}{value\_length}) \{
     \textcolor{keywordflow}{if}( p->\hyperlink{structlsredis__obj__struct_a0465c65288e8101805a6f91049164517}{value} != NULL)
       free( p->\hyperlink{structlsredis__obj__struct_a0465c65288e8101805a6f91049164517}{value});
-    p->\hyperlink{structlsredis__obj__struct_a664f0eaafb8dffc0dbde126e0340efb9}{value\_length} = strlen(v) + 256;
+    p->\hyperlink{structlsredis__obj__struct_a664f0eaafb8dffc0dbde126e0340efb9}{value\_length} = strlen(\hyperlink{namespacemk__pgpmac__redis_a5f3a2bd9ec25ae16b9b4af04dabb504c}{v}) + 256;
     p->\hyperlink{structlsredis__obj__struct_a0465c65288e8101805a6f91049164517}{value} = calloc( p->\hyperlink{structlsredis__obj__struct_a664f0eaafb8dffc0dbde126e0340efb9}{value\_length}, \textcolor{keyword}{sizeof}( \textcolor{keywordtype}{char}));
     \textcolor{keywordflow}{if}( p->\hyperlink{structlsredis__obj__struct_a0465c65288e8101805a6f91049164517}{value} == NULL) \{
       \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"\_lsredis\_set\_value: out of
@@ -337,15 +333,15 @@ Definition at line 145 of file lsredis.\-c.
       exit( -1);
     \}
   \}
-  strncpy( p->\hyperlink{structlsredis__obj__struct_a0465c65288e8101805a6f91049164517}{value}, v, p->\hyperlink{structlsredis__obj__struct_a664f0eaafb8dffc0dbde126e0340efb9}{value\_length} - 1);
+  strncpy( p->\hyperlink{structlsredis__obj__struct_a0465c65288e8101805a6f91049164517}{value}, \hyperlink{namespacemk__pgpmac__redis_a5f3a2bd9ec25ae16b9b4af04dabb504c}{v}, p->\hyperlink{structlsredis__obj__struct_a664f0eaafb8dffc0dbde126e0340efb9}{value\_length} - 1);
   p->\hyperlink{structlsredis__obj__struct_a0465c65288e8101805a6f91049164517}{value}[p->\hyperlink{structlsredis__obj__struct_a664f0eaafb8dffc0dbde126e0340efb9}{value\_length}-1] = 0;
   p->\hyperlink{structlsredis__obj__struct_ab60d0a71cabad6b921b6edb5a8f68996}{dvalue} = strtod( p->\hyperlink{structlsredis__obj__struct_a0465c65288e8101805a6f91049164517}{value}, NULL);
-  p->\hyperlink{structlsredis__obj__struct_a26211a0ab3fc02e7776e24dbc1f1256c}{lvalue} = strtol( p->\hyperlink{structlsredis__obj__struct_a0465c65288e8101805a6f91049164517}{value}, NULL, 10);
+  p->\hyperlink{structlsredis__obj__struct_a26211a0ab3fc02e7776e24dbc1f1256c}{lvalue} = p->\hyperlink{structlsredis__obj__struct_ab60d0a71cabad6b921b6edb5a8f68996}{dvalue};
 
   \textcolor{keywordflow}{if}( p->\hyperlink{structlsredis__obj__struct_ac065eeede0e08f25bcfedd45022fe593}{avalue} != NULL) \{
-    \textcolor{keywordtype}{int} i;
+    \textcolor{keywordtype}{int} \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i};
     \textcolor{keywordflow}{for}( i=0; (p->\hyperlink{structlsredis__obj__struct_ac065eeede0e08f25bcfedd45022fe593}{avalue})[i] != NULL; i++)
-      free( (p->\hyperlink{structlsredis__obj__struct_ac065eeede0e08f25bcfedd45022fe593}{avalue})[i]);
+      free( (p->\hyperlink{structlsredis__obj__struct_ac065eeede0e08f25bcfedd45022fe593}{avalue})[\hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i}]);
     free( p->\hyperlink{structlsredis__obj__struct_ac065eeede0e08f25bcfedd45022fe593}{avalue});
     p->\hyperlink{structlsredis__obj__struct_ac065eeede0e08f25bcfedd45022fe593}{avalue} = NULL;
   \}
@@ -538,7 +534,7 @@ Definition at line 95 of file lsredis.\-c.
                                                                           \{
   \textcolor{keyword}{static} \textcolor{keywordtype}{int} indentlevel = 0;
   redisReply *r;
-  \textcolor{keywordtype}{int} i;
+  \textcolor{keywordtype}{int} \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i};
 
   r = (redisReply *)reply;
 
@@ -576,7 +572,7 @@ Definition at line 95 of file lsredis.\-c.
     \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"%*sARRAY of %d elements"}, 
       indentlevel*4, \textcolor{stringliteral}{""}, (\textcolor{keywordtype}{int})r->elements);
     indentlevel++;
-    \textcolor{keywordflow}{for}( i=0; i<r->elements; i++)
+    \textcolor{keywordflow}{for}( i=0; i<(int)r->elements; i++)
       \hyperlink{lsredis_8c_a8268fd06bda0e2c327b057a880b97b59}{lsredis\_debugCB}( ac, r->element[i], NULL);
     indentlevel--;
     \textcolor{keywordflow}{break};
@@ -655,7 +651,7 @@ service the socket requests
 
 
 
-Definition at line 909 of file lsredis.\-c.
+Definition at line 885 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -693,13 +689,13 @@ Definition at line 909 of file lsredis.\-c.
 )}}\label{lsredis_8c_a1ad60526a09ca679f39174ce5d773abe}
 
 
-Definition at line 777 of file lsredis.\-c.
+Definition at line 752 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
                                                                       \{
   \textcolor{keywordtype}{char} s[512];
-  \textcolor{keywordtype}{int} i;
+  \textcolor{keywordtype}{int} \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i};
   \textcolor{keywordtype}{int} err;
   ENTRY htab\_input, *htab\_output;
   \hyperlink{structlsredis__obj__struct}{lsredis\_obj\_t} *p;
@@ -809,7 +805,7 @@ Definition at line 520 of file lsredis.\-c.
 )}}\label{lsredis_8c_abe31d0e11c41b2235307612c963bb652}
 
 
-Definition at line 358 of file lsredis.\-c.
+Definition at line 361 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -835,7 +831,7 @@ Definition at line 358 of file lsredis.\-c.
 )}}\label{lsredis_8c_abbb4e5ece19ebd130e1be18036752a08}
 
 
-Definition at line 371 of file lsredis.\-c.
+Definition at line 374 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -861,7 +857,7 @@ Definition at line 371 of file lsredis.\-c.
 )}}\label{lsredis_8c_a0b7600b1c9a4550b32d4be019d25f941}
 
 
-Definition at line 384 of file lsredis.\-c.
+Definition at line 387 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -887,7 +883,7 @@ Definition at line 384 of file lsredis.\-c.
 )}}\label{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}
 
 
-Definition at line 332 of file lsredis.\-c.
+Definition at line 335 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -913,7 +909,7 @@ Definition at line 332 of file lsredis.\-c.
 )}}\label{lsredis_8c_a1923f998441f4f451204dfd214d52218}
 
 
-Definition at line 345 of file lsredis.\-c.
+Definition at line 348 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -943,7 +939,7 @@ return a copy of the key's string value
 
 
 
-Definition at line 259 of file lsredis.\-c.
+Definition at line 262 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -974,7 +970,7 @@ Definition at line 259 of file lsredis.\-c.
 )}}\label{lsredis_8c_a8d9719b362d1b38275d734971b7988af}
 
 
-Definition at line 397 of file lsredis.\-c.
+Definition at line 400 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -985,9 +981,8 @@ Definition at line 397 of file lsredis.\-c.
   r = reply;
   p =  privdata;
 
-  \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"hgetCB: %s %s"}, p == NULL ? \textcolor{stringliteral}{"
-      <NULL>"} : p->\hyperlink{structlsredis__obj__struct_aa8c5a453b9424e5666320b8675a42f5c}{key}, r->type == REDIS\_REPLY\_STRING ? r->str : \textcolor{stringliteral}{"Non-string value. 
-       Why?"});
+  \textcolor{comment}{//  lslogging\_log\_message( "hgetCB: %s %s", p == NULL ? "<NULL>" : p->key,
+       r->type == REDIS\_REPLY\_STRING ? r->str : "Non-string value.  Why?");}
 
   \textcolor{comment}{//}
   \textcolor{comment}{// Apparently this item does not exist}
@@ -1034,7 +1029,7 @@ Initialize this module, that is, set up the connections.
 \end{DoxyParams}
 
 
-Definition at line 831 of file lsredis.\-c.
+Definition at line 806 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1052,7 +1047,7 @@ Definition at line 831 of file lsredis.\-c.
        hash table.  Really bad things are going to happen.  hcreate\_r returnd %d"}, err);
   \}
 
-  \hyperlink{lsredis_8c_acdca9095c7a3288d7febe9f4c440a6e9}{lsredis\_head}      = strdup( head);
+  \hyperlink{lsredis_8c_acdca9095c7a3288d7febe9f4c440a6e9}{lsredis\_head}      = strdup( \hyperlink{namespacemk__pgpmac__redis_a3a09e1c5bb44c0bb2175c311655d1b15}{head});
   \hyperlink{lsredis_8c_a0c81dce2e75584eeb14ab7d9dd86c72e}{lsredis\_publisher} = strdup( pub);
 
   pthread\_mutex\_init( &\hyperlink{lsredis_8c_a390e8acf789b0fa41b43a794dd27e28f}{lsredis\_mutex}, NULL);
@@ -1087,7 +1082,8 @@ Definition at line 831 of file lsredis.\-c.
   \hyperlink{lsredis_8c_afc92245910ec04f9a341c092def45564}{roac}->ev.delWrite = \hyperlink{lsredis_8c_a04f0119cfa1156dc34d35b237358822a}{lsredis\_delWrite};
   \hyperlink{lsredis_8c_afc92245910ec04f9a341c092def45564}{roac}->ev.cleanup  = \hyperlink{lsredis_8c_a45f946a5262c23b362be17c2cb0310c2}{lsredis\_cleanup};
 
-  \hyperlink{lsredis_8c_a7ea13129ad9e41a0ed2fc19fa75ffb0d}{wrac} = redisAsyncConnect(\textcolor{stringliteral}{"10.1.0.3"}, 6379);
+  \textcolor{comment}{//wrac = redisAsyncConnect("10.1.0.3", 6379);}
+  \hyperlink{lsredis_8c_a7ea13129ad9e41a0ed2fc19fa75ffb0d}{wrac} = redisAsyncConnect(\textcolor{stringliteral}{"127.0.0.1"}, 6379);
   \textcolor{keywordflow}{if}( \hyperlink{lsredis_8c_a7ea13129ad9e41a0ed2fc19fa75ffb0d}{wrac}->err) \{
     \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"Error: %s"}, \hyperlink{lsredis_8c_a7ea13129ad9e41a0ed2fc19fa75ffb0d}{wrac}->errstr);
   \}
@@ -1132,13 +1128,13 @@ Sift through the keys to find ones we like.
 
 Add them to our list of followed objects 
 
-Definition at line 756 of file lsredis.\-c.
+Definition at line 731 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
                                                                          \{
   redisReply *r;
-  \textcolor{keywordtype}{int} i;
+  \textcolor{keywordtype}{int} \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i};
   
   r = reply;
   \textcolor{keywordflow}{if}( r->type != REDIS\_REPLY\_ARRAY) \{
@@ -1148,7 +1144,7 @@ Definition at line 756 of file lsredis.\-c.
     \textcolor{keywordflow}{return};
   \}
   
-  \textcolor{keywordflow}{for}( i=0; i<r->elements; i++) \{
+  \textcolor{keywordflow}{for}( i=0; i< (int)r->elements; i++) \{
     \textcolor{keywordflow}{if}( r->element[i]->type != REDIS\_REPLY\_STRING) \{
       \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lsredis\_keysCB: exected
        string..."});
@@ -1168,7 +1164,7 @@ Definition at line 756 of file lsredis.\-c.
 )}}\label{lsredis_8c_ad3189a7329ca92efab0054921f608b97}
 
 
-Definition at line 748 of file lsredis.\-c.
+Definition at line 723 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1207,6 +1203,8 @@ Definition at line 246 of file lsredis.\-c.
   rtn = regexec( preg, p->\hyperlink{structlsredis__obj__struct_a0465c65288e8101805a6f91049164517}{value}, nmatch, pmatch, eflags);
 
   pthread\_mutex\_unlock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
+
+  \textcolor{keywordflow}{return} rtn;
 \}
 \end{DoxyCode}
 \hypertarget{lsredis_8c_ad438e4368d86bbe15a93dcf86deaded5}{\index{lsredis.\-c@{lsredis.\-c}!lsredis\-\_\-run@{lsredis\-\_\-run}}
@@ -1218,7 +1216,7 @@ Definition at line 246 of file lsredis.\-c.
 )}}\label{lsredis_8c_ad438e4368d86bbe15a93dcf86deaded5}
 
 
-Definition at line 1035 of file lsredis.\-c.
+Definition at line 1010 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1248,13 +1246,13 @@ Definition at line 206 of file lsredis.\-c.
 \begin{DoxyCode}
                                                           \{
   va\_list arg\_ptr;
-  \textcolor{keywordtype}{char} v[512];
+  \textcolor{keywordtype}{char} \hyperlink{namespacemk__pgpmac__redis_a5f3a2bd9ec25ae16b9b4af04dabb504c}{v}[512];
   
   va\_start( arg\_ptr, fmt);
   vsnprintf( v, \textcolor{keyword}{sizeof}(v)-1, fmt, arg\_ptr);
   va\_end( arg\_ptr);
 
-  v[\textcolor{keyword}{sizeof}(v)-1] = 0;
+  v[\textcolor{keyword}{sizeof}(\hyperlink{namespacemk__pgpmac__redis_a5f3a2bd9ec25ae16b9b4af04dabb504c}{v})-1] = 0;
 
   pthread\_mutex\_lock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
 
@@ -1283,18 +1281,18 @@ redis\-Async\-Command\-Argv used instead of redis\-Async\-Command 'cause it's ea
 
 $<$ redis\-Async\-Command\-Argv shouldn't need to access this after it's made up it's packet (before it returns) so we should be O\-K with this location disappearing soon. 
 
-Definition at line 284 of file lsredis.\-c.
+Definition at line 287 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
                                                        \{
   va\_list arg\_ptr;
-  \textcolor{keywordtype}{char} v[512];
+  \textcolor{keywordtype}{char} \hyperlink{namespacemk__pgpmac__redis_a5f3a2bd9ec25ae16b9b4af04dabb504c}{v}[512];
   \textcolor{keywordtype}{char} *argv[4];
 
   va\_start( arg\_ptr, fmt);
   vsnprintf( v, \textcolor{keyword}{sizeof}(v)-1, fmt, arg\_ptr);
-  v[\textcolor{keyword}{sizeof}(v)-1] = 0;
+  v[\textcolor{keyword}{sizeof}(\hyperlink{namespacemk__pgpmac__redis_a5f3a2bd9ec25ae16b9b4af04dabb504c}{v})-1] = 0;
   va\_end( arg\_ptr);
   
   pthread\_mutex\_lock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
@@ -1314,7 +1312,7 @@ Definition at line 284 of file lsredis.\-c.
   argv[0] = \textcolor{stringliteral}{"HSET"};
   argv[1] = p->\hyperlink{structlsredis__obj__struct_aa8c5a453b9424e5666320b8675a42f5c}{key};
   argv[2] = \textcolor{stringliteral}{"VALUE"};
-  argv[3] = v;          
+  argv[3] = \hyperlink{namespacemk__pgpmac__redis_a5f3a2bd9ec25ae16b9b4af04dabb504c}{v};         
 
   pthread\_mutex\_lock( &\hyperlink{lsredis_8c_a390e8acf789b0fa41b43a794dd27e28f}{lsredis\_mutex});
   \textcolor{keywordflow}{while}( \hyperlink{lsredis_8c_a7461eb2b5974a2ffac2189007d39193c}{lsredis\_running} == 0)
@@ -1349,7 +1347,7 @@ Definition at line 284 of file lsredis.\-c.
 \end{DoxyParams}
 
 
-Definition at line 933 of file lsredis.\-c.
+Definition at line 909 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1389,7 +1387,7 @@ Definition at line 631 of file lsredis.\-c.
 \begin{DoxyCode}
                                                                         \{
   redisReply *r;
-  \hyperlink{structlsredis__obj__struct}{lsredis\_obj\_t} *p, *last, *last2;
+  \hyperlink{structlsredis__obj__struct}{lsredis\_obj\_t} *p;
   \textcolor{keywordtype}{char} *k;
   \textcolor{keywordtype}{char} *publisher;
   ENTRY htab\_input, *htab\_output;
@@ -1444,32 +1442,6 @@ Definition at line 631 of file lsredis.\-c.
     \textcolor{keywordflow}{else}
       p = htab\_output->data;
       
-    \textcolor{comment}{/*  }
-\textcolor{comment}{    last  = NULL;}
-\textcolor{comment}{    last2 = NULL;}
-\textcolor{comment}{    for( p=lsredis\_objs; p != NULL; p = p->next) \{}
-\textcolor{comment}{      if( strcmp( p->key, k) == 0) \{}
-\textcolor{comment}{        p->hits++;}
-\textcolor{comment}{        //}
-\textcolor{comment}{        // Maybe reorder our list so the most often updated objects}
-\textcolor{comment}{        // eventually bump up to the beginning of the list.}
-\textcolor{comment}{        // That "hits+4" keeps us from oscillating when objects are accessed
-       equally}
-\textcolor{comment}{        //}
-\textcolor{comment}{        if( last != NULL && last->hits < p->hits+4) \{}
-\textcolor{comment}{          last->next = p->next;}
-\textcolor{comment}{          p->next    = last;}
-\textcolor{comment}{          if( last2 != NULL)}
-\textcolor{comment}{            last2->next = p;}
-\textcolor{comment}{          else}
-\textcolor{comment}{            lsredis\_objs = p;}
-\textcolor{comment}{        \}}
-\textcolor{comment}{        break;}
-\textcolor{comment}{      \}}
-\textcolor{comment}{      last2 = last;}
-\textcolor{comment}{      last  = p;}
-\textcolor{comment}{    \} }
-\textcolor{comment}{    */}
 
     \textcolor{keywordflow}{if}( p == NULL) \{
       \hyperlink{lsredis_8c_ac3fb8589e280bfa18ecbca6619fea637}{\_lsredis\_get\_obj}( k);
@@ -1529,18 +1501,17 @@ $<$ array of pollfd's for the poll function, one entry per connection
 
 $<$ number of active elements in fda 
 
-Definition at line 952 of file lsredis.\-c.
+Definition at line 928 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
                                     \{
-  \textcolor{keyword}{static} \textcolor{keywordtype}{int} poll\_timeout\_ms = 100;     
+  \textcolor{keyword}{static} \textcolor{keywordtype}{int} poll\_timeout\_ms = -1;      
   \textcolor{keyword}{static} \textcolor{keyword}{struct }pollfd fda[4];          
   \textcolor{keyword}{static} \textcolor{keywordtype}{int} nfda = 0;                  
   \textcolor{keyword}{static} sigset\_t our\_sigset;
   \textcolor{keywordtype}{int} pollrtn;
-  \textcolor{keywordtype}{int} i;
-  \textcolor{keywordtype}{int} sigfd;
+  \textcolor{keywordtype}{int} \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i};
 
 
   pthread\_mutex\_lock( &\hyperlink{lsredis_8c_a390e8acf789b0fa41b43a794dd27e28f}{lsredis\_mutex});

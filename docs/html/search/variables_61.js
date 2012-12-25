@@ -36,6 +36,7 @@ var searchData=
   ['aperturez_5fstatus_5f2',['aperturez_status_2',['../structmd2StatusStruct.html#ae407a99e428d9f4a7444a02c8bc3414e',1,'md2StatusStruct']]],
   ['apery',['apery',['../lspmac_8c.html#a139200ddaa9856a7ffcec0e6cbaa8f1b',1,'apery():&#160;lspmac.c'],['../pgpmac_8h.html#a139200ddaa9856a7ffcec0e6cbaa8f1b',1,'apery():&#160;lspmac.c']]],
   ['aperz',['aperz',['../lspmac_8c.html#ab93bd6ee850b285ca3a95e64d15e9477',1,'aperz():&#160;lspmac.c'],['../pgpmac_8h.html#ab93bd6ee850b285ca3a95e64d15e9477',1,'aperz():&#160;lspmac.c']]],
+  ['arm_5fparked',['arm_parked',['../lspmac_8c.html#afaff4fbb5f03b0d2469fc7a14f174d69',1,'arm_parked():&#160;lspmac.c'],['../pgpmac_8h.html#afaff4fbb5f03b0d2469fc7a14f174d69',1,'arm_parked():&#160;lspmac.c']]],
   ['avalue',['avalue',['../structlsredis__obj__struct.html#ac065eeede0e08f25bcfedd45022fe593',1,'lsredis_obj_struct']]],
   ['ax',['ax',['../structlspg__nextshot__struct.html#a7f57874223897ab7d9c7531a9522904d',1,'lspg_nextshot_struct']]],
   ['ax2',['ax2',['../structlspg__nextshot__struct.html#ab76bd38d2a098bc7eda82aff5dcb9c66',1,'lspg_nextshot_struct']]],

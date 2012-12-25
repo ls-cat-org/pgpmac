@@ -8,6 +8,7 @@ var files =
     [ "lsredis.c", "lsredis_8c.html", "lsredis_8c" ],
     [ "lstimer.c", "lstimer_8c.html", "lstimer_8c" ],
     [ "md2cmds.c", "md2cmds_8c.html", "md2cmds_8c" ],
+    [ "mk_pgpmac_redis.py", "mk__pgpmac__redis_8py.html", "mk__pgpmac__redis_8py" ],
     [ "pgpmac.c", "pgpmac_8c.html", "pgpmac_8c" ],
     [ "pgpmac.h", "pgpmac_8h.html", "pgpmac_8h" ]
 ];

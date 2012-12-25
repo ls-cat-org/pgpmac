@@ -1,4 +1,4 @@
-.TH "pgpmac.c" 3 "Tue Dec 18 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "pgpmac.c" 3 "Mon Dec 24 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -96,9 +96,8 @@ Definition at line 349 of file pgpmac\&.c\&.
 .PP
 .nf
            {
-  static nfds_t nfds;
 
-  static struct pollfd fda[3], *fdp;    // input for poll: room for postgres, pmac, and stdin
+  static struct pollfd fda[3];          // input for poll: room for postgres, pmac, and stdin
   static int nfd = 0;                   // number of items in fda
   static int pollrtn = 0;
   static struct option long_options[] = {
@@ -145,10 +144,14 @@ Definition at line 349 of file pgpmac\&.c\&.
   // that everyone is initiallized before anyone runs
   //
   lslogging_init();
+  lslogging_run();
   lsevents_init();
+  lsevents_run();
+  lstimer_init();
+  lstimer_run();
   lsredis_init( 'MD2-21-ID-E', 'redis\\\&.kvseq|stns\\\&.2\\\&.(\&.+)', 'stns\&.2');
   lsredis_run();
-  lstimer_init();
+
   lspmac_init( ivars, mvars);
   lspg_init();
   md2cmds_init();
@@ -174,9 +177,6 @@ Definition at line 349 of file pgpmac\&.c\&.
                                                       
   doupdate();                                         
 
-  lslogging_run();
-  lsevents_run();
-  lstimer_run();
   lspmac_run();
   lspg_run();
   md2cmds_run();
@@ -265,7 +265,7 @@ Definition at line 254 of file pgpmac\&.c\&.
                     {
   static char cmds[1024];
   static char cntrlcmd[2];
-  static char cmds_on = 0;
+  static unsigned int cmds_on = 0;
   int ch;
 
 
