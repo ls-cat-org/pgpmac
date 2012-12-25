@@ -87,7 +87,7 @@ typedef struct lspmac_cmd_queue_struct {
   int no_reply;					//!< 1 = no reply is expected, 0 = expect a reply
   struct timespec time_sent;			//!< time this item was dequeued and sent to the pmac
   unsigned char rbuff[1400];			//!< buffer for the returned bytes
-  void (*onResponse)(struct lspmac_cmd_queue_struct *,int, unsigned char *);	//!< function to call when response is received.  args are (int fd, nreturned, buffer)
+  void (*onResponse)(struct lspmac_cmd_queue_struct *,int, char *);	//!< function to call when response is received.  args are (int fd, nreturned, buffer)
 } pmac_cmd_queue_t;
 
 
@@ -149,12 +149,49 @@ typedef struct lspmac_bi_struct {
   int *ptr;			//!< points to the location in the status buffer
   pthread_mutex_t mutex;	//!< so we don't get confused
   int mask;			//!< mask for the bit in the status register
+  int position;			//!< the current value.
   int previous;			//!< the previous value
   int first_time;		//!< flag indicating we've not read the input even once
   char *changeEventOn;		//!< Event to send when the value changes to 1
   char *changeEventOff;		//!< Event to send when the value changes to 0
 } lspmac_bi_t;
 
+
+/** Store each query along with it's callback function.
+ *  All calls are asynchronous
+ */
+typedef struct lspgQueryQueueStruct {
+  char qs[LS_PG_QUERY_STRING_LENGTH];						//!< our queries should all be pretty short as we'll just be calling functions: fixed length here simplifies memory management
+  void (*onResponse)( struct lspgQueryQueueStruct *qq, PGresult *pgr);		//!< Callback function for when a query returns a result
+} lspg_query_queue_t;
+
+typedef struct lspg_waitcryo_struct {
+  pthread_mutex_t mutex;	//!< practice safe threading
+  pthread_cond_t cond;		//!< for signaling
+  int new_value_ready;		//!< OK, there is never a value, we need a variable for the conditional wait and this is what we call it everywhere else
+} lspg_waitcryo_t;
+
+extern lspg_waitcryo_t lspg_waitcryo;
+
+typedef struct lspg_getcurrentsampleid_struct {
+  pthread_mutex_t mutex;		//!< practice safe threading
+  pthread_cond_t cond;			//!< for signaling
+  int no_rows_returned;			//!< flag for an empty return
+  int new_value_ready;			//!< OK, there is never a value, we need a variable for the conditional wait and this is what we call it everywhere else
+  unsigned int getcurrentsampleid;	//!< the sample we think is mounted on the diffractometer
+  int getcurrentsampleid_isnull  ;	//!< the sample we think is mounted on the diffractometer
+} lspg_getcurrentsampleid_t;
+
+extern lspg_getcurrentsampleid_t lspg_getcurrentsampleid;
+
+
+typedef struct lspg_demandairrights_struct {
+  pthread_mutex_t mutex;
+  pthread_cond_t cond;
+  int new_value_ready;
+} lspg_demandairrights_t;
+
+extern lspg_demandairrights_t lspg_demandairrights;
 
 
 /** Storage for getcenter query
@@ -190,8 +227,24 @@ typedef struct lspg_getcenter_struct {
 
 extern lspg_getcenter_t lspg_getcenter;
 
+
+/**
+ * returns 1 if transfer can continue
+ *         0 to abort
+ */
+typedef struct lspg_starttransfer_struct {
+  pthread_mutex_t mutex;	//!< Our mutex
+  pthread_cond_t cond;		//!< Our condition
+  int new_value_ready;		//!< flag for our condition
+  int no_rows_returned;		//!< just in case, though this query should always return an integer, perhaps 0
+
+  unsigned int starttransfer;	//!< sample number (4 8-bit segments: station, dewar (lid), puck, and position in the puck)
+} lspg_starttransfer_t;
+
+extern lspg_starttransfer_t lspg_starttransfer;
+
 /** Returns the next sample number
- *  Just a 32 bit int (Ha, take that, nextshot!)
+ *  Just a 32 bit int (Ha!, take that, nextshot!)
  */
 typedef struct lspg_nextsample_struct {
   pthread_mutex_t mutex;	//!< Our mutex
@@ -425,41 +478,66 @@ extern char md2cmds_cmd[];			// our command;
 
 extern lsredis_obj_t *md2cmds_md_status_code;
 
-extern void PmacSockSendline( char *s);
-extern void pgpmac_printf( char *fmt, ...);
 extern char **lspg_array2ptrs( char *);
-extern void lspg_init();
-extern void lspg_run();
-extern void lspg_seq_run_prep_all( long long skey, double kappa, double phi, double cx, double cy, double ax, double ay, double az);
-extern void lspg_zoom_lut_call();
-extern void lspmac_init( int, int);
-extern void lspmac_run();
-extern void lspmac_move_or_jog_queue( lspmac_motor_t *, double, int);
-extern void lspmac_move_or_jog_preset_queue( lspmac_motor_t *, char *, int);
-extern void lspmac_moveabs_queue( lspmac_motor_t *, double);
-extern void lspmac_jogabs_queue( lspmac_motor_t *, double);
+extern char **lsredis_get_string_array( lsredis_obj_t *p);
 extern pmac_cmd_queue_t *lspmac_SockSendline(char *, ...);
-extern void lsupdate_init();
-extern void md2cmds_init();
-extern void md2cmds_run();
-extern void lsupdate_run();
-extern void lsevents_init();
-extern void lsevents_run();
-extern void lsevents_send_event( char *, ...);
-extern void lsevents_add_listener( char *, void (*cb)(char *));
-extern void lsevents_remove_listener( char *, void (*cb)(char *));
-extern void lstimer_init();
-extern void lstimer_run();
-extern void lstimer_add_timer( char *, int, unsigned long int, unsigned long int);
-extern void lsredis_init( char *pub, char *re, char *head);
-extern void lsredis_run();
 extern lsredis_obj_t *lsredis_get_obj( char *, ...);
 extern char *lsredis_getstr( lsredis_obj_t *p);
-extern double lsredis_getd( lsredis_obj_t *p);
+extern void PmacSockSendline( char *s);
+extern unsigned int lspg_nextsample_all( int *err);
 extern long int lsredis_getl( lsredis_obj_t *p);
-extern char **lsredis_get_string_array( lsredis_obj_t *p);
-extern int lsredis_getb( lsredis_obj_t *p);
-extern int lsredis_cmpstr( lsredis_obj_t *p, char *s);
-extern int lsredis_regexec( const regex_t *preg, lsredis_obj_t *p, size_t nmatch, regmatch_t *pmatch, int eflags);
-extern int lsredis_cmpnstr( lsredis_obj_t *p, char *s, int n);
-extern int lsredis_find_preset( char *base, char *preset_name, double *dval);
+extern void lsevents_add_listener( char *, void (*cb)(char *));
+extern void lsevents_init();
+extern void lsevents_remove_listener( char *, void (*cb)(char *));
+extern void lsevents_run();
+extern void lsevents_send_event( char *, ...);
+extern void lslogging_init();
+extern void lslogging_log_message( char *fmt, ...);
+extern void lslogging_run();
+extern void lspg_demandairrights_all();
+extern void lspg_getcenter_call();
+extern void lspg_getcenter_done();
+extern void lspg_getcenter_wait();
+extern void lspg_getcurrentsampleid_wait_for_id( unsigned int test);
+extern void lspg_init();
+extern void lspg_nextshot_call();
+extern void lspg_nextshot_done();
+extern void lspg_nextshot_wait();
+extern void lspg_query_push(void (*cb)( lspg_query_queue_t *, PGresult *), char *fmt, ...);
+extern void lspg_run();
+extern void lspg_seq_run_prep_all( long long skey, double kappa, double phi, double cx, double cy, double ax, double ay, double az);
+extern void lspg_starttransfer_call( unsigned int nextsample, int sample_detected, double ax, double ay, double az, double horz, double vert, double esttime);
+extern void lspg_starttransfer_done();
+extern void lspg_starttransfer_wait();
+extern void lspg_waitcryo_all();
+extern void lspg_waitcryo_cb( lspg_query_queue_t *qqp, PGresult *pgr);
+extern void lspg_zoom_lut_call();
+extern int  lspmac_getBIPosition( lspmac_bi_t *);
+extern void lspmac_home1_queue(	lspmac_motor_t *mp);
+extern void lspmac_init( int, int);
+extern void lspmac_jogabs_queue( lspmac_motor_t *, double);
+extern void lspmac_move_or_jog_abs_queue( lspmac_motor_t *mp, double requested_position,int use_jo);
+extern void lspmac_move_or_jog_preset_queue( lspmac_motor_t *, char *, int);
+extern void lspmac_move_or_jog_queue( lspmac_motor_t *, double, int);
+extern void lspmac_move_preset_queue( lspmac_motor_t *mp, char *preset_name);
+extern void lspmac_moveabs_queue( lspmac_motor_t *, double);
+extern void lspmac_moveabs_wait(lspmac_motor_t *mp);
+extern void lspmac_run();
+extern void lspmac_video_rotate( double secs);
+extern int  lsredis_cmpnstr( lsredis_obj_t *p, char *s, int n);
+extern int  lsredis_cmpstr( lsredis_obj_t *p, char *s);
+extern int  lsredis_find_preset( char *base, char *preset_name, double *dval);
+extern int  lsredis_getb( lsredis_obj_t *p);
+extern double lsredis_getd( lsredis_obj_t *p);
+extern void lsredis_init( char *pub, char *re, char *head);
+extern int  lsredis_regexec( const regex_t *preg, lsredis_obj_t *p, size_t nmatch, regmatch_t *pmatch, int eflags);
+extern void lsredis_run();
+extern void lsredis_setstr( lsredis_obj_t *p, char *fmt, ...);
+extern void lstimer_add_timer( char *, int, unsigned long int, unsigned long int);
+extern void lstimer_init();
+extern void lstimer_run();
+extern void lsupdate_init();
+extern void lsupdate_run();
+extern void md2cmds_init();
+extern void md2cmds_run();
+extern void pgpmac_printf( char *fmt, ...);
