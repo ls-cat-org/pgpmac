@@ -23,14 +23,14 @@ typedef struct lstimer_list_struct {
   int shots;				//!< run this many times: -1 means reload forever, 0 means we are done with this timer and it may be reused
   unsigned long int ncalls;		//!< track how many times we triggered a callback (like an unsigned long int is really needed)
   char event[LSEVENTS_EVENT_LENGTH];	//!< the event to send
-  unsigned long int next_secs;		//!< epoch (seconds) of next alarm
-  unsigned long int next_nsecs;		//!< nano seconds of next alarm
-  unsigned long int delay_secs;		//!< number of seconds for a periodic delay
-  unsigned long int delay_nsecs;	//!< nano seconds of delay
-  unsigned long int last_secs;		//!< the last time this timer was triggered
-  unsigned long int last_nsecs;		//!< the last time this timer was triggered
-  unsigned long int init_secs;		//!< our initialization time
-  unsigned long int init_nsecs;		//!< our initialization time
+  long int next_secs;		//!< epoch (seconds) of next alarm
+  long int next_nsecs;		//!< nano seconds of next alarm
+  long int delay_secs;		//!< number of seconds for a periodic delay
+  long int delay_nsecs;	//!< nano seconds of delay
+  long int last_secs;		//!< the last time this timer was triggered
+  long int last_nsecs;		//!< the last time this timer was triggered
+  long int init_secs;		//!< our initialization time
+  long int init_nsecs;		//!< our initialization time
 } lstimer_list_t;
 
 static lstimer_list_t lstimer_list[LSTIMER_LIST_LENGTH];	//!< Our timer list
@@ -185,10 +185,7 @@ static void *lstimer_worker(
 		     void *dummy		//!< [in] required by protocol
 		     ) {
   int
-    i,
     known_timers;
-
-  struct timespec now;
 
   struct sigevent  sev;
   struct sigaction sa;
