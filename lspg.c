@@ -44,15 +44,6 @@ static pthread_mutex_t lspg_queue_mutex;	//!< keep the queue from getting tangle
 static pthread_cond_t  lspg_queue_cond;	//!< keeps the queue from overflowing
 static struct pollfd lspgfd;		//!< our poll info
 
-
-/** Store each query along with it's callback function.
- *  All calls are asynchronous
- */
-typedef struct lspgQueryQueueStruct {
-  char qs[LS_PG_QUERY_STRING_LENGTH];						//!< our queries should all be pretty short as we'll just be calling functions: fixed length here simplifies memory management
-  void (*onResponse)( struct lspgQueryQueueStruct *qq, PGresult *pgr);		//!< Callback function for when a query returns a result
-} lspg_query_queue_t;
-
 /** Queue length should be long enough that we do not ordinarly bump into the end
  *  We should be safe as long as the thread the adds stuff to the queue is not
  *  the one that removes it.  (And we can tolerate the adding thread being paused.)
@@ -72,6 +63,10 @@ static PostgresPollingStatusType lspg_resetPoll_response;		//!< Used to determin
 lspg_nextsample_t lspg_nextsample;					//!< the very next sample
 lspg_nextshot_t  lspg_nextshot;						//!< the nextshot object
 lspg_getcenter_t lspg_getcenter;					//!< the getcenter object
+lspg_demandairrights_t lspg_demandairrights;				//!< our demandairrights object
+lspg_getcurrentsampleid_t lspg_getcurrentsampleid;			//!< our currentsample id
+lspg_starttransfer_t lspg_starttransfer;				//!< start a sample transfer
+lspg_waitcryo_t lspg_waitcryo;						//!< signal the robot
 
 /** Return the next item in the postgresql queue
  *
@@ -277,6 +272,133 @@ char **lspg_array2ptrs( char *a) {
   return( rtn);
 }
 
+void lspg_starttransfer_init() {
+  lspg_starttransfer.new_value_ready = 0;
+  pthread_mutex_init( &lspg_starttransfer.mutex, NULL);
+  pthread_cond_init( &lspg_starttransfer.cond, NULL);
+}
+
+void lspg_starttransfer_cb( 
+		      lspg_query_queue_t *qqp,		/**< [in] Our nextsample query			*/
+		      PGresult *pgr			/**< [in] result of the query			*/
+		      ) {
+  pthread_mutex_lock( &(lspg_starttransfer.mutex));
+
+  lspg_starttransfer.new_value_ready = 1;
+  if( PQntuples( pgr) <=0) {
+    lspg_starttransfer.no_rows_returned = 0;
+    lspg_starttransfer.starttransfer = 0;
+  } else {
+    lspg_starttransfer.no_rows_returned = 1;
+    if( PQgetisnull( pgr, 0, 0) || strtol( PQgetvalue( pgr, 0, 0), NULL, 0) != 1)
+    lspg_starttransfer.starttransfer = 0;
+  else
+    lspg_starttransfer.starttransfer = 1;
+  }
+  pthread_cond_signal( &(lspg_starttransfer.cond));
+  pthread_mutex_unlock( &(lspg_starttransfer.mutex));
+}
+
+void lspg_starttransfer_call( unsigned int nextsample, int sample_detected, double ax, double ay, double az, double horz, double vert, double esttime) {
+  pthread_mutex_lock( &(lspg_starttransfer.mutex));
+  lspg_starttransfer.new_value_ready = 0;
+  pthread_mutex_unlock( &(lspg_starttransfer.mutex));
+
+  lspg_query_push( lspg_starttransfer_cb, "SELECT px.starttransfer( %d, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f",
+		   nextsample, sample_detected, ax, ay, az, horz, vert, esttime);
+}
+
+void lspg_starttransfer_wait() {
+  pthread_mutex_lock( &(lspg_starttransfer.mutex));
+  while( lspg_starttransfer.new_value_ready == 0)
+    pthread_cond_wait( &(lspg_starttransfer.cond), &(lspg_starttransfer.mutex));
+}
+
+void lspg_starttransfer_done() {
+  pthread_mutex_unlock( &(lspg_starttransfer.mutex));
+}
+
+
+int lspg_starttransfer_all( int *err, unsigned int nextsample, int sampledetected, double ax, double ay, double az, double horz, double vert, double esttime) {
+  int rtn;
+
+  lspg_starttransfer_call( nextsample, sampledetected, ax, ay, az, horz, vert, esttime);
+  lspg_starttransfer_wait();
+  if( lspg_starttransfer.no_rows_returned || lspg_starttransfer.starttransfer != 1) {
+    *err = 1;
+  } else {
+    *err = 0;
+    rtn = lspg_starttransfer.starttransfer;
+  }
+  lspg_starttransfer_done();
+
+  return rtn;
+}
+
+void lspg_getcurrentsampleid_init() {
+  lspg_getcurrentsampleid.new_value_ready = 0;
+  pthread_mutex_init( &lspg_getcurrentsampleid.mutex, NULL);
+  pthread_cond_init( &lspg_getcurrentsampleid.cond, NULL);
+}
+
+/** get currentsampleid
+ */
+void lspg_getcurrentsampleid_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+  pthread_mutex_lock( &lspg_getcurrentsampleid.mutex);
+
+  lspg_nextsample.new_value_ready = 1;
+  lspg_getcurrentsampleid.no_rows_returned = PQntuples( pgr) <= 0;
+  if( lspg_getcurrentsampleid.no_rows_returned) {
+    pthread_cond_signal( &lspg_getcurrentsampleid.cond);
+    pthread_mutex_unlock( &lspg_getcurrentsampleid.mutex);
+    return;
+  }
+
+  lspg_getcurrentsampleid.getcurrentsampleid_isnull = PQgetisnull( pgr, 0, 0);
+  if( lspg_getcurrentsampleid.getcurrentsampleid_isnull == 0)
+    lspg_getcurrentsampleid.getcurrentsampleid = strtol( PQgetvalue( pgr, 0, 0), NULL, 0);
+
+  pthread_cond_signal( &lspg_getcurrentsampleid.cond);
+  pthread_mutex_unlock( &lspg_getcurrentsampleid.mutex);
+}
+
+/**
+ */
+void lspg_getcurrentsampleid_call() {
+  pthread_mutex_lock( &lspg_getcurrentsampleid.mutex);
+  lspg_getcurrentsampleid.new_value_ready = 0;
+  pthread_mutex_unlock( &lspg_getcurrentsampleid.mutex);
+
+  lspg_query_push( lspg_getcurrentsampleid_cb, "SELECT px.getcurrentsampleid()");
+}
+
+/**
+ */
+unsigned int lspg_getcurrentsampleid_read() {
+  unsigned int rtn;
+  pthread_mutex_lock( &lspg_getcurrentsampleid.mutex);
+  while( lspg_getcurrentsampleid.new_value_ready == 0)
+    pthread_cond_wait( &lspg_getcurrentsampleid.cond, &lspg_getcurrentsampleid.mutex);
+  
+  if( lspg_getcurrentsampleid.getcurrentsampleid_isnull)
+    rtn = -1;
+  else
+    rtn = lspg_getcurrentsampleid.getcurrentsampleid;
+  pthread_mutex_unlock( &lspg_getcurrentsampleid.mutex);
+  return rtn;
+}
+
+/**
+ */
+void lspg_getcurrentsampleid_wait_for_id( unsigned int test) {
+  pthread_mutex_lock( &lspg_getcurrentsampleid.mutex);
+  while( lspg_getcurrentsampleid.getcurrentsampleid != test)
+    pthread_cond_wait( &lspg_getcurrentsampleid.cond, &lspg_getcurrentsampleid.mutex);
+    
+  pthread_mutex_unlock( &lspg_getcurrentsampleid.mutex);
+}
+
+
 /** Next Sample
  */
 void lspg_nextsample_cb( 
@@ -343,11 +465,106 @@ void lspg_nextsample_done() {
 }
 
 
+unsigned int lspg_nextsample_all( int *err) {
+  unsigned int rtn;
+
+  lspg_nextsample_call();
+  lspg_nextsample_wait();
+
+  if( lspg_nextsample.no_rows_returned) {
+    rtn = 0;
+    *err = 1;
+  } else {
+    if( lspg_nextsample.nextsample_isnull) {
+      rtn = 0;
+      *err = 1;
+    } else {
+      rtn = lspg_nextsample.nextsample;
+      *err = 0;
+    }
+  }
+  lspg_nextsample_done();
+
+  return rtn;
+}
+
+void lspg_waitcryo_init() {
+  lspg_waitcryo.new_value_ready = 0;
+  pthread_mutex_init( &lspg_waitcryo.mutex, NULL);
+  pthread_cond_init( &lspg_waitcryo.cond, NULL);
+}
+
+void lspg_waitcryo_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+  pthread_mutex_lock( &lspg_waitcryo.mutex);
+  lspg_waitcryo.new_value_ready = 1;
+  pthread_cond_signal( &lspg_waitcryo.cond);
+  pthread_mutex_unlock( &lspg_waitcryo.mutex);
+}
+
+/** no need to get fancy with the wait cryo command
+ *  It should not return until the robot is almost ready for air rights
+ */
+void lspg_waitcryo_all() {
+  pthread_mutex_lock( &lspg_waitcryo.mutex);
+  lspg_waitcryo.new_value_ready = 0;
+
+  lspg_query_push( lspg_waitcryo_cb, "SELECT px.waitcryo())");
+
+  while( lspg_waitcryo.new_value_ready == 0)
+    pthread_cond_wait( &lspg_waitcryo.cond, &lspg_waitcryo.mutex);
+
+  pthread_mutex_unlock( &lspg_waitcryo.mutex);
+}
+
+/** initialize the demandairrights structure
+ */
+void lspg_demandairrights_init() {
+  lspg_demandairrights.new_value_ready = 0;
+  pthread_mutex_init( &lspg_demandairrights.mutex, NULL);
+  pthread_cond_init( &lspg_demandairrights.cond, NULL);
+}
+
+/** handle the airrights response
+ */
+void lspg_demandairrights_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+  pthread_mutex_lock( &lspg_demandairrights.mutex);
+  lspg_demandairrights.new_value_ready = 1;
+  pthread_cond_signal( &lspg_demandairrights.cond);
+  pthread_mutex_unlock( &lspg_demandairrights.mutex);
+}
+
+/** call for airrights
+ */
+void lspg_demandairrights_call() {
+  pthread_mutex_lock( &lspg_demandairrights.mutex);
+  lspg_demandairrights.new_value_ready = 0;
+  pthread_mutex_unlock( &lspg_demandairrights.mutex);
+  lspg_query_push( lspg_demandairrights_cb, "SELECT px.demandairrights())");
+}
+
+/** wait for the air rights request to return
+ */
+void lspg_demandairrights_wait() {
+  pthread_mutex_lock( &lspg_demandairrights.mutex);
+  while( lspg_demandairrights.new_value_ready == 0)
+    pthread_cond_wait( &lspg_demandairrights.cond, &lspg_demandairrights.mutex);
+  pthread_mutex_unlock( &lspg_demandairrights.mutex);
+}
+
+/** do nothing until we get airrights
+ */
+void lspg_demandairrights_all() {
+  lspg_demandairrights_call();
+  lspg_demandairrights_wait();
+  // there is no "done" version
+}
+
+
 /** Next Shot Callback.
  *  This is a long and tedious routine as there are a large
  *  number of variables returned.
  *  Suck it up.
- *  Return with the global variable lspg_nextshot set.
+ *  Return with the global object lspg_nextshot set.
  */
 void lspg_nextshot_cb(
 		      lspg_query_queue_t *qqp,		/**< [in] Our nextshot query			*/
@@ -1115,7 +1332,7 @@ void lspg_send_next_query() {
       // Don't wait for a reply, just reset the connection
       //
       lspg_query_reply_next();
-      ls_pg_state == LS_PG_STATE_RESET;
+      ls_pg_state = LS_PG_STATE_RESET;
     } else {
       ls_pg_state = LS_PG_STATE_SEND_FLUSH;
     }
@@ -1132,7 +1349,7 @@ void lspg_receive() {
   err = PQconsumeInput( q);
   if( err != 1) {
     lslogging_log_message( "consume input failed: %s", PQerrorMessage( q));
-    ls_pg_state == LS_PG_STATE_RESET;
+    ls_pg_state = LS_PG_STATE_RESET;
     return;
   }
 
@@ -1242,7 +1459,7 @@ void lspg_pg_service(
       err = PQconsumeInput( q);
       if( err != 1) {
 	lslogging_log_message( "consume input failed: %s", PQerrorMessage( q));
-	ls_pg_state == LS_PG_STATE_RESET;
+	ls_pg_state = LS_PG_STATE_RESET;
 	return;
       }
     }      
@@ -1269,7 +1486,9 @@ void lspg_pg_service(
 	  lspg_query_push( lspg_cmd_cb, "SELECT pmac.md2_queue_next()");
 	} else if (strstr( pgn->relname, "_diff") != NULL || strstr( pgn->relname, "_run") != NULL) {
 	  lspg_query_push( lspg_nextaction_cb, "SELECT action FROM px.nextaction()");
-	} 
+	} else if (strstr( pgn->relname, "_sample") != NULL) {
+	  lspg_getcurrentsampleid_call();
+	}
 	PQfreemem( pgn);
       }
     }
@@ -1306,15 +1525,13 @@ void lspg_pg_service(
 
 PQnoticeProcessor lspg_notice_processor( void *arg, const char *msg) {
   lslogging_log_message( "lspg: %s", msg);
+  return NULL;
 }
 
 /** Connect to the pg server
  */
 void lspg_pg_connect() {
-  PGresult *pgr;
-  int wait_interval = 1;
-  int connection_init = 0;
-  int i, err;
+  int err;
 
   if( q == NULL)
     ls_pg_state = LS_PG_STATE_INIT;
@@ -1459,7 +1676,6 @@ void *lspg_worker(
   static struct pollfd fda[2];	// 0=signal handler, 1=pg socket
   static int nfda = 0;
   static sigset_t our_sigset;
-  int sigfd;
 
   //
   // block ordinary signal mechanism
@@ -1524,21 +1740,40 @@ void *lspg_worker(
   }
 }
 
+/** log magnet state
+ */
+void lspmac_sample_detector_cb( char *event) {
+  int present;
+  if( strcmp( event, "SampleDetected") == 0)
+    present = 1;
+  else
+    present = 0;
+
+  lspg_query_push( NULL, "SELECT px.logmagnetstate(%s)", present ? "TRUE" : "FALSE");
+}
 
 /** Initiallize the lspg module
  */
 void lspg_init() {
   pthread_mutex_init( &lspg_queue_mutex, NULL);
   pthread_cond_init( &lspg_queue_cond, NULL);
-  lspg_nextshot_init();
+
+  lspg_demandairrights_init();
   lspg_getcenter_init();
-  lspg_wait_for_detector_init();
-  lspg_lock_diffractometer_init();
+  lspg_getcurrentsampleid_init();
   lspg_lock_detector_init();
+  lspg_lock_diffractometer_init();
+  lspg_nextsample_init();
+  lspg_nextshot_init();
+  lspg_seq_run_prep_init();
+  lspg_starttransfer_init();
+  lspg_wait_for_detector_init();
+  lspg_waitcryo_init();
 }
 
 /** Start 'er runnin'
  */
 void lspg_run() {
   pthread_create( &lspg_thread, NULL, lspg_worker, NULL);
+  lsevents_add_listener( "Sample(Detected|Absent)", lspmac_sample_detector_cb);
 }
