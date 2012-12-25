@@ -128,7 +128,7 @@ void lsredis_debugCB( redisAsyncContext *ac, void *reply, void *privdata) {
   case REDIS_REPLY_ARRAY:
     lslogging_log_message( "%*sARRAY of %d elements", indentlevel*4, "", (int)r->elements);
     indentlevel++;
-    for( i=0; i<r->elements; i++)
+    for( i=0; i<(int)r->elements; i++)
       lsredis_debugCB( ac, r->element[i], NULL);
     indentlevel--;
     break;
@@ -144,7 +144,7 @@ void lsredis_debugCB( redisAsyncContext *ac, void *reply, void *privdata) {
  */
 void _lsredis_set_value( lsredis_obj_t *p, char *v) {
 
-  if( strlen(v) >= p->value_length) {
+  if( strlen(v) >= (unsigned int) p->value_length) {
     if( p->value != NULL)
       free( p->value);
     p->value_length = strlen(v) + 256;
@@ -157,7 +157,7 @@ void _lsredis_set_value( lsredis_obj_t *p, char *v) {
   strncpy( p->value, v, p->value_length - 1);
   p->value[p->value_length-1] = 0;
   p->dvalue = strtod( p->value, NULL);
-  p->lvalue = strtol( p->value, NULL, 10);
+  p->lvalue = p->dvalue;
 
   if( p->avalue != NULL) {
     int i;
@@ -253,7 +253,10 @@ int lsredis_regexec( const regex_t *preg, lsredis_obj_t *p, size_t nmatch, regma
   rtn = regexec( preg, p->value, nmatch, pmatch, eflags);
 
   pthread_mutex_unlock( &p->mutex);
+
+  return rtn;
 }
+
 /** return a copy of the key's string value
  */
 char *lsredis_getstr( lsredis_obj_t *p) {
@@ -432,7 +435,6 @@ lsredis_obj_t *_lsredis_get_obj( char *key) {
   lsredis_obj_t *p;
   regmatch_t pmatch[2];
   int err;
-  char *name;
   ENTRY htab_input, *htab_output;
 
   // Dispense with obviously bad keys straight away
@@ -628,7 +630,7 @@ void lsredis_cleanup( void *data) {
  */
 void lsredis_subCB( redisAsyncContext *ac, void *reply, void *privdata) {
   redisReply *r;
-  lsredis_obj_t *p, *last, *last2;
+  lsredis_obj_t *p;
   char *k;
   char *publisher;
   ENTRY htab_input, *htab_output;
@@ -679,31 +681,6 @@ void lsredis_subCB( redisAsyncContext *ac, void *reply, void *privdata) {
     else
       p = htab_output->data;
       
-    /*	
-    last  = NULL;
-    last2 = NULL;
-    for( p=lsredis_objs; p != NULL; p = p->next) {
-      if( strcmp( p->key, k) == 0) {
-	p->hits++;
-	//
-	// Maybe reorder our list so the most often updated objects
-	// eventually bump up to the beginning of the list.
-	// That "hits+4" keeps us from oscillating when objects are accessed equally
-	//
-	if( last != NULL && last->hits < p->hits+4) {
-	  last->next = p->next;
-	  p->next    = last;
-	  if( last2 != NULL)
-	    last2->next = p;
-	  else
-	    lsredis_objs = p;
-	}
-	break;
-      }
-      last2 = last;
-      last  = p;
-    } 
-    */
 
     if( p == NULL) {
       _lsredis_get_obj( k);
@@ -762,7 +739,7 @@ void lsredis_keysCB( redisAsyncContext *ac, void *reply, void *privdata) {
     return;
   }
   
-  for( i=0; i<r->elements; i++) {
+  for( i=0; i< (int)r->elements; i++) {
     if( r->element[i]->type != REDIS_REPLY_STRING) {
       lslogging_log_message( "lsredis_keysCB: exected string...");
       lsredis_debugCB( ac, r->element[i], privdata);
@@ -955,7 +932,6 @@ void *lsredis_worker(  void *dummy) {
   static sigset_t our_sigset;
   int pollrtn;
   int i;
-  int sigfd;
 
 
   pthread_mutex_lock( &lsredis_mutex);
