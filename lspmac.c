@@ -164,13 +164,12 @@ lspmac_bi_t    *smart_mag_off;			//!< smart magnet is off
 #define VR_IPADDRESS		0xe0
 
 
-static int linesReceived=0;			//!< current number of lines received
 static unsigned char dbmem[64*1024];		//!< double buffered memory
 static int dbmemIn = 0;				//!< next location
 
 //! Minimum time between commands to the pmac
 //
-#define PMAC_MIN_CMD_TIME 20000.0
+#define PMAC_MIN_CMD_TIME 40000.0
 static struct timeval pmac_time_sent, now;	//!< used to ensure we do not send commands to the pmac too often.  Only needed for non-DB commands.
 
 //! Size of the PMAC command queue.
@@ -441,7 +440,7 @@ double lspmac_rlut(
 
 void hex_dump(
 	      int n,		/**< [in] Number of bytes passed in s	*/
-	      unsigned char *s	/**< [in] Data to dump			*/
+	      char *s		/**< [in] Data to dump			*/
 	      ) {
 
   int i;	// row counter
@@ -616,8 +615,8 @@ pmac_cmd_queue_t *lspmac_send_command(
 				      int wValue,		/**< [in] Command argument 1				*/
 				      int wIndex,		/**< [in] Command argument 2				*/
 				      int wLength,		/**< [in] Length of data array				*/
-				      unsigned char *data,	/**< [in] Data array (or NULL)				*/
-				      void (*responseCB)(pmac_cmd_queue_t *, int, unsigned char *),
+				      char *data,		/**< [in] Data array (or NULL)				*/
+				      void (*responseCB)(pmac_cmd_queue_t *, int, char *),
 				      /**< [in] Function to call when a response is read from the PMAC			*/
 				      int no_reply		/**< [in] Flag, non-zero means no reply is expected	*/
 				      ) {
@@ -686,7 +685,7 @@ void lspmac_Reset() {
  *  and print it out.
  */
 void lspmac_Error(
-		  unsigned char *buff	/**< [in] Buffer returned by PMAC perhaps containing a NULL terminated message.	*/
+		  char *buff	/**< [in] Buffer returned by PMAC perhaps containing a NULL terminated message.	*/
 		  ) {
   int err;
   //
@@ -719,7 +718,7 @@ void lspmac_Error(
 void lspmac_Service(
 		    struct pollfd *evt		/**< [in] pollfd object returned by poll		*/
 		    ) {
-  static unsigned char *receiveBuffer = NULL;	// the buffer inwhich to stick our incomming characters
+  static char *receiveBuffer = NULL;	// the buffer inwhich to stick our incomming characters
   static int receiveBufferSize = 0;		// size of receiveBuffer
   static int receiveBufferIn = 0;		// next location to write to in receiveBuffer
   pmac_cmd_queue_t *cmd;			// maybe the command we are servicing
@@ -794,7 +793,7 @@ void lspmac_Service(
   if( evt->revents & POLLIN) {
 
     if( receiveBufferSize - receiveBufferIn < 1400) {
-      unsigned char *newbuff;
+      char *newbuff;
 
       receiveBufferSize += 1400;
       newbuff = calloc( receiveBufferSize, sizeof( unsigned char));
@@ -900,7 +899,7 @@ void lspmac_Service(
 void lspmac_GetShortReplyCB(
 			    pmac_cmd_queue_t *cmd,	/**< [in] Queue item this is a reply to		*/
 			    int nreceived,		/**< [in] Number of bytes received		*/
-			    unsigned char *buff		/**< [in] The buffer of bytes			*/
+			    char *buff		/**< [in] The buffer of bytes			*/
 			    ) {
 
   char *sp;	// pointer to the command this is a reply to
@@ -934,7 +933,7 @@ void lspmac_GetShortReplyCB(
 void lspmac_SendControlReplyPrintCB(
 				    pmac_cmd_queue_t *cmd,	/**< [in] Queue item this is a reply to		*/
 				    int nreceived,		/**< [in] Number of bytes received		*/
-				    unsigned char *buff		/**< [in] Buffer of bytes received		*/
+				    char *buff			/**< [in] Buffer of bytes received		*/
 				    ) {
   pthread_mutex_lock( &ncurses_mutex);
   wprintw( term_output, "control-%c: ", '@'+ ntohs(cmd->pcmd.wValue));
@@ -955,7 +954,7 @@ void lspmac_SendControlReplyPrintCB(
  * \param buff Buffer of bytes recieved
  *  
  */
-void lspmac_GetmemReplyCB( pmac_cmd_queue_t *cmd, int nreceived, unsigned char *buff) {
+void lspmac_GetmemReplyCB( pmac_cmd_queue_t *cmd, int nreceived, char *buff) {
 
   memcpy( &(dbmem[ntohs(cmd->pcmd.wValue)]), buff, nreceived);
 
@@ -1036,7 +1035,6 @@ void lspmac_Getmem() {
 void lspmac_bo_read(
 		    lspmac_motor_t *mp		/**< [in] The motor			*/
 		    ) {
-  char s[512];
   int pos, changed;
 
   pthread_mutex_lock( &(mp->mutex));
@@ -1057,7 +1055,6 @@ void lspmac_bo_read(
 void lspmac_dac_read(
 		     lspmac_motor_t *mp		/**< [in] The motor			*/
 		     ) {
-  int pos;
   double u2c;
 
   pthread_mutex_lock( &(mp->mutex));
@@ -1122,7 +1119,6 @@ void lspmac_shutter_read(
 void lspmac_home1_queue(
 			lspmac_motor_t *mp			/**< [in] motor we are concerned about		*/
 			) {
-  char *sp;
   int i;
   int motor_num;
   int coord_num;
@@ -1159,7 +1155,7 @@ void lspmac_home1_queue(
   //
   // Don't go on if any other motors in this coordinate system are homing.
   // It's possible to write the homing program to home all the motors in the coordinate
-  // system.
+  // system.  TODO  (hint hint)
   //
   if( coord_num > 0) {
     for( i=0; i<lspmac_nmotors; i++) {
@@ -1173,8 +1169,9 @@ void lspmac_home1_queue(
       }
     }
   }
-  mp->homing = 1;
-       
+  mp->homing   = 1;
+  mp->not_done = 1;	// set up waiting for cond
+  mp->motion_seen = 0;
   // This opens the control loop.
   // The status routine should notice this and the fact that
   // the homing flag is set and call on the home2 routine
@@ -1185,7 +1182,7 @@ void lspmac_home1_queue(
   // before the open loop command is dequeued and acted on.
   //
   if( ~(mp->status1) & 0x040000) {
-    lspmac_SockSendline( "#%d$*", motor_num);
+    mp->pq = lspmac_SockSendline( "#%d$*", motor_num);
   }
 
   pthread_mutex_unlock( &(mp->mutex));
@@ -1230,7 +1227,7 @@ void lspmac_home2_queue(
     doupdate();
     pthread_mutex_unlock( &ncurses_mutex);
 
-    lspmac_SockSendline( *spp);
+    mp->pq = lspmac_SockSendline( *spp);
   }
 
   mp->homing = 2;
@@ -1410,7 +1407,7 @@ void lspmac_pmacmotor_read(
   }
   // maybe reset homing flag
   //                        homed flag                       in position flag
-  if( mp->homing == 2 && (mp->status2 & 0x000400 != 0) && (mp->status2 & 0x000001 != 0))
+  if( (mp->homing == 2) && ((mp->status2 & 0x000400) != 0) && ((mp->status2 & 0x000001) != 0))
     mp->homing = 0;
 
 
@@ -1468,21 +1465,29 @@ void lspmac_pmacmotor_read(
   lspmac_status_last_time.tv_nsec = lspmac_status_time.tv_nsec;
 }
 
+/** get binary input value
+ */
+int lspmac_getBIPosition( lspmac_bi_t *bip) {
+  int rtn;
+  pthread_mutex_lock( &bip->mutex);
+  rtn = bip->position;
+  pthread_mutex_unlock( &bip->mutex);
+  return rtn;
+}
+
+
 /** Service routing for status upate
  *  This updates positions and status information.
  */
 void lspmac_get_status_cb(
 			  pmac_cmd_queue_t *cmd,		/**< [in] The command that generated this reply	*/
 			  int nreceived,			/**< [in] Number of bytes received		*/
-			  unsigned char *buff			/**< [in] The Big Byte Buffer			*/
+			  char *buff				/**< [in] The Big Byte Buffer			*/
 			  ) {
   static int cnt = 0;
-  static char s[256];
-  static struct timeval ts1, ts2;
+  static struct timeval ts1;
 
-  char *sp;
-  int i, pos;
-  lspmac_motor_t *mp;
+  int i;
   lspmac_bi_t    *bp;
 
   clock_gettime( CLOCK_REALTIME, &lspmac_status_time);
@@ -1523,23 +1528,23 @@ void lspmac_get_status_cb(
     
     pthread_mutex_lock( &(bp->mutex));
 
-    pos = (*(bp->ptr) & bp->mask) == 0 ? 0 : 1;
+    bp->position = (*(bp->ptr) & bp->mask) == 0 ? 0 : 1;
 
     if( bp->first_time) {
       bp->first_time = 0;
-      if( pos==1 && bp->changeEventOn != NULL && bp->changeEventOn[0] != 0)
+      if( bp->position==1 && bp->changeEventOn != NULL && bp->changeEventOn[0] != 0)
 	lsevents_send_event( lspmac_bis[i].changeEventOn);
-      if( pos==0 && bp->changeEventOff != NULL && bp->changeEventOff[0] != 0)
+      if( bp->position==0 && bp->changeEventOff != NULL && bp->changeEventOff[0] != 0)
 	lsevents_send_event( lspmac_bis[i].changeEventOff);
     } else {
-      if( pos != bp->previous) {
-	if( pos==1 && bp->changeEventOn != NULL && bp->changeEventOn[0] != 0)
+      if( bp->position != bp->previous) {
+	if( bp->position==1 && bp->changeEventOn != NULL && bp->changeEventOn[0] != 0)
 	  lsevents_send_event( lspmac_bis[i].changeEventOn);
-	if( pos==0 && bp->changeEventOff != NULL && bp->changeEventOff[0] != 0)
+	if(bp->position==0 && bp->changeEventOff != NULL && bp->changeEventOff[0] != 0)
 	  lsevents_send_event( lspmac_bis[i].changeEventOff);
       }
     }
-    bp->previous = pos;
+    bp->previous = bp->position;
     pthread_mutex_unlock( &(bp->mutex));
   }
 
@@ -1679,7 +1684,7 @@ void lspmac_get_status() {
 void lspmac_GetAllIVarsCB(
 			  pmac_cmd_queue_t *cmd,	/**< [in] The command that gave this response	*/
 			  int nreceived,		/**< [in] Number of bytes received		*/
-			  unsigned char *buff		/**< [in] The byte buffer			*/
+			  char *buff			/**< [in] The byte buffer			*/
 			  ) {
   static char qs[LS_PG_QUERY_STRING_LENGTH];
   char *sp;
@@ -1704,7 +1709,7 @@ void lspmac_GetAllIVars() {
 void lspmac_GetAllMVarsCB(
 			  pmac_cmd_queue_t *cmd,	/**< [in] The command that started this		*/
 			  int nreceived,		/**< [in] Number of bytes received		*/
-			  unsigned char *buff		/**< [in] Our byte buffer			*/
+			  char *buff			/**< [in] Our byte buffer			*/
 			  ) {
   static char qs[LS_PG_QUERY_STRING_LENGTH];
   char *sp;
@@ -1747,7 +1752,7 @@ void lspmac_sendcmd_nocb(
 /** PMAC command with call back
  */
 void lspmac_sendcmd(
-			void (*responseCB)(pmac_cmd_queue_t *, int, unsigned char *),		/**< [in] our callback routine                 */
+			void (*responseCB)(pmac_cmd_queue_t *, int, char *),		/**< [in] our callback routine                 */
 			char *fmt,								/**< [in] printf style format string           */
 			...									/*        Arguments specified by format string */
 			) {
@@ -1911,7 +1916,6 @@ void lspmac_movedac_queue(
 			  lspmac_motor_t *mp,		/**< [in] Our motor						*/
 			  double requested_position	/**< [in] Desired x postion (look up and send y position)	*/
 			  ) {
-  double y;
   double u2c;
 
   pthread_mutex_lock( &(mp->mutex));
@@ -1986,6 +1990,24 @@ void lspmac_move_preset_queue( lspmac_motor_t *mp, char *preset_name) {
 
   mp->moveAbs( mp, pos);
   lslogging_log_message( "lspmac_move_preset_queue: moving %s to preset '%s' (%f)", mp->name, preset_name, pos);
+}
+
+/** see if the motor is within tolerance of the preset
+ *   1 means yes, it is
+ *   0 mean  no it isn't or that the preset was not found
+ */
+int lspmac_test_preset( lspmac_motor_t *mp, char *preset_name, double tolerance) {
+  double preset_position;
+  int err;
+
+  err = lsredis_find_preset( mp->name, preset_name, &preset_position);
+  if( err == 0)
+    return 0;
+
+  if( fabs( preset_position - lspmac_getPosition( mp)) <= tolerance)
+    return 1;
+
+  return 0;
 }
 
 
@@ -2555,6 +2577,8 @@ lspmac_motor_t *lspmac_soft_motor_init( lspmac_motor_t *d, char *name, void (*mo
   d->read         = lspmac_soft_motor_read;
   d->actual_pos_cnts_p = calloc( sizeof(int), 1);
   *d->actual_pos_cnts_p = 0;
+
+  return d;
 }
 
 
@@ -2568,6 +2592,8 @@ lspmac_bi_t *lspmac_bi_init( lspmac_bi_t *d, int *ptr, int mask, char *onEvent, 
   d->changeEventOn  = strdup( onEvent);
   d->changeEventOff = strdup( offEvent);
   d->first_time     = 1;
+
+  return d;
 }
 
 
@@ -2727,8 +2753,6 @@ void lspmac_scint_inPosition_cb( char *event) {
  *  \param event Name of the event that called us
  */
 void lspmac_backLight_up_cb( char *event) {
-  int z;
-
   blight->moveAbs( blight, lspmac_getPosition( zoom));
 }
 
@@ -2948,9 +2972,9 @@ void lspmac_run() {
       break;
 
     default:
+      lslogging_log_message( "lspmac_run: motor %s is neither active nor inactive (!?)", mp->name);
       inits = NULL;
     }
-
     if( inits != NULL) {
       while( *inits != NULL) {
 	lspmac_SockSendline( *inits);
