@@ -26,31 +26,218 @@ static int rotating = 0;		//!< flag: when omega is in position after a rotate we
 
 static double md2cmds_capz_moving_time = NAN;
 
-/** Transfer a sample
- *  TODO: Implement
+/** set up moving motors in a coordinate system
  */
-void md2cmds_transfer() {
-  int nextsample;
-  double ax, ay, az, cx, cy, horz, vert, oref;
 
-  lspg_nextsample_call();
-  lspg_nextsample_wait();
+void md2cmds_move_prep( int mmask) {
+  pmac_cmd_queue_t *pq;
+  int flag;
 
-  if( lspg_nextsample.no_rows_returned) {
-    // shouldn't ever happen
-    lspg_nextsample_done();
-    return;
+  pthread_mutex_lock( &lspmac_moving_mutex);
+  flag = (lspmac_moving_flags & mmask) != 0;
+  pthread_mutex_unlock( &lspmac_moving_mutex);
+
+  //
+  // Only wait for the all clear if it's not all clear already
+  //
+  if( flag) {
+    //
+    // Clear the motion flags for the given coordinate system(s)
+    // Then set them.
+    // Each time we wait until we've read back
+    // the changed values
+    //
+    // This guarantees that when we are waiting for motion to stop that it did, in fact, start
+    //
+    
+    //
+    // Clear the centering and alignment stage flags
+    //
+    pq = lspmac_SockSendline( "M5075=(M5075 | %d) ^ %d", mmask, mmask);
+    
+    pthread_mutex_lock( &pmac_queue_mutex);
+    //
+    // wait for the command to be sent
+    //
+    while( pq->time_sent.tv_sec==0)
+      pthread_cond_wait( &pmac_queue_cond, &pmac_queue_mutex);
+    pthread_mutex_unlock( &pmac_queue_mutex);
+    
+    //
+    // Make sure the command propagates back to the status
+    //
+    pthread_mutex_lock( &lspmac_moving_mutex);
+    while( (lspmac_moving_flags & mmask) != 0)
+      pthread_cond_wait( &lspmac_moving_cond, &lspmac_moving_mutex);
+
+    lslogging_log_message( "md2cmds_move_prep: lspmac_moving_flags = %d", lspmac_moving_flags);
+    pthread_mutex_unlock( &lspmac_moving_mutex);
   }
 
-  if( lspg_nextsample.nextsample_isnull) {
-    lslogging_log_message( "md2cmds_transfer: no sample requested to be transfered, false alarm");
-    lspg_nextsample_done();
+
+  //
+  // set a flag so the event listener doesn't look at zero motion before we start and think we are done
+  //
+  pthread_mutex_lock( &md2cmds_moving_mutex);
+  if( md2cmds_moving_count == 0)
+    md2cmds_moving_count = -1;
+  pthread_mutex_unlock( &md2cmds_moving_mutex);
+
+  //
+  // Now set the given motion flags
+  //
+  pq = lspmac_SockSendline( "M5075=(M5075 | %d)", mmask);
+
+  pthread_mutex_lock( &pmac_queue_mutex);
+  //
+  // wait for the command to be sent
+  //
+  while( pq->time_sent.tv_sec==0)
+    pthread_cond_wait( &pmac_queue_cond, &pmac_queue_mutex);
+  pthread_mutex_unlock( &pmac_queue_mutex);
+
+  //
+  // Make sure it propagates
+  //
+  pthread_mutex_lock( &lspmac_moving_mutex);
+  while( (lspmac_moving_flags & mmask) != mmask)
+    pthread_cond_wait( &lspmac_moving_cond, &lspmac_moving_mutex);
+
+  lslogging_log_message( "md2cmds_move_prep: lspmac_moving_flags = %d", lspmac_moving_flags);
+  pthread_mutex_unlock( &lspmac_moving_mutex);
+}
+
+/** Wait for the movement to stop
+ */
+void md2cmds_move_wait( int mmask) {
+  //
+  // Just wait until the motion flags are lowered
+  // Note this does not mean the motors are done moving,
+  // just that the motion program is done.
+  // 
+  // Look for the "In Position" events to see if we are really done
+  //
+  // We are assuming that the "Moving" callbacks were received
+  // before the motion programs have all finished.  Probably a reasonable
+  // expectation but not really guaranteed
+  //
+
+  pthread_mutex_lock( &pmac_queue_mutex);
+  //
+  // wait for the command to be sent
+  //
+  if( md2cmds_moving_pq != NULL) {
+   while( md2cmds_moving_pq->time_sent.tv_sec==0)
+     pthread_cond_wait( &pmac_queue_cond, &pmac_queue_mutex);
+  }
+  pthread_mutex_unlock( &pmac_queue_mutex);
+ 
+
+  //
+  // Wait for the motion programs to finish
+  //
+  pthread_mutex_lock( &lspmac_moving_mutex);
+  while( lspmac_moving_flags & mmask)
+    pthread_cond_wait( &lspmac_moving_cond, &lspmac_moving_mutex);
+  pthread_mutex_unlock( &lspmac_moving_mutex);
+
+  //
+  // Wait for the In Position events
+  //
+  pthread_mutex_lock( &md2cmds_moving_mutex);
+  while( md2cmds_moving_count > 0)
+    pthread_cond_wait( &md2cmds_moving_cond, &md2cmds_moving_mutex);
+  pthread_mutex_unlock( &md2cmds_moving_mutex);
+}
+
+double md2cmds_prep_axis( lspmac_motor_t *mp, double pos) {
+  double rtn;
+  double u2c;
+
+  pthread_mutex_lock( &(mp->mutex));
+  u2c = lsredis_getd( mp->u2c);
+
+  rtn = u2c   * pos;
+  mp->motion_seen = 0;
+  mp->not_done    = 1;
+  pthread_mutex_unlock( &(mp->mutex));
+
+  return rtn;
+}
+
+
+
+void md2cmds_organs_move_presets( char *pay, char *paz, char *pcy, char *pcz, char *psz) {
+  double ay,   az,  cy,  cz,  sz;
+  int    cay, caz, ccy, ccz, csz;
+  int err;
+
+  err = lsredis_find_preset( apery->name, pay, &ay);
+  if( err == 0) {
+    lslogging_log_message( "md2cmds_move_organs_presets: no preset '%s' for motor '%s'", pay, apery->name);
     return;
   }
   
-  nextsample = lspg_nextsample.nextsample;
-  lspg_nextsample_done();
+  err = lsredis_find_preset( aperz->name, paz, &az);
+  if( err == 0) {
+    lslogging_log_message( "md2cmds_move_organs_presets: no preset '%s' for motor '%s'", paz, aperz->name);
+    return;
+  }
+  
+  err = lsredis_find_preset( capy->name, pcy, &cy);
+  if( err == 0) {
+    lslogging_log_message( "md2cmds_organs_move_presets: no preset '%s' for motor '%s'", pcy, capy->name);
+    return;
+  }
 
+  err = lsredis_find_preset( capz->name, pcz, &cz);
+  if( err == 0) {
+    lslogging_log_message( "md2cmds_organs_move_presets: no preset '%s' for motor '%s'", pcz, capz->name);
+    return;
+  }
+
+  err = lsredis_find_preset( scint->name, psz, &sz);
+  if( err == 0) {
+    lslogging_log_message( "md2cmds_organs_move_presets: no preset '%s' for motor '%s'", psz, scint->name);
+    return;
+  }
+
+  cay = md2cmds_prep_axis( apery, ay);
+  caz = md2cmds_prep_axis( aperz, az);
+  ccy = md2cmds_prep_axis( capy,  cy);
+  ccz = md2cmds_prep_axis( capz,  cz);
+  csz = md2cmds_prep_axis( scint, sz);
+  
+  //
+  // 170          LS-CAT Move U, V, W, X, Y, Z Absolute
+  // 	       	      Q40     = X Value
+  //		      Q41     = Y Value
+  // 		      Q42     = Z Value
+  //		      Q43     = U Value
+  //		      Q44     = V Value
+  //		      Q45     = W Value
+  //
+  
+  md2cmds_moving_pq = lspmac_SockSendline( "&5 Q40=0 Q41=%d Q42=%d Q43=%d Q44=%d Q45=%d Q100=16 B170R", cay, caz, ccy, ccz, csz);
+
+}
+
+
+/** Transfer a sample
+ */
+void md2cmds_transfer() {
+  int nextsample, abort_now;
+  double esttime;
+  double ax, ay, az, cx, cy, horz, vert, oref;
+  int err;
+  int motion_mask;
+
+  nextsample = lspg_nextsample_all( &err);
+  if( err) {
+    lslogging_log_message( "md2cmds_transfer: no sample requested to be transfered, false alarm");
+    return;
+  }
+  
   //
   // BLUMax sets up an abort dialogbox here.  Probably we should figure out how we are going to handle that.
   //
@@ -58,6 +245,8 @@ void md2cmds_transfer() {
   // Wait for everything to stop moving
   // TODO: timeout and abort if we are moving forever
   //
+  md2cmds_move_wait( 0);
+
   pthread_mutex_lock( &md2cmds_moving_mutex);
   while( md2cmds_moving_count > 0)
     pthread_cond_wait( &md2cmds_moving_cond, &md2cmds_moving_mutex);
@@ -76,7 +265,139 @@ void md2cmds_transfer() {
   horz = cx * cos(oref) + cy * sin(oref);
   vert = cx * sin(oref) - cy * cos(oref);
 
+  if( lsredis_getd( capz->u2c) <= 0.0 || lsredis_getd( capz->max_speed) <= 0.0 || lsredis_getd( capz->max_accel) <= 0.0) {
+    esttime = 0.0;
+  } else {
+    
+    // Here we assume moving the capilary is the rate limiting step in preparing the MD2.
+    //
+    // TODO: look at factors in which something besides the capilary determines the time.
+    //
+    // pretend we are going to zero instead of the "Out" position.  This should be less than a 5% error
+    // and is probably not too horrible
+    //
+    // This also treats S curve acceleration as taking the same time as linear acceleration.
+    //
+    esttime  = lspmac_getPosition( capz)/lsredis_getd( capz->u2c)/(lsredis_getd( capz->max_speed));	// Time if we moved at constant velocity
+    esttime += lsredis_getd( capz->max_speed)/lsredis_getd(capz->max_accel);				// Correction for time spent accelerating
+    esttime /= 1000.;											// convert from milliseconds to seconds
+  }
+
+  lspg_starttransfer_call( nextsample, lspmac_getBIPosition( sample_detected), ax, ay, az, horz, vert, esttime);
+
+  // put the light down if it's not already
+  //
+  if( lspmac_getBIPosition( blight_down) != 1)
+    blight_ud->moveAbs( blight_ud, 0);
   
+  // Pull the fluorescence detector out of the way
+  //
+  if( lspmac_getBIPosition( fluor_back) != 1)
+    blight_ud->moveAbs( fluo, 0);
+  
+  //  get ready to move the organs, omega, kappa, and phi
+  //          omega    organs    kappa/phi
+  motion_mask = 1    |  16      | 64;
+  md2cmds_move_prep( motion_mask);
+  //
+  // Put the organs into position
+  //
+  md2cmds_organs_move_presets( "In", "Cover", "In", "Cover", "Cover");
+
+  //
+  // Home Kappa
+  //
+  lspmac_home1_queue( kappa);
+
+  //
+  // Home omega
+  //
+  lspmac_home1_queue( omega);
+
+  //
+  // wait for kappa cause we can't home phi until kappa's done
+  //
+  lspmac_moveabs_wait( kappa);
+  
+  //
+  // Home phi (whatever that means)
+  //
+  lspmac_home1_queue( phi);
+  {
+    pmac_cmd_queue_t *mypq;
+    //
+    // Do a little dance to have the md2cmds_moving routines see the
+    // last move command we sent to the pmac
+    //
+    // try not to grab too many mutexs at the same time to lower the chance of a deadlock.
+    //
+    pthread_mutex_lock( &phi->mutex);
+    mypq = phi->pq;
+    pthread_mutex_unlock( &phi->mutex);
+    
+    pthread_mutex_lock( &md2cmds_moving_mutex);
+    md2cmds_moving_pq = mypq;
+    pthread_mutex_unlock( &md2cmds_moving_mutex);
+  }
+
+  // Now let's get back to postresql (remember our query so long ago?)
+  //
+  lspg_starttransfer_wait();
+
+  //
+  // It's possible that the sample that's mounted is unknown to the robot.
+  // If so then we need to abort after we're done moving stuff
+  //
+  if( lspg_starttransfer.no_rows_returned || lspg_starttransfer.starttransfer != 1)
+    abort_now = 1;
+  else
+    abort_now = 0;
+
+  lspg_starttransfer_done();
+
+  //
+  // Wait for all those motors to stop moving
+  //
+  md2cmds_move_wait( motion_mask);
+
+  // TODO: check that all the motors are where we told them to go  
+  //
+
+  if( abort_now) {
+    lslogging_log_message( "md2cmds_transfer: Apparently there is a sample mounted already but we don't know where it is supposed to go");
+    return;
+  }
+  
+  // refuse to go on if we do not have positive confirmation that the backlight is down and the
+  // fluorescence detector is back
+  //
+  if( lspmac_getBIPosition( blight_down) != 1 ||lspmac_getBIPosition( fluor_back) != 1) {
+    lslogging_log_message( "md2cmds_transfer: It looks like either the back light is not down or the fluoescence dectector is not back");
+    return;
+  }
+
+  //
+  // Wait for the robot to unlock the cryo which signals us that we need to
+  // move the cryo back and drop air rights
+  //
+  lspg_waitcryo_all();
+
+  // Move the cryo back
+  //
+  cryo->moveAbs( cryo, 1);
+  lspmac_moveabs_wait( cryo);
+
+  // simplest query yet!
+  lspg_query_push( lspg_waitcryo_cb, "SELECT px.dropairrights()");
+
+  // wait for the result
+  // TODO: find an easy way out of this in case of error
+  //
+  lspg_getcurrentsampleid_wait_for_id( nextsample);
+
+  // grab the airrights again
+  //
+  lspg_demandairrights_all();
 }
 
 
@@ -202,7 +523,7 @@ void md2cmds_phase_change( const char *ccmd) {
   if( strcmp( mode, "manualMount") == 0) {
     lspmac_move_or_jog_preset_queue( kappa, "manualMount", 1);
     lspmac_move_or_jog_preset_queue( omega, "manualMount", 0);
-    lspmac_move_or_jog_abs_queue(    phi,   "manualMount", 0);
+    lspmac_move_or_jog_abs_queue( phi,   0.0, 0);
     lspmac_move_or_jog_preset_queue( aperz, "Cover", 1);
     lspmac_move_or_jog_preset_queue( capz,  "Cover", 1);
     lspmac_move_or_jog_preset_queue( scint, "Cover", 1);
@@ -214,7 +535,7 @@ void md2cmds_phase_change( const char *ccmd) {
   } else if( strcmp( mode, "robotMount") == 0) {
     lspmac_home1_queue( kappa);
     lspmac_home1_queue( omega);
-    lspmac_move_or_jog_abs_queue(    phi,   "manualMount", 0);
+    lspmac_move_or_jog_abs_queue( phi,  0.0, 0);
     lspmac_move_or_jog_preset_queue( apery, "In", 1);
     lspmac_move_or_jog_preset_queue( aperz, "In", 1);
     lspmac_move_or_jog_preset_queue( capz,  "Cover", 1);
@@ -227,7 +548,7 @@ void md2cmds_phase_change( const char *ccmd) {
   } else if( strcmp( mode, "center") == 0) {
     md2cmds_moveAbs( "moveAbs kappa 0");
     md2cmds_moveAbs( "moveAbs omega 0");
-    lspmac_move_or_jog_abs_queue(    phi,   "manualMount", 0);
+    lspmac_move_or_jog_abs_queue(    phi,   0.0, 0);
     lspmac_move_or_jog_preset_queue( apery, "In", 1);
     lspmac_move_or_jog_preset_queue( aperz, "In", 1);
     lspmac_move_or_jog_preset_queue( capy,  "In", 1);
@@ -278,139 +599,7 @@ void md2cmds_phase_change( const char *ccmd) {
 }
 
 
-double md2cmds_prep_axis( lspmac_motor_t *mp, double pos) {
-  double rtn;
-  double u2c;
 
-  pthread_mutex_lock( &(mp->mutex));
-  u2c = lsredis_getd( mp->u2c);
-
-  rtn = u2c   * pos;
-  mp->motion_seen = 0;
-  mp->not_done    = 1;
-  pthread_mutex_unlock( &(mp->mutex));
-
-  return rtn;
-}
-
-void md2cmds_move_prep( int mmask) {
-  pmac_cmd_queue_t *pq;
-  int flag;
-
-  pthread_mutex_lock( &lspmac_moving_mutex);
-  flag = (lspmac_moving_flags & mmask) != 0;
-  pthread_mutex_unlock( &lspmac_moving_mutex);
-
-  //
-  // Only wait for the all clear if it's not all clear already
-  //
-  if( flag) {
-    //
-    // Clear the motion flags for the given coordinate system(s)
-    // Then set them.
-    // Each time we wait until we've read back
-    // the changed values
-    //
-    // This guarantees that when we are waiting for motion to stop that it did, in fact, start
-    //
-    
-    //
-    // Clear the centering and alignment stage flags
-    //
-    pq = lspmac_SockSendline( "M5075=(M5075 | %d) ^ %d", mmask, mmask);
-    
-    pthread_mutex_lock( &pmac_queue_mutex);
-    //
-    // wait for the command to be sent
-    //
-    while( pq->time_sent.tv_sec==0)
-      pthread_cond_wait( &pmac_queue_cond, &pmac_queue_mutex);
-    pthread_mutex_unlock( &pmac_queue_mutex);
-    
-    //
-    // Make sure the command propagates back to the status
-    //
-    pthread_mutex_lock( &lspmac_moving_mutex);
-    while( (lspmac_moving_flags & mmask) != 0)
-      pthread_cond_wait( &lspmac_moving_cond, &lspmac_moving_mutex);
-
-    lslogging_log_message( "md2cmds_move_prep: lspmac_moving_flags = %d", lspmac_moving_flags);
-    pthread_mutex_unlock( &lspmac_moving_mutex);
-  }
-
-
-  //
-  // set a flag so the event listener doesn't look at zero motion before we start and think we are done
-  //
-  pthread_mutex_lock( &md2cmds_moving_mutex);
-  if( md2cmds_moving_count == 0)
-    md2cmds_moving_count = -1;
-  pthread_mutex_unlock( &md2cmds_moving_mutex);
-
-  //
-  // Now set the given motion flags
-  //
-  pq = lspmac_SockSendline( "M5075=(M5075 | %d)", mmask);
-
-  pthread_mutex_lock( &pmac_queue_mutex);
-  //
-  // wait for the command to be sent
-  //
-  while( pq->time_sent.tv_sec==0)
-    pthread_cond_wait( &pmac_queue_cond, &pmac_queue_mutex);
-  pthread_mutex_unlock( &pmac_queue_mutex);
-
-  //
-  // Make sure it propagates
-  //
-  pthread_mutex_lock( &lspmac_moving_mutex);
-  while( (lspmac_moving_flags & mmask) != mmask)
-    pthread_cond_wait( &lspmac_moving_cond, &lspmac_moving_mutex);
-
-  lslogging_log_message( "md2cmds_move_prep: lspmac_moving_flags = %d", lspmac_moving_flags);
-  pthread_mutex_unlock( &lspmac_moving_mutex);
-}
-
-/** Wait for the movement to stop
- */
-void md2cmds_move_wait( int mmask) {
-  //
-  // Just wait until the motion flags are lowered
-  // Note this does not mean the motors are done moving,
-  // just that the motion program is done.
-  // 
-  // Look for the "In Position" events to see if we are really done
-  //
-  // We are assuming that the "Moving" callback was received and acted on
-  // before the motion programs have all finished.  Probably a reasonable
-  // expectation but not really guaranteed
-  //
-
-  pthread_mutex_lock( &pmac_queue_mutex);
-  //
-  // wait for the command to be sent
-  //
-  while( md2cmds_moving_pq->time_sent.tv_sec==0)
-    pthread_cond_wait( &pmac_queue_cond, &pmac_queue_mutex);
-  pthread_mutex_unlock( &pmac_queue_mutex);
-
-
-  //
-  // Wait for the motion programs to finish
-  //
-  pthread_mutex_lock( &lspmac_moving_mutex);
-  while( lspmac_moving_flags & mmask)
-    pthread_cond_wait( &lspmac_moving_cond, &lspmac_moving_mutex);
-  pthread_mutex_unlock( &lspmac_moving_mutex);
-
-  //
-  // Wait for the In Position events
-  //
-  pthread_mutex_lock( &md2cmds_moving_mutex);
-  while( md2cmds_moving_count > 0)
-    pthread_cond_wait( &md2cmds_moving_cond, &md2cmds_moving_mutex);
-  pthread_mutex_unlock( &md2cmds_moving_mutex);
-}
 
 
 
@@ -498,60 +687,6 @@ void md2cmds_kappaphi_move( double kappa_deg, double phi_deg) {
 
 }
 
-void md2cmds_organs_move_presets( char *pay, char *paz, char *pcy, char *pcz, char *psz) {
-  double ay,   az,  cy,  cz,  sz;
-  int    cay, caz, ccy, ccz, csz;
-  int err;
-
-  err = lsredis_find_preset( apery->name, pay, &ay);
-  if( err == 0) {
-    lslogging_log_message( "md2cmds_move_organs_presets: no preset '%s' for motor '%s'", pay, apery->name);
-    return;
-  }
-  
-  err = lsredis_find_preset( aperz->name, paz, &az);
-  if( err == 0) {
-    lslogging_log_message( "md2cmds_move_organs_presets: no preset '%s' for motor '%s'", paz, aperz->name);
-    return;
-  }
-  
-  err = lsredis_find_preset( capy->name, pcy, &cy);
-  if( err == 0) {
-    lslogging_log_message( "md2cmds_organs_move_presets: no preset '%s' for motor '%s'", pcy, capy->name);
-    return;
-  }
-
-  err = lsredis_find_preset( capz->name, pcz, &cz);
-  if( err == 0) {
-    lslogging_log_message( "md2cmds_organs_move_presets: no preset '%s' for motor '%s'", pcz, capz->name);
-    return;
-  }
-
-  err = lsredis_find_preset( scint->name, psz, &sz);
-  if( err == 0) {
-    lslogging_log_message( "md2cmds_organs_move_presets: no preset '%s' for motor '%s'", psz, scint->name);
-    return;
-  }
-
-  cay = md2cmds_prep_axis( apery, ay);
-  caz = md2cmds_prep_axis( aperz, az);
-  ccy = md2cmds_prep_axis( capy,  cy);
-  ccz = md2cmds_prep_axis( capz,  cz);
-  csz = md2cmds_prep_axis( scint, sz);
-  
-  //
-  // 170          LS-CAT Move U, V, W, X, Y, Z Absolute
-  // 	       	      Q40     = X Value
-  //		      Q41     = Y Value
-  // 		      Q42     = Z Value
-  //		      Q43     = U Value
-  //		      Q44     = V Value
-  //		      Q45     = W Value
-  //
-  
-  md2cmds_moving_pq = lspmac_SockSendline( "&5 Q40=0 Q41=%d Q42=%d Q43=%d Q44=%d Q45=%d Q100=16 B170R", cay, caz, ccy, ccz, csz);
-
-}
 
 void md2cmds_organs_wait() {
   //
@@ -752,9 +887,7 @@ void md2cmds_collect() {
  *  
  */
 void md2cmds_rotate() {
-  int v;		//!< velocity (cnts/msec) for omega
   double cx, cy, ax, ay, az;
-  struct timespec snooze;
 
   //
   // BLUMax disables scintilator here.
@@ -879,7 +1012,6 @@ void md2cmds_maybe_rotate_done_cb( char *event) {
 void md2cmds_set_scale_cb( char *event) {
   int mag;
   lsredis_obj_t *p1, *p2;
-  char fmt;
   char *vp;
 
   mag = lspmac_getPosition( zoom);
@@ -918,7 +1050,8 @@ void md2cmds_time_capz_cb( char *event) {
   } else {
     clock_gettime( CLOCK_REALTIME, &now);
 
-    sec = now.tv_sec - capz_timestarted.tv_sec;
+    sec  = now.tv_sec - capz_timestarted.tv_sec;
+    nsec = 0;
     if( now.tv_nsec > capz_timestarted.tv_nsec) {
       sec--;
       nsec += 1000000000;
@@ -926,6 +1059,57 @@ void md2cmds_time_capz_cb( char *event) {
     nsec += now.tv_nsec - capz_timestarted.tv_nsec;
     md2cmds_capz_moving_time = sec + nsec / 1000000000.;
   }
+}
+
+/*
+ * queues an action for the md2cmds thread to work on
+ *
+ * \param timeout  wait this many seconds (double value, decimal secs OK), <0 means wait forever
+ *
+ * returns:
+ *         non-zero on failure (see man page for pthread_mutex_timedlock for rtn value)
+ *         0 on success
+ */
+int md2cmds_action_queue( double timeout, char *action) {
+  int rtn;
+  struct timespec waitforit;
+
+
+  if( timeout < 0.0) {
+    rtn = pthread_mutex_lock( &md2cmds_mutex);
+  } else {
+    clock_gettime( CLOCK_REALTIME, &waitforit);
+
+    waitforit.tv_sec  += floor(timeout);
+  
+    waitforit.tv_nsec += (timeout - waitforit.tv_sec)*1.e9;
+    while( waitforit.tv_nsec >= 1000000000) {
+      waitforit.tv_sec++;
+      waitforit.tv_nsec -= 1000000000;
+    }
+
+    rtn = pthread_mutex_timedlock( &md2cmds_mutex, &waitforit);
+  }
+
+  if( rtn == 0) {
+    strncpy( md2cmds_cmd, action, MD2CMDS_CMD_LENGTH-1);
+    md2cmds_cmd[MD2CMDS_CMD_LENGTH-1] = 0;
+    pthread_cond_signal( &md2cmds_cond);
+    pthread_mutex_unlock( &md2cmds_mutex);
+  } else {
+    if( rtn == ETIMEDOUT)
+      lslogging_log_message( "md2cmds_action_queue: %s not queued, operation timed out", action);
+    else
+      lslogging_log_message( "md2cmds_action_queue: %s not queued with error code %d", action, rtn);
+  }
+  return rtn;
+}
+
+/** pause until md2cmds_worker has finished running the command
+ */
+void md2cmds_action_wait() {
+  pthread_mutex_lock( &md2cmds_mutex);
+  pthread_mutex_unlock( &md2cmds_mutex);
 }
 
 /** Our worker thread
