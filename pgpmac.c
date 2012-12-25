@@ -256,7 +256,7 @@ void stdinService(
 		  ) {
   static char cmds[1024];
   static char cntrlcmd[2];
-  static char cmds_on = 0;
+  static unsigned int cmds_on = 0;
   int ch;
 
 
@@ -350,9 +350,8 @@ int main(
 	 int argc,		/**< [in] Number of arguments			*/
 	 char **argv		/**< [in] Vector of argument strings		*/
 	 ) {
-  static nfds_t nfds;
 
-  static struct pollfd fda[3], *fdp;	// input for poll: room for postgres, pmac, and stdin
+  static struct pollfd fda[3];		// input for poll: room for postgres, pmac, and stdin
   static int nfd = 0;			// number of items in fda
   static int pollrtn = 0;
   static struct option long_options[] = {
