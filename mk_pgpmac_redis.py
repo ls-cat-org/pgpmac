@@ -1,7 +1,27 @@
 #! /usr/bin/python
 # coding=utf-8
 
-head = "stns.2"
+import sys
+import iniParser
+
+
+if len(sys.argv) <= 1:
+    print >> sys.stderr, "Usage: %s headOfRedisVariableNames [prefIniFileName [hardIniFileName]]"
+    sys.exit(-1)
+
+if len(sys.argv) > 1:
+    head = sys.argv[1]
+
+if len(sys.argv) > 2:
+    pref_ini = sys.argv[2]
+else:
+    pref_ini = None
+
+if len(sys.argv) > 3:
+    hard_ini = sys.argv[3]
+else:
+    hard_ini = None
+
 
 motor_dict = {
     "omega" : { "motor_num" : "1", "max_accel" : "2", "max_speed" : "1664", "coord_num" : "1", "u2c" : "12800",
@@ -21,7 +41,7 @@ motor_dict = {
                   "home" : '{#3$,M403=1,&3E,#3&3B3R}', "active_init" : '{M33=1,&3#3->Y,"M700=(M700 | $000004) ^ $000004"}',
                   "inactive_init" : '{M33=0,&3#3->0,"M700=M700 | $000004"}',"smallStep" :  "0.001",
                   "axis" :  "Y", "format" :  "%.3f",
-                  "minPosition" :  "0.16", "maxPosition" :  "16.15"
+                  "minPosition" :  "0.16", "maxPosition" :  "16.15",
                   "hard_ini"  : "PHIAxisXYZTable.PHIYMotor"
                   },
     "align.z" : { "motor_num" : "4", "max_accel" : "0.5", "max_speed" : "121", "coord_num" : "3", "u2c" : "60620.8",
@@ -145,6 +165,18 @@ motor_dict = {
                         }
     }
 
+
+hard_ini_fields = {
+    "active"      : "Simulation",
+    "coord_num"   : "CoordinateSystem",
+    "largeStep"   : "LargeStep",
+    "maxPosition" : "MaxPosition",
+    "minPosition" : "MinPosition",
+    "motor_num"   : "MotorNumber",
+    "smallStep"   : "SmallStep",
+    "u2c"         : "UnitRatio"
+    }
+
 # DBR TYPES
 # 0  String
 # 1  Short   (16 bit)
@@ -155,103 +187,103 @@ motor_dict = {
 # 6  Double  (64 bit)
 
 motor_field_lists = [
-    # name,             default,      dbrtype, hard_ini
-    ["active",            "1",          1, "Simulation"       ],     # 1 if the motor is to be enabled and used (not fully supported as of 121219
-    ["active_init",       "",           0, None               ],     # postgresql style string array of initialization strings to send to PMAC if the motor is active
-    ["axis",              "",           4, None               ],     # PMAC axis (single charater: X,Y,Z, etc)
-    ["canHome",           "0",          1, None               ],     # 1 if a homing routine can be called
-    ["canMove",           "true",       0, None               ],     # "true" if we can move this motor, "false" if we cannot.
-    ["canStop",           "true",       0, None               ],     # "true" if it makes sense to display a stop button, "false" otherwise
-    ["coord_num",         "",           1, "CoordinateSystem" ],     # PMAC coordinate system number for this motor
-    ["currentPreset",     "",           0, None               ],     # Name of the current preset position
-    ["format",            "%f",         0, None               ],     # format string for publish position to redis
-    ["hard_ini",          None,         0, None               ],     # Name of section in microdiff_hard.ini
-    ["home",              "",           0, None               ],     # postgresql style string array of strings to send to PMAC to home motor
-    ["inPosition",        "true",       0, None               ],     # "true" if the motor is in position, "false" if it is moving
-    ["inactive_init",     "",           0, None               ],     # postgresql style string array of initialization strings to send to PMAC if the motor is inactive
-    ["largeStep",         "1.0",        6, "LargeStep"        ],     # increment for large step in a UI
-    ["maxPosition",       "Infinity",   6, "MaxPosition"      ],     # upper soft limit
-    ["max_accel",         "",           0, None               ],     # maximum motor acceleration, used for motors that are too be scanned (ie, omega)
-    ["max_speed",         "",           6, "MaxSpeedCts"      ],     # maximum motor speed, used for motors that are too be scanned (ie, omega)
-    ["minPosition",       "-Infinity",  6, "MinPosition"      ],     # lower soft limit
-    ["motor_num",         "-1",         1, "MotorNumber"      ],     # PMAC motor number
-    ["moveMode",          "translation",0, None               ],     # translation, rotation, freeRotation
-    ["name",              "",           0, None               ],     # What we think the motor should be called in a UI
-    ["negLimitSet",       "0",          1, None               ],     # 1 if on the limit, 0 otherwise
-    ["posLimitSet",       "0",          1, None               ],     # 1 if on the limit, 0 otherwise
-    ["position",          "",           6, None               ],     # our position
-    ["presets.length",    "0",          1, None               ],     # number of presets defined
-    ["printPrecision",    "3",          1, None               ],     # for ui to print out position (see the printf field for another way of doing this)
-    ["printf",            "%*.3f",      0, None               ],     # printf style format string for ncurses interface
-    ["smallStep",         "0.1",        6, "SmallStep"        ],     # step size for UI for a fine movement
-    ["status_str",        "",           0, None               ],     # Explanation of what the motor is doing
-    ["type",              "PMAC",       0, None               ],     # type of motor: PMAC, DAC, BO, SOFT, etc
-    ["u2c",               "1.0",        6, "UnitRatio"        ],     # multipy user units times u2c to get motor counts
-    ["unit",              "mm",         0, "Unit"             ],     # user units
-    ["update_resolution", "0.001",      4, None               ]      # update redis when motor is moving only when a change of this magnetude is seen
+    # name,             default,      dbrtype
+    ["active",            "1",          1],     # 1 if the motor is to be enabled and used (not fully supported as of 121219
+    ["active_init",       "",           0],     # postgresql style string array of initialization strings to send to PMAC if the motor is active
+    ["axis",              "",           4],     # PMAC axis (single charater: X,Y,Z, etc)
+    ["canHome",           "0",          1],     # 1 if a homing routine can be called
+    ["canMove",           "true",       0],     # "true" if we can move this motor, "false" if we cannot.
+    ["canStop",           "true",       0],     # "true" if it makes sense to display a stop button, "false" otherwise
+    ["coord_num",         "",           1],     # PMAC coordinate system number for this motor
+    ["currentPreset",     "",           0],     # Name of the current preset position
+    ["format",            "%f",         0],     # format string for publish position to redis
+    ["hard_ini",          None,         0],     # Name of section in microdiff_hard.ini
+    ["home",              "",           0],     # postgresql style string array of strings to send to PMAC to home motor
+    ["inPosition",        "true",       0],     # "true" if the motor is in position, "false" if it is moving
+    ["inactive_init",     "",           0],     # postgresql style string array of initialization strings to send to PMAC if the motor is inactive
+    ["largeStep",         "1.0",        6],     # increment for large step in a UI
+    ["maxPosition",       "Infinity",   6],     # upper soft limit
+    ["max_accel",         "",           0],     # maximum motor acceleration, used for motors that are too be scanned (ie, omega)
+    ["max_speed",         "",           6],     # maximum motor speed, used for motors that are too be scanned (ie, omega)
+    ["minPosition",       "-Infinity",  6],     # lower soft limit
+    ["motor_num",         "-1",         1],     # PMAC motor number
+    ["moveMode",          "translation",0],     # translation, rotation, freeRotation
+    ["name",              "",           0],     # What we think the motor should be called in a UI
+    ["negLimitSet",       "0",          1],     # 1 if on the limit, 0 otherwise
+    ["posLimitSet",       "0",          1],     # 1 if on the limit, 0 otherwise
+    ["position",          "",           6],     # our position
+    ["presets.length",    "0",          1],     # number of presets defined
+    ["printPrecision",    "3",          1],     # for ui to print out position (see the printf field for another way of doing this)
+    ["printf",            "%*.3f",      0],     # printf style format string for ncurses interface
+    ["smallStep",         "0.1",        6],     # step size for UI for a fine movement
+    ["status_str",        "",           0],     # Explanation of what the motor is doing
+    ["type",              "PMAC",       0],     # type of motor: PMAC, DAC, BO, SOFT, etc
+    ["u2c",               "1.0",        6],     # multipy user units times u2c to get motor counts
+    ["unit",              "mm",         0],     # user units
+    ["update_resolution", "0.001",      4]      # update redis when motor is moving only when a change of this magnetude is seen
     ]
 bi_list = ["CryoSwitch"]
 
 motor_presets = {
     "appy" : [
-        # name   value  canTune
-        [ "In", "0.117", "1"]
+        # name   value       canTune    pref_ini section           pref_ini option
+        [ "In", "0.117",         "1",    "ApertureYZTable",        "BeamHorizontalPosition_Y0"]
         ],
     "appz" : [
-        [ "In",    "80",     "1"],
-        [ "Out",   "71.777", "0"],
-        [ "Cover", "2.0",    "0"]
+        [ "In",    "80",         "1",    "ApertureYZTable",        "BeamVerticalPosition_Z1"],
+        [ "Out",   "71.777",     "0",    "ApertureYZTable",        "VerticalOffScreenPosition_Z2"],
+        [ "Cover", "2.0",        "0",    "ApertureYZTable",        "OffVerticalPosition_Z0"]
         ],
     "backLight" : [
-        [ "On",    "1",       None],
-        [ "Off",   "0",       None]
+        [ "On",    "1",           None,  None,                     None],
+        [ "Off",   "0",           None,  None,                     None]
         ],
     "frontLight" : [
-        [ "On",    "1",       None],
-        [ "Off",   "0",       None]
+        [ "On",    "1",           None,  None,                     None],
+        [ "Off",   "0",           None,  None,                     None]
         ],
     "capy" : [
-        [ "In",    "0.082",     "1"]
+        [ "In",    "0.082",       "1",   "CapillaryBSYZtable",     "HorizontalBeamPosition_Y0"]
         ],
     "capz" : [
-        [ "In",    "78.2617",   "1"],
-        [ "Out",   "69.944",    "0"],
-        [ "Cover", "0.3",       "0"]
+        [ "In",    "78.2617",     "1",   "CapillaryBSYZtable",     "VerticalBeamPosition_Z1"],
+        [ "Out",   "69.944",      "0",   "CapillaryBSYZtable",     "VerticalOffScreenPosition_Z2"],
+        [ "Cover", "0.3",         "0",   "CapillaryBSYZtable",     "VeticalOffPosition_Z0"]
         ],
 
     "fastShutter" : [
-        [ "Open",   "1",       None],
-        [ "Close",  "0",       None]
+        [ "Open",   "1",          None,  None,                     None],
+        [ "Close",  "0",          None,  None,                     None]
         ],
     "kappa" : [
-        [ "manualMount", "180.0", None]
+        [ "manualMount", "180.0", None,  "MiniKappa",              "Kappa1MountPosition"]
         ],
     "omega" : [
-        [ "manualMount", "180.0", None]
+        [ "manualMount", "180.0", None,  "PHIRotationAxis",        "KappaMountPosition"]
         ],
     "scint.focus" : [
-        [ "tuner",       "53",    "1"]
+        [ "tuner",       "53",    "1",   "ScintillatorPhotodiode", "OnFocusPiezoPosition"]
         ],
     "scint" : [
-        [ "Photodiode",   "53.0",   "1"],
-        [ "Scintillator", "78.788", "1"],
-        [ "Cover",        "2.0",    "0"]
+        [ "Photodiode",   "53.0",   "1", "ScintillatorPhotodiode", "DiodeOnBeamVerticalPosition_Z2"],
+        [ "Scintillator", "78.788", "1", "ScintillatorPhotodiode", "ScintiOnBeamVerticalPosition_Z1"],
+        [ "Cover",        "2.0",    "0", "ScintillatorPhotodiode", "OffVerticalPosition_Z0"]
         ]
     }
 
 
 zoom_settings = [
-    #lev   front  back  pos     scalex  scaley
-    [1,     4.0,   8.0,  34100, 2.7083,  3.3442],
-    [2,     6.0,   8.1,  31440, 2.2487,  2.2776],
-    [3,     6.5,   8.2,  27460, 1.7520,  1.7550],
-    [4,     7.0,   8.3,  23480, 1.3360,  1.3400],
-    [5,     8.0,  10.0,  19500, 1.0140,  1.0110],
-    [6,     9.0,  12.0,  15520, 0.7710,  0.7760],
-    [7,    10.0,  17.0,  11540, 0.5880,  0.5920],
-    [8,    12.0,  25.0,   7560, 0.4460,  0.4480],
-    [9,    15.0,  37.0,   3580, 0.3410,  0.3460],
-    [10,   16.0,  42.0,      0, 0.2700,  0.2690]
+    #lev   front  back  pos     scalex  scaley   section
+    [1,     4.0,   8.0,  34100, 2.7083,  3.3442, "CoaxCam.Zoom1"],
+    [2,     6.0,   8.1,  31440, 2.2487,  2.2776, "CoaxCam.Zoom2"],
+    [3,     6.5,   8.2,  27460, 1.7520,  1.7550, "CoaxCam.Zoom3"],
+    [4,     7.0,   8.3,  23480, 1.3360,  1.3400, "CoaxCam.Zoom4"],
+    [5,     8.0,  10.0,  19500, 1.0140,  1.0110, "CoaxCam.Zoom5"],
+    [6,     9.0,  12.0,  15520, 0.7710,  0.7760, "CoaxCam.Zoom6"],
+    [7,    10.0,  17.0,  11540, 0.5880,  0.5920, "CoaxCam.Zoom7"],
+    [8,    12.0,  25.0,   7560, 0.4460,  0.4480, "CoaxCam.Zoom8"],
+    [9,    15.0,  37.0,   3580, 0.3410,  0.3460, "CoaxCam.Zoom9"],
+    [10,   16.0,  42.0,      0, 0.2700,  0.2690, "CoaxCam.Zoom10"]
     ]
 
 
@@ -260,34 +292,100 @@ print "HSETNX %s.md2_pmac.init VALUE '%s'" % (head, '{\"ENABLE PLCC 0\",\"DISABL
 print "HSETNX %s.md2_status_code VALUE 7" % (head)
 
 # motor stuff
-for m in motor_dict.keys():
-    print "HSETNX %s.%s.name VALUE '%s'" % (head, m, m)
-    print "HSETNX %s.%s.name DBRTYPE 0" % (head, m)
-    print "HSETNX %s.%s.position VALUE ''" % (head, m)
-    print "HSETNX %s.%s.position DBRTYPE 6" % (head, m)
-    for k in motor_dict[m]:
-        v = motor_dict[m][k]
-        print "HSETNX %s.%s.%s VALUE '%s'" % (head, m, k, v)
+if hard_ini:
+    hi = iniParser.iniParser( hard_ini)
+    hi.read()
 
+for m in motor_dict.keys():
+    print "HSETNX %s.%s.name VALUE '%s'" % (head, m, m)         #  These values are not part of any defaults
+    print "HSETNX %s.%s.name DBRTYPE 0" % (head, m)             #  hence are not looked for in the init files
+    print "HSETNX %s.%s.position VALUE ''" % (head, m)          #
+    print "HSETNX %s.%s.position DBRTYPE 6" % (head, m)         #
+    for k in motor_dict[m]:
+        if k == "hard_ini":     # this is sort of a meta field
+            continue
+
+        # Use the value from the hard ini file, if it is available
+        # Overide the current value if it is available
+        #
+        if hard_ini == None or \
+                not motor_dict[m].has_key("hard_ini") or \
+                motor_dict[m]["hard_ini"] == None or \
+                not hard_ini_fields.has_key( k) or \
+                not hi.has_section( motor_dict[m]["hard_ini"]) or \
+                not hi.has_option( motor_dict[m]["hard_ini"], hard_ini_fields[k]):
+
+            # Use the hard coded value found in this file
+            #
+            v = motor_dict[m][k]
+            f = "HSETNX"
+        else:
+            # Use the ini file value
+            #
+            v = hi.get( motor_dict[m]["hard_ini"], hard_ini_fields[k])
+            f = "HSET"
+
+        print "%s %s.%s.%s VALUE '%s'" % (f, head, m, k, v)
+
+    # Throw out the default default value for fields not found any other way
+    #
     for field, default, dbrtype  in motor_field_lists:
         print "HSETNX %s.%s.%s VALUE '%s'" % (head, m, field, default)
         print "HSETNX %s.%s.%s DBRTYPE '%s'" % (head, m, field, dbrtype)
 
+    # Add the presets
+    #
+    if pref_ini:
+        pi = iniParser.iniParser( pref_ini)
+        pi.read()
+        
     i = 0;
     if motor_presets.has_key( m):
-        for pname, ppos, ptune in motor_presets[m]:
+        for pname, ppos, ptune, section, option in motor_presets[m]:
             print "HSETNX %s.%s.presets.%d.name VALUE %s"     % (head, m, i, pname)
-            print "HSETNX %s.%s.presets.%d.position VALUE %s" % (head, m, i, ppos)
+
+            f = "HSETNX"
+            if pref_ini and section and option and pi.has_section( section) and pi.has_option( section, option):
+                ppos = pi.get( section, option)
+                f = "HSET"
+                    
+            print "%s %s.%s.presets.%d.position VALUE %s" % ( f, head, m, i, ppos)
+
             if ptune != None:
-                print "HSETNX %s.%s.presets.%d.canTune VALUE %s" % (head, m, i, ppos)
+                print "HSETNX %s.%s.presets.%d.canTune VALUE %s" % ( head, m, i, ppos)
             i += 1
-        print "HSETNX %s.%s.presets.length VALUE %d" % (head, m, i)
+        print "HSET %s.%s.presets.length VALUE %d" % ( head, m, i)
         
 # light and zoom settings
 
-for lev, f, b, p, x, y in zoom_settings:
-    print "HSETNX %s.cam.zoom.%d.FrontLightIntensity VALUE %s" % (head, lev, f)
-    print "HSETNX %s.cam.zoom.%d.LightIntensity VALUE %s"      % (head, lev, b)
-    print "HSETNX %s.cam.zoom.%d.MotorPosition VALUE %s"       % (head, lev, p)
-    print "HSETNX %s.cam.zoom.%d.ScaleX VALUE %s"              % (head, lev, x)
-    print "HSETNX %s.cam.zoom.%d.ScaleY VALUE %s"              % (head, lev, y)
+for lev, f, b, p, x, y, section in zoom_settings:
+
+    fnc = "HSETNX"
+    if pref_ini != None and pi.has_section( section) and pi.has_option( section, "FrontLightIntensity"):
+        f = pi.get( section, "FrontLightIntensity")
+        fnc = "HSET"
+    print "%s %s.cam.zoom.%d.FrontLightIntensity VALUE %s" % (fnc, head, lev, f)
+
+    fnc = "HSETNX"
+    if pref_ini != None and pi.has_section( section) and pi.has_option( section, "LightIntensity"):
+        b = pi.get( section, "LightIntensity")
+        fnc = "HSET"
+    print "%s %s.cam.zoom.%d.LightIntensity VALUE %s"      % (fnc, head, lev, b)
+
+    fnc = "HSETNX"
+    if pref_ini != None and pi.has_section( section) and pi.has_option( section, "MotorPosition"):
+        p = pi.get( section, "MotorPosition")
+        fnc = "HSET"
+    print "%s %s.cam.zoom.%d.MotorPosition VALUE %s"       % (fnc, head, lev, p)
+
+    fnc = "HSETNX"
+    if pref_ini != None and pi.has_section( section) and pi.has_option( section, "ScaleX"):
+        x = pi.get( section, "ScaleX")
+        fnc = "HSET"
+    print "%s %s.cam.zoom.%d.ScaleX VALUE %s"              % (fnc, head, lev, x)
+
+    fnc = "HSETNX"
+    if pref_ini != None and pi.has_section( section) and pi.has_option( section, "ScaleY"):
+        y = pi.get( section, "ScaleY")
+        fnc = "HSET"
+    print "%s %s.cam.zoom.%d.ScaleY VALUE %s"              % (fnc, head, lev, y)
