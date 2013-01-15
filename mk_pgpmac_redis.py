@@ -174,7 +174,8 @@ hard_ini_fields = {
     "minPosition" : "MinPosition",
     "motor_num"   : "MotorNumber",
     "smallStep"   : "SmallStep",
-    "u2c"         : "UnitRatio"
+    "u2c"         : "UnitRatio",
+    "neutralPosition" : "NeutralPosition"
     }
 
 # DBR TYPES
@@ -256,7 +257,8 @@ motor_presets = {
         [ "Close",  "0",          None,  None,                     None]
         ],
     "kappa" : [
-        [ "manualMount", "180.0", None,  "MiniKappa",              "Kappa1MountPosition"]
+        [ "manualMount", "180.0", None,  "MiniKappa",              "Kappa1MountPosition"],
+        [ "reference",   "228.5", None,  "CentringXYTable",        "PhiReference"]
         ],
     "omega" : [
         [ "manualMount", "180.0", None,  "PHIRotationAxis",        "KappaMountPosition"]
@@ -288,8 +290,11 @@ zoom_settings = [
 
 
 # pmac initializer
-print "HSETNX %s.md2_pmac.init VALUE '%s'" % (head, '{\"ENABLE PLCC 0\",\"DISABLE PLCC 1\",\"ENABLE PLCC 2\",I5=3}')
-print "HSETNX %s.md2_status_code VALUE 7" % (head)
+#
+# (moved to hard code in lspmac.c)
+#
+# print "HSETNX %s.md2_pmac.init VALUE '%s'" % (head, '{\"ENABLE PLCC 0\",\"DISABLE PLCC 1\",\"ENABLE PLCC 2\",I5=3}')
+# print "HSETNX %s.md2_status_code VALUE 7" % (head)
 
 # motor stuff
 if hard_ini:
