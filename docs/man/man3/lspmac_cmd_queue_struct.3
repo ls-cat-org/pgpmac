@@ -1,4 +1,4 @@
-.TH "lspmac_cmd_queue_struct" 3 "Mon Dec 24 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lspmac_cmd_queue_struct" 3 "Tue Jan 15 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -27,9 +27,9 @@ PMAC command queue item\&.
 .br
 .RI "\fItime this item was dequeued and sent to the pmac \fP"
 .ti -1c
-.RI "unsigned char \fBrbuff\fP [1400]"
+.RI "char * \fBevent\fP"
 .br
-.RI "\fIbuffer for the returned bytes \fP"
+.RI "\fIevent name to send \fP"
 .ti -1c
 .RI "void(* \fBonResponse\fP )(struct \fBlspmac_cmd_queue_struct\fP *, int, char *)"
 .br
@@ -41,39 +41,39 @@ PMAC command queue item\&.
 
 Command queue items are fixed length to simplify memory management\&. 
 .PP
-Definition at line 85 of file pgpmac\&.h\&.
+Definition at line 86 of file pgpmac\&.h\&.
 .SH "Field Documentation"
 .PP 
+.SS "char* lspmac_cmd_queue_struct::event"
+
+.PP
+event name to send 
+.PP
+Definition at line 90 of file pgpmac\&.h\&.
 .SS "int lspmac_cmd_queue_struct::no_reply"
 
 .PP
 1 = no reply is expected, 0 = expect a reply 
 .PP
-Definition at line 87 of file pgpmac\&.h\&.
+Definition at line 88 of file pgpmac\&.h\&.
 .SS "void(* lspmac_cmd_queue_struct::onResponse)(struct \fBlspmac_cmd_queue_struct\fP *, int, char *)"
 
 .PP
 function to call when response is received\&. args are (int fd, nreturned, buffer) 
 .PP
-Definition at line 90 of file pgpmac\&.h\&.
+Definition at line 91 of file pgpmac\&.h\&.
 .SS "\fBpmac_cmd_t\fP lspmac_cmd_queue_struct::pcmd"
 
 .PP
 the pmac command to send 
 .PP
-Definition at line 86 of file pgpmac\&.h\&.
-.SS "unsigned char lspmac_cmd_queue_struct::rbuff[1400]"
-
-.PP
-buffer for the returned bytes 
-.PP
-Definition at line 89 of file pgpmac\&.h\&.
+Definition at line 87 of file pgpmac\&.h\&.
 .SS "struct timespec lspmac_cmd_queue_struct::time_sent"
 
 .PP
 time this item was dequeued and sent to the pmac 
 .PP
-Definition at line 88 of file pgpmac\&.h\&.
+Definition at line 89 of file pgpmac\&.h\&.
 
 .SH "Author"
 .PP 

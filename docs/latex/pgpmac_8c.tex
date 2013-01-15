@@ -30,7 +30,9 @@ W\-I\-N\-D\-O\-W $\ast$ \hyperlink{pgpmac_8c_ae2d7da3afeb756716e6e4ee9cab78f8a}{
 pthread\-\_\-mutex\-\_\-t \hyperlink{pgpmac_8c_ad128c64890c7c0d4f836d9ec6e99216a}{ncurses\-\_\-mutex}
 \begin{DoxyCompactList}\small\item\em allow more than one thread access to the screen \end{DoxyCompactList}\item 
 static struct pollfd \hyperlink{pgpmac_8c_a6dc08e82e698d914ccb09077dd33668a}{stdinfda}
-\begin{DoxyCompactList}\small\item\em Handle input from the keyboard. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{DoxyCompactList}\small\item\em Handle input from the keyboard. \end{DoxyCompactList}\item 
+static int \hyperlink{pgpmac_8c_a2f45113638a0b749a8a205d2cd7fb42b}{running} = 1
+\end{DoxyCompactItemize}
 
 
 \subsection{Detailed Description}
@@ -71,7 +73,7 @@ Our main routine.
 \end{DoxyParams}
 
 
-Definition at line 349 of file pgpmac.\-c.
+Definition at line 351 of file pgpmac.\-c.
 
 
 \begin{DoxyCode}
@@ -171,7 +173,7 @@ Definition at line 349 of file pgpmac.\-c.
   \hyperlink{lspg_8c_a1adfdb5ca9fdb5060849d726bf540117}{lspg\_run}();
   \hyperlink{md2cmds_8c_aa62da7d423952334d41c7d282f45233d}{md2cmds\_run}();
 
-  \textcolor{keywordflow}{while}( 1) \{
+  \textcolor{keywordflow}{while}( \hyperlink{pgpmac_8c_a2f45113638a0b749a8a205d2cd7fb42b}{running}) \{
     \textcolor{comment}{//}
     \textcolor{comment}{// Big loop}
     \textcolor{comment}{//}
@@ -207,6 +209,8 @@ Definition at line 349 of file pgpmac.\-c.
       \}
     \}
   \}
+  endwin();
+  \textcolor{keywordflow}{return} 0;
 \}
 \end{DoxyCode}
 \hypertarget{pgpmac_8c_a7762ca7b97b44b979e23ce88ca3b4249}{\index{pgpmac.\-c@{pgpmac.\-c}!pgpmac\-\_\-printf@{pgpmac\-\_\-printf}}
@@ -228,7 +232,7 @@ Terminal output routine ala printf.
 \end{DoxyParams}
 
 
-Definition at line 326 of file pgpmac.\-c.
+Definition at line 328 of file pgpmac.\-c.
 
 
 \begin{DoxyCode}
@@ -278,15 +282,16 @@ Definition at line 254 of file pgpmac.\-c.
   \textcolor{keywordtype}{int} ch;
 
 
-  \textcolor{keywordflow}{for}( ch=wgetch(\hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input}); ch != ERR; ch=wgetch(\hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input}
-      )) \{
+  \textcolor{keywordflow}{for}( ch=wgetch(\hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input}); ch != ERR && \hyperlink{pgpmac_8c_a2f45113638a0b749a8a205d2cd7fb42b}{running}; ch=wgetch(
+      \hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input})) \{
     \textcolor{comment}{// wprintw( term\_output, "%04x\(\backslash\)n", ch);}
     \textcolor{comment}{// wnoutrefresh( term\_output);}
 
     \textcolor{keywordflow}{switch}( ch) \{
     \textcolor{keywordflow}{case} KEY\_F(1):
-      endwin();
-      exit(0);
+    case KEY\_F(2):
+    case KEY\_F(3):
+      running = 0;
       \textcolor{keywordflow}{break};
 
     \textcolor{keywordflow}{case} 0x0001:        \textcolor{comment}{// Control-A}
@@ -305,7 +310,7 @@ Definition at line 254 of file pgpmac.\-c.
     \textcolor{keywordflow}{case} 0x0016:        \textcolor{comment}{// Control-V}
       cntrlcmd[0] = ch;
       cntrlcmd[1] = 0;
-      \hyperlink{lspmac_8c_aaa442d9bc7a3cdee39adea0724f0e18c}{lspmac\_SockSendline}( cntrlcmd);
+      \hyperlink{lspmac_8c_adebcd9b5045d49112b704a7656a981c9}{lspmac\_SockSendline}( NULL, cntrlcmd);
       \textcolor{comment}{//      PmacSockSendControlCharPrint( ch);}
       \textcolor{keywordflow}{break};
 
@@ -317,7 +322,7 @@ Definition at line 254 of file pgpmac.\-c.
     \textcolor{keywordflow}{case} KEY\_ENTER:
     \textcolor{keywordflow}{case} 0x000a:
       \textcolor{keywordflow}{if}( cmds\_on > 0 && strlen( cmds) > 0) \{
-        \hyperlink{lspmac_8c_aaa442d9bc7a3cdee39adea0724f0e18c}{lspmac\_SockSendline}( cmds);
+        \hyperlink{lspmac_8c_adebcd9b5045d49112b704a7656a981c9}{lspmac\_SockSendline}( NULL, cmds);
       \}
       memset( cmds, 0, \textcolor{keyword}{sizeof}(cmds));
       cmds\_on = 0;
@@ -331,12 +336,13 @@ Definition at line 254 of file pgpmac.\-c.
       \textcolor{keywordflow}{break};
     \}
     
-    mvwprintw( \hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input}, 1, 1, \textcolor{stringliteral}{"PMAC> %s"}, cmds);
-    wclrtoeol( \hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input});
-    box( \hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input}, 0, 0);
-    wnoutrefresh( \hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input});
-    doupdate();
-
+    \textcolor{keywordflow}{if}( running) \{
+      mvwprintw( \hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input}, 1, 1, \textcolor{stringliteral}{"PMAC> %s"}, cmds);
+      wclrtoeol( \hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input});
+      box( \hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input}, 0, 0);
+      wnoutrefresh( \hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input});
+      doupdate();
+    \}
   \}
 \}
 \end{DoxyCode}
@@ -353,6 +359,13 @@ allow more than one thread access to the screen
 
 
 Definition at line 242 of file pgpmac.\-c.
+
+\hypertarget{pgpmac_8c_a2f45113638a0b749a8a205d2cd7fb42b}{\index{pgpmac.\-c@{pgpmac.\-c}!running@{running}}
+\index{running@{running}!pgpmac.c@{pgpmac.\-c}}
+\subsubsection[{running}]{\setlength{\rightskip}{0pt plus 5cm}int running = 1\hspace{0.3cm}{\ttfamily [static]}}}\label{pgpmac_8c_a2f45113638a0b749a8a205d2cd7fb42b}
+
+
+Definition at line 249 of file pgpmac.\-c.
 
 \hypertarget{pgpmac_8c_a6dc08e82e698d914ccb09077dd33668a}{\index{pgpmac.\-c@{pgpmac.\-c}!stdinfda@{stdinfda}}
 \index{stdinfda@{stdinfda}!pgpmac.c@{pgpmac.\-c}}

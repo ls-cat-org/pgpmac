@@ -1178,516 +1178,517 @@ $(document).ready(function(){initNavTree('lspg_8c_source.html','');});
 <div class="line"><a name="l01248"></a><span class="lineno"> 1248</span>&#160;  <span class="keywordflow">for</span>( i=0; i&lt;PQntuples( pgr); i++) {</div>
 <div class="line"><a name="l01249"></a><span class="lineno"> 1249</span>&#160;    sp = PQgetvalue( pgr, i, 0);</div>
 <div class="line"><a name="l01250"></a><span class="lineno"> 1250</span>&#160;    <span class="keywordflow">if</span>( sp != NULL &amp;&amp; *sp != 0) {</div>
-<div class="line"><a name="l01251"></a><span class="lineno"> 1251</span>&#160;      <a class="code" href="lspmac_8c.html#aaa442d9bc7a3cdee39adea0724f0e18c" title="Send a one line command.">lspmac_SockSendline</a>( sp);</div>
-<div class="line"><a name="l01252"></a><span class="lineno"> 1252</span>&#160;      <span class="comment">//</span></div>
-<div class="line"><a name="l01253"></a><span class="lineno"> 1253</span>&#160;      <span class="comment">// Keep asking for more until</span></div>
-<div class="line"><a name="l01254"></a><span class="lineno"> 1254</span>&#160;      <span class="comment">// there are no commands left</span></div>
-<div class="line"><a name="l01255"></a><span class="lineno"> 1255</span>&#160;      <span class="comment">// </span></div>
-<div class="line"><a name="l01256"></a><span class="lineno"> 1256</span>&#160;      <span class="comment">// This should solve a potential problem where</span></div>
-<div class="line"><a name="l01257"></a><span class="lineno"> 1257</span>&#160;      <span class="comment">// more than one command is put on the queue for a given notify.</span></div>
-<div class="line"><a name="l01258"></a><span class="lineno"> 1258</span>&#160;      <span class="comment">//</span></div>
-<div class="line"><a name="l01259"></a><span class="lineno"> 1259</span>&#160;      <a class="code" href="kvredis_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#a1e11f525ca0f9ac9ab71f9fbe983c42b" title="Send strings directly to PMAC queue.">lspg_cmd_cb</a>, <span class="stringliteral">&quot;select pmac.md2_queue_next()&quot;</span>);</div>
-<div class="line"><a name="l01260"></a><span class="lineno"> 1260</span>&#160;    }</div>
-<div class="line"><a name="l01261"></a><span class="lineno"> 1261</span>&#160;  }</div>
-<div class="line"><a name="l01262"></a><span class="lineno"> 1262</span>&#160;}</div>
-<div class="line"><a name="l01263"></a><span class="lineno"> 1263</span>&#160;</div>
+<div class="line"><a name="l01251"></a><span class="lineno"> 1251</span>&#160;      <a class="code" href="lspmac_8c.html#afab9e8f0502a92ee5cf93209af710f81" title="prepare (queue up) a line to send the dpram ascii command interface">lspmac_SockSendDPline</a>( NULL, sp);</div>
+<div class="line"><a name="l01252"></a><span class="lineno"> 1252</span>&#160;      <span class="comment">//      lspmac_SockSendline( sp);</span></div>
+<div class="line"><a name="l01253"></a><span class="lineno"> 1253</span>&#160;      <span class="comment">//</span></div>
+<div class="line"><a name="l01254"></a><span class="lineno"> 1254</span>&#160;      <span class="comment">// Keep asking for more until</span></div>
+<div class="line"><a name="l01255"></a><span class="lineno"> 1255</span>&#160;      <span class="comment">// there are no commands left</span></div>
+<div class="line"><a name="l01256"></a><span class="lineno"> 1256</span>&#160;      <span class="comment">// </span></div>
+<div class="line"><a name="l01257"></a><span class="lineno"> 1257</span>&#160;      <span class="comment">// This should solve a potential problem where</span></div>
+<div class="line"><a name="l01258"></a><span class="lineno"> 1258</span>&#160;      <span class="comment">// more than one command is put on the queue for a given notify.</span></div>
+<div class="line"><a name="l01259"></a><span class="lineno"> 1259</span>&#160;      <span class="comment">//</span></div>
+<div class="line"><a name="l01260"></a><span class="lineno"> 1260</span>&#160;      <a class="code" href="kvredis_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#a1e11f525ca0f9ac9ab71f9fbe983c42b" title="Send strings directly to PMAC queue.">lspg_cmd_cb</a>, <span class="stringliteral">&quot;select pmac.md2_queue_next()&quot;</span>);</div>
+<div class="line"><a name="l01261"></a><span class="lineno"> 1261</span>&#160;    }</div>
+<div class="line"><a name="l01262"></a><span class="lineno"> 1262</span>&#160;  }</div>
+<div class="line"><a name="l01263"></a><span class="lineno"> 1263</span>&#160;}</div>
 <div class="line"><a name="l01264"></a><span class="lineno"> 1264</span>&#160;</div>
-<div class="line"><a name="l01267"></a><span class="lineno"><a class="code" href="lspg_8c.html#af6485ac1749c5de3008dd0e0badaa09c"> 1267</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="kvredis_8c.html#af6485ac1749c5de3008dd0e0badaa09c" title="Flush psql output buffer (ie, send the query)">lspg_flush</a>() {</div>
-<div class="line"><a name="l01268"></a><span class="lineno"> 1268</span>&#160;  <span class="keywordtype">int</span> err;</div>
-<div class="line"><a name="l01269"></a><span class="lineno"> 1269</span>&#160;</div>
-<div class="line"><a name="l01270"></a><span class="lineno"> 1270</span>&#160;  err = PQflush( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
-<div class="line"><a name="l01271"></a><span class="lineno"> 1271</span>&#160;  <span class="keywordflow">switch</span>( err) {</div>
-<div class="line"><a name="l01272"></a><span class="lineno"> 1272</span>&#160;  <span class="keywordflow">case</span> -1:</div>
-<div class="line"><a name="l01273"></a><span class="lineno"> 1273</span>&#160;    <span class="comment">// an error occured</span></div>
-<div class="line"><a name="l01274"></a><span class="lineno"> 1274</span>&#160;</div>
-<div class="line"><a name="l01275"></a><span class="lineno"> 1275</span>&#160;    <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;flush failed: %s&quot;</span>, PQerrorMessage( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>));</div>
-<div class="line"><a name="l01276"></a><span class="lineno"> 1276</span>&#160;</div>
-<div class="line"><a name="l01277"></a><span class="lineno"> 1277</span>&#160;    <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>;</div>
-<div class="line"><a name="l01278"></a><span class="lineno"> 1278</span>&#160;    <span class="comment">//</span></div>
-<div class="line"><a name="l01279"></a><span class="lineno"> 1279</span>&#160;    <span class="comment">// We should probably reset the connection and start from scratch.  Probably the connection died.</span></div>
-<div class="line"><a name="l01280"></a><span class="lineno"> 1280</span>&#160;    <span class="comment">//</span></div>
-<div class="line"><a name="l01281"></a><span class="lineno"> 1281</span>&#160;    <span class="keywordflow">break</span>;</div>
-<div class="line"><a name="l01282"></a><span class="lineno"> 1282</span>&#160;          </div>
-<div class="line"><a name="l01283"></a><span class="lineno"> 1283</span>&#160;  <span class="keywordflow">case</span> 0:</div>
-<div class="line"><a name="l01284"></a><span class="lineno"> 1284</span>&#160;    <span class="comment">// goodness and joy.</span></div>
-<div class="line"><a name="l01285"></a><span class="lineno"> 1285</span>&#160;    <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#a373e668840b4795ff9a71bc3f744d209">LS_PG_STATE_RECV</a>;</div>
-<div class="line"><a name="l01286"></a><span class="lineno"> 1286</span>&#160;    <span class="keywordflow">break</span>;</div>
-<div class="line"><a name="l01287"></a><span class="lineno"> 1287</span>&#160;</div>
-<div class="line"><a name="l01288"></a><span class="lineno"> 1288</span>&#160;  <span class="keywordflow">case</span> 1:</div>
-<div class="line"><a name="l01289"></a><span class="lineno"> 1289</span>&#160;    <span class="comment">// more sending to do</span></div>
-<div class="line"><a name="l01290"></a><span class="lineno"> 1290</span>&#160;    <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#a88a7e80c12fb0449c4b0857a0c7deb21">LS_PG_STATE_SEND_FLUSH</a>;</div>
-<div class="line"><a name="l01291"></a><span class="lineno"> 1291</span>&#160;    <span class="keywordflow">break</span>;</div>
-<div class="line"><a name="l01292"></a><span class="lineno"> 1292</span>&#160;  }</div>
-<div class="line"><a name="l01293"></a><span class="lineno"> 1293</span>&#160;}</div>
-<div class="line"><a name="l01294"></a><span class="lineno"> 1294</span>&#160;</div>
-<div class="line"><a name="l01297"></a><span class="lineno"><a class="code" href="lspg_8c.html#a714b15e117ffe7bfce4f2f2ce4725b0a"> 1297</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="kvredis_8c.html#a714b15e117ffe7bfce4f2f2ce4725b0a" title="send the next queued query to the DB server">lspg_send_next_query</a>() {</div>
-<div class="line"><a name="l01298"></a><span class="lineno"> 1298</span>&#160;  <span class="comment">//</span></div>
-<div class="line"><a name="l01299"></a><span class="lineno"> 1299</span>&#160;  <span class="comment">// Normally we should be in the &quot;send&quot; state</span></div>
-<div class="line"><a name="l01300"></a><span class="lineno"> 1300</span>&#160;  <span class="comment">// but we can also send if we are servicing</span></div>
-<div class="line"><a name="l01301"></a><span class="lineno"> 1301</span>&#160;  <span class="comment">// a reply</span></div>
-<div class="line"><a name="l01302"></a><span class="lineno"> 1302</span>&#160;  <span class="comment">//</span></div>
-<div class="line"><a name="l01303"></a><span class="lineno"> 1303</span>&#160;</div>
-<div class="line"><a name="l01304"></a><span class="lineno"> 1304</span>&#160;  <a class="code" href="structlspgQueryQueueStruct.html" title="Store each query along with it&#39;s callback function.">lspg_query_queue_t</a> *qqp;</div>
-<div class="line"><a name="l01305"></a><span class="lineno"> 1305</span>&#160;  <span class="keywordtype">int</span> err;</div>
-<div class="line"><a name="l01306"></a><span class="lineno"> 1306</span>&#160;</div>
-<div class="line"><a name="l01307"></a><span class="lineno"> 1307</span>&#160;  qqp = <a class="code" href="kvredis_8c.html#ad5f3ec8f197cc330c83dba70f310533c" title="Return the next item in the postgresql queue.">lspg_query_next</a>();</div>
-<div class="line"><a name="l01308"></a><span class="lineno"> 1308</span>&#160;  <span class="keywordflow">if</span>( qqp == NULL) {</div>
-<div class="line"><a name="l01309"></a><span class="lineno"> 1309</span>&#160;    <span class="comment">//</span></div>
-<div class="line"><a name="l01310"></a><span class="lineno"> 1310</span>&#160;    <span class="comment">// A send without a query?  Should never happen.</span></div>
-<div class="line"><a name="l01311"></a><span class="lineno"> 1311</span>&#160;    <span class="comment">// But at least we shouldn&#39;t segfault if it does.</span></div>
-<div class="line"><a name="l01312"></a><span class="lineno"> 1312</span>&#160;    <span class="comment">//</span></div>
-<div class="line"><a name="l01313"></a><span class="lineno"> 1313</span>&#160;    <span class="keywordflow">return</span>;</div>
-<div class="line"><a name="l01314"></a><span class="lineno"> 1314</span>&#160;  }</div>
-<div class="line"><a name="l01315"></a><span class="lineno"> 1315</span>&#160;</div>
-<div class="line"><a name="l01316"></a><span class="lineno"> 1316</span>&#160;  <span class="keywordflow">if</span>( qqp-&gt;<a class="code" href="structlspgQueryQueueStruct.html#a1389b3ec4ddf9ed5cc0344d229a7ff9e" title="our queries should all be pretty short as we&#39;ll just be calling functions: fixed length here simplifi...">qs</a>[0] == 0) {</div>
-<div class="line"><a name="l01317"></a><span class="lineno"> 1317</span>&#160;    <span class="comment">//</span></div>
-<div class="line"><a name="l01318"></a><span class="lineno"> 1318</span>&#160;    <span class="comment">// Do we really have to check this case?</span></div>
-<div class="line"><a name="l01319"></a><span class="lineno"> 1319</span>&#160;    <span class="comment">// It would only come up if we stupidly pushed an empty query string</span></div>
-<div class="line"><a name="l01320"></a><span class="lineno"> 1320</span>&#160;    <span class="comment">// or ran off the end of the queue</span></div>
-<div class="line"><a name="l01321"></a><span class="lineno"> 1321</span>&#160;    <span class="comment">//</span></div>
-<div class="line"><a name="l01322"></a><span class="lineno"> 1322</span>&#160;    <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;Popped empty query string.  Probably bad things are going on.&quot;</span>);</div>
-<div class="line"><a name="l01323"></a><span class="lineno"> 1323</span>&#160;</div>
-<div class="line"><a name="l01324"></a><span class="lineno"> 1324</span>&#160;    <a class="code" href="kvredis_8c.html#a3847589e641f7e16a0cd68ef30e37cca" title="Remove the oldest item in the queue.">lspg_query_reply_next</a>();</div>
-<div class="line"><a name="l01325"></a><span class="lineno"> 1325</span>&#160;    <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>;</div>
-<div class="line"><a name="l01326"></a><span class="lineno"> 1326</span>&#160;  } <span class="keywordflow">else</span> {</div>
-<div class="line"><a name="l01327"></a><span class="lineno"> 1327</span>&#160;    err = PQsendQuery( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>, qqp-&gt;<a class="code" href="structlspgQueryQueueStruct.html#a1389b3ec4ddf9ed5cc0344d229a7ff9e" title="our queries should all be pretty short as we&#39;ll just be calling functions: fixed length here simplifi...">qs</a>);</div>
-<div class="line"><a name="l01328"></a><span class="lineno"> 1328</span>&#160;    <span class="keywordflow">if</span>( err == 0) {</div>
-<div class="line"><a name="l01329"></a><span class="lineno"> 1329</span>&#160;      <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;query failed: %s\n&quot;</span>, PQerrorMessage( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>));</div>
-<div class="line"><a name="l01330"></a><span class="lineno"> 1330</span>&#160;</div>
-<div class="line"><a name="l01331"></a><span class="lineno"> 1331</span>&#160;      <span class="comment">//</span></div>
-<div class="line"><a name="l01332"></a><span class="lineno"> 1332</span>&#160;      <span class="comment">// Don&#39;t wait for a reply, just reset the connection</span></div>
-<div class="line"><a name="l01333"></a><span class="lineno"> 1333</span>&#160;      <span class="comment">//</span></div>
-<div class="line"><a name="l01334"></a><span class="lineno"> 1334</span>&#160;      <a class="code" href="kvredis_8c.html#a3847589e641f7e16a0cd68ef30e37cca" title="Remove the oldest item in the queue.">lspg_query_reply_next</a>();</div>
-<div class="line"><a name="l01335"></a><span class="lineno"> 1335</span>&#160;      <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;</div>
-<div class="line"><a name="l01336"></a><span class="lineno"> 1336</span>&#160;    } <span class="keywordflow">else</span> {</div>
-<div class="line"><a name="l01337"></a><span class="lineno"> 1337</span>&#160;      <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#a88a7e80c12fb0449c4b0857a0c7deb21">LS_PG_STATE_SEND_FLUSH</a>;</div>
-<div class="line"><a name="l01338"></a><span class="lineno"> 1338</span>&#160;    }</div>
-<div class="line"><a name="l01339"></a><span class="lineno"> 1339</span>&#160;  }</div>
-<div class="line"><a name="l01340"></a><span class="lineno"> 1340</span>&#160;}</div>
-<div class="line"><a name="l01341"></a><span class="lineno"> 1341</span>&#160;</div>
-<div class="line"><a name="l01344"></a><span class="lineno"><a class="code" href="lspg_8c.html#a038c5af23469b789fc1c55d21cb43029"> 1344</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="kvredis_8c.html#a038c5af23469b789fc1c55d21cb43029" title="Receive a result of a query.">lspg_receive</a>() {</div>
-<div class="line"><a name="l01345"></a><span class="lineno"> 1345</span>&#160;  PGresult *pgr;</div>
-<div class="line"><a name="l01346"></a><span class="lineno"> 1346</span>&#160;  <a class="code" href="structlspgQueryQueueStruct.html" title="Store each query along with it&#39;s callback function.">lspg_query_queue_t</a> *qqp;</div>
-<div class="line"><a name="l01347"></a><span class="lineno"> 1347</span>&#160;  <span class="keywordtype">int</span> err;</div>
-<div class="line"><a name="l01348"></a><span class="lineno"> 1348</span>&#160;</div>
-<div class="line"><a name="l01349"></a><span class="lineno"> 1349</span>&#160;  err = PQconsumeInput( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
-<div class="line"><a name="l01350"></a><span class="lineno"> 1350</span>&#160;  <span class="keywordflow">if</span>( err != 1) {</div>
-<div class="line"><a name="l01351"></a><span class="lineno"> 1351</span>&#160;    <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;consume input failed: %s&quot;</span>, PQerrorMessage( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>));</div>
-<div class="line"><a name="l01352"></a><span class="lineno"> 1352</span>&#160;    <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;</div>
-<div class="line"><a name="l01353"></a><span class="lineno"> 1353</span>&#160;    <span class="keywordflow">return</span>;</div>
-<div class="line"><a name="l01354"></a><span class="lineno"> 1354</span>&#160;  }</div>
-<div class="line"><a name="l01355"></a><span class="lineno"> 1355</span>&#160;</div>
-<div class="line"><a name="l01356"></a><span class="lineno"> 1356</span>&#160;  <span class="comment">//</span></div>
-<div class="line"><a name="l01357"></a><span class="lineno"> 1357</span>&#160;  <span class="comment">// We must call PQgetResult until it returns NULL before sending the next query</span></div>
-<div class="line"><a name="l01358"></a><span class="lineno"> 1358</span>&#160;  <span class="comment">// This implies that only one query can ever be active at a time and our queue</span></div>
-<div class="line"><a name="l01359"></a><span class="lineno"> 1359</span>&#160;  <span class="comment">// management should be simple</span></div>
-<div class="line"><a name="l01360"></a><span class="lineno"> 1360</span>&#160;  <span class="comment">//</span></div>
-<div class="line"><a name="l01361"></a><span class="lineno"> 1361</span>&#160;  <span class="comment">// We should be in the LS_PG_STATE_RECV here</span></div>
-<div class="line"><a name="l01362"></a><span class="lineno"> 1362</span>&#160;  <span class="comment">//</span></div>
-<div class="line"><a name="l01363"></a><span class="lineno"> 1363</span>&#160;</div>
-<div class="line"><a name="l01364"></a><span class="lineno"> 1364</span>&#160;  <span class="keywordflow">while</span>( !PQisBusy( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>)) {</div>
-<div class="line"><a name="l01365"></a><span class="lineno"> 1365</span>&#160;    pgr = PQgetResult( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
-<div class="line"><a name="l01366"></a><span class="lineno"> 1366</span>&#160;    <span class="keywordflow">if</span>( pgr == NULL) {</div>
-<div class="line"><a name="l01367"></a><span class="lineno"> 1367</span>&#160;      <a class="code" href="kvredis_8c.html#a3847589e641f7e16a0cd68ef30e37cca" title="Remove the oldest item in the queue.">lspg_query_reply_next</a>();</div>
-<div class="line"><a name="l01368"></a><span class="lineno"> 1368</span>&#160;      <span class="comment">//</span></div>
-<div class="line"><a name="l01369"></a><span class="lineno"> 1369</span>&#160;      <span class="comment">// we are now done reading the response from the database</span></div>
-<div class="line"><a name="l01370"></a><span class="lineno"> 1370</span>&#160;      <span class="comment">//</span></div>
-<div class="line"><a name="l01371"></a><span class="lineno"> 1371</span>&#160;      <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>;</div>
-<div class="line"><a name="l01372"></a><span class="lineno"> 1372</span>&#160;      <span class="keywordflow">break</span>;</div>
-<div class="line"><a name="l01373"></a><span class="lineno"> 1373</span>&#160;    } <span class="keywordflow">else</span> {</div>
-<div class="line"><a name="l01374"></a><span class="lineno"> 1374</span>&#160;      ExecStatusType es;</div>
-<div class="line"><a name="l01375"></a><span class="lineno"> 1375</span>&#160;</div>
-<div class="line"><a name="l01376"></a><span class="lineno"> 1376</span>&#160;      qqp = <a class="code" href="kvredis_8c.html#ae6bf4f54117bedf903360883bb32699f" title="Return the next item in the reply queue but don&#39;t pop it since we may need it more than once...">lspg_query_reply_peek</a>();</div>
-<div class="line"><a name="l01377"></a><span class="lineno"> 1377</span>&#160;      es = PQresultStatus( pgr);</div>
-<div class="line"><a name="l01378"></a><span class="lineno"> 1378</span>&#160;</div>
-<div class="line"><a name="l01379"></a><span class="lineno"> 1379</span>&#160;      <span class="keywordflow">if</span>( es != PGRES_COMMAND_OK &amp;&amp; es != PGRES_TUPLES_OK) {</div>
-<div class="line"><a name="l01380"></a><span class="lineno"> 1380</span>&#160;        <span class="keywordtype">char</span> *emess;</div>
-<div class="line"><a name="l01381"></a><span class="lineno"> 1381</span>&#160;        emess = PQresultErrorMessage( pgr);</div>
-<div class="line"><a name="l01382"></a><span class="lineno"> 1382</span>&#160;        <span class="keywordflow">if</span>( emess != NULL &amp;&amp; emess[0] != 0) {</div>
-<div class="line"><a name="l01383"></a><span class="lineno"> 1383</span>&#160;          <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;Error from query &#39;%s&#39;:\n%s&quot;</span>, qqp-&gt;<a class="code" href="structlspgQueryQueueStruct.html#a1389b3ec4ddf9ed5cc0344d229a7ff9e" title="our queries should all be pretty short as we&#39;ll just be calling functions: fixed length here simplifi...">qs</a>, emess);</div>
-<div class="line"><a name="l01384"></a><span class="lineno"> 1384</span>&#160;        }</div>
-<div class="line"><a name="l01385"></a><span class="lineno"> 1385</span>&#160;      } <span class="keywordflow">else</span> {</div>
-<div class="line"><a name="l01386"></a><span class="lineno"> 1386</span>&#160;        <span class="comment">//</span></div>
-<div class="line"><a name="l01387"></a><span class="lineno"> 1387</span>&#160;        <span class="comment">// Deal with the response</span></div>
-<div class="line"><a name="l01388"></a><span class="lineno"> 1388</span>&#160;        <span class="comment">//</span></div>
-<div class="line"><a name="l01389"></a><span class="lineno"> 1389</span>&#160;        <span class="comment">// If the response is likely to take awhile we should probably</span></div>
-<div class="line"><a name="l01390"></a><span class="lineno"> 1390</span>&#160;        <span class="comment">// add a new state and put something in the main look to run the onResponse</span></div>
-<div class="line"><a name="l01391"></a><span class="lineno"> 1391</span>&#160;        <span class="comment">// routine in the main loop.  For now, though, we only expect very brief onResponse routines</span></div>
-<div class="line"><a name="l01392"></a><span class="lineno"> 1392</span>&#160;        <span class="comment">//</span></div>
-<div class="line"><a name="l01393"></a><span class="lineno"> 1393</span>&#160;        <span class="keywordflow">if</span>( qqp != NULL &amp;&amp; qqp-&gt;<a class="code" href="structlspgQueryQueueStruct.html#a53bac5ae4cab775423940bff5092a831" title="Callback function for when a query returns a result.">onResponse</a> != NULL)</div>
-<div class="line"><a name="l01394"></a><span class="lineno"> 1394</span>&#160;          qqp-&gt;<a class="code" href="structlspgQueryQueueStruct.html#a53bac5ae4cab775423940bff5092a831" title="Callback function for when a query returns a result.">onResponse</a>( qqp, pgr);</div>
-<div class="line"><a name="l01395"></a><span class="lineno"> 1395</span>&#160;      }</div>
-<div class="line"><a name="l01396"></a><span class="lineno"> 1396</span>&#160;      PQclear( pgr);</div>
-<div class="line"><a name="l01397"></a><span class="lineno"> 1397</span>&#160;    }</div>
-<div class="line"><a name="l01398"></a><span class="lineno"> 1398</span>&#160;  }</div>
-<div class="line"><a name="l01399"></a><span class="lineno"> 1399</span>&#160;}</div>
-<div class="line"><a name="l01400"></a><span class="lineno"> 1400</span>&#160;</div>
-<div class="line"><a name="l01405"></a><span class="lineno"><a class="code" href="lspg_8c.html#a049f4422994aa2eb2b841ffb2937f895"> 1405</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#a049f4422994aa2eb2b841ffb2937f895" title="Service a signal Signals here are treated as file descriptors and fits into our poll scheme...">lspg_sig_service</a>(</div>
-<div class="line"><a name="l01406"></a><span class="lineno"> 1406</span>&#160;                      <span class="keyword">struct</span> pollfd *evt                </div>
-<div class="line"><a name="l01407"></a><span class="lineno"> 1407</span>&#160;                      ) {</div>
-<div class="line"><a name="l01408"></a><span class="lineno"> 1408</span>&#160;  <span class="keyword">struct </span>signalfd_siginfo fdsi;</div>
-<div class="line"><a name="l01409"></a><span class="lineno"> 1409</span>&#160;</div>
-<div class="line"><a name="l01410"></a><span class="lineno"> 1410</span>&#160;  <span class="comment">//</span></div>
-<div class="line"><a name="l01411"></a><span class="lineno"> 1411</span>&#160;  <span class="comment">// Really, we don&#39;t care about the signal,</span></div>
-<div class="line"><a name="l01412"></a><span class="lineno"> 1412</span>&#160;  <span class="comment">// it&#39;s just used to drop out of the poll</span></div>
-<div class="line"><a name="l01413"></a><span class="lineno"> 1413</span>&#160;  <span class="comment">// function when there is something for us</span></div>
-<div class="line"><a name="l01414"></a><span class="lineno"> 1414</span>&#160;  <span class="comment">// to do that didn&#39;t invovle something coming</span></div>
-<div class="line"><a name="l01415"></a><span class="lineno"> 1415</span>&#160;  <span class="comment">// from our postgresql server.</span></div>
-<div class="line"><a name="l01416"></a><span class="lineno"> 1416</span>&#160;  <span class="comment">//</span></div>
-<div class="line"><a name="l01417"></a><span class="lineno"> 1417</span>&#160;  <span class="comment">// This is accompished by the query_push function</span></div>
-<div class="line"><a name="l01418"></a><span class="lineno"> 1418</span>&#160;  <span class="comment">// to notify us that a new query is ready.</span></div>
-<div class="line"><a name="l01419"></a><span class="lineno"> 1419</span>&#160;  <span class="comment">//</span></div>
-<div class="line"><a name="l01420"></a><span class="lineno"> 1420</span>&#160;</div>
-<div class="line"><a name="l01421"></a><span class="lineno"> 1421</span>&#160;  read( evt-&gt;fd, &amp;fdsi, <span class="keyword">sizeof</span>( <span class="keyword">struct</span> signalfd_siginfo));</div>
-<div class="line"><a name="l01422"></a><span class="lineno"> 1422</span>&#160;</div>
-<div class="line"><a name="l01423"></a><span class="lineno"> 1423</span>&#160;}</div>
-<div class="line"><a name="l01424"></a><span class="lineno"> 1424</span>&#160;</div>
-<div class="line"><a name="l01427"></a><span class="lineno"><a class="code" href="lspg_8c.html#aa8d1fed4b461c2139a21826d524777d5"> 1427</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="kvredis_8c.html#aa8d1fed4b461c2139a21826d524777d5" title="I/O control to/from the postgresql server.">lspg_pg_service</a>(</div>
-<div class="line"><a name="l01428"></a><span class="lineno"> 1428</span>&#160;                     <span class="keyword">struct</span> pollfd *evt                 </div>
-<div class="line"><a name="l01429"></a><span class="lineno"> 1429</span>&#160;                     ) {</div>
-<div class="line"><a name="l01430"></a><span class="lineno"> 1430</span>&#160;  <span class="comment">//</span></div>
-<div class="line"><a name="l01431"></a><span class="lineno"> 1431</span>&#160;  <span class="comment">// Currently just used to check for notifies</span></div>
-<div class="line"><a name="l01432"></a><span class="lineno"> 1432</span>&#160;  <span class="comment">// Other socket communication is done syncronously</span></div>
-<div class="line"><a name="l01433"></a><span class="lineno"> 1433</span>&#160;  <span class="comment">//</span></div>
-<div class="line"><a name="l01434"></a><span class="lineno"> 1434</span>&#160;</div>
-<div class="line"><a name="l01435"></a><span class="lineno"> 1435</span>&#160;  <span class="keywordflow">if</span>( evt-&gt;revents &amp; POLLIN) {</div>
-<div class="line"><a name="l01436"></a><span class="lineno"> 1436</span>&#160;    <span class="keywordtype">int</span> err;</div>
-<div class="line"><a name="l01437"></a><span class="lineno"> 1437</span>&#160;</div>
-<div class="line"><a name="l01438"></a><span class="lineno"> 1438</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#ae7ea5876846b5f04c419aee22d3c0aa1">LS_PG_STATE_INIT_POLL</a>) {</div>
-<div class="line"><a name="l01439"></a><span class="lineno"> 1439</span>&#160;      <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> = PQconnectPoll( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
-<div class="line"><a name="l01440"></a><span class="lineno"> 1440</span>&#160;      <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> == PGRES_POLLING_FAILED) {</div>
-<div class="line"><a name="l01441"></a><span class="lineno"> 1441</span>&#160;        <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;</div>
-<div class="line"><a name="l01442"></a><span class="lineno"> 1442</span>&#160;      }</div>
-<div class="line"><a name="l01443"></a><span class="lineno"> 1443</span>&#160;      <span class="keywordflow">return</span>;</div>
-<div class="line"><a name="l01444"></a><span class="lineno"> 1444</span>&#160;    }</div>
-<div class="line"><a name="l01445"></a><span class="lineno"> 1445</span>&#160;</div>
-<div class="line"><a name="l01446"></a><span class="lineno"> 1446</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#ac70a1141f3b138055ea7143bd493187c">LS_PG_STATE_RESET_POLL</a>) {</div>
-<div class="line"><a name="l01447"></a><span class="lineno"> 1447</span>&#160;      <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> = PQresetPoll( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
-<div class="line"><a name="l01448"></a><span class="lineno"> 1448</span>&#160;      <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> == PGRES_POLLING_FAILED) {</div>
-<div class="line"><a name="l01449"></a><span class="lineno"> 1449</span>&#160;        <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;</div>
-<div class="line"><a name="l01450"></a><span class="lineno"> 1450</span>&#160;      }</div>
-<div class="line"><a name="l01451"></a><span class="lineno"> 1451</span>&#160;      <span class="keywordflow">return</span>;</div>
-<div class="line"><a name="l01452"></a><span class="lineno"> 1452</span>&#160;    }</div>
-<div class="line"><a name="l01453"></a><span class="lineno"> 1453</span>&#160;</div>
+<div class="line"><a name="l01265"></a><span class="lineno"> 1265</span>&#160;</div>
+<div class="line"><a name="l01268"></a><span class="lineno"><a class="code" href="lspg_8c.html#af6485ac1749c5de3008dd0e0badaa09c"> 1268</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="kvredis_8c.html#af6485ac1749c5de3008dd0e0badaa09c" title="Flush psql output buffer (ie, send the query)">lspg_flush</a>() {</div>
+<div class="line"><a name="l01269"></a><span class="lineno"> 1269</span>&#160;  <span class="keywordtype">int</span> err;</div>
+<div class="line"><a name="l01270"></a><span class="lineno"> 1270</span>&#160;</div>
+<div class="line"><a name="l01271"></a><span class="lineno"> 1271</span>&#160;  err = PQflush( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
+<div class="line"><a name="l01272"></a><span class="lineno"> 1272</span>&#160;  <span class="keywordflow">switch</span>( err) {</div>
+<div class="line"><a name="l01273"></a><span class="lineno"> 1273</span>&#160;  <span class="keywordflow">case</span> -1:</div>
+<div class="line"><a name="l01274"></a><span class="lineno"> 1274</span>&#160;    <span class="comment">// an error occured</span></div>
+<div class="line"><a name="l01275"></a><span class="lineno"> 1275</span>&#160;</div>
+<div class="line"><a name="l01276"></a><span class="lineno"> 1276</span>&#160;    <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;flush failed: %s&quot;</span>, PQerrorMessage( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>));</div>
+<div class="line"><a name="l01277"></a><span class="lineno"> 1277</span>&#160;</div>
+<div class="line"><a name="l01278"></a><span class="lineno"> 1278</span>&#160;    <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>;</div>
+<div class="line"><a name="l01279"></a><span class="lineno"> 1279</span>&#160;    <span class="comment">//</span></div>
+<div class="line"><a name="l01280"></a><span class="lineno"> 1280</span>&#160;    <span class="comment">// We should probably reset the connection and start from scratch.  Probably the connection died.</span></div>
+<div class="line"><a name="l01281"></a><span class="lineno"> 1281</span>&#160;    <span class="comment">//</span></div>
+<div class="line"><a name="l01282"></a><span class="lineno"> 1282</span>&#160;    <span class="keywordflow">break</span>;</div>
+<div class="line"><a name="l01283"></a><span class="lineno"> 1283</span>&#160;          </div>
+<div class="line"><a name="l01284"></a><span class="lineno"> 1284</span>&#160;  <span class="keywordflow">case</span> 0:</div>
+<div class="line"><a name="l01285"></a><span class="lineno"> 1285</span>&#160;    <span class="comment">// goodness and joy.</span></div>
+<div class="line"><a name="l01286"></a><span class="lineno"> 1286</span>&#160;    <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#a373e668840b4795ff9a71bc3f744d209">LS_PG_STATE_RECV</a>;</div>
+<div class="line"><a name="l01287"></a><span class="lineno"> 1287</span>&#160;    <span class="keywordflow">break</span>;</div>
+<div class="line"><a name="l01288"></a><span class="lineno"> 1288</span>&#160;</div>
+<div class="line"><a name="l01289"></a><span class="lineno"> 1289</span>&#160;  <span class="keywordflow">case</span> 1:</div>
+<div class="line"><a name="l01290"></a><span class="lineno"> 1290</span>&#160;    <span class="comment">// more sending to do</span></div>
+<div class="line"><a name="l01291"></a><span class="lineno"> 1291</span>&#160;    <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#a88a7e80c12fb0449c4b0857a0c7deb21">LS_PG_STATE_SEND_FLUSH</a>;</div>
+<div class="line"><a name="l01292"></a><span class="lineno"> 1292</span>&#160;    <span class="keywordflow">break</span>;</div>
+<div class="line"><a name="l01293"></a><span class="lineno"> 1293</span>&#160;  }</div>
+<div class="line"><a name="l01294"></a><span class="lineno"> 1294</span>&#160;}</div>
+<div class="line"><a name="l01295"></a><span class="lineno"> 1295</span>&#160;</div>
+<div class="line"><a name="l01298"></a><span class="lineno"><a class="code" href="lspg_8c.html#a714b15e117ffe7bfce4f2f2ce4725b0a"> 1298</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="kvredis_8c.html#a714b15e117ffe7bfce4f2f2ce4725b0a" title="send the next queued query to the DB server">lspg_send_next_query</a>() {</div>
+<div class="line"><a name="l01299"></a><span class="lineno"> 1299</span>&#160;  <span class="comment">//</span></div>
+<div class="line"><a name="l01300"></a><span class="lineno"> 1300</span>&#160;  <span class="comment">// Normally we should be in the &quot;send&quot; state</span></div>
+<div class="line"><a name="l01301"></a><span class="lineno"> 1301</span>&#160;  <span class="comment">// but we can also send if we are servicing</span></div>
+<div class="line"><a name="l01302"></a><span class="lineno"> 1302</span>&#160;  <span class="comment">// a reply</span></div>
+<div class="line"><a name="l01303"></a><span class="lineno"> 1303</span>&#160;  <span class="comment">//</span></div>
+<div class="line"><a name="l01304"></a><span class="lineno"> 1304</span>&#160;</div>
+<div class="line"><a name="l01305"></a><span class="lineno"> 1305</span>&#160;  <a class="code" href="structlspgQueryQueueStruct.html" title="Store each query along with it&#39;s callback function.">lspg_query_queue_t</a> *qqp;</div>
+<div class="line"><a name="l01306"></a><span class="lineno"> 1306</span>&#160;  <span class="keywordtype">int</span> err;</div>
+<div class="line"><a name="l01307"></a><span class="lineno"> 1307</span>&#160;</div>
+<div class="line"><a name="l01308"></a><span class="lineno"> 1308</span>&#160;  qqp = <a class="code" href="kvredis_8c.html#ad5f3ec8f197cc330c83dba70f310533c" title="Return the next item in the postgresql queue.">lspg_query_next</a>();</div>
+<div class="line"><a name="l01309"></a><span class="lineno"> 1309</span>&#160;  <span class="keywordflow">if</span>( qqp == NULL) {</div>
+<div class="line"><a name="l01310"></a><span class="lineno"> 1310</span>&#160;    <span class="comment">//</span></div>
+<div class="line"><a name="l01311"></a><span class="lineno"> 1311</span>&#160;    <span class="comment">// A send without a query?  Should never happen.</span></div>
+<div class="line"><a name="l01312"></a><span class="lineno"> 1312</span>&#160;    <span class="comment">// But at least we shouldn&#39;t segfault if it does.</span></div>
+<div class="line"><a name="l01313"></a><span class="lineno"> 1313</span>&#160;    <span class="comment">//</span></div>
+<div class="line"><a name="l01314"></a><span class="lineno"> 1314</span>&#160;    <span class="keywordflow">return</span>;</div>
+<div class="line"><a name="l01315"></a><span class="lineno"> 1315</span>&#160;  }</div>
+<div class="line"><a name="l01316"></a><span class="lineno"> 1316</span>&#160;</div>
+<div class="line"><a name="l01317"></a><span class="lineno"> 1317</span>&#160;  <span class="keywordflow">if</span>( qqp-&gt;<a class="code" href="structlspgQueryQueueStruct.html#a1389b3ec4ddf9ed5cc0344d229a7ff9e" title="our queries should all be pretty short as we&#39;ll just be calling functions: fixed length here simplifi...">qs</a>[0] == 0) {</div>
+<div class="line"><a name="l01318"></a><span class="lineno"> 1318</span>&#160;    <span class="comment">//</span></div>
+<div class="line"><a name="l01319"></a><span class="lineno"> 1319</span>&#160;    <span class="comment">// Do we really have to check this case?</span></div>
+<div class="line"><a name="l01320"></a><span class="lineno"> 1320</span>&#160;    <span class="comment">// It would only come up if we stupidly pushed an empty query string</span></div>
+<div class="line"><a name="l01321"></a><span class="lineno"> 1321</span>&#160;    <span class="comment">// or ran off the end of the queue</span></div>
+<div class="line"><a name="l01322"></a><span class="lineno"> 1322</span>&#160;    <span class="comment">//</span></div>
+<div class="line"><a name="l01323"></a><span class="lineno"> 1323</span>&#160;    <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;Popped empty query string.  Probably bad things are going on.&quot;</span>);</div>
+<div class="line"><a name="l01324"></a><span class="lineno"> 1324</span>&#160;</div>
+<div class="line"><a name="l01325"></a><span class="lineno"> 1325</span>&#160;    <a class="code" href="kvredis_8c.html#a3847589e641f7e16a0cd68ef30e37cca" title="Remove the oldest item in the queue.">lspg_query_reply_next</a>();</div>
+<div class="line"><a name="l01326"></a><span class="lineno"> 1326</span>&#160;    <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>;</div>
+<div class="line"><a name="l01327"></a><span class="lineno"> 1327</span>&#160;  } <span class="keywordflow">else</span> {</div>
+<div class="line"><a name="l01328"></a><span class="lineno"> 1328</span>&#160;    err = PQsendQuery( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>, qqp-&gt;<a class="code" href="structlspgQueryQueueStruct.html#a1389b3ec4ddf9ed5cc0344d229a7ff9e" title="our queries should all be pretty short as we&#39;ll just be calling functions: fixed length here simplifi...">qs</a>);</div>
+<div class="line"><a name="l01329"></a><span class="lineno"> 1329</span>&#160;    <span class="keywordflow">if</span>( err == 0) {</div>
+<div class="line"><a name="l01330"></a><span class="lineno"> 1330</span>&#160;      <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;query failed: %s\n&quot;</span>, PQerrorMessage( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>));</div>
+<div class="line"><a name="l01331"></a><span class="lineno"> 1331</span>&#160;</div>
+<div class="line"><a name="l01332"></a><span class="lineno"> 1332</span>&#160;      <span class="comment">//</span></div>
+<div class="line"><a name="l01333"></a><span class="lineno"> 1333</span>&#160;      <span class="comment">// Don&#39;t wait for a reply, just reset the connection</span></div>
+<div class="line"><a name="l01334"></a><span class="lineno"> 1334</span>&#160;      <span class="comment">//</span></div>
+<div class="line"><a name="l01335"></a><span class="lineno"> 1335</span>&#160;      <a class="code" href="kvredis_8c.html#a3847589e641f7e16a0cd68ef30e37cca" title="Remove the oldest item in the queue.">lspg_query_reply_next</a>();</div>
+<div class="line"><a name="l01336"></a><span class="lineno"> 1336</span>&#160;      <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;</div>
+<div class="line"><a name="l01337"></a><span class="lineno"> 1337</span>&#160;    } <span class="keywordflow">else</span> {</div>
+<div class="line"><a name="l01338"></a><span class="lineno"> 1338</span>&#160;      <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#a88a7e80c12fb0449c4b0857a0c7deb21">LS_PG_STATE_SEND_FLUSH</a>;</div>
+<div class="line"><a name="l01339"></a><span class="lineno"> 1339</span>&#160;    }</div>
+<div class="line"><a name="l01340"></a><span class="lineno"> 1340</span>&#160;  }</div>
+<div class="line"><a name="l01341"></a><span class="lineno"> 1341</span>&#160;}</div>
+<div class="line"><a name="l01342"></a><span class="lineno"> 1342</span>&#160;</div>
+<div class="line"><a name="l01345"></a><span class="lineno"><a class="code" href="lspg_8c.html#a038c5af23469b789fc1c55d21cb43029"> 1345</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="kvredis_8c.html#a038c5af23469b789fc1c55d21cb43029" title="Receive a result of a query.">lspg_receive</a>() {</div>
+<div class="line"><a name="l01346"></a><span class="lineno"> 1346</span>&#160;  PGresult *pgr;</div>
+<div class="line"><a name="l01347"></a><span class="lineno"> 1347</span>&#160;  <a class="code" href="structlspgQueryQueueStruct.html" title="Store each query along with it&#39;s callback function.">lspg_query_queue_t</a> *qqp;</div>
+<div class="line"><a name="l01348"></a><span class="lineno"> 1348</span>&#160;  <span class="keywordtype">int</span> err;</div>
+<div class="line"><a name="l01349"></a><span class="lineno"> 1349</span>&#160;</div>
+<div class="line"><a name="l01350"></a><span class="lineno"> 1350</span>&#160;  err = PQconsumeInput( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
+<div class="line"><a name="l01351"></a><span class="lineno"> 1351</span>&#160;  <span class="keywordflow">if</span>( err != 1) {</div>
+<div class="line"><a name="l01352"></a><span class="lineno"> 1352</span>&#160;    <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;consume input failed: %s&quot;</span>, PQerrorMessage( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>));</div>
+<div class="line"><a name="l01353"></a><span class="lineno"> 1353</span>&#160;    <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;</div>
+<div class="line"><a name="l01354"></a><span class="lineno"> 1354</span>&#160;    <span class="keywordflow">return</span>;</div>
+<div class="line"><a name="l01355"></a><span class="lineno"> 1355</span>&#160;  }</div>
+<div class="line"><a name="l01356"></a><span class="lineno"> 1356</span>&#160;</div>
+<div class="line"><a name="l01357"></a><span class="lineno"> 1357</span>&#160;  <span class="comment">//</span></div>
+<div class="line"><a name="l01358"></a><span class="lineno"> 1358</span>&#160;  <span class="comment">// We must call PQgetResult until it returns NULL before sending the next query</span></div>
+<div class="line"><a name="l01359"></a><span class="lineno"> 1359</span>&#160;  <span class="comment">// This implies that only one query can ever be active at a time and our queue</span></div>
+<div class="line"><a name="l01360"></a><span class="lineno"> 1360</span>&#160;  <span class="comment">// management should be simple</span></div>
+<div class="line"><a name="l01361"></a><span class="lineno"> 1361</span>&#160;  <span class="comment">//</span></div>
+<div class="line"><a name="l01362"></a><span class="lineno"> 1362</span>&#160;  <span class="comment">// We should be in the LS_PG_STATE_RECV here</span></div>
+<div class="line"><a name="l01363"></a><span class="lineno"> 1363</span>&#160;  <span class="comment">//</span></div>
+<div class="line"><a name="l01364"></a><span class="lineno"> 1364</span>&#160;</div>
+<div class="line"><a name="l01365"></a><span class="lineno"> 1365</span>&#160;  <span class="keywordflow">while</span>( !PQisBusy( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>)) {</div>
+<div class="line"><a name="l01366"></a><span class="lineno"> 1366</span>&#160;    pgr = PQgetResult( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
+<div class="line"><a name="l01367"></a><span class="lineno"> 1367</span>&#160;    <span class="keywordflow">if</span>( pgr == NULL) {</div>
+<div class="line"><a name="l01368"></a><span class="lineno"> 1368</span>&#160;      <a class="code" href="kvredis_8c.html#a3847589e641f7e16a0cd68ef30e37cca" title="Remove the oldest item in the queue.">lspg_query_reply_next</a>();</div>
+<div class="line"><a name="l01369"></a><span class="lineno"> 1369</span>&#160;      <span class="comment">//</span></div>
+<div class="line"><a name="l01370"></a><span class="lineno"> 1370</span>&#160;      <span class="comment">// we are now done reading the response from the database</span></div>
+<div class="line"><a name="l01371"></a><span class="lineno"> 1371</span>&#160;      <span class="comment">//</span></div>
+<div class="line"><a name="l01372"></a><span class="lineno"> 1372</span>&#160;      <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>;</div>
+<div class="line"><a name="l01373"></a><span class="lineno"> 1373</span>&#160;      <span class="keywordflow">break</span>;</div>
+<div class="line"><a name="l01374"></a><span class="lineno"> 1374</span>&#160;    } <span class="keywordflow">else</span> {</div>
+<div class="line"><a name="l01375"></a><span class="lineno"> 1375</span>&#160;      ExecStatusType es;</div>
+<div class="line"><a name="l01376"></a><span class="lineno"> 1376</span>&#160;</div>
+<div class="line"><a name="l01377"></a><span class="lineno"> 1377</span>&#160;      qqp = <a class="code" href="kvredis_8c.html#ae6bf4f54117bedf903360883bb32699f" title="Return the next item in the reply queue but don&#39;t pop it since we may need it more than once...">lspg_query_reply_peek</a>();</div>
+<div class="line"><a name="l01378"></a><span class="lineno"> 1378</span>&#160;      es = PQresultStatus( pgr);</div>
+<div class="line"><a name="l01379"></a><span class="lineno"> 1379</span>&#160;</div>
+<div class="line"><a name="l01380"></a><span class="lineno"> 1380</span>&#160;      <span class="keywordflow">if</span>( es != PGRES_COMMAND_OK &amp;&amp; es != PGRES_TUPLES_OK) {</div>
+<div class="line"><a name="l01381"></a><span class="lineno"> 1381</span>&#160;        <span class="keywordtype">char</span> *emess;</div>
+<div class="line"><a name="l01382"></a><span class="lineno"> 1382</span>&#160;        emess = PQresultErrorMessage( pgr);</div>
+<div class="line"><a name="l01383"></a><span class="lineno"> 1383</span>&#160;        <span class="keywordflow">if</span>( emess != NULL &amp;&amp; emess[0] != 0) {</div>
+<div class="line"><a name="l01384"></a><span class="lineno"> 1384</span>&#160;          <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;Error from query &#39;%s&#39;:\n%s&quot;</span>, qqp-&gt;<a class="code" href="structlspgQueryQueueStruct.html#a1389b3ec4ddf9ed5cc0344d229a7ff9e" title="our queries should all be pretty short as we&#39;ll just be calling functions: fixed length here simplifi...">qs</a>, emess);</div>
+<div class="line"><a name="l01385"></a><span class="lineno"> 1385</span>&#160;        }</div>
+<div class="line"><a name="l01386"></a><span class="lineno"> 1386</span>&#160;      } <span class="keywordflow">else</span> {</div>
+<div class="line"><a name="l01387"></a><span class="lineno"> 1387</span>&#160;        <span class="comment">//</span></div>
+<div class="line"><a name="l01388"></a><span class="lineno"> 1388</span>&#160;        <span class="comment">// Deal with the response</span></div>
+<div class="line"><a name="l01389"></a><span class="lineno"> 1389</span>&#160;        <span class="comment">//</span></div>
+<div class="line"><a name="l01390"></a><span class="lineno"> 1390</span>&#160;        <span class="comment">// If the response is likely to take awhile we should probably</span></div>
+<div class="line"><a name="l01391"></a><span class="lineno"> 1391</span>&#160;        <span class="comment">// add a new state and put something in the main look to run the onResponse</span></div>
+<div class="line"><a name="l01392"></a><span class="lineno"> 1392</span>&#160;        <span class="comment">// routine in the main loop.  For now, though, we only expect very brief onResponse routines</span></div>
+<div class="line"><a name="l01393"></a><span class="lineno"> 1393</span>&#160;        <span class="comment">//</span></div>
+<div class="line"><a name="l01394"></a><span class="lineno"> 1394</span>&#160;        <span class="keywordflow">if</span>( qqp != NULL &amp;&amp; qqp-&gt;<a class="code" href="structlspgQueryQueueStruct.html#a53bac5ae4cab775423940bff5092a831" title="Callback function for when a query returns a result.">onResponse</a> != NULL)</div>
+<div class="line"><a name="l01395"></a><span class="lineno"> 1395</span>&#160;          qqp-&gt;<a class="code" href="structlspgQueryQueueStruct.html#a53bac5ae4cab775423940bff5092a831" title="Callback function for when a query returns a result.">onResponse</a>( qqp, pgr);</div>
+<div class="line"><a name="l01396"></a><span class="lineno"> 1396</span>&#160;      }</div>
+<div class="line"><a name="l01397"></a><span class="lineno"> 1397</span>&#160;      PQclear( pgr);</div>
+<div class="line"><a name="l01398"></a><span class="lineno"> 1398</span>&#160;    }</div>
+<div class="line"><a name="l01399"></a><span class="lineno"> 1399</span>&#160;  }</div>
+<div class="line"><a name="l01400"></a><span class="lineno"> 1400</span>&#160;}</div>
+<div class="line"><a name="l01401"></a><span class="lineno"> 1401</span>&#160;</div>
+<div class="line"><a name="l01406"></a><span class="lineno"><a class="code" href="lspg_8c.html#a049f4422994aa2eb2b841ffb2937f895"> 1406</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#a049f4422994aa2eb2b841ffb2937f895" title="Service a signal Signals here are treated as file descriptors and fits into our poll scheme...">lspg_sig_service</a>(</div>
+<div class="line"><a name="l01407"></a><span class="lineno"> 1407</span>&#160;                      <span class="keyword">struct</span> pollfd *evt                </div>
+<div class="line"><a name="l01408"></a><span class="lineno"> 1408</span>&#160;                      ) {</div>
+<div class="line"><a name="l01409"></a><span class="lineno"> 1409</span>&#160;  <span class="keyword">struct </span>signalfd_siginfo fdsi;</div>
+<div class="line"><a name="l01410"></a><span class="lineno"> 1410</span>&#160;</div>
+<div class="line"><a name="l01411"></a><span class="lineno"> 1411</span>&#160;  <span class="comment">//</span></div>
+<div class="line"><a name="l01412"></a><span class="lineno"> 1412</span>&#160;  <span class="comment">// Really, we don&#39;t care about the signal,</span></div>
+<div class="line"><a name="l01413"></a><span class="lineno"> 1413</span>&#160;  <span class="comment">// it&#39;s just used to drop out of the poll</span></div>
+<div class="line"><a name="l01414"></a><span class="lineno"> 1414</span>&#160;  <span class="comment">// function when there is something for us</span></div>
+<div class="line"><a name="l01415"></a><span class="lineno"> 1415</span>&#160;  <span class="comment">// to do that didn&#39;t invovle something coming</span></div>
+<div class="line"><a name="l01416"></a><span class="lineno"> 1416</span>&#160;  <span class="comment">// from our postgresql server.</span></div>
+<div class="line"><a name="l01417"></a><span class="lineno"> 1417</span>&#160;  <span class="comment">//</span></div>
+<div class="line"><a name="l01418"></a><span class="lineno"> 1418</span>&#160;  <span class="comment">// This is accompished by the query_push function</span></div>
+<div class="line"><a name="l01419"></a><span class="lineno"> 1419</span>&#160;  <span class="comment">// to notify us that a new query is ready.</span></div>
+<div class="line"><a name="l01420"></a><span class="lineno"> 1420</span>&#160;  <span class="comment">//</span></div>
+<div class="line"><a name="l01421"></a><span class="lineno"> 1421</span>&#160;</div>
+<div class="line"><a name="l01422"></a><span class="lineno"> 1422</span>&#160;  read( evt-&gt;fd, &amp;fdsi, <span class="keyword">sizeof</span>( <span class="keyword">struct</span> signalfd_siginfo));</div>
+<div class="line"><a name="l01423"></a><span class="lineno"> 1423</span>&#160;</div>
+<div class="line"><a name="l01424"></a><span class="lineno"> 1424</span>&#160;}</div>
+<div class="line"><a name="l01425"></a><span class="lineno"> 1425</span>&#160;</div>
+<div class="line"><a name="l01428"></a><span class="lineno"><a class="code" href="lspg_8c.html#aa8d1fed4b461c2139a21826d524777d5"> 1428</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="kvredis_8c.html#aa8d1fed4b461c2139a21826d524777d5" title="I/O control to/from the postgresql server.">lspg_pg_service</a>(</div>
+<div class="line"><a name="l01429"></a><span class="lineno"> 1429</span>&#160;                     <span class="keyword">struct</span> pollfd *evt                 </div>
+<div class="line"><a name="l01430"></a><span class="lineno"> 1430</span>&#160;                     ) {</div>
+<div class="line"><a name="l01431"></a><span class="lineno"> 1431</span>&#160;  <span class="comment">//</span></div>
+<div class="line"><a name="l01432"></a><span class="lineno"> 1432</span>&#160;  <span class="comment">// Currently just used to check for notifies</span></div>
+<div class="line"><a name="l01433"></a><span class="lineno"> 1433</span>&#160;  <span class="comment">// Other socket communication is done syncronously</span></div>
+<div class="line"><a name="l01434"></a><span class="lineno"> 1434</span>&#160;  <span class="comment">//</span></div>
+<div class="line"><a name="l01435"></a><span class="lineno"> 1435</span>&#160;</div>
+<div class="line"><a name="l01436"></a><span class="lineno"> 1436</span>&#160;  <span class="keywordflow">if</span>( evt-&gt;revents &amp; POLLIN) {</div>
+<div class="line"><a name="l01437"></a><span class="lineno"> 1437</span>&#160;    <span class="keywordtype">int</span> err;</div>
+<div class="line"><a name="l01438"></a><span class="lineno"> 1438</span>&#160;</div>
+<div class="line"><a name="l01439"></a><span class="lineno"> 1439</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#ae7ea5876846b5f04c419aee22d3c0aa1">LS_PG_STATE_INIT_POLL</a>) {</div>
+<div class="line"><a name="l01440"></a><span class="lineno"> 1440</span>&#160;      <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> = PQconnectPoll( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
+<div class="line"><a name="l01441"></a><span class="lineno"> 1441</span>&#160;      <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> == PGRES_POLLING_FAILED) {</div>
+<div class="line"><a name="l01442"></a><span class="lineno"> 1442</span>&#160;        <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;</div>
+<div class="line"><a name="l01443"></a><span class="lineno"> 1443</span>&#160;      }</div>
+<div class="line"><a name="l01444"></a><span class="lineno"> 1444</span>&#160;      <span class="keywordflow">return</span>;</div>
+<div class="line"><a name="l01445"></a><span class="lineno"> 1445</span>&#160;    }</div>
+<div class="line"><a name="l01446"></a><span class="lineno"> 1446</span>&#160;</div>
+<div class="line"><a name="l01447"></a><span class="lineno"> 1447</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#ac70a1141f3b138055ea7143bd493187c">LS_PG_STATE_RESET_POLL</a>) {</div>
+<div class="line"><a name="l01448"></a><span class="lineno"> 1448</span>&#160;      <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> = PQresetPoll( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
+<div class="line"><a name="l01449"></a><span class="lineno"> 1449</span>&#160;      <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> == PGRES_POLLING_FAILED) {</div>
+<div class="line"><a name="l01450"></a><span class="lineno"> 1450</span>&#160;        <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;</div>
+<div class="line"><a name="l01451"></a><span class="lineno"> 1451</span>&#160;      }</div>
+<div class="line"><a name="l01452"></a><span class="lineno"> 1452</span>&#160;      <span class="keywordflow">return</span>;</div>
+<div class="line"><a name="l01453"></a><span class="lineno"> 1453</span>&#160;    }</div>
 <div class="line"><a name="l01454"></a><span class="lineno"> 1454</span>&#160;</div>
-<div class="line"><a name="l01455"></a><span class="lineno"> 1455</span>&#160;    <span class="comment">//</span></div>
-<div class="line"><a name="l01456"></a><span class="lineno"> 1456</span>&#160;    <span class="comment">// if in IDLE or RECV we need to call consumeInput first</span></div>
-<div class="line"><a name="l01457"></a><span class="lineno"> 1457</span>&#160;    <span class="comment">//</span></div>
-<div class="line"><a name="l01458"></a><span class="lineno"> 1458</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>) {</div>
-<div class="line"><a name="l01459"></a><span class="lineno"> 1459</span>&#160;      err = PQconsumeInput( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
-<div class="line"><a name="l01460"></a><span class="lineno"> 1460</span>&#160;      <span class="keywordflow">if</span>( err != 1) {</div>
-<div class="line"><a name="l01461"></a><span class="lineno"> 1461</span>&#160;        <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;consume input failed: %s&quot;</span>, PQerrorMessage( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>));</div>
-<div class="line"><a name="l01462"></a><span class="lineno"> 1462</span>&#160;        <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;</div>
-<div class="line"><a name="l01463"></a><span class="lineno"> 1463</span>&#160;        <span class="keywordflow">return</span>;</div>
-<div class="line"><a name="l01464"></a><span class="lineno"> 1464</span>&#160;      }</div>
-<div class="line"><a name="l01465"></a><span class="lineno"> 1465</span>&#160;    }      </div>
-<div class="line"><a name="l01466"></a><span class="lineno"> 1466</span>&#160;</div>
-<div class="line"><a name="l01467"></a><span class="lineno"> 1467</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#a373e668840b4795ff9a71bc3f744d209">LS_PG_STATE_RECV</a>) {</div>
-<div class="line"><a name="l01468"></a><span class="lineno"> 1468</span>&#160;      <a class="code" href="kvredis_8c.html#a038c5af23469b789fc1c55d21cb43029" title="Receive a result of a query.">lspg_receive</a>();</div>
-<div class="line"><a name="l01469"></a><span class="lineno"> 1469</span>&#160;    }</div>
-<div class="line"><a name="l01470"></a><span class="lineno"> 1470</span>&#160;</div>
-<div class="line"><a name="l01471"></a><span class="lineno"> 1471</span>&#160;    <span class="comment">//</span></div>
-<div class="line"><a name="l01472"></a><span class="lineno"> 1472</span>&#160;    <span class="comment">// Check for notifies regardless of our state</span></div>
-<div class="line"><a name="l01473"></a><span class="lineno"> 1473</span>&#160;    <span class="comment">// Push as many requests as we have notifies.</span></div>
-<div class="line"><a name="l01474"></a><span class="lineno"> 1474</span>&#160;    <span class="comment">//</span></div>
-<div class="line"><a name="l01475"></a><span class="lineno"> 1475</span>&#160;    {</div>
-<div class="line"><a name="l01476"></a><span class="lineno"> 1476</span>&#160;      PGnotify *pgn;</div>
-<div class="line"><a name="l01477"></a><span class="lineno"> 1477</span>&#160;</div>
-<div class="line"><a name="l01478"></a><span class="lineno"> 1478</span>&#160;      <span class="keywordflow">while</span>( 1) {</div>
-<div class="line"><a name="l01479"></a><span class="lineno"> 1479</span>&#160;        pgn = PQnotifies( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
-<div class="line"><a name="l01480"></a><span class="lineno"> 1480</span>&#160;        <span class="keywordflow">if</span>( pgn == NULL)</div>
-<div class="line"><a name="l01481"></a><span class="lineno"> 1481</span>&#160;          <span class="keywordflow">break</span>;</div>
-<div class="line"><a name="l01482"></a><span class="lineno"> 1482</span>&#160;</div>
-<div class="line"><a name="l01483"></a><span class="lineno"> 1483</span>&#160;        <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lspg_pg_service: notify recieved %s&quot;</span>, pgn-&gt;relname);</div>
-<div class="line"><a name="l01484"></a><span class="lineno"> 1484</span>&#160;        </div>
-<div class="line"><a name="l01485"></a><span class="lineno"> 1485</span>&#160;        <span class="keywordflow">if</span>( strstr( pgn-&gt;relname, <span class="stringliteral">&quot;_pmac&quot;</span>) != NULL) {</div>
-<div class="line"><a name="l01486"></a><span class="lineno"> 1486</span>&#160;          <a class="code" href="kvredis_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#a1e11f525ca0f9ac9ab71f9fbe983c42b" title="Send strings directly to PMAC queue.">lspg_cmd_cb</a>, <span class="stringliteral">&quot;SELECT pmac.md2_queue_next()&quot;</span>);</div>
-<div class="line"><a name="l01487"></a><span class="lineno"> 1487</span>&#160;        } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strstr( pgn-&gt;relname, <span class="stringliteral">&quot;_diff&quot;</span>) != NULL || strstr( pgn-&gt;relname, <span class="stringliteral">&quot;_run&quot;</span>) != NULL) {</div>
-<div class="line"><a name="l01488"></a><span class="lineno"> 1488</span>&#160;          <a class="code" href="kvredis_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#aeda8dad89b03d7d61cc994dd63ee5db6" title="Queue the next MD2 instruction.">lspg_nextaction_cb</a>, <span class="stringliteral">&quot;SELECT action FROM px.nextaction()&quot;</span>);</div>
-<div class="line"><a name="l01489"></a><span class="lineno"> 1489</span>&#160;        } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strstr( pgn-&gt;relname, <span class="stringliteral">&quot;_sample&quot;</span>) != NULL) {</div>
-<div class="line"><a name="l01490"></a><span class="lineno"> 1490</span>&#160;          <a class="code" href="lspg_8c.html#acf98a9e2adec05a69847045f444a5c77">lspg_getcurrentsampleid_call</a>();</div>
-<div class="line"><a name="l01491"></a><span class="lineno"> 1491</span>&#160;        }</div>
-<div class="line"><a name="l01492"></a><span class="lineno"> 1492</span>&#160;        PQfreemem( pgn);</div>
-<div class="line"><a name="l01493"></a><span class="lineno"> 1493</span>&#160;      }</div>
-<div class="line"><a name="l01494"></a><span class="lineno"> 1494</span>&#160;    }</div>
-<div class="line"><a name="l01495"></a><span class="lineno"> 1495</span>&#160;  }</div>
-<div class="line"><a name="l01496"></a><span class="lineno"> 1496</span>&#160;</div>
-<div class="line"><a name="l01497"></a><span class="lineno"> 1497</span>&#160;  <span class="keywordflow">if</span>( evt-&gt;revents &amp; POLLOUT) {</div>
-<div class="line"><a name="l01498"></a><span class="lineno"> 1498</span>&#160;</div>
-<div class="line"><a name="l01499"></a><span class="lineno"> 1499</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#ae7ea5876846b5f04c419aee22d3c0aa1">LS_PG_STATE_INIT_POLL</a>) {</div>
-<div class="line"><a name="l01500"></a><span class="lineno"> 1500</span>&#160;      <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> = PQconnectPoll( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
-<div class="line"><a name="l01501"></a><span class="lineno"> 1501</span>&#160;      <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> == PGRES_POLLING_FAILED) {</div>
-<div class="line"><a name="l01502"></a><span class="lineno"> 1502</span>&#160;        <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;</div>
-<div class="line"><a name="l01503"></a><span class="lineno"> 1503</span>&#160;      }</div>
-<div class="line"><a name="l01504"></a><span class="lineno"> 1504</span>&#160;      <span class="keywordflow">return</span>;</div>
-<div class="line"><a name="l01505"></a><span class="lineno"> 1505</span>&#160;    }</div>
-<div class="line"><a name="l01506"></a><span class="lineno"> 1506</span>&#160;</div>
-<div class="line"><a name="l01507"></a><span class="lineno"> 1507</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#ac70a1141f3b138055ea7143bd493187c">LS_PG_STATE_RESET_POLL</a>) {</div>
-<div class="line"><a name="l01508"></a><span class="lineno"> 1508</span>&#160;      <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> = PQresetPoll( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
-<div class="line"><a name="l01509"></a><span class="lineno"> 1509</span>&#160;      <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> == PGRES_POLLING_FAILED) {</div>
-<div class="line"><a name="l01510"></a><span class="lineno"> 1510</span>&#160;        <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;</div>
-<div class="line"><a name="l01511"></a><span class="lineno"> 1511</span>&#160;      }</div>
-<div class="line"><a name="l01512"></a><span class="lineno"> 1512</span>&#160;      <span class="keywordflow">return</span>;</div>
-<div class="line"><a name="l01513"></a><span class="lineno"> 1513</span>&#160;    }</div>
-<div class="line"><a name="l01514"></a><span class="lineno"> 1514</span>&#160;</div>
+<div class="line"><a name="l01455"></a><span class="lineno"> 1455</span>&#160;</div>
+<div class="line"><a name="l01456"></a><span class="lineno"> 1456</span>&#160;    <span class="comment">//</span></div>
+<div class="line"><a name="l01457"></a><span class="lineno"> 1457</span>&#160;    <span class="comment">// if in IDLE or RECV we need to call consumeInput first</span></div>
+<div class="line"><a name="l01458"></a><span class="lineno"> 1458</span>&#160;    <span class="comment">//</span></div>
+<div class="line"><a name="l01459"></a><span class="lineno"> 1459</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>) {</div>
+<div class="line"><a name="l01460"></a><span class="lineno"> 1460</span>&#160;      err = PQconsumeInput( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
+<div class="line"><a name="l01461"></a><span class="lineno"> 1461</span>&#160;      <span class="keywordflow">if</span>( err != 1) {</div>
+<div class="line"><a name="l01462"></a><span class="lineno"> 1462</span>&#160;        <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;consume input failed: %s&quot;</span>, PQerrorMessage( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>));</div>
+<div class="line"><a name="l01463"></a><span class="lineno"> 1463</span>&#160;        <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;</div>
+<div class="line"><a name="l01464"></a><span class="lineno"> 1464</span>&#160;        <span class="keywordflow">return</span>;</div>
+<div class="line"><a name="l01465"></a><span class="lineno"> 1465</span>&#160;      }</div>
+<div class="line"><a name="l01466"></a><span class="lineno"> 1466</span>&#160;    }      </div>
+<div class="line"><a name="l01467"></a><span class="lineno"> 1467</span>&#160;</div>
+<div class="line"><a name="l01468"></a><span class="lineno"> 1468</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#a373e668840b4795ff9a71bc3f744d209">LS_PG_STATE_RECV</a>) {</div>
+<div class="line"><a name="l01469"></a><span class="lineno"> 1469</span>&#160;      <a class="code" href="kvredis_8c.html#a038c5af23469b789fc1c55d21cb43029" title="Receive a result of a query.">lspg_receive</a>();</div>
+<div class="line"><a name="l01470"></a><span class="lineno"> 1470</span>&#160;    }</div>
+<div class="line"><a name="l01471"></a><span class="lineno"> 1471</span>&#160;</div>
+<div class="line"><a name="l01472"></a><span class="lineno"> 1472</span>&#160;    <span class="comment">//</span></div>
+<div class="line"><a name="l01473"></a><span class="lineno"> 1473</span>&#160;    <span class="comment">// Check for notifies regardless of our state</span></div>
+<div class="line"><a name="l01474"></a><span class="lineno"> 1474</span>&#160;    <span class="comment">// Push as many requests as we have notifies.</span></div>
+<div class="line"><a name="l01475"></a><span class="lineno"> 1475</span>&#160;    <span class="comment">//</span></div>
+<div class="line"><a name="l01476"></a><span class="lineno"> 1476</span>&#160;    {</div>
+<div class="line"><a name="l01477"></a><span class="lineno"> 1477</span>&#160;      PGnotify *pgn;</div>
+<div class="line"><a name="l01478"></a><span class="lineno"> 1478</span>&#160;</div>
+<div class="line"><a name="l01479"></a><span class="lineno"> 1479</span>&#160;      <span class="keywordflow">while</span>( 1) {</div>
+<div class="line"><a name="l01480"></a><span class="lineno"> 1480</span>&#160;        pgn = PQnotifies( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
+<div class="line"><a name="l01481"></a><span class="lineno"> 1481</span>&#160;        <span class="keywordflow">if</span>( pgn == NULL)</div>
+<div class="line"><a name="l01482"></a><span class="lineno"> 1482</span>&#160;          <span class="keywordflow">break</span>;</div>
+<div class="line"><a name="l01483"></a><span class="lineno"> 1483</span>&#160;</div>
+<div class="line"><a name="l01484"></a><span class="lineno"> 1484</span>&#160;        <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lspg_pg_service: notify recieved %s&quot;</span>, pgn-&gt;relname);</div>
+<div class="line"><a name="l01485"></a><span class="lineno"> 1485</span>&#160;        </div>
+<div class="line"><a name="l01486"></a><span class="lineno"> 1486</span>&#160;        <span class="keywordflow">if</span>( strstr( pgn-&gt;relname, <span class="stringliteral">&quot;_pmac&quot;</span>) != NULL) {</div>
+<div class="line"><a name="l01487"></a><span class="lineno"> 1487</span>&#160;          <a class="code" href="kvredis_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#a1e11f525ca0f9ac9ab71f9fbe983c42b" title="Send strings directly to PMAC queue.">lspg_cmd_cb</a>, <span class="stringliteral">&quot;SELECT pmac.md2_queue_next()&quot;</span>);</div>
+<div class="line"><a name="l01488"></a><span class="lineno"> 1488</span>&#160;        } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strstr( pgn-&gt;relname, <span class="stringliteral">&quot;_diff&quot;</span>) != NULL || strstr( pgn-&gt;relname, <span class="stringliteral">&quot;_run&quot;</span>) != NULL) {</div>
+<div class="line"><a name="l01489"></a><span class="lineno"> 1489</span>&#160;          <a class="code" href="kvredis_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( <a class="code" href="lspg_8c.html#aeda8dad89b03d7d61cc994dd63ee5db6" title="Queue the next MD2 instruction.">lspg_nextaction_cb</a>, <span class="stringliteral">&quot;SELECT action FROM px.nextaction()&quot;</span>);</div>
+<div class="line"><a name="l01490"></a><span class="lineno"> 1490</span>&#160;        } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strstr( pgn-&gt;relname, <span class="stringliteral">&quot;_sample&quot;</span>) != NULL) {</div>
+<div class="line"><a name="l01491"></a><span class="lineno"> 1491</span>&#160;          <a class="code" href="lspg_8c.html#acf98a9e2adec05a69847045f444a5c77">lspg_getcurrentsampleid_call</a>();</div>
+<div class="line"><a name="l01492"></a><span class="lineno"> 1492</span>&#160;        }</div>
+<div class="line"><a name="l01493"></a><span class="lineno"> 1493</span>&#160;        PQfreemem( pgn);</div>
+<div class="line"><a name="l01494"></a><span class="lineno"> 1494</span>&#160;      }</div>
+<div class="line"><a name="l01495"></a><span class="lineno"> 1495</span>&#160;    }</div>
+<div class="line"><a name="l01496"></a><span class="lineno"> 1496</span>&#160;  }</div>
+<div class="line"><a name="l01497"></a><span class="lineno"> 1497</span>&#160;</div>
+<div class="line"><a name="l01498"></a><span class="lineno"> 1498</span>&#160;  <span class="keywordflow">if</span>( evt-&gt;revents &amp; POLLOUT) {</div>
+<div class="line"><a name="l01499"></a><span class="lineno"> 1499</span>&#160;</div>
+<div class="line"><a name="l01500"></a><span class="lineno"> 1500</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#ae7ea5876846b5f04c419aee22d3c0aa1">LS_PG_STATE_INIT_POLL</a>) {</div>
+<div class="line"><a name="l01501"></a><span class="lineno"> 1501</span>&#160;      <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> = PQconnectPoll( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
+<div class="line"><a name="l01502"></a><span class="lineno"> 1502</span>&#160;      <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> == PGRES_POLLING_FAILED) {</div>
+<div class="line"><a name="l01503"></a><span class="lineno"> 1503</span>&#160;        <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;</div>
+<div class="line"><a name="l01504"></a><span class="lineno"> 1504</span>&#160;      }</div>
+<div class="line"><a name="l01505"></a><span class="lineno"> 1505</span>&#160;      <span class="keywordflow">return</span>;</div>
+<div class="line"><a name="l01506"></a><span class="lineno"> 1506</span>&#160;    }</div>
+<div class="line"><a name="l01507"></a><span class="lineno"> 1507</span>&#160;</div>
+<div class="line"><a name="l01508"></a><span class="lineno"> 1508</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#ac70a1141f3b138055ea7143bd493187c">LS_PG_STATE_RESET_POLL</a>) {</div>
+<div class="line"><a name="l01509"></a><span class="lineno"> 1509</span>&#160;      <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> = PQresetPoll( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
+<div class="line"><a name="l01510"></a><span class="lineno"> 1510</span>&#160;      <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> == PGRES_POLLING_FAILED) {</div>
+<div class="line"><a name="l01511"></a><span class="lineno"> 1511</span>&#160;        <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>;</div>
+<div class="line"><a name="l01512"></a><span class="lineno"> 1512</span>&#160;      }</div>
+<div class="line"><a name="l01513"></a><span class="lineno"> 1513</span>&#160;      <span class="keywordflow">return</span>;</div>
+<div class="line"><a name="l01514"></a><span class="lineno"> 1514</span>&#160;    }</div>
 <div class="line"><a name="l01515"></a><span class="lineno"> 1515</span>&#160;</div>
-<div class="line"><a name="l01516"></a><span class="lineno"> 1516</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#a3c6eb19f262a990e1f9ba630d9edc309">LS_PG_STATE_SEND</a>) {</div>
-<div class="line"><a name="l01517"></a><span class="lineno"> 1517</span>&#160;      <a class="code" href="kvredis_8c.html#a714b15e117ffe7bfce4f2f2ce4725b0a" title="send the next queued query to the DB server">lspg_send_next_query</a>();</div>
-<div class="line"><a name="l01518"></a><span class="lineno"> 1518</span>&#160;    }</div>
-<div class="line"><a name="l01519"></a><span class="lineno"> 1519</span>&#160;</div>
-<div class="line"><a name="l01520"></a><span class="lineno"> 1520</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#a88a7e80c12fb0449c4b0857a0c7deb21">LS_PG_STATE_SEND_FLUSH</a>) {</div>
-<div class="line"><a name="l01521"></a><span class="lineno"> 1521</span>&#160;      <a class="code" href="kvredis_8c.html#af6485ac1749c5de3008dd0e0badaa09c" title="Flush psql output buffer (ie, send the query)">lspg_flush</a>();</div>
-<div class="line"><a name="l01522"></a><span class="lineno"> 1522</span>&#160;    }</div>
-<div class="line"><a name="l01523"></a><span class="lineno"> 1523</span>&#160;  }</div>
-<div class="line"><a name="l01524"></a><span class="lineno"> 1524</span>&#160;}</div>
-<div class="line"><a name="l01525"></a><span class="lineno"> 1525</span>&#160;</div>
-<div class="line"><a name="l01526"></a><span class="lineno"><a class="code" href="lspg_8c.html#a62b110949d206fb22789191207e1d066"> 1526</a></span>&#160;PQnoticeProcessor <a class="code" href="kvredis_8c.html#a62b110949d206fb22789191207e1d066">lspg_notice_processor</a>( <span class="keywordtype">void</span> *arg, <span class="keyword">const</span> <span class="keywordtype">char</span> *msg) {</div>
-<div class="line"><a name="l01527"></a><span class="lineno"> 1527</span>&#160;  <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lspg: %s&quot;</span>, msg);</div>
-<div class="line"><a name="l01528"></a><span class="lineno"> 1528</span>&#160;  <span class="keywordflow">return</span> NULL;</div>
-<div class="line"><a name="l01529"></a><span class="lineno"> 1529</span>&#160;}</div>
-<div class="line"><a name="l01530"></a><span class="lineno"> 1530</span>&#160;</div>
-<div class="line"><a name="l01533"></a><span class="lineno"><a class="code" href="lspg_8c.html#a581c18be0368425665a40b4b7f7d9714"> 1533</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="kvredis_8c.html#a581c18be0368425665a40b4b7f7d9714" title="Connect to the pg server.">lspg_pg_connect</a>() {</div>
-<div class="line"><a name="l01534"></a><span class="lineno"> 1534</span>&#160;  <span class="keywordtype">int</span> err;</div>
-<div class="line"><a name="l01535"></a><span class="lineno"> 1535</span>&#160;</div>
-<div class="line"><a name="l01536"></a><span class="lineno"> 1536</span>&#160;  <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> == NULL)</div>
-<div class="line"><a name="l01537"></a><span class="lineno"> 1537</span>&#160;    <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#af443092447378c73bf93aa143576aba4">LS_PG_STATE_INIT</a>;</div>
-<div class="line"><a name="l01538"></a><span class="lineno"> 1538</span>&#160;</div>
-<div class="line"><a name="l01539"></a><span class="lineno"> 1539</span>&#160;  <span class="keywordflow">switch</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a>) {</div>
-<div class="line"><a name="l01540"></a><span class="lineno"> 1540</span>&#160;  <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#af443092447378c73bf93aa143576aba4">LS_PG_STATE_INIT</a>:</div>
-<div class="line"><a name="l01541"></a><span class="lineno"> 1541</span>&#160;</div>
-<div class="line"><a name="l01542"></a><span class="lineno"> 1542</span>&#160;    <span class="keywordflow">if</span>( lspg_time_sent.tv_sec != 0) {</div>
-<div class="line"><a name="l01543"></a><span class="lineno"> 1543</span>&#160;      <span class="comment">//</span></div>
-<div class="line"><a name="l01544"></a><span class="lineno"> 1544</span>&#160;      <span class="comment">// Reality check: if it&#39;s less the about 10 seconds since the last failed attempt</span></div>
-<div class="line"><a name="l01545"></a><span class="lineno"> 1545</span>&#160;      <span class="comment">// the just chill.</span></div>
-<div class="line"><a name="l01546"></a><span class="lineno"> 1546</span>&#160;      <span class="comment">//</span></div>
-<div class="line"><a name="l01547"></a><span class="lineno"> 1547</span>&#160;      gettimeofday( &amp;<a class="code" href="lspg_8c.html#ad40ac52086f6b774928af45b09d54c6e" title="used to ensure we do not inundate the db server with connection requests">now</a>, NULL);</div>
-<div class="line"><a name="l01548"></a><span class="lineno"> 1548</span>&#160;      <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#ad40ac52086f6b774928af45b09d54c6e" title="used to ensure we do not inundate the db server with connection requests">now</a>.tv_sec - lspg_time_sent.tv_sec &lt; 10) {</div>
-<div class="line"><a name="l01549"></a><span class="lineno"> 1549</span>&#160;        <span class="keywordflow">return</span>;</div>
-<div class="line"><a name="l01550"></a><span class="lineno"> 1550</span>&#160;      }</div>
-<div class="line"><a name="l01551"></a><span class="lineno"> 1551</span>&#160;    }</div>
-<div class="line"><a name="l01552"></a><span class="lineno"> 1552</span>&#160;</div>
-<div class="line"><a name="l01553"></a><span class="lineno"> 1553</span>&#160;    <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> = PQconnectStart( <span class="stringliteral">&quot;dbname=ls user=lsuser hostaddr=10.1.0.3&quot;</span>);</div>
-<div class="line"><a name="l01554"></a><span class="lineno"> 1554</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> == NULL) {</div>
-<div class="line"><a name="l01555"></a><span class="lineno"> 1555</span>&#160;      <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;Out of memory (lspg_pg_connect)&quot;</span>);</div>
-<div class="line"><a name="l01556"></a><span class="lineno"> 1556</span>&#160;      exit( -1);</div>
-<div class="line"><a name="l01557"></a><span class="lineno"> 1557</span>&#160;    }</div>
-<div class="line"><a name="l01558"></a><span class="lineno"> 1558</span>&#160;</div>
-<div class="line"><a name="l01559"></a><span class="lineno"> 1559</span>&#160;    err = PQstatus( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
-<div class="line"><a name="l01560"></a><span class="lineno"> 1560</span>&#160;    <span class="keywordflow">if</span>( err == CONNECTION_BAD) {</div>
-<div class="line"><a name="l01561"></a><span class="lineno"> 1561</span>&#160;      <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;Trouble connecting to database&quot;</span>);</div>
-<div class="line"><a name="l01562"></a><span class="lineno"> 1562</span>&#160;</div>
-<div class="line"><a name="l01563"></a><span class="lineno"> 1563</span>&#160;      gettimeofday( &amp;lspg_time_sent, NULL);</div>
-<div class="line"><a name="l01564"></a><span class="lineno"> 1564</span>&#160;      <span class="keywordflow">return</span>;</div>
-<div class="line"><a name="l01565"></a><span class="lineno"> 1565</span>&#160;    }</div>
-<div class="line"><a name="l01566"></a><span class="lineno"> 1566</span>&#160;    err = PQsetnonblocking( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>, 1);</div>
-<div class="line"><a name="l01567"></a><span class="lineno"> 1567</span>&#160;    <span class="keywordflow">if</span>( err != 0) {</div>
-<div class="line"><a name="l01568"></a><span class="lineno"> 1568</span>&#160;      <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;Odd, could not set database connection to nonblocking&quot;</span>);</div>
-<div class="line"><a name="l01569"></a><span class="lineno"> 1569</span>&#160;    }</div>
-<div class="line"><a name="l01570"></a><span class="lineno"> 1570</span>&#160;</div>
-<div class="line"><a name="l01571"></a><span class="lineno"> 1571</span>&#160;    <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#ae7ea5876846b5f04c419aee22d3c0aa1">LS_PG_STATE_INIT_POLL</a>;</div>
-<div class="line"><a name="l01572"></a><span class="lineno"> 1572</span>&#160;    <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> = PGRES_POLLING_WRITING;</div>
-<div class="line"><a name="l01573"></a><span class="lineno"> 1573</span>&#160;    <span class="comment">//</span></div>
-<div class="line"><a name="l01574"></a><span class="lineno"> 1574</span>&#160;    <span class="comment">// set up the connection for poll</span></div>
-<div class="line"><a name="l01575"></a><span class="lineno"> 1575</span>&#160;    <span class="comment">//</span></div>
-<div class="line"><a name="l01576"></a><span class="lineno"> 1576</span>&#160;    <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.fd = PQsocket( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
-<div class="line"><a name="l01577"></a><span class="lineno"> 1577</span>&#160;    <span class="keywordflow">break</span>;</div>
-<div class="line"><a name="l01578"></a><span class="lineno"> 1578</span>&#160;</div>
-<div class="line"><a name="l01579"></a><span class="lineno"> 1579</span>&#160;  <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#ae7ea5876846b5f04c419aee22d3c0aa1">LS_PG_STATE_INIT_POLL</a>:</div>
-<div class="line"><a name="l01580"></a><span class="lineno"> 1580</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> == PGRES_POLLING_FAILED) {</div>
-<div class="line"><a name="l01581"></a><span class="lineno"> 1581</span>&#160;      PQfinish( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
-<div class="line"><a name="l01582"></a><span class="lineno"> 1582</span>&#160;      <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> = NULL;</div>
-<div class="line"><a name="l01583"></a><span class="lineno"> 1583</span>&#160;      <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#af443092447378c73bf93aa143576aba4">LS_PG_STATE_INIT</a>;</div>
-<div class="line"><a name="l01584"></a><span class="lineno"> 1584</span>&#160;    } <span class="keywordflow">else</span> <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> == PGRES_POLLING_OK) {</div>
-<div class="line"><a name="l01585"></a><span class="lineno"> 1585</span>&#160;      PQsetNoticeProcessor( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>, (PQnoticeProcessor)<a class="code" href="kvredis_8c.html#a62b110949d206fb22789191207e1d066">lspg_notice_processor</a>, NULL);</div>
-<div class="line"><a name="l01586"></a><span class="lineno"> 1586</span>&#160;      <a class="code" href="kvredis_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( NULL, <span class="stringliteral">&quot;select pmac.md2_init()&quot;</span>);</div>
-<div class="line"><a name="l01587"></a><span class="lineno"> 1587</span>&#160;      <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>;</div>
-<div class="line"><a name="l01588"></a><span class="lineno"> 1588</span>&#160;    }</div>
-<div class="line"><a name="l01589"></a><span class="lineno"> 1589</span>&#160;    <span class="keywordflow">break</span>;</div>
-<div class="line"><a name="l01590"></a><span class="lineno"> 1590</span>&#160;</div>
-<div class="line"><a name="l01591"></a><span class="lineno"> 1591</span>&#160;  <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>:</div>
-<div class="line"><a name="l01592"></a><span class="lineno"> 1592</span>&#160;    err = PQresetStart( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
-<div class="line"><a name="l01593"></a><span class="lineno"> 1593</span>&#160;    <span class="keywordflow">if</span>( err == 0) {</div>
-<div class="line"><a name="l01594"></a><span class="lineno"> 1594</span>&#160;      PQfinish( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
-<div class="line"><a name="l01595"></a><span class="lineno"> 1595</span>&#160;      <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> = NULL;</div>
-<div class="line"><a name="l01596"></a><span class="lineno"> 1596</span>&#160;      <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#af443092447378c73bf93aa143576aba4">LS_PG_STATE_INIT</a>;</div>
-<div class="line"><a name="l01597"></a><span class="lineno"> 1597</span>&#160;    } <span class="keywordflow">else</span> {</div>
-<div class="line"><a name="l01598"></a><span class="lineno"> 1598</span>&#160;      <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#ac70a1141f3b138055ea7143bd493187c">LS_PG_STATE_RESET_POLL</a>;</div>
-<div class="line"><a name="l01599"></a><span class="lineno"> 1599</span>&#160;      <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> = PGRES_POLLING_WRITING;</div>
-<div class="line"><a name="l01600"></a><span class="lineno"> 1600</span>&#160;    }</div>
-<div class="line"><a name="l01601"></a><span class="lineno"> 1601</span>&#160;    <span class="keywordflow">break</span>;</div>
-<div class="line"><a name="l01602"></a><span class="lineno"> 1602</span>&#160;</div>
-<div class="line"><a name="l01603"></a><span class="lineno"> 1603</span>&#160;  <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#ac70a1141f3b138055ea7143bd493187c">LS_PG_STATE_RESET_POLL</a>:</div>
-<div class="line"><a name="l01604"></a><span class="lineno"> 1604</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> == PGRES_POLLING_FAILED) {</div>
-<div class="line"><a name="l01605"></a><span class="lineno"> 1605</span>&#160;      PQfinish( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
-<div class="line"><a name="l01606"></a><span class="lineno"> 1606</span>&#160;      <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> = NULL;</div>
-<div class="line"><a name="l01607"></a><span class="lineno"> 1607</span>&#160;      <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#af443092447378c73bf93aa143576aba4">LS_PG_STATE_INIT</a>;</div>
-<div class="line"><a name="l01608"></a><span class="lineno"> 1608</span>&#160;    } <span class="keywordflow">else</span> <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> == PGRES_POLLING_OK) {</div>
-<div class="line"><a name="l01609"></a><span class="lineno"> 1609</span>&#160;      <a class="code" href="kvredis_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( NULL, <span class="stringliteral">&quot;select pmac.md2_init()&quot;</span>);</div>
-<div class="line"><a name="l01610"></a><span class="lineno"> 1610</span>&#160;      <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>;</div>
-<div class="line"><a name="l01611"></a><span class="lineno"> 1611</span>&#160;    }</div>
-<div class="line"><a name="l01612"></a><span class="lineno"> 1612</span>&#160;    <span class="keywordflow">break</span>;</div>
-<div class="line"><a name="l01613"></a><span class="lineno"> 1613</span>&#160;  }</div>
-<div class="line"><a name="l01614"></a><span class="lineno"> 1614</span>&#160;}</div>
-<div class="line"><a name="l01615"></a><span class="lineno"> 1615</span>&#160;</div>
+<div class="line"><a name="l01516"></a><span class="lineno"> 1516</span>&#160;</div>
+<div class="line"><a name="l01517"></a><span class="lineno"> 1517</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#a3c6eb19f262a990e1f9ba630d9edc309">LS_PG_STATE_SEND</a>) {</div>
+<div class="line"><a name="l01518"></a><span class="lineno"> 1518</span>&#160;      <a class="code" href="kvredis_8c.html#a714b15e117ffe7bfce4f2f2ce4725b0a" title="send the next queued query to the DB server">lspg_send_next_query</a>();</div>
+<div class="line"><a name="l01519"></a><span class="lineno"> 1519</span>&#160;    }</div>
+<div class="line"><a name="l01520"></a><span class="lineno"> 1520</span>&#160;</div>
+<div class="line"><a name="l01521"></a><span class="lineno"> 1521</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#a88a7e80c12fb0449c4b0857a0c7deb21">LS_PG_STATE_SEND_FLUSH</a>) {</div>
+<div class="line"><a name="l01522"></a><span class="lineno"> 1522</span>&#160;      <a class="code" href="kvredis_8c.html#af6485ac1749c5de3008dd0e0badaa09c" title="Flush psql output buffer (ie, send the query)">lspg_flush</a>();</div>
+<div class="line"><a name="l01523"></a><span class="lineno"> 1523</span>&#160;    }</div>
+<div class="line"><a name="l01524"></a><span class="lineno"> 1524</span>&#160;  }</div>
+<div class="line"><a name="l01525"></a><span class="lineno"> 1525</span>&#160;}</div>
+<div class="line"><a name="l01526"></a><span class="lineno"> 1526</span>&#160;</div>
+<div class="line"><a name="l01527"></a><span class="lineno"><a class="code" href="lspg_8c.html#a62b110949d206fb22789191207e1d066"> 1527</a></span>&#160;PQnoticeProcessor <a class="code" href="kvredis_8c.html#a62b110949d206fb22789191207e1d066">lspg_notice_processor</a>( <span class="keywordtype">void</span> *arg, <span class="keyword">const</span> <span class="keywordtype">char</span> *msg) {</div>
+<div class="line"><a name="l01528"></a><span class="lineno"> 1528</span>&#160;  <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lspg: %s&quot;</span>, msg);</div>
+<div class="line"><a name="l01529"></a><span class="lineno"> 1529</span>&#160;  <span class="keywordflow">return</span> NULL;</div>
+<div class="line"><a name="l01530"></a><span class="lineno"> 1530</span>&#160;}</div>
+<div class="line"><a name="l01531"></a><span class="lineno"> 1531</span>&#160;</div>
+<div class="line"><a name="l01534"></a><span class="lineno"><a class="code" href="lspg_8c.html#a581c18be0368425665a40b4b7f7d9714"> 1534</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="kvredis_8c.html#a581c18be0368425665a40b4b7f7d9714" title="Connect to the pg server.">lspg_pg_connect</a>() {</div>
+<div class="line"><a name="l01535"></a><span class="lineno"> 1535</span>&#160;  <span class="keywordtype">int</span> err;</div>
+<div class="line"><a name="l01536"></a><span class="lineno"> 1536</span>&#160;</div>
+<div class="line"><a name="l01537"></a><span class="lineno"> 1537</span>&#160;  <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> == NULL)</div>
+<div class="line"><a name="l01538"></a><span class="lineno"> 1538</span>&#160;    <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#af443092447378c73bf93aa143576aba4">LS_PG_STATE_INIT</a>;</div>
+<div class="line"><a name="l01539"></a><span class="lineno"> 1539</span>&#160;</div>
+<div class="line"><a name="l01540"></a><span class="lineno"> 1540</span>&#160;  <span class="keywordflow">switch</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a>) {</div>
+<div class="line"><a name="l01541"></a><span class="lineno"> 1541</span>&#160;  <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#af443092447378c73bf93aa143576aba4">LS_PG_STATE_INIT</a>:</div>
+<div class="line"><a name="l01542"></a><span class="lineno"> 1542</span>&#160;</div>
+<div class="line"><a name="l01543"></a><span class="lineno"> 1543</span>&#160;    <span class="keywordflow">if</span>( lspg_time_sent.tv_sec != 0) {</div>
+<div class="line"><a name="l01544"></a><span class="lineno"> 1544</span>&#160;      <span class="comment">//</span></div>
+<div class="line"><a name="l01545"></a><span class="lineno"> 1545</span>&#160;      <span class="comment">// Reality check: if it&#39;s less the about 10 seconds since the last failed attempt</span></div>
+<div class="line"><a name="l01546"></a><span class="lineno"> 1546</span>&#160;      <span class="comment">// the just chill.</span></div>
+<div class="line"><a name="l01547"></a><span class="lineno"> 1547</span>&#160;      <span class="comment">//</span></div>
+<div class="line"><a name="l01548"></a><span class="lineno"> 1548</span>&#160;      gettimeofday( &amp;<a class="code" href="lspg_8c.html#ad40ac52086f6b774928af45b09d54c6e" title="used to ensure we do not inundate the db server with connection requests">now</a>, NULL);</div>
+<div class="line"><a name="l01549"></a><span class="lineno"> 1549</span>&#160;      <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#ad40ac52086f6b774928af45b09d54c6e" title="used to ensure we do not inundate the db server with connection requests">now</a>.tv_sec - lspg_time_sent.tv_sec &lt; 10) {</div>
+<div class="line"><a name="l01550"></a><span class="lineno"> 1550</span>&#160;        <span class="keywordflow">return</span>;</div>
+<div class="line"><a name="l01551"></a><span class="lineno"> 1551</span>&#160;      }</div>
+<div class="line"><a name="l01552"></a><span class="lineno"> 1552</span>&#160;    }</div>
+<div class="line"><a name="l01553"></a><span class="lineno"> 1553</span>&#160;</div>
+<div class="line"><a name="l01554"></a><span class="lineno"> 1554</span>&#160;    <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> = PQconnectStart( <span class="stringliteral">&quot;dbname=ls user=lsuser hostaddr=10.1.0.3&quot;</span>);</div>
+<div class="line"><a name="l01555"></a><span class="lineno"> 1555</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> == NULL) {</div>
+<div class="line"><a name="l01556"></a><span class="lineno"> 1556</span>&#160;      <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;Out of memory (lspg_pg_connect)&quot;</span>);</div>
+<div class="line"><a name="l01557"></a><span class="lineno"> 1557</span>&#160;      exit( -1);</div>
+<div class="line"><a name="l01558"></a><span class="lineno"> 1558</span>&#160;    }</div>
+<div class="line"><a name="l01559"></a><span class="lineno"> 1559</span>&#160;</div>
+<div class="line"><a name="l01560"></a><span class="lineno"> 1560</span>&#160;    err = PQstatus( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
+<div class="line"><a name="l01561"></a><span class="lineno"> 1561</span>&#160;    <span class="keywordflow">if</span>( err == CONNECTION_BAD) {</div>
+<div class="line"><a name="l01562"></a><span class="lineno"> 1562</span>&#160;      <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;Trouble connecting to database&quot;</span>);</div>
+<div class="line"><a name="l01563"></a><span class="lineno"> 1563</span>&#160;</div>
+<div class="line"><a name="l01564"></a><span class="lineno"> 1564</span>&#160;      gettimeofday( &amp;lspg_time_sent, NULL);</div>
+<div class="line"><a name="l01565"></a><span class="lineno"> 1565</span>&#160;      <span class="keywordflow">return</span>;</div>
+<div class="line"><a name="l01566"></a><span class="lineno"> 1566</span>&#160;    }</div>
+<div class="line"><a name="l01567"></a><span class="lineno"> 1567</span>&#160;    err = PQsetnonblocking( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>, 1);</div>
+<div class="line"><a name="l01568"></a><span class="lineno"> 1568</span>&#160;    <span class="keywordflow">if</span>( err != 0) {</div>
+<div class="line"><a name="l01569"></a><span class="lineno"> 1569</span>&#160;      <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;Odd, could not set database connection to nonblocking&quot;</span>);</div>
+<div class="line"><a name="l01570"></a><span class="lineno"> 1570</span>&#160;    }</div>
+<div class="line"><a name="l01571"></a><span class="lineno"> 1571</span>&#160;</div>
+<div class="line"><a name="l01572"></a><span class="lineno"> 1572</span>&#160;    <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#ae7ea5876846b5f04c419aee22d3c0aa1">LS_PG_STATE_INIT_POLL</a>;</div>
+<div class="line"><a name="l01573"></a><span class="lineno"> 1573</span>&#160;    <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> = PGRES_POLLING_WRITING;</div>
+<div class="line"><a name="l01574"></a><span class="lineno"> 1574</span>&#160;    <span class="comment">//</span></div>
+<div class="line"><a name="l01575"></a><span class="lineno"> 1575</span>&#160;    <span class="comment">// set up the connection for poll</span></div>
+<div class="line"><a name="l01576"></a><span class="lineno"> 1576</span>&#160;    <span class="comment">//</span></div>
+<div class="line"><a name="l01577"></a><span class="lineno"> 1577</span>&#160;    <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.fd = PQsocket( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
+<div class="line"><a name="l01578"></a><span class="lineno"> 1578</span>&#160;    <span class="keywordflow">break</span>;</div>
+<div class="line"><a name="l01579"></a><span class="lineno"> 1579</span>&#160;</div>
+<div class="line"><a name="l01580"></a><span class="lineno"> 1580</span>&#160;  <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#ae7ea5876846b5f04c419aee22d3c0aa1">LS_PG_STATE_INIT_POLL</a>:</div>
+<div class="line"><a name="l01581"></a><span class="lineno"> 1581</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> == PGRES_POLLING_FAILED) {</div>
+<div class="line"><a name="l01582"></a><span class="lineno"> 1582</span>&#160;      PQfinish( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
+<div class="line"><a name="l01583"></a><span class="lineno"> 1583</span>&#160;      <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> = NULL;</div>
+<div class="line"><a name="l01584"></a><span class="lineno"> 1584</span>&#160;      <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#af443092447378c73bf93aa143576aba4">LS_PG_STATE_INIT</a>;</div>
+<div class="line"><a name="l01585"></a><span class="lineno"> 1585</span>&#160;    } <span class="keywordflow">else</span> <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> == PGRES_POLLING_OK) {</div>
+<div class="line"><a name="l01586"></a><span class="lineno"> 1586</span>&#160;      PQsetNoticeProcessor( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>, (PQnoticeProcessor)<a class="code" href="kvredis_8c.html#a62b110949d206fb22789191207e1d066">lspg_notice_processor</a>, NULL);</div>
+<div class="line"><a name="l01587"></a><span class="lineno"> 1587</span>&#160;      <a class="code" href="kvredis_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( NULL, <span class="stringliteral">&quot;select pmac.md2_init()&quot;</span>);</div>
+<div class="line"><a name="l01588"></a><span class="lineno"> 1588</span>&#160;      <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>;</div>
+<div class="line"><a name="l01589"></a><span class="lineno"> 1589</span>&#160;    }</div>
+<div class="line"><a name="l01590"></a><span class="lineno"> 1590</span>&#160;    <span class="keywordflow">break</span>;</div>
+<div class="line"><a name="l01591"></a><span class="lineno"> 1591</span>&#160;</div>
+<div class="line"><a name="l01592"></a><span class="lineno"> 1592</span>&#160;  <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a>:</div>
+<div class="line"><a name="l01593"></a><span class="lineno"> 1593</span>&#160;    err = PQresetStart( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
+<div class="line"><a name="l01594"></a><span class="lineno"> 1594</span>&#160;    <span class="keywordflow">if</span>( err == 0) {</div>
+<div class="line"><a name="l01595"></a><span class="lineno"> 1595</span>&#160;      PQfinish( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
+<div class="line"><a name="l01596"></a><span class="lineno"> 1596</span>&#160;      <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> = NULL;</div>
+<div class="line"><a name="l01597"></a><span class="lineno"> 1597</span>&#160;      <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#af443092447378c73bf93aa143576aba4">LS_PG_STATE_INIT</a>;</div>
+<div class="line"><a name="l01598"></a><span class="lineno"> 1598</span>&#160;    } <span class="keywordflow">else</span> {</div>
+<div class="line"><a name="l01599"></a><span class="lineno"> 1599</span>&#160;      <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#ac70a1141f3b138055ea7143bd493187c">LS_PG_STATE_RESET_POLL</a>;</div>
+<div class="line"><a name="l01600"></a><span class="lineno"> 1600</span>&#160;      <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> = PGRES_POLLING_WRITING;</div>
+<div class="line"><a name="l01601"></a><span class="lineno"> 1601</span>&#160;    }</div>
+<div class="line"><a name="l01602"></a><span class="lineno"> 1602</span>&#160;    <span class="keywordflow">break</span>;</div>
+<div class="line"><a name="l01603"></a><span class="lineno"> 1603</span>&#160;</div>
+<div class="line"><a name="l01604"></a><span class="lineno"> 1604</span>&#160;  <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#ac70a1141f3b138055ea7143bd493187c">LS_PG_STATE_RESET_POLL</a>:</div>
+<div class="line"><a name="l01605"></a><span class="lineno"> 1605</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> == PGRES_POLLING_FAILED) {</div>
+<div class="line"><a name="l01606"></a><span class="lineno"> 1606</span>&#160;      PQfinish( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a>);</div>
+<div class="line"><a name="l01607"></a><span class="lineno"> 1607</span>&#160;      <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> = NULL;</div>
+<div class="line"><a name="l01608"></a><span class="lineno"> 1608</span>&#160;      <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#af443092447378c73bf93aa143576aba4">LS_PG_STATE_INIT</a>;</div>
+<div class="line"><a name="l01609"></a><span class="lineno"> 1609</span>&#160;    } <span class="keywordflow">else</span> <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> == PGRES_POLLING_OK) {</div>
+<div class="line"><a name="l01610"></a><span class="lineno"> 1610</span>&#160;      <a class="code" href="kvredis_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( NULL, <span class="stringliteral">&quot;select pmac.md2_init()&quot;</span>);</div>
+<div class="line"><a name="l01611"></a><span class="lineno"> 1611</span>&#160;      <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>;</div>
+<div class="line"><a name="l01612"></a><span class="lineno"> 1612</span>&#160;    }</div>
+<div class="line"><a name="l01613"></a><span class="lineno"> 1613</span>&#160;    <span class="keywordflow">break</span>;</div>
+<div class="line"><a name="l01614"></a><span class="lineno"> 1614</span>&#160;  }</div>
+<div class="line"><a name="l01615"></a><span class="lineno"> 1615</span>&#160;}</div>
 <div class="line"><a name="l01616"></a><span class="lineno"> 1616</span>&#160;</div>
 <div class="line"><a name="l01617"></a><span class="lineno"> 1617</span>&#160;</div>
-<div class="line"><a name="l01622"></a><span class="lineno"><a class="code" href="lspg_8c.html#ab52a8c8245bf6561f40c0f224fc07ff4"> 1622</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="kvredis_8c.html#ab52a8c8245bf6561f40c0f224fc07ff4" title="Implements our state machine Does not strictly only set the next state as it also calls some function...">lspg_next_state</a>() {</div>
-<div class="line"><a name="l01623"></a><span class="lineno"> 1623</span>&#160;  <span class="comment">//</span></div>
-<div class="line"><a name="l01624"></a><span class="lineno"> 1624</span>&#160;  <span class="comment">// connect to the database</span></div>
-<div class="line"><a name="l01625"></a><span class="lineno"> 1625</span>&#160;  <span class="comment">//</span></div>
-<div class="line"><a name="l01626"></a><span class="lineno"> 1626</span>&#160;  <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> == NULL ||</div>
-<div class="line"><a name="l01627"></a><span class="lineno"> 1627</span>&#160;      <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#af443092447378c73bf93aa143576aba4">LS_PG_STATE_INIT</a> ||</div>
-<div class="line"><a name="l01628"></a><span class="lineno"> 1628</span>&#160;      <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a> ||</div>
-<div class="line"><a name="l01629"></a><span class="lineno"> 1629</span>&#160;      <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#ae7ea5876846b5f04c419aee22d3c0aa1">LS_PG_STATE_INIT_POLL</a> ||</div>
-<div class="line"><a name="l01630"></a><span class="lineno"> 1630</span>&#160;      <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#ac70a1141f3b138055ea7143bd493187c">LS_PG_STATE_RESET_POLL</a>)</div>
-<div class="line"><a name="l01631"></a><span class="lineno"> 1631</span>&#160;    <a class="code" href="kvredis_8c.html#a581c18be0368425665a40b4b7f7d9714" title="Connect to the pg server.">lspg_pg_connect</a>( <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>);</div>
-<div class="line"><a name="l01632"></a><span class="lineno"> 1632</span>&#160;</div>
+<div class="line"><a name="l01618"></a><span class="lineno"> 1618</span>&#160;</div>
+<div class="line"><a name="l01623"></a><span class="lineno"><a class="code" href="lspg_8c.html#ab52a8c8245bf6561f40c0f224fc07ff4"> 1623</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="kvredis_8c.html#ab52a8c8245bf6561f40c0f224fc07ff4" title="Implements our state machine Does not strictly only set the next state as it also calls some function...">lspg_next_state</a>() {</div>
+<div class="line"><a name="l01624"></a><span class="lineno"> 1624</span>&#160;  <span class="comment">//</span></div>
+<div class="line"><a name="l01625"></a><span class="lineno"> 1625</span>&#160;  <span class="comment">// connect to the database</span></div>
+<div class="line"><a name="l01626"></a><span class="lineno"> 1626</span>&#160;  <span class="comment">//</span></div>
+<div class="line"><a name="l01627"></a><span class="lineno"> 1627</span>&#160;  <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a9012783dbbadf652a81649a289697cf3" title="Database connector.">q</a> == NULL ||</div>
+<div class="line"><a name="l01628"></a><span class="lineno"> 1628</span>&#160;      <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#af443092447378c73bf93aa143576aba4">LS_PG_STATE_INIT</a> ||</div>
+<div class="line"><a name="l01629"></a><span class="lineno"> 1629</span>&#160;      <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#accda8c3a598dc7f5b107b04986d8ab50">LS_PG_STATE_RESET</a> ||</div>
+<div class="line"><a name="l01630"></a><span class="lineno"> 1630</span>&#160;      <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#ae7ea5876846b5f04c419aee22d3c0aa1">LS_PG_STATE_INIT_POLL</a> ||</div>
+<div class="line"><a name="l01631"></a><span class="lineno"> 1631</span>&#160;      <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#ac70a1141f3b138055ea7143bd493187c">LS_PG_STATE_RESET_POLL</a>)</div>
+<div class="line"><a name="l01632"></a><span class="lineno"> 1632</span>&#160;    <a class="code" href="kvredis_8c.html#a581c18be0368425665a40b4b7f7d9714" title="Connect to the pg server.">lspg_pg_connect</a>( <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>);</div>
 <div class="line"><a name="l01633"></a><span class="lineno"> 1633</span>&#160;</div>
-<div class="line"><a name="l01634"></a><span class="lineno"> 1634</span>&#160;  <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a> &amp;&amp; <a class="code" href="lspg_8c.html#a3cbe7f3161b3c1838ebc56a3bbcfd8a6" title="Next position to add something to the queue.">lspg_query_queue_on</a> != <a class="code" href="lspg_8c.html#aca86bb77d6cecfae9251743f4171bafb" title="The last item still being used (on == off means nothing in queue)">lspg_query_queue_off</a>)</div>
-<div class="line"><a name="l01635"></a><span class="lineno"> 1635</span>&#160;    <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#a3c6eb19f262a990e1f9ba630d9edc309">LS_PG_STATE_SEND</a>;</div>
-<div class="line"><a name="l01636"></a><span class="lineno"> 1636</span>&#160;</div>
-<div class="line"><a name="l01637"></a><span class="lineno"> 1637</span>&#160;  <span class="keywordflow">switch</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a>) {</div>
-<div class="line"><a name="l01638"></a><span class="lineno"> 1638</span>&#160;  <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#ae7ea5876846b5f04c419aee22d3c0aa1">LS_PG_STATE_INIT_POLL</a>:</div>
-<div class="line"><a name="l01639"></a><span class="lineno"> 1639</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> == PGRES_POLLING_WRITING)</div>
-<div class="line"><a name="l01640"></a><span class="lineno"> 1640</span>&#160;      <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = POLLOUT;</div>
-<div class="line"><a name="l01641"></a><span class="lineno"> 1641</span>&#160;    <span class="keywordflow">else</span> <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> == PGRES_POLLING_READING)</div>
-<div class="line"><a name="l01642"></a><span class="lineno"> 1642</span>&#160;      <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = POLLIN;</div>
-<div class="line"><a name="l01643"></a><span class="lineno"> 1643</span>&#160;    <span class="keywordflow">else</span></div>
-<div class="line"><a name="l01644"></a><span class="lineno"> 1644</span>&#160;      <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = 0;</div>
-<div class="line"><a name="l01645"></a><span class="lineno"> 1645</span>&#160;    <span class="keywordflow">break</span>;</div>
-<div class="line"><a name="l01646"></a><span class="lineno"> 1646</span>&#160;      </div>
-<div class="line"><a name="l01647"></a><span class="lineno"> 1647</span>&#160;  <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#ac70a1141f3b138055ea7143bd493187c">LS_PG_STATE_RESET_POLL</a>:</div>
-<div class="line"><a name="l01648"></a><span class="lineno"> 1648</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> == PGRES_POLLING_WRITING)</div>
-<div class="line"><a name="l01649"></a><span class="lineno"> 1649</span>&#160;      <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = POLLOUT;</div>
-<div class="line"><a name="l01650"></a><span class="lineno"> 1650</span>&#160;    <span class="keywordflow">else</span> <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> == PGRES_POLLING_READING)</div>
-<div class="line"><a name="l01651"></a><span class="lineno"> 1651</span>&#160;      <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = POLLIN;</div>
-<div class="line"><a name="l01652"></a><span class="lineno"> 1652</span>&#160;    <span class="keywordflow">else</span></div>
-<div class="line"><a name="l01653"></a><span class="lineno"> 1653</span>&#160;      <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = 0;</div>
-<div class="line"><a name="l01654"></a><span class="lineno"> 1654</span>&#160;    <span class="keywordflow">break</span>;</div>
-<div class="line"><a name="l01655"></a><span class="lineno"> 1655</span>&#160;</div>
-<div class="line"><a name="l01656"></a><span class="lineno"> 1656</span>&#160;  <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>:</div>
-<div class="line"><a name="l01657"></a><span class="lineno"> 1657</span>&#160;  <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#a373e668840b4795ff9a71bc3f744d209">LS_PG_STATE_RECV</a>:</div>
-<div class="line"><a name="l01658"></a><span class="lineno"> 1658</span>&#160;    <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = POLLIN;</div>
-<div class="line"><a name="l01659"></a><span class="lineno"> 1659</span>&#160;    <span class="keywordflow">break</span>;</div>
-<div class="line"><a name="l01660"></a><span class="lineno"> 1660</span>&#160;</div>
-<div class="line"><a name="l01661"></a><span class="lineno"> 1661</span>&#160;  <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#a3c6eb19f262a990e1f9ba630d9edc309">LS_PG_STATE_SEND</a>:</div>
-<div class="line"><a name="l01662"></a><span class="lineno"> 1662</span>&#160;  <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#a88a7e80c12fb0449c4b0857a0c7deb21">LS_PG_STATE_SEND_FLUSH</a>:</div>
-<div class="line"><a name="l01663"></a><span class="lineno"> 1663</span>&#160;    <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = POLLOUT;</div>
-<div class="line"><a name="l01664"></a><span class="lineno"> 1664</span>&#160;    <span class="keywordflow">break</span>;</div>
-<div class="line"><a name="l01665"></a><span class="lineno"> 1665</span>&#160;</div>
-<div class="line"><a name="l01666"></a><span class="lineno"> 1666</span>&#160;  <span class="keywordflow">default</span>:</div>
-<div class="line"><a name="l01667"></a><span class="lineno"> 1667</span>&#160;    <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = 0;</div>
-<div class="line"><a name="l01668"></a><span class="lineno"> 1668</span>&#160;  }</div>
-<div class="line"><a name="l01669"></a><span class="lineno"> 1669</span>&#160;}</div>
-<div class="line"><a name="l01670"></a><span class="lineno"> 1670</span>&#160;</div>
-<div class="line"><a name="l01673"></a><span class="lineno"><a class="code" href="lspg_8c.html#aaf4fadd2943fa3a2ecb5d840e84d68fa"> 1673</a></span>&#160;<span class="keywordtype">void</span> *<a class="code" href="lspg_8c.html#aaf4fadd2943fa3a2ecb5d840e84d68fa" title="The main loop for the lspg thread.">lspg_worker</a>(</div>
-<div class="line"><a name="l01674"></a><span class="lineno"> 1674</span>&#160;                  <span class="keywordtype">void</span> *dummy           </div>
-<div class="line"><a name="l01675"></a><span class="lineno"> 1675</span>&#160;                  ) {</div>
-<div class="line"><a name="l01676"></a><span class="lineno"> 1676</span>&#160;  <span class="keyword">static</span> <span class="keyword">struct </span>pollfd fda[2];  <span class="comment">// 0=signal handler, 1=pg socket</span></div>
-<div class="line"><a name="l01677"></a><span class="lineno"> 1677</span>&#160;  <span class="keyword">static</span> <span class="keywordtype">int</span> nfda = 0;</div>
-<div class="line"><a name="l01678"></a><span class="lineno"> 1678</span>&#160;  <span class="keyword">static</span> sigset_t our_sigset;</div>
-<div class="line"><a name="l01679"></a><span class="lineno"> 1679</span>&#160;</div>
-<div class="line"><a name="l01680"></a><span class="lineno"> 1680</span>&#160;  <span class="comment">//</span></div>
-<div class="line"><a name="l01681"></a><span class="lineno"> 1681</span>&#160;  <span class="comment">// block ordinary signal mechanism</span></div>
-<div class="line"><a name="l01682"></a><span class="lineno"> 1682</span>&#160;  <span class="comment">//</span></div>
-<div class="line"><a name="l01683"></a><span class="lineno"> 1683</span>&#160;  sigemptyset( &amp;our_sigset);</div>
-<div class="line"><a name="l01684"></a><span class="lineno"> 1684</span>&#160;  sigaddset( &amp;our_sigset, SIGUSR1);</div>
-<div class="line"><a name="l01685"></a><span class="lineno"> 1685</span>&#160;  pthread_sigmask(SIG_BLOCK, &amp;our_sigset, NULL);</div>
-<div class="line"><a name="l01686"></a><span class="lineno"> 1686</span>&#160;</div>
-<div class="line"><a name="l01687"></a><span class="lineno"> 1687</span>&#160;    </div>
-<div class="line"><a name="l01688"></a><span class="lineno"> 1688</span>&#160;  fda[0].fd = signalfd( -1, &amp;our_sigset, SFD_NONBLOCK);</div>
-<div class="line"><a name="l01689"></a><span class="lineno"> 1689</span>&#160;  <span class="keywordflow">if</span>( fda[0].fd == -1) {</div>
-<div class="line"><a name="l01690"></a><span class="lineno"> 1690</span>&#160;    <span class="keywordtype">char</span> *es;</div>
-<div class="line"><a name="l01691"></a><span class="lineno"> 1691</span>&#160;</div>
-<div class="line"><a name="l01692"></a><span class="lineno"> 1692</span>&#160;    es = strerror( errno);</div>
-<div class="line"><a name="l01693"></a><span class="lineno"> 1693</span>&#160;    <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;Signalfd trouble: %s&quot;</span>, es);</div>
-<div class="line"><a name="l01694"></a><span class="lineno"> 1694</span>&#160;  }</div>
-<div class="line"><a name="l01695"></a><span class="lineno"> 1695</span>&#160;  fda[0].events = POLLIN;</div>
-<div class="line"><a name="l01696"></a><span class="lineno"> 1696</span>&#160;</div>
-<div class="line"><a name="l01697"></a><span class="lineno"> 1697</span>&#160;  <span class="comment">//</span></div>
-<div class="line"><a name="l01698"></a><span class="lineno"> 1698</span>&#160;  <span class="comment">//  make sure file descriptor is not legal until it&#39;s been conneceted</span></div>
-<div class="line"><a name="l01699"></a><span class="lineno"> 1699</span>&#160;  <span class="comment">//</span></div>
-<div class="line"><a name="l01700"></a><span class="lineno"> 1700</span>&#160;  <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.fd   = -1;</div>
-<div class="line"><a name="l01701"></a><span class="lineno"> 1701</span>&#160;</div>
+<div class="line"><a name="l01634"></a><span class="lineno"> 1634</span>&#160;</div>
+<div class="line"><a name="l01635"></a><span class="lineno"> 1635</span>&#160;  <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> == <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a> &amp;&amp; <a class="code" href="lspg_8c.html#a3cbe7f3161b3c1838ebc56a3bbcfd8a6" title="Next position to add something to the queue.">lspg_query_queue_on</a> != <a class="code" href="lspg_8c.html#aca86bb77d6cecfae9251743f4171bafb" title="The last item still being used (on == off means nothing in queue)">lspg_query_queue_off</a>)</div>
+<div class="line"><a name="l01636"></a><span class="lineno"> 1636</span>&#160;    <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a> = <a class="code" href="lspg_8c.html#a3c6eb19f262a990e1f9ba630d9edc309">LS_PG_STATE_SEND</a>;</div>
+<div class="line"><a name="l01637"></a><span class="lineno"> 1637</span>&#160;</div>
+<div class="line"><a name="l01638"></a><span class="lineno"> 1638</span>&#160;  <span class="keywordflow">switch</span>( <a class="code" href="lspg_8c.html#a4937baac0cc78ea306d58b5f027867f1" title="State of the lspg state machine.">ls_pg_state</a>) {</div>
+<div class="line"><a name="l01639"></a><span class="lineno"> 1639</span>&#160;  <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#ae7ea5876846b5f04c419aee22d3c0aa1">LS_PG_STATE_INIT_POLL</a>:</div>
+<div class="line"><a name="l01640"></a><span class="lineno"> 1640</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> == PGRES_POLLING_WRITING)</div>
+<div class="line"><a name="l01641"></a><span class="lineno"> 1641</span>&#160;      <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = POLLOUT;</div>
+<div class="line"><a name="l01642"></a><span class="lineno"> 1642</span>&#160;    <span class="keywordflow">else</span> <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a69ae04978986e6413ca7cefcb692b645" title="Used to determine state while connecting.">lspg_connectPoll_response</a> == PGRES_POLLING_READING)</div>
+<div class="line"><a name="l01643"></a><span class="lineno"> 1643</span>&#160;      <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = POLLIN;</div>
+<div class="line"><a name="l01644"></a><span class="lineno"> 1644</span>&#160;    <span class="keywordflow">else</span></div>
+<div class="line"><a name="l01645"></a><span class="lineno"> 1645</span>&#160;      <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = 0;</div>
+<div class="line"><a name="l01646"></a><span class="lineno"> 1646</span>&#160;    <span class="keywordflow">break</span>;</div>
+<div class="line"><a name="l01647"></a><span class="lineno"> 1647</span>&#160;      </div>
+<div class="line"><a name="l01648"></a><span class="lineno"> 1648</span>&#160;  <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#ac70a1141f3b138055ea7143bd493187c">LS_PG_STATE_RESET_POLL</a>:</div>
+<div class="line"><a name="l01649"></a><span class="lineno"> 1649</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> == PGRES_POLLING_WRITING)</div>
+<div class="line"><a name="l01650"></a><span class="lineno"> 1650</span>&#160;      <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = POLLOUT;</div>
+<div class="line"><a name="l01651"></a><span class="lineno"> 1651</span>&#160;    <span class="keywordflow">else</span> <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#a06c5a937e41a6c706a247777642ec1fb" title="Used to determine state while reconnecting.">lspg_resetPoll_response</a> == PGRES_POLLING_READING)</div>
+<div class="line"><a name="l01652"></a><span class="lineno"> 1652</span>&#160;      <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = POLLIN;</div>
+<div class="line"><a name="l01653"></a><span class="lineno"> 1653</span>&#160;    <span class="keywordflow">else</span></div>
+<div class="line"><a name="l01654"></a><span class="lineno"> 1654</span>&#160;      <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = 0;</div>
+<div class="line"><a name="l01655"></a><span class="lineno"> 1655</span>&#160;    <span class="keywordflow">break</span>;</div>
+<div class="line"><a name="l01656"></a><span class="lineno"> 1656</span>&#160;</div>
+<div class="line"><a name="l01657"></a><span class="lineno"> 1657</span>&#160;  <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#aaf1dd8ba4dafb91c296554c4cbf312e3">LS_PG_STATE_IDLE</a>:</div>
+<div class="line"><a name="l01658"></a><span class="lineno"> 1658</span>&#160;  <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#a373e668840b4795ff9a71bc3f744d209">LS_PG_STATE_RECV</a>:</div>
+<div class="line"><a name="l01659"></a><span class="lineno"> 1659</span>&#160;    <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = POLLIN;</div>
+<div class="line"><a name="l01660"></a><span class="lineno"> 1660</span>&#160;    <span class="keywordflow">break</span>;</div>
+<div class="line"><a name="l01661"></a><span class="lineno"> 1661</span>&#160;</div>
+<div class="line"><a name="l01662"></a><span class="lineno"> 1662</span>&#160;  <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#a3c6eb19f262a990e1f9ba630d9edc309">LS_PG_STATE_SEND</a>:</div>
+<div class="line"><a name="l01663"></a><span class="lineno"> 1663</span>&#160;  <span class="keywordflow">case</span> <a class="code" href="lspg_8c.html#a88a7e80c12fb0449c4b0857a0c7deb21">LS_PG_STATE_SEND_FLUSH</a>:</div>
+<div class="line"><a name="l01664"></a><span class="lineno"> 1664</span>&#160;    <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = POLLOUT;</div>
+<div class="line"><a name="l01665"></a><span class="lineno"> 1665</span>&#160;    <span class="keywordflow">break</span>;</div>
+<div class="line"><a name="l01666"></a><span class="lineno"> 1666</span>&#160;</div>
+<div class="line"><a name="l01667"></a><span class="lineno"> 1667</span>&#160;  <span class="keywordflow">default</span>:</div>
+<div class="line"><a name="l01668"></a><span class="lineno"> 1668</span>&#160;    <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events = 0;</div>
+<div class="line"><a name="l01669"></a><span class="lineno"> 1669</span>&#160;  }</div>
+<div class="line"><a name="l01670"></a><span class="lineno"> 1670</span>&#160;}</div>
+<div class="line"><a name="l01671"></a><span class="lineno"> 1671</span>&#160;</div>
+<div class="line"><a name="l01674"></a><span class="lineno"><a class="code" href="lspg_8c.html#aaf4fadd2943fa3a2ecb5d840e84d68fa"> 1674</a></span>&#160;<span class="keywordtype">void</span> *<a class="code" href="lspg_8c.html#aaf4fadd2943fa3a2ecb5d840e84d68fa" title="The main loop for the lspg thread.">lspg_worker</a>(</div>
+<div class="line"><a name="l01675"></a><span class="lineno"> 1675</span>&#160;                  <span class="keywordtype">void</span> *dummy           </div>
+<div class="line"><a name="l01676"></a><span class="lineno"> 1676</span>&#160;                  ) {</div>
+<div class="line"><a name="l01677"></a><span class="lineno"> 1677</span>&#160;  <span class="keyword">static</span> <span class="keyword">struct </span>pollfd fda[2];  <span class="comment">// 0=signal handler, 1=pg socket</span></div>
+<div class="line"><a name="l01678"></a><span class="lineno"> 1678</span>&#160;  <span class="keyword">static</span> <span class="keywordtype">int</span> nfda = 0;</div>
+<div class="line"><a name="l01679"></a><span class="lineno"> 1679</span>&#160;  <span class="keyword">static</span> sigset_t our_sigset;</div>
+<div class="line"><a name="l01680"></a><span class="lineno"> 1680</span>&#160;</div>
+<div class="line"><a name="l01681"></a><span class="lineno"> 1681</span>&#160;  <span class="comment">//</span></div>
+<div class="line"><a name="l01682"></a><span class="lineno"> 1682</span>&#160;  <span class="comment">// block ordinary signal mechanism</span></div>
+<div class="line"><a name="l01683"></a><span class="lineno"> 1683</span>&#160;  <span class="comment">//</span></div>
+<div class="line"><a name="l01684"></a><span class="lineno"> 1684</span>&#160;  sigemptyset( &amp;our_sigset);</div>
+<div class="line"><a name="l01685"></a><span class="lineno"> 1685</span>&#160;  sigaddset( &amp;our_sigset, SIGUSR1);</div>
+<div class="line"><a name="l01686"></a><span class="lineno"> 1686</span>&#160;  pthread_sigmask(SIG_BLOCK, &amp;our_sigset, NULL);</div>
+<div class="line"><a name="l01687"></a><span class="lineno"> 1687</span>&#160;</div>
+<div class="line"><a name="l01688"></a><span class="lineno"> 1688</span>&#160;    </div>
+<div class="line"><a name="l01689"></a><span class="lineno"> 1689</span>&#160;  fda[0].fd = signalfd( -1, &amp;our_sigset, SFD_NONBLOCK);</div>
+<div class="line"><a name="l01690"></a><span class="lineno"> 1690</span>&#160;  <span class="keywordflow">if</span>( fda[0].fd == -1) {</div>
+<div class="line"><a name="l01691"></a><span class="lineno"> 1691</span>&#160;    <span class="keywordtype">char</span> *es;</div>
+<div class="line"><a name="l01692"></a><span class="lineno"> 1692</span>&#160;</div>
+<div class="line"><a name="l01693"></a><span class="lineno"> 1693</span>&#160;    es = strerror( errno);</div>
+<div class="line"><a name="l01694"></a><span class="lineno"> 1694</span>&#160;    <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;Signalfd trouble: %s&quot;</span>, es);</div>
+<div class="line"><a name="l01695"></a><span class="lineno"> 1695</span>&#160;  }</div>
+<div class="line"><a name="l01696"></a><span class="lineno"> 1696</span>&#160;  fda[0].events = POLLIN;</div>
+<div class="line"><a name="l01697"></a><span class="lineno"> 1697</span>&#160;</div>
+<div class="line"><a name="l01698"></a><span class="lineno"> 1698</span>&#160;  <span class="comment">//</span></div>
+<div class="line"><a name="l01699"></a><span class="lineno"> 1699</span>&#160;  <span class="comment">//  make sure file descriptor is not legal until it&#39;s been conneceted</span></div>
+<div class="line"><a name="l01700"></a><span class="lineno"> 1700</span>&#160;  <span class="comment">//</span></div>
+<div class="line"><a name="l01701"></a><span class="lineno"> 1701</span>&#160;  <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.fd   = -1;</div>
 <div class="line"><a name="l01702"></a><span class="lineno"> 1702</span>&#160;</div>
-<div class="line"><a name="l01703"></a><span class="lineno"> 1703</span>&#160;  <span class="keywordflow">while</span>( 1) {</div>
-<div class="line"><a name="l01704"></a><span class="lineno"> 1704</span>&#160;    <span class="keywordtype">int</span> pollrtn;</div>
-<div class="line"><a name="l01705"></a><span class="lineno"> 1705</span>&#160;    <span class="keywordtype">int</span> poll_timeout_ms;</div>
-<div class="line"><a name="l01706"></a><span class="lineno"> 1706</span>&#160;</div>
-<div class="line"><a name="l01707"></a><span class="lineno"> 1707</span>&#160;   <a class="code" href="kvredis_8c.html#ab52a8c8245bf6561f40c0f224fc07ff4" title="Implements our state machine Does not strictly only set the next state as it also calls some function...">lspg_next_state</a>();</div>
-<div class="line"><a name="l01708"></a><span class="lineno"> 1708</span>&#160;</div>
-<div class="line"><a name="l01709"></a><span class="lineno"> 1709</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.fd == -1) {</div>
-<div class="line"><a name="l01710"></a><span class="lineno"> 1710</span>&#160;      <span class="comment">//</span></div>
-<div class="line"><a name="l01711"></a><span class="lineno"> 1711</span>&#160;      <span class="comment">// Here a connection to the database is not established.</span></div>
-<div class="line"><a name="l01712"></a><span class="lineno"> 1712</span>&#160;      <span class="comment">// Periodicaly try again.  Should possibly arrange to reconnect</span></div>
-<div class="line"><a name="l01713"></a><span class="lineno"> 1713</span>&#160;      <span class="comment">// to signalfd but that&#39;s unlikely to be nessesary.</span></div>
-<div class="line"><a name="l01714"></a><span class="lineno"> 1714</span>&#160;      <span class="comment">//</span></div>
-<div class="line"><a name="l01715"></a><span class="lineno"> 1715</span>&#160;      nfda = 1;</div>
-<div class="line"><a name="l01716"></a><span class="lineno"> 1716</span>&#160;      poll_timeout_ms = 10000;</div>
-<div class="line"><a name="l01717"></a><span class="lineno"> 1717</span>&#160;      fda[1].revents = 0;</div>
-<div class="line"><a name="l01718"></a><span class="lineno"> 1718</span>&#160;    } <span class="keywordflow">else</span> {</div>
-<div class="line"><a name="l01719"></a><span class="lineno"> 1719</span>&#160;      <span class="comment">//</span></div>
-<div class="line"><a name="l01720"></a><span class="lineno"> 1720</span>&#160;      <span class="comment">// Arrange to peacfully do nothing until either the pg server sends us something</span></div>
-<div class="line"><a name="l01721"></a><span class="lineno"> 1721</span>&#160;      <span class="comment">// or someone pushs something onto our queue</span></div>
-<div class="line"><a name="l01722"></a><span class="lineno"> 1722</span>&#160;      <span class="comment">//</span></div>
-<div class="line"><a name="l01723"></a><span class="lineno"> 1723</span>&#160;      nfda = 2;</div>
-<div class="line"><a name="l01724"></a><span class="lineno"> 1724</span>&#160;      fda[1].fd      = <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.fd;</div>
-<div class="line"><a name="l01725"></a><span class="lineno"> 1725</span>&#160;      fda[1].events  = <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events;</div>
-<div class="line"><a name="l01726"></a><span class="lineno"> 1726</span>&#160;      fda[1].revents = 0;</div>
-<div class="line"><a name="l01727"></a><span class="lineno"> 1727</span>&#160;      poll_timeout_ms = -1;</div>
-<div class="line"><a name="l01728"></a><span class="lineno"> 1728</span>&#160;    }</div>
-<div class="line"><a name="l01729"></a><span class="lineno"> 1729</span>&#160;</div>
-<div class="line"><a name="l01730"></a><span class="lineno"> 1730</span>&#160;    pollrtn = poll( fda, nfda, poll_timeout_ms);</div>
-<div class="line"><a name="l01731"></a><span class="lineno"> 1731</span>&#160;</div>
-<div class="line"><a name="l01732"></a><span class="lineno"> 1732</span>&#160;    <span class="keywordflow">if</span>( pollrtn &amp;&amp; fda[0].revents) {</div>
-<div class="line"><a name="l01733"></a><span class="lineno"> 1733</span>&#160;      <a class="code" href="lspg_8c.html#a049f4422994aa2eb2b841ffb2937f895" title="Service a signal Signals here are treated as file descriptors and fits into our poll scheme...">lspg_sig_service</a>( &amp;(fda[0]));</div>
-<div class="line"><a name="l01734"></a><span class="lineno"> 1734</span>&#160;      pollrtn--;</div>
-<div class="line"><a name="l01735"></a><span class="lineno"> 1735</span>&#160;    } </div>
-<div class="line"><a name="l01736"></a><span class="lineno"> 1736</span>&#160;    <span class="keywordflow">if</span>( pollrtn &amp;&amp; fda[1].revents) {</div>
-<div class="line"><a name="l01737"></a><span class="lineno"> 1737</span>&#160;      <a class="code" href="kvredis_8c.html#aa8d1fed4b461c2139a21826d524777d5" title="I/O control to/from the postgresql server.">lspg_pg_service</a>( &amp;(fda[1]));</div>
-<div class="line"><a name="l01738"></a><span class="lineno"> 1738</span>&#160;      pollrtn--;</div>
-<div class="line"><a name="l01739"></a><span class="lineno"> 1739</span>&#160;    } </div>
-<div class="line"><a name="l01740"></a><span class="lineno"> 1740</span>&#160;  }</div>
-<div class="line"><a name="l01741"></a><span class="lineno"> 1741</span>&#160;}</div>
-<div class="line"><a name="l01742"></a><span class="lineno"> 1742</span>&#160;</div>
-<div class="line"><a name="l01745"></a><span class="lineno"><a class="code" href="lspg_8c.html#aaba848ff514781cf8468cf23bc4d214f"> 1745</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#aaba848ff514781cf8468cf23bc4d214f" title="log magnet state">lspmac_sample_detector_cb</a>( <span class="keywordtype">char</span> *event) {</div>
-<div class="line"><a name="l01746"></a><span class="lineno"> 1746</span>&#160;  <span class="keywordtype">int</span> present;</div>
-<div class="line"><a name="l01747"></a><span class="lineno"> 1747</span>&#160;  <span class="keywordflow">if</span>( strcmp( event, <span class="stringliteral">&quot;SampleDetected&quot;</span>) == 0)</div>
-<div class="line"><a name="l01748"></a><span class="lineno"> 1748</span>&#160;    present = 1;</div>
-<div class="line"><a name="l01749"></a><span class="lineno"> 1749</span>&#160;  <span class="keywordflow">else</span></div>
-<div class="line"><a name="l01750"></a><span class="lineno"> 1750</span>&#160;    present = 0;</div>
-<div class="line"><a name="l01751"></a><span class="lineno"> 1751</span>&#160;</div>
-<div class="line"><a name="l01752"></a><span class="lineno"> 1752</span>&#160;  <a class="code" href="kvredis_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( NULL, <span class="stringliteral">&quot;SELECT px.logmagnetstate(%s)&quot;</span>, present ? <span class="stringliteral">&quot;TRUE&quot;</span> : <span class="stringliteral">&quot;FALSE&quot;</span>);</div>
-<div class="line"><a name="l01753"></a><span class="lineno"> 1753</span>&#160;}</div>
-<div class="line"><a name="l01754"></a><span class="lineno"> 1754</span>&#160;</div>
-<div class="line"><a name="l01757"></a><span class="lineno"><a class="code" href="pgpmac_8h.html#a8a77972df14166e05c94ed0792baa09b"> 1757</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#a8a77972df14166e05c94ed0792baa09b" title="Initiallize the lspg module.">lspg_init</a>() {</div>
-<div class="line"><a name="l01758"></a><span class="lineno"> 1758</span>&#160;  pthread_mutex_init( &amp;<a class="code" href="lspg_8c.html#aed46a94106c583796e3a8ca0e89aa8e4" title="keep the queue from getting tangled">lspg_queue_mutex</a>, NULL);</div>
-<div class="line"><a name="l01759"></a><span class="lineno"> 1759</span>&#160;  pthread_cond_init( &amp;<a class="code" href="lspg_8c.html#a61a308b6a37afd645beb422653b95baa" title="keeps the queue from overflowing">lspg_queue_cond</a>, NULL);</div>
-<div class="line"><a name="l01760"></a><span class="lineno"> 1760</span>&#160;</div>
-<div class="line"><a name="l01761"></a><span class="lineno"> 1761</span>&#160;  <a class="code" href="lspg_8c.html#a61e47be0d5d7154700e7e5edb889852e" title="initialize the demandairrights structure">lspg_demandairrights_init</a>();</div>
-<div class="line"><a name="l01762"></a><span class="lineno"> 1762</span>&#160;  <a class="code" href="lspg_8c.html#ad31db17587a02302ac4e40fb7d260b1b" title="Initialize getcenter object.">lspg_getcenter_init</a>();</div>
-<div class="line"><a name="l01763"></a><span class="lineno"> 1763</span>&#160;  <a class="code" href="lspg_8c.html#a5d6f6c4733629fc14e4f0bc128a1ffb7">lspg_getcurrentsampleid_init</a>();</div>
-<div class="line"><a name="l01764"></a><span class="lineno"> 1764</span>&#160;  <a class="code" href="lspg_8c.html#a0e9bbf847dadfe0d10830d67824d9be8" title="Initialize detector lock object.">lspg_lock_detector_init</a>();</div>
-<div class="line"><a name="l01765"></a><span class="lineno"> 1765</span>&#160;  <a class="code" href="lspg_8c.html#a39bb94f8e0d47702b2b920a3dee61ebc" title="initialize the diffractometer locking object">lspg_lock_diffractometer_init</a>();</div>
-<div class="line"><a name="l01766"></a><span class="lineno"> 1766</span>&#160;  <a class="code" href="lspg_8c.html#a2faa901ea0a8ef00cfd93a893b34b446" title="Initialize the nextsample variable, mutex, and condition.">lspg_nextsample_init</a>();</div>
-<div class="line"><a name="l01767"></a><span class="lineno"> 1767</span>&#160;  <a class="code" href="lspg_8c.html#aff91db7d60e6c832684c023813e36dbf" title="Initialize the nextshot variable, mutex, and condition.">lspg_nextshot_init</a>();</div>
-<div class="line"><a name="l01768"></a><span class="lineno"> 1768</span>&#160;  <a class="code" href="lspg_8c.html#a31823ecb2b44d4a6674f804059a27bce" title="Initialize the data collection object.">lspg_seq_run_prep_init</a>();</div>
-<div class="line"><a name="l01769"></a><span class="lineno"> 1769</span>&#160;  <a class="code" href="lspg_8c.html#ab98f7d254fa0f5f4826f9427ca8b4f03">lspg_starttransfer_init</a>();</div>
-<div class="line"><a name="l01770"></a><span class="lineno"> 1770</span>&#160;  <a class="code" href="lspg_8c.html#a3517f8fbed91c998f6036284f9bd0c48" title="initialize the detector timing object">lspg_wait_for_detector_init</a>();</div>
-<div class="line"><a name="l01771"></a><span class="lineno"> 1771</span>&#160;  <a class="code" href="lspg_8c.html#a32b2bf00d66ee5fca130ee616a09cf7b">lspg_waitcryo_init</a>();</div>
-<div class="line"><a name="l01772"></a><span class="lineno"> 1772</span>&#160;}</div>
-<div class="line"><a name="l01773"></a><span class="lineno"> 1773</span>&#160;</div>
-<div class="line"><a name="l01776"></a><span class="lineno"><a class="code" href="pgpmac_8h.html#a1adfdb5ca9fdb5060849d726bf540117"> 1776</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#a1adfdb5ca9fdb5060849d726bf540117" title="Start &#39;er runnin&#39;.">lspg_run</a>() {</div>
-<div class="line"><a name="l01777"></a><span class="lineno"> 1777</span>&#160;  pthread_create( &amp;<a class="code" href="lspg_8c.html#a04eb0cda0d5e5afeae7c393b51689765" title="our worker thread">lspg_thread</a>, NULL, <a class="code" href="lspg_8c.html#aaf4fadd2943fa3a2ecb5d840e84d68fa" title="The main loop for the lspg thread.">lspg_worker</a>, NULL);</div>
-<div class="line"><a name="l01778"></a><span class="lineno"> 1778</span>&#160;  <a class="code" href="lsevents_8c.html#ab0617d3f0594b51d10e34bf397096654" title="Add a callback routine to listen for a specific event.">lsevents_add_listener</a>( <span class="stringliteral">&quot;Sample(Detected|Absent)&quot;</span>, <a class="code" href="lspg_8c.html#aaba848ff514781cf8468cf23bc4d214f" title="log magnet state">lspmac_sample_detector_cb</a>);</div>
-<div class="line"><a name="l01779"></a><span class="lineno"> 1779</span>&#160;}</div>
+<div class="line"><a name="l01703"></a><span class="lineno"> 1703</span>&#160;</div>
+<div class="line"><a name="l01704"></a><span class="lineno"> 1704</span>&#160;  <span class="keywordflow">while</span>( 1) {</div>
+<div class="line"><a name="l01705"></a><span class="lineno"> 1705</span>&#160;    <span class="keywordtype">int</span> pollrtn;</div>
+<div class="line"><a name="l01706"></a><span class="lineno"> 1706</span>&#160;    <span class="keywordtype">int</span> poll_timeout_ms;</div>
+<div class="line"><a name="l01707"></a><span class="lineno"> 1707</span>&#160;</div>
+<div class="line"><a name="l01708"></a><span class="lineno"> 1708</span>&#160;   <a class="code" href="kvredis_8c.html#ab52a8c8245bf6561f40c0f224fc07ff4" title="Implements our state machine Does not strictly only set the next state as it also calls some function...">lspg_next_state</a>();</div>
+<div class="line"><a name="l01709"></a><span class="lineno"> 1709</span>&#160;</div>
+<div class="line"><a name="l01710"></a><span class="lineno"> 1710</span>&#160;    <span class="keywordflow">if</span>( <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.fd == -1) {</div>
+<div class="line"><a name="l01711"></a><span class="lineno"> 1711</span>&#160;      <span class="comment">//</span></div>
+<div class="line"><a name="l01712"></a><span class="lineno"> 1712</span>&#160;      <span class="comment">// Here a connection to the database is not established.</span></div>
+<div class="line"><a name="l01713"></a><span class="lineno"> 1713</span>&#160;      <span class="comment">// Periodicaly try again.  Should possibly arrange to reconnect</span></div>
+<div class="line"><a name="l01714"></a><span class="lineno"> 1714</span>&#160;      <span class="comment">// to signalfd but that&#39;s unlikely to be nessesary.</span></div>
+<div class="line"><a name="l01715"></a><span class="lineno"> 1715</span>&#160;      <span class="comment">//</span></div>
+<div class="line"><a name="l01716"></a><span class="lineno"> 1716</span>&#160;      nfda = 1;</div>
+<div class="line"><a name="l01717"></a><span class="lineno"> 1717</span>&#160;      poll_timeout_ms = 10000;</div>
+<div class="line"><a name="l01718"></a><span class="lineno"> 1718</span>&#160;      fda[1].revents = 0;</div>
+<div class="line"><a name="l01719"></a><span class="lineno"> 1719</span>&#160;    } <span class="keywordflow">else</span> {</div>
+<div class="line"><a name="l01720"></a><span class="lineno"> 1720</span>&#160;      <span class="comment">//</span></div>
+<div class="line"><a name="l01721"></a><span class="lineno"> 1721</span>&#160;      <span class="comment">// Arrange to peacfully do nothing until either the pg server sends us something</span></div>
+<div class="line"><a name="l01722"></a><span class="lineno"> 1722</span>&#160;      <span class="comment">// or someone pushs something onto our queue</span></div>
+<div class="line"><a name="l01723"></a><span class="lineno"> 1723</span>&#160;      <span class="comment">//</span></div>
+<div class="line"><a name="l01724"></a><span class="lineno"> 1724</span>&#160;      nfda = 2;</div>
+<div class="line"><a name="l01725"></a><span class="lineno"> 1725</span>&#160;      fda[1].fd      = <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.fd;</div>
+<div class="line"><a name="l01726"></a><span class="lineno"> 1726</span>&#160;      fda[1].events  = <a class="code" href="lspg_8c.html#af3f897b8ffa020ca54289bc5b28cb64d" title="our poll info">lspgfd</a>.events;</div>
+<div class="line"><a name="l01727"></a><span class="lineno"> 1727</span>&#160;      fda[1].revents = 0;</div>
+<div class="line"><a name="l01728"></a><span class="lineno"> 1728</span>&#160;      poll_timeout_ms = -1;</div>
+<div class="line"><a name="l01729"></a><span class="lineno"> 1729</span>&#160;    }</div>
+<div class="line"><a name="l01730"></a><span class="lineno"> 1730</span>&#160;</div>
+<div class="line"><a name="l01731"></a><span class="lineno"> 1731</span>&#160;    pollrtn = poll( fda, nfda, poll_timeout_ms);</div>
+<div class="line"><a name="l01732"></a><span class="lineno"> 1732</span>&#160;</div>
+<div class="line"><a name="l01733"></a><span class="lineno"> 1733</span>&#160;    <span class="keywordflow">if</span>( pollrtn &amp;&amp; fda[0].revents) {</div>
+<div class="line"><a name="l01734"></a><span class="lineno"> 1734</span>&#160;      <a class="code" href="lspg_8c.html#a049f4422994aa2eb2b841ffb2937f895" title="Service a signal Signals here are treated as file descriptors and fits into our poll scheme...">lspg_sig_service</a>( &amp;(fda[0]));</div>
+<div class="line"><a name="l01735"></a><span class="lineno"> 1735</span>&#160;      pollrtn--;</div>
+<div class="line"><a name="l01736"></a><span class="lineno"> 1736</span>&#160;    } </div>
+<div class="line"><a name="l01737"></a><span class="lineno"> 1737</span>&#160;    <span class="keywordflow">if</span>( pollrtn &amp;&amp; fda[1].revents) {</div>
+<div class="line"><a name="l01738"></a><span class="lineno"> 1738</span>&#160;      <a class="code" href="kvredis_8c.html#aa8d1fed4b461c2139a21826d524777d5" title="I/O control to/from the postgresql server.">lspg_pg_service</a>( &amp;(fda[1]));</div>
+<div class="line"><a name="l01739"></a><span class="lineno"> 1739</span>&#160;      pollrtn--;</div>
+<div class="line"><a name="l01740"></a><span class="lineno"> 1740</span>&#160;    } </div>
+<div class="line"><a name="l01741"></a><span class="lineno"> 1741</span>&#160;  }</div>
+<div class="line"><a name="l01742"></a><span class="lineno"> 1742</span>&#160;}</div>
+<div class="line"><a name="l01743"></a><span class="lineno"> 1743</span>&#160;</div>
+<div class="line"><a name="l01746"></a><span class="lineno"><a class="code" href="lspg_8c.html#aaba848ff514781cf8468cf23bc4d214f"> 1746</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#aaba848ff514781cf8468cf23bc4d214f" title="log magnet state">lspmac_sample_detector_cb</a>( <span class="keywordtype">char</span> *event) {</div>
+<div class="line"><a name="l01747"></a><span class="lineno"> 1747</span>&#160;  <span class="keywordtype">int</span> present;</div>
+<div class="line"><a name="l01748"></a><span class="lineno"> 1748</span>&#160;  <span class="keywordflow">if</span>( strcmp( event, <span class="stringliteral">&quot;SampleDetected&quot;</span>) == 0)</div>
+<div class="line"><a name="l01749"></a><span class="lineno"> 1749</span>&#160;    present = 1;</div>
+<div class="line"><a name="l01750"></a><span class="lineno"> 1750</span>&#160;  <span class="keywordflow">else</span></div>
+<div class="line"><a name="l01751"></a><span class="lineno"> 1751</span>&#160;    present = 0;</div>
+<div class="line"><a name="l01752"></a><span class="lineno"> 1752</span>&#160;</div>
+<div class="line"><a name="l01753"></a><span class="lineno"> 1753</span>&#160;  <a class="code" href="kvredis_8c.html#a0bb9ef42da8fa21c4df48ec384ab69f4" title="Place a query on the queue.">lspg_query_push</a>( NULL, <span class="stringliteral">&quot;SELECT px.logmagnetstate(%s)&quot;</span>, present ? <span class="stringliteral">&quot;TRUE&quot;</span> : <span class="stringliteral">&quot;FALSE&quot;</span>);</div>
+<div class="line"><a name="l01754"></a><span class="lineno"> 1754</span>&#160;}</div>
+<div class="line"><a name="l01755"></a><span class="lineno"> 1755</span>&#160;</div>
+<div class="line"><a name="l01758"></a><span class="lineno"><a class="code" href="pgpmac_8h.html#a8a77972df14166e05c94ed0792baa09b"> 1758</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#a8a77972df14166e05c94ed0792baa09b" title="Initiallize the lspg module.">lspg_init</a>() {</div>
+<div class="line"><a name="l01759"></a><span class="lineno"> 1759</span>&#160;  pthread_mutex_init( &amp;<a class="code" href="lspg_8c.html#aed46a94106c583796e3a8ca0e89aa8e4" title="keep the queue from getting tangled">lspg_queue_mutex</a>, NULL);</div>
+<div class="line"><a name="l01760"></a><span class="lineno"> 1760</span>&#160;  pthread_cond_init( &amp;<a class="code" href="lspg_8c.html#a61a308b6a37afd645beb422653b95baa" title="keeps the queue from overflowing">lspg_queue_cond</a>, NULL);</div>
+<div class="line"><a name="l01761"></a><span class="lineno"> 1761</span>&#160;</div>
+<div class="line"><a name="l01762"></a><span class="lineno"> 1762</span>&#160;  <a class="code" href="lspg_8c.html#a61e47be0d5d7154700e7e5edb889852e" title="initialize the demandairrights structure">lspg_demandairrights_init</a>();</div>
+<div class="line"><a name="l01763"></a><span class="lineno"> 1763</span>&#160;  <a class="code" href="lspg_8c.html#ad31db17587a02302ac4e40fb7d260b1b" title="Initialize getcenter object.">lspg_getcenter_init</a>();</div>
+<div class="line"><a name="l01764"></a><span class="lineno"> 1764</span>&#160;  <a class="code" href="lspg_8c.html#a5d6f6c4733629fc14e4f0bc128a1ffb7">lspg_getcurrentsampleid_init</a>();</div>
+<div class="line"><a name="l01765"></a><span class="lineno"> 1765</span>&#160;  <a class="code" href="lspg_8c.html#a0e9bbf847dadfe0d10830d67824d9be8" title="Initialize detector lock object.">lspg_lock_detector_init</a>();</div>
+<div class="line"><a name="l01766"></a><span class="lineno"> 1766</span>&#160;  <a class="code" href="lspg_8c.html#a39bb94f8e0d47702b2b920a3dee61ebc" title="initialize the diffractometer locking object">lspg_lock_diffractometer_init</a>();</div>
+<div class="line"><a name="l01767"></a><span class="lineno"> 1767</span>&#160;  <a class="code" href="lspg_8c.html#a2faa901ea0a8ef00cfd93a893b34b446" title="Initialize the nextsample variable, mutex, and condition.">lspg_nextsample_init</a>();</div>
+<div class="line"><a name="l01768"></a><span class="lineno"> 1768</span>&#160;  <a class="code" href="lspg_8c.html#aff91db7d60e6c832684c023813e36dbf" title="Initialize the nextshot variable, mutex, and condition.">lspg_nextshot_init</a>();</div>
+<div class="line"><a name="l01769"></a><span class="lineno"> 1769</span>&#160;  <a class="code" href="lspg_8c.html#a31823ecb2b44d4a6674f804059a27bce" title="Initialize the data collection object.">lspg_seq_run_prep_init</a>();</div>
+<div class="line"><a name="l01770"></a><span class="lineno"> 1770</span>&#160;  <a class="code" href="lspg_8c.html#ab98f7d254fa0f5f4826f9427ca8b4f03">lspg_starttransfer_init</a>();</div>
+<div class="line"><a name="l01771"></a><span class="lineno"> 1771</span>&#160;  <a class="code" href="lspg_8c.html#a3517f8fbed91c998f6036284f9bd0c48" title="initialize the detector timing object">lspg_wait_for_detector_init</a>();</div>
+<div class="line"><a name="l01772"></a><span class="lineno"> 1772</span>&#160;  <a class="code" href="lspg_8c.html#a32b2bf00d66ee5fca130ee616a09cf7b">lspg_waitcryo_init</a>();</div>
+<div class="line"><a name="l01773"></a><span class="lineno"> 1773</span>&#160;}</div>
+<div class="line"><a name="l01774"></a><span class="lineno"> 1774</span>&#160;</div>
+<div class="line"><a name="l01777"></a><span class="lineno"><a class="code" href="pgpmac_8h.html#a1adfdb5ca9fdb5060849d726bf540117"> 1777</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="lspg_8c.html#a1adfdb5ca9fdb5060849d726bf540117" title="Start &#39;er runnin&#39;.">lspg_run</a>() {</div>
+<div class="line"><a name="l01778"></a><span class="lineno"> 1778</span>&#160;  pthread_create( &amp;<a class="code" href="lspg_8c.html#a04eb0cda0d5e5afeae7c393b51689765" title="our worker thread">lspg_thread</a>, NULL, <a class="code" href="lspg_8c.html#aaf4fadd2943fa3a2ecb5d840e84d68fa" title="The main loop for the lspg thread.">lspg_worker</a>, NULL);</div>
+<div class="line"><a name="l01779"></a><span class="lineno"> 1779</span>&#160;  <a class="code" href="lsevents_8c.html#ab0617d3f0594b51d10e34bf397096654" title="Add a callback routine to listen for a specific event.">lsevents_add_listener</a>( <span class="stringliteral">&quot;Sample(Detected|Absent)&quot;</span>, <a class="code" href="lspg_8c.html#aaba848ff514781cf8468cf23bc4d214f" title="log magnet state">lspmac_sample_detector_cb</a>);</div>
+<div class="line"><a name="l01780"></a><span class="lineno"> 1780</span>&#160;}</div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="lspg_8c.html">lspg.c</a></li>
-    <li class="footer">Generated on Mon Dec 24 2012 18:43:18 for LS-CAT PGPMAC by
+    <li class="footer">Generated on Tue Jan 15 2013 16:53:09 for LS-CAT PGPMAC by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.2 </li>
   </ul>

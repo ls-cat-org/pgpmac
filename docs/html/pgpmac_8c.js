@@ -4,6 +4,7 @@ var pgpmac_8c =
     [ "pgpmac_printf", "pgpmac_8c.html#a7762ca7b97b44b979e23ce88ca3b4249", null ],
     [ "stdinService", "pgpmac_8c.html#a9127a8f722451b5996ffbc6966f4aa95", null ],
     [ "ncurses_mutex", "pgpmac_8c.html#ad128c64890c7c0d4f836d9ec6e99216a", null ],
+    [ "running", "pgpmac_8c.html#a2f45113638a0b749a8a205d2cd7fb42b", null ],
     [ "stdinfda", "pgpmac_8c.html#a6dc08e82e698d914ccb09077dd33668a", null ],
     [ "term_input", "pgpmac_8c.html#ab0487111dbe3c05d0bd835eb2fb9a3f7", null ],
     [ "term_output", "pgpmac_8c.html#a65daf0f4a5bc6def23a9df98ff5ca57e", null ],

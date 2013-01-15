@@ -1,9 +1,8 @@
 var searchData=
 [
   ['raw_5fregexp',['raw_regexp',['../structlsevents__listener__struct.html#afffe7a6889fda47a3a7a91beefed9168',1,'lsevents_listener_struct']]],
-  ['rbuff',['rbuff',['../structlspmac__cmd__queue__struct.html#aa059563886db174f9bb4f7a14bc19bbe',1,'lspmac_cmd_queue_struct']]],
   ['re',['re',['../structlsevents__listener__struct.html#a60b0f9e188a08e6101c494af89052d3f',1,'lsevents_listener_struct']]],
-  ['read',['read',['../structlspmac__motor__struct.html#ac62692eb939c04ca35e939d1c3acfe8f',1,'lspmac_motor_struct']]],
+  ['read',['read',['../structlspmac__motor__struct.html#ac62692eb939c04ca35e939d1c3acfe8f',1,'lspmac_motor_struct::read()'],['../classiniParser_1_1iniParser.html#a9f3ec4f3951b9b68a8e82c59e88ee9be',1,'iniParser.iniParser.read()']]],
   ['read_5fmask',['read_mask',['../structlspmac__motor__struct.html#a3c24ed30c5a3ad490c6139b2780b2af7',1,'lspmac_motor_struct']]],
   ['read_5fptr',['read_ptr',['../structlspmac__motor__struct.html#a844b28ccabab5048ca216db074fb9704',1,'lspmac_motor_struct']]],
   ['redis_5ffmt',['redis_fmt',['../structlspmac__motor__struct.html#a91c38b2072d878b71f4e77de2f1375a4',1,'lspmac_motor_struct']]],
@@ -14,8 +13,12 @@ var searchData=
   ['requested_5fpos_5fcnts',['requested_pos_cnts',['../structlspmac__motor__struct.html#a6e8dc9c11dc52a439fe9837230f93ce2',1,'lspmac_motor_struct']]],
   ['requested_5fposition',['requested_position',['../structlspmac__motor__struct.html#af8cdc94c6e2478b12ce942d4cf1d7499',1,'lspmac_motor_struct']]],
   ['requesttype',['RequestType',['../structtagEthernetCmd.html#a6a155eb3ae546dd29369c4a33ddb3310',1,'tagEthernetCmd']]],
+  ['response_5fbuf',['response_buf',['../structlspmac__ascii__buffers__struct.html#ae1d37cf9568478c9d8dad540ce77183c',1,'lspmac_ascii_buffers_struct']]],
+  ['response_5fn',['response_n',['../structlspmac__ascii__buffers__struct.html#a97c2fdd21eec29c2cba993e361c3c069',1,'lspmac_ascii_buffers_struct']]],
+  ['response_5fstr',['response_str',['../structlspmac__ascii__buffers__struct.html#a32c4baecf20143eb71d348b6b5679039',1,'lspmac_ascii_buffers_struct']]],
   ['roac',['roac',['../lsredis_8c.html#afc92245910ec04f9a341c092def45564',1,'lsredis.c']]],
   ['rofd',['rofd',['../lsredis_8c.html#add819e43a356d0575ec64c346c6fed57',1,'lsredis.c']]],
   ['rotating',['rotating',['../md2cmds_8c.html#aaa6eb2d46be8d5e17a511591dd5a1271',1,'md2cmds.c']]],
-  ['rr_5fcmd',['rr_cmd',['../lspmac_8c.html#a6fcbbe47fe9912533962601f5befdb29',1,'lspmac.c']]]
+  ['rr_5fcmd',['rr_cmd',['../lspmac_8c.html#a6fcbbe47fe9912533962601f5befdb29',1,'lspmac.c']]],
+  ['running',['running',['../pgpmac_8c.html#a2f45113638a0b749a8a205d2cd7fb42b',1,'pgpmac.c']]]
 ];

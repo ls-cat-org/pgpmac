@@ -46,6 +46,8 @@ void \hyperlink{md2cmds_8c_a4eb608d012f8a471671e10fb19b366d6}{md2cmds\-\_\-set\-
 \begin{DoxyCompactList}\small\item\em Fix up xscale and yscale when zoom changes. \end{DoxyCompactList}\item 
 void \hyperlink{md2cmds_8c_a5a9d72c08597ffe45287622c40975e7f}{md2cmds\-\_\-center} ()
 \begin{DoxyCompactList}\small\item\em Move centering and alignment tables as requested T\-O\-D\-O\-: Implement. \end{DoxyCompactList}\item 
+void \hyperlink{md2cmds_8c_abd60a276f9d4658561110a4ec68c6144}{md2cmds\-\_\-move\-\_\-prep\-\_\-done\-\_\-cb} (char $\ast$event)
+\item 
 void \hyperlink{md2cmds_8c_aab9e2aa02903648acc342068f0664a96}{md2cmds\-\_\-time\-\_\-capz\-\_\-cb} (char $\ast$event)
 \begin{DoxyCompactList}\small\item\em Time the capillary motion for the transfer routine. \end{DoxyCompactList}\item 
 int \hyperlink{md2cmds_8c_aea8abad4c01250c1c88d6eff766bb83e}{md2cmds\-\_\-action\-\_\-queue} (double timeout, char $\ast$action)
@@ -65,8 +67,10 @@ pthread\-\_\-cond\-\_\-t \hyperlink{md2cmds_8c_a08d5b18ec9478d753c46a3e28d1f2126
 \begin{DoxyCompactList}\small\item\em condition to signal when it's time to run an md2 command \end{DoxyCompactList}\item 
 pthread\-\_\-mutex\-\_\-t \hyperlink{md2cmds_8c_ad67304bb851dc6268b0cda2f40fc5aa8}{md2cmds\-\_\-mutex}
 \begin{DoxyCompactList}\small\item\em mutex for the condition \end{DoxyCompactList}\item 
+int \hyperlink{md2cmds_8c_af14178edd0398535a0c3c87066d6f00c}{md2cmds\-\_\-moving\-\_\-queue\-\_\-wait} = 0
+\item 
 pthread\-\_\-cond\-\_\-t \hyperlink{md2cmds_8c_adeebdb8f552bff14bd666c187505ee9e}{md2cmds\-\_\-moving\-\_\-cond}
-\begin{DoxyCompactList}\small\item\em coordinate call and response \end{DoxyCompactList}\item 
+\begin{DoxyCompactList}\small\item\em wait for command to have been dequeued and run \end{DoxyCompactList}\item 
 pthread\-\_\-mutex\-\_\-t \hyperlink{md2cmds_8c_a4ea6e6bf63aefcd49f87c3921029451d}{md2cmds\-\_\-moving\-\_\-mutex}
 \begin{DoxyCompactList}\small\item\em message passing between md2cmds and pg \end{DoxyCompactList}\item 
 \hyperlink{pgpmac_8h_a99c275e32ad897dca34d196b91f038cb}{pmac\-\_\-cmd\-\_\-queue\-\_\-t} $\ast$ \hyperlink{md2cmds_8c_adb9f3bcc0d1231c4c22282279e11244f}{md2cmds\-\_\-moving\-\_\-pq}
@@ -112,7 +116,7 @@ Definition in file \hyperlink{md2cmds_8c_source}{md2cmds.\-c}.
 )}}\label{md2cmds_8c_aea8abad4c01250c1c88d6eff766bb83e}
 
 
-Definition at line 1073 of file md2cmds.\-c.
+Definition at line 1083 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -167,7 +171,7 @@ pause until md2cmds\-\_\-worker has finished running the command
 
 
 
-Definition at line 1110 of file md2cmds.\-c.
+Definition at line 1120 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -189,7 +193,7 @@ Move centering and alignment tables as requested T\-O\-D\-O\-: Implement.
 
 
 
-Definition at line 1038 of file md2cmds.\-c.
+Definition at line 1041 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -231,7 +235,7 @@ $<$ current phi position in case we need to move kappa only
 
 $<$ combined motion mask to set up waiting 
 
-Definition at line 701 of file md2cmds.\-c.
+Definition at line 704 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -265,7 +269,7 @@ Definition at line 701 of file md2cmds.\-c.
   \textcolor{comment}{//}
   \textcolor{comment}{// reset shutter has opened flag}
   \textcolor{comment}{//}
-  \hyperlink{lspmac_8c_aaa442d9bc7a3cdee39adea0724f0e18c}{lspmac\_SockSendline}( \textcolor{stringliteral}{"P3001=0 P3002=0"});
+  \hyperlink{lspmac_8c_afab9e8f0502a92ee5cf93209af710f81}{lspmac\_SockSendDPline}( NULL, \textcolor{stringliteral}{"P3001=0 P3002=0"});
 
   \textcolor{keywordflow}{while}( 1) \{
     \hyperlink{lspg_8c_af17ef79544ca5d78fd477010fe90d538}{lspg\_nextshot\_call}();
@@ -375,8 +379,8 @@ Definition at line 701 of file md2cmds.\-c.
     \textcolor{comment}{//}
     \textcolor{comment}{// Start the exposure}
     \textcolor{comment}{//}
-    \hyperlink{lspmac_8c_aaa442d9bc7a3cdee39adea0724f0e18c}{lspmac\_SockSendline}( \textcolor{stringliteral}{"&1 P170=%.1f P171=%.1f P173=%.1f
-       P174=0 P175=%.1f P176=0 P177=1 P178=0 P180=%.1f M431=1 &1B131R"},
+    \hyperlink{lspmac_8c_afab9e8f0502a92ee5cf93209af710f81}{lspmac\_SockSendDPline}( NULL, \textcolor{stringliteral}{"&1 P170=%.1f P171=%.1f
+       P173=%.1f P174=0 P175=%.1f P176=0 P177=1 P178=0 P180=%.1f M431=1 &1B131R"},
                              p170,     p171,     p173,            p175,        
                         p180);
 
@@ -414,7 +418,7 @@ Definition at line 701 of file md2cmds.\-c.
     \textcolor{comment}{//}
     \textcolor{comment}{// reset shutter has opened flag}
     \textcolor{comment}{//}
-    \hyperlink{lspmac_8c_aaa442d9bc7a3cdee39adea0724f0e18c}{lspmac\_SockSendline}( \textcolor{stringliteral}{"P3001=0"});
+    \hyperlink{lspmac_8c_afab9e8f0502a92ee5cf93209af710f81}{lspmac\_SockSendDPline}( NULL, \textcolor{stringliteral}{"P3001=0"});
 
     \textcolor{comment}{//}
     \textcolor{comment}{// Move the center/alignment stages to the next position}
@@ -464,7 +468,7 @@ Initialize the md2cmds module.
 
 
 
-Definition at line 1151 of file md2cmds.\-c.
+Definition at line 1161 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -493,7 +497,7 @@ Definition at line 1151 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_ab0ee93046bd7bc476c9f8ec50342e89e}
 
 
-Definition at line 672 of file md2cmds.\-c.
+Definition at line 675 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -511,8 +515,8 @@ Definition at line 672 of file md2cmds.\-c.
   \textcolor{comment}{//  ;                 Q21    = Y Value}
   \textcolor{comment}{//  ;                 Q100   = 1 << (coord sys no  - 1)}
 
-  \hyperlink{md2cmds_8c_adb9f3bcc0d1231c4c22282279e11244f}{md2cmds\_moving\_pq} = \hyperlink{lspmac_8c_aaa442d9bc7a3cdee39adea0724f0e18c}{lspmac\_SockSendline}( \textcolor{stringliteral}{
-      "&7 Q20=%d Q21=%d Q100=64"}, kc, pc);
+  \hyperlink{lspmac_8c_afab9e8f0502a92ee5cf93209af710f81}{lspmac\_SockSendDPline}( \textcolor{stringliteral}{"kappaphi\_move"}, \textcolor{stringliteral}{"&7 Q20=%d
+       Q21=%d Q100=64"}, kc, pc);
 
 \}
 \end{DoxyCode}
@@ -529,7 +533,7 @@ Track how many motors are moving.
 
 
 
-Definition at line 636 of file md2cmds.\-c.
+Definition at line 639 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -573,7 +577,7 @@ Now that we are done with the 360 rotation lets rehome right quick.
 
 
 
-Definition at line 1002 of file md2cmds.\-c.
+Definition at line 1005 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -597,12 +601,11 @@ set up moving motors in a coordinate system
 
 
 
-Definition at line 32 of file md2cmds.\-c.
+Definition at line 33 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
                                    \{
-  \hyperlink{structlspmac__cmd__queue__struct}{pmac\_cmd\_queue\_t} *pq;
   \textcolor{keywordtype}{int} flag;
 
   pthread\_mutex\_lock( &\hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
@@ -623,20 +626,21 @@ Definition at line 32 of file md2cmds.\-c.
        in fact, start}
     \textcolor{comment}{//}
     
+    pthread\_mutex\_lock( &\hyperlink{md2cmds_8c_a4ea6e6bf63aefcd49f87c3921029451d}{md2cmds\_moving\_mutex});
+    \hyperlink{md2cmds_8c_af14178edd0398535a0c3c87066d6f00c}{md2cmds\_moving\_queue\_wait} = 1;
+    pthread\_mutex\_unlock( &\hyperlink{md2cmds_8c_a4ea6e6bf63aefcd49f87c3921029451d}{md2cmds\_moving\_mutex});
+    
     \textcolor{comment}{//}
     \textcolor{comment}{// Clear the centering and alignment stage flags}
     \textcolor{comment}{//}
-    pq = \hyperlink{lspmac_8c_aaa442d9bc7a3cdee39adea0724f0e18c}{lspmac\_SockSendline}( \textcolor{stringliteral}{"M5075=(M5075 | %d) ^ %d"}, 
-      mmask, mmask);
+    \hyperlink{lspmac_8c_afab9e8f0502a92ee5cf93209af710f81}{lspmac\_SockSendDPline}( \textcolor{stringliteral}{"move\_prep"}, \textcolor{stringliteral}{"M5075=(M5075 |
+       %d) ^ %d"}, mmask, mmask);
     
-    pthread\_mutex\_lock( &\hyperlink{lspmac_8c_acc1bb77b9bcbc4d970f841a41fd274b3}{pmac\_queue\_mutex});
-    \textcolor{comment}{//}
-    \textcolor{comment}{// wait for the command to be sent}
-    \textcolor{comment}{//}
-    \textcolor{keywordflow}{while}( pq->\hyperlink{structlspmac__cmd__queue__struct_a276ebc4b35c2554e4cb7377b60fd89b7}{time\_sent}.tv\_sec==0)
-      pthread\_cond\_wait( &\hyperlink{lspmac_8c_a8a25bd9c593c6985107f90f999ce0b08}{pmac\_queue\_cond}, &\hyperlink{lspmac_8c_acc1bb77b9bcbc4d970f841a41fd274b3}{pmac\_queue\_mutex}
-      );
-    pthread\_mutex\_unlock( &\hyperlink{lspmac_8c_acc1bb77b9bcbc4d970f841a41fd274b3}{pmac\_queue\_mutex});
+    pthread\_mutex\_lock( &\hyperlink{md2cmds_8c_a4ea6e6bf63aefcd49f87c3921029451d}{md2cmds\_moving\_mutex});
+    \textcolor{keywordflow}{while}( \hyperlink{md2cmds_8c_af14178edd0398535a0c3c87066d6f00c}{md2cmds\_moving\_queue\_wait})
+      pthread\_cond\_wait( &\hyperlink{md2cmds_8c_adeebdb8f552bff14bd666c187505ee9e}{md2cmds\_moving\_cond}, &
+      \hyperlink{md2cmds_8c_a4ea6e6bf63aefcd49f87c3921029451d}{md2cmds\_moving\_mutex});
+    pthread\_mutex\_unlock( &\hyperlink{md2cmds_8c_a4ea6e6bf63aefcd49f87c3921029451d}{md2cmds\_moving\_mutex});
     
     \textcolor{comment}{//}
     \textcolor{comment}{// Make sure the command propagates back to the status}
@@ -659,21 +663,24 @@ Definition at line 32 of file md2cmds.\-c.
   pthread\_mutex\_lock( &\hyperlink{md2cmds_8c_a4ea6e6bf63aefcd49f87c3921029451d}{md2cmds\_moving\_mutex});
   \textcolor{keywordflow}{if}( \hyperlink{md2cmds_8c_a5ce190461376c4f9c7d74842d8ebc5d5}{md2cmds\_moving\_count} == 0)
     \hyperlink{md2cmds_8c_a5ce190461376c4f9c7d74842d8ebc5d5}{md2cmds\_moving\_count} = -1;
+  \hyperlink{md2cmds_8c_af14178edd0398535a0c3c87066d6f00c}{md2cmds\_moving\_queue\_wait} = 1;
   pthread\_mutex\_unlock( &\hyperlink{md2cmds_8c_a4ea6e6bf63aefcd49f87c3921029451d}{md2cmds\_moving\_mutex});
 
   \textcolor{comment}{//}
   \textcolor{comment}{// Now set the given motion flags}
   \textcolor{comment}{//}
-  pq = \hyperlink{lspmac_8c_aaa442d9bc7a3cdee39adea0724f0e18c}{lspmac\_SockSendline}( \textcolor{stringliteral}{"M5075=(M5075 | %d)"}, mmask);
+  \hyperlink{lspmac_8c_afab9e8f0502a92ee5cf93209af710f81}{lspmac\_SockSendDPline}( \textcolor{stringliteral}{"move\_prep"}, \textcolor{stringliteral}{"M5075=(M5075 | %d)"}
+      , mmask);
 
   pthread\_mutex\_lock( &\hyperlink{lspmac_8c_acc1bb77b9bcbc4d970f841a41fd274b3}{pmac\_queue\_mutex});
   \textcolor{comment}{//}
   \textcolor{comment}{// wait for the command to be sent}
   \textcolor{comment}{//}
-  \textcolor{keywordflow}{while}( pq->\hyperlink{structlspmac__cmd__queue__struct_a276ebc4b35c2554e4cb7377b60fd89b7}{time\_sent}.tv\_sec==0)
-    pthread\_cond\_wait( &\hyperlink{lspmac_8c_a8a25bd9c593c6985107f90f999ce0b08}{pmac\_queue\_cond}, &\hyperlink{lspmac_8c_acc1bb77b9bcbc4d970f841a41fd274b3}{pmac\_queue\_mutex}
-      );
-  pthread\_mutex\_unlock( &\hyperlink{lspmac_8c_acc1bb77b9bcbc4d970f841a41fd274b3}{pmac\_queue\_mutex});
+  pthread\_mutex\_lock( &\hyperlink{md2cmds_8c_a4ea6e6bf63aefcd49f87c3921029451d}{md2cmds\_moving\_mutex});
+  \textcolor{keywordflow}{while}( \hyperlink{md2cmds_8c_af14178edd0398535a0c3c87066d6f00c}{md2cmds\_moving\_queue\_wait})
+    pthread\_cond\_wait( &\hyperlink{md2cmds_8c_adeebdb8f552bff14bd666c187505ee9e}{md2cmds\_moving\_cond}, &
+      \hyperlink{md2cmds_8c_a4ea6e6bf63aefcd49f87c3921029451d}{md2cmds\_moving\_mutex});
+  pthread\_mutex\_unlock( &\hyperlink{md2cmds_8c_a4ea6e6bf63aefcd49f87c3921029451d}{md2cmds\_moving\_mutex});
 
   \textcolor{comment}{//}
   \textcolor{comment}{// Make sure it propagates}
@@ -686,6 +693,26 @@ Definition at line 32 of file md2cmds.\-c.
   \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_move\_prep:
        lspmac\_moving\_flags = %d"}, \hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags});
   pthread\_mutex\_unlock( &\hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
+\}
+\end{DoxyCode}
+\hypertarget{md2cmds_8c_abd60a276f9d4658561110a4ec68c6144}{\index{md2cmds.\-c@{md2cmds.\-c}!md2cmds\-\_\-move\-\_\-prep\-\_\-done\-\_\-cb@{md2cmds\-\_\-move\-\_\-prep\-\_\-done\-\_\-cb}}
+\index{md2cmds\-\_\-move\-\_\-prep\-\_\-done\-\_\-cb@{md2cmds\-\_\-move\-\_\-prep\-\_\-done\-\_\-cb}!md2cmds.c@{md2cmds.\-c}}
+\subsubsection[{md2cmds\-\_\-move\-\_\-prep\-\_\-done\-\_\-cb}]{\setlength{\rightskip}{0pt plus 5cm}void md2cmds\-\_\-move\-\_\-prep\-\_\-done\-\_\-cb (
+\begin{DoxyParamCaption}
+\item[{char $\ast$}]{event}
+\end{DoxyParamCaption}
+)}}\label{md2cmds_8c_abd60a276f9d4658561110a4ec68c6144}
+
+
+Definition at line 1044 of file md2cmds.\-c.
+
+
+\begin{DoxyCode}
+                                             \{
+  pthread\_mutex\_lock( &\hyperlink{md2cmds_8c_a4ea6e6bf63aefcd49f87c3921029451d}{md2cmds\_moving\_mutex});
+  \hyperlink{md2cmds_8c_af14178edd0398535a0c3c87066d6f00c}{md2cmds\_moving\_queue\_wait} = 0;
+  pthread\_cond\_signal( &\hyperlink{md2cmds_8c_adeebdb8f552bff14bd666c187505ee9e}{md2cmds\_moving\_cond});
+  pthread\_mutex\_unlock( &\hyperlink{md2cmds_8c_a4ea6e6bf63aefcd49f87c3921029451d}{md2cmds\_moving\_mutex});
 \}
 \end{DoxyCode}
 \hypertarget{md2cmds_8c_aeac3f41c9c95d2bc0cb4c7824772264d}{\index{md2cmds.\-c@{md2cmds.\-c}!md2cmds\-\_\-move\-\_\-wait@{md2cmds\-\_\-move\-\_\-wait}}
@@ -701,7 +728,7 @@ Wait for the movement to stop.
 
 
 
-Definition at line 112 of file md2cmds.\-c.
+Definition at line 115 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -767,7 +794,7 @@ Move a motor to the position requested.
 \end{DoxyParams}
 
 
-Definition at line 406 of file md2cmds.\-c.
+Definition at line 409 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -884,7 +911,7 @@ Move the centering and alignment tables.
 \end{DoxyParams}
 
 
-Definition at line 608 of file md2cmds.\-c.
+Definition at line 611 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -903,10 +930,10 @@ Definition at line 608 of file md2cmds.\-c.
   ay\_cts = \hyperlink{md2cmds_8c_ab1cc77bc7476714a419c7db69c7c4be4}{md2cmds\_prep\_axis}( \hyperlink{lspmac_8c_a737c246c3948e644a18d191a931e1acd}{aligny}, ay);
   az\_cts = \hyperlink{md2cmds_8c_ab1cc77bc7476714a419c7db69c7c4be4}{md2cmds\_prep\_axis}( \hyperlink{lspmac_8c_ae7642b1da0f7c7f8448104c691d40a12}{alignz}, az);
 
-  \hyperlink{lspmac_8c_aaa442d9bc7a3cdee39adea0724f0e18c}{lspmac\_SockSendline}( \textcolor{stringliteral}{"&2 Q100=2 Q20=%.1f Q21=%.1f B150R"}, 
-      cx\_cts, cy\_cts);
-  \hyperlink{md2cmds_8c_adb9f3bcc0d1231c4c22282279e11244f}{md2cmds\_moving\_pq} = \hyperlink{lspmac_8c_aaa442d9bc7a3cdee39adea0724f0e18c}{lspmac\_SockSendline}( \textcolor{stringliteral}{
-      "&3 Q100=4 Q30=%.1f Q31=%.1f Q32=%.1f B160R"}, ax\_cts, ay\_cts, az\_cts);
+  \hyperlink{lspmac_8c_afab9e8f0502a92ee5cf93209af710f81}{lspmac\_SockSendDPline}( NULL, \textcolor{stringliteral}{"&2 Q100=2 Q20=%.1f
+       Q21=%.1f B150R"}, cx\_cts, cy\_cts);
+  \hyperlink{lspmac_8c_afab9e8f0502a92ee5cf93209af710f81}{lspmac\_SockSendDPline}( \textcolor{stringliteral}{"mvcenter\_move"}, \textcolor{stringliteral}{"&3 Q100=4
+       Q30=%.1f Q31=%.1f Q32=%.1f B160R"}, ax\_cts, ay\_cts, az\_cts);
   
 \}
 \end{DoxyCode}
@@ -923,7 +950,7 @@ Definition at line 608 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_a09a28007e7d8df7b8f97207474e5e516}
 
 
-Definition at line 170 of file md2cmds.\-c.
+Definition at line 173 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -987,9 +1014,8 @@ Definition at line 170 of file md2cmds.\-c.
   \textcolor{comment}{//                  Q45     = W Value}
   \textcolor{comment}{//}
   
-  \hyperlink{md2cmds_8c_adb9f3bcc0d1231c4c22282279e11244f}{md2cmds\_moving\_pq} = \hyperlink{lspmac_8c_aaa442d9bc7a3cdee39adea0724f0e18c}{lspmac\_SockSendline}( \textcolor{stringliteral}{
-      "&5 Q40=0 Q41=%d Q42=%d Q43=%d Q44=%d Q45=%d Q100=16 B170R"}, cay, caz, ccy, ccz,
-       csz);
+  \hyperlink{lspmac_8c_afab9e8f0502a92ee5cf93209af710f81}{lspmac\_SockSendDPline}( \textcolor{stringliteral}{"organs"}, \textcolor{stringliteral}{"&5 Q40=0 Q41=%d Q42=%d
+       Q43=%d Q44=%d Q45=%d Q100=16 B170R"}, cay, caz, ccy, ccz, csz);
 
 \}
 \end{DoxyCode}
@@ -1002,7 +1028,7 @@ Definition at line 170 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_a1a2022a63bcc751f6ffd710d3f626bc4}
 
 
-Definition at line 664 of file md2cmds.\-c.
+Definition at line 667 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1022,7 +1048,7 @@ Definition at line 664 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_a80b1720e736e2331dcdb7872510c31e8}
 
 
-Definition at line 691 of file md2cmds.\-c.
+Definition at line 694 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1053,7 +1079,7 @@ E\-M\-B\-L calls these states \char`\"{}phases\char`\"{} and this language is pa
 \end{DoxyParams}
 
 
-Definition at line 493 of file md2cmds.\-c.
+Definition at line 496 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1208,7 +1234,7 @@ Definition at line 493 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_ab1cc77bc7476714a419c7db69c7c4be4}
 
 
-Definition at line 153 of file md2cmds.\-c.
+Definition at line 156 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1240,7 +1266,7 @@ Spin 360 and make a video (recenter first, maybe)
 
 
 
-Definition at line 889 of file md2cmds.\-c.
+Definition at line 892 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1367,7 +1393,7 @@ Tell the database about the time we went through omega=zero.
 
 This should trigger the video feed server to starting making a movie. 
 
-Definition at line 985 of file md2cmds.\-c.
+Definition at line 988 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1401,7 +1427,7 @@ Start up the thread.
 
 
 
-Definition at line 1166 of file md2cmds.\-c.
+Definition at line 1176 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1414,6 +1440,8 @@ Definition at line 1166 of file md2cmds.\-c.
       \hyperlink{md2cmds_8c_a3970ef1a233dabcc5c1408e9d3865f13}{md2cmds\_maybe\_done\_moving\_cb});
   \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"capz (Moving|In Position)"}, 
       \hyperlink{md2cmds_8c_aab9e2aa02903648acc342068f0664a96}{md2cmds\_time\_capz\_cb});
+  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"move\_prep command done"},    
+      \hyperlink{md2cmds_8c_abd60a276f9d4658561110a4ec68c6144}{md2cmds\_move\_prep\_done\_cb});
 \}
 \end{DoxyCode}
 \hypertarget{md2cmds_8c_a4eb608d012f8a471671e10fb19b366d6}{\index{md2cmds.\-c@{md2cmds.\-c}!md2cmds\-\_\-set\-\_\-scale\-\_\-cb@{md2cmds\-\_\-set\-\_\-scale\-\_\-cb}}
@@ -1429,7 +1457,7 @@ Fix up xscale and yscale when zoom changes.
 
 
 
-Definition at line 1012 of file md2cmds.\-c.
+Definition at line 1015 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1469,7 +1497,7 @@ Time the capillary motion for the transfer routine.
 
 $<$ track the time spent moving capz 
 
-Definition at line 1043 of file md2cmds.\-c.
+Definition at line 1053 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1508,7 +1536,7 @@ Transfer a sample.
 
 
 
-Definition at line 228 of file md2cmds.\-c.
+Definition at line 231 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1638,7 +1666,7 @@ Definition at line 228 of file md2cmds.\-c.
        a deadlock.}
     \textcolor{comment}{//}
     pthread\_mutex\_lock( &\hyperlink{lspmac_8c_ac8070dc568ad974a3db42b51eca828cc}{phi}->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex});
-    mypq = \hyperlink{lspmac_8c_ac8070dc568ad974a3db42b51eca828cc}{phi}->\hyperlink{structlspmac__motor__struct_ae0a0c9264f49f51bf72168c3b62f8723}{pq};
+    mypq = \hyperlink{lspmac_8c_ac8070dc568ad974a3db42b51eca828cc}{phi}->\hyperlink{structlspmac__motor__struct_a8caf0031e134e144bffc87d9d896d15b}{pq};
     pthread\_mutex\_unlock( &\hyperlink{lspmac_8c_ac8070dc568ad974a3db42b51eca828cc}{phi}->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex});
     
     pthread\_mutex\_lock( &\hyperlink{md2cmds_8c_a4ea6e6bf63aefcd49f87c3921029451d}{md2cmds\_moving\_mutex});
@@ -1733,7 +1761,7 @@ Our worker thread.
 \end{DoxyParams}
 
 
-Definition at line 1117 of file md2cmds.\-c.
+Definition at line 1127 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1775,7 +1803,7 @@ Definition at line 1117 of file md2cmds.\-c.
 \subsubsection[{md2cmds\-\_\-capz\-\_\-moving\-\_\-time}]{\setlength{\rightskip}{0pt plus 5cm}double md2cmds\-\_\-capz\-\_\-moving\-\_\-time = N\-A\-N\hspace{0.3cm}{\ttfamily [static]}}}\label{md2cmds_8c_a478ca2fc7299fac5a13f6bce991198b7}
 
 
-Definition at line 27 of file md2cmds.\-c.
+Definition at line 28 of file md2cmds.\-c.
 
 \hypertarget{md2cmds_8c_a5f0fe1e2dfa92cf345b8c29134ab1ede}{\index{md2cmds.\-c@{md2cmds.\-c}!md2cmds\-\_\-cmd@{md2cmds\-\_\-cmd}}
 \index{md2cmds\-\_\-cmd@{md2cmds\-\_\-cmd}!md2cmds.c@{md2cmds.\-c}}
@@ -1786,7 +1814,7 @@ our command;
 
 
 
-Definition at line 19 of file md2cmds.\-c.
+Definition at line 20 of file md2cmds.\-c.
 
 \hypertarget{md2cmds_8c_a08d5b18ec9478d753c46a3e28d1f2126}{\index{md2cmds.\-c@{md2cmds.\-c}!md2cmds\-\_\-cond@{md2cmds\-\_\-cond}}
 \index{md2cmds\-\_\-cond@{md2cmds\-\_\-cond}!md2cmds.c@{md2cmds.\-c}}
@@ -1804,25 +1832,25 @@ Definition at line 10 of file md2cmds.\-c.
 \subsubsection[{md2cmds\-\_\-md\-\_\-status\-\_\-code}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lsredis\-\_\-obj\-\_\-t}$\ast$ md2cmds\-\_\-md\-\_\-status\-\_\-code}}\label{md2cmds_8c_a6a34fb6876abbd580629d3708c805e7f}
 
 
-Definition at line 21 of file md2cmds.\-c.
+Definition at line 22 of file md2cmds.\-c.
 
 \hypertarget{md2cmds_8c_adeebdb8f552bff14bd666c187505ee9e}{\index{md2cmds.\-c@{md2cmds.\-c}!md2cmds\-\_\-moving\-\_\-cond@{md2cmds\-\_\-moving\-\_\-cond}}
 \index{md2cmds\-\_\-moving\-\_\-cond@{md2cmds\-\_\-moving\-\_\-cond}!md2cmds.c@{md2cmds.\-c}}
 \subsubsection[{md2cmds\-\_\-moving\-\_\-cond}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-cond\-\_\-t md2cmds\-\_\-moving\-\_\-cond}}\label{md2cmds_8c_adeebdb8f552bff14bd666c187505ee9e}
 
 
+wait for command to have been dequeued and run 
+
 coordinate call and response 
 
-
-
-Definition at line 13 of file md2cmds.\-c.
+Definition at line 14 of file md2cmds.\-c.
 
 \hypertarget{md2cmds_8c_a5ce190461376c4f9c7d74842d8ebc5d5}{\index{md2cmds.\-c@{md2cmds.\-c}!md2cmds\-\_\-moving\-\_\-count@{md2cmds\-\_\-moving\-\_\-count}}
 \index{md2cmds\-\_\-moving\-\_\-count@{md2cmds\-\_\-moving\-\_\-count}!md2cmds.c@{md2cmds.\-c}}
 \subsubsection[{md2cmds\-\_\-moving\-\_\-count}]{\setlength{\rightskip}{0pt plus 5cm}int md2cmds\-\_\-moving\-\_\-count = 0}}\label{md2cmds_8c_a5ce190461376c4f9c7d74842d8ebc5d5}
 
 
-Definition at line 17 of file md2cmds.\-c.
+Definition at line 18 of file md2cmds.\-c.
 
 \hypertarget{md2cmds_8c_a4ea6e6bf63aefcd49f87c3921029451d}{\index{md2cmds.\-c@{md2cmds.\-c}!md2cmds\-\_\-moving\-\_\-mutex@{md2cmds\-\_\-moving\-\_\-mutex}}
 \index{md2cmds\-\_\-moving\-\_\-mutex@{md2cmds\-\_\-moving\-\_\-mutex}!md2cmds.c@{md2cmds.\-c}}
@@ -1833,7 +1861,7 @@ message passing between md2cmds and pg
 
 
 
-Definition at line 14 of file md2cmds.\-c.
+Definition at line 15 of file md2cmds.\-c.
 
 \hypertarget{md2cmds_8c_adb9f3bcc0d1231c4c22282279e11244f}{\index{md2cmds.\-c@{md2cmds.\-c}!md2cmds\-\_\-moving\-\_\-pq@{md2cmds\-\_\-moving\-\_\-pq}}
 \index{md2cmds\-\_\-moving\-\_\-pq@{md2cmds\-\_\-moving\-\_\-pq}!md2cmds.c@{md2cmds.\-c}}
@@ -1844,7 +1872,14 @@ pmac queue item from last command
 
 
 
-Definition at line 15 of file md2cmds.\-c.
+Definition at line 16 of file md2cmds.\-c.
+
+\hypertarget{md2cmds_8c_af14178edd0398535a0c3c87066d6f00c}{\index{md2cmds.\-c@{md2cmds.\-c}!md2cmds\-\_\-moving\-\_\-queue\-\_\-wait@{md2cmds\-\_\-moving\-\_\-queue\-\_\-wait}}
+\index{md2cmds\-\_\-moving\-\_\-queue\-\_\-wait@{md2cmds\-\_\-moving\-\_\-queue\-\_\-wait}!md2cmds.c@{md2cmds.\-c}}
+\subsubsection[{md2cmds\-\_\-moving\-\_\-queue\-\_\-wait}]{\setlength{\rightskip}{0pt plus 5cm}int md2cmds\-\_\-moving\-\_\-queue\-\_\-wait = 0}}\label{md2cmds_8c_af14178edd0398535a0c3c87066d6f00c}
+
+
+Definition at line 13 of file md2cmds.\-c.
 
 \hypertarget{md2cmds_8c_ad67304bb851dc6268b0cda2f40fc5aa8}{\index{md2cmds.\-c@{md2cmds.\-c}!md2cmds\-\_\-mutex@{md2cmds\-\_\-mutex}}
 \index{md2cmds\-\_\-mutex@{md2cmds\-\_\-mutex}!md2cmds.c@{md2cmds.\-c}}
@@ -1862,7 +1897,7 @@ Definition at line 11 of file md2cmds.\-c.
 \subsubsection[{md2cmds\-\_\-thread}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-t md2cmds\-\_\-thread\hspace{0.3cm}{\ttfamily [static]}}}\label{md2cmds_8c_aa230921945149692de98fff15c01962f}
 
 
-Definition at line 23 of file md2cmds.\-c.
+Definition at line 24 of file md2cmds.\-c.
 
 \hypertarget{md2cmds_8c_aaa6eb2d46be8d5e17a511591dd5a1271}{\index{md2cmds.\-c@{md2cmds.\-c}!rotating@{rotating}}
 \index{rotating@{rotating}!md2cmds.c@{md2cmds.\-c}}
@@ -1873,5 +1908,5 @@ flag\-: when omega is in position after a rotate we want to re-\/home omega
 
 
 
-Definition at line 25 of file md2cmds.\-c.
+Definition at line 26 of file md2cmds.\-c.
 

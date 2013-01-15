@@ -164,6 +164,8 @@ Functions</h2></td></tr>
 <tr class="memitem:a5a9d72c08597ffe45287622c40975e7f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="md2cmds_8c.html#a5a9d72c08597ffe45287622c40975e7f">md2cmds_center</a> ()</td></tr>
 <tr class="memdesc:a5a9d72c08597ffe45287622c40975e7f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move centering and alignment tables as requested TODO: Implement.  <a href="#a5a9d72c08597ffe45287622c40975e7f"></a><br/></td></tr>
 <tr class="separator:a5a9d72c08597ffe45287622c40975e7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abd60a276f9d4658561110a4ec68c6144"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="md2cmds_8c.html#abd60a276f9d4658561110a4ec68c6144">md2cmds_move_prep_done_cb</a> (char *event)</td></tr>
+<tr class="separator:abd60a276f9d4658561110a4ec68c6144"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aab9e2aa02903648acc342068f0664a96"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="md2cmds_8c.html#aab9e2aa02903648acc342068f0664a96">md2cmds_time_capz_cb</a> (char *event)</td></tr>
 <tr class="memdesc:aab9e2aa02903648acc342068f0664a96"><td class="mdescLeft">&#160;</td><td class="mdescRight">Time the capillary motion for the transfer routine.  <a href="#aab9e2aa02903648acc342068f0664a96"></a><br/></td></tr>
 <tr class="separator:aab9e2aa02903648acc342068f0664a96"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -190,8 +192,10 @@ Variables</h2></td></tr>
 <tr class="memitem:ad67304bb851dc6268b0cda2f40fc5aa8"><td class="memItemLeft" align="right" valign="top">pthread_mutex_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="md2cmds_8c.html#ad67304bb851dc6268b0cda2f40fc5aa8">md2cmds_mutex</a></td></tr>
 <tr class="memdesc:ad67304bb851dc6268b0cda2f40fc5aa8"><td class="mdescLeft">&#160;</td><td class="mdescRight">mutex for the condition  <a href="#ad67304bb851dc6268b0cda2f40fc5aa8"></a><br/></td></tr>
 <tr class="separator:ad67304bb851dc6268b0cda2f40fc5aa8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af14178edd0398535a0c3c87066d6f00c"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="md2cmds_8c.html#af14178edd0398535a0c3c87066d6f00c">md2cmds_moving_queue_wait</a> = 0</td></tr>
+<tr class="separator:af14178edd0398535a0c3c87066d6f00c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adeebdb8f552bff14bd666c187505ee9e"><td class="memItemLeft" align="right" valign="top">pthread_cond_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="md2cmds_8c.html#adeebdb8f552bff14bd666c187505ee9e">md2cmds_moving_cond</a></td></tr>
-<tr class="memdesc:adeebdb8f552bff14bd666c187505ee9e"><td class="mdescLeft">&#160;</td><td class="mdescRight">coordinate call and response  <a href="#adeebdb8f552bff14bd666c187505ee9e"></a><br/></td></tr>
+<tr class="memdesc:adeebdb8f552bff14bd666c187505ee9e"><td class="mdescLeft">&#160;</td><td class="mdescRight">wait for command to have been dequeued and run  <a href="#adeebdb8f552bff14bd666c187505ee9e"></a><br/></td></tr>
 <tr class="separator:adeebdb8f552bff14bd666c187505ee9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4ea6e6bf63aefcd49f87c3921029451d"><td class="memItemLeft" align="right" valign="top">pthread_mutex_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="md2cmds_8c.html#a4ea6e6bf63aefcd49f87c3921029451d">md2cmds_moving_mutex</a></td></tr>
 <tr class="memdesc:a4ea6e6bf63aefcd49f87c3921029451d"><td class="mdescLeft">&#160;</td><td class="mdescRight">message passing between md2cmds and pg  <a href="#a4ea6e6bf63aefcd49f87c3921029451d"></a><br/></td></tr>
@@ -246,7 +250,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l01073">1073</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l01083">1083</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                                                        {</div>
 <div class="line">  <span class="keywordtype">int</span> rtn;</div>
 <div class="line">  <span class="keyword">struct </span>timespec waitforit;</div>
@@ -299,7 +303,7 @@ Variables</h2></td></tr>
 
 <p>pause until md2cmds_worker has finished running the command </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l01110">1110</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l01120">1120</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                           {</div>
 <div class="line">  pthread_mutex_lock( &amp;<a class="code" href="md2cmds_8c.html#ad67304bb851dc6268b0cda2f40fc5aa8" title="mutex for the condition">md2cmds_mutex</a>);</div>
 <div class="line">  pthread_mutex_unlock( &amp;<a class="code" href="md2cmds_8c.html#ad67304bb851dc6268b0cda2f40fc5aa8" title="mutex for the condition">md2cmds_mutex</a>);</div>
@@ -322,7 +326,7 @@ Variables</h2></td></tr>
 
 <p>Move centering and alignment tables as requested TODO: Implement. </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l01038">1038</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l01041">1041</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                      {</div>
 <div class="line">}</div>
 </div><!-- fragment -->
@@ -355,7 +359,7 @@ Variables</h2></td></tr>
 <p>&lt; current phi position in case we need to move kappa only</p>
 <p>&lt; combined motion mask to set up waiting </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00701">701</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00704">704</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                       {</div>
 <div class="line">  <span class="keywordtype">long</span> <span class="keywordtype">long</span> skey;       </div>
 <div class="line">  <span class="keywordtype">double</span> p170;          </div>
@@ -385,7 +389,7 @@ Variables</h2></td></tr>
 <div class="line">  <span class="comment">//</span></div>
 <div class="line">  <span class="comment">// reset shutter has opened flag</span></div>
 <div class="line">  <span class="comment">//</span></div>
-<div class="line">  <a class="code" href="lspmac_8c.html#aaa442d9bc7a3cdee39adea0724f0e18c" title="Send a one line command.">lspmac_SockSendline</a>( <span class="stringliteral">&quot;P3001=0 P3002=0&quot;</span>);</div>
+<div class="line">  <a class="code" href="lspmac_8c.html#afab9e8f0502a92ee5cf93209af710f81" title="prepare (queue up) a line to send the dpram ascii command interface">lspmac_SockSendDPline</a>( NULL, <span class="stringliteral">&quot;P3001=0 P3002=0&quot;</span>);</div>
 <div class="line"></div>
 <div class="line">  <span class="keywordflow">while</span>( 1) {</div>
 <div class="line">    <a class="code" href="lspg_8c.html#af17ef79544ca5d78fd477010fe90d538" title="Queue up a nextshot query.">lspg_nextshot_call</a>();</div>
@@ -480,7 +484,7 @@ Variables</h2></td></tr>
 <div class="line">    <span class="comment">//</span></div>
 <div class="line">    <span class="comment">// Start the exposure</span></div>
 <div class="line">    <span class="comment">//</span></div>
-<div class="line">    <a class="code" href="lspmac_8c.html#aaa442d9bc7a3cdee39adea0724f0e18c" title="Send a one line command.">lspmac_SockSendline</a>( <span class="stringliteral">&quot;&amp;1 P170=%.1f P171=%.1f P173=%.1f P174=0 P175=%.1f P176=0 P177=1 P178=0 P180=%.1f M431=1 &amp;1B131R&quot;</span>,</div>
+<div class="line">    <a class="code" href="lspmac_8c.html#afab9e8f0502a92ee5cf93209af710f81" title="prepare (queue up) a line to send the dpram ascii command interface">lspmac_SockSendDPline</a>( NULL, <span class="stringliteral">&quot;&amp;1 P170=%.1f P171=%.1f P173=%.1f P174=0 P175=%.1f P176=0 P177=1 P178=0 P180=%.1f M431=1 &amp;1B131R&quot;</span>,</div>
 <div class="line">                             p170,     p171,     p173,            p175,                          p180);</div>
 <div class="line"></div>
 <div class="line"></div>
@@ -514,7 +518,7 @@ Variables</h2></td></tr>
 <div class="line">    <span class="comment">//</span></div>
 <div class="line">    <span class="comment">// reset shutter has opened flag</span></div>
 <div class="line">    <span class="comment">//</span></div>
-<div class="line">    <a class="code" href="lspmac_8c.html#aaa442d9bc7a3cdee39adea0724f0e18c" title="Send a one line command.">lspmac_SockSendline</a>( <span class="stringliteral">&quot;P3001=0&quot;</span>);</div>
+<div class="line">    <a class="code" href="lspmac_8c.html#afab9e8f0502a92ee5cf93209af710f81" title="prepare (queue up) a line to send the dpram ascii command interface">lspmac_SockSendDPline</a>( NULL, <span class="stringliteral">&quot;P3001=0&quot;</span>);</div>
 <div class="line"></div>
 <div class="line">    <span class="comment">//</span></div>
 <div class="line">    <span class="comment">// Move the center/alignment stages to the next position</span></div>
@@ -558,7 +562,7 @@ Variables</h2></td></tr>
 
 <p>Initialize the md2cmds module. </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l01151">1151</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l01161">1161</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                    {</div>
 <div class="line">  memset( <a class="code" href="md2cmds_8c.html#a5f0fe1e2dfa92cf345b8c29134ab1ede" title="our command;">md2cmds_cmd</a>, 0, <span class="keyword">sizeof</span>( <a class="code" href="md2cmds_8c.html#a5f0fe1e2dfa92cf345b8c29134ab1ede" title="our command;">md2cmds_cmd</a>));</div>
 <div class="line"></div>
@@ -566,7 +570,7 @@ Variables</h2></td></tr>
 <div class="line">  pthread_cond_init( &amp;<a class="code" href="md2cmds_8c.html#a08d5b18ec9478d753c46a3e28d1f2126" title="condition to signal when it&#39;s time to run an md2 command">md2cmds_cond</a>, NULL);</div>
 <div class="line"></div>
 <div class="line">  pthread_mutex_init( &amp;<a class="code" href="md2cmds_8c.html#a4ea6e6bf63aefcd49f87c3921029451d" title="message passing between md2cmds and pg">md2cmds_moving_mutex</a>, NULL);</div>
-<div class="line">  pthread_cond_init(  &amp;<a class="code" href="md2cmds_8c.html#adeebdb8f552bff14bd666c187505ee9e" title="coordinate call and response">md2cmds_moving_cond</a>, NULL);</div>
+<div class="line">  pthread_cond_init(  &amp;<a class="code" href="md2cmds_8c.html#adeebdb8f552bff14bd666c187505ee9e" title="wait for command to have been dequeued and run">md2cmds_moving_cond</a>, NULL);</div>
 <div class="line"></div>
 <div class="line">  <a class="code" href="md2cmds_8c.html#a6a34fb6876abbd580629d3708c805e7f">md2cmds_md_status_code</a> = <a class="code" href="lsredis_8c.html#ad3bb3ebbae1ffbd03e062ecdd663cc6a">lsredis_get_obj</a>( <span class="stringliteral">&quot;md2_status_code&quot;</span>);</div>
 <div class="line">  <a class="code" href="lsredis_8c.html#a9b9c64f883c7ded60badfe89cb15fa78" title="Set the value and update redis.">lsredis_setstr</a>( <a class="code" href="md2cmds_8c.html#a6a34fb6876abbd580629d3708c805e7f">md2cmds_md_status_code</a>, <span class="stringliteral">&quot;7&quot;</span>);</div>
@@ -598,7 +602,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00672">672</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00675">675</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                                                              {</div>
 <div class="line">  <span class="keywordtype">int</span> kc, pc;</div>
 <div class="line"></div>
@@ -613,7 +617,7 @@ Variables</h2></td></tr>
 <div class="line">  <span class="comment">//  ;                 Q21    = Y Value</span></div>
 <div class="line">  <span class="comment">//  ;                 Q100   = 1 &lt;&lt; (coord sys no  - 1)</span></div>
 <div class="line"></div>
-<div class="line">  <a class="code" href="md2cmds_8c.html#adb9f3bcc0d1231c4c22282279e11244f" title="pmac queue item from last command">md2cmds_moving_pq</a> = <a class="code" href="lspmac_8c.html#aaa442d9bc7a3cdee39adea0724f0e18c" title="Send a one line command.">lspmac_SockSendline</a>( <span class="stringliteral">&quot;&amp;7 Q20=%d Q21=%d Q100=64&quot;</span>, kc, pc);</div>
+<div class="line">  <a class="code" href="lspmac_8c.html#afab9e8f0502a92ee5cf93209af710f81" title="prepare (queue up) a line to send the dpram ascii command interface">lspmac_SockSendDPline</a>( <span class="stringliteral">&quot;kappaphi_move&quot;</span>, <span class="stringliteral">&quot;&amp;7 Q20=%d Q21=%d Q100=64&quot;</span>, kc, pc);</div>
 <div class="line"></div>
 <div class="line">}</div>
 </div><!-- fragment -->
@@ -635,7 +639,7 @@ Variables</h2></td></tr>
 
 <p>Track how many motors are moving. </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00636">636</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00639">639</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                                                {</div>
 <div class="line"></div>
 <div class="line">  pthread_mutex_lock(   &amp;<a class="code" href="md2cmds_8c.html#a4ea6e6bf63aefcd49f87c3921029451d" title="message passing between md2cmds and pg">md2cmds_moving_mutex</a>);</div>
@@ -657,7 +661,7 @@ Variables</h2></td></tr>
 <div class="line">  <a class="code" href="lsredis_8c.html#a9b9c64f883c7ded60badfe89cb15fa78" title="Set the value and update redis.">lsredis_setstr</a>( <a class="code" href="md2cmds_8c.html#a6a34fb6876abbd580629d3708c805e7f">md2cmds_md_status_code</a>, <span class="stringliteral">&quot;%s&quot;</span>, <a class="code" href="md2cmds_8c.html#a5ce190461376c4f9c7d74842d8ebc5d5">md2cmds_moving_count</a> ? <span class="stringliteral">&quot;4&quot;</span> : <span class="stringliteral">&quot;3&quot;</span>);</div>
 <div class="line">  </div>
 <div class="line">  <span class="keywordflow">if</span>( <a class="code" href="md2cmds_8c.html#a5ce190461376c4f9c7d74842d8ebc5d5">md2cmds_moving_count</a> == 0)</div>
-<div class="line">    pthread_cond_signal( &amp;<a class="code" href="md2cmds_8c.html#adeebdb8f552bff14bd666c187505ee9e" title="coordinate call and response">md2cmds_moving_cond</a>);</div>
+<div class="line">    pthread_cond_signal( &amp;<a class="code" href="md2cmds_8c.html#adeebdb8f552bff14bd666c187505ee9e" title="wait for command to have been dequeued and run">md2cmds_moving_cond</a>);</div>
 <div class="line">  pthread_mutex_unlock( &amp;<a class="code" href="md2cmds_8c.html#a4ea6e6bf63aefcd49f87c3921029451d" title="message passing between md2cmds and pg">md2cmds_moving_mutex</a>);</div>
 <div class="line">  </div>
 <div class="line">}</div>
@@ -680,7 +684,7 @@ Variables</h2></td></tr>
 
 <p>Now that we are done with the 360 rotation lets rehome right quick. </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l01002">1002</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l01005">1005</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                                                {</div>
 <div class="line">  <span class="keywordflow">if</span>( <a class="code" href="md2cmds_8c.html#aaa6eb2d46be8d5e17a511591dd5a1271" title="flag: when omega is in position after a rotate we want to re-home omega">rotating</a>) {</div>
 <div class="line">    <a class="code" href="md2cmds_8c.html#aaa6eb2d46be8d5e17a511591dd5a1271" title="flag: when omega is in position after a rotate we want to re-home omega">rotating</a> = 0;</div>
@@ -706,9 +710,8 @@ Variables</h2></td></tr>
 
 <p>set up moving motors in a coordinate system </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00032">32</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00033">33</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                                   {</div>
-<div class="line">  <a class="code" href="structlspmac__cmd__queue__struct.html" title="PMAC command queue item.">pmac_cmd_queue_t</a> *pq;</div>
 <div class="line">  <span class="keywordtype">int</span> flag;</div>
 <div class="line"></div>
 <div class="line">  pthread_mutex_lock( &amp;<a class="code" href="lspmac_8c.html#a85679cac947e199c88794f8e5a12bf5f" title="Coordinate moving motors between threads.">lspmac_moving_mutex</a>);</div>
@@ -728,18 +731,19 @@ Variables</h2></td></tr>
 <div class="line">    <span class="comment">// This guarantees that when we are waiting for motion to stop that it did, in fact, start</span></div>
 <div class="line">    <span class="comment">//</span></div>
 <div class="line">    </div>
+<div class="line">    pthread_mutex_lock( &amp;<a class="code" href="md2cmds_8c.html#a4ea6e6bf63aefcd49f87c3921029451d" title="message passing between md2cmds and pg">md2cmds_moving_mutex</a>);</div>
+<div class="line">    <a class="code" href="md2cmds_8c.html#af14178edd0398535a0c3c87066d6f00c">md2cmds_moving_queue_wait</a> = 1;</div>
+<div class="line">    pthread_mutex_unlock( &amp;<a class="code" href="md2cmds_8c.html#a4ea6e6bf63aefcd49f87c3921029451d" title="message passing between md2cmds and pg">md2cmds_moving_mutex</a>);</div>
+<div class="line">    </div>
 <div class="line">    <span class="comment">//</span></div>
 <div class="line">    <span class="comment">// Clear the centering and alignment stage flags</span></div>
 <div class="line">    <span class="comment">//</span></div>
-<div class="line">    pq = <a class="code" href="lspmac_8c.html#aaa442d9bc7a3cdee39adea0724f0e18c" title="Send a one line command.">lspmac_SockSendline</a>( <span class="stringliteral">&quot;M5075=(M5075 | %d) ^ %d&quot;</span>, mmask, mmask);</div>
+<div class="line">    <a class="code" href="lspmac_8c.html#afab9e8f0502a92ee5cf93209af710f81" title="prepare (queue up) a line to send the dpram ascii command interface">lspmac_SockSendDPline</a>( <span class="stringliteral">&quot;move_prep&quot;</span>, <span class="stringliteral">&quot;M5075=(M5075 | %d) ^ %d&quot;</span>, mmask, mmask);</div>
 <div class="line">    </div>
-<div class="line">    pthread_mutex_lock( &amp;<a class="code" href="lspmac_8c.html#acc1bb77b9bcbc4d970f841a41fd274b3" title="manage access to the pmac command queue">pmac_queue_mutex</a>);</div>
-<div class="line">    <span class="comment">//</span></div>
-<div class="line">    <span class="comment">// wait for the command to be sent</span></div>
-<div class="line">    <span class="comment">//</span></div>
-<div class="line">    <span class="keywordflow">while</span>( pq-&gt;<a class="code" href="structlspmac__cmd__queue__struct.html#a276ebc4b35c2554e4cb7377b60fd89b7" title="time this item was dequeued and sent to the pmac">time_sent</a>.tv_sec==0)</div>
-<div class="line">      pthread_cond_wait( &amp;<a class="code" href="lspmac_8c.html#a8a25bd9c593c6985107f90f999ce0b08" title="wait for a command to be sent to PMAC before continuing">pmac_queue_cond</a>, &amp;<a class="code" href="lspmac_8c.html#acc1bb77b9bcbc4d970f841a41fd274b3" title="manage access to the pmac command queue">pmac_queue_mutex</a>);</div>
-<div class="line">    pthread_mutex_unlock( &amp;<a class="code" href="lspmac_8c.html#acc1bb77b9bcbc4d970f841a41fd274b3" title="manage access to the pmac command queue">pmac_queue_mutex</a>);</div>
+<div class="line">    pthread_mutex_lock( &amp;<a class="code" href="md2cmds_8c.html#a4ea6e6bf63aefcd49f87c3921029451d" title="message passing between md2cmds and pg">md2cmds_moving_mutex</a>);</div>
+<div class="line">    <span class="keywordflow">while</span>( <a class="code" href="md2cmds_8c.html#af14178edd0398535a0c3c87066d6f00c">md2cmds_moving_queue_wait</a>)</div>
+<div class="line">      pthread_cond_wait( &amp;<a class="code" href="md2cmds_8c.html#adeebdb8f552bff14bd666c187505ee9e" title="wait for command to have been dequeued and run">md2cmds_moving_cond</a>, &amp;<a class="code" href="md2cmds_8c.html#a4ea6e6bf63aefcd49f87c3921029451d" title="message passing between md2cmds and pg">md2cmds_moving_mutex</a>);</div>
+<div class="line">    pthread_mutex_unlock( &amp;<a class="code" href="md2cmds_8c.html#a4ea6e6bf63aefcd49f87c3921029451d" title="message passing between md2cmds and pg">md2cmds_moving_mutex</a>);</div>
 <div class="line">    </div>
 <div class="line">    <span class="comment">//</span></div>
 <div class="line">    <span class="comment">// Make sure the command propagates back to the status</span></div>
@@ -759,20 +763,22 @@ Variables</h2></td></tr>
 <div class="line">  pthread_mutex_lock( &amp;<a class="code" href="md2cmds_8c.html#a4ea6e6bf63aefcd49f87c3921029451d" title="message passing between md2cmds and pg">md2cmds_moving_mutex</a>);</div>
 <div class="line">  <span class="keywordflow">if</span>( <a class="code" href="md2cmds_8c.html#a5ce190461376c4f9c7d74842d8ebc5d5">md2cmds_moving_count</a> == 0)</div>
 <div class="line">    <a class="code" href="md2cmds_8c.html#a5ce190461376c4f9c7d74842d8ebc5d5">md2cmds_moving_count</a> = -1;</div>
+<div class="line">  <a class="code" href="md2cmds_8c.html#af14178edd0398535a0c3c87066d6f00c">md2cmds_moving_queue_wait</a> = 1;</div>
 <div class="line">  pthread_mutex_unlock( &amp;<a class="code" href="md2cmds_8c.html#a4ea6e6bf63aefcd49f87c3921029451d" title="message passing between md2cmds and pg">md2cmds_moving_mutex</a>);</div>
 <div class="line"></div>
 <div class="line">  <span class="comment">//</span></div>
 <div class="line">  <span class="comment">// Now set the given motion flags</span></div>
 <div class="line">  <span class="comment">//</span></div>
-<div class="line">  pq = <a class="code" href="lspmac_8c.html#aaa442d9bc7a3cdee39adea0724f0e18c" title="Send a one line command.">lspmac_SockSendline</a>( <span class="stringliteral">&quot;M5075=(M5075 | %d)&quot;</span>, mmask);</div>
+<div class="line">  <a class="code" href="lspmac_8c.html#afab9e8f0502a92ee5cf93209af710f81" title="prepare (queue up) a line to send the dpram ascii command interface">lspmac_SockSendDPline</a>( <span class="stringliteral">&quot;move_prep&quot;</span>, <span class="stringliteral">&quot;M5075=(M5075 | %d)&quot;</span>, mmask);</div>
 <div class="line"></div>
 <div class="line">  pthread_mutex_lock( &amp;<a class="code" href="lspmac_8c.html#acc1bb77b9bcbc4d970f841a41fd274b3" title="manage access to the pmac command queue">pmac_queue_mutex</a>);</div>
 <div class="line">  <span class="comment">//</span></div>
 <div class="line">  <span class="comment">// wait for the command to be sent</span></div>
 <div class="line">  <span class="comment">//</span></div>
-<div class="line">  <span class="keywordflow">while</span>( pq-&gt;<a class="code" href="structlspmac__cmd__queue__struct.html#a276ebc4b35c2554e4cb7377b60fd89b7" title="time this item was dequeued and sent to the pmac">time_sent</a>.tv_sec==0)</div>
-<div class="line">    pthread_cond_wait( &amp;<a class="code" href="lspmac_8c.html#a8a25bd9c593c6985107f90f999ce0b08" title="wait for a command to be sent to PMAC before continuing">pmac_queue_cond</a>, &amp;<a class="code" href="lspmac_8c.html#acc1bb77b9bcbc4d970f841a41fd274b3" title="manage access to the pmac command queue">pmac_queue_mutex</a>);</div>
-<div class="line">  pthread_mutex_unlock( &amp;<a class="code" href="lspmac_8c.html#acc1bb77b9bcbc4d970f841a41fd274b3" title="manage access to the pmac command queue">pmac_queue_mutex</a>);</div>
+<div class="line">  pthread_mutex_lock( &amp;<a class="code" href="md2cmds_8c.html#a4ea6e6bf63aefcd49f87c3921029451d" title="message passing between md2cmds and pg">md2cmds_moving_mutex</a>);</div>
+<div class="line">  <span class="keywordflow">while</span>( <a class="code" href="md2cmds_8c.html#af14178edd0398535a0c3c87066d6f00c">md2cmds_moving_queue_wait</a>)</div>
+<div class="line">    pthread_cond_wait( &amp;<a class="code" href="md2cmds_8c.html#adeebdb8f552bff14bd666c187505ee9e" title="wait for command to have been dequeued and run">md2cmds_moving_cond</a>, &amp;<a class="code" href="md2cmds_8c.html#a4ea6e6bf63aefcd49f87c3921029451d" title="message passing between md2cmds and pg">md2cmds_moving_mutex</a>);</div>
+<div class="line">  pthread_mutex_unlock( &amp;<a class="code" href="md2cmds_8c.html#a4ea6e6bf63aefcd49f87c3921029451d" title="message passing between md2cmds and pg">md2cmds_moving_mutex</a>);</div>
 <div class="line"></div>
 <div class="line">  <span class="comment">//</span></div>
 <div class="line">  <span class="comment">// Make sure it propagates</span></div>
@@ -783,6 +789,30 @@ Variables</h2></td></tr>
 <div class="line"></div>
 <div class="line">  <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;md2cmds_move_prep: lspmac_moving_flags = %d&quot;</span>, <a class="code" href="lspmac_8c.html#a7a32c617c183166308241e270959df56" title="Flag used to implement motor moving condition.">lspmac_moving_flags</a>);</div>
 <div class="line">  pthread_mutex_unlock( &amp;<a class="code" href="lspmac_8c.html#a85679cac947e199c88794f8e5a12bf5f" title="Coordinate moving motors between threads.">lspmac_moving_mutex</a>);</div>
+<div class="line">}</div>
+</div><!-- fragment -->
+</div>
+</div>
+<a class="anchor" id="abd60a276f9d4658561110a4ec68c6144"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void md2cmds_move_prep_done_cb </td>
+          <td>(</td>
+          <td class="paramtype">char *&#160;</td>
+          <td class="paramname"><em>event</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l01044">1044</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<div class="fragment"><div class="line">                                             {</div>
+<div class="line">  pthread_mutex_lock( &amp;<a class="code" href="md2cmds_8c.html#a4ea6e6bf63aefcd49f87c3921029451d" title="message passing between md2cmds and pg">md2cmds_moving_mutex</a>);</div>
+<div class="line">  <a class="code" href="md2cmds_8c.html#af14178edd0398535a0c3c87066d6f00c">md2cmds_moving_queue_wait</a> = 0;</div>
+<div class="line">  pthread_cond_signal( &amp;<a class="code" href="md2cmds_8c.html#adeebdb8f552bff14bd666c187505ee9e" title="wait for command to have been dequeued and run">md2cmds_moving_cond</a>);</div>
+<div class="line">  pthread_mutex_unlock( &amp;<a class="code" href="md2cmds_8c.html#a4ea6e6bf63aefcd49f87c3921029451d" title="message passing between md2cmds and pg">md2cmds_moving_mutex</a>);</div>
 <div class="line">}</div>
 </div><!-- fragment -->
 </div>
@@ -803,7 +833,7 @@ Variables</h2></td></tr>
 
 <p>Wait for the movement to stop. </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00112">112</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00115">115</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                                   {</div>
 <div class="line">  <span class="comment">//</span></div>
 <div class="line">  <span class="comment">// Just wait until the motion flags are lowered</span></div>
@@ -841,7 +871,7 @@ Variables</h2></td></tr>
 <div class="line">  <span class="comment">//</span></div>
 <div class="line">  pthread_mutex_lock( &amp;<a class="code" href="md2cmds_8c.html#a4ea6e6bf63aefcd49f87c3921029451d" title="message passing between md2cmds and pg">md2cmds_moving_mutex</a>);</div>
 <div class="line">  <span class="keywordflow">while</span>( <a class="code" href="md2cmds_8c.html#a5ce190461376c4f9c7d74842d8ebc5d5">md2cmds_moving_count</a> &gt; 0)</div>
-<div class="line">    pthread_cond_wait( &amp;<a class="code" href="md2cmds_8c.html#adeebdb8f552bff14bd666c187505ee9e" title="coordinate call and response">md2cmds_moving_cond</a>, &amp;<a class="code" href="md2cmds_8c.html#a4ea6e6bf63aefcd49f87c3921029451d" title="message passing between md2cmds and pg">md2cmds_moving_mutex</a>);</div>
+<div class="line">    pthread_cond_wait( &amp;<a class="code" href="md2cmds_8c.html#adeebdb8f552bff14bd666c187505ee9e" title="wait for command to have been dequeued and run">md2cmds_moving_cond</a>, &amp;<a class="code" href="md2cmds_8c.html#a4ea6e6bf63aefcd49f87c3921029451d" title="message passing between md2cmds and pg">md2cmds_moving_mutex</a>);</div>
 <div class="line">  pthread_mutex_unlock( &amp;<a class="code" href="md2cmds_8c.html#a4ea6e6bf63aefcd49f87c3921029451d" title="message passing between md2cmds and pg">md2cmds_moving_mutex</a>);</div>
 <div class="line">}</div>
 </div><!-- fragment -->
@@ -869,7 +899,7 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00406">406</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00409">409</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                       {</div>
 <div class="line">  <span class="keywordtype">char</span> *cmd;</div>
 <div class="line">  <span class="keywordtype">char</span> *ignore;</div>
@@ -1005,7 +1035,7 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00608">608</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00611">611</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                             {</div>
 <div class="line">  </div>
 <div class="line">  <span class="comment">//</span></div>
@@ -1021,8 +1051,8 @@ Variables</h2></td></tr>
 <div class="line">  ay_cts = <a class="code" href="md2cmds_8c.html#ab1cc77bc7476714a419c7db69c7c4be4">md2cmds_prep_axis</a>( <a class="code" href="lspmac_8c.html#a737c246c3948e644a18d191a931e1acd" title="Alignment stage Y.">aligny</a>, ay);</div>
 <div class="line">  az_cts = <a class="code" href="md2cmds_8c.html#ab1cc77bc7476714a419c7db69c7c4be4">md2cmds_prep_axis</a>( <a class="code" href="lspmac_8c.html#ae7642b1da0f7c7f8448104c691d40a12" title="Alignment stage X.">alignz</a>, az);</div>
 <div class="line"></div>
-<div class="line">  <a class="code" href="lspmac_8c.html#aaa442d9bc7a3cdee39adea0724f0e18c" title="Send a one line command.">lspmac_SockSendline</a>( <span class="stringliteral">&quot;&amp;2 Q100=2 Q20=%.1f Q21=%.1f B150R&quot;</span>, cx_cts, cy_cts);</div>
-<div class="line">  <a class="code" href="md2cmds_8c.html#adb9f3bcc0d1231c4c22282279e11244f" title="pmac queue item from last command">md2cmds_moving_pq</a> = <a class="code" href="lspmac_8c.html#aaa442d9bc7a3cdee39adea0724f0e18c" title="Send a one line command.">lspmac_SockSendline</a>( <span class="stringliteral">&quot;&amp;3 Q100=4 Q30=%.1f Q31=%.1f Q32=%.1f B160R&quot;</span>, ax_cts, ay_cts, az_cts);</div>
+<div class="line">  <a class="code" href="lspmac_8c.html#afab9e8f0502a92ee5cf93209af710f81" title="prepare (queue up) a line to send the dpram ascii command interface">lspmac_SockSendDPline</a>( NULL, <span class="stringliteral">&quot;&amp;2 Q100=2 Q20=%.1f Q21=%.1f B150R&quot;</span>, cx_cts, cy_cts);</div>
+<div class="line">  <a class="code" href="lspmac_8c.html#afab9e8f0502a92ee5cf93209af710f81" title="prepare (queue up) a line to send the dpram ascii command interface">lspmac_SockSendDPline</a>( <span class="stringliteral">&quot;mvcenter_move&quot;</span>, <span class="stringliteral">&quot;&amp;3 Q100=4 Q30=%.1f Q31=%.1f Q32=%.1f B160R&quot;</span>, ax_cts, ay_cts, az_cts);</div>
 <div class="line">  </div>
 <div class="line">}</div>
 </div><!-- fragment -->
@@ -1070,7 +1100,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00170">170</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00173">173</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                                                                                         {</div>
 <div class="line">  <span class="keywordtype">double</span> ay,   az,  cy,  cz,  sz;</div>
 <div class="line">  <span class="keywordtype">int</span>    cay, caz, ccy, ccz, csz;</div>
@@ -1122,7 +1152,7 @@ Variables</h2></td></tr>
 <div class="line">  <span class="comment">//                  Q45     = W Value</span></div>
 <div class="line">  <span class="comment">//</span></div>
 <div class="line">  </div>
-<div class="line">  <a class="code" href="md2cmds_8c.html#adb9f3bcc0d1231c4c22282279e11244f" title="pmac queue item from last command">md2cmds_moving_pq</a> = <a class="code" href="lspmac_8c.html#aaa442d9bc7a3cdee39adea0724f0e18c" title="Send a one line command.">lspmac_SockSendline</a>( <span class="stringliteral">&quot;&amp;5 Q40=0 Q41=%d Q42=%d Q43=%d Q44=%d Q45=%d Q100=16 B170R&quot;</span>, cay, caz, ccy, ccz, csz);</div>
+<div class="line">  <a class="code" href="lspmac_8c.html#afab9e8f0502a92ee5cf93209af710f81" title="prepare (queue up) a line to send the dpram ascii command interface">lspmac_SockSendDPline</a>( <span class="stringliteral">&quot;organs&quot;</span>, <span class="stringliteral">&quot;&amp;5 Q40=0 Q41=%d Q42=%d Q43=%d Q44=%d Q45=%d Q100=16 B170R&quot;</span>, cay, caz, ccy, ccz, csz);</div>
 <div class="line"></div>
 <div class="line">}</div>
 </div><!-- fragment -->
@@ -1141,7 +1171,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00664">664</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00667">667</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                           {</div>
 <div class="line">  <span class="comment">//</span></div>
 <div class="line">  <span class="comment">// we are coordinate system 5,  mask is 1 &lt;&lt; (cs - 1)</span></div>
@@ -1164,7 +1194,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00691">691</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00694">694</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                           {</div>
 <div class="line">  <span class="comment">//</span></div>
 <div class="line">  <span class="comment">// we are coordinate system 5,  mask is 1 &lt;&lt; (cs - 1)</span></div>
@@ -1197,7 +1227,7 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00493">493</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00496">496</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                                             {</div>
 <div class="line">  <span class="keywordtype">char</span> *cmd;</div>
 <div class="line">  <span class="keywordtype">char</span> *ignore;</div>
@@ -1332,7 +1362,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00153">153</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00156">156</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                                                          {</div>
 <div class="line">  <span class="keywordtype">double</span> rtn;</div>
 <div class="line">  <span class="keywordtype">double</span> u2c;</div>
@@ -1365,7 +1395,7 @@ Variables</h2></td></tr>
 
 <p>Spin 360 and make a video (recenter first, maybe) </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00889">889</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00892">892</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                      {</div>
 <div class="line">  <span class="keywordtype">double</span> cx, cy, ax, ay, az;</div>
 <div class="line"></div>
@@ -1478,7 +1508,7 @@ Variables</h2></td></tr>
 <p>Tell the database about the time we went through omega=zero. </p>
 <p>This should trigger the video feed server to starting making a movie. </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00985">985</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00988">988</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                                     {</div>
 <div class="line">  <span class="keyword">struct </span>tm t;</div>
 <div class="line">  <span class="keywordtype">int</span> usecs;</div>
@@ -1511,12 +1541,13 @@ Variables</h2></td></tr>
 
 <p>Start up the thread. </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l01166">1166</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l01176">1176</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                   {</div>
 <div class="line">  pthread_create( &amp;<a class="code" href="md2cmds_8c.html#aa230921945149692de98fff15c01962f">md2cmds_thread</a>, NULL,              <a class="code" href="md2cmds_8c.html#ae967e769d23555a631f615e630f25b00" title="Our worker thread.">md2cmds_worker</a>, NULL);</div>
 <div class="line">  <a class="code" href="lsevents_8c.html#ab0617d3f0594b51d10e34bf397096654" title="Add a callback routine to listen for a specific event.">lsevents_add_listener</a>( <span class="stringliteral">&quot;omega crossed zero&quot;</span>,        <a class="code" href="md2cmds_8c.html#aa43887b7c9799bc88d51df13745d0e5c" title="Tell the database about the time we went through omega=zero.">md2cmds_rotate_cb</a>);</div>
 <div class="line">  <a class="code" href="lsevents_8c.html#ab0617d3f0594b51d10e34bf397096654" title="Add a callback routine to listen for a specific event.">lsevents_add_listener</a>( <span class="stringliteral">&quot;.+ (Moving|In Position)&quot;</span>,   <a class="code" href="md2cmds_8c.html#a3970ef1a233dabcc5c1408e9d3865f13" title="Track how many motors are moving.">md2cmds_maybe_done_moving_cb</a>);</div>
 <div class="line">  <a class="code" href="lsevents_8c.html#ab0617d3f0594b51d10e34bf397096654" title="Add a callback routine to listen for a specific event.">lsevents_add_listener</a>( <span class="stringliteral">&quot;capz (Moving|In Position)&quot;</span>, <a class="code" href="md2cmds_8c.html#aab9e2aa02903648acc342068f0664a96" title="Time the capillary motion for the transfer routine.">md2cmds_time_capz_cb</a>);</div>
+<div class="line">  <a class="code" href="lsevents_8c.html#ab0617d3f0594b51d10e34bf397096654" title="Add a callback routine to listen for a specific event.">lsevents_add_listener</a>( <span class="stringliteral">&quot;move_prep command done&quot;</span>,    <a class="code" href="md2cmds_8c.html#abd60a276f9d4658561110a4ec68c6144">md2cmds_move_prep_done_cb</a>);</div>
 <div class="line">}</div>
 </div><!-- fragment -->
 </div>
@@ -1537,7 +1568,7 @@ Variables</h2></td></tr>
 
 <p>Fix up xscale and yscale when zoom changes. </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l01012">1012</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l01015">1015</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                                        {</div>
 <div class="line">  <span class="keywordtype">int</span> mag;</div>
 <div class="line">  <a class="code" href="structlsredis__obj__struct.html" title="Redis Object Basic object whose value is sychronized with our redis db.">lsredis_obj_t</a> *p1, *p2;</div>
@@ -1580,7 +1611,7 @@ Variables</h2></td></tr>
 <p>Time the capillary motion for the transfer routine. </p>
 <p>&lt; track the time spent moving capz </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l01043">1043</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l01053">1053</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                                        {</div>
 <div class="line">  <span class="keyword">static</span> <span class="keyword">struct </span>timespec capz_timestarted;      </div>
 <div class="line">  <span class="keyword">struct </span>timespec <a class="code" href="kvredis_8c.html#ad40ac52086f6b774928af45b09d54c6e" title="used to ensure we do not inundate the db server with connection requests">now</a>;</div>
@@ -1619,7 +1650,7 @@ Variables</h2></td></tr>
 
 <p>Transfer a sample. </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00228">228</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00231">231</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                        {</div>
 <div class="line">  <span class="keywordtype">int</span> nextsample, abort_now;</div>
 <div class="line">  <span class="keywordtype">double</span> esttime;</div>
@@ -1644,7 +1675,7 @@ Variables</h2></td></tr>
 <div class="line"></div>
 <div class="line">  pthread_mutex_lock( &amp;<a class="code" href="md2cmds_8c.html#a4ea6e6bf63aefcd49f87c3921029451d" title="message passing between md2cmds and pg">md2cmds_moving_mutex</a>);</div>
 <div class="line">  <span class="keywordflow">while</span>( <a class="code" href="md2cmds_8c.html#a5ce190461376c4f9c7d74842d8ebc5d5">md2cmds_moving_count</a> &gt; 0)</div>
-<div class="line">    pthread_cond_wait( &amp;<a class="code" href="md2cmds_8c.html#adeebdb8f552bff14bd666c187505ee9e" title="coordinate call and response">md2cmds_moving_cond</a>, &amp;<a class="code" href="md2cmds_8c.html#a4ea6e6bf63aefcd49f87c3921029451d" title="message passing between md2cmds and pg">md2cmds_moving_mutex</a>);</div>
+<div class="line">    pthread_cond_wait( &amp;<a class="code" href="md2cmds_8c.html#adeebdb8f552bff14bd666c187505ee9e" title="wait for command to have been dequeued and run">md2cmds_moving_cond</a>, &amp;<a class="code" href="md2cmds_8c.html#a4ea6e6bf63aefcd49f87c3921029451d" title="message passing between md2cmds and pg">md2cmds_moving_mutex</a>);</div>
 <div class="line">  pthread_mutex_unlock( &amp;<a class="code" href="md2cmds_8c.html#a4ea6e6bf63aefcd49f87c3921029451d" title="message passing between md2cmds and pg">md2cmds_moving_mutex</a>);</div>
 <div class="line">  </div>
 <div class="line">  <span class="comment">//</span></div>
@@ -1727,7 +1758,7 @@ Variables</h2></td></tr>
 <div class="line">    <span class="comment">// try not to grab too many mutexs at the same time to lower the chance of a deadlock.</span></div>
 <div class="line">    <span class="comment">//</span></div>
 <div class="line">    pthread_mutex_lock( &amp;<a class="code" href="lspmac_8c.html#ac8070dc568ad974a3db42b51eca828cc" title="Phi (not data collection axis)">phi</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>);</div>
-<div class="line">    mypq = <a class="code" href="lspmac_8c.html#ac8070dc568ad974a3db42b51eca828cc" title="Phi (not data collection axis)">phi</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#ae0a0c9264f49f51bf72168c3b62f8723" title="the queue item requesting motion. Used to check time request was made">pq</a>;</div>
+<div class="line">    mypq = <a class="code" href="lspmac_8c.html#ac8070dc568ad974a3db42b51eca828cc" title="Phi (not data collection axis)">phi</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a8caf0031e134e144bffc87d9d896d15b" title="the queue item requesting motion. Used to check time request was made">pq</a>;</div>
 <div class="line">    pthread_mutex_unlock( &amp;<a class="code" href="lspmac_8c.html#ac8070dc568ad974a3db42b51eca828cc" title="Phi (not data collection axis)">phi</a>-&gt;<a class="code" href="structlspmac__motor__struct.html#a188c5b1e991750ce2ffd53e0192e0907" title="coordinate waiting for motor to be done">mutex</a>);</div>
 <div class="line">    </div>
 <div class="line">    pthread_mutex_lock( &amp;<a class="code" href="md2cmds_8c.html#a4ea6e6bf63aefcd49f87c3921029451d" title="message passing between md2cmds and pg">md2cmds_moving_mutex</a>);</div>
@@ -1822,7 +1853,7 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l01117">1117</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l01127">1127</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                       {</div>
 <div class="line"></div>
 <div class="line">  pthread_mutex_lock( &amp;<a class="code" href="md2cmds_8c.html#ad67304bb851dc6268b0cda2f40fc5aa8" title="mutex for the condition">md2cmds_mutex</a>);</div>
@@ -1873,7 +1904,7 @@ Variables</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00027">27</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00028">28</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 
 </div>
 </div>
@@ -1889,7 +1920,7 @@ Variables</h2></td></tr>
 
 <p>our command; </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00019">19</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00020">20</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 
 </div>
 </div>
@@ -1919,7 +1950,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00021">21</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00022">22</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 
 </div>
 </div>
@@ -1933,9 +1964,10 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
+<p>wait for command to have been dequeued and run </p>
 <p>coordinate call and response </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00013">13</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00014">14</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 
 </div>
 </div>
@@ -1949,7 +1981,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00017">17</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00018">18</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 
 </div>
 </div>
@@ -1965,7 +1997,7 @@ Variables</h2></td></tr>
 
 <p>message passing between md2cmds and pg </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00014">14</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00015">15</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 
 </div>
 </div>
@@ -1981,7 +2013,21 @@ Variables</h2></td></tr>
 
 <p>pmac queue item from last command </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00015">15</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00016">16</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="af14178edd0398535a0c3c87066d6f00c"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int md2cmds_moving_queue_wait = 0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00013">13</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 
 </div>
 </div>
@@ -2019,7 +2065,7 @@ Variables</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00023">23</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00024">24</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 
 </div>
 </div>
@@ -2043,7 +2089,7 @@ Variables</h2></td></tr>
 
 <p>flag: when omega is in position after a rotate we want to re-home omega </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00025">25</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l00026">26</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 
 </div>
 </div>
@@ -2053,7 +2099,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="md2cmds_8c.html">md2cmds.c</a></li>
-    <li class="footer">Generated on Mon Dec 24 2012 18:43:19 for LS-CAT PGPMAC by
+    <li class="footer">Generated on Tue Jan 15 2013 16:53:09 for LS-CAT PGPMAC by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.2 </li>
   </ul>

@@ -1,4 +1,4 @@
-.TH "md2cmds.c" 3 "Mon Dec 24 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "md2cmds.c" 3 "Tue Jan 15 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -83,6 +83,9 @@ Implements commands to run the md2 diffractometer attached to a PMAC controled b
 .br
 .RI "\fIMove centering and alignment tables as requested TODO: Implement\&. \fP"
 .ti -1c
+.RI "void \fBmd2cmds_move_prep_done_cb\fP (char *event)"
+.br
+.ti -1c
 .RI "void \fBmd2cmds_time_capz_cb\fP (char *event)"
 .br
 .RI "\fITime the capillary motion for the transfer routine\&. \fP"
@@ -118,9 +121,12 @@ Implements commands to run the md2 diffractometer attached to a PMAC controled b
 .br
 .RI "\fImutex for the condition \fP"
 .ti -1c
+.RI "int \fBmd2cmds_moving_queue_wait\fP = 0"
+.br
+.ti -1c
 .RI "pthread_cond_t \fBmd2cmds_moving_cond\fP"
 .br
-.RI "\fIcoordinate call and response \fP"
+.RI "\fIwait for command to have been dequeued and run \fP"
 .ti -1c
 .RI "pthread_mutex_t \fBmd2cmds_moving_mutex\fP"
 .br
@@ -177,7 +183,7 @@ Definition in file \fBmd2cmds\&.c\fP\&.
 .SS "int md2cmds_action_queue (doubletimeout, char *action)"
 
 .PP
-Definition at line 1073 of file md2cmds\&.c\&.
+Definition at line 1083 of file md2cmds\&.c\&.
 .PP
 .nf
                                                         {
@@ -220,7 +226,7 @@ Definition at line 1073 of file md2cmds\&.c\&.
 .PP
 pause until md2cmds_worker has finished running the command 
 .PP
-Definition at line 1110 of file md2cmds\&.c\&.
+Definition at line 1120 of file md2cmds\&.c\&.
 .PP
 .nf
                            {
@@ -233,7 +239,7 @@ Definition at line 1110 of file md2cmds\&.c\&.
 .PP
 Move centering and alignment tables as requested TODO: Implement\&. 
 .PP
-Definition at line 1038 of file md2cmds\&.c\&.
+Definition at line 1041 of file md2cmds\&.c\&.
 .PP
 .nf
                       {
@@ -266,7 +272,7 @@ Collect some data\&. < index of shot to be taken
 .PP
 < combined motion mask to set up waiting 
 .PP
-Definition at line 701 of file md2cmds\&.c\&.
+Definition at line 704 of file md2cmds\&.c\&.
 .PP
 .nf
                        {
@@ -298,7 +304,7 @@ Definition at line 701 of file md2cmds\&.c\&.
   //
   // reset shutter has opened flag
   //
-  lspmac_SockSendline( 'P3001=0 P3002=0');
+  lspmac_SockSendDPline( NULL, 'P3001=0 P3002=0');
 
   while( 1) {
     lspg_nextshot_call();
@@ -393,7 +399,7 @@ Definition at line 701 of file md2cmds\&.c\&.
     //
     // Start the exposure
     //
-    lspmac_SockSendline( '&1 P170=%\&.1f P171=%\&.1f P173=%\&.1f P174=0 P175=%\&.1f P176=0 P177=1 P178=0 P180=%\&.1f M431=1 &1B131R',
+    lspmac_SockSendDPline( NULL, '&1 P170=%\&.1f P171=%\&.1f P173=%\&.1f P174=0 P175=%\&.1f P176=0 P177=1 P178=0 P180=%\&.1f M431=1 &1B131R',
                              p170,     p171,     p173,            p175,                          p180);
 
 
@@ -427,7 +433,7 @@ Definition at line 701 of file md2cmds\&.c\&.
     //
     // reset shutter has opened flag
     //
-    lspmac_SockSendline( 'P3001=0');
+    lspmac_SockSendDPline( NULL, 'P3001=0');
 
     //
     // Move the center/alignment stages to the next position
@@ -459,7 +465,7 @@ Definition at line 701 of file md2cmds\&.c\&.
 .PP
 Initialize the md2cmds module\&. 
 .PP
-Definition at line 1151 of file md2cmds\&.c\&.
+Definition at line 1161 of file md2cmds\&.c\&.
 .PP
 .nf
                     {
@@ -478,7 +484,7 @@ Definition at line 1151 of file md2cmds\&.c\&.
 .SS "void md2cmds_kappaphi_move (doublekappa_deg, doublephi_deg)"
 
 .PP
-Definition at line 672 of file md2cmds\&.c\&.
+Definition at line 675 of file md2cmds\&.c\&.
 .PP
 .nf
                                                               {
@@ -495,7 +501,7 @@ Definition at line 672 of file md2cmds\&.c\&.
   //  ;                 Q21    = Y Value
   //  ;                 Q100   = 1 << (coord sys no  - 1)
 
-  md2cmds_moving_pq = lspmac_SockSendline( '&7 Q20=%d Q21=%d Q100=64', kc, pc);
+  lspmac_SockSendDPline( 'kappaphi_move', '&7 Q20=%d Q21=%d Q100=64', kc, pc);
 
 }
 .fi
@@ -504,7 +510,7 @@ Definition at line 672 of file md2cmds\&.c\&.
 .PP
 Track how many motors are moving\&. 
 .PP
-Definition at line 636 of file md2cmds\&.c\&.
+Definition at line 639 of file md2cmds\&.c\&.
 .PP
 .nf
                                                 {
@@ -538,7 +544,7 @@ Definition at line 636 of file md2cmds\&.c\&.
 .PP
 Now that we are done with the 360 rotation lets rehome right quick\&. 
 .PP
-Definition at line 1002 of file md2cmds\&.c\&.
+Definition at line 1005 of file md2cmds\&.c\&.
 .PP
 .nf
                                                 {
@@ -553,11 +559,10 @@ Definition at line 1002 of file md2cmds\&.c\&.
 .PP
 set up moving motors in a coordinate system 
 .PP
-Definition at line 32 of file md2cmds\&.c\&.
+Definition at line 33 of file md2cmds\&.c\&.
 .PP
 .nf
                                    {
-  pmac_cmd_queue_t *pq;
   int flag;
 
   pthread_mutex_lock( &lspmac_moving_mutex);
@@ -577,18 +582,19 @@ Definition at line 32 of file md2cmds\&.c\&.
     // This guarantees that when we are waiting for motion to stop that it did, in fact, start
     //
     
+    pthread_mutex_lock( &md2cmds_moving_mutex);
+    md2cmds_moving_queue_wait = 1;
+    pthread_mutex_unlock( &md2cmds_moving_mutex);
+    
     //
     // Clear the centering and alignment stage flags
     //
-    pq = lspmac_SockSendline( 'M5075=(M5075 | %d) ^ %d', mmask, mmask);
+    lspmac_SockSendDPline( 'move_prep', 'M5075=(M5075 | %d) ^ %d', mmask, mmask);
     
-    pthread_mutex_lock( &pmac_queue_mutex);
-    //
-    // wait for the command to be sent
-    //
-    while( pq->time_sent\&.tv_sec==0)
-      pthread_cond_wait( &pmac_queue_cond, &pmac_queue_mutex);
-    pthread_mutex_unlock( &pmac_queue_mutex);
+    pthread_mutex_lock( &md2cmds_moving_mutex);
+    while( md2cmds_moving_queue_wait)
+      pthread_cond_wait( &md2cmds_moving_cond, &md2cmds_moving_mutex);
+    pthread_mutex_unlock( &md2cmds_moving_mutex);
     
     //
     // Make sure the command propagates back to the status
@@ -608,20 +614,22 @@ Definition at line 32 of file md2cmds\&.c\&.
   pthread_mutex_lock( &md2cmds_moving_mutex);
   if( md2cmds_moving_count == 0)
     md2cmds_moving_count = -1;
+  md2cmds_moving_queue_wait = 1;
   pthread_mutex_unlock( &md2cmds_moving_mutex);
 
   //
   // Now set the given motion flags
   //
-  pq = lspmac_SockSendline( 'M5075=(M5075 | %d)', mmask);
+  lspmac_SockSendDPline( 'move_prep', 'M5075=(M5075 | %d)', mmask);
 
   pthread_mutex_lock( &pmac_queue_mutex);
   //
   // wait for the command to be sent
   //
-  while( pq->time_sent\&.tv_sec==0)
-    pthread_cond_wait( &pmac_queue_cond, &pmac_queue_mutex);
-  pthread_mutex_unlock( &pmac_queue_mutex);
+  pthread_mutex_lock( &md2cmds_moving_mutex);
+  while( md2cmds_moving_queue_wait)
+    pthread_cond_wait( &md2cmds_moving_cond, &md2cmds_moving_mutex);
+  pthread_mutex_unlock( &md2cmds_moving_mutex);
 
   //
   // Make sure it propagates
@@ -634,12 +642,25 @@ Definition at line 32 of file md2cmds\&.c\&.
   pthread_mutex_unlock( &lspmac_moving_mutex);
 }
 .fi
+.SS "void md2cmds_move_prep_done_cb (char *event)"
+
+.PP
+Definition at line 1044 of file md2cmds\&.c\&.
+.PP
+.nf
+                                             {
+  pthread_mutex_lock( &md2cmds_moving_mutex);
+  md2cmds_moving_queue_wait = 0;
+  pthread_cond_signal( &md2cmds_moving_cond);
+  pthread_mutex_unlock( &md2cmds_moving_mutex);
+}
+.fi
 .SS "void md2cmds_move_wait (intmmask)"
 
 .PP
 Wait for the movement to stop\&. 
 .PP
-Definition at line 112 of file md2cmds\&.c\&.
+Definition at line 115 of file md2cmds\&.c\&.
 .PP
 .nf
                                    {
@@ -693,7 +714,7 @@ Move a motor to the position requested\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 406 of file md2cmds\&.c\&.
+Definition at line 409 of file md2cmds\&.c\&.
 .PP
 .nf
                        {
@@ -793,7 +814,7 @@ Move the centering and alignment tables\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 608 of file md2cmds\&.c\&.
+Definition at line 611 of file md2cmds\&.c\&.
 .PP
 .nf
                              {
@@ -811,15 +832,15 @@ Definition at line 608 of file md2cmds\&.c\&.
   ay_cts = md2cmds_prep_axis( aligny, ay);
   az_cts = md2cmds_prep_axis( alignz, az);
 
-  lspmac_SockSendline( '&2 Q100=2 Q20=%\&.1f Q21=%\&.1f B150R', cx_cts, cy_cts);
-  md2cmds_moving_pq = lspmac_SockSendline( '&3 Q100=4 Q30=%\&.1f Q31=%\&.1f Q32=%\&.1f B160R', ax_cts, ay_cts, az_cts);
+  lspmac_SockSendDPline( NULL, '&2 Q100=2 Q20=%\&.1f Q21=%\&.1f B150R', cx_cts, cy_cts);
+  lspmac_SockSendDPline( 'mvcenter_move', '&3 Q100=4 Q30=%\&.1f Q31=%\&.1f Q32=%\&.1f B160R', ax_cts, ay_cts, az_cts);
   
 }
 .fi
 .SS "void md2cmds_organs_move_presets (char *pay, char *paz, char *pcy, char *pcz, char *psz)"
 
 .PP
-Definition at line 170 of file md2cmds\&.c\&.
+Definition at line 173 of file md2cmds\&.c\&.
 .PP
 .nf
                                                                                          {
@@ -873,14 +894,14 @@ Definition at line 170 of file md2cmds\&.c\&.
   //                  Q45     = W Value
   //
   
-  md2cmds_moving_pq = lspmac_SockSendline( '&5 Q40=0 Q41=%d Q42=%d Q43=%d Q44=%d Q45=%d Q100=16 B170R', cay, caz, ccy, ccz, csz);
+  lspmac_SockSendDPline( 'organs', '&5 Q40=0 Q41=%d Q42=%d Q43=%d Q44=%d Q45=%d Q100=16 B170R', cay, caz, ccy, ccz, csz);
 
 }
 .fi
 .SS "void md2cmds_organs_prep ()"
 
 .PP
-Definition at line 664 of file md2cmds\&.c\&.
+Definition at line 667 of file md2cmds\&.c\&.
 .PP
 .nf
                            {
@@ -893,7 +914,7 @@ Definition at line 664 of file md2cmds\&.c\&.
 .SS "void md2cmds_organs_wait ()"
 
 .PP
-Definition at line 691 of file md2cmds\&.c\&.
+Definition at line 694 of file md2cmds\&.c\&.
 .PP
 .nf
                            {
@@ -915,7 +936,7 @@ Move md2 devices to a preconfigured state\&. EMBL calls these states 'phases' an
 .PP
 
 .PP
-Definition at line 493 of file md2cmds\&.c\&.
+Definition at line 496 of file md2cmds\&.c\&.
 .PP
 .nf
                                              {
@@ -1029,7 +1050,7 @@ Definition at line 493 of file md2cmds\&.c\&.
 .SS "double md2cmds_prep_axis (\fBlspmac_motor_t\fP *mp, doublepos)"
 
 .PP
-Definition at line 153 of file md2cmds\&.c\&.
+Definition at line 156 of file md2cmds\&.c\&.
 .PP
 .nf
                                                           {
@@ -1052,7 +1073,7 @@ Definition at line 153 of file md2cmds\&.c\&.
 .PP
 Spin 360 and make a video (recenter first, maybe) 
 .PP
-Definition at line 889 of file md2cmds\&.c\&.
+Definition at line 892 of file md2cmds\&.c\&.
 .PP
 .nf
                       {
@@ -1153,7 +1174,7 @@ Definition at line 889 of file md2cmds\&.c\&.
 .PP
 Tell the database about the time we went through omega=zero\&. This should trigger the video feed server to starting making a movie\&. 
 .PP
-Definition at line 985 of file md2cmds\&.c\&.
+Definition at line 988 of file md2cmds\&.c\&.
 .PP
 .nf
                                      {
@@ -1176,7 +1197,7 @@ Definition at line 985 of file md2cmds\&.c\&.
 .PP
 Start up the thread\&. 
 .PP
-Definition at line 1166 of file md2cmds\&.c\&.
+Definition at line 1176 of file md2cmds\&.c\&.
 .PP
 .nf
                    {
@@ -1184,6 +1205,7 @@ Definition at line 1166 of file md2cmds\&.c\&.
   lsevents_add_listener( 'omega crossed zero',        md2cmds_rotate_cb);
   lsevents_add_listener( '\&.+ (Moving|In Position)',   md2cmds_maybe_done_moving_cb);
   lsevents_add_listener( 'capz (Moving|In Position)', md2cmds_time_capz_cb);
+  lsevents_add_listener( 'move_prep command done',    md2cmds_move_prep_done_cb);
 }
 .fi
 .SS "void md2cmds_set_scale_cb (char *event)"
@@ -1191,7 +1213,7 @@ Definition at line 1166 of file md2cmds\&.c\&.
 .PP
 Fix up xscale and yscale when zoom changes\&. 
 .PP
-Definition at line 1012 of file md2cmds\&.c\&.
+Definition at line 1015 of file md2cmds\&.c\&.
 .PP
 .nf
                                         {
@@ -1222,7 +1244,7 @@ Definition at line 1012 of file md2cmds\&.c\&.
 .PP
 Time the capillary motion for the transfer routine\&. < track the time spent moving capz 
 .PP
-Definition at line 1043 of file md2cmds\&.c\&.
+Definition at line 1053 of file md2cmds\&.c\&.
 .PP
 .nf
                                         {
@@ -1251,7 +1273,7 @@ Definition at line 1043 of file md2cmds\&.c\&.
 .PP
 Transfer a sample\&. 
 .PP
-Definition at line 228 of file md2cmds\&.c\&.
+Definition at line 231 of file md2cmds\&.c\&.
 .PP
 .nf
                         {
@@ -1444,7 +1466,7 @@ Our worker thread\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1117 of file md2cmds\&.c\&.
+Definition at line 1127 of file md2cmds\&.c\&.
 .PP
 .nf
                        {
@@ -1481,13 +1503,13 @@ Definition at line 1117 of file md2cmds\&.c\&.
 .SS "double md2cmds_capz_moving_time = NAN\fC [static]\fP"
 
 .PP
-Definition at line 27 of file md2cmds\&.c\&.
+Definition at line 28 of file md2cmds\&.c\&.
 .SS "char md2cmds_cmd[\fBMD2CMDS_CMD_LENGTH\fP]"
 
 .PP
 our command; 
 .PP
-Definition at line 19 of file md2cmds\&.c\&.
+Definition at line 20 of file md2cmds\&.c\&.
 .SS "pthread_cond_t md2cmds_cond"
 
 .PP
@@ -1497,29 +1519,33 @@ Definition at line 10 of file md2cmds\&.c\&.
 .SS "\fBlsredis_obj_t\fP* md2cmds_md_status_code"
 
 .PP
-Definition at line 21 of file md2cmds\&.c\&.
+Definition at line 22 of file md2cmds\&.c\&.
 .SS "pthread_cond_t md2cmds_moving_cond"
 
 .PP
-coordinate call and response 
+wait for command to have been dequeued and run coordinate call and response 
 .PP
-Definition at line 13 of file md2cmds\&.c\&.
+Definition at line 14 of file md2cmds\&.c\&.
 .SS "int md2cmds_moving_count = 0"
 
 .PP
-Definition at line 17 of file md2cmds\&.c\&.
+Definition at line 18 of file md2cmds\&.c\&.
 .SS "pthread_mutex_t md2cmds_moving_mutex"
 
 .PP
 message passing between md2cmds and pg 
 .PP
-Definition at line 14 of file md2cmds\&.c\&.
+Definition at line 15 of file md2cmds\&.c\&.
 .SS "\fBpmac_cmd_queue_t\fP* md2cmds_moving_pq"
 
 .PP
 pmac queue item from last command 
 .PP
-Definition at line 15 of file md2cmds\&.c\&.
+Definition at line 16 of file md2cmds\&.c\&.
+.SS "int md2cmds_moving_queue_wait = 0"
+
+.PP
+Definition at line 13 of file md2cmds\&.c\&.
 .SS "pthread_mutex_t md2cmds_mutex"
 
 .PP
@@ -1529,13 +1555,13 @@ Definition at line 11 of file md2cmds\&.c\&.
 .SS "pthread_t md2cmds_thread\fC [static]\fP"
 
 .PP
-Definition at line 23 of file md2cmds\&.c\&.
+Definition at line 24 of file md2cmds\&.c\&.
 .SS "int rotating = 0\fC [static]\fP"
 
 .PP
 flag: when omega is in position after a rotate we want to re-home omega 
 .PP
-Definition at line 25 of file md2cmds\&.c\&.
+Definition at line 26 of file md2cmds\&.c\&.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for LS-CAT PGPMAC from the source code\&.

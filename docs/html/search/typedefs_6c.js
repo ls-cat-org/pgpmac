@@ -15,7 +15,9 @@ var searchData=
   ['lspg_5fstarttransfer_5ft',['lspg_starttransfer_t',['../pgpmac_8h.html#aa1f0e602ae9509005c62fb2d73bc1c5a',1,'pgpmac.h']]],
   ['lspg_5fwait_5ffor_5fdetector_5ft',['lspg_wait_for_detector_t',['../lspg_8c.html#a6f273a499bf316de95df3816a9b1bc06',1,'lspg.c']]],
   ['lspg_5fwaitcryo_5ft',['lspg_waitcryo_t',['../pgpmac_8h.html#a779e2acce8b5e748c184caf23ed0db57',1,'pgpmac.h']]],
+  ['lspmac_5fascii_5fbuffers_5ft',['lspmac_ascii_buffers_t',['../lspmac_8c.html#a3f7d17365bd23c29c6f498210179d2c1',1,'lspmac.c']]],
   ['lspmac_5fbi_5ft',['lspmac_bi_t',['../pgpmac_8h.html#ac48984832ef73cf145e5f08bc65bd3a0',1,'pgpmac.h']]],
+  ['lspmac_5fdpascii_5fqueue_5ft',['lspmac_dpascii_queue_t',['../lspmac_8c.html#a93786bb32f3e2ef44e7967210beeeca3',1,'lspmac.c']]],
   ['lspmac_5fmotor_5ft',['lspmac_motor_t',['../pgpmac_8h.html#aa5067fcbaabc5bbfdc52492495518c96',1,'pgpmac.h']]],
   ['lsredis_5fobj_5ft',['lsredis_obj_t',['../pgpmac_8h.html#ad449de06d02791adf2498d2a1e1f909c',1,'pgpmac.h']]],
   ['lstimer_5flist_5ft',['lstimer_list_t',['../lstimer_8c.html#abae36af84be0a2f4529aa0424edc6fbf',1,'lstimer.c']]]

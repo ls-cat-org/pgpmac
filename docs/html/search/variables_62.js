@@ -1,5 +1,6 @@
 var searchData=
 [
+  ['b',['b',['../namespacemk__pgpmac__redis.html#a90faa2042277e396b48b19374c9db4ab',1,'mk_pgpmac_redis']]],
   ['back_5fdac',['back_dac',['../structmd2StatusStruct.html#a33ce490348c8de255cf49b96469d3d4e',1,'md2StatusStruct']]],
   ['bdata',['bData',['../structtagEthernetCmd.html#a872dab798127d6f589974a79c5d0aef1',1,'tagEthernetCmd']]],
   ['bi_5flist',['bi_list',['../namespacemk__pgpmac__redis.html#a961bfabfbdcbf5b749f6e6ecdc733619',1,'mk_pgpmac_redis']]],

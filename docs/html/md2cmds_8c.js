@@ -9,6 +9,7 @@ var md2cmds_8c =
     [ "md2cmds_maybe_done_moving_cb", "md2cmds_8c.html#a3970ef1a233dabcc5c1408e9d3865f13", null ],
     [ "md2cmds_maybe_rotate_done_cb", "md2cmds_8c.html#a136f278c9f5a2742b2e9b4987b063faa", null ],
     [ "md2cmds_move_prep", "md2cmds_8c.html#a6be0050882c7e5f9829c95d2734ff0b4", null ],
+    [ "md2cmds_move_prep_done_cb", "md2cmds_8c.html#abd60a276f9d4658561110a4ec68c6144", null ],
     [ "md2cmds_move_wait", "md2cmds_8c.html#aeac3f41c9c95d2bc0cb4c7824772264d", null ],
     [ "md2cmds_moveAbs", "md2cmds_8c.html#aab520d15af31fe87571d025d7491987e", null ],
     [ "md2cmds_mvcenter_move", "md2cmds_8c.html#afdc46152b46ae4d37c73407b83016b78", null ],
@@ -32,6 +33,7 @@ var md2cmds_8c =
     [ "md2cmds_moving_count", "md2cmds_8c.html#a5ce190461376c4f9c7d74842d8ebc5d5", null ],
     [ "md2cmds_moving_mutex", "md2cmds_8c.html#a4ea6e6bf63aefcd49f87c3921029451d", null ],
     [ "md2cmds_moving_pq", "md2cmds_8c.html#adb9f3bcc0d1231c4c22282279e11244f", null ],
+    [ "md2cmds_moving_queue_wait", "md2cmds_8c.html#af14178edd0398535a0c3c87066d6f00c", null ],
     [ "md2cmds_mutex", "md2cmds_8c.html#ad67304bb851dc6268b0cda2f40fc5aa8", null ],
     [ "md2cmds_thread", "md2cmds_8c.html#aa230921945149692de98fff15c01962f", null ],
     [ "rotating", "md2cmds_8c.html#aaa6eb2d46be8d5e17a511591dd5a1271", null ]

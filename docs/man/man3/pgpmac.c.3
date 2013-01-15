@@ -1,4 +1,4 @@
-.TH "pgpmac.c" 3 "Mon Dec 24 2012" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "pgpmac.c" 3 "Tue Jan 15 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -55,6 +55,9 @@ Main for the pgpmac project\&.
 .RI "static struct pollfd \fBstdinfda\fP"
 .br
 .RI "\fIHandle input from the keyboard\&. \fP"
+.ti -1c
+.RI "static int \fBrunning\fP = 1"
+.br
 .in -1c
 .SH "Detailed Description"
 .PP 
@@ -92,7 +95,7 @@ Our main routine\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 349 of file pgpmac\&.c\&.
+Definition at line 351 of file pgpmac\&.c\&.
 .PP
 .nf
            {
@@ -181,7 +184,7 @@ Definition at line 349 of file pgpmac\&.c\&.
   lspg_run();
   md2cmds_run();
 
-  while( 1) {
+  while( running) {
     //
     // Big loop
     //
@@ -217,6 +220,8 @@ Definition at line 349 of file pgpmac\&.c\&.
       }
     }
   }
+  endwin();
+  return 0;
 }
 .fi
 .SS "void pgpmac_printf (char *fmt, \&.\&.\&.)"
@@ -229,7 +234,7 @@ Terminal output routine ala printf\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 326 of file pgpmac\&.c\&.
+Definition at line 328 of file pgpmac\&.c\&.
 .PP
 .nf
                      {
@@ -269,14 +274,15 @@ Definition at line 254 of file pgpmac\&.c\&.
   int ch;
 
 
-  for( ch=wgetch(term_input); ch != ERR; ch=wgetch(term_input)) {
+  for( ch=wgetch(term_input); ch != ERR && running; ch=wgetch(term_input)) {
     // wprintw( term_output, '%04x\n', ch);
     // wnoutrefresh( term_output);
 
     switch( ch) {
     case KEY_F(1):
-      endwin();
-      exit(0);
+    case KEY_F(2):
+    case KEY_F(3):
+      running = 0;
       break;
 
     case 0x0001:        // Control-A
@@ -295,7 +301,7 @@ Definition at line 254 of file pgpmac\&.c\&.
     case 0x0016:        // Control-V
       cntrlcmd[0] = ch;
       cntrlcmd[1] = 0;
-      lspmac_SockSendline( cntrlcmd);
+      lspmac_SockSendline( NULL, cntrlcmd);
       //      PmacSockSendControlCharPrint( ch);
       break;
 
@@ -307,7 +313,7 @@ Definition at line 254 of file pgpmac\&.c\&.
     case KEY_ENTER:
     case 0x000a:
       if( cmds_on > 0 && strlen( cmds) > 0) {
-        lspmac_SockSendline( cmds);
+        lspmac_SockSendline( NULL, cmds);
       }
       memset( cmds, 0, sizeof(cmds));
       cmds_on = 0;
@@ -321,12 +327,13 @@ Definition at line 254 of file pgpmac\&.c\&.
       break;
     }
     
-    mvwprintw( term_input, 1, 1, 'PMAC> %s', cmds);
-    wclrtoeol( term_input);
-    box( term_input, 0, 0);
-    wnoutrefresh( term_input);
-    doupdate();
-
+    if( running) {
+      mvwprintw( term_input, 1, 1, 'PMAC> %s', cmds);
+      wclrtoeol( term_input);
+      box( term_input, 0, 0);
+      wnoutrefresh( term_input);
+      doupdate();
+    }
   }
 }
 .fi
@@ -338,6 +345,10 @@ Definition at line 254 of file pgpmac\&.c\&.
 allow more than one thread access to the screen 
 .PP
 Definition at line 242 of file pgpmac\&.c\&.
+.SS "int running = 1\fC [static]\fP"
+
+.PP
+Definition at line 249 of file pgpmac\&.c\&.
 .SS "struct pollfd stdinfda\fC [static]\fP"
 
 .PP

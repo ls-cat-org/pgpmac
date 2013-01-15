@@ -1,5 +1,6 @@
 var files =
 [
+    [ "iniParser.py", "iniParser_8py.html", "iniParser_8py" ],
     [ "kvredis.c", "kvredis_8c.html", "kvredis_8c" ],
     [ "lsevents.c", "lsevents_8c.html", "lsevents_8c" ],
     [ "lslogging.c", "lslogging_8c.html", "lslogging_8c" ],
