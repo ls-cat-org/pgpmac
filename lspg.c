@@ -1248,7 +1248,8 @@ void lspg_cmd_cb(
   for( i=0; i<PQntuples( pgr); i++) {
     sp = PQgetvalue( pgr, i, 0);
     if( sp != NULL && *sp != 0) {
-      lspmac_SockSendline( sp);
+      lspmac_SockSendDPline( NULL, sp);
+      //      lspmac_SockSendline( sp);
       //
       // Keep asking for more until
       // there are no commands left
