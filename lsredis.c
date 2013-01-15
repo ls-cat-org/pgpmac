@@ -305,13 +305,15 @@ void lsredis_setstr( lsredis_obj_t *p, char *fmt, ...) {
     return;
   }
 
-  p->wait_for_me++;						//!< up the count of times we need to see ourselves published before we start listening to others again
+  p->wait_for_me++;			//!< up the count of times we need to see ourselves published before we start listening to others again
+  pthread_mutex_unlock( &p->mutex);	//!< Unlock to prevent deadlock in case the service routine needs to set our value
 
 
   argv[0] = "HSET";
   argv[1] = p->key;
   argv[2] = "VALUE";
   argv[3] = v;		//!< redisAsyncCommandArgv shouldn't need to access this after it's made up it's packet (before it returns) so we should be OK with this location disappearing soon.
+
 
   pthread_mutex_lock( &lsredis_mutex);
   while( lsredis_running == 0)
@@ -326,6 +328,7 @@ void lsredis_setstr( lsredis_obj_t *p, char *fmt, ...) {
 
   // Assume redis will take exactly the value we sent it
   //
+  pthread_mutex_lock( &p->mutex);
   _lsredis_set_value( p, v);
   pthread_cond_signal( &p->cond);
   pthread_mutex_unlock( &p->mutex);
@@ -813,7 +816,7 @@ void lsredis_init( char *pub, char *re, char *head) {
   //
   err = hcreate_r( 8192, &lsredis_htab);
   if( err == 0) {
-    lslogging_log_message( "lsredis_init: Cannot create hash table.  Really bad things are going to happen.  hcreate_r returnd %d", err);
+    lslogging_log_message( "lsredis_init: Cannot create hash table.  Really bad things are going to happen.  hcreate_r returned %d", err);
   }
 
   lsredis_head      = strdup( head);
