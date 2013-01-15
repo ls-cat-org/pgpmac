@@ -10,6 +10,7 @@
 pthread_cond_t  md2cmds_cond;		//!< condition to signal when it's time to run an md2 command
 pthread_mutex_t md2cmds_mutex;		//!< mutex for the condition
 
+int md2cmds_moving_queue_wait = 0;	//! wait for command to have been dequeued and run
 pthread_cond_t  md2cmds_moving_cond;	//!< coordinate call and response
 pthread_mutex_t md2cmds_moving_mutex;	//!< message passing between md2cmds and pg
 pmac_cmd_queue_t *md2cmds_moving_pq;	//!< pmac queue item from last command
@@ -30,7 +31,6 @@ static double md2cmds_capz_moving_time = NAN;
  */
 
 void md2cmds_move_prep( int mmask) {
-  pmac_cmd_queue_t *pq;
   int flag;
 
   pthread_mutex_lock( &lspmac_moving_mutex);
@@ -50,18 +50,19 @@ void md2cmds_move_prep( int mmask) {
     // This guarantees that when we are waiting for motion to stop that it did, in fact, start
     //
     
+    pthread_mutex_lock( &md2cmds_moving_mutex);
+    md2cmds_moving_queue_wait = 1;
+    pthread_mutex_unlock( &md2cmds_moving_mutex);
+    
     //
     // Clear the centering and alignment stage flags
     //
-    pq = lspmac_SockSendline( "M5075=(M5075 | %d) ^ %d", mmask, mmask);
+    lspmac_SockSendDPline( "move_prep", "M5075=(M5075 | %d) ^ %d", mmask, mmask);
     
-    pthread_mutex_lock( &pmac_queue_mutex);
-    //
-    // wait for the command to be sent
-    //
-    while( pq->time_sent.tv_sec==0)
-      pthread_cond_wait( &pmac_queue_cond, &pmac_queue_mutex);
-    pthread_mutex_unlock( &pmac_queue_mutex);
+    pthread_mutex_lock( &md2cmds_moving_mutex);
+    while( md2cmds_moving_queue_wait)
+      pthread_cond_wait( &md2cmds_moving_cond, &md2cmds_moving_mutex);
+    pthread_mutex_unlock( &md2cmds_moving_mutex);
     
     //
     // Make sure the command propagates back to the status
@@ -81,20 +82,22 @@ void md2cmds_move_prep( int mmask) {
   pthread_mutex_lock( &md2cmds_moving_mutex);
   if( md2cmds_moving_count == 0)
     md2cmds_moving_count = -1;
+  md2cmds_moving_queue_wait = 1;
   pthread_mutex_unlock( &md2cmds_moving_mutex);
 
   //
   // Now set the given motion flags
   //
-  pq = lspmac_SockSendline( "M5075=(M5075 | %d)", mmask);
+  lspmac_SockSendDPline( "move_prep", "M5075=(M5075 | %d)", mmask);
 
   pthread_mutex_lock( &pmac_queue_mutex);
   //
   // wait for the command to be sent
   //
-  while( pq->time_sent.tv_sec==0)
-    pthread_cond_wait( &pmac_queue_cond, &pmac_queue_mutex);
-  pthread_mutex_unlock( &pmac_queue_mutex);
+  pthread_mutex_lock( &md2cmds_moving_mutex);
+  while( md2cmds_moving_queue_wait)
+    pthread_cond_wait( &md2cmds_moving_cond, &md2cmds_moving_mutex);
+  pthread_mutex_unlock( &md2cmds_moving_mutex);
 
   //
   // Make sure it propagates
@@ -218,7 +221,7 @@ void md2cmds_organs_move_presets( char *pay, char *paz, char *pcy, char *pcz, ch
   //		      Q45     = W Value
   //
   
-  md2cmds_moving_pq = lspmac_SockSendline( "&5 Q40=0 Q41=%d Q42=%d Q43=%d Q44=%d Q45=%d Q100=16 B170R", cay, caz, ccy, ccz, csz);
+  lspmac_SockSendDPline( "organs", "&5 Q40=0 Q41=%d Q42=%d Q43=%d Q44=%d Q45=%d Q100=16 B170R", cay, caz, ccy, ccz, csz);
 
 }
 
@@ -626,8 +629,8 @@ void md2cmds_mvcenter_move(
   ay_cts = md2cmds_prep_axis( aligny, ay);
   az_cts = md2cmds_prep_axis( alignz, az);
 
-  lspmac_SockSendline( "&2 Q100=2 Q20=%.1f Q21=%.1f B150R", cx_cts, cy_cts);
-  md2cmds_moving_pq = lspmac_SockSendline( "&3 Q100=4 Q30=%.1f Q31=%.1f Q32=%.1f B160R", ax_cts, ay_cts, az_cts);
+  lspmac_SockSendDPline( NULL, "&2 Q100=2 Q20=%.1f Q21=%.1f B150R", cx_cts, cy_cts);
+  lspmac_SockSendDPline( "mvcenter_move", "&3 Q100=4 Q30=%.1f Q31=%.1f Q32=%.1f B160R", ax_cts, ay_cts, az_cts);
   
 }
 
@@ -683,7 +686,7 @@ void md2cmds_kappaphi_move( double kappa_deg, double phi_deg) {
   //  ;			Q21    = Y Value
   //  ;			Q100   = 1 << (coord sys no  - 1)
 
-  md2cmds_moving_pq = lspmac_SockSendline( "&7 Q20=%d Q21=%d Q100=64", kc, pc);
+  lspmac_SockSendDPline( "kappaphi_move", "&7 Q20=%d Q21=%d Q100=64", kc, pc);
 
 }
 
@@ -727,7 +730,7 @@ void md2cmds_collect() {
   //
   // reset shutter has opened flag
   //
-  lspmac_SockSendline( "P3001=0 P3002=0");
+  lspmac_SockSendDPline( NULL, "P3001=0 P3002=0");
 
   while( 1) {
     lspg_nextshot_call();
@@ -822,7 +825,7 @@ void md2cmds_collect() {
     //
     // Start the exposure
     //
-    lspmac_SockSendline( "&1 P170=%.1f P171=%.1f P173=%.1f P174=0 P175=%.1f P176=0 P177=1 P178=0 P180=%.1f M431=1 &1B131R",
+    lspmac_SockSendDPline( NULL, "&1 P170=%.1f P171=%.1f P173=%.1f P174=0 P175=%.1f P176=0 P177=1 P178=0 P180=%.1f M431=1 &1B131R",
 			     p170,     p171,     p173,            p175,                          p180);
 
 
@@ -856,7 +859,7 @@ void md2cmds_collect() {
     //
     // reset shutter has opened flag
     //
-    lspmac_SockSendline( "P3001=0");
+    lspmac_SockSendDPline( NULL, "P3001=0");
 
     //
     // Move the center/alignment stages to the next position
@@ -1038,6 +1041,13 @@ void md2cmds_set_scale_cb( char *event) {
 void md2cmds_center() {
 }
 
+void md2cmds_move_prep_done_cb( char *event) {
+  pthread_mutex_lock( &md2cmds_moving_mutex);
+  md2cmds_moving_queue_wait = 0;
+  pthread_cond_signal( &md2cmds_moving_cond);
+  pthread_mutex_unlock( &md2cmds_moving_mutex);
+}
+
 /** Time the capillary motion for the transfer routine
  */
 void md2cmds_time_capz_cb( char *event) {
@@ -1168,4 +1178,5 @@ void md2cmds_run() {
   lsevents_add_listener( "omega crossed zero",        md2cmds_rotate_cb);
   lsevents_add_listener( ".+ (Moving|In Position)",   md2cmds_maybe_done_moving_cb);
   lsevents_add_listener( "capz (Moving|In Position)", md2cmds_time_capz_cb);
+  lsevents_add_listener( "move_prep command done",    md2cmds_move_prep_done_cb);
 }
