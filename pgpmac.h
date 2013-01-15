@@ -5,6 +5,7 @@
  *  \copyright All Rights Reserved
  */
 #define _GNU_SOURCE
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -86,7 +87,7 @@ typedef struct lspmac_cmd_queue_struct {
   pmac_cmd_t pcmd;				//!< the pmac command to send
   int no_reply;					//!< 1 = no reply is expected, 0 = expect a reply
   struct timespec time_sent;			//!< time this item was dequeued and sent to the pmac
-  unsigned char rbuff[1400];			//!< buffer for the returned bytes
+  char *event;					//!< event name to send
   void (*onResponse)(struct lspmac_cmd_queue_struct *,int, char *);	//!< function to call when response is received.  args are (int fd, nreturned, buffer)
 } pmac_cmd_queue_t;
 
@@ -102,8 +103,9 @@ typedef struct lspmac_motor_struct {
   pthread_cond_t cond;		//!< used to signal when a motor is done moving
   int not_done;			//!< set to 1 when request is queued, zero after motion has toggled
   void (*read)( struct lspmac_motor_struct *);		//!< method to read the motor status and position
+  int command_sent;		//!< Motion command verified sent to pmac
   int motion_seen;		//!< set to 1 when motion has been verified to have started
-  struct lspmac_cmd_queue_struct *pq;	//!< the queue item requesting motion.  Used to check time request was made
+  pmac_cmd_queue_t *pq;	//!< the queue item requesting motion.  Used to check time request was made
   int homing;			//!< Homing routine started
   int requested_pos_cnts;	//!< requested position
   int *actual_pos_cnts_p;	//!< pointer to the md2_status structure to the actual position
@@ -480,7 +482,8 @@ extern lsredis_obj_t *md2cmds_md_status_code;
 
 extern char **lspg_array2ptrs( char *);
 extern char **lsredis_get_string_array( lsredis_obj_t *p);
-extern pmac_cmd_queue_t *lspmac_SockSendline(char *, ...);
+extern void lspmac_SockSendDPline( char *, char *fmt, ...);
+extern pmac_cmd_queue_t *lspmac_SockSendline(char *, char *, ...);
 extern lsredis_obj_t *lsredis_get_obj( char *, ...);
 extern char *lsredis_getstr( lsredis_obj_t *p);
 extern void PmacSockSendline( char *s);
