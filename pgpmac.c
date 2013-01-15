@@ -246,7 +246,7 @@ pthread_mutex_t ncurses_mutex;		//!< allow more than one thread access to the sc
 // globals
 //
 static struct pollfd stdinfda;			//!< Handle input from the keyboard
-
+static int running = 1;
 
 
 /** Handle keyboard input
@@ -260,14 +260,15 @@ void stdinService(
   int ch;
 
 
-  for( ch=wgetch(term_input); ch != ERR; ch=wgetch(term_input)) {
+  for( ch=wgetch(term_input); ch != ERR && running; ch=wgetch(term_input)) {
     // wprintw( term_output, "%04x\n", ch);
     // wnoutrefresh( term_output);
 
     switch( ch) {
     case KEY_F(1):
-      endwin();
-      exit(0);
+    case KEY_F(2):
+    case KEY_F(3):
+      running = 0;
       break;
 
     case 0x0001:	// Control-A
@@ -286,7 +287,7 @@ void stdinService(
     case 0x0016:	// Control-V
       cntrlcmd[0] = ch;
       cntrlcmd[1] = 0;
-      lspmac_SockSendline( cntrlcmd);
+      lspmac_SockSendline( NULL, cntrlcmd);
       //      PmacSockSendControlCharPrint( ch);
       break;
 
@@ -298,7 +299,7 @@ void stdinService(
     case KEY_ENTER:
     case 0x000a:
       if( cmds_on > 0 && strlen( cmds) > 0) {
-	lspmac_SockSendline( cmds);
+	lspmac_SockSendline( NULL, cmds);
       }
       memset( cmds, 0, sizeof(cmds));
       cmds_on = 0;
@@ -312,12 +313,13 @@ void stdinService(
       break;
     }
     
-    mvwprintw( term_input, 1, 1, "PMAC> %s", cmds);
-    wclrtoeol( term_input);
-    box( term_input, 0, 0);
-    wnoutrefresh( term_input);
-    doupdate();
-
+    if( running) {
+      mvwprintw( term_input, 1, 1, "PMAC> %s", cmds);
+      wclrtoeol( term_input);
+      box( term_input, 0, 0);
+      wnoutrefresh( term_input);
+      doupdate();
+    }
   }
 }
 
@@ -435,7 +437,7 @@ int main(
   lspg_run();
   md2cmds_run();
 
-  while( 1) {
+  while( running) {
     //
     // Big loop
     //
@@ -471,5 +473,7 @@ int main(
       }
     }
   }
+  endwin();
+  return 0;
 }
 
