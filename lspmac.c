@@ -50,7 +50,7 @@
 #define LS_PMAC_STATE_WGB      12
 static int ls_pmac_state = LS_PMAC_STATE_DETACHED;	//!< Current state of the PMAC communications state machine
 
-static lsredis_obj_t *lspmac_md2_init;
+//static lsredis_obj_t *lspmac_md2_init;
 
 void lspmac_get_ascii( char *);			//!< Forward declarateion
 
@@ -1350,6 +1350,7 @@ void lspmac_pmacmotor_read(
   char s[512], *sp;
   int homing1, homing2;
   double u2c;
+  double neutral_pos;
   int motor_num;
   char *fmt;
   int status_changed;
@@ -1396,8 +1397,9 @@ void lspmac_pmacmotor_read(
 
   // Get some values we might need later
   //
-  u2c       = lsredis_getd( mp->u2c);
-  motor_num = lsredis_getl( mp->motor_num);
+  u2c         = lsredis_getd( mp->u2c);
+  motor_num   = lsredis_getl( mp->motor_num);
+  neutral_pos = lsredis_getd( mp->neutral_pos);
 
   //
   // maybe look for omega zero crossing
@@ -1469,7 +1471,7 @@ void lspmac_pmacmotor_read(
     mp->position = lspmac_rlut( mp->nlut, mp->lut, mp->actual_pos_cnts);
   } else {
     if( u2c != 0.0) {
-      mp->position = mp->actual_pos_cnts / u2c;
+      mp->position = ((mp->actual_pos_cnts / u2c) - neutral_pos);
     } else {
       mp->position = mp->actual_pos_cnts;
     }
@@ -2393,13 +2395,15 @@ void lspmac_moveabs_timed_queue(
   int q100;	 // 1 << (coord sys no - 1)
   int coord_num; // our coordinate number
   double u2c;
+  double neutral_pos;
   double max_accel;
 
   pthread_mutex_lock( &(mp->mutex));
 
-  u2c       = lsredis_getd( mp->u2c);
-  max_accel = lsredis_getd( mp->max_accel);
-  coord_num = lsredis_getl( mp->coord_num);
+  u2c         = lsredis_getd( mp->u2c);
+  max_accel   = lsredis_getd( mp->max_accel);
+  coord_num   = lsredis_getl( mp->coord_num);
+  neutral_pos = lsredis_getd( mp->neutral_pos);
 
   if( u2c == 0.0 || time <= 0.0 || max_accel <= 0.0) {
     //
@@ -2413,7 +2417,7 @@ void lspmac_moveabs_timed_queue(
   mp->motion_seen = 0;
 
   mp->requested_position = start + delta;
-  mp->requested_pos_cnts = u2c * mp->requested_position;
+  mp->requested_pos_cnts = u2c * (mp->requested_position + neutral_pos);
   q10 = mp->requested_pos_cnts;
   q11 = u2c * delta;
   q12 = 1000 * time;
@@ -2489,6 +2493,7 @@ void lspmac_video_rotate( double secs) {
   double q12;		// milliseconds to run over delta
   
   double u2c;
+  double neutral_pos;
 
   if( secs <= 0.0)
     return;
@@ -2496,9 +2501,10 @@ void lspmac_video_rotate( double secs) {
   omega_zero_search = 1;
 
   pthread_mutex_lock( &(omega->mutex));
-  u2c = lsredis_getd( omega->u2c);
+  u2c         = lsredis_getd( omega->u2c);
+  neutral_pos = lsredis_getd( omega->neutral_pos);
 
-  q10 = 0;
+  q10 = neutral_pos / u2c;
   q11 = 360.0 * u2c;
   q12 = 1000 * secs;
   
@@ -2523,13 +2529,15 @@ void lspmac_move_or_jog_abs_queue(
   int coord_num, motor_num;	//!< motor and coordinate system;
   char *axis;			//!< our axis
   double u2c;
+  double neutral_pos;
 
   pthread_mutex_lock( &(mp->mutex));
 
-  u2c       = lsredis_getd(   mp->u2c);
-  motor_num = lsredis_getl(   mp->motor_num);
-  coord_num = lsredis_getl(   mp->coord_num);
-  axis      = lsredis_getstr( mp->axis);
+  u2c         = lsredis_getd(   mp->u2c);
+  motor_num   = lsredis_getl(   mp->motor_num);
+  coord_num   = lsredis_getl(   mp->coord_num);
+  axis        = lsredis_getstr( mp->axis);
+  neutral_pos = lsredis_getd(   mp->neutral_pos);
 
   if( u2c == 0.0) {
     //
@@ -2542,7 +2550,7 @@ void lspmac_move_or_jog_abs_queue(
   mp->not_done     = 1;
   mp->motion_seen  = 0;
   mp->command_sent = 0;
-  mp->requested_pos_cnts = u2c * requested_position;  
+  mp->requested_pos_cnts = u2c * (requested_position + neutral_pos);
   requested_pos_cnts = mp->requested_pos_cnts;
 
   if( use_jog || axis == NULL || *axis == 0) {
@@ -2730,22 +2738,24 @@ void _lspmac_motor_init( lspmac_motor_t *d, char *name) {
   pthread_cond_init(  &(d->cond), NULL);
 
   d->name                = strdup(name);
-  d->redis_position      = lsredis_get_obj( "%s.position",          d->name);
-  d->u2c                 = lsredis_get_obj( "%s.u2c",               d->name);
-  d->printf_fmt		 = lsredis_get_obj( "%s.printf",            d->name);
-  d->redis_fmt		 = lsredis_get_obj( "%s.format",            d->name);
-  d->unit		 = lsredis_get_obj( "%s.unit",              d->name);
-  d->max_speed		 = lsredis_get_obj( "%s.max_speed",         d->name);
-  d->max_accel		 = lsredis_get_obj( "%s.max_accel",         d->name);
-  d->motor_num		 = lsredis_get_obj( "%s.motor_num",         d->name);
-  d->coord_num		 = lsredis_get_obj( "%s.coord_num",         d->name);
-  d->axis		 = lsredis_get_obj( "%s.axis",	            d->name);
-  d->home		 = lsredis_get_obj( "%s.home",	            d->name);
   d->active		 = lsredis_get_obj( "%s.active",	    d->name);
   d->active_init	 = lsredis_get_obj( "%s.active_init",	    d->name);
+  d->axis		 = lsredis_get_obj( "%s.axis",	            d->name);
+  d->coord_num		 = lsredis_get_obj( "%s.coord_num",         d->name);
+  d->home		 = lsredis_get_obj( "%s.home",	            d->name);
   d->inactive_init	 = lsredis_get_obj( "%s.inactive_init",	    d->name);
-  d->update_resolution   = lsredis_get_obj( "%s.update_resolution", d->name);
+  d->redis_fmt		 = lsredis_get_obj( "%s.format",            d->name);
+  d->max_accel		 = lsredis_get_obj( "%s.max_accel",         d->name);
+  d->max_speed		 = lsredis_get_obj( "%s.max_speed",         d->name);
+  d->motor_num		 = lsredis_get_obj( "%s.motor_num",         d->name);
+  d->neutral_pos         = lsredis_get_obj( "%s.neutralPosition",   d->name);
+  d->redis_position      = lsredis_get_obj( "%s.position",          d->name);
+  d->precision           = lsredis_get_obj( "%s.precision",         d->name);
+  d->printf_fmt		 = lsredis_get_obj( "%s.printf",            d->name);
   d->status_str          = lsredis_get_obj( "%s.status_str",        d->name);
+  d->u2c                 = lsredis_get_obj( "%s.u2c",               d->name);
+  d->unit		 = lsredis_get_obj( "%s.unit",              d->name);
+  d->update_resolution   = lsredis_get_obj( "%s.update_resolution", d->name);
   d->lut                 = NULL;
   d->nlut                = 0;
   d->homing              = 0;
@@ -2904,7 +2914,7 @@ void lspmac_init(
   //
   // Get the MD2 initialization strings
   //
-  lspmac_md2_init = lsredis_get_obj( "md2_pmac.init");
+  //  lspmac_md2_init = lsredis_get_obj( "md2_pmac.init");  // hard coded now.
 
   //
   // Initialize the motor objects

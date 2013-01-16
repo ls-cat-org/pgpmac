@@ -119,22 +119,24 @@ typedef struct lspmac_motor_struct {
   int status2;			//!< local copy of status2
   char *dac_mvar;		//!< controlling mvariable as a string
   char *name;			//!< Name of motor as refered by ls database kvs table
-  lsredis_obj_t *unit;		//!< string to use as the units
-  lsredis_obj_t *printf_fmt;	//!< printf format
-  lsredis_obj_t *redis_fmt;	//!< special format string to create text array for putting the position back into redis
-  lsredis_obj_t *max_speed;	//!< our maximum speed (cts/msec)
-  lsredis_obj_t *max_accel;	//!< our maximum acceleration (cts/msec^2)
-  lsredis_obj_t *motor_num;	//!< pmac motor number
-  lsredis_obj_t *coord_num;	//!< coordinate system this motor belongs to (0 if none)
-  lsredis_obj_t *update_resolution;	//!< Change needs to be at least this big to report as a new position to the database
-  lsredis_obj_t *axis;		//!< the axis (X, Y, Z, etc) or null if not in a coordinate system
-  lsredis_obj_t *home;		//!< pmac commands to home motor
   lsredis_obj_t *active;	//!< Use the motor ("true") or not ("false")
   lsredis_obj_t *active_init;	//!< pmac commands to make this motor active
+  lsredis_obj_t *axis;		//!< the axis (X, Y, Z, etc) or null if not in a coordinate system
+  lsredis_obj_t *coord_num;	//!< coordinate system this motor belongs to (0 if none)
+  lsredis_obj_t *home;		//!< pmac commands to home motor
   lsredis_obj_t *inactive_init;	//!< pmac commands to inactivate the motor
+  lsredis_obj_t *max_accel;	//!< our maximum acceleration (cts/msec^2)
+  lsredis_obj_t *max_speed;	//!< our maximum speed (cts/msec)
+  lsredis_obj_t *motor_num;	//!< pmac motor number
+  lsredis_obj_t *neutral_pos;	//!< zero offset
+  lsredis_obj_t *precision;	//!< moves of less than this amount may be ignored
+  lsredis_obj_t *printf_fmt;	//!< printf format
+  lsredis_obj_t *redis_fmt;	//!< special format string to create text array for putting the position back into redis
   lsredis_obj_t *redis_position;//!< how we report our position to the world
   lsredis_obj_t *status_str;	//!< A talky version of the status
   lsredis_obj_t *u2c;		//!< conversion from counts to units: 0.0 means not loaded yet
+  lsredis_obj_t *unit;		//!< string to use as the units
+  lsredis_obj_t *update_resolution;	//!< Change needs to be at least this big to report as a new position to the database
   char *write_fmt;		//!< Format string to write requested position to PMAC used for binary io
   int *read_ptr;		//!< With read_mask finds bit to read for binary i/o
   int read_mask;		//!< With read_ptr find bit to read for binary i/o

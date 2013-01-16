@@ -90,7 +90,6 @@ void md2cmds_move_prep( int mmask) {
   //
   lspmac_SockSendDPline( "move_prep", "M5075=(M5075 | %d)", mmask);
 
-  pthread_mutex_lock( &pmac_queue_mutex);
   //
   // wait for the command to be sent
   //
@@ -125,16 +124,20 @@ void md2cmds_move_wait( int mmask) {
   // expectation but not really guaranteed
   //
 
-  pthread_mutex_lock( &pmac_queue_mutex);
   //
-  // wait for the command to be sent
+  // Dummy command that will get queued after our moves
   //
-  if( md2cmds_moving_pq != NULL) {
-   while( md2cmds_moving_pq->time_sent.tv_sec==0)
-     pthread_cond_wait( &pmac_queue_cond, &pmac_queue_mutex);
-  }
-  pthread_mutex_unlock( &pmac_queue_mutex);
- 
+  pthread_mutex_lock( &md2cmds_moving_mutex);
+  md2cmds_moving_queue_wait = 1;
+  pthread_mutex_unlock( &md2cmds_moving_mutex);
+
+  lspmac_SockSendDPline( "move_wait", "i65=4");
+
+  pthread_mutex_lock( &md2cmds_moving_mutex);
+  while( md2cmds_moving_queue_wait)
+    pthread_cond_wait( &md2cmds_moving_cond, &md2cmds_moving_mutex);
+  pthread_mutex_unlock( &md2cmds_moving_mutex);
+  
 
   //
   // Wait for the motion programs to finish
@@ -153,16 +156,31 @@ void md2cmds_move_wait( int mmask) {
   pthread_mutex_unlock( &md2cmds_moving_mutex);
 }
 
-double md2cmds_prep_axis( lspmac_motor_t *mp, double pos) {
+double md2cmds_prep_axis( lspmac_motor_t *mp, double pos, int *there_already) {
   double rtn;
   double u2c;
+  double precision;
+  double current_pos;
+  double neutral_pos;
 
   pthread_mutex_lock( &(mp->mutex));
-  u2c = lsredis_getd( mp->u2c);
 
-  rtn = u2c   * pos;
-  mp->motion_seen = 0;
-  mp->not_done    = 1;
+  u2c         = lsredis_getd( mp->u2c);
+  neutral_pos = lsredis_getd( mp->neutral_pos);
+  precision   = lsredis_getd( mp->precision);
+  current_pos = mp->position;
+
+  if( fabs( pos - current_pos) < precision) {
+    *there_already = 1;
+    mp->motion_seen = 0;
+    mp->not_done    = 1;
+  } else {
+    *there_already = 0;
+    mp->motion_seen = 0;
+    mp->not_done    = 1;
+  }
+  rtn = u2c   * (pos + neutral_pos);
+
   pthread_mutex_unlock( &(mp->mutex));
 
   return rtn;
@@ -173,6 +191,7 @@ double md2cmds_prep_axis( lspmac_motor_t *mp, double pos) {
 void md2cmds_organs_move_presets( char *pay, char *paz, char *pcy, char *pcz, char *psz) {
   double ay,   az,  cy,  cz,  sz;
   int    cay, caz, ccy, ccz, csz;
+  int    cay_there, caz_there, ccy_there, ccz_there, csz_there;
   int err;
 
   err = lsredis_find_preset( apery->name, pay, &ay);
@@ -205,11 +224,11 @@ void md2cmds_organs_move_presets( char *pay, char *paz, char *pcy, char *pcz, ch
     return;
   }
 
-  cay = md2cmds_prep_axis( apery, ay);
-  caz = md2cmds_prep_axis( aperz, az);
-  ccy = md2cmds_prep_axis( capy,  cy);
-  ccz = md2cmds_prep_axis( capz,  cz);
-  csz = md2cmds_prep_axis( scint, sz);
+  cay = md2cmds_prep_axis( apery, ay, &cay_there);
+  caz = md2cmds_prep_axis( aperz, az, &caz_there);
+  ccy = md2cmds_prep_axis( capy,  cy, &ccy_there);
+  ccz = md2cmds_prep_axis( capz,  cz, &ccz_there);
+  csz = md2cmds_prep_axis( scint, sz, &csz_there);
   
   //
   // 170          LS-CAT Move U, V, W, X, Y, Z Absolute
@@ -221,7 +240,8 @@ void md2cmds_organs_move_presets( char *pay, char *paz, char *pcy, char *pcz, ch
   //		      Q45     = W Value
   //
   
-  lspmac_SockSendDPline( "organs", "&5 Q40=0 Q41=%d Q42=%d Q43=%d Q44=%d Q45=%d Q100=16 B170R", cay, caz, ccy, ccz, csz);
+  if( cay_there==0 || caz_there==0 || ccy_there==0 || ccz_there==0 || csz_there==0)
+    lspmac_SockSendDPline( "organs", "&5 Q40=0 Q41=%d Q42=%d Q43=%d Q44=%d Q45=%d Q100=16 B170R", cay, caz, ccy, ccz, csz);
 
 }
 
@@ -622,15 +642,19 @@ void md2cmds_mvcenter_move(
   //
   
   double cx_cts, cy_cts, ax_cts, ay_cts, az_cts;
+  int cx_there, cy_there, ax_there, ay_there, az_there;
 
-  cx_cts = md2cmds_prep_axis( cenx, cx);
-  cy_cts = md2cmds_prep_axis( ceny, cy);
-  ax_cts = md2cmds_prep_axis( alignx, ax);
-  ay_cts = md2cmds_prep_axis( aligny, ay);
-  az_cts = md2cmds_prep_axis( alignz, az);
+  cx_cts = md2cmds_prep_axis( cenx,   cx, &cx_there);
+  cy_cts = md2cmds_prep_axis( ceny,   cy, &cy_there);
+  ax_cts = md2cmds_prep_axis( alignx, ax, &ax_there);
+  ay_cts = md2cmds_prep_axis( aligny, ay, &ay_there);
+  az_cts = md2cmds_prep_axis( alignz, az, &az_there);
 
-  lspmac_SockSendDPline( NULL, "&2 Q100=2 Q20=%.1f Q21=%.1f B150R", cx_cts, cy_cts);
-  lspmac_SockSendDPline( "mvcenter_move", "&3 Q100=4 Q30=%.1f Q31=%.1f Q32=%.1f B160R", ax_cts, ay_cts, az_cts);
+  if( cx_there==0 || cy_there==0)
+    lspmac_SockSendDPline( NULL, "&2 Q100=2 Q20=%.1f Q21=%.1f B150R", cx_cts, cy_cts);
+
+  if( ax_there==0 || ay_there==0 || az_there==0)
+    lspmac_SockSendDPline( "mvcenter_move", "&3 Q100=4 Q30=%.1f Q31=%.1f Q32=%.1f B160R", ax_cts, ay_cts, az_cts);
   
 }
 
@@ -674,19 +698,21 @@ void md2cmds_organs_prep() {
 
 void md2cmds_kappaphi_move( double kappa_deg, double phi_deg) {
   int kc, pc;
+  int k_there, p_there;
 
   // coordinate system 7
   // 1 << (coord sys no - 1) = 64
 
-  kc = md2cmds_prep_axis( kappa, kappa_deg);
-  pc = md2cmds_prep_axis( kappa, phi_deg);
+  kc = md2cmds_prep_axis( kappa, kappa_deg, &k_there);
+  pc = md2cmds_prep_axis( kappa, phi_deg,   &p_there);
 
   //  ;150		LS-CAT Move X, Y Absolute
   //  ;			Q20    = X Value
   //  ;			Q21    = Y Value
   //  ;			Q100   = 1 << (coord sys no  - 1)
 
-  lspmac_SockSendDPline( "kappaphi_move", "&7 Q20=%d Q21=%d Q100=64", kc, pc);
+  if( k_there==0 || p_there==0)
+    lspmac_SockSendDPline( "kappaphi_move", "&7 Q20=%d Q21=%d Q100=64", kc, pc);
 
 }
 
@@ -710,13 +736,15 @@ void md2cmds_collect() {
   double p180;		//!< exposure time (msec)
   int center_request;	//!< one of the stages, at least, needs to be moved
   double u2c;		//!< unit to counts conversion
+  double neutral_pos;	//!< nominal zero offset
   double max_accel;	//!< maximum acceleration allowed for omega
   double kappa_pos;	//!< current kappa position in case we need to move phi only
   double phi_pos;	//!< current phi position in case we need to move kappa only
   int motion_mask;	//!< combined motion mask to set up waiting
 
-  u2c       = lsredis_getd( omega->u2c);
-  max_accel = lsredis_getd( omega->max_accel);
+  u2c         = lsredis_getd( omega->u2c);
+  neutral_pos = lsredis_getd( omega->neutral_pos);
+  max_accel   = lsredis_getd( omega->max_accel);
 
   //
   // Put the organs into position
@@ -786,7 +814,7 @@ void md2cmds_collect() {
     // Calculate the parameters we'll need to run the scan
     //
     p180 = lspg_nextshot.dsexp * 1000.0;
-    p170 = u2c * lspg_nextshot.sstart;
+    p170 = u2c * (lspg_nextshot.sstart + neutral_pos);
     p171 = u2c * lspg_nextshot.dsowidth;
     p173 = fabs(p180) < 1.e-4 ? 0.0 : u2c * lspg_nextshot.dsowidth / p180;
     p175 = p173/max_accel;
@@ -1048,6 +1076,13 @@ void md2cmds_move_prep_done_cb( char *event) {
   pthread_mutex_unlock( &md2cmds_moving_mutex);
 }
 
+void md2cmds_move_wait_done_cb( char *event) {
+  pthread_mutex_lock( &md2cmds_moving_mutex);
+  md2cmds_moving_queue_wait = 0;
+  pthread_cond_signal( &md2cmds_moving_cond);
+  pthread_mutex_unlock( &md2cmds_moving_mutex);
+}
+
 /** Time the capillary motion for the transfer routine
  */
 void md2cmds_time_capz_cb( char *event) {
@@ -1179,4 +1214,5 @@ void md2cmds_run() {
   lsevents_add_listener( ".+ (Moving|In Position)",   md2cmds_maybe_done_moving_cb);
   lsevents_add_listener( "capz (Moving|In Position)", md2cmds_time_capz_cb);
   lsevents_add_listener( "move_prep command done",    md2cmds_move_prep_done_cb);
+  lsevents_add_listener( "move_wait command done",    md2cmds_move_wait_done_cb);
 }

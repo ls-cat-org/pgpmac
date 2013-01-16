@@ -70,7 +70,8 @@
 
 static pthread_t lsredis_thread;
 
-static pthread_mutex_t lsredis_mutex;
+static pthread_mutex_t lsredis_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+
 static pthread_cond_t  lsredis_cond;
 static int lsredis_running = 0;
 
@@ -822,7 +823,7 @@ void lsredis_init( char *pub, char *re, char *head) {
   lsredis_head      = strdup( head);
   lsredis_publisher = strdup( pub);
 
-  pthread_mutex_init( &lsredis_mutex, NULL);
+  
   pthread_cond_init( &lsredis_cond, NULL);
 
   subac = redisAsyncConnect("127.0.0.1", 6379);
