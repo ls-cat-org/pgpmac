@@ -306,9 +306,11 @@ void stdinService(
       break;
       
     default:
-      if( cmds_on < sizeof( cmds)-1) {
-	cmds[cmds_on++] = ch;
-	cmds[cmds_on] = 0;
+      if( ch >= 0x20 && ch <= 0x7e) {
+	if( cmds_on < sizeof( cmds)-1) {
+	  cmds[cmds_on++] = ch;
+	  cmds[cmds_on] = 0;
+	}
       }
       break;
     }
