@@ -175,7 +175,7 @@ static int dbmemIn = 0;				//!< next location
 //! Minimum time between commands to the pmac
 //
 //#define PMAC_MIN_CMD_TIME 40000.0
-#define PMAC_MIN_CMD_TIME 100.0
+#define PMAC_MIN_CMD_TIME 10000.0
 static struct timeval pmac_time_sent, now;	//!< used to ensure we do not send commands to the pmac too often.  Only needed for non-DB commands.
 
 //! Size of the PMAC command queue.
@@ -1403,7 +1403,7 @@ void lspmac_pmacmotor_read(
 
   //
   // maybe look for omega zero crossing
-  //
+  // 
   if( motor_num == 1 && omega_zero_search && *mp->actual_pos_cnts_p >=0 && mp->actual_pos_cnts < 0) {
     int secs, nsecs;
 
@@ -1608,7 +1608,16 @@ void lspmac_get_status_cb(
   //
   pthread_mutex_lock( &lspmac_moving_mutex);
   if( md2_status.moving_flags != lspmac_moving_flags) {
+    int mask;
+
     lslogging_log_message( "lspmac_get_status_cb: new moving flag: %0x", md2_status.moving_flags);
+    mask = 1;
+    for( i=1; i<=16; i++, mask <<= 1) {
+      if( ((lspmac_moving_flags & mask) != 0) && ((md2_status.moving_flags & mask) == 0)) {
+	// Falling edge: send event
+	lsevents_send_event( "Coordsys %d Stopped", i);
+      }
+    }
     lspmac_moving_flags = md2_status.moving_flags;
     pthread_cond_signal( &lspmac_moving_cond);
   }
@@ -2504,7 +2513,7 @@ void lspmac_video_rotate( double secs) {
   u2c         = lsredis_getd( omega->u2c);
   neutral_pos = lsredis_getd( omega->neutral_pos);
 
-  q10 = neutral_pos / u2c;
+  q10 = neutral_pos * u2c;
   q11 = 360.0 * u2c;
   q12 = 1000 * secs;
   
@@ -2569,11 +2578,11 @@ void lspmac_move_or_jog_abs_queue(
     // TODO: are we sure this thread is not the one moving it?
     //
     pthread_mutex_lock( &lspmac_moving_mutex);
-    lslogging_log_message( "lspmac_moveabs_queue: waiting for previous moves to end.  lspmac_moving_flags = %0x", lspmac_moving_flags);
+    lslogging_log_message( "lspmac_move_or_jog_abs_queue: waiting for previous moves to end.  lspmac_moving_flags = %0x", lspmac_moving_flags);
     while( (lspmac_moving_flags & q100) != 0)
       pthread_cond_wait( &lspmac_moving_cond, &lspmac_moving_mutex);
     pthread_mutex_unlock( &lspmac_moving_mutex);
-    lslogging_log_message( "lspmac_moveabs_queue: Done.  lspmac_moving_flags = %0x", lspmac_moving_flags);
+    lslogging_log_message( "lspmac_move_or_jog_abs_queue: Done.  lspmac_moving_flags = %0x", lspmac_moving_flags);
 
     //
     // Set the "we are moving this coordinate system" flag
@@ -2621,11 +2630,11 @@ void lspmac_move_or_jog_abs_queue(
     // Make sure the flag has been seen
     //
     pthread_mutex_lock( &lspmac_moving_mutex);
-    lslogging_log_message( "lspmac_moveabs_queue: waiting for moving flag to propagate.  lspmac_moving_flags = %0x", lspmac_moving_flags);
+    lslogging_log_message( "lspmac_move_or_jog_abs_queue: waiting for moving flag to propagate.  lspmac_moving_flags = %0x", lspmac_moving_flags);
     while( (lspmac_moving_flags & q100) == 0)
       pthread_cond_wait( &lspmac_moving_cond, &lspmac_moving_mutex);
     pthread_mutex_unlock( &lspmac_moving_mutex);
-    lslogging_log_message( "lspmac_moveabs_queue: Done.  lspmac_moving_flags = %0x", lspmac_moving_flags);
+    lslogging_log_message( "lspmac_move_or_jog_abs_queue: Done.  lspmac_moving_flags = %0x", lspmac_moving_flags);
   }
   pthread_mutex_lock( &(mp->mutex));
   if( use_jog) {
@@ -2922,7 +2931,7 @@ void lspmac_init(
 
   p = &md2_status;
 
-  omega  = lspmac_motor_init( &(lspmac_motors[ 0]), 0, 0, &p->omega_act_pos,     &p->omega_status_1,     &p->omega_status_2,     "Omega   #1 &1 A", "omega",       lspmac_moveabs_queue);
+  omega  = lspmac_motor_init( &(lspmac_motors[ 0]), 0, 0, &p->omega_act_pos,     &p->omega_status_1,     &p->omega_status_2,     "Omega   #1 &1 X", "omega",       lspmac_moveabs_queue);
   alignx = lspmac_motor_init( &(lspmac_motors[ 1]), 0, 1, &p->alignx_act_pos,    &p->alignx_status_1,    &p->alignx_status_2,    "Align X #2 &3 X", "align.x",     lspmac_moveabs_queue);
   aligny = lspmac_motor_init( &(lspmac_motors[ 2]), 0, 2, &p->aligny_act_pos,    &p->aligny_status_1,    &p->aligny_status_2,    "Align Y #3 &3 Y", "align.y",     lspmac_moveabs_queue);
   alignz = lspmac_motor_init( &(lspmac_motors[ 3]), 0, 3, &p->alignz_act_pos,    &p->alignz_status_1,    &p->alignz_status_2,    "Align Z #4 &3 Z", "align.z",     lspmac_moveabs_queue);
