@@ -4614,25 +4614,25 @@ OPEN PROG 240 CLEAR
   DWELL0
   %100					; The notorious global feed rate.
   DWELL0
-  ABS(A)
+  ABS(X)
   IF (Q12 > 0 AND Q13 > 0)		; Non positive times are not interesting but at least shouldn't kill us
     Q200 = Q11 / Q12			; Final Velocity
     Q201 = Q200 / Q13			; Time to accelerate to final velocity
     Q202 = Q200 * Q201 / 2		; Distance required to reach final velocity
     LINEAR				; Should never be any other, but just in case, this is the mode we want
-    RAPID A(Q10-Q202)			; Go to the start point less a tad for acceleration
+    RAPID X(Q10-Q202)			; Go to the start point less a tad for acceleration
     DWELL0
-    FRAX(A)
+    FRAX(X)
     TS(Q201/2)				; S-Curve acceleration time
     F(Q200)
     DWELL0
     LINEAR
-    INC(A)
+    INC(X)
     DWELL0
-    A(Q11+2*Q202)
+    X(Q11+2*Q202)
     DWELL0
   ELSE
-    RAPID A(Q10)			; Just move to the beginning.  Probably not what was desired but beats trying to move at infinite speed and/or acceleration
+    RAPID X(Q10)			; Just move to the beginning.  Probably not what was desired but beats trying to move at infinite speed and/or acceleration
   ENDIF
   DWELL0
   F(Q14)				; Restore speed
