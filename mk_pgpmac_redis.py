@@ -25,9 +25,9 @@ else:
 
 motor_dict = {
     "omega" : { "motor_num" : "1", "max_accel" : "2", "max_speed" : "1664", "coord_num" : "1", "u2c" : "12800",
-                "home" : '{"M401=1 M1115=1 #1$",&1E,#1&1B1R}',"active_init" : '{M31=1,&1#1->A,"M700=(M700 | $000001) ^ $000001", M1115=1}',
+                "home" : '{"M401=1 M1115=1 #1$",&1E,#1&1B1R}',"active_init" : '{M31=1,&1#1->X,"M700=(M700 | $000001) ^ $000001", M1115=1}',
                 "inactive_init" : '{M31=0,&1#1->0,"M700=M700 | $000001",M1115=0}',"moveMode" :  "freeRotation",
-                "reference" :  "228.5", "format" :  "%.3f", "printf" : "%*.4f°",
+                "reference" :  "228.5", "format" :  "%.3f", "printf" : "%*.4f°", "axis" : "X",
                 "hard_ini"  : "PHIRotationAxis.PHIMotor", "neutralPosition" : "0"
                 },
     "align.x" : { "motor_num" : "2", "max_accel" : "2", "max_speed" : "121", "coord_num" : "3", "u2c" : "60620.8",
