@@ -90,7 +90,7 @@ motor_dict = {
                "inactive_init" : '{M40=0,&5#10->0,"M700=M700 | $000200"}', "smallStep" :  "0.002",
                "axis" :  "V","format" :  "%.3f",
                "minPosition" :  "0.57","maxPosition" :  "81.49",
-               "hard_ini" : "CapillaryBSYZtable.CapillaryBSYMotor", "neutralPosition" : "0"
+               "hard_ini" : "CapillaryBSYZtable.CapillaryBSZMotor", "neutralPosition" : "0"
               },
     "scint" : { "motor_num" : "11","max_accel" : "0.5", "max_speed" : "151", "coord_num" : "5", "u2c" : "19865.6",
                 "home" : '{#11$,M411=1,&5E,#11&5B11R}', "active_init" : '{M41=1,&5#11->W,"M700=(M700 | $000400) ^ $000400"}',
