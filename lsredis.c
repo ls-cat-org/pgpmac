@@ -65,7 +65,7 @@
  *
  *   char     lsredis_getc( lsredis_obj_t *p)              Returns the first character of VALUE
  *
- *   
+ * </pre>
  */
 
 static pthread_t lsredis_thread;
