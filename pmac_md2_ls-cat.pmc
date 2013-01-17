@@ -4339,11 +4339,11 @@ FastShutterOpenHist = 0 ; clear shutter openings history
 PhiScan = 1
 P5000=P173*(P175 + 200)/2      ;  Calcul of Accel Dist + 200 ms of margin
 TM(1)                    ;  In order to have the maximum speed
-ABS(A)
+ABS(X)
 If (P171 = 0)
-  RAPID A(P170)                 ;  Move Phi to the start position
+  RAPID X(P170)                 ;  Move Phi to the start position
 Else
-  RAPID A(P170-P5000-P178)      ;  Move Phi to the start position
+  RAPID X(P170-P5000-P178)      ;  Move Phi to the start position
 EndIf
 DWELL0
 LINEAR
@@ -4365,7 +4365,7 @@ If (P171 = 0)
   EndIf
 Else
   FShutterManualEnable  = 0
-  M601=ShutterPulseDuration * (P170 + P173) ; get the phi delta position for the shutter pulse
+  M601=ShutterPulseDuration * P173 ; get the phi delta position for the shutter pulse
   While (P177 > 0)
     If (P177 > 0)
       M3021=M522+P170-P178          ;  CaptureOffset + OpenPos - RisingDist
@@ -4381,9 +4381,9 @@ Else
       DWELL0
       Cmd "m1124=1" ;FShutterScanEnable=1
       DWELL0
-      INC(A)
+      INC(X)
       DWELL0
-      A(P171+2*P5000+P178+P179)       ;  Phi to the stop position
+      X(P171+2*P5000+P178+P179)       ;  Phi to the stop position
       DWELL0
       Cmd "m1124=0" ;FShutterScanEnable=0
       DWELL0
@@ -4408,7 +4408,7 @@ Else
       DWELL0
       INC(A)
       DWELL0
-      A(-P171-2*P5000-P178-P178)       ;  Phi to the stop position
+      X(-P171-2*P5000-P178-P178)       ;  Phi to the stop position
       DWELL0
       cmd "m1124=0" ;FShutterScanEnable=0
       DWELL0
@@ -4431,9 +4431,9 @@ DWELL0
 ; Set up the next scan
 ;
 If (P171 != 0)
-  ABS(A)
+  ABS(X)
   DWELL0
-  RAPID A(P170+P171-P5000-P178)      ;  Move Phi to the next start position
+  RAPID X(P170+P171-P5000-P178)      ;  Move Phi to the next start position
 EndIf
 DWELL0
 
