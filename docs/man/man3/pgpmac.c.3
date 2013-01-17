@@ -1,4 +1,4 @@
-.TH "pgpmac.c" 3 "Tue Jan 15 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "pgpmac.c" 3 "Thu Jan 17 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -95,7 +95,7 @@ Our main routine\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 351 of file pgpmac\&.c\&.
+Definition at line 353 of file pgpmac\&.c\&.
 .PP
 .nf
            {
@@ -234,7 +234,7 @@ Terminal output routine ala printf\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 328 of file pgpmac\&.c\&.
+Definition at line 330 of file pgpmac\&.c\&.
 .PP
 .nf
                      {
@@ -320,9 +320,11 @@ Definition at line 254 of file pgpmac\&.c\&.
       break;
       
     default:
-      if( cmds_on < sizeof( cmds)-1) {
-        cmds[cmds_on++] = ch;
-        cmds[cmds_on] = 0;
+      if( ch >= 0x20 && ch <= 0x7e) {
+        if( cmds_on < sizeof( cmds)-1) {
+          cmds[cmds_on++] = ch;
+          cmds[cmds_on] = 0;
+        }
       }
       break;
     }

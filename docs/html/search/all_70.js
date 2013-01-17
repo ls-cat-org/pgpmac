@@ -27,6 +27,7 @@ var searchData=
   ['position',['position',['../structlspmac__motor__struct.html#af8ffb3aed907d8664b65b37601954411',1,'lspmac_motor_struct::position()'],['../structlspmac__bi__struct.html#a76c4627028b86141c101f1764bebb7b0',1,'lspmac_bi_struct::position()']]],
   ['ppos',['ppos',['../namespacemk__pgpmac__redis.html#aadd7321b8f7efe139c3e92e51cd34c00',1,'mk_pgpmac_redis']]],
   ['pq',['pq',['../structlspmac__motor__struct.html#a8caf0031e134e144bffc87d9d896d15b',1,'lspmac_motor_struct']]],
+  ['precision',['precision',['../structlspmac__motor__struct.html#a411f12c0ecdc481687d4fbbbec4c5510',1,'lspmac_motor_struct']]],
   ['pref_5fini',['pref_ini',['../namespacemk__pgpmac__redis.html#a38c785af5201403976e1267c47ea5096',1,'mk_pgpmac_redis']]],
   ['previous',['previous',['../structlspmac__bi__struct.html#a00f09cb3d7bdbe1058fb56bb8c2b0fa3',1,'lspmac_bi_struct']]],
   ['printf_5ffmt',['printf_fmt',['../structlspmac__motor__struct.html#a25b13b65baf1b28c34012850809b0a3a',1,'lspmac_motor_struct']]],

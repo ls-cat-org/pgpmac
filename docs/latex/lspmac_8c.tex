@@ -91,7 +91,7 @@ struct \hyperlink{structlspmac__dpascii__queue__struct}{lspmac\-\_\-dpascii\-\_\
 \item 
 \#define \hyperlink{lspmac_8c_a34a2e0d5c1f48ba463ae5d98431d05f7}{V\-R\-\_\-\-I\-P\-A\-D\-D\-R\-E\-S\-S}~0xe0
 \item 
-\#define \hyperlink{lspmac_8c_a59f5f5218e25332dbf64f216aec116e5}{P\-M\-A\-C\-\_\-\-M\-I\-N\-\_\-\-C\-M\-D\-\_\-\-T\-I\-M\-E}~100.\-0
+\#define \hyperlink{lspmac_8c_a59f5f5218e25332dbf64f216aec116e5}{P\-M\-A\-C\-\_\-\-M\-I\-N\-\_\-\-C\-M\-D\-\_\-\-T\-I\-M\-E}~10000.\-0
 \begin{DoxyCompactList}\small\item\em Minimum time between commands to the pmac. \end{DoxyCompactList}\item 
 \#define \hyperlink{lspmac_8c_a3fae557baafab24b7518dc84f5ef5a9b}{P\-M\-A\-C\-\_\-\-C\-M\-D\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H}~2048
 \begin{DoxyCompactList}\small\item\em Size of the P\-M\-A\-C command queue. \end{DoxyCompactList}\item 
@@ -282,8 +282,6 @@ void \hyperlink{lspmac_8c_a3a7fb93fb3fb9c4454613f30bfb0b1ee}{lspmac\-\_\-run} ()
 \item 
 static int \hyperlink{lspmac_8c_a6d9261680ee01b1e106d1ea1d7ffa390}{ls\-\_\-pmac\-\_\-state} = \hyperlink{lspmac_8c_a7eb86ecf0789ab9555de1e03a4c73567}{L\-S\-\_\-\-P\-M\-A\-C\-\_\-\-S\-T\-A\-T\-E\-\_\-\-D\-E\-T\-A\-C\-H\-E\-D}
 \begin{DoxyCompactList}\small\item\em Current state of the P\-M\-A\-C communications state machine. \end{DoxyCompactList}\item 
-static \hyperlink{pgpmac_8h_ad449de06d02791adf2498d2a1e1f909c}{lsredis\-\_\-obj\-\_\-t} $\ast$ \hyperlink{lspmac_8c_a45e8803dd459ea079a96fcbfb4709885}{lspmac\-\_\-md2\-\_\-init}
-\item 
 int \hyperlink{lspmac_8c_a112158e0cd50449a440ac55c7af7bea2}{lspmac\-\_\-shutter\-\_\-state}
 \begin{DoxyCompactList}\small\item\em State of the shutter, used to detect changes. \end{DoxyCompactList}\item 
 int \hyperlink{lspmac_8c_a396fbf06208de3ecbe1b0df549f1cd46}{lspmac\-\_\-shutter\-\_\-has\-\_\-opened}
@@ -639,7 +637,7 @@ Definition at line 148 of file lspmac.\-c.
 
 \hypertarget{lspmac_8c_a59f5f5218e25332dbf64f216aec116e5}{\index{lspmac.\-c@{lspmac.\-c}!P\-M\-A\-C\-\_\-\-M\-I\-N\-\_\-\-C\-M\-D\-\_\-\-T\-I\-M\-E@{P\-M\-A\-C\-\_\-\-M\-I\-N\-\_\-\-C\-M\-D\-\_\-\-T\-I\-M\-E}}
 \index{P\-M\-A\-C\-\_\-\-M\-I\-N\-\_\-\-C\-M\-D\-\_\-\-T\-I\-M\-E@{P\-M\-A\-C\-\_\-\-M\-I\-N\-\_\-\-C\-M\-D\-\_\-\-T\-I\-M\-E}!lspmac.c@{lspmac.\-c}}
-\subsubsection[{P\-M\-A\-C\-\_\-\-M\-I\-N\-\_\-\-C\-M\-D\-\_\-\-T\-I\-M\-E}]{\setlength{\rightskip}{0pt plus 5cm}\#define P\-M\-A\-C\-\_\-\-M\-I\-N\-\_\-\-C\-M\-D\-\_\-\-T\-I\-M\-E~100.\-0}}\label{lspmac_8c_a59f5f5218e25332dbf64f216aec116e5}
+\subsubsection[{P\-M\-A\-C\-\_\-\-M\-I\-N\-\_\-\-C\-M\-D\-\_\-\-T\-I\-M\-E}]{\setlength{\rightskip}{0pt plus 5cm}\#define P\-M\-A\-C\-\_\-\-M\-I\-N\-\_\-\-C\-M\-D\-\_\-\-T\-I\-M\-E~10000.\-0}}\label{lspmac_8c_a59f5f5218e25332dbf64f216aec116e5}
 
 
 Minimum time between commands to the pmac. 
@@ -825,7 +823,7 @@ Helper funciton for the init calls.
 
 
 
-Definition at line 2726 of file lspmac.\-c.
+Definition at line 2743 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -836,38 +834,42 @@ Definition at line 2726 of file lspmac.\-c.
   pthread\_cond\_init(  &(d->\hyperlink{structlspmac__motor__struct_aa0ea4108b8fed5b41ff91ca7266f3d84}{cond}), NULL);
 
   d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name}                = strdup(name);
-  d->\hyperlink{structlspmac__motor__struct_af94a0b2611136058ead4948fd7c858e3}{redis\_position}      = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"
-      %s.position"},          d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
-  d->\hyperlink{structlspmac__motor__struct_a8838915ebb6f9989944117c8197d5e86}{u2c}                 = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s.u2c"},        
-             d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
-  d->\hyperlink{structlspmac__motor__struct_a25b13b65baf1b28c34012850809b0a3a}{printf\_fmt}                = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"
-      %s.printf"},            d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
-  d->\hyperlink{structlspmac__motor__struct_a91c38b2072d878b71f4e77de2f1375a4}{redis\_fmt}          = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s.format"},
-                  d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
-  d->\hyperlink{structlspmac__motor__struct_af8e6eb1df6b0d343fc4da93fbdd63133}{unit}            = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s.unit"},          
-          d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
-  d->\hyperlink{structlspmac__motor__struct_a69e49769a1001665377efc7193d88a0a}{max\_speed}          = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"
-      %s.max\_speed"},         d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
-  d->\hyperlink{structlspmac__motor__struct_a50cf4c0711cea164e332bc34705a1a68}{max\_accel}          = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"
-      %s.max\_accel"},         d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
-  d->\hyperlink{structlspmac__motor__struct_ad6a51cca3c7e5f79168e5c33fd9e736b}{motor\_num}          = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"
-      %s.motor\_num"},         d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
-  d->\hyperlink{structlspmac__motor__struct_a5614e003272e8323f8809bf7b6559532}{coord\_num}          = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"
-      %s.coord\_num"},         d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
-  d->\hyperlink{structlspmac__motor__struct_a7437ef16c2dce65bde4dda1ea00e9df3}{axis}            = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s.axis"},          
-           d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
-  d->\hyperlink{structlspmac__motor__struct_a6dc1ceab86687f741d4c4a574501959c}{home}            = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s.home"},          
-           d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
   d->\hyperlink{structlspmac__motor__struct_aed4998885bcd5a2a30069637180f58e3}{active}                = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s.active"}, 
           d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
   d->\hyperlink{structlspmac__motor__struct_ac2a02f137e4a35db816bc728290d3558}{active\_init}      = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"
       %s.active\_init"},        d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
+  d->\hyperlink{structlspmac__motor__struct_a7437ef16c2dce65bde4dda1ea00e9df3}{axis}            = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s.axis"},          
+           d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
+  d->\hyperlink{structlspmac__motor__struct_a5614e003272e8323f8809bf7b6559532}{coord\_num}          = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"
+      %s.coord\_num"},         d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
+  d->\hyperlink{structlspmac__motor__struct_a6dc1ceab86687f741d4c4a574501959c}{home}            = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s.home"},          
+           d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
   d->\hyperlink{structlspmac__motor__struct_ab329ce9b277eca9984c18417dece7bf7}{inactive\_init}  = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"
       %s.inactive\_init"},      d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
-  d->\hyperlink{structlspmac__motor__struct_aefa84c7592369090eec8b211caaa3a51}{update\_resolution}   = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"
-      %s.update\_resolution"}, d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
+  d->\hyperlink{structlspmac__motor__struct_a91c38b2072d878b71f4e77de2f1375a4}{redis\_fmt}          = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s.format"},
+                  d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
+  d->\hyperlink{structlspmac__motor__struct_a50cf4c0711cea164e332bc34705a1a68}{max\_accel}          = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"
+      %s.max\_accel"},         d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
+  d->\hyperlink{structlspmac__motor__struct_a69e49769a1001665377efc7193d88a0a}{max\_speed}          = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"
+      %s.max\_speed"},         d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
+  d->\hyperlink{structlspmac__motor__struct_ad6a51cca3c7e5f79168e5c33fd9e736b}{motor\_num}          = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"
+      %s.motor\_num"},         d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
+  d->\hyperlink{structlspmac__motor__struct_ae931e9bc9fc2fa82ca649334fc052fbe}{neutral\_pos}         = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"
+      %s.neutralPosition"},   d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
+  d->\hyperlink{structlspmac__motor__struct_af94a0b2611136058ead4948fd7c858e3}{redis\_position}      = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"
+      %s.position"},          d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
+  d->\hyperlink{structlspmac__motor__struct_a411f12c0ecdc481687d4fbbbec4c5510}{precision}           = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"
+      %s.precision"},         d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
+  d->\hyperlink{structlspmac__motor__struct_a25b13b65baf1b28c34012850809b0a3a}{printf\_fmt}                = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"
+      %s.printf"},            d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
   d->\hyperlink{structlspmac__motor__struct_aa0a6bed8379c5b1f90a4eb826cde9136}{status\_str}          = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"
       %s.status\_str"},        d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
+  d->\hyperlink{structlspmac__motor__struct_a8838915ebb6f9989944117c8197d5e86}{u2c}                 = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s.u2c"},        
+             d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
+  d->\hyperlink{structlspmac__motor__struct_af8e6eb1df6b0d343fc4da93fbdd63133}{unit}            = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s.unit"},          
+          d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
+  d->\hyperlink{structlspmac__motor__struct_aefa84c7592369090eec8b211caaa3a51}{update\_resolution}   = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"
+      %s.update\_resolution"}, d->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
   d->\hyperlink{structlspmac__motor__struct_a7b43671f7f3e06521f6cf91fb9ac707d}{lut}                 = NULL;
   d->\hyperlink{structlspmac__motor__struct_a11cbc6f50c150ed446e9a901cf7cc12b}{nlut}                = 0;
   d->\hyperlink{structlspmac__motor__struct_aa74108855693f94fc2ff76333c9fb6ac}{homing}              = 0;
@@ -1053,7 +1055,7 @@ P\-M\-A\-C has received our ascii command request Now see when it is ready for t
 
 
 
-Definition at line 1904 of file lspmac.\-c.
+Definition at line 1915 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1079,7 +1081,7 @@ Turn off the backlight whenever it goes down.
 \end{DoxyParams}
 
 
-Definition at line 3073 of file lspmac.\-c.
+Definition at line 3092 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1105,7 +1107,7 @@ Turn on the backlight whenever it goes up.
 \end{DoxyParams}
 
 
-Definition at line 3066 of file lspmac.\-c.
+Definition at line 3085 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1131,7 +1133,7 @@ Initialize binary input.
 
 
 
-Definition at line 2875 of file lspmac.\-c.
+Definition at line 2894 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1161,7 +1163,7 @@ Set up lookup table for blight.
 
 
 
-Definition at line 3175 of file lspmac.\-c.
+Definition at line 3194 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1241,7 +1243,7 @@ Initialize binary i/o motor.
 \end{DoxyParams}
 
 
-Definition at line 2809 of file lspmac.\-c.
+Definition at line 2828 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1305,7 +1307,7 @@ Definition at line 1119 of file lspmac.\-c.
 )}}\label{lspmac_8c_a611168a1076b2de45c596ed95c68445a}
 
 
-Definition at line 3235 of file lspmac.\-c.
+Definition at line 3254 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1344,7 +1346,7 @@ Definition at line 3235 of file lspmac.\-c.
 )}}\label{lspmac_8c_afc00ddac633f8c8a3a699e3d22de2770}
 
 
-Definition at line 3028 of file lspmac.\-c.
+Definition at line 3047 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1388,7 +1390,7 @@ For this reason this initialzation code must be run before the database queue is
 \end{DoxyParams}
 
 
-Definition at line 2835 of file lspmac.\-c.
+Definition at line 2854 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1508,7 +1510,7 @@ Set up lookup table for flight.
 
 
 
-Definition at line 3142 of file lspmac.\-c.
+Definition at line 3161 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1559,7 +1561,7 @@ Set up lookup table for fscint.
 
 
 
-Definition at line 3216 of file lspmac.\-c.
+Definition at line 3235 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1601,7 +1603,7 @@ Initalize the fast shutter motor.
 \end{DoxyParams}
 
 
-Definition at line 2793 of file lspmac.\-c.
+Definition at line 2812 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1629,7 +1631,7 @@ Forward declarateion.
 
 Request the ascii buffers from the P\-M\-A\-C. 
 
-Definition at line 1896 of file lspmac.\-c.
+Definition at line 1907 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1654,7 +1656,7 @@ service the ascii buffer request response
 
 
 
-Definition at line 1788 of file lspmac.\-c.
+Definition at line 1799 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1795,7 +1797,7 @@ Request a status update from the P\-M\-A\-C.
 
 
 
-Definition at line 1776 of file lspmac.\-c.
+Definition at line 1787 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1829,7 +1831,7 @@ Service routing for status upate This updates positions and status information.
 \end{DoxyParams}
 
 
-Definition at line 1577 of file lspmac.\-c.
+Definition at line 1579 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1862,8 +1864,18 @@ Definition at line 1577 of file lspmac.\-c.
   pthread\_mutex\_lock( &\hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
   \textcolor{keywordflow}{if}( \hyperlink{lspmac_8c_ad5bce7451d48127bace5af445d03b492}{md2\_status}.\hyperlink{structmd2StatusStruct_aac82f8e97fa39ea9be7823dd1d308986}{moving\_flags} != \hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags}
       ) \{
+    \textcolor{keywordtype}{int} mask;
+
     \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_get\_status\_cb: new
        moving flag: %0x"}, \hyperlink{lspmac_8c_ad5bce7451d48127bace5af445d03b492}{md2\_status}.\hyperlink{structmd2StatusStruct_aac82f8e97fa39ea9be7823dd1d308986}{moving\_flags});
+    mask = 1;
+    \textcolor{keywordflow}{for}( i=1; i<=16; i++, mask <<= 1) \{
+      \textcolor{keywordflow}{if}( ((\hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags} & mask) != 0) && ((\hyperlink{lspmac_8c_ad5bce7451d48127bace5af445d03b492}{
+      md2\_status}.\hyperlink{structmd2StatusStruct_aac82f8e97fa39ea9be7823dd1d308986}{moving\_flags} & mask) == 0)) \{
+        \textcolor{comment}{// Falling edge: send event}
+        \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Coordsys %d Stopped"}, i);
+      \}
+    \}
     \hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags} = \hyperlink{lspmac_8c_ad5bce7451d48127bace5af445d03b492}{md2\_status}.\hyperlink{structmd2StatusStruct_aac82f8e97fa39ea9be7823dd1d308986}{moving\_flags}
       ;
     pthread\_cond\_signal( &\hyperlink{lspmac_8c_a57547d211906c981ef20257eba99f8df}{lspmac\_moving\_cond});
@@ -2061,7 +2073,7 @@ Request the values of all the I variables.
 
 
 
-Definition at line 1976 of file lspmac.\-c.
+Definition at line 1987 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2096,7 +2108,7 @@ Receive the values of all the I variables Update our Postgresql database with th
 \end{DoxyParams}
 
 
-Definition at line 1959 of file lspmac.\-c.
+Definition at line 1970 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2124,7 +2136,7 @@ Request the values of all the M variables.
 
 
 
-Definition at line 2001 of file lspmac.\-c.
+Definition at line 2012 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2159,7 +2171,7 @@ Receive the values of all the M variables Update our database with the results.
 \end{DoxyParams}
 
 
-Definition at line 1984 of file lspmac.\-c.
+Definition at line 1995 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2187,7 +2199,7 @@ get binary input value
 
 
 
-Definition at line 1565 of file lspmac.\-c.
+Definition at line 1567 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2541,7 +2553,7 @@ Initialize this module.
 \end{DoxyParams}
 
 
-Definition at line 2891 of file lspmac.\-c.
+Definition at line 2910 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2558,8 +2570,7 @@ Definition at line 2891 of file lspmac.\-c.
   \textcolor{comment}{//}
   \textcolor{comment}{// Get the MD2 initialization strings}
   \textcolor{comment}{//}
-  \hyperlink{lspmac_8c_a45e8803dd459ea079a96fcbfb4709885}{lspmac\_md2\_init} = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"
-      md2\_pmac.init"});
+  \textcolor{comment}{//  lspmac\_md2\_init = lsredis\_get\_obj( "md2\_pmac.init");  // hard coded now.}
 
   \textcolor{comment}{//}
   \textcolor{comment}{// Initialize the motor objects}
@@ -2569,7 +2580,7 @@ Definition at line 2891 of file lspmac.\-c.
 
   \hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega}  = \hyperlink{lspmac_8c_a95c0a2d36e4e2a0f170fcf3583e7c422}{lspmac\_motor\_init}( &(\hyperlink{lspmac_8c_a894c709ddd0652583d6db22e86282503}{lspmac\_motors}
       [ 0]), 0, 0, &p->\hyperlink{structmd2StatusStruct_a6ce303bec89082cae1e9b1fddf6b6c10}{omega\_act\_pos},     &p->\hyperlink{structmd2StatusStruct_af6cf3cd65b9ef205685a0d970f168907}{omega\_status\_1}
-      ,     &p->\hyperlink{structmd2StatusStruct_a8577c9df7b663b548b2759ac3db721cd}{omega\_status\_2},     \textcolor{stringliteral}{"Omega   #1 &1 A"}, \textcolor{stringliteral}{"omega"},       
+      ,     &p->\hyperlink{structmd2StatusStruct_a8577c9df7b663b548b2759ac3db721cd}{omega\_status\_2},     \textcolor{stringliteral}{"Omega   #1 &1 X"}, \textcolor{stringliteral}{"omega"},       
       \hyperlink{lspmac_8c_aa4ea5a4c387ef167702c58eaddcb4151}{lspmac\_moveabs\_queue});
   \hyperlink{lspmac_8c_a6cb218bdccfe5a93471c161f15a15cab}{alignx} = \hyperlink{lspmac_8c_a95c0a2d36e4e2a0f170fcf3583e7c422}{lspmac\_motor\_init}( &(\hyperlink{lspmac_8c_a894c709ddd0652583d6db22e86282503}{lspmac\_motors}
       [ 1]), 0, 1, &p->\hyperlink{structmd2StatusStruct_a9653a75bc0b66c5f86d8b0206dc39b4f}{alignx\_act\_pos},    &p->\hyperlink{structmd2StatusStruct_a56accf8cb00c59bff87ed75df7dafbbe}{alignx\_status\_1}
@@ -2806,7 +2817,7 @@ Use jog to move motor to requested position.
 \end{DoxyParams}
 
 
-Definition at line 2665 of file lspmac.\-c.
+Definition at line 2682 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2834,7 +2845,7 @@ Set the backlight intensity whenever the zoom is changed (and the backlight is u
 \end{DoxyParams}
 
 
-Definition at line 3080 of file lspmac.\-c.
+Definition at line 3099 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2955,7 +2966,7 @@ we are expecting more characters from the D\-P\-R\-A\-M A\-S\-C\-I\-I interface
 
 
 
-Definition at line 1782 of file lspmac.\-c.
+Definition at line 1793 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3005,7 +3016,7 @@ Initialize a pmac stepper or servo motor.
 \end{DoxyParams}
 
 
-Definition at line 2764 of file lspmac.\-c.
+Definition at line 2783 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3060,7 +3071,7 @@ $<$ our axis
 \end{DoxyParams}
 
 
-Definition at line 2515 of file lspmac.\-c.
+Definition at line 2530 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3071,13 +3082,15 @@ Definition at line 2515 of file lspmac.\-c.
   \textcolor{keywordtype}{int} coord\_num, motor\_num;     
   \textcolor{keywordtype}{char} *axis;                   
   \textcolor{keywordtype}{double} u2c;
+  \textcolor{keywordtype}{double} neutral\_pos;
 
   pthread\_mutex\_lock( &(mp->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex}));
 
-  u2c       = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}(   mp->\hyperlink{structlspmac__motor__struct_a8838915ebb6f9989944117c8197d5e86}{u2c});
-  motor\_num = \hyperlink{lsredis_8c_a1923f998441f4f451204dfd214d52218}{lsredis\_getl}(   mp->\hyperlink{structlspmac__motor__struct_ad6a51cca3c7e5f79168e5c33fd9e736b}{motor\_num});
-  coord\_num = \hyperlink{lsredis_8c_a1923f998441f4f451204dfd214d52218}{lsredis\_getl}(   mp->\hyperlink{structlspmac__motor__struct_a5614e003272e8323f8809bf7b6559532}{coord\_num});
-  axis      = \hyperlink{lsredis_8c_ac1994e56114b2315294527d76311f829}{lsredis\_getstr}( mp->\hyperlink{structlspmac__motor__struct_a7437ef16c2dce65bde4dda1ea00e9df3}{axis});
+  u2c         = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}(   mp->\hyperlink{structlspmac__motor__struct_a8838915ebb6f9989944117c8197d5e86}{u2c});
+  motor\_num   = \hyperlink{lsredis_8c_a1923f998441f4f451204dfd214d52218}{lsredis\_getl}(   mp->\hyperlink{structlspmac__motor__struct_ad6a51cca3c7e5f79168e5c33fd9e736b}{motor\_num});
+  coord\_num   = \hyperlink{lsredis_8c_a1923f998441f4f451204dfd214d52218}{lsredis\_getl}(   mp->\hyperlink{structlspmac__motor__struct_a5614e003272e8323f8809bf7b6559532}{coord\_num});
+  axis        = \hyperlink{lsredis_8c_ac1994e56114b2315294527d76311f829}{lsredis\_getstr}( mp->\hyperlink{structlspmac__motor__struct_a7437ef16c2dce65bde4dda1ea00e9df3}{axis});
+  neutral\_pos = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}(   mp->\hyperlink{structlspmac__motor__struct_ae931e9bc9fc2fa82ca649334fc052fbe}{neutral\_pos});
 
   \textcolor{keywordflow}{if}( u2c == 0.0) \{
     \textcolor{comment}{//}
@@ -3090,7 +3103,8 @@ Definition at line 2515 of file lspmac.\-c.
   mp->\hyperlink{structlspmac__motor__struct_ab7bd8bff48953ce05c758598d75877ac}{not\_done}     = 1;
   mp->\hyperlink{structlspmac__motor__struct_a68c471836f52707fa8582f7860cf500f}{motion\_seen}  = 0;
   mp->\hyperlink{structlspmac__motor__struct_a59a7f007476b2428fd3c5bd7f24440e8}{command\_sent} = 0;
-  mp->\hyperlink{structlspmac__motor__struct_a6e8dc9c11dc52a439fe9837230f93ce2}{requested\_pos\_cnts} = u2c * requested\_position;  
+  mp->\hyperlink{structlspmac__motor__struct_a6e8dc9c11dc52a439fe9837230f93ce2}{requested\_pos\_cnts} = u2c * (requested\_position + 
+      neutral\_pos);
   requested\_pos\_cnts = mp->\hyperlink{structlspmac__motor__struct_a6e8dc9c11dc52a439fe9837230f93ce2}{requested\_pos\_cnts};
 
   \textcolor{keywordflow}{if}( use\_jog || axis == NULL || *axis == 0) \{
@@ -3109,15 +3123,15 @@ Definition at line 2515 of file lspmac.\-c.
     \textcolor{comment}{// TODO: are we sure this thread is not the one moving it?}
     \textcolor{comment}{//}
     pthread\_mutex\_lock( &\hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
-    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_moveabs\_queue: waiting
-       for previous moves to end.  lspmac\_moving\_flags = %0x"}, \hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags}
-      );
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_move\_or\_jog\_abs\_queue:
+       waiting for previous moves to end.  lspmac\_moving\_flags = %0x"}, 
+      \hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags});
     \textcolor{keywordflow}{while}( (\hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags} & q100) != 0)
       pthread\_cond\_wait( &\hyperlink{lspmac_8c_a57547d211906c981ef20257eba99f8df}{lspmac\_moving\_cond}, &
       \hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
     pthread\_mutex\_unlock( &\hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
-    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_moveabs\_queue: Done. 
-       lspmac\_moving\_flags = %0x"}, \hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags});
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_move\_or\_jog\_abs\_queue:
+       Done.  lspmac\_moving\_flags = %0x"}, \hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags});
 
     \textcolor{comment}{//}
     \textcolor{comment}{// Set the "we are moving this coordinate system" flag}
@@ -3166,15 +3180,15 @@ Definition at line 2515 of file lspmac.\-c.
     \textcolor{comment}{// Make sure the flag has been seen}
     \textcolor{comment}{//}
     pthread\_mutex\_lock( &\hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
-    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_moveabs\_queue: waiting
-       for moving flag to propagate.  lspmac\_moving\_flags = %0x"}, \hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags}
-      );
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_move\_or\_jog\_abs\_queue:
+       waiting for moving flag to propagate.  lspmac\_moving\_flags = %0x"}, 
+      \hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags});
     \textcolor{keywordflow}{while}( (\hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags} & q100) == 0)
       pthread\_cond\_wait( &\hyperlink{lspmac_8c_a57547d211906c981ef20257eba99f8df}{lspmac\_moving\_cond}, &
       \hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
     pthread\_mutex\_unlock( &\hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
-    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_moveabs\_queue: Done. 
-       lspmac\_moving\_flags = %0x"}, \hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags});
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_move\_or\_jog\_abs\_queue:
+       Done.  lspmac\_moving\_flags = %0x"}, \hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags});
   \}
   pthread\_mutex\_lock( &(mp->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex}));
   \textcolor{keywordflow}{if}( use\_jog) \{
@@ -3213,7 +3227,7 @@ move using a preset value
 \end{DoxyParams}
 
 
-Definition at line 2635 of file lspmac.\-c.
+Definition at line 2652 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3252,7 +3266,7 @@ No movement if the preset is not found.
 \end{DoxyParams}
 
 
-Definition at line 2284 of file lspmac.\-c.
+Definition at line 2295 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3283,7 +3297,7 @@ Definition at line 2284 of file lspmac.\-c.
 )}}\label{lspmac_8c_ae8f8f355aefad437e4364469024e2e07}
 
 
-Definition at line 2464 of file lspmac.\-c.
+Definition at line 2477 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3328,7 +3342,7 @@ Move method for binary i/o motor objects.
 \end{DoxyParams}
 
 
-Definition at line 2350 of file lspmac.\-c.
+Definition at line 2361 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3360,7 +3374,7 @@ Definition at line 2350 of file lspmac.\-c.
 )}}\label{lspmac_8c_a64c4eff486a01a8e170a65c0d68777aa}
 
 
-Definition at line 2443 of file lspmac.\-c.
+Definition at line 2456 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3400,7 +3414,7 @@ Definition at line 2443 of file lspmac.\-c.
 
 
 
-Definition at line 2431 of file lspmac.\-c.
+Definition at line 2444 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3438,7 +3452,7 @@ Slightly more complicated than a binary io as some flags need to be set up.
 \end{DoxyParams}
 
 
-Definition at line 2323 of file lspmac.\-c.
+Definition at line 2334 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3487,7 +3501,7 @@ Use coordinate system motion program, if available, to move motor to requested p
 \end{DoxyParams}
 
 
-Definition at line 2655 of file lspmac.\-c.
+Definition at line 2672 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3524,7 +3538,7 @@ timed motor move
 \end{DoxyParams}
 $<$ Flags needed for wait routine 
 
-Definition at line 2376 of file lspmac.\-c.
+Definition at line 2387 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3543,13 +3557,15 @@ Definition at line 2376 of file lspmac.\-c.
   \textcolor{keywordtype}{int} q100;      \textcolor{comment}{// 1 << (coord sys no - 1)}
   \textcolor{keywordtype}{int} coord\_num; \textcolor{comment}{// our coordinate number}
   \textcolor{keywordtype}{double} u2c;
+  \textcolor{keywordtype}{double} neutral\_pos;
   \textcolor{keywordtype}{double} max\_accel;
 
   pthread\_mutex\_lock( &(mp->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex}));
 
-  u2c       = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( mp->\hyperlink{structlspmac__motor__struct_a8838915ebb6f9989944117c8197d5e86}{u2c});
-  max\_accel = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( mp->\hyperlink{structlspmac__motor__struct_a50cf4c0711cea164e332bc34705a1a68}{max\_accel});
-  coord\_num = \hyperlink{lsredis_8c_a1923f998441f4f451204dfd214d52218}{lsredis\_getl}( mp->\hyperlink{structlspmac__motor__struct_a5614e003272e8323f8809bf7b6559532}{coord\_num});
+  u2c         = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( mp->\hyperlink{structlspmac__motor__struct_a8838915ebb6f9989944117c8197d5e86}{u2c});
+  max\_accel   = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( mp->\hyperlink{structlspmac__motor__struct_a50cf4c0711cea164e332bc34705a1a68}{max\_accel});
+  coord\_num   = \hyperlink{lsredis_8c_a1923f998441f4f451204dfd214d52218}{lsredis\_getl}( mp->\hyperlink{structlspmac__motor__struct_a5614e003272e8323f8809bf7b6559532}{coord\_num});
+  neutral\_pos = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( mp->\hyperlink{structlspmac__motor__struct_ae931e9bc9fc2fa82ca649334fc052fbe}{neutral\_pos});
 
   \textcolor{keywordflow}{if}( u2c == 0.0 || time <= 0.0 || max\_accel <= 0.0) \{
     \textcolor{comment}{//}
@@ -3563,8 +3579,8 @@ Definition at line 2376 of file lspmac.\-c.
   mp->\hyperlink{structlspmac__motor__struct_a68c471836f52707fa8582f7860cf500f}{motion\_seen} = 0;
 
   mp->\hyperlink{structlspmac__motor__struct_af8cdc94c6e2478b12ce942d4cf1d7499}{requested\_position} = start + delta;
-  mp->\hyperlink{structlspmac__motor__struct_a6e8dc9c11dc52a439fe9837230f93ce2}{requested\_pos\_cnts} = u2c * mp->\hyperlink{structlspmac__motor__struct_af8cdc94c6e2478b12ce942d4cf1d7499}{requested\_position}
-      ;
+  mp->\hyperlink{structlspmac__motor__struct_a6e8dc9c11dc52a439fe9837230f93ce2}{requested\_pos\_cnts} = u2c * (mp->\hyperlink{structlspmac__motor__struct_af8cdc94c6e2478b12ce942d4cf1d7499}{requested\_position}
+       + neutral\_pos);
   q10 = mp->\hyperlink{structlspmac__motor__struct_a6e8dc9c11dc52a439fe9837230f93ce2}{requested\_pos\_cnts};
   q11 = u2c * delta;
   q12 = 1000 * time;
@@ -3596,7 +3612,7 @@ Assume motion already queued, now just wait
 \end{DoxyParams}
 
 
-Definition at line 2677 of file lspmac.\-c.
+Definition at line 2694 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3667,7 +3683,7 @@ Move method for dac motor objects (ie, lights)
 \end{DoxyParams}
 
 
-Definition at line 2219 of file lspmac.\-c.
+Definition at line 2230 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3722,7 +3738,7 @@ Move method for the zoom motor.
 \end{DoxyParams}
 
 
-Definition at line 2251 of file lspmac.\-c.
+Definition at line 2262 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3765,7 +3781,7 @@ State machine logic.
 
 Given the current state, generate the next one 
 
-Definition at line 2050 of file lspmac.\-c.
+Definition at line 2061 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3917,6 +3933,7 @@ Definition at line 1347 of file lspmac.\-c.
   \textcolor{keywordtype}{char} s[512], *sp;
   \textcolor{keywordtype}{int} homing1, homing2;
   \textcolor{keywordtype}{double} u2c;
+  \textcolor{keywordtype}{double} neutral\_pos;
   \textcolor{keywordtype}{int} motor\_num;
   \textcolor{keywordtype}{char} *fmt;
   \textcolor{keywordtype}{int} status\_changed;
@@ -3973,12 +3990,13 @@ Definition at line 1347 of file lspmac.\-c.
 
   \textcolor{comment}{// Get some values we might need later}
   \textcolor{comment}{//}
-  u2c       = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( mp->\hyperlink{structlspmac__motor__struct_a8838915ebb6f9989944117c8197d5e86}{u2c});
-  motor\_num = \hyperlink{lsredis_8c_a1923f998441f4f451204dfd214d52218}{lsredis\_getl}( mp->\hyperlink{structlspmac__motor__struct_ad6a51cca3c7e5f79168e5c33fd9e736b}{motor\_num});
+  u2c         = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( mp->\hyperlink{structlspmac__motor__struct_a8838915ebb6f9989944117c8197d5e86}{u2c});
+  motor\_num   = \hyperlink{lsredis_8c_a1923f998441f4f451204dfd214d52218}{lsredis\_getl}( mp->\hyperlink{structlspmac__motor__struct_ad6a51cca3c7e5f79168e5c33fd9e736b}{motor\_num});
+  neutral\_pos = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( mp->\hyperlink{structlspmac__motor__struct_ae931e9bc9fc2fa82ca649334fc052fbe}{neutral\_pos});
 
   \textcolor{comment}{//}
   \textcolor{comment}{// maybe look for omega zero crossing}
-  \textcolor{comment}{//}
+  \textcolor{comment}{// }
   \textcolor{keywordflow}{if}( motor\_num == 1 && \hyperlink{lspmac_8c_ae06d2291c1996ffb7dcf7d132e25b038}{omega\_zero\_search} && *mp->
       \hyperlink{structlspmac__motor__struct_a312047bb71def5cd2443fecd875eaea5}{actual\_pos\_cnts\_p} >=0 && mp->\hyperlink{structlspmac__motor__struct_ae5c7aea45b9637a1817be246688fd980}{actual\_pos\_cnts} < 
       0) \{
@@ -4060,7 +4078,8 @@ Definition at line 1347 of file lspmac.\-c.
       ->\hyperlink{structlspmac__motor__struct_ae5c7aea45b9637a1817be246688fd980}{actual\_pos\_cnts});
   \} \textcolor{keywordflow}{else} \{
     \textcolor{keywordflow}{if}( u2c != 0.0) \{
-      mp->\hyperlink{structlspmac__motor__struct_af8ffb3aed907d8664b65b37601954411}{position} = mp->\hyperlink{structlspmac__motor__struct_ae5c7aea45b9637a1817be246688fd980}{actual\_pos\_cnts} / u2c;
+      mp->\hyperlink{structlspmac__motor__struct_af8ffb3aed907d8664b65b37601954411}{position} = ((mp->\hyperlink{structlspmac__motor__struct_ae5c7aea45b9637a1817be246688fd980}{actual\_pos\_cnts} / u2c) - 
+      neutral\_pos);
     \} \textcolor{keywordflow}{else} \{
       mp->\hyperlink{structlspmac__motor__struct_af8ffb3aed907d8664b65b37601954411}{position} = mp->\hyperlink{structlspmac__motor__struct_ae5c7aea45b9637a1817be246688fd980}{actual\_pos\_cnts};
     \}
@@ -4417,7 +4436,7 @@ Start up the lspmac thread.
 
 
 
-Definition at line 3263 of file lspmac.\-c.
+Definition at line 3282 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -4540,7 +4559,7 @@ Turn off the dryer.
 \end{DoxyParams}
 
 
-Definition at line 3103 of file lspmac.\-c.
+Definition at line 3122 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -4568,7 +4587,7 @@ Maybe start drying off the scintilator.
 \end{DoxyParams}
 
 
-Definition at line 3041 of file lspmac.\-c.
+Definition at line 3060 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -4711,7 +4730,7 @@ P\-M\-A\-C command with call back.
 \end{DoxyParams}
 
 
-Definition at line 2029 of file lspmac.\-c.
+Definition at line 2040 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -4748,7 +4767,7 @@ Send a command that does not need to deal with the reply.
 \end{DoxyParams}
 
 
-Definition at line 2010 of file lspmac.\-c.
+Definition at line 2021 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -5173,7 +5192,7 @@ prepare (queue up) a line to send the dpram ascii command interface
 
 
 
-Definition at line 1910 of file lspmac.\-c.
+Definition at line 1921 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -5207,7 +5226,7 @@ Definition at line 1910 of file lspmac.\-c.
 )}}\label{lspmac_8c_ad59af2883f1a6f2ee5daeebb7282f8a6}
 
 
-Definition at line 1930 of file lspmac.\-c.
+Definition at line 1941 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -5337,7 +5356,7 @@ Definition at line 1081 of file lspmac.\-c.
 )}}\label{lspmac_8c_a25e8b92da927708fab6ac41feee6f502}
 
 
-Definition at line 2860 of file lspmac.\-c.
+Definition at line 2879 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -5367,7 +5386,7 @@ Dummy routine to read a soft motor.
 
 
 
-Definition at line 2855 of file lspmac.\-c.
+Definition at line 2874 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -5390,7 +5409,7 @@ see if the motor is within tolerance of the preset 1 means yes, it is 0 mean no 
 
 
 
-Definition at line 2302 of file lspmac.\-c.
+Definition at line 2313 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -5424,7 +5443,7 @@ Special motion program to collect centering video.
 
 
 
-Definition at line 2486 of file lspmac.\-c.
+Definition at line 2499 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -5434,6 +5453,7 @@ Definition at line 2486 of file lspmac.\-c.
   \textcolor{keywordtype}{double} q12;           \textcolor{comment}{// milliseconds to run over delta}
   
   \textcolor{keywordtype}{double} u2c;
+  \textcolor{keywordtype}{double} neutral\_pos;
 
   \textcolor{keywordflow}{if}( secs <= 0.0)
     \textcolor{keywordflow}{return};
@@ -5441,9 +5461,10 @@ Definition at line 2486 of file lspmac.\-c.
   \hyperlink{lspmac_8c_ae06d2291c1996ffb7dcf7d132e25b038}{omega\_zero\_search} = 1;
 
   pthread\_mutex\_lock( &(\hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega}->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex}));
-  u2c = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( \hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega}->\hyperlink{structlspmac__motor__struct_a8838915ebb6f9989944117c8197d5e86}{u2c});
+  u2c         = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( \hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega}->\hyperlink{structlspmac__motor__struct_a8838915ebb6f9989944117c8197d5e86}{u2c});
+  neutral\_pos = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( \hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega}->\hyperlink{structlspmac__motor__struct_ae931e9bc9fc2fa82ca649334fc052fbe}{neutral\_pos});
 
-  q10 = 0;
+  q10 = neutral\_pos * u2c;
   q11 = 360.0 * u2c;
   q12 = 1000 * secs;
   
@@ -5474,7 +5495,7 @@ Our lspmac worker thread.
 \end{DoxyParams}
 
 
-Definition at line 2168 of file lspmac.\-c.
+Definition at line 2179 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -5540,7 +5561,7 @@ Set up lookup table for zoom.
 
 
 
-Definition at line 3111 of file lspmac.\-c.
+Definition at line 3130 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -6125,13 +6146,6 @@ Definition at line 362 of file lspmac.\-c.
 
 
 Definition at line 361 of file lspmac.\-c.
-
-\hypertarget{lspmac_8c_a45e8803dd459ea079a96fcbfb4709885}{\index{lspmac.\-c@{lspmac.\-c}!lspmac\-\_\-md2\-\_\-init@{lspmac\-\_\-md2\-\_\-init}}
-\index{lspmac\-\_\-md2\-\_\-init@{lspmac\-\_\-md2\-\_\-init}!lspmac.c@{lspmac.\-c}}
-\subsubsection[{lspmac\-\_\-md2\-\_\-init}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lsredis\-\_\-obj\-\_\-t}$\ast$ lspmac\-\_\-md2\-\_\-init\hspace{0.3cm}{\ttfamily [static]}}}\label{lspmac_8c_a45e8803dd459ea079a96fcbfb4709885}
-
-
-Definition at line 53 of file lspmac.\-c.
 
 \hypertarget{lspmac_8c_a894c709ddd0652583d6db22e86282503}{\index{lspmac.\-c@{lspmac.\-c}!lspmac\-\_\-motors@{lspmac\-\_\-motors}}
 \index{lspmac\-\_\-motors@{lspmac\-\_\-motors}!lspmac.c@{lspmac.\-c}}

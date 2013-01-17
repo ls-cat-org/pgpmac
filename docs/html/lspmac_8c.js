@@ -180,7 +180,6 @@ var lspmac_8c =
     [ "lspmac_dpascii_off", "lspmac_8c.html#a9b0d9e2c858f6f0178be2bfdd96d4c05", null ],
     [ "lspmac_dpascii_on", "lspmac_8c.html#a09701de0235acaeae5abf4e04268be33", null ],
     [ "lspmac_dpascii_queue", "lspmac_8c.html#a2bd5340143f40b5e6404a381fb438710", null ],
-    [ "lspmac_md2_init", "lspmac_8c.html#a45e8803dd459ea079a96fcbfb4709885", null ],
     [ "lspmac_motors", "lspmac_8c.html#a894c709ddd0652583d6db22e86282503", null ],
     [ "lspmac_moving_cond", "lspmac_8c.html#a57547d211906c981ef20257eba99f8df", null ],
     [ "lspmac_moving_flags", "lspmac_8c.html#a7a32c617c183166308241e270959df56", null ],

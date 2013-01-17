@@ -470,7 +470,7 @@ Definition at line 67 of file pgpmac.\-h.
 \subsubsection[{M\-D2\-C\-M\-D\-S\-\_\-\-C\-M\-D\-\_\-\-L\-E\-N\-G\-T\-H}]{\setlength{\rightskip}{0pt plus 5cm}\#define M\-D2\-C\-M\-D\-S\-\_\-\-C\-M\-D\-\_\-\-L\-E\-N\-G\-T\-H~32}}\label{pgpmac_8h_a30f0f377b0f0695284145d420ea51846}
 
 
-Definition at line 478 of file pgpmac.\-h.
+Definition at line 480 of file pgpmac.\-h.
 
 
 
@@ -1554,7 +1554,7 @@ get binary input value
 
 
 
-Definition at line 1565 of file lspmac.\-c.
+Definition at line 1567 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1721,7 +1721,7 @@ Initialize this module.
 
 
 
-Definition at line 2891 of file lspmac.\-c.
+Definition at line 2910 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1738,8 +1738,7 @@ Definition at line 2891 of file lspmac.\-c.
   \textcolor{comment}{//}
   \textcolor{comment}{// Get the MD2 initialization strings}
   \textcolor{comment}{//}
-  \hyperlink{lspmac_8c_a45e8803dd459ea079a96fcbfb4709885}{lspmac\_md2\_init} = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"
-      md2\_pmac.init"});
+  \textcolor{comment}{//  lspmac\_md2\_init = lsredis\_get\_obj( "md2\_pmac.init");  // hard coded now.}
 
   \textcolor{comment}{//}
   \textcolor{comment}{// Initialize the motor objects}
@@ -1749,7 +1748,7 @@ Definition at line 2891 of file lspmac.\-c.
 
   \hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega}  = \hyperlink{lspmac_8c_a95c0a2d36e4e2a0f170fcf3583e7c422}{lspmac\_motor\_init}( &(\hyperlink{lspmac_8c_a894c709ddd0652583d6db22e86282503}{lspmac\_motors}
       [ 0]), 0, 0, &p->\hyperlink{structmd2StatusStruct_a6ce303bec89082cae1e9b1fddf6b6c10}{omega\_act\_pos},     &p->\hyperlink{structmd2StatusStruct_af6cf3cd65b9ef205685a0d970f168907}{omega\_status\_1}
-      ,     &p->\hyperlink{structmd2StatusStruct_a8577c9df7b663b548b2759ac3db721cd}{omega\_status\_2},     \textcolor{stringliteral}{"Omega   #1 &1 A"}, \textcolor{stringliteral}{"omega"},       
+      ,     &p->\hyperlink{structmd2StatusStruct_a8577c9df7b663b548b2759ac3db721cd}{omega\_status\_2},     \textcolor{stringliteral}{"Omega   #1 &1 X"}, \textcolor{stringliteral}{"omega"},       
       \hyperlink{lspmac_8c_aa4ea5a4c387ef167702c58eaddcb4151}{lspmac\_moveabs\_queue});
   \hyperlink{lspmac_8c_a6cb218bdccfe5a93471c161f15a15cab}{alignx} = \hyperlink{lspmac_8c_a95c0a2d36e4e2a0f170fcf3583e7c422}{lspmac\_motor\_init}( &(\hyperlink{lspmac_8c_a894c709ddd0652583d6db22e86282503}{lspmac\_motors}
       [ 1]), 0, 1, &p->\hyperlink{structmd2StatusStruct_a9653a75bc0b66c5f86d8b0206dc39b4f}{alignx\_act\_pos},    &p->\hyperlink{structmd2StatusStruct_a56accf8cb00c59bff87ed75df7dafbbe}{alignx\_status\_1}
@@ -1979,7 +1978,7 @@ Use jog to move motor to requested position.
 
 
 
-Definition at line 2665 of file lspmac.\-c.
+Definition at line 2682 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2021,7 +2020,7 @@ $<$ our axis
 \end{DoxyParams}
 
 
-Definition at line 2515 of file lspmac.\-c.
+Definition at line 2530 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2032,13 +2031,15 @@ Definition at line 2515 of file lspmac.\-c.
   \textcolor{keywordtype}{int} coord\_num, motor\_num;     
   \textcolor{keywordtype}{char} *axis;                   
   \textcolor{keywordtype}{double} u2c;
+  \textcolor{keywordtype}{double} neutral\_pos;
 
   pthread\_mutex\_lock( &(mp->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex}));
 
-  u2c       = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}(   mp->\hyperlink{structlspmac__motor__struct_a8838915ebb6f9989944117c8197d5e86}{u2c});
-  motor\_num = \hyperlink{lsredis_8c_a1923f998441f4f451204dfd214d52218}{lsredis\_getl}(   mp->\hyperlink{structlspmac__motor__struct_ad6a51cca3c7e5f79168e5c33fd9e736b}{motor\_num});
-  coord\_num = \hyperlink{lsredis_8c_a1923f998441f4f451204dfd214d52218}{lsredis\_getl}(   mp->\hyperlink{structlspmac__motor__struct_a5614e003272e8323f8809bf7b6559532}{coord\_num});
-  axis      = \hyperlink{lsredis_8c_ac1994e56114b2315294527d76311f829}{lsredis\_getstr}( mp->\hyperlink{structlspmac__motor__struct_a7437ef16c2dce65bde4dda1ea00e9df3}{axis});
+  u2c         = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}(   mp->\hyperlink{structlspmac__motor__struct_a8838915ebb6f9989944117c8197d5e86}{u2c});
+  motor\_num   = \hyperlink{lsredis_8c_a1923f998441f4f451204dfd214d52218}{lsredis\_getl}(   mp->\hyperlink{structlspmac__motor__struct_ad6a51cca3c7e5f79168e5c33fd9e736b}{motor\_num});
+  coord\_num   = \hyperlink{lsredis_8c_a1923f998441f4f451204dfd214d52218}{lsredis\_getl}(   mp->\hyperlink{structlspmac__motor__struct_a5614e003272e8323f8809bf7b6559532}{coord\_num});
+  axis        = \hyperlink{lsredis_8c_ac1994e56114b2315294527d76311f829}{lsredis\_getstr}( mp->\hyperlink{structlspmac__motor__struct_a7437ef16c2dce65bde4dda1ea00e9df3}{axis});
+  neutral\_pos = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}(   mp->\hyperlink{structlspmac__motor__struct_ae931e9bc9fc2fa82ca649334fc052fbe}{neutral\_pos});
 
   \textcolor{keywordflow}{if}( u2c == 0.0) \{
     \textcolor{comment}{//}
@@ -2051,7 +2052,8 @@ Definition at line 2515 of file lspmac.\-c.
   mp->\hyperlink{structlspmac__motor__struct_ab7bd8bff48953ce05c758598d75877ac}{not\_done}     = 1;
   mp->\hyperlink{structlspmac__motor__struct_a68c471836f52707fa8582f7860cf500f}{motion\_seen}  = 0;
   mp->\hyperlink{structlspmac__motor__struct_a59a7f007476b2428fd3c5bd7f24440e8}{command\_sent} = 0;
-  mp->\hyperlink{structlspmac__motor__struct_a6e8dc9c11dc52a439fe9837230f93ce2}{requested\_pos\_cnts} = u2c * requested\_position;  
+  mp->\hyperlink{structlspmac__motor__struct_a6e8dc9c11dc52a439fe9837230f93ce2}{requested\_pos\_cnts} = u2c * (requested\_position + 
+      neutral\_pos);
   requested\_pos\_cnts = mp->\hyperlink{structlspmac__motor__struct_a6e8dc9c11dc52a439fe9837230f93ce2}{requested\_pos\_cnts};
 
   \textcolor{keywordflow}{if}( use\_jog || axis == NULL || *axis == 0) \{
@@ -2070,15 +2072,15 @@ Definition at line 2515 of file lspmac.\-c.
     \textcolor{comment}{// TODO: are we sure this thread is not the one moving it?}
     \textcolor{comment}{//}
     pthread\_mutex\_lock( &\hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
-    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_moveabs\_queue: waiting
-       for previous moves to end.  lspmac\_moving\_flags = %0x"}, \hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags}
-      );
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_move\_or\_jog\_abs\_queue:
+       waiting for previous moves to end.  lspmac\_moving\_flags = %0x"}, 
+      \hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags});
     \textcolor{keywordflow}{while}( (\hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags} & q100) != 0)
       pthread\_cond\_wait( &\hyperlink{lspmac_8c_a57547d211906c981ef20257eba99f8df}{lspmac\_moving\_cond}, &
       \hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
     pthread\_mutex\_unlock( &\hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
-    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_moveabs\_queue: Done. 
-       lspmac\_moving\_flags = %0x"}, \hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags});
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_move\_or\_jog\_abs\_queue:
+       Done.  lspmac\_moving\_flags = %0x"}, \hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags});
 
     \textcolor{comment}{//}
     \textcolor{comment}{// Set the "we are moving this coordinate system" flag}
@@ -2127,15 +2129,15 @@ Definition at line 2515 of file lspmac.\-c.
     \textcolor{comment}{// Make sure the flag has been seen}
     \textcolor{comment}{//}
     pthread\_mutex\_lock( &\hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
-    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_moveabs\_queue: waiting
-       for moving flag to propagate.  lspmac\_moving\_flags = %0x"}, \hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags}
-      );
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_move\_or\_jog\_abs\_queue:
+       waiting for moving flag to propagate.  lspmac\_moving\_flags = %0x"}, 
+      \hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags});
     \textcolor{keywordflow}{while}( (\hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags} & q100) == 0)
       pthread\_cond\_wait( &\hyperlink{lspmac_8c_a57547d211906c981ef20257eba99f8df}{lspmac\_moving\_cond}, &
       \hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
     pthread\_mutex\_unlock( &\hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
-    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_moveabs\_queue: Done. 
-       lspmac\_moving\_flags = %0x"}, \hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags});
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_move\_or\_jog\_abs\_queue:
+       Done.  lspmac\_moving\_flags = %0x"}, \hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags});
   \}
   pthread\_mutex\_lock( &(mp->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex}));
   \textcolor{keywordflow}{if}( use\_jog) \{
@@ -2165,7 +2167,7 @@ move using a preset value
 
 
 
-Definition at line 2635 of file lspmac.\-c.
+Definition at line 2652 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2213,7 +2215,7 @@ No movement if the preset is not found.
 \end{DoxyParams}
 
 
-Definition at line 2284 of file lspmac.\-c.
+Definition at line 2295 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2248,7 +2250,7 @@ Use coordinate system motion program, if available, to move motor to requested p
 
 
 
-Definition at line 2655 of file lspmac.\-c.
+Definition at line 2672 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2276,7 +2278,7 @@ Assume motion already queued, now just wait
 \end{DoxyParams}
 
 
-Definition at line 2677 of file lspmac.\-c.
+Definition at line 2694 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2339,7 +2341,7 @@ Start up the lspmac thread.
 
 
 
-Definition at line 3263 of file lspmac.\-c.
+Definition at line 3282 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2459,7 +2461,7 @@ prepare (queue up) a line to send the dpram ascii command interface
 
 
 
-Definition at line 1910 of file lspmac.\-c.
+Definition at line 1921 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2539,7 +2541,7 @@ Special motion program to collect centering video.
 
 
 
-Definition at line 2486 of file lspmac.\-c.
+Definition at line 2499 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2549,6 +2551,7 @@ Definition at line 2486 of file lspmac.\-c.
   \textcolor{keywordtype}{double} q12;           \textcolor{comment}{// milliseconds to run over delta}
   
   \textcolor{keywordtype}{double} u2c;
+  \textcolor{keywordtype}{double} neutral\_pos;
 
   \textcolor{keywordflow}{if}( secs <= 0.0)
     \textcolor{keywordflow}{return};
@@ -2556,9 +2559,10 @@ Definition at line 2486 of file lspmac.\-c.
   \hyperlink{lspmac_8c_ae06d2291c1996ffb7dcf7d132e25b038}{omega\_zero\_search} = 1;
 
   pthread\_mutex\_lock( &(\hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega}->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex}));
-  u2c = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( \hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega}->\hyperlink{structlspmac__motor__struct_a8838915ebb6f9989944117c8197d5e86}{u2c});
+  u2c         = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( \hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega}->\hyperlink{structlspmac__motor__struct_a8838915ebb6f9989944117c8197d5e86}{u2c});
+  neutral\_pos = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( \hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega}->\hyperlink{structlspmac__motor__struct_ae931e9bc9fc2fa82ca649334fc052fbe}{neutral\_pos});
 
-  q10 = 0;
+  q10 = neutral\_pos * u2c;
   q11 = 360.0 * u2c;
   q12 = 1000 * secs;
   
@@ -2582,7 +2586,7 @@ Definition at line 2486 of file lspmac.\-c.
 )}}\label{pgpmac_8h_ac356cd43e46799929242dcf5214df7f6}
 
 
-Definition at line 235 of file lsredis.\-c.
+Definition at line 236 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -2607,7 +2611,7 @@ Definition at line 235 of file lsredis.\-c.
 )}}\label{pgpmac_8h_a9fc8fd0db4c71c5eae68682b43103078}
 
 
-Definition at line 224 of file lsredis.\-c.
+Definition at line 225 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -2633,7 +2637,7 @@ Definition at line 224 of file lsredis.\-c.
 )}}\label{pgpmac_8h_a1ad60526a09ca679f39174ce5d773abe}
 
 
-Definition at line 755 of file lsredis.\-c.
+Definition at line 756 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -2701,7 +2705,7 @@ Definition at line 755 of file lsredis.\-c.
 )}}\label{pgpmac_8h_a6d9f550b9ba36acd237925164abe3ffc}
 
 
-Definition at line 523 of file lsredis.\-c.
+Definition at line 524 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -2749,7 +2753,7 @@ Definition at line 523 of file lsredis.\-c.
 )}}\label{pgpmac_8h_abe31d0e11c41b2235307612c963bb652}
 
 
-Definition at line 364 of file lsredis.\-c.
+Definition at line 365 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -2775,7 +2779,7 @@ Definition at line 364 of file lsredis.\-c.
 )}}\label{pgpmac_8h_abbb4e5ece19ebd130e1be18036752a08}
 
 
-Definition at line 377 of file lsredis.\-c.
+Definition at line 378 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -2801,7 +2805,7 @@ Definition at line 377 of file lsredis.\-c.
 )}}\label{pgpmac_8h_aa8daf63b794b6b6341018feec205cb7d}
 
 
-Definition at line 338 of file lsredis.\-c.
+Definition at line 339 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -2827,7 +2831,7 @@ Definition at line 338 of file lsredis.\-c.
 )}}\label{pgpmac_8h_a1923f998441f4f451204dfd214d52218}
 
 
-Definition at line 351 of file lsredis.\-c.
+Definition at line 352 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -2857,7 +2861,7 @@ return a copy of the key's string value
 
 
 
-Definition at line 262 of file lsredis.\-c.
+Definition at line 263 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -2901,7 +2905,7 @@ Initialize this module, that is, set up the connections.
 \end{DoxyParams}
 
 
-Definition at line 809 of file lsredis.\-c.
+Definition at line 810 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -2922,7 +2926,7 @@ Definition at line 809 of file lsredis.\-c.
   \hyperlink{lsredis_8c_acdca9095c7a3288d7febe9f4c440a6e9}{lsredis\_head}      = strdup( \hyperlink{namespacemk__pgpmac__redis_a760ff4955cbf5beef4ae36a28c30b01a}{head});
   \hyperlink{lsredis_8c_a0c81dce2e75584eeb14ab7d9dd86c72e}{lsredis\_publisher} = strdup( pub);
 
-  pthread\_mutex\_init( &\hyperlink{lsredis_8c_a390e8acf789b0fa41b43a794dd27e28f}{lsredis\_mutex}, NULL);
+  
   pthread\_cond\_init( &\hyperlink{lsredis_8c_a2f63408d16b5603541b124a78f36a5a8}{lsredis\_cond}, NULL);
 
   \hyperlink{lsredis_8c_a4d65536cb1094fb5deda0a852b181232}{subac} = redisAsyncConnect(\textcolor{stringliteral}{"127.0.0.1"}, 6379);
@@ -2998,7 +3002,7 @@ Definition at line 809 of file lsredis.\-c.
 )}}\label{pgpmac_8h_ac58fca47533e695c8775e0d2b9128766}
 
 
-Definition at line 246 of file lsredis.\-c.
+Definition at line 247 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -3026,7 +3030,7 @@ Definition at line 246 of file lsredis.\-c.
 )}}\label{pgpmac_8h_ad438e4368d86bbe15a93dcf86deaded5}
 
 
-Definition at line 1013 of file lsredis.\-c.
+Definition at line 1014 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -3056,7 +3060,7 @@ $<$ Unlock to prevent deadlock in case the service routine needs to set our valu
 
 $<$ redis\-Async\-Command\-Argv shouldn't need to access this after it's made up it's packet (before it returns) so we should be O\-K with this location disappearing soon. 
 
-Definition at line 287 of file lsredis.\-c.
+Definition at line 288 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -3275,7 +3279,7 @@ Initialize the md2cmds module.
 
 
 
-Definition at line 1161 of file md2cmds.\-c.
+Definition at line 1023 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -3307,7 +3311,7 @@ Start up the thread.
 
 
 
-Definition at line 1176 of file md2cmds.\-c.
+Definition at line 1038 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -3316,12 +3320,24 @@ Definition at line 1176 of file md2cmds.\-c.
       \hyperlink{md2cmds_8c_ae967e769d23555a631f615e630f25b00}{md2cmds\_worker}, NULL);
   \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"omega crossed zero"},        
       \hyperlink{md2cmds_8c_aa43887b7c9799bc88d51df13745d0e5c}{md2cmds\_rotate\_cb});
+  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"omega In Position"},         
+      \hyperlink{md2cmds_8c_a136f278c9f5a2742b2e9b4987b063faa}{md2cmds\_maybe\_rotate\_done\_cb});
   \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{".+ (Moving|In Position)"},   
       \hyperlink{md2cmds_8c_a3970ef1a233dabcc5c1408e9d3865f13}{md2cmds\_maybe\_done\_moving\_cb});
   \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"capz (Moving|In Position)"}, 
       \hyperlink{md2cmds_8c_aab9e2aa02903648acc342068f0664a96}{md2cmds\_time\_capz\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"move\_prep command done"},    
-      \hyperlink{md2cmds_8c_abd60a276f9d4658561110a4ec68c6144}{md2cmds\_move\_prep\_done\_cb});
+  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 1 Stopped"},        
+      \hyperlink{md2cmds_8c_a4cf5215fdb88407144f582d829c03c7b}{md2cmds\_coordsys\_1\_stopped\_cb});
+  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 2 Stopped"},        
+      \hyperlink{md2cmds_8c_a1ab8f6d08c82ee2130202d65d44ef3fe}{md2cmds\_coordsys\_2\_stopped\_cb});
+  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 3 Stopped"},        
+      \hyperlink{md2cmds_8c_a3640785c2fc9cd2f27ce0bafd7959179}{md2cmds\_coordsys\_3\_stopped\_cb});
+  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 4 Stopped"},        
+      \hyperlink{md2cmds_8c_a6069cb2f6e9f662edd54e1aeb6e78370}{md2cmds\_coordsys\_4\_stopped\_cb});
+  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 5 Stopped"},        
+      \hyperlink{md2cmds_8c_a846ed10de4e5ad48cfa429a93c853308}{md2cmds\_coordsys\_5\_stopped\_cb});
+  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 7 Stopped"},        
+      \hyperlink{md2cmds_8c_ab172a83eaf3e74799159e6720e4f5268}{md2cmds\_coordsys\_7\_stopped\_cb});
 \}
 \end{DoxyCode}
 \hypertarget{pgpmac_8h_a7762ca7b97b44b979e23ce88ca3b4249}{\index{pgpmac.\-h@{pgpmac.\-h}!pgpmac\-\_\-printf@{pgpmac\-\_\-printf}}
@@ -3343,7 +3359,7 @@ Terminal output routine ala printf.
 \end{DoxyParams}
 
 
-Definition at line 328 of file pgpmac.\-c.
+Definition at line 330 of file pgpmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3933,7 +3949,7 @@ our command;
 
 
 
-Definition at line 20 of file md2cmds.\-c.
+Definition at line 19 of file md2cmds.\-c.
 
 \hypertarget{pgpmac_8h_a08d5b18ec9478d753c46a3e28d1f2126}{\index{pgpmac.\-h@{pgpmac.\-h}!md2cmds\-\_\-cond@{md2cmds\-\_\-cond}}
 \index{md2cmds\-\_\-cond@{md2cmds\-\_\-cond}!pgpmac.h@{pgpmac.\-h}}
@@ -3951,7 +3967,7 @@ Definition at line 10 of file md2cmds.\-c.
 \subsubsection[{md2cmds\-\_\-md\-\_\-status\-\_\-code}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lsredis\-\_\-obj\-\_\-t}$\ast$ md2cmds\-\_\-md\-\_\-status\-\_\-code}}\label{pgpmac_8h_a6a34fb6876abbd580629d3708c805e7f}
 
 
-Definition at line 22 of file md2cmds.\-c.
+Definition at line 21 of file md2cmds.\-c.
 
 \hypertarget{pgpmac_8h_ad67304bb851dc6268b0cda2f40fc5aa8}{\index{pgpmac.\-h@{pgpmac.\-h}!md2cmds\-\_\-mutex@{md2cmds\-\_\-mutex}}
 \index{md2cmds\-\_\-mutex@{md2cmds\-\_\-mutex}!pgpmac.h@{pgpmac.\-h}}
