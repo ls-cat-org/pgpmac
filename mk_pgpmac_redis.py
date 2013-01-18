@@ -160,7 +160,7 @@ motor_dict = {
     "frontLight.factor" : { "canHome" :  "false","type" :  "DAC",
                             "update_resolution" :  "0.5","canStop" :  "false"
                             },
-    "smartMagnet"  : { "canHome" :  "false","type" :  "BO",
+    "smartMagnet"  : { "canHome" :  "false","type" :  "BO", "active_init" : '{m1100=0,m1106=1}', "inactive_init" : '{m1100=1,m1106=0}',
                      "update_resolution" :  "0.5","canStop" :  "false"
                         }
     }

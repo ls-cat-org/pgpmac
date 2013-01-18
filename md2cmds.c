@@ -14,6 +14,11 @@ int md2cmds_moving_queue_wait = 0;	//! wait for command to have been dequeued an
 pthread_cond_t  md2cmds_moving_cond;	//!< coordinate call and response
 pthread_mutex_t md2cmds_moving_mutex;	//!< message passing between md2cmds and pg
 
+int md2cmds_homing_count = 0;		//!< We've asked a motor to home
+pthread_cond_t md2cmds_homing_cond;	//!< coordinate homing and homed
+pthread_mutex_t md2cmds_homing_mutex;	//!< our mutex;
+
+
 int md2cmds_moving_count = 0;
 
 char md2cmds_cmd[MD2CMDS_CMD_LENGTH];	//!< our command;
@@ -26,6 +31,56 @@ static int rotating = 0;		//!< flag: when omega is in position after a rotate we
 
 static double md2cmds_capz_moving_time = NAN;
 
+void md2cmds_home_prep() {
+  pthread_mutex_lock( &md2cmds_homing_mutex);
+  md2cmds_homing_count = -1;
+  pthread_mutex_unlock( &md2cmds_homing_mutex);
+}
+
+
+int md2cmds_home_wait( double timeout_secs) {
+  struct timespec timeout, now;
+  double isecs, fsecs;
+  int err;
+
+  clock_gettime( CLOCK_REALTIME, &now);
+
+  fsecs = modf( timeout_secs, &isecs);
+
+  timeout.tv_sec  = now.tv_sec  + (long)floor( isecs);
+  timeout.tv_nsec = now.tv_nsec + (long)floor( fsecs * 1.0e9);
+  
+  timeout.tv_sec  += timeout.tv_nsec / 1000000000;
+  timeout.tv_nsec %= 1000000000;
+
+  err = 0;
+  pthread_mutex_lock( &md2cmds_homing_mutex);
+  while( err == 0 && md2cmds_homing_count == -1)
+    err = pthread_cond_timedwait( &md2cmds_homing_cond, &md2cmds_homing_mutex, &timeout);
+
+  if( err != 0) {
+    if( err != ETIMEDOUT) {
+      lslogging_log_message( "md2cmds_home_wait: unexpected error from timedwait: %d  tv_sec %ld   tv_nsec %ld", err, timeout.tv_sec, timeout.tv_nsec);
+    }
+    pthread_mutex_unlock( &md2cmds_homing_mutex);
+    return 1;
+  }
+
+  err = 0;
+  while( err == 0 && md2cmds_homing_count > 0)
+    err = pthread_cond_timedwait( &md2cmds_homing_cond, &md2cmds_homing_mutex, &timeout);
+  pthread_mutex_unlock( &md2cmds_homing_mutex);
+
+  if( err != 0) {
+    if( err != ETIMEDOUT)
+      lslogging_log_message( "md2cmds_home_wait: unexpected error from timedwait: %d", err);
+    
+    return 1;
+  } 
+  return 0;
+}
+
+
 /** prepare for new movements
  */
 void md2cmds_move_prep() {
@@ -35,17 +90,60 @@ void md2cmds_move_prep() {
 }
 
 /** Wait for all the motions requested to complete
+ *  \param timeout_sec  Double value of seconds to wait
+ *  There are two waits involved: First to wait for the first "Moving"
+ *  to be seen and second to wait for the last "In Position".  This means that
+ *  the maximum wait is twice the timeout value.
+ *
+ * returns 0 on success and 1 if we timedout.
+ *
  */
-void md2cmds_move_wait() {
-  pthread_mutex_lock( &md2cmds_moving_mutex);
-  while( md2cmds_moving_count == -1)
-    pthread_cond_wait( &md2cmds_moving_cond, &md2cmds_moving_mutex);
+int md2cmds_move_wait( double timeout_secs) {
+  double isecs, fsecs;
+  struct timespec timeout, now;
+  int err;
 
-  while( md2cmds_moving_count > 0)
-    pthread_cond_wait( &md2cmds_moving_cond, &md2cmds_moving_mutex);
+  clock_gettime( CLOCK_REALTIME, &now);
+
+  fsecs = modf( timeout_secs, &isecs);
+
+  timeout.tv_sec  = now.tv_sec  + (long)floor( isecs);
+  timeout.tv_nsec = now.tv_nsec + (long)floor( fsecs * 1.0e9);
+  
+  timeout.tv_sec  += timeout.tv_nsec / 1000000000;
+  timeout.tv_nsec %= 1000000000;
+
+  err = 0;
+  pthread_mutex_lock( &md2cmds_moving_mutex);
+  while( err == 0 && md2cmds_moving_count == -1)
+    err = pthread_cond_timedwait( &md2cmds_moving_cond, &md2cmds_moving_mutex, &timeout);
+
+  if( err == ETIMEDOUT) {
+    pthread_mutex_unlock( &md2cmds_moving_mutex);
+    return 1;
+  }
+
+  err = 0;
+  while( err == 0 && md2cmds_moving_count > 0)
+    err = pthread_cond_timedwait( &md2cmds_moving_cond, &md2cmds_moving_mutex, &timeout);
   pthread_mutex_unlock( &md2cmds_moving_mutex);
+
+  if( err == ETIMEDOUT)
+    return 1;
+  return 0;
 }
 
+/** returns non-zero if we think a motor is moving, 0 otherwise
+ */
+int md2cmds_is_moving() {
+  int rtn;
+
+  pthread_mutex_lock( &md2cmds_moving_mutex);
+  rtn = md2cmds_moving_count != 0;
+  pthread_mutex_unlock( &md2cmds_moving_mutex);
+
+  return rtn;
+}
 
 
 double md2cmds_prep_axis( lspmac_motor_t *mp, double pos) {
@@ -145,7 +243,15 @@ void md2cmds_transfer() {
   // BLUMax sets up an abort dialogbox here.  Probably we should figure out how we are going to handle that.
   //
 
-  md2cmds_move_wait();
+  //
+  // Wait for motors to stop
+  //
+  if( md2cmds_is_moving()) {
+    lslogging_log_message( "md2cmds_transfer: Waiting for previous motion to finish");
+    if( md2cmds_move_wait( 30.0)) {
+      lslogging_log_message( "md2cmds_transfer: Timed out waiting for previous motion to finish.  Aborting transfer");
+    }
+  }
 
   //
   // get positions we'll be needed to report to postgres
@@ -166,10 +272,10 @@ void md2cmds_transfer() {
     
     // Here we assume moving the capilary is the rate limiting step in preparing the MD2.
     //
-    // TODO: look at factors in which something besides the capilary determines the time.
+    // TODO: look at factors in which something besides the capilary determines the time such as if the scintilator is out.
     //
-    // pretend we are going to zero instead of the "Out" position.  This should be less than a 5% error
-    // and is probably not too horrible
+    // pretend we are going to zero instead of the "Out" position.  We should probably arrange for
+    // neutralPosition such that "Out" is zero.
     //
     // This also treats S curve acceleration as taking the same time as linear acceleration.
     //
@@ -191,10 +297,17 @@ void md2cmds_transfer() {
     blight_ud->moveAbs( fluo, 0);
   
   //
+  // Prepare for moving stuff
+  //
+  md2cmds_move_prep();
+
+  //
   // Put the organs into position
   //
   md2cmds_organs_move_presets( "In", "Cover", "In", "Cover", "Cover");
 
+
+  md2cmds_home_prep();
 
   //
   // Home Kappa
@@ -209,7 +322,7 @@ void md2cmds_transfer() {
   //
   // wait for kappa cause we can't home phi until kappa's done
   //
-  lspmac_moveabs_wait( kappa);
+  lspmac_moveabs_wait( kappa, 60.0);
   
   //
   // Home phi (whatever that means)
@@ -232,11 +345,30 @@ void md2cmds_transfer() {
   lspg_starttransfer_done();
 
  
+  //
+  // Wait for the homing routines to finish
+  //
+  if( md2cmds_home_wait( 30.0)) {
+    lslogging_log_message( "md2cmds_transfer: homing routines taking too long.  Aborting transfer.");
+    lsevents_send_event( "Transfer Aborted");
+    return;
+  }
+
+  //
+  // Wait for all the motors to stop moving
+  //
+  if( md2cmds_move_wait( 30.0)) {
+    lslogging_log_message( "md2cmds_transfer: We got bored waiting for the motors to stop.  Aborting transfer.  Later.");
+    lsevents_send_event( "Transfer Aborted");
+    return;
+  }
+
   // TODO: check that all the motors are where we told them to go  
   //
 
   if( abort_now) {
     lslogging_log_message( "md2cmds_transfer: Apparently there is a sample mounted already but we don't know where it is supposed to go");
+    lsevents_send_event( "Transfer Aborted");
     return;
   }
   
@@ -245,6 +377,7 @@ void md2cmds_transfer() {
   //
   if( lspmac_getBIPosition( blight_down) != 1 ||lspmac_getBIPosition( fluor_back) != 1) {
     lslogging_log_message( "md2cmds_transfer: It looks like either the back light is not down or the fluoescence dectector is not back");
+    lsevents_send_event( "Transfer Aborted");
     return;
   }
 
@@ -257,7 +390,7 @@ void md2cmds_transfer() {
   // Move the cryo back
   //
   cryo->moveAbs( cryo, 1);
-  lspmac_moveabs_wait( cryo);
+  lspmac_moveabs_wait( cryo, 10.0);
 
   // simplest query yet!
   lspg_query_push( lspg_waitcryo_cb, "SELECT px.dropairrights()");
@@ -270,6 +403,8 @@ void md2cmds_transfer() {
   // grab the airrights again
   //
   lspg_demandairrights_all();
+
+  lsevents_send_event( "Transfer Done");
 }
 
 
@@ -393,6 +528,9 @@ void md2cmds_phase_change( const char *ccmd) {
   }
   
   if( strcmp( mode, "manualMount") == 0) {
+    lsevents_send_event( "Mode manualMount Starting");
+
+    md2cmds_move_prep();
     lspmac_move_or_jog_preset_queue( kappa, "manualMount", 1);
     lspmac_move_or_jog_preset_queue( omega, "manualMount", 0);
     lspmac_move_or_jog_abs_queue( phi,   0.0, 0);
@@ -404,7 +542,17 @@ void md2cmds_phase_change( const char *ccmd) {
     md2cmds_moveAbs( "moveAbs cryo 1");
     md2cmds_moveAbs( "moveAbs fluo 0");
     md2cmds_moveAbs( "moveAbs cam.zoom 1");
+
+    if( md2cmds_move_wait( 60.0))
+      lsevents_send_event( "Mode manualMount Aborted");
+    else
+      lsevents_send_event( "Mode manualMount Done");
+
   } else if( strcmp( mode, "robotMount") == 0) {
+
+    lsevents_send_event( "Mode robotMount Starting");
+    md2cmds_home_prep();
+    md2cmds_move_prep();
     lspmac_home1_queue( kappa);
     lspmac_home1_queue( omega);
     lspmac_move_or_jog_abs_queue( phi,  0.0, 0);
@@ -417,7 +565,18 @@ void md2cmds_phase_change( const char *ccmd) {
     md2cmds_moveAbs( "moveAbs cryo 1");
     md2cmds_moveAbs( "moveAbs fluo 0");
     md2cmds_moveAbs( "moveAbs cam.zoom 1");
+    if( md2cmds_home_wait( 60.0)) {
+      lsevents_send_event( "Mode robotMount Aborted");
+    } else {
+      if( md2cmds_move_wait( 60.0))
+	lsevents_send_event( "Mode robotMount Aborted");
+      else
+	lsevents_send_event( "Mode robotMount Done");
+    }
   } else if( strcmp( mode, "center") == 0) {
+    lsevents_send_event( "Mode center Starting");
+
+    md2cmds_move_prep();
     md2cmds_moveAbs( "moveAbs kappa 0");
     md2cmds_moveAbs( "moveAbs omega 0");
     lspmac_move_or_jog_abs_queue(    phi,   0.0, 0);
@@ -430,7 +589,17 @@ void md2cmds_phase_change( const char *ccmd) {
     md2cmds_moveAbs( "moveAbs cam.zoom 1");
     md2cmds_moveAbs( "moveAbs cryo 0");
     md2cmds_moveAbs( "moveAbs fluo 0");
+
+    if( md2cmds_move_wait( 60.0))
+      lsevents_send_event( "Mode center Aborted");
+    else
+      lsevents_send_event( "Mode center Done");
+
   } else if( strcmp( mode, "dataCollection") == 0) {
+
+    lsevents_send_event( "Mode dataCollection Starting");
+
+    md2cmds_move_prep();
     lspmac_move_or_jog_preset_queue( apery, "In", 1);
     lspmac_move_or_jog_preset_queue( aperz, "In", 1);
     lspmac_move_or_jog_preset_queue( capy,  "In", 1);
@@ -440,7 +609,16 @@ void md2cmds_phase_change( const char *ccmd) {
     md2cmds_moveAbs( "moveAbs backLight.intensity 0");
     md2cmds_moveAbs( "moveAbs cryo 0");
     md2cmds_moveAbs( "moveAbs fluo 0");
+
+    if( md2cmds_move_wait( 60.0))
+      lsevents_send_event( "Mode dataCollection Aborted");
+    else
+      lsevents_send_event( "Mode dataCollection Done");
+
   } else if( strcmp( mode, "beamLocation") == 0) {
+
+    lsevents_send_event( "Mode beamLocation Starting");
+
     md2cmds_moveAbs( "moveAbs kappa 0");
     md2cmds_moveAbs( "moveAbs omega 0");
     lspmac_move_or_jog_preset_queue( apery, "In", 1);
@@ -452,7 +630,16 @@ void md2cmds_phase_change( const char *ccmd) {
     md2cmds_moveAbs( "moveAbs cam.zoom 1");
     md2cmds_moveAbs( "moveAbs cryo 0");
     md2cmds_moveAbs( "moveAbs fluo 0");
+
+    if( md2cmds_move_wait( 60.0))
+      lsevents_send_event( "Mode beamLocation Aborted");
+    else
+      lsevents_send_event( "Mode beamLocation Done");
+
   } else if( strcmp( mode, "safe") == 0) {
+
+    lsevents_send_event( "Mode safe Starting");
+
     md2cmds_moveAbs( "moveAbs kappa 0");
     md2cmds_moveAbs( "moveAbs omega 0");
     lspmac_move_or_jog_preset_queue( apery, "In", 1);
@@ -464,8 +651,12 @@ void md2cmds_phase_change( const char *ccmd) {
     md2cmds_moveAbs( "moveAbs cam.zoom 1");
     md2cmds_moveAbs( "moveAbs cryo 0");
     md2cmds_moveAbs( "moveAbs fluo 0");
-  }
 
+    if( md2cmds_move_wait( 60.0))
+      lsevents_send_event( "Mode safe Aborted");
+    else
+      lsevents_send_event( "Mode safe Done");
+  }
   
   free( cmd);
 }
@@ -531,6 +722,31 @@ void md2cmds_maybe_done_moving_cb( char *event) {
 }
 
 
+/** Track motors homing
+ */
+void md2cmds_maybe_done_homing_cb( char *event) {
+  pthread_mutex_lock( &md2cmds_homing_mutex);
+  
+  if( strstr( event, "Homing") == NULL) {
+    if( md2cmds_homing_count != -1)
+      md2cmds_homing_count = 1;
+    else
+      md2cmds_homing_count++;
+  } else {
+    if( md2cmds_homing_count > 0)
+      md2cmds_homing_count--;
+  }
+
+  if( md2cmds_homing_count != 0)
+    lsredis_setstr( md2cmds_md_status_code, "%s", "4");
+
+  if( md2cmds_homing_count == 0)
+    pthread_cond_signal( &md2cmds_homing_cond);
+  
+  pthread_mutex_unlock( &md2cmds_homing_mutex);
+}
+
+
 
 void md2cmds_kappaphi_move( double kappa_deg, double phi_deg) {
   int kc, pc;
@@ -554,6 +770,7 @@ void md2cmds_kappaphi_move( double kappa_deg, double phi_deg) {
  */
 void md2cmds_collect() {
   long long skey;	//!< index of shot to be taken
+  double exp_time;      //!< Exposure time (saved to compute shutter timeout)
   double p170;		//!< start cnts
   double p171;		//!< delta cnts
   double p173;		//!< omega velocity cnts/msec
@@ -565,6 +782,8 @@ void md2cmds_collect() {
   double max_accel;	//!< maximum acceleration allowed for omega
   double kappa_pos;	//!< current kappa position in case we need to move phi only
   double phi_pos;	//!< current phi position in case we need to move kappa only
+  struct timespec now, timeout;	//!< setup timeouts for shutter
+  int err;
 
   u2c         = lsredis_getd( omega->u2c);
   neutral_pos = lsredis_getd( omega->neutral_pos);
@@ -572,7 +791,12 @@ void md2cmds_collect() {
 
   md2cmds_move_prep();
   md2cmds_organs_move_presets( "In", "In", "In", "In", "Cover");
-  md2cmds_move_wait();
+  //
+  if( md2cmds_move_wait( 30.0)) {
+    lslogging_log_message( "md2cmds_collect: Timed out waiting for organs to move.  Aborting data collection.");
+    lsevents_send_event( "Data Colection Aborted");
+    return;
+  }
 
   //
   // reset shutter has opened flag
@@ -582,6 +806,8 @@ void md2cmds_collect() {
   while( 1) {
     lspg_nextshot_call();
     lspg_nextshot_wait();
+
+    exp_time = lspg_nextshot.dsexp;
 
     if( lspg_nextshot.no_rows_returned) {
       lspg_nextshot_done();
@@ -608,7 +834,11 @@ void md2cmds_collect() {
 	lslogging_log_message( "md2cmds_collect: moving center to cx=%f, cy=%f, ax=%f, ay=%f, az=%f",lspg_nextshot.cx, lspg_nextshot.cy, lspg_nextshot.ax, lspg_nextshot.ay, lspg_nextshot.az);
 	md2cmds_move_prep();
 	md2cmds_mvcenter_move( lspg_nextshot.cx, lspg_nextshot.cy, lspg_nextshot.ax, lspg_nextshot.ay, lspg_nextshot.az);
-	md2cmds_move_wait();
+	if( md2cmds_move_wait( 2.0)) {
+	  lslogging_log_message( "md2cmds_collect: Timed out waiting for alignment or centering stage (or both) to stop moving.  Aborting data collection.");
+	  lsevents_send_event( "Data Colection Aborted");
+	  return;
+	}
       }
     }
 
@@ -622,7 +852,11 @@ void md2cmds_collect() {
       lslogging_log_message( "md2cmds_collect: move phy/kappa: kappa=%f  phi=%f", kappa_pos, phi_pos);
       md2cmds_move_prep();
       md2cmds_kappaphi_move( kappa_pos, phi_pos);
-      md2cmds_move_wait();
+      if( md2cmds_move_wait( 30.0)) {
+	  lslogging_log_message( "md2cmds_collect: Timed out waiting for kappa or phi (or both) to stop moving.  Aborting data collection.");
+	  lsevents_send_event( "Data Colection Aborted");
+	  return;
+      }	
     }
 
   
@@ -661,33 +895,72 @@ void md2cmds_collect() {
     // make sure our opened flag is down
     // wait for the p3001=0 command to be noticed
     //
+    clock_gettime( CLOCK_REALTIME, &now);
+    timeout.tv_sec  = now.tv_sec + 10;
+    timeout.tv_nsec = now.tv_nsec;
+
+    err = 0;
     pthread_mutex_lock( &lspmac_shutter_mutex);
-    while( lspmac_shutter_has_opened == 1)
-      pthread_cond_wait( &lspmac_shutter_cond, &lspmac_shutter_mutex);
+    while( err == 0 && lspmac_shutter_has_opened == 1)
+      err = pthread_cond_timedwait( &lspmac_shutter_cond, &lspmac_shutter_mutex, &timeout);
     pthread_mutex_unlock( &lspmac_shutter_mutex);
+
+    if( err == ETIMEDOUT) {
+      pthread_mutex_unlock( &lspmac_shutter_mutex);
+      lslogging_log_message( "md2cmds_collect: Timed out waiting for shutter to open.  Data collection aborted.");
+      lsevents_send_event( "Data Collection Aborted");
+      return;
+    }
 
     //
     // Start the exposure
     //
-    lspmac_SockSendDPline( NULL, "&1 P170=%.1f P171=%.1f P173=%.1f P174=0 P175=%.1f P176=0 P177=1 P178=0 P180=%.1f M431=1 &1B131R",
+    md2cmds_move_prep();
+    lspmac_SockSendDPline( "Exposure", "&1 P170=%.1f P171=%.1f P173=%.1f P174=0 P175=%.1f P176=0 P177=1 P178=0 P180=%.1f M431=1 &1B131R",
 			     p170,     p171,     p173,            p175,                          p180);
 
-
-
+    //
+    // We could look for the "Exposure command accepted" event at this point.
+    //
     //
     // wait for the shutter to open
     //
+    clock_gettime( CLOCK_REALTIME, &now);
+    timeout.tv_sec  = now.tv_sec + 10;
+    timeout.tv_nsec = now.tv_nsec;
+
+    err = 0;
     pthread_mutex_lock( &lspmac_shutter_mutex);
-    while( lspmac_shutter_has_opened == 0)
-      pthread_cond_wait( &lspmac_shutter_cond, &lspmac_shutter_mutex);
+    while( err == 0 && lspmac_shutter_has_opened == 0)
+      err = pthread_cond_timedwait( &lspmac_shutter_cond, &lspmac_shutter_mutex, &timeout);
+
+    if( err == ETIMEDOUT) {
+      pthread_mutex_unlock( &lspmac_shutter_mutex);
+      lslogging_log_message( "md2cmds_collect: Timed out waiting for shutter to open.  Data collection aborted.");
+      lsevents_send_event( "Data Collection Aborted");
+      return;
+    }
 
 
     //
     // wait for the shutter to close
     //
-    while( lspmac_shutter_state == 1)
-      pthread_cond_wait( &lspmac_shutter_cond, &lspmac_shutter_mutex);
+    clock_gettime( CLOCK_REALTIME, &now);
+    timeout.tv_sec  = now.tv_sec + 4 + exp_time;	// hopefully 4 seconds is long enough to never catch a legitimate shutter close and short enough to bail when something is really wrong
+    timeout.tv_nsec = now.tv_nsec;
+
+    err = 0;
+    while( err == 0 && lspmac_shutter_state == 1)
+      err = pthread_cond_timedwait( &lspmac_shutter_cond, &lspmac_shutter_mutex, &timeout);
     pthread_mutex_unlock( &lspmac_shutter_mutex);
+
+
+    if( err == ETIMEDOUT) {
+      pthread_mutex_unlock( &lspmac_shutter_mutex);
+      lslogging_log_message( "md2cmds_collect: Timed out waiting for shutter to close.  Data collection aborted.");
+      lsevents_send_event( "Data Collection Aborted");
+      return;
+    }
 
 
     //
@@ -706,6 +979,15 @@ void md2cmds_collect() {
     lspmac_SockSendDPline( NULL, "P3001=0");
 
     //
+    // Wait for omega to stop moving
+    //
+    if( md2cmds_move_wait( 10.0)) {
+      lslogging_log_message( "md2cmds_collect: Giving up waiting for omega to stop moving. Data collection aborted.");
+      lsevents_send_event( "Data Colection Aborted");
+      return;
+    }
+
+    //
     // Move the center/alignment stages to the next position
     //
     // TODO: position omega for the next shot.  During data collection the motion program
@@ -722,10 +1004,12 @@ void md2cmds_collect() {
 	 (fabs( lspg_nextshot.az2 - alignz->position) > 0.1)) {
 
 	center_request = 1;
+	md2cmds_move_prep();
 	md2cmds_mvcenter_move( lspg_nextshot.cx, lspg_nextshot.cy, lspg_nextshot.ax, lspg_nextshot.ay, lspg_nextshot.az);
       }
     }
   }
+  lsevents_send_event( "Data Collection Done");
 }
 
 /** Spin 360 and make a video (recenter first, maybe)
@@ -743,17 +1027,21 @@ void md2cmds_rotate() {
   //
   // get the new center information
   //
-  lslogging_log_message( "md2cmds_rotate: calling getcenter");
   lspg_getcenter_call();
-
-  lslogging_log_message( "md2cmds_rotate: wait for getcenter");
   lspg_getcenter_wait();
 
 
-  lslogging_log_message( "md2cmds_rotate: moving backlight up");
   // put up the back light
   blight_ud->moveAbs( blight_ud, 1);
 
+  md2cmds_move_prep();
+  md2cmds_home_prep();
+
+  //
+  // make sure omega is homed
+  //
+  lspmac_home1_queue( omega);
+  //
   if( lspg_getcenter.no_rows_returned) {
     //
     // Always specify zoom even if no other center information is found
@@ -819,8 +1107,19 @@ void md2cmds_rotate() {
   lspg_getcenter_done();
 
 
-  // Omega was just homed before we mounted the sample, don't do it again here
-  
+  if( md2cmds_home_wait( 20.0)) {
+    lslogging_log_message( "md2cmds_rotate: homing motors timed out.  Rotate aborted");
+    lsevents_send_event( "Rotate Aborted");
+    return;
+  }
+
+  if( md2cmds_move_wait( 20.0)) {
+    lslogging_log_message( "md2cmds_rotate: moving motors timed out.  Rotate aborted");
+    lsevents_send_event( "Rotate Aborted");
+    return;
+  }
+
+
   // Report new center positions
   cx = lspmac_getPosition( cenx);
   cy = lspmac_getPosition( ceny);
@@ -828,8 +1127,6 @@ void md2cmds_rotate() {
   ay = lspmac_getPosition( aligny);
   az = lspmac_getPosition( alignz);
   lspg_query_push( NULL, "SELECT px.applycenter( %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f)", cx, cy, ax, ay, az, lspmac_getPosition(kappa), lspmac_getPosition( phi));
-
-  lspmac_moveabs_wait( zoom);
 
   lslogging_log_message( "md2cmds_rotate: done with applycenter");
   lspmac_video_rotate( 4.0);
@@ -846,8 +1143,6 @@ void md2cmds_rotate_cb( char *event) {
 
   localtime_r( &(omega_zero_time.tv_sec), &t);
   
-  lslogging_log_message( "md2cmds_rotate_cb: Here I am");
-
   usecs = omega_zero_time.tv_nsec / 1000;
   lspg_query_push( NULL, "SELECT px.trigcam('%d-%d-%d %d:%d:%d.%06d', %d, 0.0, 90.0)",
 		   t.tm_year+1900, t.tm_mon+1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec, usecs,
@@ -860,7 +1155,7 @@ void md2cmds_rotate_cb( char *event) {
 void md2cmds_maybe_rotate_done_cb( char *event) {
   if( rotating) {
     rotating = 0;
-    lspmac_home1_queue( omega);
+    lsevents_send_event( "Rotate Done");
   }
 }
 
@@ -1021,13 +1316,20 @@ void md2cmds_coordsys_7_stopped_cb( char *event) {
 /** Initialize the md2cmds module
  */
 void md2cmds_init() {
-  memset( md2cmds_cmd, 0, sizeof( md2cmds_cmd));
+  pthread_mutexattr_t mutex_initializer;
 
-  pthread_mutex_init( &md2cmds_mutex, NULL);
+  pthread_mutexattr_init( &mutex_initializer);
+  pthread_mutexattr_settype( &mutex_initializer, PTHREAD_MUTEX_RECURSIVE);
+
+  pthread_mutex_init( &md2cmds_mutex, &mutex_initializer);
   pthread_cond_init( &md2cmds_cond, NULL);
 
-  pthread_mutex_init( &md2cmds_moving_mutex, NULL);
+
+  pthread_mutex_init( &md2cmds_moving_mutex, &mutex_initializer);
   pthread_cond_init(  &md2cmds_moving_cond, NULL);
+
+  pthread_mutex_init( &md2cmds_homing_mutex, &mutex_initializer);
+  pthread_cond_init(  &md2cmds_homing_cond, NULL);
 
   md2cmds_md_status_code = lsredis_get_obj( "md2_status_code");
   lsredis_setstr( md2cmds_md_status_code, "7");
@@ -1040,6 +1342,7 @@ void md2cmds_run() {
   lsevents_add_listener( "omega crossed zero",        md2cmds_rotate_cb);
   lsevents_add_listener( "omega In Position",         md2cmds_maybe_rotate_done_cb);
   lsevents_add_listener( ".+ (Moving|In Position)",   md2cmds_maybe_done_moving_cb);
+  lsevents_add_listener( "(.+) (Homing|Homed)",       md2cmds_maybe_done_homing_cb);
   lsevents_add_listener( "capz (Moving|In Position)", md2cmds_time_capz_cb);
   lsevents_add_listener( "Coordsys 1 Stopped",        md2cmds_coordsys_1_stopped_cb);
   lsevents_add_listener( "Coordsys 2 Stopped",        md2cmds_coordsys_2_stopped_cb);

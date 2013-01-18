@@ -126,9 +126,13 @@ typedef struct lspmac_motor_struct {
   lsredis_obj_t *home;		//!< pmac commands to home motor
   lsredis_obj_t *inactive_init;	//!< pmac commands to inactivate the motor
   lsredis_obj_t *max_accel;	//!< our maximum acceleration (cts/msec^2)
+  lsredis_obj_t *max_pos;	//!< our maximum position (soft limit)
   lsredis_obj_t *max_speed;	//!< our maximum speed (cts/msec)
+  lsredis_obj_t *min_pos;	//!< our minimum position (soft limit)
   lsredis_obj_t *motor_num;	//!< pmac motor number
   lsredis_obj_t *neutral_pos;	//!< zero offset
+  lsredis_obj_t *pos_limit_hit; //!< positive limit status
+  lsredis_obj_t *neg_limit_hit; //!< negative limit status
   lsredis_obj_t *precision;	//!< moves of less than this amount may be ignored
   lsredis_obj_t *printf_fmt;	//!< printf format
   lsredis_obj_t *redis_fmt;	//!< special format string to create text array for putting the position back into redis
@@ -140,7 +144,7 @@ typedef struct lspmac_motor_struct {
   char *write_fmt;		//!< Format string to write requested position to PMAC used for binary io
   int *read_ptr;		//!< With read_mask finds bit to read for binary i/o
   int read_mask;		//!< With read_ptr find bit to read for binary i/o
-  void (*moveAbs)( struct lspmac_motor_struct *, double);	//!< function to move the motor
+  int (*moveAbs)( struct lspmac_motor_struct *, double);	//!< function to move the motor
   double *lut;			//!< lookup table (instead of u2c)
   int  nlut;			//!< length of lut
   WINDOW *win;			//!< our ncurses window
@@ -520,13 +524,13 @@ extern void lspg_zoom_lut_call();
 extern int  lspmac_getBIPosition( lspmac_bi_t *);
 extern void lspmac_home1_queue(	lspmac_motor_t *mp);
 extern void lspmac_init( int, int);
-extern void lspmac_jogabs_queue( lspmac_motor_t *, double);
-extern void lspmac_move_or_jog_abs_queue( lspmac_motor_t *mp, double requested_position,int use_jo);
-extern void lspmac_move_or_jog_preset_queue( lspmac_motor_t *, char *, int);
+extern int lspmac_jogabs_queue( lspmac_motor_t *, double);
+extern int lspmac_move_or_jog_abs_queue( lspmac_motor_t *mp, double requested_position,int use_jo);
+extern int lspmac_move_or_jog_preset_queue( lspmac_motor_t *, char *, int);
 extern void lspmac_move_or_jog_queue( lspmac_motor_t *, double, int);
 extern void lspmac_move_preset_queue( lspmac_motor_t *mp, char *preset_name);
-extern void lspmac_moveabs_queue( lspmac_motor_t *, double);
-extern void lspmac_moveabs_wait(lspmac_motor_t *mp);
+extern int lspmac_moveabs_queue( lspmac_motor_t *, double);
+extern int lspmac_moveabs_wait(lspmac_motor_t *mp, double timeout);
 extern void lspmac_run();
 extern void lspmac_video_rotate( double secs);
 extern int  lsredis_cmpnstr( lsredis_obj_t *p, char *s, int n);
