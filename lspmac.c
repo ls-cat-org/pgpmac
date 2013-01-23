@@ -1966,6 +1966,22 @@ void lspmac_SockSendDPline( char *event, char *fmt, ...) {
   pthread_mutex_unlock( &lspmac_ascii_mutex);
 }
 
+void lspmac_SockSendDPControlCharCB( pmac_cmd_queue_t *cmd, int nreceived, char *buf) {
+  if( cmd->event != NULL && *(cmd->event))
+    lsevents_send_event( "%s accepted", cmd->event);
+}
+
+/** use dpram ascii interface to send a control character
+ */
+void lspmac_SockSendDPControlChar( char *event, char c) {
+  uint16_t buff;
+
+  buff = 0x07 & c;
+  lspmac_send_command( VR_UPLOAD, VR_PMAC_SETMEM, 0x0e9e, 0, 2, (char *)&buff, lspmac_SockSendDPControlCharCB, 1, event);
+  lsevents_send_event( "%s queued", event);
+}
+
+
 void lspmac_SockSendDPqueue() {
   lspmac_dpascii_queue_t *qp;
   uint32_t mask;
@@ -1990,6 +2006,24 @@ void lspmac_SockSendDPqueue() {
   if( qp->event != NULL && *(qp->event) != 0)
     lsevents_send_event( "%s queued", qp->event);
 }
+
+/** abort motion and try to recover
+ */
+void lspmac_abort() {
+  lspmac_motor_t *mp;
+  int i;
+
+  lspmac_SockSendDPControlChar( "Abort Request", 0x01);
+  
+  for( i=0; i<lspmac_nmotors; i++) {
+    mp = &(lspmac_motors[i]);
+    if( lsredis_getl(mp->motor_num) >=1 && mp->max_speed != NULL) {
+	lspmac_SockSendDPline( NULL, "i%d22=%d", lsredis_getl(mp->motor_num), lsredis_getl( mp->max_speed));
+      }
+  }
+
+}
+
 
 
 /** Receive the values of all the I variables
@@ -2321,7 +2355,7 @@ int lspmac_movezoom_queue(
  *  \param mp lspmac motor pointer
  *  \param name Name of the preset to use
  */
-void lspmac_move_preset_queue( lspmac_motor_t *mp, char *preset_name) {
+int lspmac_move_preset_queue( lspmac_motor_t *mp, char *preset_name) {
   double pos;
   int err;
 
@@ -2329,10 +2363,15 @@ void lspmac_move_preset_queue( lspmac_motor_t *mp, char *preset_name) {
 
   err = lsredis_find_preset( mp->name, preset_name, &pos);
   if( err == 0)
-    return;
+    return 1;
 
-  mp->moveAbs( mp, pos);
-  lslogging_log_message( "lspmac_move_preset_queue: moving %s to preset '%s' (%f)", mp->name, preset_name, pos);
+  err = mp->moveAbs( mp, pos);
+  if( !err)
+    lslogging_log_message( "lspmac_move_preset_queue: moving %s to preset '%s' (%f)", mp->name, preset_name, pos);
+  //
+  // the abort event should have been sent in moveAbs
+  //
+  return err;
 }
 
 /** see if the motor is within tolerance of the preset
@@ -2372,7 +2411,7 @@ int lspmac_moveabs_fshut_queue(
   mp->requested_pos_cnts = requested_position;
   if( requested_position != 0) {
     //
-    // ScanEnable=0, ManualEnable=1, ManualOn=1
+   // ScanEnable=0, ManualEnable=1, ManualOn=1
     //
     lspmac_SockSendDPline( mp->name, "M1124=0 M1125=1 M1126=1");
   } else {
@@ -2599,7 +2638,7 @@ int lspmac_move_or_jog_abs_queue(
     // Shouldn't try moving a motor that's in trouble
     //
     pthread_mutex_unlock( &(mp->mutex));
-    lslogging_log_message( "lspmac_move_or_jog_abs_queue: %s  u2c=%f  requested position=%f  min allowed=%f  max allowed=%f", mp->name, u2c, min_pos, max_pos);
+    lslogging_log_message( "lspmac_move_or_jog_abs_queue: %s  u2c=%f  requested position=%f  min allowed=%f  max allowed=%f", mp->name, u2c, requested_position, min_pos, max_pos);
     lsevents_send_event( "%s Move Aborted", mp->name);
     return 1;
   }
