@@ -1,4 +1,4 @@
-.TH "md2cmds.c" 3 "Thu Jan 17 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "md2cmds.c" 3 "Tue Jan 22 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -16,13 +16,23 @@ Implements commands to run the md2 diffractometer attached to a PMAC controled b
 
 .in +1c
 .ti -1c
+.RI "void \fBmd2cmds_home_prep\fP ()"
+.br
+.ti -1c
+.RI "int \fBmd2cmds_home_wait\fP (double timeout_secs)"
+.br
+.ti -1c
 .RI "void \fBmd2cmds_move_prep\fP ()"
 .br
 .RI "\fIprepare for new movements \fP"
 .ti -1c
-.RI "void \fBmd2cmds_move_wait\fP ()"
+.RI "int \fBmd2cmds_move_wait\fP (double timeout_secs)"
 .br
 .RI "\fIWait for all the motions requested to complete\&. \fP"
+.ti -1c
+.RI "int \fBmd2cmds_is_moving\fP ()"
+.br
+.RI "\fIreturns non-zero if we think a motor is moving, 0 otherwise \fP"
 .ti -1c
 .RI "double \fBmd2cmds_prep_axis\fP (\fBlspmac_motor_t\fP *mp, double pos)"
 .br
@@ -34,7 +44,7 @@ Implements commands to run the md2 diffractometer attached to a PMAC controled b
 .br
 .RI "\fITransfer a sample\&. \fP"
 .ti -1c
-.RI "void \fBmd2cmds_moveAbs\fP (const char *ccmd)"
+.RI "int \fBmd2cmds_moveAbs\fP (const char *ccmd)"
 .br
 .RI "\fIMove a motor to the position requested\&. \fP"
 .ti -1c
@@ -49,6 +59,10 @@ Implements commands to run the md2 diffractometer attached to a PMAC controled b
 .RI "void \fBmd2cmds_maybe_done_moving_cb\fP (char *event)"
 .br
 .RI "\fITrack how many motors are moving\&. \fP"
+.ti -1c
+.RI "void \fBmd2cmds_maybe_done_homing_cb\fP (char *event)"
+.br
+.RI "\fITrack motors homing\&. \fP"
 .ti -1c
 .RI "void \fBmd2cmds_kappaphi_move\fP (double kappa_deg, double phi_deg)"
 .br
@@ -82,6 +96,9 @@ Implements commands to run the md2 diffractometer attached to a PMAC controled b
 .RI "\fITime the capillary motion for the transfer routine\&. \fP"
 .ti -1c
 .RI "int \fBmd2cmds_action_queue\fP (double timeout, char *action)"
+.br
+.ti -1c
+.RI "void \fBmd2cmds_abort\fP ()"
 .br
 .ti -1c
 .RI "void \fBmd2cmds_action_wait\fP ()"
@@ -141,6 +158,18 @@ Implements commands to run the md2 diffractometer attached to a PMAC controled b
 .br
 .RI "\fImessage passing between md2cmds and pg \fP"
 .ti -1c
+.RI "int \fBmd2cmds_homing_count\fP = 0"
+.br
+.RI "\fIWe've asked a motor to home\&. \fP"
+.ti -1c
+.RI "pthread_cond_t \fBmd2cmds_homing_cond\fP"
+.br
+.RI "\fIcoordinate homing and homed \fP"
+.ti -1c
+.RI "pthread_mutex_t \fBmd2cmds_homing_mutex\fP"
+.br
+.RI "\fIour mutex; \fP"
+.ti -1c
 .RI "int \fBmd2cmds_moving_count\fP = 0"
 .br
 .ti -1c
@@ -185,10 +214,44 @@ All Rights Reserved
 Definition in file \fBmd2cmds\&.c\fP\&.
 .SH "Function Documentation"
 .PP 
+.SS "void md2cmds_abort ()"
+
+.PP
+Definition at line 1268 of file md2cmds\&.c\&.
+.PP
+.nf
+                     {
+  //
+  // First priority is to close the shutter
+  //
+  if( fshut->moveAbs( fshut, 0))
+    lslogging_log_message( 'md2cmds_abort: for some reason the shutter close requested failed\&.  Proceeding anyway\&.');
+
+  //
+  // Now stop all the motors
+  //
+  lspmac_abort();
+  if( md2cmds_move_wait( 10\&.0))
+    lslogging_log_message( 'md2cmds_abort: Some motors did not appear to stop\&.  Proceding with reset anyway');
+
+  //
+  // Now try to close the shutter (again)
+  //
+  if( fshut->moveAbs( fshut, 0))
+    lslogging_log_message( 'md2cmds_abort: for some reason the shutter close requested failed (2)\&.  Proceeding anyway\&.');
+  
+  //
+  // Force the motion flags down
+  //
+  lspmac_SockSendDPline( NULL, 'm5075=0');
+  
+
+}
+.fi
 .SS "int md2cmds_action_queue (doubletimeout, char *action)"
 
 .PP
-Definition at line 932 of file md2cmds\&.c\&.
+Definition at line 1233 of file md2cmds\&.c\&.
 .PP
 .nf
                                                         {
@@ -231,7 +294,7 @@ Definition at line 932 of file md2cmds\&.c\&.
 .PP
 pause until md2cmds_worker has finished running the command 
 .PP
-Definition at line 969 of file md2cmds\&.c\&.
+Definition at line 1298 of file md2cmds\&.c\&.
 .PP
 .nf
                            {
@@ -244,7 +307,7 @@ Definition at line 969 of file md2cmds\&.c\&.
 .PP
 Move centering and alignment tables as requested TODO: Implement\&. 
 .PP
-Definition at line 896 of file md2cmds\&.c\&.
+Definition at line 1197 of file md2cmds\&.c\&.
 .PP
 .nf
                       {
@@ -254,6 +317,8 @@ Definition at line 896 of file md2cmds\&.c\&.
 
 .PP
 Collect some data\&. < index of shot to be taken
+.PP
+< Exposure time (saved to compute shutter timeout)
 .PP
 < start cnts
 .PP
@@ -275,13 +340,16 @@ Collect some data\&. < index of shot to be taken
 .PP
 < current kappa position in case we need to move phi only
 .PP
-< current phi position in case we need to move kappa only 
+< current phi position in case we need to move kappa only
 .PP
-Definition at line 555 of file md2cmds\&.c\&.
+< setup timeouts for shutter 
+.PP
+Definition at line 777 of file md2cmds\&.c\&.
 .PP
 .nf
                        {
   long long skey;       
+  double exp_time;      
   double p170;          
   double p171;          
   double p173;          
@@ -293,6 +361,8 @@ Definition at line 555 of file md2cmds\&.c\&.
   double max_accel;     
   double kappa_pos;     
   double phi_pos;       
+  struct timespec now, timeout; 
+  int err;
 
   u2c         = lsredis_getd( omega->u2c);
   neutral_pos = lsredis_getd( omega->neutral_pos);
@@ -300,7 +370,12 @@ Definition at line 555 of file md2cmds\&.c\&.
 
   md2cmds_move_prep();
   md2cmds_organs_move_presets( 'In', 'In', 'In', 'In', 'Cover');
-  md2cmds_move_wait();
+  //
+  if( md2cmds_move_wait( 30\&.0)) {
+    lslogging_log_message( 'md2cmds_collect: Timed out waiting for organs to move\&.  Aborting data collection\&.');
+    lsevents_send_event( 'Data Colection Aborted');
+    return;
+  }
 
   //
   // reset shutter has opened flag
@@ -310,6 +385,8 @@ Definition at line 555 of file md2cmds\&.c\&.
   while( 1) {
     lspg_nextshot_call();
     lspg_nextshot_wait();
+
+    exp_time = lspg_nextshot\&.dsexp;
 
     if( lspg_nextshot\&.no_rows_returned) {
       lspg_nextshot_done();
@@ -336,7 +413,11 @@ Definition at line 555 of file md2cmds\&.c\&.
         lslogging_log_message( 'md2cmds_collect: moving center to cx=%f, cy=%f, ax=%f, ay=%f, az=%f',lspg_nextshot\&.cx, lspg_nextshot\&.cy, lspg_nextshot\&.ax, lspg_nextshot\&.ay, lspg_nextshot\&.az);
         md2cmds_move_prep();
         md2cmds_mvcenter_move( lspg_nextshot\&.cx, lspg_nextshot\&.cy, lspg_nextshot\&.ax, lspg_nextshot\&.ay, lspg_nextshot\&.az);
-        md2cmds_move_wait();
+        if( md2cmds_move_wait( 2\&.0)) {
+          lslogging_log_message( 'md2cmds_collect: Timed out waiting for alignment or centering stage (or both) to stop moving\&.  Aborting data collection\&.');
+          lsevents_send_event( 'Data Colection Aborted');
+          return;
+        }
       }
     }
 
@@ -350,7 +431,11 @@ Definition at line 555 of file md2cmds\&.c\&.
       lslogging_log_message( 'md2cmds_collect: move phy/kappa: kappa=%f  phi=%f', kappa_pos, phi_pos);
       md2cmds_move_prep();
       md2cmds_kappaphi_move( kappa_pos, phi_pos);
-      md2cmds_move_wait();
+      if( md2cmds_move_wait( 30\&.0)) {
+          lslogging_log_message( 'md2cmds_collect: Timed out waiting for kappa or phi (or both) to stop moving\&.  Aborting data collection\&.');
+          lsevents_send_event( 'Data Colection Aborted');
+          return;
+      } 
     }
 
   
@@ -389,33 +474,72 @@ Definition at line 555 of file md2cmds\&.c\&.
     // make sure our opened flag is down
     // wait for the p3001=0 command to be noticed
     //
+    clock_gettime( CLOCK_REALTIME, &now);
+    timeout\&.tv_sec  = now\&.tv_sec + 10;
+    timeout\&.tv_nsec = now\&.tv_nsec;
+
+    err = 0;
     pthread_mutex_lock( &lspmac_shutter_mutex);
-    while( lspmac_shutter_has_opened == 1)
-      pthread_cond_wait( &lspmac_shutter_cond, &lspmac_shutter_mutex);
+    while( err == 0 && lspmac_shutter_has_opened == 1)
+      err = pthread_cond_timedwait( &lspmac_shutter_cond, &lspmac_shutter_mutex, &timeout);
     pthread_mutex_unlock( &lspmac_shutter_mutex);
+
+    if( err == ETIMEDOUT) {
+      pthread_mutex_unlock( &lspmac_shutter_mutex);
+      lslogging_log_message( 'md2cmds_collect: Timed out waiting for shutter to open\&.  Data collection aborted\&.');
+      lsevents_send_event( 'Data Collection Aborted');
+      return;
+    }
 
     //
     // Start the exposure
     //
-    lspmac_SockSendDPline( NULL, '&1 P170=%\&.1f P171=%\&.1f P173=%\&.1f P174=0 P175=%\&.1f P176=0 P177=1 P178=0 P180=%\&.1f M431=1 &1B131R',
+    md2cmds_move_prep();
+    lspmac_SockSendDPline( 'Exposure', '&1 P170=%\&.1f P171=%\&.1f P173=%\&.1f P174=0 P175=%\&.1f P176=0 P177=1 P178=0 P180=%\&.1f M431=1 &1B131R',
                              p170,     p171,     p173,            p175,                          p180);
 
-
-
+    //
+    // We could look for the 'Exposure command accepted' event at this point\&.
+    //
     //
     // wait for the shutter to open
     //
+    clock_gettime( CLOCK_REALTIME, &now);
+    timeout\&.tv_sec  = now\&.tv_sec + 10;
+    timeout\&.tv_nsec = now\&.tv_nsec;
+
+    err = 0;
     pthread_mutex_lock( &lspmac_shutter_mutex);
-    while( lspmac_shutter_has_opened == 0)
-      pthread_cond_wait( &lspmac_shutter_cond, &lspmac_shutter_mutex);
+    while( err == 0 && lspmac_shutter_has_opened == 0)
+      err = pthread_cond_timedwait( &lspmac_shutter_cond, &lspmac_shutter_mutex, &timeout);
+
+    if( err == ETIMEDOUT) {
+      pthread_mutex_unlock( &lspmac_shutter_mutex);
+      lslogging_log_message( 'md2cmds_collect: Timed out waiting for shutter to open\&.  Data collection aborted\&.');
+      lsevents_send_event( 'Data Collection Aborted');
+      return;
+    }
 
 
     //
     // wait for the shutter to close
     //
-    while( lspmac_shutter_state == 1)
-      pthread_cond_wait( &lspmac_shutter_cond, &lspmac_shutter_mutex);
+    clock_gettime( CLOCK_REALTIME, &now);
+    timeout\&.tv_sec  = now\&.tv_sec + 4 + exp_time;  // hopefully 4 seconds is long enough to never catch a legitimate shutter close and short enough to bail when something is really wrong
+    timeout\&.tv_nsec = now\&.tv_nsec;
+
+    err = 0;
+    while( err == 0 && lspmac_shutter_state == 1)
+      err = pthread_cond_timedwait( &lspmac_shutter_cond, &lspmac_shutter_mutex, &timeout);
     pthread_mutex_unlock( &lspmac_shutter_mutex);
+
+
+    if( err == ETIMEDOUT) {
+      pthread_mutex_unlock( &lspmac_shutter_mutex);
+      lslogging_log_message( 'md2cmds_collect: Timed out waiting for shutter to close\&.  Data collection aborted\&.');
+      lsevents_send_event( 'Data Collection Aborted');
+      return;
+    }
 
 
     //
@@ -434,6 +558,15 @@ Definition at line 555 of file md2cmds\&.c\&.
     lspmac_SockSendDPline( NULL, 'P3001=0');
 
     //
+    // Wait for omega to stop moving
+    //
+    if( md2cmds_move_wait( 10\&.0)) {
+      lslogging_log_message( 'md2cmds_collect: Giving up waiting for omega to stop moving\&. Data collection aborted\&.');
+      lsevents_send_event( 'Data Colection Aborted');
+      return;
+    }
+
+    //
     // Move the center/alignment stages to the next position
     //
     // TODO: position omega for the next shot\&.  During data collection the motion program
@@ -450,16 +583,18 @@ Definition at line 555 of file md2cmds\&.c\&.
          (fabs( lspg_nextshot\&.az2 - alignz->position) > 0\&.1)) {
 
         center_request = 1;
+        md2cmds_move_prep();
         md2cmds_mvcenter_move( lspg_nextshot\&.cx, lspg_nextshot\&.cy, lspg_nextshot\&.ax, lspg_nextshot\&.ay, lspg_nextshot\&.az);
       }
     }
   }
+  lsevents_send_event( 'Data Collection Done');
 }
 .fi
 .SS "void md2cmds_coordsys_1_stopped_cb (char *event)"
 
 .PP
-Definition at line 1007 of file md2cmds\&.c\&.
+Definition at line 1338 of file md2cmds\&.c\&.
 .PP
 .nf
                                                  {
@@ -468,7 +603,7 @@ Definition at line 1007 of file md2cmds\&.c\&.
 .SS "void md2cmds_coordsys_2_stopped_cb (char *event)"
 
 .PP
-Definition at line 1009 of file md2cmds\&.c\&.
+Definition at line 1340 of file md2cmds\&.c\&.
 .PP
 .nf
                                                  {
@@ -477,7 +612,7 @@ Definition at line 1009 of file md2cmds\&.c\&.
 .SS "void md2cmds_coordsys_3_stopped_cb (char *event)"
 
 .PP
-Definition at line 1011 of file md2cmds\&.c\&.
+Definition at line 1342 of file md2cmds\&.c\&.
 .PP
 .nf
                                                  {
@@ -486,7 +621,7 @@ Definition at line 1011 of file md2cmds\&.c\&.
 .SS "void md2cmds_coordsys_4_stopped_cb (char *event)"
 
 .PP
-Definition at line 1013 of file md2cmds\&.c\&.
+Definition at line 1344 of file md2cmds\&.c\&.
 .PP
 .nf
                                                  {
@@ -495,7 +630,7 @@ Definition at line 1013 of file md2cmds\&.c\&.
 .SS "void md2cmds_coordsys_5_stopped_cb (char *event)"
 
 .PP
-Definition at line 1015 of file md2cmds\&.c\&.
+Definition at line 1346 of file md2cmds\&.c\&.
 .PP
 .nf
                                                  {
@@ -504,10 +639,70 @@ Definition at line 1015 of file md2cmds\&.c\&.
 .SS "void md2cmds_coordsys_7_stopped_cb (char *event)"
 
 .PP
-Definition at line 1017 of file md2cmds\&.c\&.
+Definition at line 1348 of file md2cmds\&.c\&.
 .PP
 .nf
                                                  {
+}
+.fi
+.SS "void md2cmds_home_prep ()"
+
+.PP
+Definition at line 34 of file md2cmds\&.c\&.
+.PP
+.nf
+                         {
+  pthread_mutex_lock( &md2cmds_homing_mutex);
+  md2cmds_homing_count = -1;
+  pthread_mutex_unlock( &md2cmds_homing_mutex);
+}
+.fi
+.SS "int md2cmds_home_wait (doubletimeout_secs)"
+
+.PP
+Definition at line 41 of file md2cmds\&.c\&.
+.PP
+.nf
+                                            {
+  struct timespec timeout, now;
+  double isecs, fsecs;
+  int err;
+
+  clock_gettime( CLOCK_REALTIME, &now);
+
+  fsecs = modf( timeout_secs, &isecs);
+
+  timeout\&.tv_sec  = now\&.tv_sec  + (long)floor( isecs);
+  timeout\&.tv_nsec = now\&.tv_nsec + (long)floor( fsecs * 1\&.0e9);
+  
+  timeout\&.tv_sec  += timeout\&.tv_nsec / 1000000000;
+  timeout\&.tv_nsec %= 1000000000;
+
+  err = 0;
+  pthread_mutex_lock( &md2cmds_homing_mutex);
+  while( err == 0 && md2cmds_homing_count == -1)
+    err = pthread_cond_timedwait( &md2cmds_homing_cond, &md2cmds_homing_mutex, &timeout);
+
+  if( err != 0) {
+    if( err != ETIMEDOUT) {
+      lslogging_log_message( 'md2cmds_home_wait: unexpected error from timedwait: %d  tv_sec %ld   tv_nsec %ld', err, timeout\&.tv_sec, timeout\&.tv_nsec);
+    }
+    pthread_mutex_unlock( &md2cmds_homing_mutex);
+    return 1;
+  }
+
+  err = 0;
+  while( err == 0 && md2cmds_homing_count > 0)
+    err = pthread_cond_timedwait( &md2cmds_homing_cond, &md2cmds_homing_mutex, &timeout);
+  pthread_mutex_unlock( &md2cmds_homing_mutex);
+
+  if( err != 0) {
+    if( err != ETIMEDOUT)
+      lslogging_log_message( 'md2cmds_home_wait: unexpected error from timedwait: %d', err);
+    
+    return 1;
+  } 
+  return 0;
 }
 .fi
 .SS "void md2cmds_init ()"
@@ -515,26 +710,51 @@ Definition at line 1017 of file md2cmds\&.c\&.
 .PP
 Initialize the md2cmds module\&. 
 .PP
-Definition at line 1023 of file md2cmds\&.c\&.
+Definition at line 1354 of file md2cmds\&.c\&.
 .PP
 .nf
                     {
-  memset( md2cmds_cmd, 0, sizeof( md2cmds_cmd));
+  pthread_mutexattr_t mutex_initializer;
 
-  pthread_mutex_init( &md2cmds_mutex, NULL);
+  pthread_mutexattr_init( &mutex_initializer);
+  pthread_mutexattr_settype( &mutex_initializer, PTHREAD_MUTEX_RECURSIVE);
+
+  pthread_mutex_init( &md2cmds_mutex, &mutex_initializer);
   pthread_cond_init( &md2cmds_cond, NULL);
 
-  pthread_mutex_init( &md2cmds_moving_mutex, NULL);
+
+  pthread_mutex_init( &md2cmds_moving_mutex, &mutex_initializer);
   pthread_cond_init(  &md2cmds_moving_cond, NULL);
+
+  pthread_mutex_init( &md2cmds_homing_mutex, &mutex_initializer);
+  pthread_cond_init(  &md2cmds_homing_cond, NULL);
 
   md2cmds_md_status_code = lsredis_get_obj( 'md2_status_code');
   lsredis_setstr( md2cmds_md_status_code, '7');
 }
 .fi
+.SS "int md2cmds_is_moving ()"
+
+.PP
+returns non-zero if we think a motor is moving, 0 otherwise 
+.PP
+Definition at line 138 of file md2cmds\&.c\&.
+.PP
+.nf
+                        {
+  int rtn;
+
+  pthread_mutex_lock( &md2cmds_moving_mutex);
+  rtn = md2cmds_moving_count != 0;
+  pthread_mutex_unlock( &md2cmds_moving_mutex);
+
+  return rtn;
+}
+.fi
 .SS "void md2cmds_kappaphi_move (doublekappa_deg, doublephi_deg)"
 
 .PP
-Definition at line 535 of file md2cmds\&.c\&.
+Definition at line 757 of file md2cmds\&.c\&.
 .PP
 .nf
                                                               {
@@ -554,12 +774,42 @@ Definition at line 535 of file md2cmds\&.c\&.
   lspmac_SockSendDPline( 'kappaphi_move', '&7 Q20=%d Q21=%d Q100=64', kc, pc);
 }
 .fi
+.SS "void md2cmds_maybe_done_homing_cb (char *event)"
+
+.PP
+Track motors homing\&. 
+.PP
+Definition at line 733 of file md2cmds\&.c\&.
+.PP
+.nf
+                                                {
+  pthread_mutex_lock( &md2cmds_homing_mutex);
+  
+  if( strstr( event, 'Homing') == NULL) {
+    if( md2cmds_homing_count != -1)
+      md2cmds_homing_count = 1;
+    else
+      md2cmds_homing_count++;
+  } else {
+    if( md2cmds_homing_count > 0)
+      md2cmds_homing_count--;
+  }
+
+  if( md2cmds_homing_count != 0)
+    lsredis_setstr( md2cmds_md_status_code, '%s', '4');
+
+  if( md2cmds_homing_count == 0)
+    pthread_cond_signal( &md2cmds_homing_cond);
+  
+  pthread_mutex_unlock( &md2cmds_homing_mutex);
+}
+.fi
 .SS "void md2cmds_maybe_done_moving_cb (char *event)"
 
 .PP
 Track how many motors are moving\&. 
 .PP
-Definition at line 507 of file md2cmds\&.c\&.
+Definition at line 704 of file md2cmds\&.c\&.
 .PP
 .nf
                                                 {
@@ -593,13 +843,13 @@ Definition at line 507 of file md2cmds\&.c\&.
 .PP
 Now that we are done with the 360 rotation lets rehome right quick\&. 
 .PP
-Definition at line 860 of file md2cmds\&.c\&.
+Definition at line 1161 of file md2cmds\&.c\&.
 .PP
 .nf
                                                 {
   if( rotating) {
     rotating = 0;
-    lspmac_home1_queue( omega);
+    lsevents_send_event( 'Rotate Done');
   }
 }
 .fi
@@ -608,7 +858,7 @@ Definition at line 860 of file md2cmds\&.c\&.
 .PP
 prepare for new movements 
 .PP
-Definition at line 31 of file md2cmds\&.c\&.
+Definition at line 86 of file md2cmds\&.c\&.
 .PP
 .nf
                          {
@@ -617,25 +867,55 @@ Definition at line 31 of file md2cmds\&.c\&.
   pthread_mutex_unlock( &md2cmds_moving_mutex);
 }
 .fi
-.SS "void md2cmds_move_wait ()"
+.SS "int md2cmds_move_wait (doubletimeout_secs)"
 
 .PP
-Wait for all the motions requested to complete\&. 
+Wait for all the motions requested to complete\&. \fBParameters:\fP
+.RS 4
+\fItimeout_sec\fP Double value of seconds to wait There are two waits involved: First to wait for the first 'Moving' to be seen and second to wait for the last 'In Position'\&. This means that the maximum wait is twice the timeout value\&.
+.RE
 .PP
-Definition at line 39 of file md2cmds\&.c\&.
+returns 0 on success and 1 if we timedout\&. 
+.PP
+Definition at line 101 of file md2cmds\&.c\&.
 .PP
 .nf
-                         {
-  pthread_mutex_lock( &md2cmds_moving_mutex);
-  while( md2cmds_moving_count == -1)
-    pthread_cond_wait( &md2cmds_moving_cond, &md2cmds_moving_mutex);
+                                            {
+  double isecs, fsecs;
+  struct timespec timeout, now;
+  int err;
 
-  while( md2cmds_moving_count > 0)
-    pthread_cond_wait( &md2cmds_moving_cond, &md2cmds_moving_mutex);
+  clock_gettime( CLOCK_REALTIME, &now);
+
+  fsecs = modf( timeout_secs, &isecs);
+
+  timeout\&.tv_sec  = now\&.tv_sec  + (long)floor( isecs);
+  timeout\&.tv_nsec = now\&.tv_nsec + (long)floor( fsecs * 1\&.0e9);
+  
+  timeout\&.tv_sec  += timeout\&.tv_nsec / 1000000000;
+  timeout\&.tv_nsec %= 1000000000;
+
+  err = 0;
+  pthread_mutex_lock( &md2cmds_moving_mutex);
+  while( err == 0 && md2cmds_moving_count == -1)
+    err = pthread_cond_timedwait( &md2cmds_moving_cond, &md2cmds_moving_mutex, &timeout);
+
+  if( err == ETIMEDOUT) {
+    pthread_mutex_unlock( &md2cmds_moving_mutex);
+    return 1;
+  }
+
+  err = 0;
+  while( err == 0 && md2cmds_moving_count > 0)
+    err = pthread_cond_timedwait( &md2cmds_moving_cond, &md2cmds_moving_mutex, &timeout);
   pthread_mutex_unlock( &md2cmds_moving_mutex);
+
+  if( err == ETIMEDOUT)
+    return 1;
+  return 0;
 }
 .fi
-.SS "void md2cmds_moveAbs (const char *ccmd)"
+.SS "int md2cmds_moveAbs (const char *ccmd)"
 
 .PP
 Move a motor to the position requested\&. \fBParameters:\fP
@@ -645,7 +925,7 @@ Move a motor to the position requested\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 278 of file md2cmds\&.c\&.
+Definition at line 413 of file md2cmds\&.c\&.
 .PP
 .nf
                        {
@@ -658,10 +938,11 @@ Definition at line 278 of file md2cmds\&.c\&.
   char *endptr;
   lspmac_motor_t *mp;
   int i;
+  int err;
 
   // ignore nothing
   if( ccmd == NULL || *ccmd == 0) {
-    return;
+    return 1;
   }
 
   // operate on a copy of the string since strtok_r will modify its argument
@@ -674,7 +955,7 @@ Definition at line 278 of file md2cmds\&.c\&.
   if( ignore == NULL) {
     lslogging_log_message( 'md2cmds_moveAbs: ignoring blank command '%s'', cmd);
     free( cmd);
-    return;
+    return 1;
   }
 
   // The first string should be 'moveAbs' cause that's how we got here\&.
@@ -684,7 +965,7 @@ Definition at line 278 of file md2cmds\&.c\&.
   if( mtr == NULL) {
     lslogging_log_message( 'md2cmds moveAbs error: missing motor name');
     free( cmd);
-    return;
+    return 1;
   }
 
   mp = NULL;
@@ -697,14 +978,14 @@ Definition at line 278 of file md2cmds\&.c\&.
   if( mp == NULL) {
     lslogging_log_message( 'md2cmds moveAbs error: cannot find motor %s', mtr);
     free( cmd);
-    return;
+    return 1;
   }
 
   pos = strtok_r( NULL, ' ', &ptr);
   if( pos == NULL) {
     lslogging_log_message( 'md2cmds moveAbs error: missing position');
     free( cmd);
-    return;
+    return 1;
   }
 
   fpos = strtod( pos, &endptr);
@@ -713,18 +994,19 @@ Definition at line 278 of file md2cmds\&.c\&.
     // Maybe we have a preset\&.  Give it a whirl
     // In any case we are done here\&.
     //
-    lspmac_move_preset_queue( mp, pos);
+    err = lspmac_move_preset_queue( mp, pos);
     free( cmd);
-    return;
+    return err;
   }
 
   if( mp != NULL && mp->moveAbs != NULL) {
     wprintw( term_output, 'Moving %s to %f\n', mtr, fpos);
     wnoutrefresh( term_output);
-    mp->moveAbs( mp, fpos);
+    err = mp->moveAbs( mp, fpos);
   }
 
   free( cmd);
+  return err;
 }
 .fi
 .SS "void md2cmds_mvcenter_move (doublecx, doublecy, doubleax, doubleay, doubleaz)"
@@ -745,7 +1027,7 @@ Move the centering and alignment tables\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 480 of file md2cmds\&.c\&.
+Definition at line 677 of file md2cmds\&.c\&.
 .PP
 .nf
                              {
@@ -770,7 +1052,7 @@ Definition at line 480 of file md2cmds\&.c\&.
 .SS "void md2cmds_organs_move_presets (char *pay, char *paz, char *pcy, char *pcz, char *psz)"
 
 .PP
-Definition at line 75 of file md2cmds\&.c\&.
+Definition at line 173 of file md2cmds\&.c\&.
 .PP
 .nf
                                                                                          {
@@ -839,7 +1121,7 @@ Move md2 devices to a preconfigured state\&. EMBL calls these states 'phases' an
 .PP
 
 .PP
-Definition at line 365 of file md2cmds\&.c\&.
+Definition at line 502 of file md2cmds\&.c\&.
 .PP
 .nf
                                              {
@@ -847,6 +1129,7 @@ Definition at line 365 of file md2cmds\&.c\&.
   char *ignore;
   char *ptr;
   char *mode;
+  int err;
   
   if( ccmd == NULL || *ccmd == 0)
     return;
@@ -873,18 +1156,34 @@ Definition at line 365 of file md2cmds\&.c\&.
   }
   
   if( strcmp( mode, 'manualMount') == 0) {
-    lspmac_move_or_jog_preset_queue( kappa, 'manualMount', 1);
-    lspmac_move_or_jog_preset_queue( omega, 'manualMount', 0);
-    lspmac_move_or_jog_abs_queue( phi,   0\&.0, 0);
-    lspmac_move_or_jog_preset_queue( aperz, 'Cover', 1);
-    lspmac_move_or_jog_preset_queue( capz,  'Cover', 1);
-    lspmac_move_or_jog_preset_queue( scint, 'Cover', 1);
-    md2cmds_moveAbs( 'moveAbs backLight 0');
-    md2cmds_moveAbs( 'moveAbs backLight\&.intensity 0');
-    md2cmds_moveAbs( 'moveAbs cryo 1');
-    md2cmds_moveAbs( 'moveAbs fluo 0');
-    md2cmds_moveAbs( 'moveAbs cam\&.zoom 1');
+    lsevents_send_event( 'Mode manualMount Starting');
+
+    //
+    // Try all motions, flag errors at the end
+    //
+    md2cmds_move_prep();
+    err =  lspmac_move_or_jog_preset_queue( kappa, 'manualMount', 1);
+    err += lspmac_move_or_jog_preset_queue( omega, 'manualMount', 0);
+    err += lspmac_move_or_jog_abs_queue( phi,   0\&.0, 0);
+    err += lspmac_move_or_jog_preset_queue( aperz, 'Cover', 1);
+    err += lspmac_move_or_jog_preset_queue( capz,  'Cover', 1);
+    err += lspmac_move_or_jog_preset_queue( scint, 'Cover', 1);
+    err += md2cmds_moveAbs( 'moveAbs backLight 0');
+    err += md2cmds_moveAbs( 'moveAbs backLight\&.intensity 0');
+    err += md2cmds_moveAbs( 'moveAbs cryo 1');
+    err += md2cmds_moveAbs( 'moveAbs fluo 0');
+    err += md2cmds_moveAbs( 'moveAbs cam\&.zoom 1');
+
+    if( md2cmds_move_wait( 60\&.0) || err)
+      lsevents_send_event( 'Mode manualMount Aborted');
+    else
+      lsevents_send_event( 'Mode manualMount Done');
+
   } else if( strcmp( mode, 'robotMount') == 0) {
+
+    lsevents_send_event( 'Mode robotMount Starting');
+    md2cmds_home_prep();
+    md2cmds_move_prep();
     lspmac_home1_queue( kappa);
     lspmac_home1_queue( omega);
     lspmac_move_or_jog_abs_queue( phi,  0\&.0, 0);
@@ -897,7 +1196,18 @@ Definition at line 365 of file md2cmds\&.c\&.
     md2cmds_moveAbs( 'moveAbs cryo 1');
     md2cmds_moveAbs( 'moveAbs fluo 0');
     md2cmds_moveAbs( 'moveAbs cam\&.zoom 1');
+    if( md2cmds_home_wait( 60\&.0)) {
+      lsevents_send_event( 'Mode robotMount Aborted');
+    } else {
+      if( md2cmds_move_wait( 60\&.0))
+        lsevents_send_event( 'Mode robotMount Aborted');
+      else
+        lsevents_send_event( 'Mode robotMount Done');
+    }
   } else if( strcmp( mode, 'center') == 0) {
+    lsevents_send_event( 'Mode center Starting');
+
+    md2cmds_move_prep();
     md2cmds_moveAbs( 'moveAbs kappa 0');
     md2cmds_moveAbs( 'moveAbs omega 0');
     lspmac_move_or_jog_abs_queue(    phi,   0\&.0, 0);
@@ -910,7 +1220,17 @@ Definition at line 365 of file md2cmds\&.c\&.
     md2cmds_moveAbs( 'moveAbs cam\&.zoom 1');
     md2cmds_moveAbs( 'moveAbs cryo 0');
     md2cmds_moveAbs( 'moveAbs fluo 0');
+
+    if( md2cmds_move_wait( 60\&.0))
+      lsevents_send_event( 'Mode center Aborted');
+    else
+      lsevents_send_event( 'Mode center Done');
+
   } else if( strcmp( mode, 'dataCollection') == 0) {
+
+    lsevents_send_event( 'Mode dataCollection Starting');
+
+    md2cmds_move_prep();
     lspmac_move_or_jog_preset_queue( apery, 'In', 1);
     lspmac_move_or_jog_preset_queue( aperz, 'In', 1);
     lspmac_move_or_jog_preset_queue( capy,  'In', 1);
@@ -920,7 +1240,16 @@ Definition at line 365 of file md2cmds\&.c\&.
     md2cmds_moveAbs( 'moveAbs backLight\&.intensity 0');
     md2cmds_moveAbs( 'moveAbs cryo 0');
     md2cmds_moveAbs( 'moveAbs fluo 0');
+
+    if( md2cmds_move_wait( 60\&.0))
+      lsevents_send_event( 'Mode dataCollection Aborted');
+    else
+      lsevents_send_event( 'Mode dataCollection Done');
+
   } else if( strcmp( mode, 'beamLocation') == 0) {
+
+    lsevents_send_event( 'Mode beamLocation Starting');
+
     md2cmds_moveAbs( 'moveAbs kappa 0');
     md2cmds_moveAbs( 'moveAbs omega 0');
     lspmac_move_or_jog_preset_queue( apery, 'In', 1);
@@ -932,7 +1261,16 @@ Definition at line 365 of file md2cmds\&.c\&.
     md2cmds_moveAbs( 'moveAbs cam\&.zoom 1');
     md2cmds_moveAbs( 'moveAbs cryo 0');
     md2cmds_moveAbs( 'moveAbs fluo 0');
+
+    if( md2cmds_move_wait( 60\&.0))
+      lsevents_send_event( 'Mode beamLocation Aborted');
+    else
+      lsevents_send_event( 'Mode beamLocation Done');
+
   } else if( strcmp( mode, 'safe') == 0) {
+
+    lsevents_send_event( 'Mode safe Starting');
+
     md2cmds_moveAbs( 'moveAbs kappa 0');
     md2cmds_moveAbs( 'moveAbs omega 0');
     lspmac_move_or_jog_preset_queue( apery, 'In', 1);
@@ -944,8 +1282,12 @@ Definition at line 365 of file md2cmds\&.c\&.
     md2cmds_moveAbs( 'moveAbs cam\&.zoom 1');
     md2cmds_moveAbs( 'moveAbs cryo 0');
     md2cmds_moveAbs( 'moveAbs fluo 0');
-  }
 
+    if( md2cmds_move_wait( 60\&.0))
+      lsevents_send_event( 'Mode safe Aborted');
+    else
+      lsevents_send_event( 'Mode safe Done');
+  }
   
   free( cmd);
 }
@@ -953,7 +1295,7 @@ Definition at line 365 of file md2cmds\&.c\&.
 .SS "double md2cmds_prep_axis (\fBlspmac_motor_t\fP *mp, doublepos)"
 
 .PP
-Definition at line 51 of file md2cmds\&.c\&.
+Definition at line 149 of file md2cmds\&.c\&.
 .PP
 .nf
                                                           {
@@ -983,7 +1325,7 @@ Definition at line 51 of file md2cmds\&.c\&.
 .PP
 Spin 360 and make a video (recenter first, maybe) 
 .PP
-Definition at line 734 of file md2cmds\&.c\&.
+Definition at line 1024 of file md2cmds\&.c\&.
 .PP
 .nf
                       {
@@ -998,17 +1340,21 @@ Definition at line 734 of file md2cmds\&.c\&.
   //
   // get the new center information
   //
-  lslogging_log_message( 'md2cmds_rotate: calling getcenter');
   lspg_getcenter_call();
-
-  lslogging_log_message( 'md2cmds_rotate: wait for getcenter');
   lspg_getcenter_wait();
 
 
-  lslogging_log_message( 'md2cmds_rotate: moving backlight up');
   // put up the back light
   blight_ud->moveAbs( blight_ud, 1);
 
+  md2cmds_move_prep();
+  md2cmds_home_prep();
+
+  //
+  // make sure omega is homed
+  //
+  lspmac_home1_queue( omega);
+  //
   if( lspg_getcenter\&.no_rows_returned) {
     //
     // Always specify zoom even if no other center information is found
@@ -1074,8 +1420,19 @@ Definition at line 734 of file md2cmds\&.c\&.
   lspg_getcenter_done();
 
 
-  // Omega was just homed before we mounted the sample, don't do it again here
-  
+  if( md2cmds_home_wait( 20\&.0)) {
+    lslogging_log_message( 'md2cmds_rotate: homing motors timed out\&.  Rotate aborted');
+    lsevents_send_event( 'Rotate Aborted');
+    return;
+  }
+
+  if( md2cmds_move_wait( 20\&.0)) {
+    lslogging_log_message( 'md2cmds_rotate: moving motors timed out\&.  Rotate aborted');
+    lsevents_send_event( 'Rotate Aborted');
+    return;
+  }
+
+
   // Report new center positions
   cx = lspmac_getPosition( cenx);
   cy = lspmac_getPosition( ceny);
@@ -1083,8 +1440,6 @@ Definition at line 734 of file md2cmds\&.c\&.
   ay = lspmac_getPosition( aligny);
   az = lspmac_getPosition( alignz);
   lspg_query_push( NULL, 'SELECT px\&.applycenter( %\&.3f, %\&.3f, %\&.3f, %\&.3f, %\&.3f, %\&.3f, %\&.3f)', cx, cy, ax, ay, az, lspmac_getPosition(kappa), lspmac_getPosition( phi));
-
-  lspmac_moveabs_wait( zoom);
 
   lslogging_log_message( 'md2cmds_rotate: done with applycenter');
   lspmac_video_rotate( 4\&.0);
@@ -1097,7 +1452,7 @@ Definition at line 734 of file md2cmds\&.c\&.
 .PP
 Tell the database about the time we went through omega=zero\&. This should trigger the video feed server to starting making a movie\&. 
 .PP
-Definition at line 843 of file md2cmds\&.c\&.
+Definition at line 1146 of file md2cmds\&.c\&.
 .PP
 .nf
                                      {
@@ -1106,8 +1461,6 @@ Definition at line 843 of file md2cmds\&.c\&.
 
   localtime_r( &(omega_zero_time\&.tv_sec), &t);
   
-  lslogging_log_message( 'md2cmds_rotate_cb: Here I am');
-
   usecs = omega_zero_time\&.tv_nsec / 1000;
   lspg_query_push( NULL, 'SELECT px\&.trigcam('%d-%d-%d %d:%d:%d\&.%06d', %d, 0\&.0, 90\&.0)',
                    t\&.tm_year+1900, t\&.tm_mon+1, t\&.tm_mday, t\&.tm_hour, t\&.tm_min, t\&.tm_sec, usecs,
@@ -1120,7 +1473,7 @@ Definition at line 843 of file md2cmds\&.c\&.
 .PP
 Start up the thread\&. 
 .PP
-Definition at line 1038 of file md2cmds\&.c\&.
+Definition at line 1376 of file md2cmds\&.c\&.
 .PP
 .nf
                    {
@@ -1128,6 +1481,7 @@ Definition at line 1038 of file md2cmds\&.c\&.
   lsevents_add_listener( 'omega crossed zero',        md2cmds_rotate_cb);
   lsevents_add_listener( 'omega In Position',         md2cmds_maybe_rotate_done_cb);
   lsevents_add_listener( '\&.+ (Moving|In Position)',   md2cmds_maybe_done_moving_cb);
+  lsevents_add_listener( '(\&.+) (Homing|Homed)',       md2cmds_maybe_done_homing_cb);
   lsevents_add_listener( 'capz (Moving|In Position)', md2cmds_time_capz_cb);
   lsevents_add_listener( 'Coordsys 1 Stopped',        md2cmds_coordsys_1_stopped_cb);
   lsevents_add_listener( 'Coordsys 2 Stopped',        md2cmds_coordsys_2_stopped_cb);
@@ -1142,7 +1496,7 @@ Definition at line 1038 of file md2cmds\&.c\&.
 .PP
 Fix up xscale and yscale when zoom changes\&. 
 .PP
-Definition at line 870 of file md2cmds\&.c\&.
+Definition at line 1171 of file md2cmds\&.c\&.
 .PP
 .nf
                                         {
@@ -1173,7 +1527,7 @@ Definition at line 870 of file md2cmds\&.c\&.
 .PP
 Time the capillary motion for the transfer routine\&. < track the time spent moving capz 
 .PP
-Definition at line 902 of file md2cmds\&.c\&.
+Definition at line 1203 of file md2cmds\&.c\&.
 .PP
 .nf
                                         {
@@ -1202,7 +1556,7 @@ Definition at line 902 of file md2cmds\&.c\&.
 .PP
 Transfer a sample\&. 
 .PP
-Definition at line 132 of file md2cmds\&.c\&.
+Definition at line 230 of file md2cmds\&.c\&.
 .PP
 .nf
                         {
@@ -1221,7 +1575,15 @@ Definition at line 132 of file md2cmds\&.c\&.
   // BLUMax sets up an abort dialogbox here\&.  Probably we should figure out how we are going to handle that\&.
   //
 
-  md2cmds_move_wait();
+  //
+  // Wait for motors to stop
+  //
+  if( md2cmds_is_moving()) {
+    lslogging_log_message( 'md2cmds_transfer: Waiting for previous motion to finish');
+    if( md2cmds_move_wait( 30\&.0)) {
+      lslogging_log_message( 'md2cmds_transfer: Timed out waiting for previous motion to finish\&.  Aborting transfer');
+    }
+  }
 
   //
   // get positions we'll be needed to report to postgres
@@ -1242,10 +1604,10 @@ Definition at line 132 of file md2cmds\&.c\&.
     
     // Here we assume moving the capilary is the rate limiting step in preparing the MD2\&.
     //
-    // TODO: look at factors in which something besides the capilary determines the time\&.
+    // TODO: look at factors in which something besides the capilary determines the time such as if the scintilator is out\&.
     //
-    // pretend we are going to zero instead of the 'Out' position\&.  This should be less than a 5% error
-    // and is probably not too horrible
+    // pretend we are going to zero instead of the 'Out' position\&.  We should probably arrange for
+    // neutralPosition such that 'Out' is zero\&.
     //
     // This also treats S curve acceleration as taking the same time as linear acceleration\&.
     //
@@ -1267,10 +1629,17 @@ Definition at line 132 of file md2cmds\&.c\&.
     blight_ud->moveAbs( fluo, 0);
   
   //
+  // Prepare for moving stuff
+  //
+  md2cmds_move_prep();
+
+  //
   // Put the organs into position
   //
   md2cmds_organs_move_presets( 'In', 'Cover', 'In', 'Cover', 'Cover');
 
+
+  md2cmds_home_prep();
 
   //
   // Home Kappa
@@ -1285,7 +1654,7 @@ Definition at line 132 of file md2cmds\&.c\&.
   //
   // wait for kappa cause we can't home phi until kappa's done
   //
-  lspmac_moveabs_wait( kappa);
+  lspmac_moveabs_wait( kappa, 60\&.0);
   
   //
   // Home phi (whatever that means)
@@ -1308,11 +1677,30 @@ Definition at line 132 of file md2cmds\&.c\&.
   lspg_starttransfer_done();
 
  
+  //
+  // Wait for the homing routines to finish
+  //
+  if( md2cmds_home_wait( 30\&.0)) {
+    lslogging_log_message( 'md2cmds_transfer: homing routines taking too long\&.  Aborting transfer\&.');
+    lsevents_send_event( 'Transfer Aborted');
+    return;
+  }
+
+  //
+  // Wait for all the motors to stop moving
+  //
+  if( md2cmds_move_wait( 30\&.0)) {
+    lslogging_log_message( 'md2cmds_transfer: We got bored waiting for the motors to stop\&.  Aborting transfer\&.  Later\&.');
+    lsevents_send_event( 'Transfer Aborted');
+    return;
+  }
+
   // TODO: check that all the motors are where we told them to go  
   //
 
   if( abort_now) {
     lslogging_log_message( 'md2cmds_transfer: Apparently there is a sample mounted already but we don't know where it is supposed to go');
+    lsevents_send_event( 'Transfer Aborted');
     return;
   }
   
@@ -1321,6 +1709,7 @@ Definition at line 132 of file md2cmds\&.c\&.
   //
   if( lspmac_getBIPosition( blight_down) != 1 ||lspmac_getBIPosition( fluor_back) != 1) {
     lslogging_log_message( 'md2cmds_transfer: It looks like either the back light is not down or the fluoescence dectector is not back');
+    lsevents_send_event( 'Transfer Aborted');
     return;
   }
 
@@ -1333,7 +1722,7 @@ Definition at line 132 of file md2cmds\&.c\&.
   // Move the cryo back
   //
   cryo->moveAbs( cryo, 1);
-  lspmac_moveabs_wait( cryo);
+  lspmac_moveabs_wait( cryo, 10\&.0);
 
   // simplest query yet!
   lspg_query_push( lspg_waitcryo_cb, 'SELECT px\&.dropairrights()');
@@ -1346,6 +1735,8 @@ Definition at line 132 of file md2cmds\&.c\&.
   // grab the airrights again
   //
   lspg_demandairrights_all();
+
+  lsevents_send_event( 'Transfer Done');
 }
 .fi
 .SS "void* md2cmds_worker (void *dummy)"
@@ -1363,7 +1754,7 @@ Our worker thread\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 976 of file md2cmds\&.c\&.
+Definition at line 1305 of file md2cmds\&.c\&.
 .PP
 .nf
                        {
@@ -1377,7 +1768,9 @@ Definition at line 976 of file md2cmds\&.c\&.
     while( md2cmds_cmd[0] == 0)
       pthread_cond_wait( &md2cmds_cond, &md2cmds_mutex);
 
-    if( strcmp( md2cmds_cmd, 'transfer') == 0) {
+    if( strcmp( md2cmds_cmd, 'abort') == 0) {
+      md2cmds_abort();
+    } else if( strcmp( md2cmds_cmd, 'transfer') == 0) {
       md2cmds_transfer();
     } else if( strcmp( md2cmds_cmd, 'collect') == 0) {
       md2cmds_collect();
@@ -1400,23 +1793,41 @@ Definition at line 976 of file md2cmds\&.c\&.
 .SS "double md2cmds_capz_moving_time = NAN\fC [static]\fP"
 
 .PP
-Definition at line 27 of file md2cmds\&.c\&.
+Definition at line 32 of file md2cmds\&.c\&.
 .SS "char md2cmds_cmd[\fBMD2CMDS_CMD_LENGTH\fP]"
 
 .PP
 our command; 
 .PP
-Definition at line 19 of file md2cmds\&.c\&.
+Definition at line 24 of file md2cmds\&.c\&.
 .SS "pthread_cond_t md2cmds_cond"
 
 .PP
 condition to signal when it's time to run an md2 command 
 .PP
 Definition at line 10 of file md2cmds\&.c\&.
+.SS "pthread_cond_t md2cmds_homing_cond"
+
+.PP
+coordinate homing and homed 
+.PP
+Definition at line 18 of file md2cmds\&.c\&.
+.SS "int md2cmds_homing_count = 0"
+
+.PP
+We've asked a motor to home\&. 
+.PP
+Definition at line 17 of file md2cmds\&.c\&.
+.SS "pthread_mutex_t md2cmds_homing_mutex"
+
+.PP
+our mutex; 
+.PP
+Definition at line 19 of file md2cmds\&.c\&.
 .SS "\fBlsredis_obj_t\fP* md2cmds_md_status_code"
 
 .PP
-Definition at line 21 of file md2cmds\&.c\&.
+Definition at line 26 of file md2cmds\&.c\&.
 .SS "pthread_cond_t md2cmds_moving_cond"
 
 .PP
@@ -1426,7 +1837,7 @@ Definition at line 14 of file md2cmds\&.c\&.
 .SS "int md2cmds_moving_count = 0"
 
 .PP
-Definition at line 17 of file md2cmds\&.c\&.
+Definition at line 22 of file md2cmds\&.c\&.
 .SS "pthread_mutex_t md2cmds_moving_mutex"
 
 .PP
@@ -1446,13 +1857,13 @@ Definition at line 11 of file md2cmds\&.c\&.
 .SS "pthread_t md2cmds_thread\fC [static]\fP"
 
 .PP
-Definition at line 23 of file md2cmds\&.c\&.
+Definition at line 28 of file md2cmds\&.c\&.
 .SS "int rotating = 0\fC [static]\fP"
 
 .PP
 flag: when omega is in position after a rotate we want to re-home omega 
 .PP
-Definition at line 25 of file md2cmds\&.c\&.
+Definition at line 30 of file md2cmds\&.c\&.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for LS-CAT PGPMAC from the source code\&.

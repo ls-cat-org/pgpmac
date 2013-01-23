@@ -34,9 +34,9 @@ var NAVTREEINDEX =
 [
 "annotated.html",
 "lspg_8c.html#a50458a014041a4118452802dfb303960",
-"lspmac_8c.html#ad6ae1e37afd118f24ab1c6878da53878",
-"pgpmac_8h.html#a6d9f550b9ba36acd237925164abe3ffc",
-"structlspg__starttransfer__struct.html#af01b6bac6db9830719aef63e552312eb"
+"lspmac_8c.html#ad52a5dbc2f06247eca7619195936b85f",
+"pgpmac_8h.html#a57547d211906c981ef20257eba99f8df",
+"structlspg__nextshot__struct.html#afaf9bdf89a68e7f479969072643e55eb"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

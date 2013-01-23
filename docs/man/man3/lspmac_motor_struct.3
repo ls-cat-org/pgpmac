@@ -1,4 +1,4 @@
-.TH "lspmac_motor_struct" 3 "Thu Jan 17 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lspmac_motor_struct" 3 "Tue Jan 22 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -123,9 +123,17 @@ Motor information\&.
 .br
 .RI "\fIour maximum acceleration (cts/msec^2) \fP"
 .ti -1c
+.RI "\fBlsredis_obj_t\fP * \fBmax_pos\fP"
+.br
+.RI "\fIour maximum position (soft limit) \fP"
+.ti -1c
 .RI "\fBlsredis_obj_t\fP * \fBmax_speed\fP"
 .br
 .RI "\fIour maximum speed (cts/msec) \fP"
+.ti -1c
+.RI "\fBlsredis_obj_t\fP * \fBmin_pos\fP"
+.br
+.RI "\fIour minimum position (soft limit) \fP"
 .ti -1c
 .RI "\fBlsredis_obj_t\fP * \fBmotor_num\fP"
 .br
@@ -134,6 +142,14 @@ Motor information\&.
 .RI "\fBlsredis_obj_t\fP * \fBneutral_pos\fP"
 .br
 .RI "\fIzero offset \fP"
+.ti -1c
+.RI "\fBlsredis_obj_t\fP * \fBpos_limit_hit\fP"
+.br
+.RI "\fIpositive limit status \fP"
+.ti -1c
+.RI "\fBlsredis_obj_t\fP * \fBneg_limit_hit\fP"
+.br
+.RI "\fInegative limit status \fP"
 .ti -1c
 .RI "\fBlsredis_obj_t\fP * \fBprecision\fP"
 .br
@@ -179,7 +195,7 @@ Motor information\&.
 .br
 .RI "\fIWith read_ptr find bit to read for binary i/o\&. \fP"
 .ti -1c
-.RI "void(* \fBmoveAbs\fP )(struct \fBlspmac_motor_struct\fP *, double)"
+.RI "int(* \fBmoveAbs\fP )(struct \fBlspmac_motor_struct\fP *, double)"
 .br
 .RI "\fIfunction to move the motor \fP"
 .ti -1c
@@ -281,19 +297,31 @@ Definition at line 127 of file pgpmac\&.h\&.
 .PP
 lookup table (instead of u2c) 
 .PP
-Definition at line 144 of file pgpmac\&.h\&.
+Definition at line 148 of file pgpmac\&.h\&.
 .SS "\fBlsredis_obj_t\fP* lspmac_motor_struct::max_accel"
 
 .PP
 our maximum acceleration (cts/msec^2) 
 .PP
 Definition at line 128 of file pgpmac\&.h\&.
+.SS "\fBlsredis_obj_t\fP* lspmac_motor_struct::max_pos"
+
+.PP
+our maximum position (soft limit) 
+.PP
+Definition at line 129 of file pgpmac\&.h\&.
 .SS "\fBlsredis_obj_t\fP* lspmac_motor_struct::max_speed"
 
 .PP
 our maximum speed (cts/msec) 
 .PP
-Definition at line 129 of file pgpmac\&.h\&.
+Definition at line 130 of file pgpmac\&.h\&.
+.SS "\fBlsredis_obj_t\fP* lspmac_motor_struct::min_pos"
+
+.PP
+our minimum position (soft limit) 
+.PP
+Definition at line 131 of file pgpmac\&.h\&.
 .SS "int lspmac_motor_struct::motion_seen"
 
 .PP
@@ -305,13 +333,13 @@ Definition at line 107 of file pgpmac\&.h\&.
 .PP
 pmac motor number 
 .PP
-Definition at line 130 of file pgpmac\&.h\&.
-.SS "void(* lspmac_motor_struct::moveAbs)(struct \fBlspmac_motor_struct\fP *, double)"
+Definition at line 132 of file pgpmac\&.h\&.
+.SS "int(* lspmac_motor_struct::moveAbs)(struct \fBlspmac_motor_struct\fP *, double)"
 
 .PP
 function to move the motor 
 .PP
-Definition at line 143 of file pgpmac\&.h\&.
+Definition at line 147 of file pgpmac\&.h\&.
 .SS "pthread_mutex_t lspmac_motor_struct::mutex"
 
 .PP
@@ -324,24 +352,36 @@ Definition at line 102 of file pgpmac\&.h\&.
 Name of motor as refered by ls database kvs table\&. 
 .PP
 Definition at line 121 of file pgpmac\&.h\&.
+.SS "\fBlsredis_obj_t\fP* lspmac_motor_struct::neg_limit_hit"
+
+.PP
+negative limit status 
+.PP
+Definition at line 135 of file pgpmac\&.h\&.
 .SS "\fBlsredis_obj_t\fP* lspmac_motor_struct::neutral_pos"
 
 .PP
 zero offset 
 .PP
-Definition at line 131 of file pgpmac\&.h\&.
+Definition at line 133 of file pgpmac\&.h\&.
 .SS "int lspmac_motor_struct::nlut"
 
 .PP
 length of lut 
 .PP
-Definition at line 145 of file pgpmac\&.h\&.
+Definition at line 149 of file pgpmac\&.h\&.
 .SS "int lspmac_motor_struct::not_done"
 
 .PP
 set to 1 when request is queued, zero after motion has toggled 
 .PP
 Definition at line 104 of file pgpmac\&.h\&.
+.SS "\fBlsredis_obj_t\fP* lspmac_motor_struct::pos_limit_hit"
+
+.PP
+positive limit status 
+.PP
+Definition at line 134 of file pgpmac\&.h\&.
 .SS "double lspmac_motor_struct::position"
 
 .PP
@@ -359,13 +399,13 @@ Definition at line 108 of file pgpmac\&.h\&.
 .PP
 moves of less than this amount may be ignored 
 .PP
-Definition at line 132 of file pgpmac\&.h\&.
+Definition at line 136 of file pgpmac\&.h\&.
 .SS "\fBlsredis_obj_t\fP* lspmac_motor_struct::printf_fmt"
 
 .PP
 printf format 
 .PP
-Definition at line 133 of file pgpmac\&.h\&.
+Definition at line 137 of file pgpmac\&.h\&.
 .SS "void(* lspmac_motor_struct::read)(struct \fBlspmac_motor_struct\fP *)"
 
 .PP
@@ -377,25 +417,25 @@ Definition at line 105 of file pgpmac\&.h\&.
 .PP
 With read_ptr find bit to read for binary i/o\&. 
 .PP
-Definition at line 142 of file pgpmac\&.h\&.
+Definition at line 146 of file pgpmac\&.h\&.
 .SS "int* lspmac_motor_struct::read_ptr"
 
 .PP
 With read_mask finds bit to read for binary i/o\&. 
 .PP
-Definition at line 141 of file pgpmac\&.h\&.
+Definition at line 145 of file pgpmac\&.h\&.
 .SS "\fBlsredis_obj_t\fP* lspmac_motor_struct::redis_fmt"
 
 .PP
 special format string to create text array for putting the position back into redis 
 .PP
-Definition at line 134 of file pgpmac\&.h\&.
+Definition at line 138 of file pgpmac\&.h\&.
 .SS "\fBlsredis_obj_t\fP* lspmac_motor_struct::redis_position"
 
 .PP
 how we report our position to the world 
 .PP
-Definition at line 135 of file pgpmac\&.h\&.
+Definition at line 139 of file pgpmac\&.h\&.
 .SS "double lspmac_motor_struct::reported_position"
 
 .PP
@@ -443,37 +483,37 @@ Definition at line 118 of file pgpmac\&.h\&.
 .PP
 A talky version of the status\&. 
 .PP
-Definition at line 136 of file pgpmac\&.h\&.
+Definition at line 140 of file pgpmac\&.h\&.
 .SS "\fBlsredis_obj_t\fP* lspmac_motor_struct::u2c"
 
 .PP
 conversion from counts to units: 0\&.0 means not loaded yet 
 .PP
-Definition at line 137 of file pgpmac\&.h\&.
+Definition at line 141 of file pgpmac\&.h\&.
 .SS "\fBlsredis_obj_t\fP* lspmac_motor_struct::unit"
 
 .PP
 string to use as the units 
 .PP
-Definition at line 138 of file pgpmac\&.h\&.
+Definition at line 142 of file pgpmac\&.h\&.
 .SS "\fBlsredis_obj_t\fP* lspmac_motor_struct::update_resolution"
 
 .PP
 Change needs to be at least this big to report as a new position to the database\&. 
 .PP
-Definition at line 139 of file pgpmac\&.h\&.
+Definition at line 143 of file pgpmac\&.h\&.
 .SS "WINDOW* lspmac_motor_struct::win"
 
 .PP
 our ncurses window 
 .PP
-Definition at line 146 of file pgpmac\&.h\&.
+Definition at line 150 of file pgpmac\&.h\&.
 .SS "char* lspmac_motor_struct::write_fmt"
 
 .PP
 Format string to write requested position to PMAC used for binary io\&. 
 .PP
-Definition at line 140 of file pgpmac\&.h\&.
+Definition at line 144 of file pgpmac\&.h\&.
 
 .SH "Author"
 .PP 
