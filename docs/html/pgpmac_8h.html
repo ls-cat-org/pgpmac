@@ -2077,17 +2077,10 @@ Variables</h2></td></tr>
 
 <p>Definition at line <a class="el" href="lspmac_8c_source.html#l02012">2012</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                    {</div>
-<div class="line">  <a class="code" href="structlspmac__motor__struct.html" title="Motor information.">lspmac_motor_t</a> *mp;</div>
-<div class="line">  <span class="keywordtype">int</span> <a class="code" href="namespacemk__pgpmac__redis.html#afa643a23a5984fe44c2182ada3dfa401">i</a>;</div>
-<div class="line"></div>
+<div class="line">  <span class="comment">//</span></div>
+<div class="line">  <span class="comment">// Stop everything!  (consider ^O instead of ^A)</span></div>
+<div class="line">  <span class="comment">//</span></div>
 <div class="line">  <a class="code" href="lspmac_8c.html#a0575fc751cecf35ffe8b290ab483ac21" title="use dpram ascii interface to send a control character">lspmac_SockSendDPControlChar</a>( <span class="stringliteral">&quot;Abort Request&quot;</span>, 0x01);</div>
-<div class="line">  </div>
-<div class="line">  <span class="keywordflow">for</span>( i=0; i&lt;<a class="code" href="lspmac_8c.html#a56260f012c50a591ee7f97e500f16994" title="The number of motors we manage.">lspmac_nmotors</a>; i++) {</div>
-<div class="line">    mp = &amp;(<a class="code" href="lspmac_8c.html#a894c709ddd0652583d6db22e86282503" title="All our motors.">lspmac_motors</a>[<a class="code" href="namespacemk__pgpmac__redis.html#afa643a23a5984fe44c2182ada3dfa401">i</a>]);</div>
-<div class="line">    <span class="keywordflow">if</span>( <a class="code" href="lsredis_8c.html#a1923f998441f4f451204dfd214d52218">lsredis_getl</a>(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#ad6a51cca3c7e5f79168e5c33fd9e736b" title="pmac motor number">motor_num</a>) &gt;=1 &amp;&amp; mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a69e49769a1001665377efc7193d88a0a" title="our maximum speed (cts/msec)">max_speed</a> != NULL) {</div>
-<div class="line">        <a class="code" href="lspmac_8c.html#afab9e8f0502a92ee5cf93209af710f81" title="prepare (queue up) a line to send the dpram ascii command interface">lspmac_SockSendDPline</a>( NULL, <span class="stringliteral">&quot;i%d22=%d&quot;</span>, <a class="code" href="lsredis_8c.html#a1923f998441f4f451204dfd214d52218">lsredis_getl</a>(mp-&gt;<a class="code" href="structlspmac__motor__struct.html#ad6a51cca3c7e5f79168e5c33fd9e736b" title="pmac motor number">motor_num</a>), <a class="code" href="lsredis_8c.html#a1923f998441f4f451204dfd214d52218">lsredis_getl</a>( mp-&gt;<a class="code" href="structlspmac__motor__struct.html#a69e49769a1001665377efc7193d88a0a" title="our maximum speed (cts/msec)">max_speed</a>));</div>
-<div class="line">      }</div>
-<div class="line">  }</div>
 <div class="line"></div>
 <div class="line">}</div>
 </div><!-- fragment -->
@@ -2287,7 +2280,7 @@ Variables</h2></td></tr>
 
 <p>Initialize this module. </p>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l03075">3075</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l03132">3132</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                   {</div>
 <div class="line">  <a class="code" href="structmd2StatusStruct.html" title="The block of memory retrieved in a status request.">md2_status_t</a> *<a class="code" href="namespacemk__pgpmac__redis.html#a11daf2847f2dc94562b5b61b3f412574">p</a>;</div>
 <div class="line">  pthread_mutexattr_t mutex_initializer;</div>
@@ -2456,7 +2449,7 @@ Variables</h2></td></tr>
 
 <p>Use jog to move motor to requested position. </p>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02814">2814</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02871">2871</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                            {</div>
 <div class="line">  </div>
 <div class="line">  <span class="keywordflow">return</span> <a class="code" href="lspmac_8c.html#a2ab30559739e0232331f53d16c0cb5ac" title="Move method for normal stepper and servo motor objects Returns non-zero on abort, zero if OK...">lspmac_move_or_jog_abs_queue</a>( mp, requested_position, 1);</div>
@@ -2509,7 +2502,7 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02607">2607</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02664">2664</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                            {</div>
 <div class="line">  <span class="keywordtype">char</span> *fmt;                    </div>
 <div class="line">  <span class="keywordtype">int</span> q100;                     </div>
@@ -2706,7 +2699,7 @@ Variables</h2></td></tr>
 
 <p>move using a preset value returns 0 on success, non-zero on error </p>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02776">2776</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02833">2833</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                       {</div>
 <div class="line">  <span class="keywordtype">double</span> pos;</div>
 <div class="line">  <span class="keywordtype">int</span> err;</div>
@@ -2791,12 +2784,12 @@ Variables</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">mp</td><td>lspmac motor pointer </td></tr>
-    <tr><td class="paramname">name</td><td>Name of the preset to use </td></tr>
+    <tr><td class="paramname">preset_name</td><td>Name of the preset to use </td></tr>
   </table>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02358">2358</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02351">2351</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                                                     {</div>
 <div class="line">  <span class="keywordtype">double</span> pos;</div>
 <div class="line">  <span class="keywordtype">int</span> err;</div>
@@ -2844,7 +2837,7 @@ Variables</h2></td></tr>
 
 <p>Use coordinate system motion program, if available, to move motor to requested position. </p>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02804">2804</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02861">2861</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                            {</div>
 <div class="line">  </div>
 <div class="line">  <span class="keywordflow">return</span> <a class="code" href="lspmac_8c.html#a2ab30559739e0232331f53d16c0cb5ac" title="Move method for normal stepper and servo motor objects Returns non-zero on abort, zero if OK...">lspmac_move_or_jog_abs_queue</a>( mp, requested_position, 0);</div>
@@ -2877,16 +2870,17 @@ Variables</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Wait for motor to finish moving. </p>
-<p>Assume motion already queued, now just wait </p>
+<p>Assume motion already queued, now just wait</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramdir">[in]</td><td class="paramname">mp</td><td>The motor object to wait for </td></tr>
+    <tr><td class="paramname">mp</td><td>The motor object to wait for </td></tr>
+    <tr><td class="paramname">timeout_secs</td><td>The number of seconds to wait for. Fractional values fine. </td></tr>
   </table>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02826">2826</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
-<div class="fragment"><div class="line">                           {</div>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02886">2886</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<div class="fragment"><div class="line">                                                                  {</div>
 <div class="line">  <span class="keyword">struct </span>timespec timeout, <a class="code" href="lspmac_8c.html#a4bed9053319d1d2cad5cc03d0549e17f" title="used to ensure we do not send commands to the pmac too often. Only needed for non-DB commands...">now</a>;</div>
 <div class="line">  <span class="keywordtype">double</span> isecs, fsecs;</div>
 <div class="line">  <span class="keywordtype">int</span> err;</div>
@@ -2976,7 +2970,7 @@ Variables</h2></td></tr>
 
 <p>Start up the lspmac thread. </p>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l03454">3454</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l03511">3511</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                  {</div>
 <div class="line">  <span class="keywordtype">char</span> **inits;</div>
 <div class="line">  <a class="code" href="structlspmac__motor__struct.html" title="Motor information.">lspmac_motor_t</a> *mp;</div>
@@ -3191,7 +3185,7 @@ Variables</h2></td></tr>
 
 <p>Special motion program to collect centering video. </p>
 
-<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02575">2575</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
+<p>Definition at line <a class="el" href="lspmac_8c_source.html#l02568">2568</a> of file <a class="el" href="lspmac_8c_source.html">lspmac.c</a>.</p>
 <div class="fragment"><div class="line">                                       {</div>
 <div class="line">  <span class="keywordtype">double</span> q10;           <span class="comment">// starting position (counts)</span></div>
 <div class="line">  <span class="keywordtype">double</span> q11;           <span class="comment">// delta counts</span></div>
@@ -4080,7 +4074,7 @@ Variables</h2></td></tr>
 
 <p>Initialize the md2cmds module. </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l01354">1354</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l01356">1356</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                    {</div>
 <div class="line">  pthread_mutexattr_t mutex_initializer;</div>
 <div class="line"></div>
@@ -4118,7 +4112,7 @@ Variables</h2></td></tr>
 
 <p>Start up the thread. </p>
 
-<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l01376">1376</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
+<p>Definition at line <a class="el" href="md2cmds_8c_source.html#l01378">1378</a> of file <a class="el" href="md2cmds_8c_source.html">md2cmds.c</a>.</p>
 <div class="fragment"><div class="line">                   {</div>
 <div class="line">  pthread_create( &amp;<a class="code" href="md2cmds_8c.html#aa230921945149692de98fff15c01962f">md2cmds_thread</a>, NULL,              <a class="code" href="md2cmds_8c.html#ae967e769d23555a631f615e630f25b00" title="Our worker thread.">md2cmds_worker</a>, NULL);</div>
 <div class="line">  <a class="code" href="lsevents_8c.html#ab0617d3f0594b51d10e34bf397096654" title="Add a callback routine to listen for a specific event.">lsevents_add_listener</a>( <span class="stringliteral">&quot;omega crossed zero&quot;</span>,        <a class="code" href="md2cmds_8c.html#aa43887b7c9799bc88d51df13745d0e5c" title="Tell the database about the time we went through omega=zero.">md2cmds_rotate_cb</a>);</div>
@@ -5401,7 +5395,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="pgpmac_8h.html">pgpmac.h</a></li>
-    <li class="footer">Generated on Tue Jan 22 2013 22:41:06 for LS-CAT PGPMAC by
+    <li class="footer">Generated on Wed Jan 23 2013 10:19:09 for LS-CAT PGPMAC by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.2 </li>
   </ul>

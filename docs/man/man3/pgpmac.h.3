@@ -1,4 +1,4 @@
-.TH "pgpmac.h" 3 "Tue Jan 22 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "pgpmac.h" 3 "Wed Jan 23 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -1549,17 +1549,10 @@ Definition at line 2012 of file lspmac\&.c\&.
 .PP
 .nf
                     {
-  lspmac_motor_t *mp;
-  int i;
-
+  //
+  // Stop everything!  (consider ^O instead of ^A)
+  //
   lspmac_SockSendDPControlChar( 'Abort Request', 0x01);
-  
-  for( i=0; i<lspmac_nmotors; i++) {
-    mp = &(lspmac_motors[i]);
-    if( lsredis_getl(mp->motor_num) >=1 && mp->max_speed != NULL) {
-        lspmac_SockSendDPline( NULL, 'i%d22=%d', lsredis_getl(mp->motor_num), lsredis_getl( mp->max_speed));
-      }
-  }
 
 }
 .fi
@@ -1701,7 +1694,7 @@ Definition at line 1205 of file lspmac\&.c\&.
 .PP
 Initialize this module\&. 
 .PP
-Definition at line 3075 of file lspmac\&.c\&.
+Definition at line 3132 of file lspmac\&.c\&.
 .PP
 .nf
                    {
@@ -1849,7 +1842,7 @@ Definition at line 3075 of file lspmac\&.c\&.
 .PP
 Use jog to move motor to requested position\&. 
 .PP
-Definition at line 2814 of file lspmac\&.c\&.
+Definition at line 2871 of file lspmac\&.c\&.
 .PP
 .nf
                             {
@@ -1879,7 +1872,7 @@ Move method for normal stepper and servo motor objects Returns non-zero on abort
 .PP
 
 .PP
-Definition at line 2607 of file lspmac\&.c\&.
+Definition at line 2664 of file lspmac\&.c\&.
 .PP
 .nf
                             {
@@ -2049,7 +2042,7 @@ Definition at line 2607 of file lspmac\&.c\&.
 .PP
 move using a preset value returns 0 on success, non-zero on error 
 .PP
-Definition at line 2776 of file lspmac\&.c\&.
+Definition at line 2833 of file lspmac\&.c\&.
 .PP
 .nf
                                        {
@@ -2084,12 +2077,12 @@ Move a given motor to one of its preset positions\&. No movement if the preset i
 .RS 4
 \fImp\fP lspmac motor pointer 
 .br
-\fIname\fP Name of the preset to use 
+\fIpreset_name\fP Name of the preset to use 
 .RE
 .PP
 
 .PP
-Definition at line 2358 of file lspmac\&.c\&.
+Definition at line 2351 of file lspmac\&.c\&.
 .PP
 .nf
                                                                      {
@@ -2116,7 +2109,7 @@ Definition at line 2358 of file lspmac\&.c\&.
 .PP
 Use coordinate system motion program, if available, to move motor to requested position\&. 
 .PP
-Definition at line 2804 of file lspmac\&.c\&.
+Definition at line 2861 of file lspmac\&.c\&.
 .PP
 .nf
                             {
@@ -2127,17 +2120,21 @@ Definition at line 2804 of file lspmac\&.c\&.
 .SS "int lspmac_moveabs_wait (\fBlspmac_motor_t\fP *mp, doubletimeout_secs)"
 
 .PP
-Wait for motor to finish moving\&. Assume motion already queued, now just wait \fBParameters:\fP
+Wait for motor to finish moving\&. Assume motion already queued, now just wait
+.PP
+\fBParameters:\fP
 .RS 4
 \fImp\fP The motor object to wait for 
+.br
+\fItimeout_secs\fP The number of seconds to wait for\&. Fractional values fine\&. 
 .RE
 .PP
 
 .PP
-Definition at line 2826 of file lspmac\&.c\&.
+Definition at line 2886 of file lspmac\&.c\&.
 .PP
 .nf
-                           {
+                                                                  {
   struct timespec timeout, now;
   double isecs, fsecs;
   int err;
@@ -2215,7 +2212,7 @@ Definition at line 2826 of file lspmac\&.c\&.
 .PP
 Start up the lspmac thread\&. 
 .PP
-Definition at line 3454 of file lspmac\&.c\&.
+Definition at line 3511 of file lspmac\&.c\&.
 .PP
 .nf
                   {
@@ -2364,7 +2361,7 @@ Definition at line 1060 of file lspmac\&.c\&.
 .PP
 Special motion program to collect centering video\&. 
 .PP
-Definition at line 2575 of file lspmac\&.c\&.
+Definition at line 2568 of file lspmac\&.c\&.
 .PP
 .nf
                                        {
@@ -2914,7 +2911,7 @@ Definition at line 273 of file lstimer\&.c\&.
 .PP
 Initialize the md2cmds module\&. 
 .PP
-Definition at line 1354 of file md2cmds\&.c\&.
+Definition at line 1356 of file md2cmds\&.c\&.
 .PP
 .nf
                     {
@@ -2942,7 +2939,7 @@ Definition at line 1354 of file md2cmds\&.c\&.
 .PP
 Start up the thread\&. 
 .PP
-Definition at line 1376 of file md2cmds\&.c\&.
+Definition at line 1378 of file md2cmds\&.c\&.
 .PP
 .nf
                    {

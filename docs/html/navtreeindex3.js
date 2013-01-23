@@ -1,5 +1,6 @@
 var NAVTREEINDEX3 =
 {
+"pgpmac_8h.html#a565d1106e02cd035deacf10395ddefb9":[3,0,11,66],
 "pgpmac_8h.html#a57547d211906c981ef20257eba99f8df":[3,0,11,139],
 "pgpmac_8h.html#a589431b3a79c21c251fcb97cc9126991":[3,0,11,162],
 "pgpmac_8h.html#a5c50804e6019d47d91f3f1cb3ebd1f00":[3,0,11,133],
@@ -248,6 +249,5 @@ var NAVTREEINDEX3 =
 "structlspg__nextshot__struct.html#ae08ef74ea76e6e099a3ff6c7f845d337":[2,0,11,79],
 "structlspg__nextshot__struct.html#ae461439c2af31255227765c0fb61850f":[2,0,11,42],
 "structlspg__nextshot__struct.html#ae9d0cfdff6868e0ba9cd5acafbe133db":[2,0,11,69],
-"structlspg__nextshot__struct.html#aee9f8196dd9bcea832a60f2f0ea3a999":[2,0,11,43],
-"structlspg__nextshot__struct.html#af64a4e3f17752b5f1f05fb15d6f48382":[2,0,11,72]
+"structlspg__nextshot__struct.html#aee9f8196dd9bcea832a60f2f0ea3a999":[2,0,11,43]
 };

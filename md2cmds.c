@@ -90,10 +90,12 @@ void md2cmds_move_prep() {
 }
 
 /** Wait for all the motions requested to complete
- *  \param timeout_sec  Double value of seconds to wait
+ *
+ *  \param timeout_secs  Double value of seconds to wait
+ *
  *  There are two waits involved: First to wait for the first "Moving"
- *  to be seen and second to wait for the last "In Position".  This means that
- *  the maximum wait is twice the timeout value.
+ *  to be seen and second to wait for the last "In Position".
+ *  The timeout specified here is the sum of the two.
  *
  * returns 0 on success and 1 if we timedout.
  *

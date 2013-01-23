@@ -2010,17 +2010,10 @@ void lspmac_SockSendDPqueue() {
 /** abort motion and try to recover
  */
 void lspmac_abort() {
-  lspmac_motor_t *mp;
-  int i;
-
+  //
+  // Stop everything!  (consider ^O instead of ^A)
+  //
   lspmac_SockSendDPControlChar( "Abort Request", 0x01);
-  
-  for( i=0; i<lspmac_nmotors; i++) {
-    mp = &(lspmac_motors[i]);
-    if( lsredis_getl(mp->motor_num) >=1 && mp->max_speed != NULL) {
-	lspmac_SockSendDPline( NULL, "i%d22=%d", lsredis_getl(mp->motor_num), lsredis_getl( mp->max_speed));
-      }
-  }
 
 }
 
@@ -2352,8 +2345,8 @@ int lspmac_movezoom_queue(
 
 /** Move a given motor to one of its preset positions.
  *  No movement if the preset is not found.
- *  \param mp lspmac motor pointer
- *  \param name Name of the preset to use
+ *  \param             mp lspmac motor pointer
+ *  \param preset_name Name of the preset to use
  */
 int lspmac_move_preset_queue( lspmac_motor_t *mp, char *preset_name) {
   double pos;
@@ -2416,9 +2409,9 @@ int lspmac_moveabs_fshut_queue(
     lspmac_SockSendDPline( mp->name, "M1124=0 M1125=1 M1126=1");
   } else {
     //
-    // ManualOn=0, ManualEnable=0, ScanEnable=1
+    // ManualOn=0, ManualEnable=0, ScanEnable=0
     //
-    lspmac_SockSendDPline( mp->name, "M1126=0 M1125=0 M1124=1");
+    lspmac_SockSendDPline( mp->name, "M1126=0 M1125=0 M1124=0");
   }
 
   pthread_mutex_unlock( &(mp->mutex));
@@ -2598,6 +2591,70 @@ void lspmac_video_rotate( double secs) {
 
   lspmac_SockSendDPline( omega->name, "&1 Q10=%.1f Q11=%.1f Q12=%.1f Q13=(I117) Q14=(I116) B240R", q10, q11, q12);
   pthread_mutex_unlock( &(omega->mutex));
+}
+
+
+/** guess the minimum time it will take to move the motor
+ * \param min_time     Return at least this value.  Can be zero if you like.
+ * \param delta        Add this fudge factor to the estimate so we always over estimate the time (You do not want to under estimate or even be exactly right)
+ * \param mp_1         Pointer to first motor
+ * \param preset_1     Name of preset we'd like to move to or NULL if end_point_1 should be used instead
+ * \param end_point_1  End point for the first motor.  Ignored if preset_1 is non null and identifies a valid preset for this motor
+ * \param ...          Perhaps more pairs of motors and end points
+ * MUST END ARG LIST WITH NULL
+ */
+double lspmac_est_move_time( double min_time, double delta, lspmac_motor_t *mp_1, char *preset_1, double end_point_1, ...) {
+  va_list arg_ptr;
+  lspmac_motor_t *mp;
+  double ep, maybe_ep;
+  char *ps;
+  double rtn;
+  double t;
+  int err;
+
+  rtn = min_time;
+  mp = mp_1;
+  ps = preset_1;
+  ep = end_point_1;
+
+  va_start( arg_ptr, end_point_1);
+  while( 1) {
+
+    t = min_time;
+    if( mp != NULL && mp->max_speed != NULL && mp->max_accel != NULL && mp->u2c &&
+	lsredis_getd( mp->max_speed) > 0 && lsredis_getd(mp->max_accel) > 0 && lsredis_getd( mp->u2c) > 0) {
+    
+      if( ps != NULL && *ps != 0) {
+	err = lsredis_find_preset( mp->name, ps, &maybe_ep);
+	if( err != 0)
+	  ep = maybe_ep;
+      }
+
+      // time if we went the entire way at constant velocity
+      //
+      t = fabs(ep - lspmac_getPosition(mp)) / lsredis_getd( mp->u2c) / lsredis_getd( mp->max_speed);
+
+      // Correction for acceleration time
+      //
+      t += lsredis_getd( mp->max_speed) / lsredis_getd( mp->max_accel);
+
+      // Add something for good measure: we always want to overestimate the timeout
+      t += delta;
+
+    }
+
+    rtn = rtn < t ? t : rtn;
+
+    mp = va_arg( arg_ptr, lspmac_motor_t *);
+    if( mp == NULL)
+      break;
+
+    ps = va_arg( arg_ptr, char *);
+    ep = va_arg( arg_ptr, double);
+  }
+  va_end( arg_ptr);
+
+  return rtn;
 }
 
 
@@ -2822,11 +2879,11 @@ int lspmac_jogabs_queue(
 
 /** Wait for motor to finish moving.
  *  Assume motion already queued, now just wait
+ *
+ *  \param mp The motor object to wait for
+ *  \param timeout_secs  The number of seconds to wait for.  Fractional values fine.
  */
-int lspmac_moveabs_wait(
-			lspmac_motor_t *mp,		/**< [in] The motor object to wait for		*/
-			double timeout_secs
-			 ) {
+int lspmac_moveabs_wait( lspmac_motor_t *mp, double timeout_secs) {
   struct timespec timeout, now;
   double isecs, fsecs;
   int err;

@@ -231,6 +231,8 @@ int \hyperlink{lspmac_8c_a4c4e5e996755d21603e0afdd41ab9cd4}{lspmac\-\_\-moveabs\
 \item 
 void \hyperlink{lspmac_8c_aa8bf745a9ec388783009e2275a8b56f8}{lspmac\-\_\-video\-\_\-rotate} (double secs)
 \begin{DoxyCompactList}\small\item\em Special motion program to collect centering video. \end{DoxyCompactList}\item 
+double \hyperlink{lspmac_8c_ae5f51a18b32ca08ba7824ff6952bb752}{lspmac\-\_\-est\-\_\-move\-\_\-time} (double min\-\_\-time, double delta, \hyperlink{pgpmac_8h_aa5067fcbaabc5bbfdc52492495518c96}{lspmac\-\_\-motor\-\_\-t} $\ast$mp\-\_\-1, char $\ast$preset\-\_\-1, double end\-\_\-point\-\_\-1,...)
+\begin{DoxyCompactList}\small\item\em guess the minimum time it will take to move the motor \end{DoxyCompactList}\item 
 int \hyperlink{lspmac_8c_a2ab30559739e0232331f53d16c0cb5ac}{lspmac\-\_\-move\-\_\-or\-\_\-jog\-\_\-abs\-\_\-queue} (\hyperlink{pgpmac_8h_aa5067fcbaabc5bbfdc52492495518c96}{lspmac\-\_\-motor\-\_\-t} $\ast$mp, double requested\-\_\-position, int use\-\_\-jog)
 \begin{DoxyCompactList}\small\item\em Move method for normal stepper and servo motor objects Returns non-\/zero on abort, zero if O\-K. \end{DoxyCompactList}\item 
 int \hyperlink{lspmac_8c_a4451ae36e7b01c349d510249f52611da}{lspmac\-\_\-move\-\_\-or\-\_\-jog\-\_\-preset\-\_\-queue} (\hyperlink{pgpmac_8h_aa5067fcbaabc5bbfdc52492495518c96}{lspmac\-\_\-motor\-\_\-t} $\ast$mp, char $\ast$preset, int use\-\_\-jog)
@@ -829,7 +831,7 @@ Helper funciton for the init calls.
 
 
 
-Definition at line 2904 of file lspmac.\-c.
+Definition at line 2961 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1072,21 +1074,11 @@ Definition at line 2012 of file lspmac.\-c.
 
 \begin{DoxyCode}
                     \{
-  \hyperlink{structlspmac__motor__struct}{lspmac\_motor\_t} *mp;
-  \textcolor{keywordtype}{int} \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i};
-
+  \textcolor{comment}{//}
+  \textcolor{comment}{// Stop everything!  (consider ^O instead of ^A)}
+  \textcolor{comment}{//}
   \hyperlink{lspmac_8c_a0575fc751cecf35ffe8b290ab483ac21}{lspmac\_SockSendDPControlChar}( \textcolor{stringliteral}{"Abort Request"}, 0
       x01);
-  
-  \textcolor{keywordflow}{for}( i=0; i<\hyperlink{lspmac_8c_a56260f012c50a591ee7f97e500f16994}{lspmac\_nmotors}; i++) \{
-    mp = &(\hyperlink{lspmac_8c_a894c709ddd0652583d6db22e86282503}{lspmac\_motors}[\hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i}]);
-    \textcolor{keywordflow}{if}( \hyperlink{lsredis_8c_a1923f998441f4f451204dfd214d52218}{lsredis\_getl}(mp->\hyperlink{structlspmac__motor__struct_ad6a51cca3c7e5f79168e5c33fd9e736b}{motor\_num}) >=1 && mp->\hyperlink{structlspmac__motor__struct_a69e49769a1001665377efc7193d88a0a}{max\_speed}
-       != NULL) \{
-        \hyperlink{lspmac_8c_afab9e8f0502a92ee5cf93209af710f81}{lspmac\_SockSendDPline}( NULL, \textcolor{stringliteral}{"i%d22=%d"}, 
-      \hyperlink{lsredis_8c_a1923f998441f4f451204dfd214d52218}{lsredis\_getl}(mp->\hyperlink{structlspmac__motor__struct_ad6a51cca3c7e5f79168e5c33fd9e736b}{motor\_num}), \hyperlink{lsredis_8c_a1923f998441f4f451204dfd214d52218}{lsredis\_getl}( mp
-      ->\hyperlink{structlspmac__motor__struct_a69e49769a1001665377efc7193d88a0a}{max\_speed}));
-      \}
-  \}
 
 \}
 \end{DoxyCode}
@@ -1131,7 +1123,7 @@ Turn off the backlight whenever it goes down.
 \end{DoxyParams}
 
 
-Definition at line 3264 of file lspmac.\-c.
+Definition at line 3321 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1157,7 +1149,7 @@ Turn on the backlight whenever it goes up.
 \end{DoxyParams}
 
 
-Definition at line 3257 of file lspmac.\-c.
+Definition at line 3314 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1183,7 +1175,7 @@ Initialize binary input.
 
 
 
-Definition at line 3059 of file lspmac.\-c.
+Definition at line 3116 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1213,7 +1205,7 @@ Set up lookup table for blight.
 
 
 
-Definition at line 3366 of file lspmac.\-c.
+Definition at line 3423 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1293,7 +1285,7 @@ Initialize binary i/o motor.
 \end{DoxyParams}
 
 
-Definition at line 2993 of file lspmac.\-c.
+Definition at line 3050 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1357,7 +1349,7 @@ Definition at line 1121 of file lspmac.\-c.
 )}}\label{lspmac_8c_a611168a1076b2de45c596ed95c68445a}
 
 
-Definition at line 3426 of file lspmac.\-c.
+Definition at line 3483 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1396,7 +1388,7 @@ Definition at line 3426 of file lspmac.\-c.
 )}}\label{lspmac_8c_afc00ddac633f8c8a3a699e3d22de2770}
 
 
-Definition at line 3219 of file lspmac.\-c.
+Definition at line 3276 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1440,7 +1432,7 @@ For this reason this initialzation code must be run before the database queue is
 \end{DoxyParams}
 
 
-Definition at line 3019 of file lspmac.\-c.
+Definition at line 3076 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1547,6 +1539,104 @@ Definition at line 767 of file lspmac.\-c.
   \hyperlink{lspmac_8c_aaedae34bc18ac1742a232117c125d7b9}{lspmac\_Reset}();
 \}
 \end{DoxyCode}
+\hypertarget{lspmac_8c_ae5f51a18b32ca08ba7824ff6952bb752}{\index{lspmac.\-c@{lspmac.\-c}!lspmac\-\_\-est\-\_\-move\-\_\-time@{lspmac\-\_\-est\-\_\-move\-\_\-time}}
+\index{lspmac\-\_\-est\-\_\-move\-\_\-time@{lspmac\-\_\-est\-\_\-move\-\_\-time}!lspmac.c@{lspmac.\-c}}
+\subsubsection[{lspmac\-\_\-est\-\_\-move\-\_\-time}]{\setlength{\rightskip}{0pt plus 5cm}double lspmac\-\_\-est\-\_\-move\-\_\-time (
+\begin{DoxyParamCaption}
+\item[{double}]{min\-\_\-time, }
+\item[{double}]{delta, }
+\item[{{\bf lspmac\-\_\-motor\-\_\-t} $\ast$}]{mp\-\_\-1, }
+\item[{char $\ast$}]{preset\-\_\-1, }
+\item[{double}]{end\-\_\-point\-\_\-1, }
+\item[{}]{...}
+\end{DoxyParamCaption}
+)}}\label{lspmac_8c_ae5f51a18b32ca08ba7824ff6952bb752}
+
+
+guess the minimum time it will take to move the motor 
+
+
+\begin{DoxyParams}{Parameters}
+{\em min\-\_\-time} & Return at least this value. Can be zero if you like. \\
+\hline
+{\em delta} & Add this fudge factor to the estimate so we always over estimate the time (You do not want to under estimate or even be exactly right) \\
+\hline
+{\em mp\-\_\-1} & Pointer to first motor \\
+\hline
+{\em preset\-\_\-1} & Name of preset we'd like to move to or N\-U\-L\-L if end\-\_\-point\-\_\-1 should be used instead \\
+\hline
+{\em end\-\_\-point\-\_\-1} & End point for the first motor. Ignored if preset\-\_\-1 is non null and identifies a valid preset for this motor \\
+\hline
+{\em ...} & Perhaps more pairs of motors and end points M\-U\-S\-T E\-N\-D A\-R\-G L\-I\-S\-T W\-I\-T\-H N\-U\-L\-L \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 2606 of file lspmac.\-c.
+
+
+\begin{DoxyCode}
+                                                                               
+                                                  \{
+  va\_list arg\_ptr;
+  \hyperlink{structlspmac__motor__struct}{lspmac\_motor\_t} *mp;
+  \textcolor{keywordtype}{double} ep, maybe\_ep;
+  \textcolor{keywordtype}{char} *ps;
+  \textcolor{keywordtype}{double} rtn;
+  \textcolor{keywordtype}{double} t;
+  \textcolor{keywordtype}{int} err;
+
+  rtn = min\_time;
+  mp = mp\_1;
+  ps = preset\_1;
+  ep = end\_point\_1;
+
+  va\_start( arg\_ptr, end\_point\_1);
+  \textcolor{keywordflow}{while}( 1) \{
+
+    t = min\_time;
+    \textcolor{keywordflow}{if}( mp != NULL && mp->\hyperlink{structlspmac__motor__struct_a69e49769a1001665377efc7193d88a0a}{max\_speed} != NULL && mp->\hyperlink{structlspmac__motor__struct_a50cf4c0711cea164e332bc34705a1a68}{max\_accel} 
+      != NULL && mp->\hyperlink{structlspmac__motor__struct_a8838915ebb6f9989944117c8197d5e86}{u2c} &&
+        \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( mp->\hyperlink{structlspmac__motor__struct_a69e49769a1001665377efc7193d88a0a}{max\_speed}) > 0 && \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}
+      (mp->\hyperlink{structlspmac__motor__struct_a50cf4c0711cea164e332bc34705a1a68}{max\_accel}) > 0 && \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( mp->\hyperlink{structlspmac__motor__struct_a8838915ebb6f9989944117c8197d5e86}{u2c}) > 0) \{
+    
+      \textcolor{keywordflow}{if}( ps != NULL && *ps != 0) \{
+        err = \hyperlink{lsredis_8c_a1ad60526a09ca679f39174ce5d773abe}{lsredis\_find\_preset}( mp->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name}, ps, &
+      maybe\_ep);
+        \textcolor{keywordflow}{if}( err != 0)
+          ep = maybe\_ep;
+      \}
+
+      \textcolor{comment}{// time if we went the entire way at constant velocity}
+      \textcolor{comment}{//}
+      t = fabs(ep - \hyperlink{lspmac_8c_acc46bdddee59bd8c5ad662b3fd445e9f}{lspmac\_getPosition}(mp)) / \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}
+      ( mp->\hyperlink{structlspmac__motor__struct_a8838915ebb6f9989944117c8197d5e86}{u2c}) / \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( mp->\hyperlink{structlspmac__motor__struct_a69e49769a1001665377efc7193d88a0a}{max\_speed});
+
+      \textcolor{comment}{// Correction for acceleration time}
+      \textcolor{comment}{//}
+      t += \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( mp->\hyperlink{structlspmac__motor__struct_a69e49769a1001665377efc7193d88a0a}{max\_speed}) / \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}
+      ( mp->\hyperlink{structlspmac__motor__struct_a50cf4c0711cea164e332bc34705a1a68}{max\_accel});
+
+      \textcolor{comment}{// Add something for good measure: we always want to overestimate the
+       timeout}
+      t += delta;
+
+    \}
+
+    rtn = rtn < t ? t : rtn;
+
+    mp = va\_arg( arg\_ptr, \hyperlink{structlspmac__motor__struct}{lspmac\_motor\_t} *);
+    \textcolor{keywordflow}{if}( mp == NULL)
+      \textcolor{keywordflow}{break};
+
+    ps = va\_arg( arg\_ptr, \textcolor{keywordtype}{char} *);
+    ep = va\_arg( arg\_ptr, \textcolor{keywordtype}{double});
+  \}
+  va\_end( arg\_ptr);
+
+  \textcolor{keywordflow}{return} rtn;
+\}
+\end{DoxyCode}
 \hypertarget{lspmac_8c_ad52a5dbc2f06247eca7619195936b85f}{\index{lspmac.\-c@{lspmac.\-c}!lspmac\-\_\-flight\-\_\-lut\-\_\-setup@{lspmac\-\_\-flight\-\_\-lut\-\_\-setup}}
 \index{lspmac\-\_\-flight\-\_\-lut\-\_\-setup@{lspmac\-\_\-flight\-\_\-lut\-\_\-setup}!lspmac.c@{lspmac.\-c}}
 \subsubsection[{lspmac\-\_\-flight\-\_\-lut\-\_\-setup}]{\setlength{\rightskip}{0pt plus 5cm}void lspmac\-\_\-flight\-\_\-lut\-\_\-setup (
@@ -1560,7 +1650,7 @@ Set up lookup table for flight.
 
 
 
-Definition at line 3333 of file lspmac.\-c.
+Definition at line 3390 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1611,7 +1701,7 @@ Set up lookup table for fscint.
 
 
 
-Definition at line 3407 of file lspmac.\-c.
+Definition at line 3464 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -1653,7 +1743,7 @@ Initalize the fast shutter motor.
 \end{DoxyParams}
 
 
-Definition at line 2977 of file lspmac.\-c.
+Definition at line 3034 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2139,7 +2229,7 @@ Request the values of all the I variables.
 
 
 
-Definition at line 2049 of file lspmac.\-c.
+Definition at line 2042 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2174,7 +2264,7 @@ Receive the values of all the I variables Update our Postgresql database with th
 \end{DoxyParams}
 
 
-Definition at line 2032 of file lspmac.\-c.
+Definition at line 2025 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2202,7 +2292,7 @@ Request the values of all the M variables.
 
 
 
-Definition at line 2074 of file lspmac.\-c.
+Definition at line 2067 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2237,7 +2327,7 @@ Receive the values of all the M variables Update our database with the results.
 \end{DoxyParams}
 
 
-Definition at line 2057 of file lspmac.\-c.
+Definition at line 2050 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2620,7 +2710,7 @@ Initialize this module.
 \end{DoxyParams}
 
 
-Definition at line 3075 of file lspmac.\-c.
+Definition at line 3132 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2894,7 +2984,7 @@ Use jog to move motor to requested position.
 \end{DoxyParams}
 
 
-Definition at line 2814 of file lspmac.\-c.
+Definition at line 2871 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2922,7 +3012,7 @@ Set the backlight intensity whenever the zoom is changed (and the backlight is u
 \end{DoxyParams}
 
 
-Definition at line 3271 of file lspmac.\-c.
+Definition at line 3328 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3093,7 +3183,7 @@ Initialize a pmac stepper or servo motor.
 \end{DoxyParams}
 
 
-Definition at line 2948 of file lspmac.\-c.
+Definition at line 3005 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3148,7 +3238,7 @@ $<$ our axis
 \end{DoxyParams}
 
 
-Definition at line 2607 of file lspmac.\-c.
+Definition at line 2664 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3356,7 +3446,7 @@ move using a preset value returns 0 on success, non-\/zero on error
 \end{DoxyParams}
 
 
-Definition at line 2776 of file lspmac.\-c.
+Definition at line 2833 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3398,12 +3488,12 @@ No movement if the preset is not found.
 \begin{DoxyParams}{Parameters}
 {\em mp} & lspmac motor pointer \\
 \hline
-{\em name} & Name of the preset to use \\
+{\em preset\-\_\-name} & Name of the preset to use \\
 \hline
 \end{DoxyParams}
 
 
-Definition at line 2358 of file lspmac.\-c.
+Definition at line 2351 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3439,7 +3529,7 @@ Definition at line 2358 of file lspmac.\-c.
 )}}\label{lspmac_8c_a4c4e5e996755d21603e0afdd41ab9cd4}
 
 
-Definition at line 2551 of file lspmac.\-c.
+Definition at line 2544 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3486,7 +3576,7 @@ Move method for binary i/o motor objects.
 \end{DoxyParams}
 
 
-Definition at line 2432 of file lspmac.\-c.
+Definition at line 2425 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3518,7 +3608,7 @@ Definition at line 2432 of file lspmac.\-c.
 )}}\label{lspmac_8c_acbe3a8e54208048506e77b365b4c0f58}
 
 
-Definition at line 2528 of file lspmac.\-c.
+Definition at line 2521 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3560,7 +3650,7 @@ Definition at line 2528 of file lspmac.\-c.
 
 
 
-Definition at line 2515 of file lspmac.\-c.
+Definition at line 2508 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3599,7 +3689,7 @@ Slightly more complicated than a binary io as some flags need to be set up.
 \end{DoxyParams}
 
 
-Definition at line 2402 of file lspmac.\-c.
+Definition at line 2395 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3618,10 +3708,10 @@ Definition at line 2402 of file lspmac.\-c.
        M1126=1"});
   \} \textcolor{keywordflow}{else} \{
     \textcolor{comment}{//}
-    \textcolor{comment}{// ManualOn=0, ManualEnable=0, ScanEnable=1}
+    \textcolor{comment}{// ManualOn=0, ManualEnable=0, ScanEnable=0}
     \textcolor{comment}{//}
     \hyperlink{lspmac_8c_afab9e8f0502a92ee5cf93209af710f81}{lspmac\_SockSendDPline}( mp->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name}, \textcolor{stringliteral}{"M1126=0 M1125=0
-       M1124=1"});
+       M1124=0"});
   \}
 
   pthread\_mutex\_unlock( &(mp->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex}));
@@ -3651,7 +3741,7 @@ Use coordinate system motion program, if available, to move motor to requested p
 \end{DoxyParams}
 
 
-Definition at line 2804 of file lspmac.\-c.
+Definition at line 2861 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3688,7 +3778,7 @@ timed motor move
 \end{DoxyParams}
 $<$ Flags needed for wait routine 
 
-Definition at line 2458 of file lspmac.\-c.
+Definition at line 2451 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3756,18 +3846,22 @@ Definition at line 2458 of file lspmac.\-c.
 
 Wait for motor to finish moving. 
 
-Assume motion already queued, now just wait 
-\begin{DoxyParams}[1]{Parameters}
-\mbox{\tt in}  & {\em mp} & The motor object to wait for \\
+Assume motion already queued, now just wait
+
+
+\begin{DoxyParams}{Parameters}
+{\em mp} & The motor object to wait for \\
+\hline
+{\em timeout\-\_\-secs} & The number of seconds to wait for. Fractional values fine. \\
 \hline
 \end{DoxyParams}
 
 
-Definition at line 2826 of file lspmac.\-c.
+Definition at line 2886 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
-                           \{
+                                                                  \{
   \textcolor{keyword}{struct }timespec timeout, \hyperlink{lspmac_8c_a4bed9053319d1d2cad5cc03d0549e17f}{now};
   \textcolor{keywordtype}{double} isecs, fsecs;
   \textcolor{keywordtype}{int} err;
@@ -3869,7 +3963,7 @@ Move method for dac motor objects (ie, lights)
 \end{DoxyParams}
 
 
-Definition at line 2292 of file lspmac.\-c.
+Definition at line 2285 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3925,7 +4019,7 @@ Move method for the zoom motor.
 \end{DoxyParams}
 
 
-Definition at line 2325 of file lspmac.\-c.
+Definition at line 2318 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3968,7 +4062,7 @@ State machine logic.
 
 Given the current state, generate the next one 
 
-Definition at line 2123 of file lspmac.\-c.
+Definition at line 2116 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -4634,7 +4728,7 @@ Start up the lspmac thread.
 
 
 
-Definition at line 3454 of file lspmac.\-c.
+Definition at line 3511 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -4757,7 +4851,7 @@ Turn off the dryer.
 \end{DoxyParams}
 
 
-Definition at line 3294 of file lspmac.\-c.
+Definition at line 3351 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -4785,7 +4879,7 @@ Maybe start drying off the scintilator.
 \end{DoxyParams}
 
 
-Definition at line 3232 of file lspmac.\-c.
+Definition at line 3289 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -4928,7 +5022,7 @@ P\-M\-A\-C command with call back.
 \end{DoxyParams}
 
 
-Definition at line 2102 of file lspmac.\-c.
+Definition at line 2095 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -4965,7 +5059,7 @@ Send a command that does not need to deal with the reply.
 \end{DoxyParams}
 
 
-Definition at line 2083 of file lspmac.\-c.
+Definition at line 2076 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -5603,7 +5697,7 @@ Definition at line 1083 of file lspmac.\-c.
 )}}\label{lspmac_8c_a698719a7ce58e2052fa70ab87b1fb293}
 
 
-Definition at line 3044 of file lspmac.\-c.
+Definition at line 3101 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -5633,7 +5727,7 @@ Dummy routine to read a soft motor.
 
 
 
-Definition at line 3039 of file lspmac.\-c.
+Definition at line 3096 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -5656,7 +5750,7 @@ see if the motor is within tolerance of the preset 1 means yes, it is 0 mean no 
 
 
 
-Definition at line 2381 of file lspmac.\-c.
+Definition at line 2374 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -5690,7 +5784,7 @@ Special motion program to collect centering video.
 
 
 
-Definition at line 2575 of file lspmac.\-c.
+Definition at line 2568 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -5742,7 +5836,7 @@ Our lspmac worker thread.
 \end{DoxyParams}
 
 
-Definition at line 2241 of file lspmac.\-c.
+Definition at line 2234 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -5808,7 +5902,7 @@ Set up lookup table for zoom.
 
 
 
-Definition at line 3302 of file lspmac.\-c.
+Definition at line 3359 of file lspmac.\-c.
 
 
 \begin{DoxyCode}

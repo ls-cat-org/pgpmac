@@ -227,6 +227,7 @@ var searchData=
   ['lspmac_5fdpascii_5fqueue_5fstruct',['lspmac_dpascii_queue_struct',['../structlspmac__dpascii__queue__struct.html',1,'']]],
   ['lspmac_5fdpascii_5fqueue_5ft',['lspmac_dpascii_queue_t',['../lspmac_8c.html#a93786bb32f3e2ef44e7967210beeeca3',1,'lspmac.c']]],
   ['lspmac_5ferror',['lspmac_Error',['../lspmac_8c.html#a4748a88d1fe46aa3ab1beee55bcddf1b',1,'lspmac.c']]],
+  ['lspmac_5fest_5fmove_5ftime',['lspmac_est_move_time',['../lspmac_8c.html#ae5f51a18b32ca08ba7824ff6952bb752',1,'lspmac.c']]],
   ['lspmac_5fflight_5flut_5fsetup',['lspmac_flight_lut_setup',['../lspmac_8c.html#ad52a5dbc2f06247eca7619195936b85f',1,'lspmac.c']]],
   ['lspmac_5ffscint_5flut_5fsetup',['lspmac_fscint_lut_setup',['../lspmac_8c.html#a54ceac41b127ad8bbad07bd90c6729dc',1,'lspmac.c']]],
   ['lspmac_5ffshut_5finit',['lspmac_fshut_init',['../lspmac_8c.html#a40aa4aeb5c799a6a3a089137da4fd6a8',1,'lspmac.c']]],
