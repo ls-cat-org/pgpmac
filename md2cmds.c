@@ -410,7 +410,7 @@ void md2cmds_transfer() {
 
 /** Move a motor to the position requested
  */
-void md2cmds_moveAbs(
+int md2cmds_moveAbs(
 		     const char *ccmd			/**< [in] The full command string to parse, ie, "moveAbs omega 180"	*/
 		     ) {
   char *cmd;
@@ -422,10 +422,11 @@ void md2cmds_moveAbs(
   char *endptr;
   lspmac_motor_t *mp;
   int i;
+  int err;
 
   // ignore nothing
   if( ccmd == NULL || *ccmd == 0) {
-    return;
+    return 1;
   }
 
   // operate on a copy of the string since strtok_r will modify its argument
@@ -438,7 +439,7 @@ void md2cmds_moveAbs(
   if( ignore == NULL) {
     lslogging_log_message( "md2cmds_moveAbs: ignoring blank command '%s'", cmd);
     free( cmd);
-    return;
+    return 1;
   }
 
   // The first string should be "moveAbs" cause that's how we got here.
@@ -448,7 +449,7 @@ void md2cmds_moveAbs(
   if( mtr == NULL) {
     lslogging_log_message( "md2cmds moveAbs error: missing motor name");
     free( cmd);
-    return;
+    return 1;
   }
 
   mp = NULL;
@@ -461,14 +462,14 @@ void md2cmds_moveAbs(
   if( mp == NULL) {
     lslogging_log_message( "md2cmds moveAbs error: cannot find motor %s", mtr);
     free( cmd);
-    return;
+    return 1;
   }
 
   pos = strtok_r( NULL, " ", &ptr);
   if( pos == NULL) {
     lslogging_log_message( "md2cmds moveAbs error: missing position");
     free( cmd);
-    return;
+    return 1;
   }
 
   fpos = strtod( pos, &endptr);
@@ -477,18 +478,19 @@ void md2cmds_moveAbs(
     // Maybe we have a preset.  Give it a whirl
     // In any case we are done here.
     //
-    lspmac_move_preset_queue( mp, pos);
+    err = lspmac_move_preset_queue( mp, pos);
     free( cmd);
-    return;
+    return err;
   }
 
   if( mp != NULL && mp->moveAbs != NULL) {
     wprintw( term_output, "Moving %s to %f\n", mtr, fpos);
     wnoutrefresh( term_output);
-    mp->moveAbs( mp, fpos);
+    err = mp->moveAbs( mp, fpos);
   }
 
   free( cmd);
+  return err;
 }
 
 
@@ -502,6 +504,7 @@ void md2cmds_phase_change( const char *ccmd) {
   char *ignore;
   char *ptr;
   char *mode;
+  int err;
   
   if( ccmd == NULL || *ccmd == 0)
     return;
@@ -530,20 +533,23 @@ void md2cmds_phase_change( const char *ccmd) {
   if( strcmp( mode, "manualMount") == 0) {
     lsevents_send_event( "Mode manualMount Starting");
 
+    //
+    // Try all motions, flag errors at the end
+    //
     md2cmds_move_prep();
-    lspmac_move_or_jog_preset_queue( kappa, "manualMount", 1);
-    lspmac_move_or_jog_preset_queue( omega, "manualMount", 0);
-    lspmac_move_or_jog_abs_queue( phi,   0.0, 0);
-    lspmac_move_or_jog_preset_queue( aperz, "Cover", 1);
-    lspmac_move_or_jog_preset_queue( capz,  "Cover", 1);
-    lspmac_move_or_jog_preset_queue( scint, "Cover", 1);
-    md2cmds_moveAbs( "moveAbs backLight 0");
-    md2cmds_moveAbs( "moveAbs backLight.intensity 0");
-    md2cmds_moveAbs( "moveAbs cryo 1");
-    md2cmds_moveAbs( "moveAbs fluo 0");
-    md2cmds_moveAbs( "moveAbs cam.zoom 1");
+    err =  lspmac_move_or_jog_preset_queue( kappa, "manualMount", 1);
+    err += lspmac_move_or_jog_preset_queue( omega, "manualMount", 0);
+    err += lspmac_move_or_jog_abs_queue( phi,   0.0, 0);
+    err += lspmac_move_or_jog_preset_queue( aperz, "Cover", 1);
+    err += lspmac_move_or_jog_preset_queue( capz,  "Cover", 1);
+    err += lspmac_move_or_jog_preset_queue( scint, "Cover", 1);
+    err += md2cmds_moveAbs( "moveAbs backLight 0");
+    err += md2cmds_moveAbs( "moveAbs backLight.intensity 0");
+    err += md2cmds_moveAbs( "moveAbs cryo 1");
+    err += md2cmds_moveAbs( "moveAbs fluo 0");
+    err += md2cmds_moveAbs( "moveAbs cam.zoom 1");
 
-    if( md2cmds_move_wait( 60.0))
+    if( md2cmds_move_wait( 60.0) || err)
       lsevents_send_event( "Mode manualMount Aborted");
     else
       lsevents_send_event( "Mode manualMount Done");
@@ -1259,6 +1265,34 @@ int md2cmds_action_queue( double timeout, char *action) {
   return rtn;
 }
 
+void md2cmds_abort() {
+  //
+  // First priority is to close the shutter
+  //
+  if( fshut->moveAbs( fshut, 0))
+    lslogging_log_message( "md2cmds_abort: for some reason the shutter close requested failed.  Proceeding anyway.");
+
+  //
+  // Now stop all the motors
+  //
+  lspmac_abort();
+  if( md2cmds_move_wait( 10.0))
+    lslogging_log_message( "md2cmds_abort: Some motors did not appear to stop.  Proceding with reset anyway");
+
+  //
+  // Now try to close the shutter (again)
+  //
+  if( fshut->moveAbs( fshut, 0))
+    lslogging_log_message( "md2cmds_abort: for some reason the shutter close requested failed (2).  Proceeding anyway.");
+  
+  //
+  // Force the motion flags down
+  //
+  lspmac_SockSendDPline( NULL, "m5075=0");
+  
+
+}
+
 /** pause until md2cmds_worker has finished running the command
  */
 void md2cmds_action_wait() {
@@ -1281,7 +1315,9 @@ void *md2cmds_worker(
     while( md2cmds_cmd[0] == 0)
       pthread_cond_wait( &md2cmds_cond, &md2cmds_mutex);
 
-    if( strcmp( md2cmds_cmd, "transfer") == 0) {
+    if( strcmp( md2cmds_cmd, "abort") == 0) {
+      md2cmds_abort();
+    } else if( strcmp( md2cmds_cmd, "transfer") == 0) {
       md2cmds_transfer();
     } else if( strcmp( md2cmds_cmd, "collect") == 0) {
       md2cmds_collect();
