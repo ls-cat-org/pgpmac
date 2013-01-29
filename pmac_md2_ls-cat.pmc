@@ -4611,6 +4611,30 @@ OPEN PROG 170 CLEAR
   DWELL0
 CLOSE
 
+; 180          LS-CAT Move U, V, W, X, Y, Z Timed Incremental Move
+; 	       	      Q40     = X Value
+;		      Q41     = Y Value
+;		      Q42     = Z Value
+;		      Q43     = U Value
+;		      Q44     = V Value
+;		      Q45     = W Value
+;                     Q46     = A Value
+;                     Q47     = B Value
+;                     Q48     = C Value
+;                     Q49     = Time in milliseconds to complete move
+;                     Q100    = 1 << (coord sys no  - 1)
+OPEN PROG 180 CLEAR
+  DWELL0
+  TM(Q49)
+  M5075 = (M5075 | Q100)		; Raise the running flag (should have been set in application program)
+  INC(X,Y,Z,U,V,W,A,B,C)
+  X(Q40) Y(Q41) Z(Q42) U(Q43) V(Q44) W(Q45) A(Q46) B(Q47) C(Q48)
+  DWELL0
+  DWELL0
+  M5075 = (M5075 | Q100) ^ Q100		; Lower the running flag
+  DWELL0
+CLOSE
+
 
 
 
@@ -4625,7 +4649,6 @@ OPEN PROG 240 CLEAR
   DWELL0
   M5075 = (M5075 | Q100)		; Raise the running flag (should have been set in application program)
   TM(1)
-  %100					; The notorious global feed rate.
   DWELL0
   ABS(X)
   IF (Q12 > 0 AND Q13 > 0)		; Non positive times are not interesting but at least shouldn't kill us
