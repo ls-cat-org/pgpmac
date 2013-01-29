@@ -1213,6 +1213,7 @@ void lspg_nextaction_cb(
 			) {
   char *action;
 
+
   if( PQntuples( pgr) <= 0)
     return;		// Note: nextaction should always return at least "noAction", so this branch should never be taken
 
@@ -1777,4 +1778,5 @@ void lspg_init() {
 void lspg_run() {
   pthread_create( &lspg_thread, NULL, lspg_worker, NULL);
   lsevents_add_listener( "Sample(Detected|Absent)", lspmac_sample_detector_cb);
+
 }
