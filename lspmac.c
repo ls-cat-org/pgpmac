@@ -364,6 +364,12 @@ static lspmac_dpascii_queue_t lspmac_dpascii_queue[LSPMAC_DPASCII_QUEUE_LENGTH];
 static uint32_t lspmac_dpascii_on  = 0;
 static uint32_t lspmac_dpascii_off = 0;
 
+typedef struct lspmac_combined_move_struct {
+  int    Delta;			// change from curent position in counts
+  int    moveme;		// flag: non-zero means move this motor
+  int    coord_num;		// Our coordinate system
+  char   axis;			// The axes to move
+} lspmac_combined_move_t;
 
 
 /** Look up table support for motor positions (think x=zoom, y=light intensity)
@@ -1358,6 +1364,9 @@ void lspmac_pmacmotor_read(
   char *fmt;
   int status_changed;
 
+
+  if( lsredis_getb( mp->active) != 1)
+    return;
 
   pthread_mutex_lock( &(mp->mutex));
 
@@ -2358,7 +2367,7 @@ int lspmac_move_preset_queue( lspmac_motor_t *mp, char *preset_name) {
   if( err == 0)
     return 1;
 
-  err = mp->moveAbs( mp, pos);
+  err = mp->jogAbs( mp, pos);
   if( !err)
     lslogging_log_message( "lspmac_move_preset_queue: moving %s to preset '%s' (%f)", mp->name, preset_name, pos);
   //
@@ -2594,67 +2603,329 @@ void lspmac_video_rotate( double secs) {
 }
 
 
-/** guess the minimum time it will take to move the motor
- * \param min_time     Return at least this value.  Can be zero if you like.
- * \param delta        Add this fudge factor to the estimate so we always over estimate the time (You do not want to under estimate or even be exactly right)
+/** Move the motors and estimate the time it'll take to finish the job.
+ * Returns the estimate time and the coordinate system mask to waite for
  * \param mp_1         Pointer to first motor
+ * \param jog_1        1 to force a jog, 0 to try a motion program  DO NOT MIX JOGS AND MOTION PROGRAMS IN THE SAME COORDINATE SYSTEM!
  * \param preset_1     Name of preset we'd like to move to or NULL if end_point_1 should be used instead
  * \param end_point_1  End point for the first motor.  Ignored if preset_1 is non null and identifies a valid preset for this motor
- * \param ...          Perhaps more pairs of motors and end points
+ * \param ...          Perhaps more triples of motors, preset names and end points.  End is a NULL motor pointer
  * MUST END ARG LIST WITH NULL
  */
-double lspmac_est_move_time( double min_time, double delta, lspmac_motor_t *mp_1, char *preset_1, double end_point_1, ...) {
+int lspmac_est_move_time( double *est_time, int *mmask, lspmac_motor_t *mp_1, int jog_1, char *preset_1, double end_point_1, ...) {
+  static char axes[] = "XYZUVWABC";
+  static int qs[9];
+  static lspmac_combined_move_t motions[32];
+
+  int j;
   va_list arg_ptr;
   lspmac_motor_t *mp;
   double ep, maybe_ep;
   char *ps;
-  double rtn;
-  double t;
+  double
+    min_pos,
+    max_pos,
+    neutral_pos,
+    u2c,		//!< units to counts
+    D,			//!< The total distance we need to go
+    V,			//!< Our maximum velocity
+    A,			//!< Our maximum acceleration
+    Tt;                 //!< Total time for this motor
   int err;
+  int jog;
+  int i;
+  int m5075;		//!< coordinate system motion flags
 
-  rtn = min_time;
-  mp = mp_1;
-  ps = preset_1;
-  ep = end_point_1;
+  // reset our coordinate flags and command strings
+  //
+  for( i=0; i<32; i++) {
+    motions[i].moveme = 0;
+  }
+  m5075 = 0;
+
+  //
+  // Initialze first iteration
+  //
+  *est_time = 0.0;
+  mp  = mp_1;
+  ps  = preset_1;
+  ep  = end_point_1;
+  jog = jog_1;
 
   va_start( arg_ptr, end_point_1);
   while( 1) {
+    /*
+     :                  |       Constant       |
+     :                  |<---   Velocity   --->|
+     :                  |       Time (Ct)      |
+   V :                   ----------------------              ---------
+   e :                 /                        \               ^
+   l :                /                          \              |
+   o :               /                            \             |
+   c :              /                              \            V
+   i :             /                                \           |
+   t :            /                                  \          |
+   y :___________/....................................\_________v___________
+                 |      |         Time              
+                 |      |
+              -->|      |<-- Acceleration Time  (At)
+                 |
+                 |<-----    Total  Time (Tt)  ------->|
 
-    t = min_time;
-    if( mp != NULL && mp->max_speed != NULL && mp->max_accel != NULL && mp->u2c &&
-	lsredis_getd( mp->max_speed) > 0 && lsredis_getd(mp->max_accel) > 0 && lsredis_getd( mp->u2c) > 0) {
-    
+      Assumption 1: We can replace S curve acceleration with linear acceleration
+                    for the purposes of distance and time calculations for the timeout
+                    period that we are attempting to calculate here.
+
+     Ct  = Constant Velocity Time.  The time spent at constant velocity.
+
+     At  = Acceleration Time.  Time spent accelerating at either end of the ramp, that is,
+          1/2 the total time spent accelerating and decelerating.
+
+     D   = the total distance we need to travel
+
+     V   = constant velocity.  Here we use the motor's maximum velocity.
+
+     A   = the motor acceleration, Here it's the maximum acceleration.
+
+         V = A * At   
+
+     or  At = V/A
+
+      The Total Time (Tt) is
+
+          Tt = Ct + 2 * At
+
+
+
+      If we had infinite acceleration the total time would be D/V.  To account for finite acceleration we just need to
+      adjust this for the average velocity while accelerating (0.5 V).  This neatly adds a single V/A term:
+
+      (1)     Tt = D/V  + V/A
+
+      When the distance is short, we need a different calculation:
+
+        D = 0.5 * A * T1^2  + 0.5 * A * T2^2  (T1 = acceleration time and T2 = deceleration time)
+
+      or, since total time  Tt = T1 + T2 and T1 = T2,
+
+        D = A * (0.5*Tt)^2
+
+      or
+      
+      (2)    Tt = 2 * sqrt( D/A)
+
+
+      When we accelerate to the maximum speed the time it takes is V/A so the distance we travel (Da) is
+
+         Da = 0.5 * A * (V/A)^2
+
+      or
+
+        Da = 0.5 * V^2 / A
+
+      So when D > 2 * Da, or
+
+       D > V^2 / A
+         
+      we need to use equation (1) otherwise we need to use equation (2)
+
+     */
+
+    Tt = 0.0;
+    if( mp != NULL && mp->max_speed != NULL && mp->max_accel != NULL && mp->u2c != NULL) {
+
+      //
+      // get the real endpoint if a preset was mentioned
+      //
       if( ps != NULL && *ps != 0) {
 	err = lsredis_find_preset( mp->name, ps, &maybe_ep);
 	if( err != 0)
 	  ep = maybe_ep;
       }
 
-      // time if we went the entire way at constant velocity
-      //
-      t = fabs(ep - lspmac_getPosition(mp)) / lsredis_getd( mp->u2c) / lsredis_getd( mp->max_speed);
+      u2c = lsredis_getd( mp->u2c);
 
-      // Correction for acceleration time
-      //
-      t += lsredis_getd( mp->max_speed) / lsredis_getd( mp->max_accel);
+      if( u2c <= 0.0)
+	continue;
 
-      // Add something for good measure: we always want to overestimate the timeout
-      t += delta;
+      D = ep - lspmac_getPosition( mp);				// User units
+      V = lsredis_getd( mp->max_speed) / u2c * 1000.;		// User units per second
+      A = lsredis_getd( mp->max_accel) / u2c * 1000. * 1000;	// User units per second per second
+
+
+      neutral_pos = lsredis_getd( mp->neutral_pos);
+      min_pos     = lsredis_getd( mp->min_pos) - neutral_pos;
+      max_pos     = lsredis_getd( mp->max_pos) - neutral_pos;
+
+      if( ep < min_pos || ep > max_pos) {
+	lslogging_log_message( "lspmac_est_move_time: Motor %s Requested position %f out of range: min=%f, max=%f", mp->name, ep, min_pos, max_pos);
+	lsevents_send_event( "%s Move Aborted", mp->name);
+	return 1;
+      }
+
+      //
+      // Don't bother with motors without velocity or acceleration defined
+      //
+      if( V > 0.0 && A > 0.0) {
+	if( fabs(D) > V*V/A) {
+	  //
+	  // Normal ramp up, constant velocity, and ramp down
+	  //
+	  Tt = fabs(D)/V + V/A;
+	} else {
+	  //
+	  // Never reach constantanve velocity, just ramp up a bit and back down
+	  //
+	  Tt = 2.0 * sqrt( fabs(D)/A);
+	}
+
+	lslogging_log_message( "lspmac_est_move_time: Motor: %s  D: %f  VV/A: %f  Tt: %f", mp->name, D, V*V/A, Tt);
+      }  else {
+	//
+	// TODO: insert move time based for DAC or BO motor like objects;
+	// For now assume 100 msec;
+	//
+	Tt = 0.1;
+      }
+
+      // Perhaps flag a coordinate system
+      //
+      // We can move a motor that's not in a coordinate system but we cannot move a motor that is but does not
+      // have an axis defined if we are also moving one that does.  It's a limitation, I guess.
+      //
+      if( jog != 1 &&
+	  mp->coord_num != NULL && lsredis_getl( mp->coord_num) > 0 && lsredis_getl( mp->coord_num) <= 16 &&
+	  mp->motor_num != NULL && lsredis_getl( mp->motor_num) > 0 && mp->axis != NULL && lsredis_getc( mp->axis) != 0) {
+	int axis;
+	int motor_num;
+
+	motor_num = lsredis_getl( mp->motor_num);
+
+	axis = lsredis_getc( mp->axis);
+	for( j=0; j<sizeof(axes); j++) {
+	  if( axis == axes[j])
+	    break;
+	}
+
+	if( j < sizeof( axes)) {
+	  //
+	  // Store the motion request for a normal PMAC motor
+	  //
+	  int cn;
+	  int in_position_band;
+
+	  cn = lsredis_getl( mp->coord_num);
+	  in_position_band = lsredis_getl( mp->in_position_band);
+
+	  motions[motor_num - 1].coord_num = cn;
+	  motions[motor_num - 1].axis      = j;
+	  motions[motor_num - 1].Delta     = D * u2c;
+	  //
+	  // Don't ask to run a motion program if we are already where we want to be
+	  //
+	  // Deadband is 10 counts except for zoom which is 100.
+	  // We use Ixx28 In-Position Band which has units of 1/16 count
+	  //
+	  //
+	  if( abs(motions[motor_num - 1].Delta)*16 >= in_position_band) {
+	    m5075 |= 1 << (cn - 1);
+	    motions[motor_num - 1].moveme    = 1;
+	  }	  
+	}
+      } else {
+	//
+	// Here we are dealling with a DAC or BO motor or just want to jog.
+	//
+	if( mp->jogAbs( mp, lspmac_getPosition( mp) + D)) {
+	  lslogging_log_message( "lspmac_est_move_time: motor %s failed to queue move of distance %f from %f", mp->name, D, lspmac_getPosition(mp));
+	  lsevents_send_event( "Move Aborted");
+	  return 1;
+	}
+      }
+      //
+      // Update the estimated time
+      //
+      *est_time = *est_time < Tt ? Tt : *est_time;
+      
+      lslogging_log_message( "lspmac_est_move_time: est_time=%f", *est_time);
 
     }
 
-    rtn = rtn < t ? t : rtn;
 
     mp = va_arg( arg_ptr, lspmac_motor_t *);
     if( mp == NULL)
       break;
 
-    ps = va_arg( arg_ptr, char *);
-    ep = va_arg( arg_ptr, double);
+    jog = va_arg( arg_ptr, int);
+    ps  = va_arg( arg_ptr, char *);
+    ep  = va_arg( arg_ptr, double);
   }
   va_end( arg_ptr);
 
-  return rtn;
+  
+  // Call the motion program(s)
+  {
+    char s[256];
+    int foundone;
+    int err;
+    int moving_flags;
+    struct timespec timeout;
+
+    if( m5075 != 0) {
+      *mmask |= m5075;	// Tell the caller about our new mask
+
+      pthread_mutex_lock( &lspmac_moving_mutex);
+      if( (lspmac_moving_flags & m5075) != m5075)
+	lspmac_SockSendDPline( NULL, "M5075=(M5075 | %d)", m5075);
+
+      clock_gettime( CLOCK_REALTIME, &timeout);
+      //
+      timeout.tv_sec += 2;	// 2 seconds should be more than enough time to set the flags
+      err = 0;
+      while( err == 0 && (lspmac_moving_flags & m5075) != m5075)
+	err = pthread_cond_timedwait( &lspmac_moving_cond, &lspmac_moving_mutex, &timeout);
+      moving_flags = lspmac_moving_flags;
+      pthread_mutex_unlock( &lspmac_moving_mutex);
+
+      if( err == ETIMEDOUT) {
+	lslogging_log_message( "lspmac_est_move_time: Timed out waiting for moving flags.  lspmac_moving_flags = %0x", moving_flags);
+	lsevents_send_event( "%s Move Aborted Combined Motors");
+	return 1;
+      }
+    }
+
+
+    for( i=1; i<=16; i++) {
+      //
+      // Loop over coordinate systems
+      //
+      foundone = 0;
+
+      for( j=0; j<9; j++)
+	qs[j] = 0;
+
+      for( j=0; j<31; j++) {
+	//
+	// Loop over motors
+	//
+	if( motions[j].moveme && motions[j].coord_num == i) {
+	  if( abs(motions[j].Delta) > 0) {
+	    qs[(int)(motions[j].axis)] = motions[j].Delta;
+	    foundone=1;
+	  }
+	}
+      }
+      
+      if( foundone) {
+	sprintf( s, "&%d Q40=%d Q41=%d Q42=%d Q43=%d Q44=%d Q45=%d Q46=%d Q47=%d Q48=%d Q49=%.1f Q100=%d B180R",
+		 i, qs[0], qs[1], qs[2], qs[3], qs[4], qs[5], qs[6], qs[7], qs[8], *est_time * 1000., 1 << (i-1));
+
+	lspmac_SockSendDPline( NULL, s);
+
+      }
+    }
+  }
+  return 0;
 }
 
 
@@ -2674,21 +2945,22 @@ int lspmac_move_or_jog_abs_queue(
   double u2c;
   double neutral_pos;
   double min_pos, max_pos;
-  int pos_limit_hit, neg_limit_hit;
+  int pos_limit_hit, neg_limit_hit, in_position_band;
   struct timespec timeout, now;
   int err;
 
   pthread_mutex_lock( &(mp->mutex));
 
-  u2c           = lsredis_getd(   mp->u2c);
-  motor_num     = lsredis_getl(   mp->motor_num);
-  coord_num     = lsredis_getl(   mp->coord_num);
-  axis          = lsredis_getstr( mp->axis);
-  neutral_pos   = lsredis_getd(   mp->neutral_pos);
-  min_pos       = lsredis_getd(   mp->min_pos);
-  max_pos       = lsredis_getd(   mp->max_pos);
-  pos_limit_hit = lsredis_getd(   mp->pos_limit_hit);
-  neg_limit_hit = lsredis_getd(   mp->neg_limit_hit);
+  u2c              = lsredis_getd(   mp->u2c);
+  motor_num        = lsredis_getl(   mp->motor_num);
+  coord_num        = lsredis_getl(   mp->coord_num);
+  axis             = lsredis_getstr( mp->axis);
+  neutral_pos      = lsredis_getd(   mp->neutral_pos);
+  min_pos          = lsredis_getd(   mp->min_pos) - neutral_pos;
+  max_pos          = lsredis_getd(   mp->max_pos) - neutral_pos;
+  pos_limit_hit    = lsredis_getd(   mp->pos_limit_hit);
+  neg_limit_hit    = lsredis_getd(   mp->neg_limit_hit);
+  in_position_band = lsredis_getl(   mp->in_position_band);
 
   if( u2c == 0.0 || requested_position < min_pos || requested_position > max_pos) {
     //
@@ -2710,11 +2982,35 @@ int lspmac_move_or_jog_abs_queue(
 
 
   mp->requested_position = requested_position;
+  if( mp->nlut > 0 && mp->lut != NULL) {
+    mp->requested_pos_cnts = (int)lspmac_lut( mp->nlut, mp->lut, requested_position);
+  } else {
+    mp->requested_pos_cnts = u2c * (requested_position + neutral_pos);
+  }
+  requested_pos_cnts = mp->requested_pos_cnts;
+
+  if( (abs( requested_pos_cnts - mp->actual_pos_cnts) * 16 < in_position_band) || (lsredis_getb( mp->active) != 1)) {
+    //
+    // Lie and say we moved even though we didn't.  Who will know? We are within the deadband or not active.
+    //
+    mp->not_done     = 0;
+    mp->motion_seen  = 1;
+    mp->command_sent = 1;
+
+    if( lsredis_getb( mp->active) != 1) {
+      //
+      // fake the motion for simulated motors
+      //
+      mp->position = requested_position;
+      mp->actual_pos_cnts = requested_pos_cnts;
+    }
+    pthread_mutex_unlock( &(mp->mutex));
+    return 0;
+  }
+
   mp->not_done     = 1;
   mp->motion_seen  = 0;
   mp->command_sent = 0;
-  mp->requested_pos_cnts = u2c * (requested_position + neutral_pos);
-  requested_pos_cnts = mp->requested_pos_cnts;
 
   if( use_jog || axis == NULL || *axis == 0) {
     use_jog = 1;
@@ -2722,6 +3018,7 @@ int lspmac_move_or_jog_abs_queue(
     use_jog = 0;
     q100 = 1 << (coord_num -1);
   }
+
 
   pthread_mutex_unlock( &(mp->mutex));
 
@@ -2745,7 +3042,7 @@ int lspmac_move_or_jog_abs_queue(
     pthread_mutex_unlock( &lspmac_moving_mutex);
 
     if( err == ETIMEDOUT) {
-      lslogging_log_message( "lspmac_move_or_jog_abs_queue: Done.  lspmac_moving_flags = %0x", lspmac_moving_flags);
+      lslogging_log_message( "lspmac_move_or_jog_abs_queue: Timed Out.  lspmac_moving_flags = %0x", lspmac_moving_flags);
       lsevents_send_event( "%s Move Aborted", mp->name);
       return 1;
     }
@@ -2808,7 +3105,7 @@ int lspmac_move_or_jog_abs_queue(
     pthread_mutex_unlock( &lspmac_moving_mutex);
 
     if( err == ETIMEDOUT) {
-      lslogging_log_message( "lspmac_move_or_jog_abs_queue: Did not see flag propagate.  Move aborted.  lspmac_moving_flags = %0x", lspmac_moving_flags);
+      lslogging_log_message( "lspmac_move_or_jog_abs_queue: Did not see flag propagate.  Move aborted.");
       lsevents_send_event( "%s Move Aborted", mp->name);
       return 1;
     }
@@ -2866,6 +3163,7 @@ int lspmac_moveabs_queue(
   return lspmac_move_or_jog_abs_queue( mp, requested_position, 0);
 }
 
+
 /** Use jog to move motor to requested position
  */
 int lspmac_jogabs_queue(
@@ -2909,7 +3207,7 @@ int lspmac_moveabs_wait( lspmac_motor_t *mp, double timeout_secs) {
   pthread_mutex_unlock( &(mp->mutex));
   if( err != 0) {
     if( err != ETIMEDOUT) {
-      lslogging_log_message( "lspmac_moveabs_wait: unexpected error from timedwait: %d  tv_sec %ld   tv_nsec %ld", err, timeout.tv_sec, timeout.tv_nsec);
+      lslogging_log_message( "lspmac_moveabs_wait: unexpected error from timedwait %d  tv_sec %ld   tv_nsec %ld", err, timeout.tv_sec, timeout.tv_nsec);
     }
     return 1;
   }
@@ -2971,6 +3269,7 @@ void _lspmac_motor_init( lspmac_motor_t *d, char *name) {
   d->coord_num		 = lsredis_get_obj( "%s.coord_num",         d->name);
   d->home		 = lsredis_get_obj( "%s.home",	            d->name);
   d->inactive_init	 = lsredis_get_obj( "%s.inactive_init",	    d->name);
+  d->in_position_band    = lsredis_get_obj( "%s.in_position_band",  d->name);
   d->redis_fmt		 = lsredis_get_obj( "%s.format",            d->name);
   d->max_accel		 = lsredis_get_obj( "%s.max_accel",         d->name);
   d->max_speed		 = lsredis_get_obj( "%s.max_speed",         d->name);
@@ -3011,12 +3310,14 @@ lspmac_motor_t *lspmac_motor_init(
 				  int *stat2p,					/**< [in] Pointer to 2nd status word			*/
 				  char *wtitle,					/**< [in] Title for this motor (to display)		*/
 				  char *name,					/**< [in] This motor's name		                */
-				  int (*moveAbs)(lspmac_motor_t *,double)	/**< [in] Method to use to move this motor		*/
+				  int (*moveAbs)(lspmac_motor_t *,double),	/**< [in] Method to use to move this motor (motion program preferred)	*/
+				  int (*jogAbs)(lspmac_motor_t *,double)	/**< [in] Method to use to jog this motor  (jog preferred)		*/
 				  ) {
 
   _lspmac_motor_init( d, name);
 
   d->moveAbs             = moveAbs;
+  d->jogAbs              = jogAbs;
   d->read                = lspmac_pmacmotor_read;
   d->actual_pos_cnts_p   = posp;
   d->status1_p           = stat1p;
@@ -3038,6 +3339,7 @@ lspmac_motor_t *lspmac_fshut_init(
   _lspmac_motor_init( d, "fastShutter");
 
   d->moveAbs           = lspmac_moveabs_fshut_queue;
+  d->jogAbs            = lspmac_moveabs_fshut_queue;
   d->read              = lspmac_shutter_read;
 
   return d;
@@ -3058,6 +3360,7 @@ lspmac_motor_t *lspmac_bo_init(
   _lspmac_motor_init( d, name);
 
   d->moveAbs           = lspmac_moveabs_bo_queue;
+  d->jogAbs            = lspmac_moveabs_bo_queue;
   d->read              = lspmac_bo_read;
   d->write_fmt         = strdup( write_fmt);
   d->read_ptr	       = read_ptr;
@@ -3084,6 +3387,7 @@ lspmac_motor_t *lspmac_dac_init(
 
   _lspmac_motor_init( d, name);
   d->moveAbs           = moveAbs;
+  d->jogAbs            = moveAbs;
   d->read              = lspmac_dac_read;
   d->actual_pos_cnts_p = posp;
   d->dac_mvar          = strdup(mvar);
@@ -3103,6 +3407,7 @@ lspmac_motor_t *lspmac_soft_motor_init( lspmac_motor_t *d, char *name, int (*mov
   _lspmac_motor_init( d, name);
 
   d->moveAbs      = moveAbs;
+  d->jogAbs       = moveAbs;
   d->read         = lspmac_soft_motor_read;
   d->actual_pos_cnts_p = calloc( sizeof(int), 1);
   *d->actual_pos_cnts_p = 0;
@@ -3159,21 +3464,21 @@ void lspmac_init(
 
   p = &md2_status;
 
-  omega  = lspmac_motor_init( &(lspmac_motors[ 0]), 0, 0, &p->omega_act_pos,     &p->omega_status_1,     &p->omega_status_2,     "Omega   #1 &1 X", "omega",       lspmac_moveabs_queue);
-  alignx = lspmac_motor_init( &(lspmac_motors[ 1]), 0, 1, &p->alignx_act_pos,    &p->alignx_status_1,    &p->alignx_status_2,    "Align X #2 &3 X", "align.x",     lspmac_moveabs_queue);
-  aligny = lspmac_motor_init( &(lspmac_motors[ 2]), 0, 2, &p->aligny_act_pos,    &p->aligny_status_1,    &p->aligny_status_2,    "Align Y #3 &3 Y", "align.y",     lspmac_moveabs_queue);
-  alignz = lspmac_motor_init( &(lspmac_motors[ 3]), 0, 3, &p->alignz_act_pos,    &p->alignz_status_1,    &p->alignz_status_2,    "Align Z #4 &3 Z", "align.z",     lspmac_moveabs_queue);
-  anal   = lspmac_motor_init( &(lspmac_motors[ 4]), 0, 4, &p->analyzer_act_pos,  &p->analyzer_status_1,  &p->analyzer_status_2,  "Anal    #5",      "lightPolar",  lspmac_moveabs_queue);
-  zoom   = lspmac_motor_init( &(lspmac_motors[ 5]), 1, 0, &p->zoom_act_pos,      &p->zoom_status_1,      &p->zoom_status_2,      "Zoom    #6 &4 Z", "cam.zoom",    lspmac_movezoom_queue);
-  apery  = lspmac_motor_init( &(lspmac_motors[ 6]), 1, 1, &p->aperturey_act_pos, &p->aperturey_status_1, &p->aperturey_status_2, "Aper Y  #7 &5 Y", "appy",        lspmac_moveabs_queue);
-  aperz  = lspmac_motor_init( &(lspmac_motors[ 7]), 1, 2, &p->aperturez_act_pos, &p->aperturez_status_1, &p->aperturez_status_2, "Aper Z  #8 &5 Z", "appz",        lspmac_moveabs_queue);
-  capy   = lspmac_motor_init( &(lspmac_motors[ 8]), 1, 3, &p->capy_act_pos,      &p->capy_status_1,      &p->capy_status_2,      "Cap Y   #9 &5 U", "capy",        lspmac_moveabs_queue);
-  capz   = lspmac_motor_init( &(lspmac_motors[ 9]), 1, 4, &p->capz_act_pos,      &p->capz_status_1,      &p->capz_status_2,      "Cap Z  #10 &5 V", "capz",        lspmac_moveabs_queue);
-  scint  = lspmac_motor_init( &(lspmac_motors[10]), 2, 0, &p->scint_act_pos,     &p->scint_status_1,     &p->scint_status_2,     "Scin Z #11 &5 W", "scint",       lspmac_moveabs_queue);
-  cenx   = lspmac_motor_init( &(lspmac_motors[11]), 2, 1, &p->centerx_act_pos,   &p->centerx_status_1,   &p->centerx_status_2,   "Cen X  #17 &2 X", "centering.x", lspmac_moveabs_queue);
-  ceny   = lspmac_motor_init( &(lspmac_motors[12]), 2, 2, &p->centery_act_pos,   &p->centery_status_1,   &p->centery_status_2,   "Cen Y  #18 &2 Y", "centering.y", lspmac_moveabs_queue);
-  kappa  = lspmac_motor_init( &(lspmac_motors[13]), 2, 3, &p->kappa_act_pos,     &p->kappa_status_1,     &p->kappa_status_2,     "Kappa  #19 &7 X", "kappa",       lspmac_moveabs_queue);
-  phi    = lspmac_motor_init( &(lspmac_motors[14]), 2, 4, &p->phi_act_pos,       &p->phi_status_1,       &p->phi_status_2,       "Phi    #20 &7 Y", "phi",         lspmac_moveabs_queue);
+  omega  = lspmac_motor_init( &(lspmac_motors[ 0]), 0, 0, &p->omega_act_pos,     &p->omega_status_1,     &p->omega_status_2,     "Omega   #1 &1 X", "omega",       lspmac_moveabs_queue, lspmac_jogabs_queue);
+  alignx = lspmac_motor_init( &(lspmac_motors[ 1]), 0, 1, &p->alignx_act_pos,    &p->alignx_status_1,    &p->alignx_status_2,    "Align X #2 &3 X", "align.x",     lspmac_moveabs_queue, lspmac_jogabs_queue);
+  aligny = lspmac_motor_init( &(lspmac_motors[ 2]), 0, 2, &p->aligny_act_pos,    &p->aligny_status_1,    &p->aligny_status_2,    "Align Y #3 &3 Y", "align.y",     lspmac_moveabs_queue, lspmac_jogabs_queue);
+  alignz = lspmac_motor_init( &(lspmac_motors[ 3]), 0, 3, &p->alignz_act_pos,    &p->alignz_status_1,    &p->alignz_status_2,    "Align Z #4 &3 Z", "align.z",     lspmac_moveabs_queue, lspmac_jogabs_queue);
+  anal   = lspmac_motor_init( &(lspmac_motors[ 4]), 0, 4, &p->analyzer_act_pos,  &p->analyzer_status_1,  &p->analyzer_status_2,  "Anal    #5",      "lightPolar",  lspmac_moveabs_queue, lspmac_jogabs_queue);
+  zoom   = lspmac_motor_init( &(lspmac_motors[ 5]), 1, 0, &p->zoom_act_pos,      &p->zoom_status_1,      &p->zoom_status_2,      "Zoom    #6 &4 Z", "cam.zoom",    lspmac_movezoom_queue, lspmac_movezoom_queue);
+  apery  = lspmac_motor_init( &(lspmac_motors[ 6]), 1, 1, &p->aperturey_act_pos, &p->aperturey_status_1, &p->aperturey_status_2, "Aper Y  #7 &5 Y", "appy",        lspmac_moveabs_queue, lspmac_jogabs_queue);
+  aperz  = lspmac_motor_init( &(lspmac_motors[ 7]), 1, 2, &p->aperturez_act_pos, &p->aperturez_status_1, &p->aperturez_status_2, "Aper Z  #8 &5 Z", "appz",        lspmac_moveabs_queue, lspmac_jogabs_queue);
+  capy   = lspmac_motor_init( &(lspmac_motors[ 8]), 1, 3, &p->capy_act_pos,      &p->capy_status_1,      &p->capy_status_2,      "Cap Y   #9 &5 U", "capy",        lspmac_moveabs_queue, lspmac_jogabs_queue);
+  capz   = lspmac_motor_init( &(lspmac_motors[ 9]), 1, 4, &p->capz_act_pos,      &p->capz_status_1,      &p->capz_status_2,      "Cap Z  #10 &5 V", "capz",        lspmac_moveabs_queue, lspmac_jogabs_queue);
+  scint  = lspmac_motor_init( &(lspmac_motors[10]), 2, 0, &p->scint_act_pos,     &p->scint_status_1,     &p->scint_status_2,     "Scin Z #11 &5 W", "scint",       lspmac_moveabs_queue, lspmac_jogabs_queue);
+  cenx   = lspmac_motor_init( &(lspmac_motors[11]), 2, 1, &p->centerx_act_pos,   &p->centerx_status_1,   &p->centerx_status_2,   "Cen X  #17 &2 X", "centering.x", lspmac_moveabs_queue, lspmac_jogabs_queue);
+  ceny   = lspmac_motor_init( &(lspmac_motors[12]), 2, 2, &p->centery_act_pos,   &p->centery_status_1,   &p->centery_status_2,   "Cen Y  #18 &2 Y", "centering.y", lspmac_moveabs_queue, lspmac_jogabs_queue);
+  kappa  = lspmac_motor_init( &(lspmac_motors[13]), 2, 3, &p->kappa_act_pos,     &p->kappa_status_1,     &p->kappa_status_2,     "Kappa  #19 &7 X", "kappa",       lspmac_moveabs_queue, lspmac_jogabs_queue);
+  phi    = lspmac_motor_init( &(lspmac_motors[14]), 2, 4, &p->phi_act_pos,       &p->phi_status_1,       &p->phi_status_2,       "Phi    #20 &7 Y", "phi",         lspmac_moveabs_queue, lspmac_jogabs_queue);
 
   fshut  = lspmac_fshut_init( &(lspmac_motors[15]));
   flight = lspmac_dac_init( &(lspmac_motors[16]), &p->front_dac,   "M1200", "frontLight.intensity", lspmac_movedac_queue);
@@ -3312,7 +3617,7 @@ void lspmac_scint_inPosition_cb( char *event) {
  *  \param event Name of the event that called us
  */
 void lspmac_backLight_up_cb( char *event) {
-  blight->moveAbs( blight, round(lspmac_getPosition( zoom)));
+  blight->moveAbs( blight, (int)(lspmac_getPosition( zoom)));
 }
 
 /** Turn off the backlight whenever it goes down
@@ -3328,7 +3633,7 @@ void lspmac_backLight_down_cb( char *event) {
 void lspmac_light_zoom_cb( char *event) {
   int z;
 
-  z = round(lspmac_getPosition( zoom));
+  z = (int)(lspmac_getPosition( zoom));
 
   lslogging_log_message( "lspmac_light_zoom_cb: zoom = %d", z);
 
@@ -3514,6 +3819,7 @@ void lspmac_run() {
   char evts[64];
   int i;
   int active;
+  int motor_num;
 
   pthread_create( &pmac_thread, NULL, lspmac_worker, NULL);
 
@@ -3564,8 +3870,17 @@ void lspmac_run() {
   // (ie, set the various flag for when a motor is active or not)
   //
   for( i=0; i<lspmac_nmotors; i++) {
-    mp = &(lspmac_motors[i]);
-    active = lsredis_getb( mp->active);
+    mp        = &(lspmac_motors[i]);
+    active    = lsredis_getb( mp->active);
+    motor_num = lsredis_getl( mp->motor_num);
+
+    if( motor_num >= 1 && motor_num <= 32) {
+      
+      //
+      // Set the PMAC to be consistant with redis
+      //
+      lspmac_SockSendDPline( NULL, "I%d16=%f I%d17=%f I%d28=%d", motor_num, lsredis_getd( mp->max_speed), motor_num, lsredis_getd( mp->max_accel), motor_num, lsredis_getl( mp->in_position_band));
+    }    
 
     // if there is a problem with "active" then don't do anything
     // On the other hand, various combinations of yes/no true/fals 1/0 should work
