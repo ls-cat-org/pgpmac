@@ -31,6 +31,33 @@ static int rotating = 0;		//!< flag: when omega is in position after a rotate we
 
 static double md2cmds_capz_moving_time = NAN;
 
+static struct hsearch_data md2cmds_hmap;
+
+typedef struct md2cmds_cmd_kv_struct {
+  char *k;
+  int (*v)( const char *);
+} md2cmds_cmd_kv_t;
+
+int md2cmds_abort(        const char *);
+int md2cmds_center(       const char *);
+int md2cmds_collect(      const char *);
+int md2cmds_moveAbs(      const char *);
+int md2cmds_phase_change( const char *);
+int md2cmds_test(         const char *);
+int md2cmds_rotate(       const char *);
+int md2cmds_transfer(     const char *);
+
+static md2cmds_cmd_kv_t md2cmds_cmd_kvs[] = {
+  { "abort",      md2cmds_abort},
+  { "center",     md2cmds_center},
+  { "changeMode", md2cmds_phase_change},
+  { "collect",    md2cmds_collect},
+  { "moveAbs",    md2cmds_moveAbs},
+  { "rotate",     md2cmds_rotate},
+  { "test",       md2cmds_test},
+  { "transfer",   md2cmds_transfer}
+};
+
 void md2cmds_home_prep() {
   pthread_mutex_lock( &md2cmds_homing_mutex);
   md2cmds_homing_count = -1;
@@ -228,8 +255,9 @@ void md2cmds_organs_move_presets( char *pay, char *paz, char *pcy, char *pcz, ch
 
 
 /** Transfer a sample
+ *  \param dummy Unused
  */
-void md2cmds_transfer() {
+int md2cmds_transfer( const char *dummy) {
   int nextsample, abort_now;
   double esttime;
   double ax, ay, az, cx, cy, horz, vert, oref;
@@ -238,7 +266,7 @@ void md2cmds_transfer() {
   nextsample = lspg_nextsample_all( &err);
   if( err) {
     lslogging_log_message( "md2cmds_transfer: no sample requested to be transfered, false alarm");
-    return;
+    return 1;
   }
   
   //
@@ -353,7 +381,7 @@ void md2cmds_transfer() {
   if( md2cmds_home_wait( 30.0)) {
     lslogging_log_message( "md2cmds_transfer: homing routines taking too long.  Aborting transfer.");
     lsevents_send_event( "Transfer Aborted");
-    return;
+    return 1;
   }
 
   //
@@ -362,7 +390,7 @@ void md2cmds_transfer() {
   if( md2cmds_move_wait( 30.0)) {
     lslogging_log_message( "md2cmds_transfer: We got bored waiting for the motors to stop.  Aborting transfer.  Later.");
     lsevents_send_event( "Transfer Aborted");
-    return;
+    return 1;
   }
 
   // TODO: check that all the motors are where we told them to go  
@@ -371,7 +399,7 @@ void md2cmds_transfer() {
   if( abort_now) {
     lslogging_log_message( "md2cmds_transfer: Apparently there is a sample mounted already but we don't know where it is supposed to go");
     lsevents_send_event( "Transfer Aborted");
-    return;
+    return 1;
   }
   
   // refuse to go on if we do not have positive confirmation that the backlight is down and the
@@ -380,7 +408,7 @@ void md2cmds_transfer() {
   if( lspmac_getBIPosition( blight_down) != 1 ||lspmac_getBIPosition( fluor_back) != 1) {
     lslogging_log_message( "md2cmds_transfer: It looks like either the back light is not down or the fluoescence dectector is not back");
     lsevents_send_event( "Transfer Aborted");
-    return;
+    return 1;
   }
 
   //
@@ -407,10 +435,13 @@ void md2cmds_transfer() {
   lspg_demandairrights_all();
 
   lsevents_send_event( "Transfer Done");
+
+  return 0;
 }
 
 
 /** Move a motor to the position requested
+ *  Returns non zero on error
  */
 int md2cmds_moveAbs(
 		     const char *ccmd			/**< [in] The full command string to parse, ie, "moveAbs omega 180"	*/
@@ -501,7 +532,7 @@ int md2cmds_moveAbs(
  *
  *  \param ccmd The full text of the command that sent us here
  */
-void md2cmds_phase_change( const char *ccmd) {
+int md2cmds_phase_change( const char *ccmd) {
   char *cmd;
   char *ignore;
   char *ptr;
@@ -509,7 +540,7 @@ void md2cmds_phase_change( const char *ccmd) {
   int err;
   
   if( ccmd == NULL || *ccmd == 0)
-    return;
+    return 1;
 
   // use a copy as strtok_r modifies the string it is parsing
   //
@@ -519,7 +550,7 @@ void md2cmds_phase_change( const char *ccmd) {
   if( ignore == NULL) {
     lslogging_log_message( "md2cmds_phase_change: ignoring empty command string (how did we let things get this far?");
     free( cmd);
-    return;
+    return 1;
   }
 
   //
@@ -529,7 +560,7 @@ void md2cmds_phase_change( const char *ccmd) {
   if( mode == NULL) {
     lslogging_log_message( "md2cmds_phase_change: no mode specified");
     free( cmd);
-    return;
+    return 1;
   }
   
   if( strcmp( mode, "manualMount") == 0) {
@@ -667,6 +698,8 @@ void md2cmds_phase_change( const char *ccmd) {
   }
   
   free( cmd);
+
+  return 0;
 }
 
 
@@ -775,8 +808,10 @@ void md2cmds_kappaphi_move( double kappa_deg, double phi_deg) {
 
 
 /** Collect some data
+ *  \param dummy Unused
+ *  returns non-zero on error
  */
-void md2cmds_collect() {
+int md2cmds_collect( const char *dummy) {
   long long skey;	//!< index of shot to be taken
   double exp_time;      //!< Exposure time (saved to compute shutter timeout)
   double p170;		//!< start cnts
@@ -803,7 +838,7 @@ void md2cmds_collect() {
   if( md2cmds_move_wait( 30.0)) {
     lslogging_log_message( "md2cmds_collect: Timed out waiting for organs to move.  Aborting data collection.");
     lsevents_send_event( "Data Colection Aborted");
-    return;
+    return 1;
   }
 
   //
@@ -845,7 +880,7 @@ void md2cmds_collect() {
 	if( md2cmds_move_wait( 2.0)) {
 	  lslogging_log_message( "md2cmds_collect: Timed out waiting for alignment or centering stage (or both) to stop moving.  Aborting data collection.");
 	  lsevents_send_event( "Data Colection Aborted");
-	  return;
+	  return 1;
 	}
       }
     }
@@ -863,7 +898,7 @@ void md2cmds_collect() {
       if( md2cmds_move_wait( 30.0)) {
 	  lslogging_log_message( "md2cmds_collect: Timed out waiting for kappa or phi (or both) to stop moving.  Aborting data collection.");
 	  lsevents_send_event( "Data Colection Aborted");
-	  return;
+	  return 1;
       }	
     }
 
@@ -917,7 +952,7 @@ void md2cmds_collect() {
       pthread_mutex_unlock( &lspmac_shutter_mutex);
       lslogging_log_message( "md2cmds_collect: Timed out waiting for shutter to open.  Data collection aborted.");
       lsevents_send_event( "Data Collection Aborted");
-      return;
+      return 1;
     }
 
     //
@@ -946,7 +981,7 @@ void md2cmds_collect() {
       pthread_mutex_unlock( &lspmac_shutter_mutex);
       lslogging_log_message( "md2cmds_collect: Timed out waiting for shutter to open.  Data collection aborted.");
       lsevents_send_event( "Data Collection Aborted");
-      return;
+      return 1;
     }
 
 
@@ -967,7 +1002,7 @@ void md2cmds_collect() {
       pthread_mutex_unlock( &lspmac_shutter_mutex);
       lslogging_log_message( "md2cmds_collect: Timed out waiting for shutter to close.  Data collection aborted.");
       lsevents_send_event( "Data Collection Aborted");
-      return;
+      return 1;
     }
 
 
@@ -992,7 +1027,7 @@ void md2cmds_collect() {
     if( md2cmds_move_wait( 10.0)) {
       lslogging_log_message( "md2cmds_collect: Giving up waiting for omega to stop moving. Data collection aborted.");
       lsevents_send_event( "Data Colection Aborted");
-      return;
+      return 1;
     }
 
     //
@@ -1018,12 +1053,15 @@ void md2cmds_collect() {
     }
   }
   lsevents_send_event( "Data Collection Done");
+  return 0;
 }
 
 /** Spin 360 and make a video (recenter first, maybe)
+ *  \param dummy Unused
+ *  returns non-zero on error
  *  
  */
-void md2cmds_rotate() {
+int md2cmds_rotate( const char *dummy) {
   double cx, cy, ax, ay, az;
   int mmask;
 
@@ -1118,13 +1156,13 @@ void md2cmds_rotate() {
   if( md2cmds_home_wait( 20.0)) {
     lslogging_log_message( "md2cmds_rotate: homing motors timed out.  Rotate aborted");
     lsevents_send_event( "Rotate Aborted");
-    return;
+    return 1;
   }
 
   if( md2cmds_move_wait( 20.0)) {
     lslogging_log_message( "md2cmds_rotate: moving motors timed out.  Rotate aborted");
     lsevents_send_event( "Rotate Aborted");
-    return;
+    return 1;
   }
 
 
@@ -1140,6 +1178,8 @@ void md2cmds_rotate() {
   lspmac_video_rotate( 4.0);
   lslogging_log_message( "md2cmds_rotate: starting rotation");
   rotating = 1;
+
+  return 0;
 }
 
 /** Tell the database about the time we went through omega=zero.
@@ -1196,7 +1236,8 @@ void md2cmds_set_scale_cb( char *event) {
 /** Move centering and alignment tables as requested
  *  TODO: Implement
  */
-void md2cmds_center() {
+int md2cmds_center( const char *dummy) {
+  return 0;
 }
 
 
@@ -1267,7 +1308,10 @@ int md2cmds_action_queue( double timeout, char *action) {
   return rtn;
 }
 
-void md2cmds_abort() {
+/** abort the current motion and put the system into a known state
+ *  /param dummy Unused here
+ */
+int md2cmds_abort( const char *dummy) {
   //
   // First priority is to close the shutter
   //
@@ -1292,7 +1336,7 @@ void md2cmds_abort() {
   //
   lspmac_SockSendDPline( NULL, "m5075=0");
   
-
+  return 0;
 }
 
 /** pause until md2cmds_worker has finished running the command
@@ -1302,11 +1346,25 @@ void md2cmds_action_wait() {
   pthread_mutex_unlock( &md2cmds_mutex);
 }
 
+/** Run the test routine(s)
+ *  \param dummy Unused
+ */
+int md2cmds_test( const char *dummy) {
+  lstest_main();
+  return 0;
+}
+
+
 /** Our worker thread
  */
 void *md2cmds_worker(
 		     void *dummy		/**> [in] Unused but required by protocol		*/
 		     ) {
+
+  ENTRY hsearcher, *hrtnval;
+  char theCmd[32], *sp;
+  int i, err;
+  md2cmds_cmd_kv_t *cmdp;
 
   pthread_mutex_lock( &md2cmds_mutex);
 
@@ -1317,20 +1375,39 @@ void *md2cmds_worker(
     while( md2cmds_cmd[0] == 0)
       pthread_cond_wait( &md2cmds_cond, &md2cmds_mutex);
 
-    if( strcmp( md2cmds_cmd, "abort") == 0) {
-      md2cmds_abort();
-    } else if( strcmp( md2cmds_cmd, "transfer") == 0) {
-      md2cmds_transfer();
-    } else if( strcmp( md2cmds_cmd, "collect") == 0) {
-      md2cmds_collect();
-    } else if( strcmp( md2cmds_cmd, "rotate") == 0) {
-      md2cmds_rotate();
-    } else if( strcmp( md2cmds_cmd, "center") == 0) {
-      md2cmds_center();
-    } else if( strncmp( md2cmds_cmd, "moveAbs", 7) == 0) {
-      md2cmds_moveAbs( md2cmds_cmd);
-    } else if( strncmp( md2cmds_cmd, "changeMode", 10) == 0) {
-      md2cmds_phase_change( md2cmds_cmd);
+
+    //
+    // pull out the command name itself from the string we were given
+    //
+    for( i=0, sp=md2cmds_cmd; i<sizeof( theCmd)-1; i++, sp++) {
+      if( *sp == 0 || *sp == ' ') {
+	theCmd[i] = 0;
+	break;
+      }
+      theCmd[i] = *sp;
+    }
+    theCmd[sizeof(theCmd)-1]=0;
+
+    hsearcher.key  = theCmd;
+    hsearcher.data = NULL;
+
+    errno = 0;
+    err = hsearch_r( hsearcher, FIND, &hrtnval, &md2cmds_hmap);
+    if( err == 0) {
+      lslogging_log_message( "md2cmds_worker: hsearch_r failed.  theCmd = '%s' Errno: %d: %s", theCmd, errno, strerror( errno));
+      md2cmds_cmd[0] = 0;
+      continue;
+    }
+    lslogging_log_message( "md2cmds_worker: Found command '%s'", theCmd);
+    if( hrtnval != NULL) {
+      cmdp = (md2cmds_cmd_kv_t *)hrtnval;
+      err = cmdp->v( md2cmds_cmd);
+      if( err) {
+	lslogging_log_message( "md2cmds_worker: Command failed: '%s'", md2cmds_cmd);
+	//
+	// At this point we'd clear the queue but the queue is currently too short to bother doing that
+	//
+      }
     }
 
     md2cmds_cmd[0] = 0;
@@ -1354,6 +1431,9 @@ void md2cmds_coordsys_7_stopped_cb( char *event) {
 /** Initialize the md2cmds module
  */
 void md2cmds_init() {
+  ENTRY hloader, *hrtnval;
+  int i, err;
+
   pthread_mutexattr_t mutex_initializer;
 
   pthread_mutexattr_init( &mutex_initializer);
@@ -1371,6 +1451,17 @@ void md2cmds_init() {
 
   md2cmds_md_status_code = lsredis_get_obj( "md2_status_code");
   lsredis_setstr( md2cmds_md_status_code, "7");
+
+  hcreate_r( 32, &md2cmds_hmap);
+  for( i=0; i<sizeof(md2cmds_cmd_kvs)/sizeof(md2cmds_cmd_kvs[0]); i++) {
+    hloader.key  = md2cmds_cmd_kvs[i].k;
+    hloader.data = md2cmds_cmd_kvs[i].v;
+    err = hsearch_r( hloader, ENTER, &hrtnval, &md2cmds_hmap);
+    if( err == 0) {
+      lslogging_log_message( "md2cmds_init: hsearch_r returned an error for item %d: %s", i, strerror( errno));
+    }
+  }
+
 }
 
 /** Start up the thread
