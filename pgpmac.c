@@ -299,7 +299,7 @@ void stdinService(
     case KEY_ENTER:
     case 0x000a:
       if( cmds_on > 0 && strlen( cmds) > 0) {
-	lspmac_SockSendline( NULL, cmds);
+	lspmac_SockSendline( NULL, "%s", cmds);
       }
       memset( cmds, 0, sizeof(cmds));
       cmds_on = 0;
@@ -364,11 +364,10 @@ int main(
     { NULL,     0, NULL, 0}
   };
   int c;
-  int ivars, mvars;
-  mvars=0;
-  ivars=0;
-
-  int i;				// standard loop counter
+  int ivars, mvars;		//!< argument flags
+  mvars    = 0;
+  ivars    = 0;
+  int i;			// standard loop counter
 
   while( 1) {
     c=getopt_long( argc, argv, "im", long_options, NULL);
@@ -383,7 +382,6 @@ int main(
     case 'm':
       mvars=1;
       break;
-
     }
   }
 
