@@ -1,4 +1,4 @@
-.TH "pgpmac.c" 3 "Wed Jan 23 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "pgpmac.c" 3 "Tue Jan 29 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -86,7 +86,7 @@ Definition in file \fBpgpmac\&.c\fP\&.
 .SS "int main (intargc, char **argv)"
 
 .PP
-Our main routine\&. \fBParameters:\fP
+Our main routine\&. < argument flags \fBParameters:\fP
 .RS 4
 \fIargc\fP Number of arguments 
 .br
@@ -109,11 +109,10 @@ Definition at line 353 of file pgpmac\&.c\&.
     { NULL,     0, NULL, 0}
   };
   int c;
-  int ivars, mvars;
-  mvars=0;
-  ivars=0;
-
-  int i;                                // standard loop counter
+  int ivars, mvars;             
+  mvars    = 0;
+  ivars    = 0;
+  int i;                        // standard loop counter
 
   while( 1) {
     c=getopt_long( argc, argv, 'im', long_options, NULL);
@@ -128,7 +127,6 @@ Definition at line 353 of file pgpmac\&.c\&.
     case 'm':
       mvars=1;
       break;
-
     }
   }
 
@@ -313,7 +311,7 @@ Definition at line 254 of file pgpmac\&.c\&.
     case KEY_ENTER:
     case 0x000a:
       if( cmds_on > 0 && strlen( cmds) > 0) {
-        lspmac_SockSendline( NULL, cmds);
+        lspmac_SockSendline( NULL, '%s', cmds);
       }
       memset( cmds, 0, sizeof(cmds));
       cmds_on = 0;

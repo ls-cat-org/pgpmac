@@ -1,11 +1,11 @@
-VERSION= 0.4
+VERSION= 0.5
 # 
 # Makefile for pgpmac project
 # (C) 2012 by Keith Brister and Northwesern University
 # All Rights Reserved
 #
-pgpmac: pgpmac.c pgpmac.h lspg.o lsredis.o lspmac.o md2cmds.o lslogging.o lsevents.o lstimer.o Makefile
-	gcc -g -pthread -o pgpmac pgpmac.c  -Wall md2cmds.o lspmac.o lspg.o lsredis.o lslogging.o lsevents.o lstimer.o -lpq -lncurses -lpthread -lrt -lhiredis -lm
+pgpmac: pgpmac.c pgpmac.h lspg.o lsredis.o lspmac.o md2cmds.o lslogging.o lsevents.o lstimer.o lstest.o Makefile
+	gcc -g -pthread -o pgpmac pgpmac.c  -Wall md2cmds.o lspmac.o lspg.o lsredis.o lslogging.o lsevents.o lstimer.o lstest.o -lpq -lncurses -lpthread -lrt -lhiredis -lm
 
 dist:
 	ln -fs . ls-cat-pgpmac-$(VERSION)
@@ -38,6 +38,9 @@ lspg.o: lspg.c pgpmac.h Makefile
 
 md2cmds.o: md2cmds.c pgpmac.h Makefile
 	gcc -g -pthread -c md2cmds.c -Wall
+
+lstest.o: lstest.c pgpmac.h Makefile
+	gcc -g -pthread -c lstest.c -Wall
 
 
 #

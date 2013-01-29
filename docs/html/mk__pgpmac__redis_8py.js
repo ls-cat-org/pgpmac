@@ -1,5 +1,7 @@
 var mk__pgpmac__redis_8py =
 [
+    [ "active_simulation", "mk__pgpmac__redis_8py.html#a2572732af48007dc8f70e12ed2a738fe", null ],
+    [ "asis", "mk__pgpmac__redis_8py.html#afe77e7198e6992a85f09dc3667d931d7", null ],
     [ "b", "mk__pgpmac__redis_8py.html#a90faa2042277e396b48b19374c9db4ab", null ],
     [ "bi_list", "mk__pgpmac__redis_8py.html#a961bfabfbdcbf5b749f6e6ecdc733619", null ],
     [ "f", "mk__pgpmac__redis_8py.html#a057fe7457503e0de97edcf855591ed58", null ],
@@ -18,6 +20,7 @@ var mk__pgpmac__redis_8py =
     [ "pref_ini", "mk__pgpmac__redis_8py.html#a38c785af5201403976e1267c47ea5096", null ],
     [ "v", "mk__pgpmac__redis_8py.html#ac732d49b0afca9a9951e3a252bae42fc", null ],
     [ "x", "mk__pgpmac__redis_8py.html#abc8696f6f2f3fd3edd30989d3c8ec301", null ],
+    [ "xlate", "mk__pgpmac__redis_8py.html#afba647feb8fc4d0a364c3dca29af3a22", null ],
     [ "y", "mk__pgpmac__redis_8py.html#a34220d58136fb95853f54ed51a130f79", null ],
     [ "zoom_settings", "mk__pgpmac__redis_8py.html#ad91bac9be746f99e1cf1f8e28ff348be", null ]
 ];

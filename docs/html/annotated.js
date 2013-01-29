@@ -20,10 +20,12 @@ var annotated =
     [ "lspmac_ascii_buffers_struct", "structlspmac__ascii__buffers__struct.html", "structlspmac__ascii__buffers__struct" ],
     [ "lspmac_bi_struct", "structlspmac__bi__struct.html", "structlspmac__bi__struct" ],
     [ "lspmac_cmd_queue_struct", "structlspmac__cmd__queue__struct.html", "structlspmac__cmd__queue__struct" ],
+    [ "lspmac_combined_move_struct", "structlspmac__combined__move__struct.html", "structlspmac__combined__move__struct" ],
     [ "lspmac_dpascii_queue_struct", "structlspmac__dpascii__queue__struct.html", "structlspmac__dpascii__queue__struct" ],
     [ "lspmac_motor_struct", "structlspmac__motor__struct.html", "structlspmac__motor__struct" ],
     [ "lsredis_obj_struct", "structlsredis__obj__struct.html", "structlsredis__obj__struct" ],
     [ "lstimer_list_struct", "structlstimer__list__struct.html", "structlstimer__list__struct" ],
+    [ "md2cmds_cmd_kv_struct", "structmd2cmds__cmd__kv__struct.html", "structmd2cmds__cmd__kv__struct" ],
     [ "md2StatusStruct", "structmd2StatusStruct.html", "structmd2StatusStruct" ],
     [ "tagEthernetCmd", "structtagEthernetCmd.html", "structtagEthernetCmd" ]
 ];

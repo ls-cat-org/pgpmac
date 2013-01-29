@@ -15,6 +15,7 @@ var searchData=
   ['dcy_5fisnull',['dcy_isnull',['../structlspg__getcenter__struct.html#a352c48c8d443c52f18ebd13019d01684',1,'lspg_getcenter_struct']]],
   ['delay_5fnsecs',['delay_nsecs',['../structlstimer__list__struct.html#a45e9fc0b669a1b2831d46b465822344c',1,'lstimer_list_struct']]],
   ['delay_5fsecs',['delay_secs',['../structlstimer__list__struct.html#aa5eac664fe8159916bc3cdfbf583f818',1,'lstimer_list_struct']]],
+  ['delta',['Delta',['../structlspmac__combined__move__struct.html#a5389f07fcf2b24b0e912aefb4141001d',1,'lspmac_combined_move_struct']]],
   ['dryer',['dryer',['../lspmac_8c.html#a9d9c5030d817483ca9518027c91adac4',1,'dryer():&#160;lspmac.c'],['../pgpmac_8h.html#a9d9c5030d817483ca9518027c91adac4',1,'dryer():&#160;lspmac.c']]],
   ['dsdir',['dsdir',['../structlspg__nextshot__struct.html#ac372e1774a25b3d4bfbb9169762eb39e',1,'lspg_nextshot_struct']]],
   ['dsdir_5fisnull',['dsdir_isnull',['../structlspg__nextshot__struct.html#a8dea57b78b92d67d83ccbb6ed6da13ca',1,'lspg_nextshot_struct']]],

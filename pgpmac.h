@@ -125,6 +125,7 @@ typedef struct lspmac_motor_struct {
   lsredis_obj_t *coord_num;	//!< coordinate system this motor belongs to (0 if none)
   lsredis_obj_t *home;		//!< pmac commands to home motor
   lsredis_obj_t *inactive_init;	//!< pmac commands to inactivate the motor
+  lsredis_obj_t *in_position_band;	//!< moves within this amount are ignored UNITS ARE 1/16 COUNT
   lsredis_obj_t *max_accel;	//!< our maximum acceleration (cts/msec^2)
   lsredis_obj_t *max_pos;	//!< our maximum position (soft limit)
   lsredis_obj_t *max_speed;	//!< our maximum speed (cts/msec)
@@ -145,6 +146,7 @@ typedef struct lspmac_motor_struct {
   int *read_ptr;		//!< With read_mask finds bit to read for binary i/o
   int read_mask;		//!< With read_ptr find bit to read for binary i/o
   int (*moveAbs)( struct lspmac_motor_struct *, double);	//!< function to move the motor
+  int (*jogAbs)( struct lspmac_motor_struct *, double);		//!< function to move the motor
   double *lut;			//!< lookup table (instead of u2c)
   int  nlut;			//!< length of lut
   WINDOW *win;			//!< our ncurses window
@@ -494,6 +496,7 @@ extern lsredis_obj_t *lsredis_get_obj( char *, ...);
 extern char *lsredis_getstr( lsredis_obj_t *p);
 extern void PmacSockSendline( char *s);
 extern unsigned int lspg_nextsample_all( int *err);
+extern char lsredis_getc( lsredis_obj_t *p);
 extern long int lsredis_getl( lsredis_obj_t *p);
 extern void lsevents_add_listener( char *, void (*cb)(char *));
 extern void lsevents_init();
@@ -531,6 +534,7 @@ extern int lspmac_move_or_jog_preset_queue( lspmac_motor_t *, char *, int);
 extern void lspmac_move_or_jog_queue( lspmac_motor_t *, double, int);
 extern int lspmac_move_preset_queue( lspmac_motor_t *mp, char *preset_name);
 extern int lspmac_moveabs_queue( lspmac_motor_t *, double);
+extern int lspmac_jogabs_queue( lspmac_motor_t *, double);
 extern int lspmac_moveabs_wait(lspmac_motor_t *mp, double timeout);
 extern void lspmac_run();
 extern void lspmac_video_rotate( double secs);
@@ -551,3 +555,5 @@ extern void lsupdate_run();
 extern void md2cmds_init();
 extern void md2cmds_run();
 extern void pgpmac_printf( char *fmt, ...);
+extern void lstest_main();
+extern int lspmac_est_move_time( double *est_time, int *mmask, lspmac_motor_t *mp_1, int jog_1, char *preset_1, double end_point_1, ...);
