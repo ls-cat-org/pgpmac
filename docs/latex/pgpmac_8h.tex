@@ -249,7 +249,9 @@ void \hyperlink{pgpmac_8h_a7762ca7b97b44b979e23ce88ca3b4249}{pgpmac\-\_\-printf}
 void \hyperlink{pgpmac_8h_a7b84b6a923167d84c1aefbd2241864c3}{lstest\-\_\-main} ()
 \item 
 int \hyperlink{pgpmac_8h_a83ba40e81c04ecc11009be6cbed0c5e1}{lspmac\-\_\-est\-\_\-move\-\_\-time} (double $\ast$est\-\_\-time, int $\ast$mmask, \hyperlink{pgpmac_8h_aa5067fcbaabc5bbfdc52492495518c96}{lspmac\-\_\-motor\-\_\-t} $\ast$mp\-\_\-1, int jog\-\_\-1, char $\ast$preset\-\_\-1, double end\-\_\-point\-\_\-1,...)
-\begin{DoxyCompactList}\small\item\em Move the motors and estimate the time it'll take to finish the job. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{DoxyCompactList}\small\item\em Move the motors and estimate the time it'll take to finish the job. \end{DoxyCompactList}\item 
+int \hyperlink{pgpmac_8h_a1273ffacbd1a28282a019460bf6bc9b5}{lspmac\-\_\-est\-\_\-move\-\_\-time\-\_\-wait} (double move\-\_\-time, int mmask)
+\begin{DoxyCompactList}\small\item\em wait for motion to stop returns non-\/zero if the wait timed out \end{DoxyCompactList}\end{DoxyCompactItemize}
 \subsection*{Variables}
 \begin{DoxyCompactItemize}
 \item 
@@ -1982,6 +1984,60 @@ Definition at line 2617 of file lspmac.\-c.
   \textcolor{keywordflow}{return} 0;
 \}
 \end{DoxyCode}
+\hypertarget{pgpmac_8h_a1273ffacbd1a28282a019460bf6bc9b5}{\index{pgpmac.\-h@{pgpmac.\-h}!lspmac\-\_\-est\-\_\-move\-\_\-time\-\_\-wait@{lspmac\-\_\-est\-\_\-move\-\_\-time\-\_\-wait}}
+\index{lspmac\-\_\-est\-\_\-move\-\_\-time\-\_\-wait@{lspmac\-\_\-est\-\_\-move\-\_\-time\-\_\-wait}!pgpmac.h@{pgpmac.\-h}}
+\subsubsection[{lspmac\-\_\-est\-\_\-move\-\_\-time\-\_\-wait}]{\setlength{\rightskip}{0pt plus 5cm}int lspmac\-\_\-est\-\_\-move\-\_\-time\-\_\-wait (
+\begin{DoxyParamCaption}
+\item[{double}]{move\-\_\-time, }
+\item[{int}]{mmask}
+\end{DoxyParamCaption}
+)}}\label{pgpmac_8h_a1273ffacbd1a28282a019460bf6bc9b5}
+
+
+wait for motion to stop returns non-\/zero if the wait timed out 
+
+
+\begin{DoxyParams}{Parameters}
+{\em move\-\_\-time} & The time out in seconds \\
+\hline
+{\em mmask} & A coordinate system mask to wait for\\
+\hline
+\end{DoxyParams}
+Both values are returned from lspmac\-\_\-est\-\_\-move\-\_\-time 
+
+Definition at line 2941 of file lspmac.\-c.
+
+
+\begin{DoxyCode}
+                                                            \{
+  \textcolor{keywordtype}{int} err;
+  \textcolor{keywordtype}{double} isecs, fsecs;
+  \textcolor{keyword}{struct }timespec timeout;
+
+  clock\_gettime( CLOCK\_REALTIME, &timeout);
+  fsecs = modf( move\_time, &isecs);
+  timeout.tv\_sec  += (long)floor(isecs);
+  timeout.tv\_nsec += (long)floor(fsecs * 1.e9);
+  timeout.tv\_sec  += timeout.tv\_nsec / 1000000000;
+  timeout.tv\_nsec %= 1000000000;
+
+  err = 0;
+  pthread\_mutex\_lock( &\hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
+  \textcolor{keywordflow}{while}( err == 0 && (\hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags} & mmask) != 0)
+    err = pthread\_cond\_timedwait( &\hyperlink{lspmac_8c_a57547d211906c981ef20257eba99f8df}{lspmac\_moving\_cond}, &
+      \hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex}, &timeout);
+  pthread\_mutex\_unlock( &\hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
+
+  \textcolor{keywordflow}{if}( err != 0) \{
+    \textcolor{keywordflow}{if}( err == ETIMEDOUT) \{
+      \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lstest\_lspmac\_est\_move\_time:
+       timed out waiting %f seconds"}, move\_time);
+    \}
+    \textcolor{keywordflow}{return} 1;
+  \}
+  \textcolor{keywordflow}{return} 0;
+\}
+\end{DoxyCode}
 \hypertarget{pgpmac_8h_ac4bf3a54deeaeb6e93dc3183388ad104}{\index{pgpmac.\-h@{pgpmac.\-h}!lspmac\-\_\-get\-B\-I\-Position@{lspmac\-\_\-get\-B\-I\-Position}}
 \index{lspmac\-\_\-get\-B\-I\-Position@{lspmac\-\_\-get\-B\-I\-Position}!pgpmac.h@{pgpmac.\-h}}
 \subsubsection[{lspmac\-\_\-get\-B\-I\-Position}]{\setlength{\rightskip}{0pt plus 5cm}int lspmac\-\_\-get\-B\-I\-Position (
@@ -2164,7 +2220,7 @@ Initialize this module.
 
 
 
-Definition at line 3439 of file lspmac.\-c.
+Definition at line 3477 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2446,7 +2502,7 @@ Use jog to move motor to requested position.
 
 
 
-Definition at line 3171 of file lspmac.\-c.
+Definition at line 3209 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2488,7 +2544,7 @@ $<$ our axis
 \end{DoxyParams}
 
 
-Definition at line 2937 of file lspmac.\-c.
+Definition at line 2975 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2721,7 +2777,7 @@ move using a preset value returns 0 on success, non-\/zero on error
 
 
 
-Definition at line 3132 of file lspmac.\-c.
+Definition at line 3170 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2817,7 +2873,7 @@ Use coordinate system motion program, if available, to move motor to requested p
 
 
 
-Definition at line 3160 of file lspmac.\-c.
+Definition at line 3198 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2850,7 +2906,7 @@ Assume motion already queued, now just wait
 \end{DoxyParams}
 
 
-Definition at line 3186 of file lspmac.\-c.
+Definition at line 3224 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2948,7 +3004,7 @@ Start up the lspmac thread.
 
 
 
-Definition at line 3818 of file lspmac.\-c.
+Definition at line 3856 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3770,7 +3826,7 @@ Definition at line 288 of file lsredis.\-c.
 )}}\label{pgpmac_8h_a7b84b6a923167d84c1aefbd2241864c3}
 
 
-Definition at line 119 of file lstest.\-c.
+Definition at line 92 of file lstest.\-c.
 
 
 \begin{DoxyCode}

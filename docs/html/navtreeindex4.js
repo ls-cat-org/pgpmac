@@ -1,5 +1,6 @@
 var NAVTREEINDEX4 =
 {
+"structlspg__nextshot__struct.html#ab76bd38d2a098bc7eda82aff5dcb9c66":[2,0,11,5],
 "structlspg__nextshot__struct.html#ab7a7b37a17f06c4e9ebdcdf056946098":[2,0,11,21],
 "structlspg__nextshot__struct.html#abc9242805729f70b83df79706c394c71":[2,0,11,65],
 "structlspg__nextshot__struct.html#abd3c69357470052eb79ddd8eddd57b2c":[2,0,11,73],

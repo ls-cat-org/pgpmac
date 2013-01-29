@@ -65,6 +65,7 @@ var lspmac_8c =
     [ "lspmac_dac_read", "lspmac_8c.html#a200bc9306d54fca566eb5e29d8e82308", null ],
     [ "lspmac_Error", "lspmac_8c.html#a4748a88d1fe46aa3ab1beee55bcddf1b", null ],
     [ "lspmac_est_move_time", "lspmac_8c.html#a83ba40e81c04ecc11009be6cbed0c5e1", null ],
+    [ "lspmac_est_move_time_wait", "lspmac_8c.html#a1273ffacbd1a28282a019460bf6bc9b5", null ],
     [ "lspmac_flight_lut_setup", "lspmac_8c.html#ad52a5dbc2f06247eca7619195936b85f", null ],
     [ "lspmac_fscint_lut_setup", "lspmac_8c.html#a54ceac41b127ad8bbad07bd90c6729dc", null ],
     [ "lspmac_fshut_init", "lspmac_8c.html#a40aa4aeb5c799a6a3a089137da4fd6a8", null ],

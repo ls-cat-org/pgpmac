@@ -2931,6 +2931,44 @@ int lspmac_est_move_time( double *est_time, int *mmask, lspmac_motor_t *mp_1, in
 }
 
 
+/** wait for motion to stop
+ * returns non-zero if the wait timed out
+ * \param move_time The time out in seconds
+ * \param mmask     A coordinate system mask to wait for
+ *
+ * Both values are returned from lspmac_est_move_time
+ */
+int lspmac_est_move_time_wait( double move_time, int mmask) {
+  int err;
+  double isecs, fsecs;
+  struct timespec timeout;
+
+  clock_gettime( CLOCK_REALTIME, &timeout);
+  fsecs = modf( move_time, &isecs);
+  timeout.tv_sec  += (long)floor(isecs);
+  timeout.tv_nsec += (long)floor(fsecs * 1.e9);
+  timeout.tv_sec  += timeout.tv_nsec / 1000000000;
+  timeout.tv_nsec %= 1000000000;
+
+  err = 0;
+  pthread_mutex_lock( &lspmac_moving_mutex);
+  while( err == 0 && (lspmac_moving_flags & mmask) != 0)
+    err = pthread_cond_timedwait( &lspmac_moving_cond, &lspmac_moving_mutex, &timeout);
+  pthread_mutex_unlock( &lspmac_moving_mutex);
+
+  if( err != 0) {
+    if( err == ETIMEDOUT) {
+      lslogging_log_message( "lstest_lspmac_est_move_time: timed out waiting %f seconds", move_time);
+    }
+    return 1;
+  }
+  return 0;
+}
+
+
+
+
+
 /** Move method for normal stepper and servo motor objects
  *  Returns non-zero on abort, zero if OK
  */

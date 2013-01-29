@@ -62,6 +62,7 @@ var pgpmac_8h =
     [ "lspg_zoom_lut_call", "pgpmac_8h.html#a95e3fd7c1685d7e6ab6d0a295ab42f78", null ],
     [ "lspmac_abort", "pgpmac_8h.html#a85f7a5e4d853b7a86ddde1006dd4dc1f", null ],
     [ "lspmac_est_move_time", "pgpmac_8h.html#a83ba40e81c04ecc11009be6cbed0c5e1", null ],
+    [ "lspmac_est_move_time_wait", "pgpmac_8h.html#a1273ffacbd1a28282a019460bf6bc9b5", null ],
     [ "lspmac_getBIPosition", "pgpmac_8h.html#ac4bf3a54deeaeb6e93dc3183388ad104", null ],
     [ "lspmac_getPosition", "pgpmac_8h.html#a6a1b639686b771c1213b6e23716a7898", null ],
     [ "lspmac_home1_queue", "pgpmac_8h.html#a9fbadf816a842c8f131cf8ee47b54e29", null ],
