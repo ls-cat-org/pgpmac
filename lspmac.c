@@ -2605,11 +2605,13 @@ void lspmac_video_rotate( double secs) {
 
 /** Move the motors and estimate the time it'll take to finish the job.
  * Returns the estimate time and the coordinate system mask to waite for
+ * \param est_time     Returns number of seconds we estimate the move(s) will take
+ * \param mmask        Mask of coordinate systems we are trying to move, excluding jogs.  Used to wait for motions to complete
  * \param mp_1         Pointer to first motor
  * \param jog_1        1 to force a jog, 0 to try a motion program  DO NOT MIX JOGS AND MOTION PROGRAMS IN THE SAME COORDINATE SYSTEM!
  * \param preset_1     Name of preset we'd like to move to or NULL if end_point_1 should be used instead
  * \param end_point_1  End point for the first motor.  Ignored if preset_1 is non null and identifies a valid preset for this motor
- * \param ...          Perhaps more triples of motors, preset names and end points.  End is a NULL motor pointer
+ * \param ...          Perhaps more quads of motors, jog flags, preset names, and end points.  End is a NULL motor pointer
  * MUST END ARG LIST WITH NULL
  */
 int lspmac_est_move_time( double *est_time, int *mmask, lspmac_motor_t *mp_1, int jog_1, char *preset_1, double end_point_1, ...) {
