@@ -245,6 +245,24 @@ motor_field_lists = [
 bi_list = ["CryoSwitch"]
 
 motor_presets = {
+    "align.x" : [
+        # name            value       canTune    pref_ini section           pref_ini option
+        [ "Beam",         "0.0",      "1",    "PHIAxisXYZTable",         "XBeam_X1"],
+        [ "Back",        "-1.8",      "1",    "PHIAxisXYZTable",         "XScintillatorOut_X2"],
+        [ "Back_Vector", "-1.8",      "1",    "PHIAxisXYZTable",         "XScintillatorOut_X2"]
+        ],
+    "align.y" : [
+        # name           value       canTune    pref_ini section           pref_ini option
+        [ "Beam",        "0.0",        "1",    "PHIAxisXYZTable",         "YBeam_Y1"],
+        [ "Back",        "1.0",        "1",    "PHIAxisXYZTable",         "YScintillatorOut_Y2"],
+        [ "Back_Vector", "1.0",        "1",    "PHIAxisXYZTable",         "YScintillatorOut_Y2"]
+        ],
+    "align.z" : [
+        # name           value       canTune    pref_ini section           pref_ini option
+        [ "Beam",        "0.0",        "1",    "PHIAxisXYZTable",         "ZBeam_Z1"],
+        [ "Back",        "1.9",        "1",    "PHIAxisXYZTable",         "ZScintillatorOut_Z2"],
+        [ "Back_Vector", "1.9",        "1",    "PHIAxisXYZTable",         "ZScintillatorOut_Z2"]
+        ],
     "appy" : [
         # name   value       canTune    pref_ini section           pref_ini option
         [ "In", "0.117",         "1",    "ApertureYZTable",        "BeamHorizontalPosition_Y0"]
