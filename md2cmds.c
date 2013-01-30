@@ -1057,7 +1057,9 @@ int md2cmds_collect( const char *dummy) {
  */
 int md2cmds_rotate( const char *dummy) {
   double cx, cy, ax, ay, az;
+  double        bax, bay, baz;
   int mmask;
+  int err;
 
   mmask = 0;
   //
@@ -1120,14 +1122,39 @@ int md2cmds_rotate( const char *dummy) {
 
 
     
-    if( lspg_getcenter.dax_isnull == 0)
-      ax  += lspg_getcenter.dax;
+    if( lspg_getcenter.dax_isnull == 0) {
+      err = lsredis_find_preset( "align.x", "Back_Vector", &bax);
+      if( err == 0)
+	bax = 0.0;
+      bax += lspg_getcenter.dax;
+      lsredis_set_preset( "align.x", "Back", bax);
 
-    if( lspg_getcenter.day_isnull == 0)
+      ax  += lspg_getcenter.dax;
+      lsredis_set_preset( "align.x", "Beam", ax);
+    }      
+
+
+    if( lspg_getcenter.day_isnull == 0) {
+      err = lsredis_find_preset( "align.y", "Back_Vector", &bay);
+      if( err == 0)
+	bay = 0.0;
+      bay += lspg_getcenter.day;
+      lsredis_set_preset( "align.y", "Back", bay);
+
       ay  += lspg_getcenter.day;
+      lsredis_set_preset( "align.y", "Beam", ay);
+    }
 			  
-    if( lspg_getcenter.daz_isnull == 0)
+    if( lspg_getcenter.daz_isnull == 0) {
+      err = lsredis_find_preset( "align.z", "Back_Vector", &baz);
+      if( err == 0)
+	baz = 0.0;
+      baz += lspg_getcenter.daz;
+      lsredis_set_preset( "align.z", "Back", baz);
+
       az  += lspg_getcenter.daz;
+      lsredis_set_preset( "align.z", "Beam", az);
+    }
 			  
 
     if( (lspg_getcenter.dax_isnull == 0 && fabs(lspg_getcenter.dax) >= lsredis_getd( alignx->precision)) ||
