@@ -131,40 +131,40 @@ motor_dict = {
               "hard_ini" : "MiniKappa.Kappa2", "neutralPosition" : "0", "active" : "1"
               },
     "fastShutter" : { "canHome" :  "false","type" :  "BO",
-                      "update_resolution" :  "0.5","canStop" :  "false", "active" : "1"
+                      "update_resolution" :  "0.5","canStop" :  "false", "active" : "1", "in_position_band" : "0"
                       },
     "frontLight.intensity" : { "canHome" :  "false","type" :  "DAC",
-                               "update_resolution" :  "0.5","canStop" :  "false", "active" : "1"
+                               "update_resolution" :  "0.5","canStop" :  "false", "active" : "1", "in_position_band" : "0"
                               },
     "backLight.intensity" : { "canHome" :  "false","type" :  "DAC",
-                              "update_resolution" :  "0.5","canStop" :  "false", "active" : "1"
+                              "update_resolution" :  "0.5","canStop" :  "false", "active" : "1", "in_position_band" : "0"
                              },
     "scint.focus" : { "canHome" :  "false","type" :  "DAC",
-                      "update_resolution" :  "0.5","canStop" :  "false", "active" : "1"
+                      "update_resolution" :  "0.5","canStop" :  "false", "active" : "1", "in_position_band" : "0"
                       },
     "backLight" : { "canHome" :  "false","type" :  "BO",
-                    "update_resolution" :  "0.5","canStop" :  "false", "active" : "1"
+                    "update_resolution" :  "0.5","canStop" :  "false", "active" : "1", "in_position_band" : "0"
                     },
     "cryo" : { "canHome" :  "false","type" :  "BO",
-               "update_resolution" :  "0.5","canStop" :  "false", "active" : "1"
+               "update_resolution" :  "0.5","canStop" :  "false", "active" : "1", "in_position_band" : "0"
                },
     "dryer" : { "canHome" :  "false","type" :  "BO",
-                "update_resolution" :  "0.5","canStop" :  "false", "active" : "1"
+                "update_resolution" :  "0.5","canStop" :  "false", "active" : "1", "in_position_band" : "0"
                 },
     "fluo" : { "canHome" :  "false","type" :  "BO",
-               "update_resolution" :  "0.5","canStop" :  "false", "active" : "1"
+               "update_resolution" :  "0.5","canStop" :  "false", "active" : "1", "in_position_band" : "0"
                },
     "frontLight" : { "canHome" :  "false","type" :  "BO",
-                     "update_resolution" :  "0.5","canStop" :  "false", "active" : "1"
+                     "update_resolution" :  "0.5","canStop" :  "false", "active" : "1", "in_position_band" : "0"
                      },
     "backLight.factor" : { "canHome" :  "false","type" :  "DAC",
-                           "update_resolution" :  "0.5","canStop" :  "false", "active" : "1"
+                           "update_resolution" :  "0.5","canStop" :  "false", "active" : "1", "in_position_band" : "0"
                            },
     "frontLight.factor" : { "canHome" :  "false","type" :  "DAC",
-                            "update_resolution" :  "0.5","canStop" :  "false", "active" : "1"
+                            "update_resolution" :  "0.5","canStop" :  "false", "active" : "1", "in_position_band" : "0"
                             },
     "smartMagnet"  : { "canHome" :  "false","type" :  "BO", "active_init" : '{m1100=0,m1106=1}', "inactive_init" : '{m1100=1,m1106=0}',
-                     "update_resolution" :  "0.5","canStop" :  "false", "active" : "1"
+                     "update_resolution" :  "0.5","canStop" :  "false", "active" : "1", "in_position_band" : "0"
                         }
     }
 
@@ -342,7 +342,7 @@ for m in motor_dict.keys():
 
             # Use the hard coded value found in this file
             #
-            v = motor_dict[m][k][0]
+            v = motor_dict[m][k]
             f = "HSETNX"
         else:
             # Use the ini file value
