@@ -2657,45 +2657,45 @@ int lspmac_est_move_time( double *est_time, int *mmask, lspmac_motor_t *mp_1, in
   va_start( arg_ptr, end_point_1);
   while( 1) {
     /*
-     :                  |       Constant       |
-     :                  |<---   Velocity   --->|
-     :                  |       Time (Ct)      |
-   V :                   ----------------------              ---------
-   e :                 /                        \               ^
-   l :                /                          \              |
-   o :               /                            \             |
-   c :              /                              \            V
-   i :             /                                \           |
-   t :            /                                  \          |
-   y :___________/....................................\_________v___________
-                 |      |         Time              
-                 |      |
-              -->|      |<-- Acceleration Time  (At)
-                 |
-                 |<-----    Total  Time (Tt)  ------->|
+      :                  |       Constant       |
+      :                  |<---   Velocity   --->|
+      :                  |       Time (Ct)      |
+      V :                   ----------------------              ---------
+      e :                 /                        \               ^
+      l :                /                          \              |
+      o :               /                            \             |
+      c :              /                              \            V
+      i :             /                                \           |
+      t :            /                                  \          |
+      y :___________/....................................\_________v___________
+      |      |         Time              
+      |      |
+      -->|      |<-- Acceleration Time  (At)
+      |
+      |<-----    Total  Time (Tt)  ------->|
 
       Assumption 1: We can replace S curve acceleration with linear acceleration
-                    for the purposes of distance and time calculations for the timeout
-                    period that we are attempting to calculate here.
+      for the purposes of distance and time calculations for the timeout
+      period that we are attempting to calculate here.
 
-     Ct  = Constant Velocity Time.  The time spent at constant velocity.
+      Ct  = Constant Velocity Time.  The time spent at constant velocity.
 
-     At  = Acceleration Time.  Time spent accelerating at either end of the ramp, that is,
-          1/2 the total time spent accelerating and decelerating.
+      At  = Acceleration Time.  Time spent accelerating at either end of the ramp, that is,
+      1/2 the total time spent accelerating and decelerating.
 
-     D   = the total distance we need to travel
+      D   = the total distance we need to travel
 
-     V   = constant velocity.  Here we use the motor's maximum velocity.
+      V   = constant velocity.  Here we use the motor's maximum velocity.
 
-     A   = the motor acceleration, Here it's the maximum acceleration.
+      A   = the motor acceleration, Here it's the maximum acceleration.
 
-         V = A * At   
+      V = A * At   
 
-     or  At = V/A
+      or  At = V/A
 
       The Total Time (Tt) is
 
-          Tt = Ct + 2 * At
+      Tt = Ct + 2 * At
 
 
 
@@ -2706,11 +2706,11 @@ int lspmac_est_move_time( double *est_time, int *mmask, lspmac_motor_t *mp_1, in
 
       When the distance is short, we need a different calculation:
 
-        D = 0.5 * A * T1^2  + 0.5 * A * T2^2  (T1 = acceleration time and T2 = deceleration time)
+      D = 0.5 * A * T1^2  + 0.5 * A * T2^2  (T1 = acceleration time and T2 = deceleration time)
 
       or, since total time  Tt = T1 + T2 and T1 = T2,
 
-        D = A * (0.5*Tt)^2
+      D = A * (0.5*Tt)^2
 
       or
       
@@ -2719,19 +2719,19 @@ int lspmac_est_move_time( double *est_time, int *mmask, lspmac_motor_t *mp_1, in
 
       When we accelerate to the maximum speed the time it takes is V/A so the distance we travel (Da) is
 
-         Da = 0.5 * A * (V/A)^2
+      Da = 0.5 * A * (V/A)^2
 
       or
 
-        Da = 0.5 * V^2 / A
+      Da = 0.5 * V^2 / A
 
       So when D > 2 * Da, or
 
-       D > V^2 / A
+      D > V^2 / A
          
       we need to use equation (1) otherwise we need to use equation (2)
 
-     */
+    */
 
     Tt = 0.0;
     if( mp != NULL && mp->max_speed != NULL && mp->max_accel != NULL && mp->u2c != NULL) {
@@ -2973,10 +2973,10 @@ int lspmac_est_move_time_wait( double move_time, int mmask) {
  *  Returns non-zero on abort, zero if OK
  */
 int lspmac_move_or_jog_abs_queue(
-			  lspmac_motor_t *mp,			/**< [in] The motor to move			*/
-			  double requested_position,		/**< [in] Where to move it			*/
-			  int use_jog				/**< [in] 1 to force jog, 0 for motion prog	*/
-			  ) {
+				 lspmac_motor_t *mp,			/**< [in] The motor to move			*/
+				 double requested_position,		/**< [in] Where to move it			*/
+				 int use_jog				/**< [in] 1 to force jog, 0 for motion prog	*/
+				 ) {
   char *fmt;			//!< format string for coordinate system move
   int q100;			//!< coordinate system bit
   int requested_pos_cnts;	//!< the requested position in units of "counts"
@@ -3029,28 +3029,34 @@ int lspmac_move_or_jog_abs_queue(
   }
   requested_pos_cnts = mp->requested_pos_cnts;
 
-  if( (abs( requested_pos_cnts - mp->actual_pos_cnts) * 16 < in_position_band) || (lsredis_getb( mp->active) != 1)) {
-    //
-    // Lie and say we moved even though we didn't.  Who will know? We are within the deadband or not active.
-    //
-    mp->not_done     = 0;
-    mp->motion_seen  = 1;
-    mp->command_sent = 1;
+  //
+  // Only consider bluffing for coordinated moves.
+  //
+  if( !use_jog) {
+    if( (abs( requested_pos_cnts - mp->actual_pos_cnts) * 16 < in_position_band) || (lsredis_getb( mp->active) != 1)) {
+      //
+      // Lie and say we moved even though we didn't.  Who will know? We are within the deadband or not active.
+      //
+      mp->not_done     = 0;
+      mp->motion_seen  = 1;
+      mp->command_sent = 1;
 
-    if( lsredis_getb( mp->active) != 1) {
-      //
-      // fake the motion for simulated motors
-      //
-      mp->position = requested_position;
-      mp->actual_pos_cnts = requested_pos_cnts;
+      if( lsredis_getb( mp->active) != 1) {
+	//
+	// fake the motion for simulated motors
+	//
+	mp->position = requested_position;
+	mp->actual_pos_cnts = requested_pos_cnts;
+      }
+      pthread_mutex_unlock( &(mp->mutex));
+      return 0;
     }
-    pthread_mutex_unlock( &(mp->mutex));
-    return 0;
   }
 
   mp->not_done     = 1;
   mp->motion_seen  = 0;
   mp->command_sent = 0;
+
 
   if( use_jog || axis == NULL || *axis == 0) {
     use_jog = 1;
@@ -3690,6 +3696,57 @@ void lspmac_light_zoom_cb( char *event) {
 }
 
 
+/** Perhaps we need to move the sample out of the way
+ */
+void lspmac_scint_maybe_move_sample_cb( char *event) {
+  double scint_target;
+  int err;
+  double move_time;
+  int mmask;
+
+  pthread_mutex_lock( &scint->mutex);
+  scint_target = scint->requested_position;
+  pthread_mutex_unlock( &scint->mutex);
+  
+  // This should be pretty conservative since the out position is around 80
+  //
+  if( scint_target > 10.0) {
+    err = lspmac_est_move_time( &move_time, &mmask,
+				alignx, 0, "Back", -2.0,
+				aligny, 0, "Back",  1.0,
+				alignz, 0, "Back",  1.0,
+				NULL);
+    if( err) {
+      lspmac_abort();
+      lsevents_send_event( "Aborting Motion");
+      lslogging_log_message( "lspmac_scint_maybe_move_sample_cb: Failed move request, aborting motion to keep scint from hitting sample");
+    }    
+  }
+}
+
+/** Perhaps we need to return the sample to the beam
+ */
+void lspmac_scint_maybe_return_sample_cb( char *event) {
+  double scint_target;
+  double move_time;
+  int mmask;
+
+  pthread_mutex_lock( &scint->mutex);
+  scint_target = scint->requested_position;
+  pthread_mutex_unlock( &scint->mutex);
+  
+  // This should be pretty conservative since the out position is around 80
+  //
+  if( scint_target < 10.0) {
+    lspmac_est_move_time( &move_time, &mmask,
+			  alignx, 0, "Beam",  0.0,
+			  aligny, 0, "Beam",  0.0,
+			  alignz, 0, "Beam",  0.0,
+			  NULL);
+  }
+}
+
+
 /** Turn off the dryer
  *  \param event required by protocol
  */
@@ -3864,6 +3921,8 @@ void lspmac_run() {
   pthread_create( &pmac_thread, NULL, lspmac_worker, NULL);
 
   lsevents_add_listener( "CryoSwitchChanged",    lspmac_cryoSwitchChanged_cb);
+  lsevents_add_listener( "scint Moving",         lspmac_scint_maybe_move_sample_cb);
+  lsevents_add_listener( "scint In Position",    lspmac_scint_maybe_return_sample_cb);
   lsevents_add_listener( "scint In Position",    lspmac_scint_inPosition_cb);
   lsevents_add_listener( "scintDried",           lspmac_scint_dried_cb);
   lsevents_add_listener( "backLight 1",	         lspmac_backLight_up_cb);
