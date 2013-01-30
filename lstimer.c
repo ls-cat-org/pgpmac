@@ -184,9 +184,6 @@ static void handler( int sig, siginfo_t *si, void *dummy) {
 static void *lstimer_worker(
 		     void *dummy		//!< [in] required by protocol
 		     ) {
-  int
-    known_timers;
-
   struct sigevent  sev;
   struct sigaction sa;
   sigset_t mask;
@@ -219,8 +216,6 @@ static void *lstimer_worker(
   sigemptyset( &mask);
   sigaddset( &mask, SIGRTMIN);
   
-  known_timers = 0;
-
   while( 1) {
     pthread_mutex_lock( &lstimer_mutex);
 

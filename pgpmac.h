@@ -16,7 +16,7 @@
 #include <netinet/in.h>
 #include <errno.h>
 #include <poll.h>
-#include <libpq-fe.h>
+#include <postgresql/libpq-fe.h>
 #include <ncurses.h>
 #include <math.h>
 #include <pthread.h>

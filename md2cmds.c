@@ -178,14 +178,12 @@ int md2cmds_is_moving() {
 double md2cmds_prep_axis( lspmac_motor_t *mp, double pos) {
   double rtn;
   double u2c;
-  double current_pos;
   double neutral_pos;
 
   pthread_mutex_lock( &(mp->mutex));
 
   u2c         = lsredis_getd( mp->u2c);
   neutral_pos = lsredis_getd( mp->neutral_pos);
-  current_pos = mp->position;
 
   mp->motion_seen = 0;
   mp->not_done    = 1;
@@ -819,7 +817,6 @@ int md2cmds_collect( const char *dummy) {
   double p173;		//!< omega velocity cnts/msec
   double p175;		//!< acceleration time (msec)
   double p180;		//!< exposure time (msec)
-  int center_request;	//!< one of the stages, at least, needs to be moved
   double u2c;		//!< unit to counts conversion
   double neutral_pos;	//!< nominal zero offset
   double max_accel;	//!< maximum acceleration allowed for omega
@@ -860,7 +857,6 @@ int md2cmds_collect( const char *dummy) {
     skey = lspg_nextshot.skey;
     lspg_query_push( NULL, "SELECT px.shots_set_state(%lld, 'Preparing')", skey);
 
-    center_request = 0;
     if( lspg_nextshot.active) {
       if(
 	 //
@@ -873,7 +869,6 @@ int md2cmds_collect( const char *dummy) {
 	 (fabs( lspg_nextshot.az - alignz->position) > 0.1)) {
 
 
-	center_request = 1;
 	lslogging_log_message( "md2cmds_collect: moving center to cx=%f, cy=%f, ax=%f, ay=%f, az=%f",lspg_nextshot.cx, lspg_nextshot.cy, lspg_nextshot.ax, lspg_nextshot.ay, lspg_nextshot.az);
 	md2cmds_move_prep();
 	md2cmds_mvcenter_move( lspg_nextshot.cx, lspg_nextshot.cy, lspg_nextshot.ax, lspg_nextshot.ay, lspg_nextshot.az);
@@ -1046,7 +1041,6 @@ int md2cmds_collect( const char *dummy) {
 	 (fabs( lspg_nextshot.ay2 - aligny->position) > 0.1) ||
 	 (fabs( lspg_nextshot.az2 - alignz->position) > 0.1)) {
 
-	center_request = 1;
 	md2cmds_move_prep();
 	md2cmds_mvcenter_move( lspg_nextshot.cx, lspg_nextshot.cy, lspg_nextshot.ax, lspg_nextshot.ay, lspg_nextshot.az);
       }
@@ -1222,14 +1216,14 @@ void md2cmds_set_scale_cb( char *event) {
   p2  = lsredis_get_obj( "cam.zoom.%d.ScaleX", mag);
 
   vp = lsredis_getstr( p2);
-  lsredis_setstr( p2, vp);
+  lsredis_setstr( p1, vp);
   free( vp);
 
   p1  = lsredis_get_obj( "cam.yScale");
   p2  = lsredis_get_obj( "cam.zoom.%d.ScaleY", mag);
 
   vp = lsredis_getstr( p2);
-  lsredis_setstr( p2, vp);
+  lsredis_setstr( p1, vp);
   free( vp);
 }
 
