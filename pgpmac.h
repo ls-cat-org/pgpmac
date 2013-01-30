@@ -558,3 +558,4 @@ extern void pgpmac_printf( char *fmt, ...);
 extern void lstest_main();
 extern int lspmac_est_move_time( double *est_time, int *mmask, lspmac_motor_t *mp_1, int jog_1, char *preset_1, double end_point_1, ...);
 extern int lspmac_est_move_time_wait( double move_time, int mmask);
+extern void lsredis_set_preset( char *base, char *preset_name, double dval);
