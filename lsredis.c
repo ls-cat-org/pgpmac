@@ -336,6 +336,30 @@ void lsredis_setstr( lsredis_obj_t *p, char *fmt, ...) {
 }
 
 
+double lsredis_get_or_set_d( lsredis_obj_t *p, double val, int prec) {
+  long int rtn;
+  int err;
+  struct timespec timeout;
+
+  clock_gettime( CLOCK_REALTIME, &timeout);
+  timeout.tv_sec += 2;
+
+  pthread_mutex_lock( &p->mutex);
+  err = 0;
+  while( err == 0 && p->valid == 0)
+    err = pthread_cond_timedwait( &p->cond, &p->mutex, &timeout);
+
+  if( err == ETIMEDOUT) {
+    rtn = val;
+    lsredis_setstr( p, "%.*f", prec, val);
+  } else {
+    rtn = p->lvalue;
+  }
+  pthread_mutex_unlock( &p->mutex);
+  
+  return rtn;
+}  
+
 double lsredis_getd( lsredis_obj_t *p) {
   double rtn;
 
@@ -357,6 +381,30 @@ long int lsredis_getl( lsredis_obj_t *p) {
     pthread_cond_wait( &p->cond, &p->mutex);
 
   rtn = p->lvalue;
+  pthread_mutex_unlock( &p->mutex);
+  
+  return rtn;
+}  
+
+long int lsredis_get_or_set_l( lsredis_obj_t *p, long int val) {
+  long int rtn;
+  int err;
+  struct timespec timeout;
+
+  clock_gettime( CLOCK_REALTIME, &timeout);
+  timeout.tv_sec += 2;
+
+  pthread_mutex_lock( &p->mutex);
+  err = 0;
+  while( err == 0 && p->valid == 0)
+    err = pthread_cond_timedwait( &p->cond, &p->mutex, &timeout);
+
+  if( err == ETIMEDOUT) {
+    rtn = val;
+    lsredis_setstr( p, "%ld", val);
+  } else {
+    rtn = p->lvalue;
+  }
   pthread_mutex_unlock( &p->mutex);
   
   return rtn;
@@ -760,7 +808,6 @@ int lsredis_find_preset( char *base, char *preset_name, double *dval) {
   ENTRY htab_input, *htab_output;
   lsredis_obj_t *p;
 
-  i = 0;
   for( i=0; i<1024; i++) {
     snprintf( s, sizeof( s)-1, "%s.%s.presets.%d.name", lsredis_head, base, i);
     s[sizeof(s)-1] = 0;
@@ -799,6 +846,72 @@ int lsredis_find_preset( char *base, char *preset_name, double *dval) {
   *dval = 0;
   return 0;
 }
+
+void lsredis_set_preset( char *base, char *preset_name, double dval) {
+  char s[512];
+  int i, plength;
+  int err;
+  ENTRY htab_input, *htab_output;
+  lsredis_obj_t *p;
+
+  p = lsredis_get_obj(  "%s.%s.presets.length", lsredis_head, base);
+  plength = lsredis_get_or_set_l( p, 0);
+
+  for( i=0; i<plength; i++) {
+    snprintf( s, sizeof( s)-1, "%s.%s.presets.%d.name", lsredis_head, base, i);
+    s[sizeof(s)-1] = 0;
+    htab_input.key  = s;
+    htab_input.data = NULL;
+    err = hsearch_r( htab_input, FIND, &htab_output, &lsredis_htab);
+    if( err == 0) {
+      //
+      // Not found? odd.  Length Lied.
+      // Might as well just stick our preset here.
+      //
+      p = lsredis_get_obj( "%s", s);
+      lsredis_setstr( p, "%s", preset_name);
+    } else {
+      // Check if we have a match
+      p = htab_output->data;
+    }
+
+    if( lsredis_cmpstr( p, preset_name)==0) {
+      //
+      // got a match, now look for the position
+      //
+      snprintf( s, sizeof( s)-1, "%s.%s.presets.%d.position", lsredis_head, base, i);
+      s[sizeof(s)-1] = 0;
+      htab_input.key = s;
+      htab_input.data = NULL;
+      err = hsearch_r( htab_input, FIND, &htab_output, &lsredis_htab);
+      if( err == 0) {
+	//
+	// Name but not position? odd.
+	//
+	p = lsredis_get_obj( "%s", s);
+      } else {
+	p = htab_output->data;
+      }
+      lsredis_setstr( p, "%.3f", dval);
+      return;
+    }
+  }
+  //
+  // OK, our preset was not found, add it
+  //
+  snprintf( s, sizeof( s)-1, "%s.%s.presets.%d.name", lsredis_head, base, i);
+  s[sizeof(s)-1] = 0;
+  p = lsredis_get_obj( "%s", s);
+  lsredis_setstr( p, "%s", preset_name);
+
+  p = lsredis_get_obj( "%s", s);
+  lsredis_setstr( p, "%.3f", dval);
+
+  p = lsredis_get_obj(  "%s.%s.presets.length", lsredis_head, base);
+  lsredis_setstr( p, "%ld", plength + 1);
+
+}
+
 
 
 
