@@ -26,6 +26,7 @@
          MD2-*
    or    UI-*
    or    REDIS_KV_CONNECTOR
+   or    mk_pgpmac_redis
 </pre>
  * (this last value is used to support the now depreciated px.kvs table in the LS-CAT postgresql server).
  * We assume that all publisher that we are listening to ONLY publish key names that have changed.
@@ -1073,7 +1074,7 @@ void *lsredis_worker(  void *dummy) {
 
   lsredis_running = 1;
 
-  if( redisAsyncCommand( subac, lsredis_subCB, NULL, "PSUBSCRIBE REDIS_KV_CONNECTOR UI* MD2-*") == REDIS_ERR) {
+  if( redisAsyncCommand( subac, lsredis_subCB, NULL, "PSUBSCRIBE REDIS_KV_CONNECTOR mk_pgpmac_redis UI* MD2-*") == REDIS_ERR) {
     lslogging_log_message( "Error sending PSUBSCRIBE command");
   }
 

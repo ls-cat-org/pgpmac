@@ -174,8 +174,6 @@ def active_simulation( sim):
         rtn = "0"
     else:
         rtn = "1"
-
-    print sim, rtn
     return rtn
 
 def asis( arg):
@@ -340,9 +338,13 @@ if hard_ini:
 
 for m in motor_dict.keys():
     print "HSETNX %s.%s.name VALUE '%s'" % (head, m, m)         #  These values are not part of any defaults
-    print "HSETNX %s.%s.name DBRTYPE 0" % (head, m)             #  hence are not looked for in the init files
+    print "PUBLISH mk_pgpmac_redis %s.%s.name"  % (head, m)     #
+    print "HSETNX %s.%s.name DBRTYPE 0"  % (head, m)            #
     print "HSETNX %s.%s.position VALUE ''" % (head, m)          #
+    print "PUBLISH mk_pgpmac_redis %s.%s.position" % (head, m)  #
     print "HSETNX %s.%s.position DBRTYPE 6" % (head, m)         #
+
+
     for k in motor_dict[m]:
         if k == "hard_ini":     # this is sort of a meta field
             continue
@@ -370,11 +372,13 @@ for m in motor_dict.keys():
             f = "HSET"
 
         print "%s %s.%s.%s VALUE '%s'" % (f, head, m, k, v)
+        print "PUBLISH mk_pgpmac_redis %s.%s.%s" % (f, head, m)
 
     # Throw out the default default value for fields not found any other way
     #
     for field, default, dbrtype  in motor_field_lists:
         print "HSETNX %s.%s.%s VALUE '%s'" % (head, m, field, default)
+        print "PUBLISH mk_pgpmac_redis %s.%s.%s" % (head, m, field)
         print "HSETNX %s.%s.%s DBRTYPE '%s'" % (head, m, field, dbrtype)
 
     # Add the presets
@@ -387,6 +391,7 @@ for m in motor_dict.keys():
     if motor_presets.has_key( m):
         for pname, ppos, ptune, section, option in motor_presets[m]:
             print "HSETNX %s.%s.presets.%d.name VALUE %s"     % (head, m, i, pname)
+            print "PUBLISH mk_pgpmac_redis %s.%s.presets.%d.name" % (head, m, i)
 
             f = "HSETNX"
             if pref_ini and section and option and pi.has_section( section) and pi.has_option( section, option):
@@ -394,11 +399,15 @@ for m in motor_dict.keys():
                 f = "HSET"
                     
             print "%s %s.%s.presets.%d.position VALUE %s" % ( f, head, m, i, ppos)
+            print "PUBLISH mk_pgpmac_redis %s.%s.presets.%d.position" % (head, m, i)
 
             if ptune != None:
                 print "HSETNX %s.%s.presets.%d.canTune VALUE %s" % ( head, m, i, ppos)
+                print "PUBLISH mk_pgpmac_redis %s.%s.presets.%d.canTune" % (head, m, i)
             i += 1
         print "HSET %s.%s.presets.length VALUE %d" % ( head, m, i)
+        print "PUBLISH mk_pgpmac_redis %s.%s.presets.length" % (head, m)
+
         
 # light and zoom settings
 
@@ -409,27 +418,32 @@ for lev, f, b, p, x, y, section in zoom_settings:
         f = pi.get( section, "FrontLightIntensity")
         fnc = "HSET"
     print "%s %s.cam.zoom.%d.FrontLightIntensity VALUE %s" % (fnc, head, lev, f)
+    print "PUBLISH mk_pgpmac_redis %s.cam.zoom.%d.FrontLightIntensity" % (head, lev)
 
     fnc = "HSETNX"
     if pref_ini != None and pi.has_section( section) and pi.has_option( section, "LightIntensity"):
         b = pi.get( section, "LightIntensity")
         fnc = "HSET"
     print "%s %s.cam.zoom.%d.LightIntensity VALUE %s"      % (fnc, head, lev, b)
+    print "PUBLISH mk_pgpmac_redis %s.cam.zoom.%d.LightIntensity"      % (head, lev)
 
     fnc = "HSETNX"
     if pref_ini != None and pi.has_section( section) and pi.has_option( section, "MotorPosition"):
         p = pi.get( section, "MotorPosition")
         fnc = "HSET"
     print "%s %s.cam.zoom.%d.MotorPosition VALUE %s"       % (fnc, head, lev, p)
+    print "PUBLISH mk_pgpmac_redis %s.cam.zoom.%d.MotorPosition"       % (head, lev)
 
     fnc = "HSETNX"
     if pref_ini != None and pi.has_section( section) and pi.has_option( section, "ScaleX"):
         x = pi.get( section, "ScaleX")
         fnc = "HSET"
     print "%s %s.cam.zoom.%d.ScaleX VALUE %s"              % (fnc, head, lev, x)
+    print "PUBLISH mk_pgpmac_redis %s.cam.zoom.%d.ScaleX"              % (head, lev)
 
     fnc = "HSETNX"
     if pref_ini != None and pi.has_section( section) and pi.has_option( section, "ScaleY"):
         y = pi.get( section, "ScaleY")
         fnc = "HSET"
     print "%s %s.cam.zoom.%d.ScaleY VALUE %s"              % (fnc, head, lev, y)
+    print "PUBLISH mk_pgpmac_redis %s.cam.zoom.%d.ScaleY"              % (head, lev)
