@@ -2750,7 +2750,16 @@ int lspmac_est_move_time( double *est_time, int *mmask, lspmac_motor_t *mp_1, in
       if( u2c <= 0.0)
 	continue;
 
-      D = ep - lspmac_getPosition( mp);				// User units
+      //
+      // For look up tables user units are (or should be) counts and u2c should be 1
+      //
+      if( mp->nlut > 0 && mp->lut != NULL) {
+	u2c = 1.0;
+	D = lspmac_lut( mp->nlut, mp->lut, ep) - lspmac_lut( mp->nlut, mp->lut, lspmac_getPosition( mp));
+      } else {
+	D = ep - lspmac_getPosition( mp);				// User units
+      }
+
       V = lsredis_getd( mp->max_speed) / u2c * 1000.;		// User units per second
       A = lsredis_getd( mp->max_accel) / u2c * 1000. * 1000;	// User units per second per second
 
@@ -2838,7 +2847,7 @@ int lspmac_est_move_time( double *est_time, int *mmask, lspmac_motor_t *mp_1, in
 	//
 	// Here we are dealling with a DAC or BO motor or just want to jog.
 	//
-	if( mp->jogAbs( mp, lspmac_getPosition( mp) + D)) {
+	if( mp->jogAbs( mp, ep)) {
 	  lslogging_log_message( "lspmac_est_move_time: motor %s failed to queue move of distance %f from %f", mp->name, D, lspmac_getPosition(mp));
 	  lsevents_send_event( "Move Aborted");
 	  return 1;
@@ -3761,6 +3770,9 @@ void lspmac_scint_dried_cb( char *event) {
 void lspmac_zoom_lut_setup() {
   int i;
   lsredis_obj_t *p;
+  double neutral_pos;
+
+  neutral_pos = lsredis_getd( zoom->neutral_pos);
 
   pthread_mutex_lock( &zoom->mutex);
 
@@ -3782,7 +3794,7 @@ void lspmac_zoom_lut_setup() {
       return;
     }
     zoom->lut[2*i]   = i+1;
-    zoom->lut[2*i+1] = lsredis_getd( p);
+    zoom->lut[2*i+1] = lsredis_getd( p) + neutral_pos;
   }
   pthread_mutex_unlock( &zoom->mutex);
 }
