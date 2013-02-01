@@ -1056,10 +1056,11 @@ int md2cmds_collect( const char *dummy) {
  *  
  */
 int md2cmds_rotate( const char *dummy) {
-  double cx, cy, ax, ay, az;
+  double cx, cy, ax, ay, az,   zm;
   double        bax, bay, baz;
   int mmask;
   int err;
+  double move_time;
 
   mmask = 0;
   //
@@ -1076,6 +1077,8 @@ int md2cmds_rotate( const char *dummy) {
   // put up the back light
   blight_ud->moveAbs( blight_ud, 1);
 
+  //
+  // Get ready to move our motors
   md2cmds_move_prep();
   md2cmds_home_prep();
 
@@ -1084,30 +1087,30 @@ int md2cmds_rotate( const char *dummy) {
   //
   lspmac_home1_queue( omega);
   //
+  // Grab the current positions
+  //
+  cx = lspmac_getPosition( cenx);
+  cy = lspmac_getPosition( ceny);
+  ax = lspmac_getPosition( alignx);
+  ay = lspmac_getPosition( aligny);
+  az = lspmac_getPosition( alignz);
+
+  lslogging_log_message( "md2cmds_rotate: actual positions cx %f, cy %f, ax %f, ay %f, az %f", cx, cy, ax, ay, az);
+
   if( lspg_getcenter.no_rows_returned) {
     //
     // Always specify zoom even if no other center information is found
     //
-    zoom->moveAbs( zoom, 1);	// default zoom is 1
+    zm = 1;
   } else {
     lslogging_log_message( "md2cmds_rotate: getcenter returned dcx %f, dcy %f, dax %f, day %f, daz %f, zoom %d",
 			   lspg_getcenter.dcx, lspg_getcenter.dcy, lspg_getcenter.dax, lspg_getcenter.day, lspg_getcenter.daz,lspg_getcenter.zoom);
 
     if( lspg_getcenter.zoom_isnull == 0) {
-      zoom->moveAbs( zoom, lspg_getcenter.zoom);
+      zm = lspg_getcenter.zoom;
     } else {
-      zoom->moveAbs( zoom, 1);
+      zm = 1.0;
     }
-
-    //
-    // Grab the current positions and perhaps add the tad specified by getcenter
-    //
-    cx = lspmac_getPosition( cenx);
-    cy = lspmac_getPosition( ceny);
-    ax = lspmac_getPosition( alignx);
-    ay = lspmac_getPosition( aligny);
-    az = lspmac_getPosition( alignz);
-    lslogging_log_message( "md2cmds_rotate: actual positions cx %f, cy %f, ax %f, ay %f, az %f", cx, cy, ax, ay, az);
 
     if( lspg_getcenter.dcx_isnull == 0)
       cx += lspg_getcenter.dcx;
@@ -1115,13 +1118,11 @@ int md2cmds_rotate( const char *dummy) {
     if( lspg_getcenter.dcy_isnull == 0)
       cy  += lspg_getcenter.dcy;
 
-    if( (lspg_getcenter.dcx_isnull == 0 && fabs(lspg_getcenter.dcx) >= 0.0) ||
-	(lspg_getcenter.dcy_isnull == 0 && fabs(lspg_getcenter.dcy) >= 0.0)) {
-      mmask |= 2;
-    }
-
-
-    
+    //
+    // Slightly complicated proceedure for alignment stage since we might want to update
+    // the presets.  Use the preset Back_Vector to calculate the new Back preset from our
+    // current position.
+    //
     if( lspg_getcenter.dax_isnull == 0) {
       err = lsredis_find_preset( "align.x", "Back_Vector", &bax);
       if( err == 0)
@@ -1157,12 +1158,6 @@ int md2cmds_rotate( const char *dummy) {
     }
 			  
 
-    if( (lspg_getcenter.dax_isnull == 0 && fabs(lspg_getcenter.dax) >= lsredis_getd( alignx->precision)) ||
-	(lspg_getcenter.day_isnull == 0 && fabs(lspg_getcenter.day) >= lsredis_getd( aligny->precision)) ||
-	(lspg_getcenter.daz_isnull == 0 && fabs(lspg_getcenter.daz) >= lsredis_getd( alignz->precision))) {
-    }
-
-
     lslogging_log_message( "md2cmds_rotate: requested positions cx %f, cy %f, ax %f, ay %f, az %f", cx, cy, ax, ay, az);
 
     lslogging_log_message( "md2cmds_rotate: moving center");
@@ -1174,18 +1169,35 @@ int md2cmds_rotate( const char *dummy) {
   lspg_getcenter_done();
 
 
+  if( lspmac_est_move_time( &move_time, &mmask,
+			    cenx,   0,  NULL, cx,
+			    ceny,   0,  NULL, cy,
+			    alignx, 0,  NULL, ax,
+			    aligny, 0,  NULL, ay,
+			    alignz, 0,  NULL, az,
+			    zoom,   1,  NULL, zm,
+			    NULL)) {
+    lsevents_send_event( "Rotate Aborted");
+    return 1;
+  }
+
+  if( lspmac_est_move_time_wait( move_time + 2.0, mmask)) {
+    lsevents_send_event( "Rotate Aborted");
+    return 1;
+  }
+
+  if( lspmac_moveabs_wait( zoom, move_time + 2.0)) {
+    lsevents_send_event( "Rotate Aborted");
+    return 1;
+  }
+
+
+
   if( md2cmds_home_wait( 20.0)) {
     lslogging_log_message( "md2cmds_rotate: homing motors timed out.  Rotate aborted");
     lsevents_send_event( "Rotate Aborted");
     return 1;
   }
-
-  if( md2cmds_move_wait( 20.0)) {
-    lslogging_log_message( "md2cmds_rotate: moving motors timed out.  Rotate aborted");
-    lsevents_send_event( "Rotate Aborted");
-    return 1;
-  }
-
 
   // Report new center positions
   cx = lspmac_getPosition( cenx);
@@ -1473,7 +1485,7 @@ void md2cmds_init() {
   md2cmds_md_status_code = lsredis_get_obj( "md2_status_code");
   lsredis_setstr( md2cmds_md_status_code, "7");
 
-  hcreate_r( 32, &md2cmds_hmap);
+  hcreate_r( 2 * sizeof(md2cmds_cmd_kvs)/sizeof(md2cmds_cmd_kvs[0]), &md2cmds_hmap);
   for( i=0; i<sizeof(md2cmds_cmd_kvs)/sizeof(md2cmds_cmd_kvs[0]); i++) {
     hloader.key  = md2cmds_cmd_kvs[i].k;
     hloader.data = md2cmds_cmd_kvs[i].v;
@@ -1500,4 +1512,5 @@ void md2cmds_run() {
   lsevents_add_listener( "Coordsys 4 Stopped",        md2cmds_coordsys_4_stopped_cb);
   lsevents_add_listener( "Coordsys 5 Stopped",        md2cmds_coordsys_5_stopped_cb);
   lsevents_add_listener( "Coordsys 7 Stopped",        md2cmds_coordsys_7_stopped_cb);
+  lsevents_add_listener( "cam.zoom In Position",      md2cmds_set_scale_cb);
 }
