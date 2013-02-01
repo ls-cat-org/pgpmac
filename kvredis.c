@@ -596,7 +596,7 @@ void lspg_pg_service(
 	if( pgn == NULL)
 	  break;
 	
-	lspg_query_push( lspg_allkvs_cb, "SELECT * FROM px.redis_kv_update(%d)", kvseq);
+	lspg_query_push( lspg_allkvs_cb, "EXECUTE redis_kv_update(%d)", kvseq);
 
 	PQfreemem( pgn);
       }
@@ -709,10 +709,12 @@ main() {
     exit( -1);
   }
 
-  if( redisAsyncCommand( subac, debugCB, NULL, "PSUBSCRIBE MD2* UI*") == REDIS_ERR) {
+  if( redisAsyncCommand( subac, debugCB, NULL, "PSUBSCRIBE MD2* UI* mk_pgpmac_redis") == REDIS_ERR) {
     fprintf( stderr, "Error sending PSUBSCRIBE command\n");
     exit( -1);
   }
+
+  lspg_query_push( NULL, "PREPARE redis_kv_update ( int) AS SELECT * FROM px.redis_kv_update($1)");
 
 
   lspg_query_push( lspg_allkvs_cb, "SELECT * FROM px.redis_kv_init()");
