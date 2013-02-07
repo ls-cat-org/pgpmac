@@ -272,6 +272,106 @@ char **lspg_array2ptrs( char *a) {
   return( rtn);
 }
 
+/** set a redis variable based on an updated kv pair
+ *
+ * \param qqp  The query that elicited this response
+ * \param pgr  The resonse from postgresql
+ */ 
+void lspg_allkvs_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+  int kvname_col, kvvalue_col, kvseq_col, kvdbrtype_col;
+  int i;
+  lsredis_obj_t *robj;
+  
+  kvname_col    = PQfnumber( pgr, "rname");
+  kvvalue_col   = PQfnumber( pgr, "rvalue");
+  kvseq_col     = PQfnumber( pgr, "rseq");
+  kvdbrtype_col = PQfnumber( pgr, "rdbrtype");
+  
+  if( kvname_col == -1 || kvvalue_col == -1 || kvseq_col == -1 || kvdbrtype_col == -1) {
+    fprintf( stderr, "lspg_allkvs_cb: bad column number(s)\n");
+    return;
+  }
+
+  
+  for( i=0; i<PQntuples( pgr); i++) {
+    pthread_mutex_lock( &lsredis_mutex);
+    while( lsredis_running == 0)
+      pthread_cond_wait( &lsredis_cond, &lsredis_mutex);
+
+    robj = _lsredis_get_obj( PQgetvalue( pgr, i, kvname_col));
+    pthread_mutex_unlock( &lsredis_mutex);
+
+
+    if( robj == NULL) {
+      lslogging_log_message( "lspg_allkvs_cb: could not find redis object named '%s'", PQgetvalue( pgr, i, kvname_col));
+      continue;
+    }
+
+    lsredis_setstr( robj, "%s", PQgetvalue( pgr, i, kvvalue_col));
+  }
+
+}
+
+/** Perhaps update the px.kvs table in postgresql
+ *  Should be triggered by a timer event
+ */
+void lspg_update_kvs_cb( char *event) {
+  static char s[LS_PG_QUERY_STRING_LENGTH - 64], *fmt;
+  int i, need_comma, n;
+  lspmac_motor_t *mp;
+  int updateme;
+  double new_value;
+
+  s[0] = 0;
+  need_comma = 0;
+
+  for( i=0; i<lspmac_nmotors; i++ ) {
+    mp = &(lspmac_motors[i]);
+    pthread_mutex_lock( &mp->mutex);
+    if( fabs(mp->reported_pg_position - mp->position) >= lsredis_getd(mp->update_resolution)) {
+      new_value = mp->position;
+      mp->reported_pg_position = mp->position;
+      fmt = lsredis_getstr( mp->redis_fmt);	// borrow the redis format
+      updateme = 1;
+    } else {
+      updateme = 0;
+    }
+    pthread_mutex_unlock( &mp->mutex);
+    if( !updateme)
+      continue;
+    
+    n = strlen( s);
+    snprintf( &(s[n]), sizeof(s)-n-1, "%s%s.position,", need_comma++ ? "," : "", mp->name);
+
+    n = strlen( s);
+    snprintf( &(s[n]), sizeof(s)-n-1, fmt, new_value);
+
+    //
+    // And again for the original remote interface
+    // We'll be able to remove this, someday
+    //
+    n = strlen( s);
+    snprintf( &(s[n]), sizeof(s)-n-1, ",%s,",  mp->name);
+
+    n = strlen( s);
+    snprintf( &(s[n]), sizeof(s)-n-1, fmt, new_value);
+    free( fmt);
+
+    n = strlen( s);
+    if( n >= sizeof(s) - 64) {
+      lspg_query_push( NULL, "EXECUTE kvupdate('{%s}')", s);
+      s[0] = 0;
+      need_comma = 0;
+    }
+  }
+
+  if( strlen(s)) {
+    lspg_query_push( NULL, "EXECUTE kvupdate('{%s}')", s);
+  }
+}
+
+
+
 void lspg_starttransfer_init() {
   lspg_starttransfer.new_value_ready = 0;
   pthread_mutex_init( &lspg_starttransfer.mutex, NULL);
@@ -1485,11 +1585,13 @@ void lspg_pg_service(
 	lslogging_log_message( "lspg_pg_service: notify recieved %s", pgn->relname);
 	
 	if( strstr( pgn->relname, "_pmac") != NULL) {
-	  lspg_query_push( lspg_cmd_cb, "SELECT pmac.md2_queue_next()");
-	} else if (strstr( pgn->relname, "_diff") != NULL || strstr( pgn->relname, "_run") != NULL) {
-	  lspg_query_push( lspg_nextaction_cb, "SELECT action FROM px.nextaction()");
-	} else if (strstr( pgn->relname, "_sample") != NULL) {
+	  lspg_query_push( lspg_cmd_cb, "EXEVUTE md2_queue_next");
+	} else if( strstr( pgn->relname, "_diff") != NULL || strstr( pgn->relname, "_run") != NULL) {
+	  lspg_query_push( lspg_nextaction_cb, "EXECUTE nextaction");
+	} else if( strstr( pgn->relname, "_sample") != NULL) {
 	  lspg_getcurrentsampleid_call();
+	} else if( strstr( pgn->relname, "_kvs") != NULL) {
+	  lspg_query_push( lspg_allkvs_cb, "EXECUTE getkvs");
 	}
 	PQfreemem( pgn);
       }
@@ -1742,9 +1844,100 @@ void *lspg_worker(
   }
 }
 
+void lspg_preset_changed_cb( char *event) {
+  static char base[] = "Preset Changed ";
+  char *pn;
+  lsredis_obj_t *p;
+  char *v;
+
+  pn = strstr( event, base);
+  if( pn == NULL) {
+    lslogging_log_message( "lspg_preset_changed_cb: Could not parse '%s'", event);
+    return;
+  }
+  pn += strlen( base);
+  
+  p = lsredis_get_obj( "%s", pn);
+  if( p == NULL) {
+    lslogging_log_message( "lspg_preset_changed_cb: Could not find variable '%s'", pn);
+    return;
+  }
+  v = lsredis_getstr( p);
+  lspg_query_push( NULL, "EXECUTE kvupdate('{%s,%s}'::text[])", pn, v);
+}
+
+void lspg_check_preset_in_position_cb( char *event) {
+  lspmac_motor_t *mp;
+  char cp[64];
+  int i;
+
+  for( i=0; i<strlen( event); i++) {
+    cp[i] = 0;
+    if( event[i] == ' ')
+      break;
+    cp[i] = event[i];
+  }
+
+  mp = lspmac_find_motor_by_name( cp);
+  if( mp == NULL) {
+    return;
+  }
+  i = lsredis_find_preset_index_by_position( mp);
+  lspg_query_push( NULL, "EXECUTE kvupdate( '{%s.currentPreset,%d}')", cp, i);
+
+}
+
+void lspg_unset_current_preset_moving_cb( char *event) {
+  lspmac_motor_t *mp;
+  char cp[64];
+  int i;
+
+  for( i=0; i<strlen( event); i++) {
+    cp[i] = 0;
+    if( event[i] == ' ')
+      break;
+    cp[i] = event[i];
+  }
+
+  mp = lspmac_find_motor_by_name( cp);
+  if( mp == NULL) {
+    lslogging_log_message( "lspg_unset_current_reset_moving_cb: Could not find motor '%s'", cp);
+    return;
+  }
+  lspg_query_push( NULL, "EXECUTE kvupdate( '{%s.currentPreset,-1}')", cp);
+}
+
+
+/** Fix up xscale and yscale when zoom changes
+ */
+void lspg_set_scale_cb( char *event) {
+  int mag;
+  lsredis_obj_t *px, *py;
+  char *sx, *sy;
+
+  //
+  // There is already a call back to set the redis variables xScale and yScale
+  // we just need to set the KV's
+  //
+
+  mag = lspmac_getPosition( zoom);
+  
+  px  = lsredis_get_obj( "cam.zoom.%d.ScaleX", mag);
+  sx = lsredis_getstr( px);
+
+  py  = lsredis_get_obj( "cam.zoom.%d.ScaleY", mag);
+  sy = lsredis_getstr( py);
+
+  lspg_query_push( NULL, "EXECUTE kvupdate( '{cam.xScale,%s,cam.yScale,%s}')", sx, sy);
+  free( sx);
+  free( sy);
+}
+
+
+
 /** log magnet state
  */
-void lspmac_sample_detector_cb( char *event) {
+void lspg_sample_detector_cb( char *event) {
   int present;
   if( strcmp( event, "SampleDetected") == 0)
     present = 1;
@@ -1777,6 +1970,11 @@ void lspg_init() {
  */
 void lspg_run() {
   pthread_create( &lspg_thread, NULL, lspg_worker, NULL);
-  lsevents_add_listener( "Sample(Detected|Absent)", lspmac_sample_detector_cb);
-
+  lsevents_add_listener( "(appy|appz|capy|capz|scint) In Position",        lspg_check_preset_in_position_cb);
+  lsevents_add_listener( "(appy|appz|capy|capz|scint) Moving",             lspg_unset_current_preset_moving_cb);
+  lsevents_add_listener( "Preset Changed (.+)",     lspg_preset_changed_cb);
+  lsevents_add_listener( "Sample(Detected|Absent)", lspg_sample_detector_cb);
+  lsevents_add_listener( "Timer Update KVs",        lspg_update_kvs_cb);
+  lsevents_add_listener( "cam.zoom In Position",    lspg_set_scale_cb);
+  lstimer_add_timer(     "Timer Update KVs", -1, 0, 500000000);
 }
