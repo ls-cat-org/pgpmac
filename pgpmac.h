@@ -99,57 +99,58 @@ typedef struct lspmac_cmd_queue_struct {
  * Not all members are used by all objects.
  */
 typedef struct lspmac_motor_struct {
-  pthread_mutex_t mutex;	//!< coordinate waiting for motor to be done
-  pthread_cond_t cond;		//!< used to signal when a motor is done moving
-  int not_done;			//!< set to 1 when request is queued, zero after motion has toggled
-  void (*read)( struct lspmac_motor_struct *);		//!< method to read the motor status and position
-  int command_sent;		//!< Motion command verified sent to pmac
-  int motion_seen;		//!< set to 1 when motion has been verified to have started
-  pmac_cmd_queue_t *pq;	//!< the queue item requesting motion.  Used to check time request was made
-  int homing;			//!< Homing routine started
-  int requested_pos_cnts;	//!< requested position
-  int *actual_pos_cnts_p;	//!< pointer to the md2_status structure to the actual position
-  int actual_pos_cnts;		//!< local copy of actual counts so only our mutex is needed to read
-  double position;		//!< scaled position
-  double reported_position;	//!< previous position reported to the database
-  double requested_position;	//!< The position as requested by the user
-  int *status1_p;		//!< First 24 bit PMAC motor status word
-  int status1;			//!< local copy of status1
-  int *status2_p;		//!< Sectond 24 bit PMAC motor status word
-  int status2;			//!< local copy of status2
-  char *dac_mvar;		//!< controlling mvariable as a string
-  char *name;			//!< Name of motor as refered by ls database kvs table
-  lsredis_obj_t *active;	//!< Use the motor ("true") or not ("false")
-  lsredis_obj_t *active_init;	//!< pmac commands to make this motor active
-  lsredis_obj_t *axis;		//!< the axis (X, Y, Z, etc) or null if not in a coordinate system
-  lsredis_obj_t *coord_num;	//!< coordinate system this motor belongs to (0 if none)
-  lsredis_obj_t *home;		//!< pmac commands to home motor
-  lsredis_obj_t *inactive_init;	//!< pmac commands to inactivate the motor
-  lsredis_obj_t *in_position_band;	//!< moves within this amount are ignored UNITS ARE 1/16 COUNT
-  lsredis_obj_t *max_accel;	//!< our maximum acceleration (cts/msec^2)
-  lsredis_obj_t *max_pos;	//!< our maximum position (soft limit)
-  lsredis_obj_t *max_speed;	//!< our maximum speed (cts/msec)
-  lsredis_obj_t *min_pos;	//!< our minimum position (soft limit)
-  lsredis_obj_t *motor_num;	//!< pmac motor number
-  lsredis_obj_t *neutral_pos;	//!< zero offset
-  lsredis_obj_t *pos_limit_hit; //!< positive limit status
-  lsredis_obj_t *neg_limit_hit; //!< negative limit status
-  lsredis_obj_t *precision;	//!< moves of less than this amount may be ignored
-  lsredis_obj_t *printf_fmt;	//!< printf format
-  lsredis_obj_t *redis_fmt;	//!< special format string to create text array for putting the position back into redis
-  lsredis_obj_t *redis_position;//!< how we report our position to the world
-  lsredis_obj_t *status_str;	//!< A talky version of the status
-  lsredis_obj_t *u2c;		//!< conversion from counts to units: 0.0 means not loaded yet
-  lsredis_obj_t *unit;		//!< string to use as the units
-  lsredis_obj_t *update_resolution;	//!< Change needs to be at least this big to report as a new position to the database
-  char *write_fmt;		//!< Format string to write requested position to PMAC used for binary io
-  int *read_ptr;		//!< With read_mask finds bit to read for binary i/o
-  int read_mask;		//!< With read_ptr find bit to read for binary i/o
+  pthread_mutex_t mutex;			//!< coordinate waiting for motor to be done
+  pthread_cond_t cond;				//!< used to signal when a motor is done moving
+  int not_done;					//!< set to 1 when request is queued, zero after motion has toggled
+  void (*read)( struct lspmac_motor_struct *);	//!< method to read the motor status and position
+  int command_sent;				//!< Motion command verified sent to pmac
+  int motion_seen;				//!< set to 1 when motion has been verified to have started
+  pmac_cmd_queue_t *pq;				//!< the queue item requesting motion.  Used to check time request was made
+  int homing;					//!< Homing routine started
+  int requested_pos_cnts;			//!< requested position
+  int *actual_pos_cnts_p;			//!< pointer to the md2_status structure to the actual position
+  int actual_pos_cnts;				//!< local copy of actual counts so only our mutex is needed to read
+  double position;				//!< scaled position
+  double reported_pg_position;			//!< previous position reported to postgresql
+  double reported_position;			//!< previous position reported to redis
+  double requested_position;			//!< The position as requested by the user
+  int *status1_p;				//!< First 24 bit PMAC motor status word
+  int status1;					//!< local copy of status1
+  int *status2_p;				//!< Sectond 24 bit PMAC motor status word
+  int status2;					//!< local copy of status2
+  char *dac_mvar;				//!< controlling mvariable as a string
+  char *name;					//!< Name of motor as refered by ls database kvs table
+  lsredis_obj_t *active;			//!< Use the motor ("true") or not ("false")
+  lsredis_obj_t *active_init;			//!< pmac commands to make this motor active
+  lsredis_obj_t *axis;				//!< the axis (X, Y, Z, etc) or null if not in a coordinate system
+  lsredis_obj_t *coord_num;			//!< coordinate system this motor belongs to (0 if none)
+  lsredis_obj_t *home;				//!< pmac commands to home motor
+  lsredis_obj_t *inactive_init;			//!< pmac commands to inactivate the motor
+  lsredis_obj_t *in_position_band;		//!< moves within this amount are ignored UNITS ARE 1/16 COUNT
+  lsredis_obj_t *max_accel;			//!< our maximum acceleration (cts/msec^2)
+  lsredis_obj_t *max_pos;			//!< our maximum position (soft limit)
+  lsredis_obj_t *max_speed;			//!< our maximum speed (cts/msec)
+  lsredis_obj_t *min_pos;			//!< our minimum position (soft limit)
+  lsredis_obj_t *motor_num;			//!< pmac motor number
+  lsredis_obj_t *neutral_pos;			//!< zero offset
+  lsredis_obj_t *pos_limit_hit;			//!< positive limit status
+  lsredis_obj_t *neg_limit_hit;			//!< negative limit status
+  lsredis_obj_t *precision;			//!< moves of less than this amount may be ignored
+  lsredis_obj_t *printf_fmt;			//!< printf format
+  lsredis_obj_t *redis_fmt;			//!< special format string to create text array for putting the position back into redis
+  lsredis_obj_t *redis_position;		//!< how we report our position to the world
+  lsredis_obj_t *status_str;			//!< A talky version of the status
+  lsredis_obj_t *u2c;				//!< conversion from counts to units: 0.0 means not loaded yet
+  lsredis_obj_t *unit;				//!< string to use as the units
+  lsredis_obj_t *update_resolution;		//!< Change needs to be at least this big to report as a new position to the database
+  char *write_fmt;				//!< Format string to write requested position to PMAC used for binary io
+  int *read_ptr;				//!< With read_mask finds bit to read for binary i/o
+  int read_mask;				//!< With read_ptr find bit to read for binary i/o
   int (*moveAbs)( struct lspmac_motor_struct *, double);	//!< function to move the motor
   int (*jogAbs)( struct lspmac_motor_struct *, double);		//!< function to move the motor
-  double *lut;			//!< lookup table (instead of u2c)
-  int  nlut;			//!< length of lut
-  WINDOW *win;			//!< our ncurses window
+  double *lut;					//!< lookup table (instead of u2c)
+  int  nlut;					//!< length of lut
+  WINDOW *win;					//!< our ncurses window
 } lspmac_motor_t;
 
 
@@ -526,6 +527,7 @@ extern void lspg_waitcryo_cb( lspg_query_queue_t *qqp, PGresult *pgr);
 extern void lspg_zoom_lut_call();
 extern int  lspmac_getBIPosition( lspmac_bi_t *);
 extern void lspmac_home1_queue(	lspmac_motor_t *mp);
+extern void lspmac_home2_queue(	lspmac_motor_t *mp);
 extern void lspmac_abort();
 extern void lspmac_init( int, int);
 extern int lspmac_jogabs_queue( lspmac_motor_t *, double);
@@ -559,3 +561,9 @@ extern void lstest_main();
 extern int lspmac_est_move_time( double *est_time, int *mmask, lspmac_motor_t *mp_1, int jog_1, char *preset_1, double end_point_1, ...);
 extern int lspmac_est_move_time_wait( double move_time, int mmask);
 extern void lsredis_set_preset( char *base, char *preset_name, double dval);
+extern pthread_mutex_t lsredis_mutex;
+extern pthread_cond_t  lsredis_cond;
+extern int lsredis_running;
+extern lsredis_obj_t *_lsredis_get_obj( char *key);
+extern lspmac_motor_t *lspmac_find_motor_by_name( char *name);
+extern int lsredis_find_preset_index_by_position( lspmac_motor_t *mp);
