@@ -80,8 +80,7 @@ CREATE OR REPLACE FUNCTION pmac.array_pop(a anyarray, element text) RETURNS anya
   DECLARE 
     result a%TYPE;
   BEGIN
-  SELECT ARRAY(
-    SELECT b.e FROM (SELECT unnest(a)) AS b(e) WHERE b.e <> element) INTO result;
+  SELECT ARRAY(SELECT b.e FROM (SELECT unnest(a)) AS b(e) WHERE b.e <> element) INTO result;
   RETURN result;
   END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -96,7 +95,7 @@ CREATE OR REPLACE FUNCTION pmac.md2_init( the_stn int) returns void as $$
     ntfy_diff text;
     ntfy_kvs  text;
     ntfy_kvsa  text[];
-    
+
     motor record;
     minit text;
   BEGIN
@@ -110,6 +109,13 @@ CREATE OR REPLACE FUNCTION pmac.md2_init( the_stn int) returns void as $$
     END IF;
     EXECUTE 'LISTEN ' || ntfy_pmac;     -- A raw PMAC command is in the queue
     EXECUTE 'LISTEN ' || ntfy_diff;     -- A diffractometer command awaits
+    EXECUTE 'LISTEN ' || ntfy_kvs;	-- A UI changed something we're listening for via px.kvs
+    --
+    -- Mark our station's presets to notify us on change
+    --
+    ntfy_kvsa := ('{' || ntfy_kvs || '}')::text[];
+    UPDATE px.kvs SET kvnotify = kvnotify || ntfy_kvsa WHERE kvname like 'stns.' || the_stn || '.%.presets.%' and (not kvnotify @> ntfy_kvsa or kvnotify is null);
+
 
     -- Log the fact that we are connecting
     --
@@ -118,13 +124,64 @@ CREATE OR REPLACE FUNCTION pmac.md2_init( the_stn int) returns void as $$
     PERFORM px.ininotifies( the_stn);
 
 
-    -- Remove all the old information from the database queue
+    -- Remove all the old information from the database queues
     --
     DELETE FROM pmac.md2_queue WHERE mq_stn=the_stn;
+    PERFORM px.md2clearqueue( the_stn);
+    PERFORM px.runqueue_clear( the_stn);
+    PERFORM cats._clearqueue( the_stn);
+
+    -- Prepare some common queries
+    --
+    PREPARE getkvs AS SELECT pmac.getkvs();
+    PREPARE nextaction AS SELECT action FROM px.nextaction();
+    PREPARE md2_queue_next AS SELECT pmac.md2_queue_next();
+    PREPARE kvupdate( text[]) AS SELECT px.kvupdate($1);
 
   END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ALTER FUNCTION pmac.md2_init( int) OWNER TO lsadmin;
+
+
+CREATE OR REPLACE FUNCTION pmac.getkvs( the_stn int) returns setof text AS $$
+  DECLARE
+    the_mrkey int;
+    the_seq  int;
+    new_seq  int;
+    the_ntfy text;
+    the_ntfya text[];
+    the_k    text;
+    the_v    text;
+
+  BEGIN
+    SELECT INTO the_mrkey, the_seq mr_key,mr_kvseq FROM pmac.md2_registration WHERE mr_stn=the_stn ORDER BY mr_key DESC LIMIT 1;
+    IF NOT FOUND THEN
+      return;
+    END IF;
+
+    SELECT INTO the_ntfy cnotifykvs FROM px._config WHERE cstnkey = the_stn;
+    IF NOT FOUND THEN
+      return;
+    END IF;
+
+    the_ntfya = ('{' || the_ntfy || '}')::text[];
+
+    FOR new_seq, the_k, the_v IN SELECT kvseq, kvname, kvvalue FROM px.kvs WHERE kvseq > the_seq and kvnotify @> the_ntfya order by kvseq LOOP
+      return next the_k;
+      return next the_v;
+    END LOOP;
+
+    IF new_seq is not null and new_seq > the_seq THEN
+      UPDATE pmac.md2_registration SET mr_kvseq = new_seq WHERE mr_key = the_mrkey;
+    END IF;
+  END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+ALTER FUNCTION pmac.getkvs( int) OWNER TO lsadmin;
+
+CREATE OR REPLACE FUNCTION pmac.getkvs() returns setof text AS $$
+  SELECT pmac.getkvs( px.getstation());
+$$ LANGUAGE SQL SECURITY DEFINER;
+ALTER FUNCTION pmac.getkvs() OWNER TO lsadmin;
 
 
 CREATE OR REPLACE FUNCTION pmac.md2_init() returns void as $$
