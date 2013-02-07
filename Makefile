@@ -23,8 +23,9 @@ dist:
 clean:
 	rm *.o pgpmac
 
-docs:
+docs:   *.c *.h Makefile
 	/usr/local/bin/doxygen
+	(cd docs/latex && make)
 
 lstimer.o: lstimer.c pgpmac.h Makefile
 	gcc -g -pthread -c lstimer.c ${PG_INCLUDE} -Wall
