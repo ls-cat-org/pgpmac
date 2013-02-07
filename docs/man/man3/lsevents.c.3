@@ -1,4 +1,4 @@
-.TH "lsevents.c" 3 "Tue Jan 29 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lsevents.c" 3 "Thu Feb 7 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -163,7 +163,7 @@ Add a callback routine to listen for a specific event\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 75 of file lsevents\&.c\&.
+Definition at line 72 of file lsevents\&.c\&.
 .PP
 .nf
                                                              {
@@ -212,7 +212,7 @@ Definition at line 75 of file lsevents\&.c\&.
 .PP
 Initialize this module\&. 
 .PP
-Definition at line 214 of file lsevents\&.c\&.
+Definition at line 211 of file lsevents\&.c\&.
 .PP
 .nf
                      {
@@ -233,7 +233,7 @@ Remove a listener previously added with lsevents_add_listener\&. \fBParameters:\
 .PP
 
 .PP
-Definition at line 120 of file lsevents\&.c\&.
+Definition at line 117 of file lsevents\&.c\&.
 .PP
 .nf
                                                                 {
@@ -273,7 +273,7 @@ Definition at line 120 of file lsevents\&.c\&.
 .PP
 Start up the thread and get out of the way\&. 
 .PP
-Definition at line 222 of file lsevents\&.c\&.
+Definition at line 219 of file lsevents\&.c\&.
 .PP
 .nf
                     {
@@ -306,9 +306,6 @@ Definition at line 45 of file lsevents\&.c\&.
 
   pthread_mutex_lock( &lsevents_queue_mutex);
 
-  lslogging_log_message( 'lsevents_send_event: %s', event);
-
-
   // maybe wait for room on the queue
   while( (lsevents_queue_on + 1) % LSEVENTS_QUEUE_LENGTH == lsevents_queue_off % LSEVENTS_QUEUE_LENGTH)
     pthread_cond_wait( &lsevents_queue_cond, &lsevents_queue_mutex);
@@ -330,7 +327,7 @@ Our worker\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 155 of file lsevents\&.c\&.
+Definition at line 152 of file lsevents\&.c\&.
 .PP
 .nf
                        {

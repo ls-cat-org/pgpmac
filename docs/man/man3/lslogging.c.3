@@ -1,4 +1,4 @@
-.TH "lslogging.c" 3 "Tue Jan 29 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lslogging.c" 3 "Thu Feb 7 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -57,6 +57,10 @@ Logs messages to a file\&.
 .RI "void \fBlslogging_log_message\fP (char *fmt,\&.\&.\&.)"
 .br
 .RI "\fIThe routine everyone will be talking about\&. \fP"
+.ti -1c
+.RI "void \fBlslogging_event_cb\fP (char *event)"
+.br
+.RI "\fILog most events\&. \fP"
 .ti -1c
 .RI "void * \fBlslogging_worker\fP (void *dummy)"
 .br
@@ -148,6 +152,20 @@ Definition at line 30 of file lslogging\&.c\&.
 Our log object: time and message\&. 
 .SH "Function Documentation"
 .PP 
+.SS "void lslogging_event_cb (char *event)"
+
+.PP
+Log most events\&. 
+.PP
+Definition at line 76 of file lslogging\&.c\&.
+.PP
+.nf
+                                      {
+  if( strcmp( event, 'Timer Update KVs') != 0) {
+    lslogging_log_message( 'EVENT: %s', event);
+  }
+}
+.fi
 .SS "void lslogging_init ()"
 
 .PP
@@ -209,12 +227,13 @@ Definition at line 48 of file lslogging\&.c\&.
 .PP
 Start up the worker thread\&. 
 .PP
-Definition at line 105 of file lslogging\&.c\&.
+Definition at line 114 of file lslogging\&.c\&.
 .PP
 .nf
                      {
   pthread_create( &lslogging_thread, NULL, &lslogging_worker, NULL);
   lslogging_log_message( 'Start up');
+  lsevents_add_listener( '\&.+', lslogging_event_cb);
 }
 .fi
 .SS "void* lslogging_worker (void *dummy)"
@@ -227,7 +246,7 @@ Service the queue, write to the file\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 76 of file lslogging\&.c\&.
+Definition at line 85 of file lslogging\&.c\&.
 .PP
 .nf
                         {

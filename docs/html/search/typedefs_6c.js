@@ -10,7 +10,7 @@ var searchData=
   ['lspg_5flock_5fdiffractometer_5ft',['lspg_lock_diffractometer_t',['../lspg_8c.html#a7232a0d630558f0c4c081d087150973d',1,'lspg.c']]],
   ['lspg_5fnextsample_5ft',['lspg_nextsample_t',['../pgpmac_8h.html#a9dda9014cd0e39fba8d523e37cf9f982',1,'pgpmac.h']]],
   ['lspg_5fnextshot_5ft',['lspg_nextshot_t',['../pgpmac_8h.html#a17ea2bf07a0b3b892baa00bd392607b3',1,'pgpmac.h']]],
-  ['lspg_5fquery_5fqueue_5ft',['lspg_query_queue_t',['../kvredis_8c.html#ae57432c0a6ac48a50457815dab2c5b4c',1,'lspg_query_queue_t():&#160;kvredis.c'],['../pgpmac_8h.html#ae57432c0a6ac48a50457815dab2c5b4c',1,'lspg_query_queue_t():&#160;pgpmac.h']]],
+  ['lspg_5fquery_5fqueue_5ft',['lspg_query_queue_t',['../pgpmac_8h.html#ae57432c0a6ac48a50457815dab2c5b4c',1,'pgpmac.h']]],
   ['lspg_5fseq_5frun_5fprep_5ft',['lspg_seq_run_prep_t',['../lspg_8c.html#ab2da550aea6388c835abe0ee0b226eb0',1,'lspg.c']]],
   ['lspg_5fstarttransfer_5ft',['lspg_starttransfer_t',['../pgpmac_8h.html#aa1f0e602ae9509005c62fb2d73bc1c5a',1,'pgpmac.h']]],
   ['lspg_5fwait_5ffor_5fdetector_5ft',['lspg_wait_for_detector_t',['../lspg_8c.html#a6f273a499bf316de95df3816a9b1bc06',1,'lspg.c']]],

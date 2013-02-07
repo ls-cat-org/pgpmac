@@ -34,6 +34,8 @@ void \hyperlink{lslogging_8c_a3418b9ab57811d28632794236e056408}{lslogging\-\_\-i
 \begin{DoxyCompactList}\small\item\em Initialize the lslogging objects. \end{DoxyCompactList}\item 
 void \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\-\_\-log\-\_\-message} (char $\ast$fmt,...)
 \begin{DoxyCompactList}\small\item\em The routine everyone will be talking about. \end{DoxyCompactList}\item 
+void \hyperlink{lslogging_8c_a775318b2753a8b5be9f235589a78797b}{lslogging\-\_\-event\-\_\-cb} (char $\ast$event)
+\begin{DoxyCompactList}\small\item\em Log most events. \end{DoxyCompactList}\item 
 void $\ast$ \hyperlink{lslogging_8c_a33ec49aea69b5e4b1b551a34e7bacfca}{lslogging\-\_\-worker} (void $\ast$dummy)
 \begin{DoxyCompactList}\small\item\em Service the queue, write to the file. \end{DoxyCompactList}\item 
 void \hyperlink{lslogging_8c_ad9f65252584e65957f461b809d59e3a2}{lslogging\-\_\-run} ()
@@ -120,6 +122,29 @@ Our log object\-: time and message.
 
 
 \subsection{Function Documentation}
+\hypertarget{lslogging_8c_a775318b2753a8b5be9f235589a78797b}{\index{lslogging.\-c@{lslogging.\-c}!lslogging\-\_\-event\-\_\-cb@{lslogging\-\_\-event\-\_\-cb}}
+\index{lslogging\-\_\-event\-\_\-cb@{lslogging\-\_\-event\-\_\-cb}!lslogging.c@{lslogging.\-c}}
+\subsubsection[{lslogging\-\_\-event\-\_\-cb}]{\setlength{\rightskip}{0pt plus 5cm}void lslogging\-\_\-event\-\_\-cb (
+\begin{DoxyParamCaption}
+\item[{char $\ast$}]{event}
+\end{DoxyParamCaption}
+)}}\label{lslogging_8c_a775318b2753a8b5be9f235589a78797b}
+
+
+Log most events. 
+
+
+
+Definition at line 76 of file lslogging.\-c.
+
+
+\begin{DoxyCode}
+                                      \{
+  \textcolor{keywordflow}{if}( strcmp( event, \textcolor{stringliteral}{"Timer Update KVs"}) != 0) \{
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"EVENT: %s"}, event);
+  \}
+\}
+\end{DoxyCode}
 \hypertarget{lslogging_8c_a3418b9ab57811d28632794236e056408}{\index{lslogging.\-c@{lslogging.\-c}!lslogging\-\_\-init@{lslogging\-\_\-init}}
 \index{lslogging\-\_\-init@{lslogging\-\_\-init}!lslogging.c@{lslogging.\-c}}
 \subsubsection[{lslogging\-\_\-init}]{\setlength{\rightskip}{0pt plus 5cm}void lslogging\-\_\-init (
@@ -213,7 +238,7 @@ Start up the worker thread.
 
 
 
-Definition at line 105 of file lslogging.\-c.
+Definition at line 114 of file lslogging.\-c.
 
 
 \begin{DoxyCode}
@@ -221,6 +246,8 @@ Definition at line 105 of file lslogging.\-c.
   pthread\_create( &\hyperlink{lslogging_8c_ad7629be92d1bec1c621b5cc0800f497f}{lslogging\_thread}, NULL, &\hyperlink{lslogging_8c_a33ec49aea69b5e4b1b551a34e7bacfca}{lslogging\_worker}
       , NULL);
   \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"Start up"});
+  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{".+"}, \hyperlink{lslogging_8c_a775318b2753a8b5be9f235589a78797b}{lslogging\_event\_cb}
+      );
 \}
 \end{DoxyCode}
 \hypertarget{lslogging_8c_a33ec49aea69b5e4b1b551a34e7bacfca}{\index{lslogging.\-c@{lslogging.\-c}!lslogging\-\_\-worker@{lslogging\-\_\-worker}}
@@ -241,7 +268,7 @@ Service the queue, write to the file.
 \end{DoxyParams}
 
 
-Definition at line 76 of file lslogging.\-c.
+Definition at line 85 of file lslogging.\-c.
 
 
 \begin{DoxyCode}

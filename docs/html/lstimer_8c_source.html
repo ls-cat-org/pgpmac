@@ -262,98 +262,93 @@ $(document).ready(function(){initNavTree('lstimer_8c_source.html','');});
 <div class="line"><a name="l00184"></a><span class="lineno"><a class="code" href="lstimer_8c.html#ab8b409bb2a7ff78da22d988cfb3b537a">  184</a></span>&#160;<span class="keyword">static</span> <span class="keywordtype">void</span> *<a class="code" href="lstimer_8c.html#ab8b409bb2a7ff78da22d988cfb3b537a" title="Our worker.">lstimer_worker</a>(</div>
 <div class="line"><a name="l00185"></a><span class="lineno">  185</span>&#160;                     <span class="keywordtype">void</span> *dummy                </div>
 <div class="line"><a name="l00186"></a><span class="lineno">  186</span>&#160;                     ) {</div>
-<div class="line"><a name="l00187"></a><span class="lineno">  187</span>&#160;  <span class="keywordtype">int</span></div>
-<div class="line"><a name="l00188"></a><span class="lineno">  188</span>&#160;    known_timers;</div>
-<div class="line"><a name="l00189"></a><span class="lineno">  189</span>&#160;</div>
-<div class="line"><a name="l00190"></a><span class="lineno">  190</span>&#160;  <span class="keyword">struct </span>sigevent  sev;</div>
-<div class="line"><a name="l00191"></a><span class="lineno">  191</span>&#160;  <span class="keyword">struct </span>sigaction sa;</div>
-<div class="line"><a name="l00192"></a><span class="lineno">  192</span>&#160;  sigset_t mask;</div>
+<div class="line"><a name="l00187"></a><span class="lineno">  187</span>&#160;  <span class="keyword">struct </span>sigevent  sev;</div>
+<div class="line"><a name="l00188"></a><span class="lineno">  188</span>&#160;  <span class="keyword">struct </span>sigaction sa;</div>
+<div class="line"><a name="l00189"></a><span class="lineno">  189</span>&#160;  sigset_t mask;</div>
+<div class="line"><a name="l00190"></a><span class="lineno">  190</span>&#160;</div>
+<div class="line"><a name="l00191"></a><span class="lineno">  191</span>&#160;  <span class="comment">// See example at http://www.kernel.org/doc/man-pages/online/pages/man2/timer_create.2.html</span></div>
+<div class="line"><a name="l00192"></a><span class="lineno">  192</span>&#160;  <span class="comment">//</span></div>
 <div class="line"><a name="l00193"></a><span class="lineno">  193</span>&#160;</div>
-<div class="line"><a name="l00194"></a><span class="lineno">  194</span>&#160;  <span class="comment">// See example at http://www.kernel.org/doc/man-pages/online/pages/man2/timer_create.2.html</span></div>
+<div class="line"><a name="l00194"></a><span class="lineno">  194</span>&#160;  <span class="comment">// Set up hander</span></div>
 <div class="line"><a name="l00195"></a><span class="lineno">  195</span>&#160;  <span class="comment">//</span></div>
-<div class="line"><a name="l00196"></a><span class="lineno">  196</span>&#160;</div>
-<div class="line"><a name="l00197"></a><span class="lineno">  197</span>&#160;  <span class="comment">// Set up hander</span></div>
-<div class="line"><a name="l00198"></a><span class="lineno">  198</span>&#160;  <span class="comment">//</span></div>
-<div class="line"><a name="l00199"></a><span class="lineno">  199</span>&#160;  sa.sa_flags = SA_SIGINFO;</div>
-<div class="line"><a name="l00200"></a><span class="lineno">  200</span>&#160;  sa.sa_sigaction = <a class="code" href="lstimer_8c.html#afa91bbd2fdb257d80ad65a5ce8abb845" title="Service the signal.">handler</a>;</div>
-<div class="line"><a name="l00201"></a><span class="lineno">  201</span>&#160;  sigemptyset(&amp;sa.sa_mask);</div>
-<div class="line"><a name="l00202"></a><span class="lineno">  202</span>&#160;  <span class="keywordflow">if</span> (sigaction(SIGRTMIN, &amp;sa, NULL) == -1) {</div>
-<div class="line"><a name="l00203"></a><span class="lineno">  203</span>&#160;    <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lstimer_worker: sigaction failed&quot;</span>);</div>
-<div class="line"><a name="l00204"></a><span class="lineno">  204</span>&#160;    exit( -1);</div>
-<div class="line"><a name="l00205"></a><span class="lineno">  205</span>&#160;  }</div>
-<div class="line"><a name="l00206"></a><span class="lineno">  206</span>&#160;</div>
-<div class="line"><a name="l00207"></a><span class="lineno">  207</span>&#160;  <span class="comment">// Create the timer</span></div>
-<div class="line"><a name="l00208"></a><span class="lineno">  208</span>&#160;  <span class="comment">//</span></div>
-<div class="line"><a name="l00209"></a><span class="lineno">  209</span>&#160;  sev.sigev_notify = SIGEV_SIGNAL;</div>
-<div class="line"><a name="l00210"></a><span class="lineno">  210</span>&#160;  sev.sigev_signo  = SIGRTMIN;</div>
-<div class="line"><a name="l00211"></a><span class="lineno">  211</span>&#160;  sev.sigev_value.sival_ptr = &amp;<a class="code" href="lstimer_8c.html#a3394b0c23c3c962dc15cb88499f4358c" title="our real time timer">lstimer_timerid</a>;</div>
-<div class="line"><a name="l00212"></a><span class="lineno">  212</span>&#160;  timer_create( CLOCK_REALTIME, &amp;sev, &amp;<a class="code" href="lstimer_8c.html#a3394b0c23c3c962dc15cb88499f4358c" title="our real time timer">lstimer_timerid</a>);</div>
-<div class="line"><a name="l00213"></a><span class="lineno">  213</span>&#160;</div>
-<div class="line"><a name="l00214"></a><span class="lineno">  214</span>&#160;</div>
-<div class="line"><a name="l00215"></a><span class="lineno">  215</span>&#160;  <span class="comment">// Block timer signal for now since we really </span></div>
-<div class="line"><a name="l00216"></a><span class="lineno">  216</span>&#160;  <span class="comment">// want to be sure we do not own a lock on the timer mutex</span></div>
-<div class="line"><a name="l00217"></a><span class="lineno">  217</span>&#160;  <span class="comment">// while servicing the signal</span></div>
-<div class="line"><a name="l00218"></a><span class="lineno">  218</span>&#160;  <span class="comment">//</span></div>
-<div class="line"><a name="l00219"></a><span class="lineno">  219</span>&#160;  sigemptyset( &amp;mask);</div>
-<div class="line"><a name="l00220"></a><span class="lineno">  220</span>&#160;  sigaddset( &amp;mask, SIGRTMIN);</div>
-<div class="line"><a name="l00221"></a><span class="lineno">  221</span>&#160;  </div>
-<div class="line"><a name="l00222"></a><span class="lineno">  222</span>&#160;  known_timers = 0;</div>
-<div class="line"><a name="l00223"></a><span class="lineno">  223</span>&#160;</div>
-<div class="line"><a name="l00224"></a><span class="lineno">  224</span>&#160;  <span class="keywordflow">while</span>( 1) {</div>
-<div class="line"><a name="l00225"></a><span class="lineno">  225</span>&#160;    pthread_mutex_lock( &amp;<a class="code" href="lstimer_8c.html#a170993cbed9b9ec8bc64b6642a3ed581" title="protect the timer list">lstimer_mutex</a>);</div>
-<div class="line"><a name="l00226"></a><span class="lineno">  226</span>&#160;</div>
-<div class="line"><a name="l00227"></a><span class="lineno">  227</span>&#160;    <span class="keywordflow">while</span>( <a class="code" href="lstimer_8c.html#a5a3c6ef3507448d284d91958878d3f75" title="indicate that a new timer exists and a call to service_timers is required">new_timer</a> == 0)</div>
-<div class="line"><a name="l00228"></a><span class="lineno">  228</span>&#160;      pthread_cond_wait( &amp;<a class="code" href="lstimer_8c.html#a96b7516e4a15c4b879de82a569cd5f0a" title="allows us to be idle when there is nothing to do">lstimer_cond</a>, &amp;<a class="code" href="lstimer_8c.html#a170993cbed9b9ec8bc64b6642a3ed581" title="protect the timer list">lstimer_mutex</a>);</div>
-<div class="line"><a name="l00229"></a><span class="lineno">  229</span>&#160;</div>
-<div class="line"><a name="l00230"></a><span class="lineno">  230</span>&#160;    <span class="comment">// ignore signals so we don&#39;t service the signal while we are already in the</span></div>
-<div class="line"><a name="l00231"></a><span class="lineno">  231</span>&#160;    <span class="comment">// service routine</span></div>
-<div class="line"><a name="l00232"></a><span class="lineno">  232</span>&#160;    <span class="comment">//</span></div>
-<div class="line"><a name="l00233"></a><span class="lineno">  233</span>&#160;    sigprocmask( SIG_SETMASK, &amp;mask, NULL);</div>
-<div class="line"><a name="l00234"></a><span class="lineno">  234</span>&#160;    </div>
-<div class="line"><a name="l00235"></a><span class="lineno">  235</span>&#160;</div>
-<div class="line"><a name="l00236"></a><span class="lineno">  236</span>&#160;    <span class="comment">//</span></div>
-<div class="line"><a name="l00237"></a><span class="lineno">  237</span>&#160;    <span class="comment">// Setting up the timer interval is in the handler</span></div>
-<div class="line"><a name="l00238"></a><span class="lineno">  238</span>&#160;    <span class="comment">// so just call it</span></div>
+<div class="line"><a name="l00196"></a><span class="lineno">  196</span>&#160;  sa.sa_flags = SA_SIGINFO;</div>
+<div class="line"><a name="l00197"></a><span class="lineno">  197</span>&#160;  sa.sa_sigaction = <a class="code" href="lstimer_8c.html#afa91bbd2fdb257d80ad65a5ce8abb845" title="Service the signal.">handler</a>;</div>
+<div class="line"><a name="l00198"></a><span class="lineno">  198</span>&#160;  sigemptyset(&amp;sa.sa_mask);</div>
+<div class="line"><a name="l00199"></a><span class="lineno">  199</span>&#160;  <span class="keywordflow">if</span> (sigaction(SIGRTMIN, &amp;sa, NULL) == -1) {</div>
+<div class="line"><a name="l00200"></a><span class="lineno">  200</span>&#160;    <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;lstimer_worker: sigaction failed&quot;</span>);</div>
+<div class="line"><a name="l00201"></a><span class="lineno">  201</span>&#160;    exit( -1);</div>
+<div class="line"><a name="l00202"></a><span class="lineno">  202</span>&#160;  }</div>
+<div class="line"><a name="l00203"></a><span class="lineno">  203</span>&#160;</div>
+<div class="line"><a name="l00204"></a><span class="lineno">  204</span>&#160;  <span class="comment">// Create the timer</span></div>
+<div class="line"><a name="l00205"></a><span class="lineno">  205</span>&#160;  <span class="comment">//</span></div>
+<div class="line"><a name="l00206"></a><span class="lineno">  206</span>&#160;  sev.sigev_notify = SIGEV_SIGNAL;</div>
+<div class="line"><a name="l00207"></a><span class="lineno">  207</span>&#160;  sev.sigev_signo  = SIGRTMIN;</div>
+<div class="line"><a name="l00208"></a><span class="lineno">  208</span>&#160;  sev.sigev_value.sival_ptr = &amp;<a class="code" href="lstimer_8c.html#a3394b0c23c3c962dc15cb88499f4358c" title="our real time timer">lstimer_timerid</a>;</div>
+<div class="line"><a name="l00209"></a><span class="lineno">  209</span>&#160;  timer_create( CLOCK_REALTIME, &amp;sev, &amp;<a class="code" href="lstimer_8c.html#a3394b0c23c3c962dc15cb88499f4358c" title="our real time timer">lstimer_timerid</a>);</div>
+<div class="line"><a name="l00210"></a><span class="lineno">  210</span>&#160;</div>
+<div class="line"><a name="l00211"></a><span class="lineno">  211</span>&#160;</div>
+<div class="line"><a name="l00212"></a><span class="lineno">  212</span>&#160;  <span class="comment">// Block timer signal for now since we really </span></div>
+<div class="line"><a name="l00213"></a><span class="lineno">  213</span>&#160;  <span class="comment">// want to be sure we do not own a lock on the timer mutex</span></div>
+<div class="line"><a name="l00214"></a><span class="lineno">  214</span>&#160;  <span class="comment">// while servicing the signal</span></div>
+<div class="line"><a name="l00215"></a><span class="lineno">  215</span>&#160;  <span class="comment">//</span></div>
+<div class="line"><a name="l00216"></a><span class="lineno">  216</span>&#160;  sigemptyset( &amp;mask);</div>
+<div class="line"><a name="l00217"></a><span class="lineno">  217</span>&#160;  sigaddset( &amp;mask, SIGRTMIN);</div>
+<div class="line"><a name="l00218"></a><span class="lineno">  218</span>&#160;  </div>
+<div class="line"><a name="l00219"></a><span class="lineno">  219</span>&#160;  <span class="keywordflow">while</span>( 1) {</div>
+<div class="line"><a name="l00220"></a><span class="lineno">  220</span>&#160;    pthread_mutex_lock( &amp;<a class="code" href="lstimer_8c.html#a170993cbed9b9ec8bc64b6642a3ed581" title="protect the timer list">lstimer_mutex</a>);</div>
+<div class="line"><a name="l00221"></a><span class="lineno">  221</span>&#160;</div>
+<div class="line"><a name="l00222"></a><span class="lineno">  222</span>&#160;    <span class="keywordflow">while</span>( <a class="code" href="lstimer_8c.html#a5a3c6ef3507448d284d91958878d3f75" title="indicate that a new timer exists and a call to service_timers is required">new_timer</a> == 0)</div>
+<div class="line"><a name="l00223"></a><span class="lineno">  223</span>&#160;      pthread_cond_wait( &amp;<a class="code" href="lstimer_8c.html#a96b7516e4a15c4b879de82a569cd5f0a" title="allows us to be idle when there is nothing to do">lstimer_cond</a>, &amp;<a class="code" href="lstimer_8c.html#a170993cbed9b9ec8bc64b6642a3ed581" title="protect the timer list">lstimer_mutex</a>);</div>
+<div class="line"><a name="l00224"></a><span class="lineno">  224</span>&#160;</div>
+<div class="line"><a name="l00225"></a><span class="lineno">  225</span>&#160;    <span class="comment">// ignore signals so we don&#39;t service the signal while we are already in the</span></div>
+<div class="line"><a name="l00226"></a><span class="lineno">  226</span>&#160;    <span class="comment">// service routine</span></div>
+<div class="line"><a name="l00227"></a><span class="lineno">  227</span>&#160;    <span class="comment">//</span></div>
+<div class="line"><a name="l00228"></a><span class="lineno">  228</span>&#160;    sigprocmask( SIG_SETMASK, &amp;mask, NULL);</div>
+<div class="line"><a name="l00229"></a><span class="lineno">  229</span>&#160;    </div>
+<div class="line"><a name="l00230"></a><span class="lineno">  230</span>&#160;</div>
+<div class="line"><a name="l00231"></a><span class="lineno">  231</span>&#160;    <span class="comment">//</span></div>
+<div class="line"><a name="l00232"></a><span class="lineno">  232</span>&#160;    <span class="comment">// Setting up the timer interval is in the handler</span></div>
+<div class="line"><a name="l00233"></a><span class="lineno">  233</span>&#160;    <span class="comment">// so just call it</span></div>
+<div class="line"><a name="l00234"></a><span class="lineno">  234</span>&#160;    <span class="comment">//</span></div>
+<div class="line"><a name="l00235"></a><span class="lineno">  235</span>&#160;    <a class="code" href="lstimer_8c.html#a7796321359df34cb827ffa51bbc44e9c" title="Send events that are past due, due, or just about to be due.">service_timers</a>();</div>
+<div class="line"><a name="l00236"></a><span class="lineno">  236</span>&#160;</div>
+<div class="line"><a name="l00237"></a><span class="lineno">  237</span>&#160;    <span class="comment">//</span></div>
+<div class="line"><a name="l00238"></a><span class="lineno">  238</span>&#160;    <span class="comment">// Reset our flag</span></div>
 <div class="line"><a name="l00239"></a><span class="lineno">  239</span>&#160;    <span class="comment">//</span></div>
-<div class="line"><a name="l00240"></a><span class="lineno">  240</span>&#160;    <a class="code" href="lstimer_8c.html#a7796321359df34cb827ffa51bbc44e9c" title="Send events that are past due, due, or just about to be due.">service_timers</a>();</div>
+<div class="line"><a name="l00240"></a><span class="lineno">  240</span>&#160;    <a class="code" href="lstimer_8c.html#a5a3c6ef3507448d284d91958878d3f75" title="indicate that a new timer exists and a call to service_timers is required">new_timer</a> = 0;</div>
 <div class="line"><a name="l00241"></a><span class="lineno">  241</span>&#160;</div>
-<div class="line"><a name="l00242"></a><span class="lineno">  242</span>&#160;    <span class="comment">//</span></div>
-<div class="line"><a name="l00243"></a><span class="lineno">  243</span>&#160;    <span class="comment">// Reset our flag</span></div>
-<div class="line"><a name="l00244"></a><span class="lineno">  244</span>&#160;    <span class="comment">//</span></div>
-<div class="line"><a name="l00245"></a><span class="lineno">  245</span>&#160;    <a class="code" href="lstimer_8c.html#a5a3c6ef3507448d284d91958878d3f75" title="indicate that a new timer exists and a call to service_timers is required">new_timer</a> = 0;</div>
-<div class="line"><a name="l00246"></a><span class="lineno">  246</span>&#160;</div>
-<div class="line"><a name="l00247"></a><span class="lineno">  247</span>&#160;    pthread_mutex_unlock( &amp;<a class="code" href="lstimer_8c.html#a170993cbed9b9ec8bc64b6642a3ed581" title="protect the timer list">lstimer_mutex</a>);</div>
-<div class="line"><a name="l00248"></a><span class="lineno">  248</span>&#160;</div>
-<div class="line"><a name="l00249"></a><span class="lineno">  249</span>&#160;</div>
-<div class="line"><a name="l00250"></a><span class="lineno">  250</span>&#160;    <span class="comment">// Let the signals rain down</span></div>
-<div class="line"><a name="l00251"></a><span class="lineno">  251</span>&#160;    <span class="comment">//</span></div>
-<div class="line"><a name="l00252"></a><span class="lineno">  252</span>&#160;    sigprocmask( SIG_UNBLOCK, &amp;mask, NULL);</div>
-<div class="line"><a name="l00253"></a><span class="lineno">  253</span>&#160;  }</div>
-<div class="line"><a name="l00254"></a><span class="lineno">  254</span>&#160;}</div>
-<div class="line"><a name="l00255"></a><span class="lineno">  255</span>&#160;</div>
+<div class="line"><a name="l00242"></a><span class="lineno">  242</span>&#160;    pthread_mutex_unlock( &amp;<a class="code" href="lstimer_8c.html#a170993cbed9b9ec8bc64b6642a3ed581" title="protect the timer list">lstimer_mutex</a>);</div>
+<div class="line"><a name="l00243"></a><span class="lineno">  243</span>&#160;</div>
+<div class="line"><a name="l00244"></a><span class="lineno">  244</span>&#160;</div>
+<div class="line"><a name="l00245"></a><span class="lineno">  245</span>&#160;    <span class="comment">// Let the signals rain down</span></div>
+<div class="line"><a name="l00246"></a><span class="lineno">  246</span>&#160;    <span class="comment">//</span></div>
+<div class="line"><a name="l00247"></a><span class="lineno">  247</span>&#160;    sigprocmask( SIG_UNBLOCK, &amp;mask, NULL);</div>
+<div class="line"><a name="l00248"></a><span class="lineno">  248</span>&#160;  }</div>
+<div class="line"><a name="l00249"></a><span class="lineno">  249</span>&#160;}</div>
+<div class="line"><a name="l00250"></a><span class="lineno">  250</span>&#160;</div>
+<div class="line"><a name="l00251"></a><span class="lineno">  251</span>&#160;</div>
+<div class="line"><a name="l00254"></a><span class="lineno"><a class="code" href="pgpmac_8h.html#a8cd37a8fb0f061456456a5d79bdd5189">  254</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="lstimer_8c.html#a8cd37a8fb0f061456456a5d79bdd5189" title="Initialize the timer list and pthread stuff.">lstimer_init</a>() {</div>
+<div class="line"><a name="l00255"></a><span class="lineno">  255</span>&#160;  <span class="keywordtype">int</span> <a class="code" href="namespacemk__pgpmac__redis.html#afa643a23a5984fe44c2182ada3dfa401">i</a>;</div>
 <div class="line"><a name="l00256"></a><span class="lineno">  256</span>&#160;</div>
-<div class="line"><a name="l00259"></a><span class="lineno"><a class="code" href="pgpmac_8h.html#a8cd37a8fb0f061456456a5d79bdd5189">  259</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="lstimer_8c.html#a8cd37a8fb0f061456456a5d79bdd5189" title="Initialize the timer list and pthread stuff.">lstimer_init</a>() {</div>
-<div class="line"><a name="l00260"></a><span class="lineno">  260</span>&#160;  <span class="keywordtype">int</span> <a class="code" href="namespacemk__pgpmac__redis.html#afa643a23a5984fe44c2182ada3dfa401">i</a>;</div>
+<div class="line"><a name="l00257"></a><span class="lineno">  257</span>&#160;  <span class="keywordflow">for</span>( i=0; i&lt;<a class="code" href="lstimer_8c.html#af020a0f708e86162a32d2ca6373c96bb" title="We&#39;ll allow this many timers. This should be way more than enough.">LSTIMER_LIST_LENGTH</a>; i++) {</div>
+<div class="line"><a name="l00258"></a><span class="lineno">  258</span>&#160;    lstimer_list[<a class="code" href="namespacemk__pgpmac__redis.html#afa643a23a5984fe44c2182ada3dfa401">i</a>].<a class="code" href="structlstimer__list__struct.html#ac7ab4cd1f3065156f95b49e66bf05283" title="run this many times: -1 means reload forever, 0 means we are done with this timer and it may be reuse...">shots</a> = 0;</div>
+<div class="line"><a name="l00259"></a><span class="lineno">  259</span>&#160;  }</div>
+<div class="line"><a name="l00260"></a><span class="lineno">  260</span>&#160;</div>
 <div class="line"><a name="l00261"></a><span class="lineno">  261</span>&#160;</div>
-<div class="line"><a name="l00262"></a><span class="lineno">  262</span>&#160;  <span class="keywordflow">for</span>( i=0; i&lt;<a class="code" href="lstimer_8c.html#af020a0f708e86162a32d2ca6373c96bb" title="We&#39;ll allow this many timers. This should be way more than enough.">LSTIMER_LIST_LENGTH</a>; i++) {</div>
-<div class="line"><a name="l00263"></a><span class="lineno">  263</span>&#160;    lstimer_list[<a class="code" href="namespacemk__pgpmac__redis.html#afa643a23a5984fe44c2182ada3dfa401">i</a>].<a class="code" href="structlstimer__list__struct.html#ac7ab4cd1f3065156f95b49e66bf05283" title="run this many times: -1 means reload forever, 0 means we are done with this timer and it may be reuse...">shots</a> = 0;</div>
-<div class="line"><a name="l00264"></a><span class="lineno">  264</span>&#160;  }</div>
+<div class="line"><a name="l00262"></a><span class="lineno">  262</span>&#160;  pthread_mutex_init( &amp;<a class="code" href="lstimer_8c.html#a170993cbed9b9ec8bc64b6642a3ed581" title="protect the timer list">lstimer_mutex</a>, NULL);</div>
+<div class="line"><a name="l00263"></a><span class="lineno">  263</span>&#160;  pthread_cond_init(  &amp;<a class="code" href="lstimer_8c.html#a96b7516e4a15c4b879de82a569cd5f0a" title="allows us to be idle when there is nothing to do">lstimer_cond</a>, NULL);</div>
+<div class="line"><a name="l00264"></a><span class="lineno">  264</span>&#160;}</div>
 <div class="line"><a name="l00265"></a><span class="lineno">  265</span>&#160;</div>
-<div class="line"><a name="l00266"></a><span class="lineno">  266</span>&#160;</div>
-<div class="line"><a name="l00267"></a><span class="lineno">  267</span>&#160;  pthread_mutex_init( &amp;<a class="code" href="lstimer_8c.html#a170993cbed9b9ec8bc64b6642a3ed581" title="protect the timer list">lstimer_mutex</a>, NULL);</div>
-<div class="line"><a name="l00268"></a><span class="lineno">  268</span>&#160;  pthread_cond_init(  &amp;<a class="code" href="lstimer_8c.html#a96b7516e4a15c4b879de82a569cd5f0a" title="allows us to be idle when there is nothing to do">lstimer_cond</a>, NULL);</div>
-<div class="line"><a name="l00269"></a><span class="lineno">  269</span>&#160;}</div>
-<div class="line"><a name="l00270"></a><span class="lineno">  270</span>&#160;</div>
-<div class="line"><a name="l00273"></a><span class="lineno"><a class="code" href="pgpmac_8h.html#a0b918acc1a4bf737cb62b5a70f8b553a">  273</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="lstimer_8c.html#a0b918acc1a4bf737cb62b5a70f8b553a" title="Start up our thread.">lstimer_run</a>() {</div>
-<div class="line"><a name="l00274"></a><span class="lineno">  274</span>&#160;  pthread_create( &amp;<a class="code" href="lstimer_8c.html#a76660e8720b08f4adee2be9f44b5f419" title="the timer thread">lstimer_thread</a>, NULL, <a class="code" href="lstimer_8c.html#ab8b409bb2a7ff78da22d988cfb3b537a" title="Our worker.">lstimer_worker</a>, NULL);</div>
-<div class="line"><a name="l00275"></a><span class="lineno">  275</span>&#160;}</div>
+<div class="line"><a name="l00268"></a><span class="lineno"><a class="code" href="pgpmac_8h.html#a0b918acc1a4bf737cb62b5a70f8b553a">  268</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="lstimer_8c.html#a0b918acc1a4bf737cb62b5a70f8b553a" title="Start up our thread.">lstimer_run</a>() {</div>
+<div class="line"><a name="l00269"></a><span class="lineno">  269</span>&#160;  pthread_create( &amp;<a class="code" href="lstimer_8c.html#a76660e8720b08f4adee2be9f44b5f419" title="the timer thread">lstimer_thread</a>, NULL, <a class="code" href="lstimer_8c.html#ab8b409bb2a7ff78da22d988cfb3b537a" title="Our worker.">lstimer_worker</a>, NULL);</div>
+<div class="line"><a name="l00270"></a><span class="lineno">  270</span>&#160;}</div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="lstimer_8c.html">lstimer.c</a></li>
-    <li class="footer">Generated on Tue Jan 29 2013 14:53:25 for LS-CAT PGPMAC by
+    <li class="footer">Generated on Thu Feb 7 2013 10:09:48 for LS-CAT PGPMAC by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.2 </li>
   </ul>

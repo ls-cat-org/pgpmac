@@ -38,6 +38,7 @@ var structlspmac__motor__struct =
     [ "read_ptr", "structlspmac__motor__struct.html#a844b28ccabab5048ca216db074fb9704", null ],
     [ "redis_fmt", "structlspmac__motor__struct.html#a91c38b2072d878b71f4e77de2f1375a4", null ],
     [ "redis_position", "structlspmac__motor__struct.html#af94a0b2611136058ead4948fd7c858e3", null ],
+    [ "reported_pg_position", "structlspmac__motor__struct.html#a959bd55eb5c88a30cd4873ea567944d8", null ],
     [ "reported_position", "structlspmac__motor__struct.html#ae5f1f605a0f587500e627332ad4e5e7e", null ],
     [ "requested_pos_cnts", "structlspmac__motor__struct.html#a6e8dc9c11dc52a439fe9837230f93ce2", null ],
     [ "requested_position", "structlspmac__motor__struct.html#af8cdc94c6e2478b12ce942d4cf1d7499", null ],

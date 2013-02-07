@@ -159,44 +159,52 @@ $(document).ready(function(){initNavTree('lslogging_8c_source.html','');});
 <div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;  </div>
 <div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;}</div>
 <div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;</div>
-<div class="line"><a name="l00076"></a><span class="lineno"><a class="code" href="lslogging_8c.html#a33ec49aea69b5e4b1b551a34e7bacfca">   76</a></span>&#160;<span class="keywordtype">void</span> *<a class="code" href="lslogging_8c.html#a33ec49aea69b5e4b1b551a34e7bacfca" title="Service the queue, write to the file.">lslogging_worker</a>(</div>
-<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;                      <span class="keywordtype">void</span> *dummy       </div>
-<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;                      ) {</div>
-<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;</div>
-<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;</div>
-<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;  <span class="keyword">struct </span>tm coarsetime;</div>
-<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;  <span class="keywordtype">char</span> tstr[64];</div>
-<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;  <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> msecs;</div>
-<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;  <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> off;</div>
-<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;</div>
-<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;  pthread_mutex_lock( &amp;<a class="code" href="lslogging_8c.html#a4a97ffe8731ae437f014ada051301be3" title="mutex to keep the various threads from adding to the queue at the exact same time">lslogging_mutex</a>);</div>
-<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;</div>
-<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;  <span class="keywordflow">while</span>( 1) {</div>
-<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;    <span class="keywordflow">while</span>( <a class="code" href="lslogging_8c.html#a1f6e69ade57a17755e6b74a6286505df" title="next location to add to the queue">lslogging_on</a> == <a class="code" href="lslogging_8c.html#a6c571e94580b7fc9ab72e01fbc5d23c7" title="next location to remove from the queue">lslogging_off</a>) {</div>
-<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;      pthread_cond_wait( &amp;<a class="code" href="lslogging_8c.html#afa5f05c4337683edc3c88ab56aa5ea6f" title="We&#39;ll spend most of our time waiting for this condition&#39;s signal.">lslogging_cond</a>, &amp;<a class="code" href="lslogging_8c.html#a4a97ffe8731ae437f014ada051301be3" title="mutex to keep the various threads from adding to the queue at the exact same time">lslogging_mutex</a>);</div>
-<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;    }</div>
-<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;    </div>
-<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;    off = (<a class="code" href="lslogging_8c.html#a6c571e94580b7fc9ab72e01fbc5d23c7" title="next location to remove from the queue">lslogging_off</a>++) % <a class="code" href="lslogging_8c.html#a5b1cb610bee26b000a2d64caa7d77a8d" title="Modest length queue.">LSLOGGING_QUEUE_LENGTH</a>;</div>
-<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;    localtime_r( &amp;(lslogging_queue[off].ltime.tv_sec), &amp;coarsetime);</div>
-<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;    strftime( tstr, <span class="keyword">sizeof</span>(tstr)-1, <span class="stringliteral">&quot;%Y-%m-%d %H:%M:%S&quot;</span>, &amp;coarsetime);</div>
-<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;    tstr[<span class="keyword">sizeof</span>(tstr)-1] = 0;</div>
-<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;    msecs = lslogging_queue[off].<a class="code" href="structlslogging__queue__struct.html#aa8211878c89f3c98757c3433115453eb" title="time stamp: set when queued">ltime</a>.tv_nsec / 1000;</div>
-<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;    fprintf( <a class="code" href="lslogging_8c.html#a5709d6eb68a8eebf78ba58bb78da0649" title="our log file object">lslogging_file</a>, <span class="stringliteral">&quot;%s.%.06u  %s\n&quot;</span>, tstr, msecs, lslogging_queue[off].lmsg);</div>
-<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;    fflush( <a class="code" href="lslogging_8c.html#a5709d6eb68a8eebf78ba58bb78da0649" title="our log file object">lslogging_file</a>);</div>
-<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;  }</div>
-<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;}</div>
-<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;</div>
-<div class="line"><a name="l00105"></a><span class="lineno"><a class="code" href="pgpmac_8h.html#ad9f65252584e65957f461b809d59e3a2">  105</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="lslogging_8c.html#ad9f65252584e65957f461b809d59e3a2" title="Start up the worker thread.">lslogging_run</a>() {</div>
-<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;  pthread_create( &amp;<a class="code" href="lslogging_8c.html#ad7629be92d1bec1c621b5cc0800f497f" title="our thread">lslogging_thread</a>, NULL, &amp;<a class="code" href="lslogging_8c.html#a33ec49aea69b5e4b1b551a34e7bacfca" title="Service the queue, write to the file.">lslogging_worker</a>, NULL);</div>
-<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;  <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;Start up&quot;</span>);</div>
-<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;}</div>
+<div class="line"><a name="l00076"></a><span class="lineno"><a class="code" href="lslogging_8c.html#a775318b2753a8b5be9f235589a78797b">   76</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="lslogging_8c.html#a775318b2753a8b5be9f235589a78797b" title="Log most events.">lslogging_event_cb</a>( <span class="keywordtype">char</span> *event) {</div>
+<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;  <span class="keywordflow">if</span>( strcmp( event, <span class="stringliteral">&quot;Timer Update KVs&quot;</span>) != 0) {</div>
+<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;    <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;EVENT: %s&quot;</span>, event);</div>
+<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;  }</div>
+<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;}</div>
+<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;</div>
+<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;</div>
+<div class="line"><a name="l00085"></a><span class="lineno"><a class="code" href="lslogging_8c.html#a33ec49aea69b5e4b1b551a34e7bacfca">   85</a></span>&#160;<span class="keywordtype">void</span> *<a class="code" href="lslogging_8c.html#a33ec49aea69b5e4b1b551a34e7bacfca" title="Service the queue, write to the file.">lslogging_worker</a>(</div>
+<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;                      <span class="keywordtype">void</span> *dummy       </div>
+<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;                      ) {</div>
+<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;</div>
+<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;</div>
+<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;  <span class="keyword">struct </span>tm coarsetime;</div>
+<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;  <span class="keywordtype">char</span> tstr[64];</div>
+<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;  <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> msecs;</div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;  <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> off;</div>
+<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;</div>
+<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;  pthread_mutex_lock( &amp;<a class="code" href="lslogging_8c.html#a4a97ffe8731ae437f014ada051301be3" title="mutex to keep the various threads from adding to the queue at the exact same time">lslogging_mutex</a>);</div>
+<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;</div>
+<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;  <span class="keywordflow">while</span>( 1) {</div>
+<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;    <span class="keywordflow">while</span>( <a class="code" href="lslogging_8c.html#a1f6e69ade57a17755e6b74a6286505df" title="next location to add to the queue">lslogging_on</a> == <a class="code" href="lslogging_8c.html#a6c571e94580b7fc9ab72e01fbc5d23c7" title="next location to remove from the queue">lslogging_off</a>) {</div>
+<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;      pthread_cond_wait( &amp;<a class="code" href="lslogging_8c.html#afa5f05c4337683edc3c88ab56aa5ea6f" title="We&#39;ll spend most of our time waiting for this condition&#39;s signal.">lslogging_cond</a>, &amp;<a class="code" href="lslogging_8c.html#a4a97ffe8731ae437f014ada051301be3" title="mutex to keep the various threads from adding to the queue at the exact same time">lslogging_mutex</a>);</div>
+<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;    }</div>
+<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;    </div>
+<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;    off = (<a class="code" href="lslogging_8c.html#a6c571e94580b7fc9ab72e01fbc5d23c7" title="next location to remove from the queue">lslogging_off</a>++) % <a class="code" href="lslogging_8c.html#a5b1cb610bee26b000a2d64caa7d77a8d" title="Modest length queue.">LSLOGGING_QUEUE_LENGTH</a>;</div>
+<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;    localtime_r( &amp;(lslogging_queue[off].ltime.tv_sec), &amp;coarsetime);</div>
+<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;    strftime( tstr, <span class="keyword">sizeof</span>(tstr)-1, <span class="stringliteral">&quot;%Y-%m-%d %H:%M:%S&quot;</span>, &amp;coarsetime);</div>
+<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;    tstr[<span class="keyword">sizeof</span>(tstr)-1] = 0;</div>
+<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;    msecs = lslogging_queue[off].<a class="code" href="structlslogging__queue__struct.html#aa8211878c89f3c98757c3433115453eb" title="time stamp: set when queued">ltime</a>.tv_nsec / 1000;</div>
+<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;    fprintf( <a class="code" href="lslogging_8c.html#a5709d6eb68a8eebf78ba58bb78da0649" title="our log file object">lslogging_file</a>, <span class="stringliteral">&quot;%s.%.06u  %s\n&quot;</span>, tstr, msecs, lslogging_queue[off].lmsg);</div>
+<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;    fflush( <a class="code" href="lslogging_8c.html#a5709d6eb68a8eebf78ba58bb78da0649" title="our log file object">lslogging_file</a>);</div>
+<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;  }</div>
+<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;}</div>
+<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;</div>
+<div class="line"><a name="l00114"></a><span class="lineno"><a class="code" href="pgpmac_8h.html#ad9f65252584e65957f461b809d59e3a2">  114</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="lslogging_8c.html#ad9f65252584e65957f461b809d59e3a2" title="Start up the worker thread.">lslogging_run</a>() {</div>
+<div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;  pthread_create( &amp;<a class="code" href="lslogging_8c.html#ad7629be92d1bec1c621b5cc0800f497f" title="our thread">lslogging_thread</a>, NULL, &amp;<a class="code" href="lslogging_8c.html#a33ec49aea69b5e4b1b551a34e7bacfca" title="Service the queue, write to the file.">lslogging_worker</a>, NULL);</div>
+<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;  <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;Start up&quot;</span>);</div>
+<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;  <a class="code" href="lsevents_8c.html#ab0617d3f0594b51d10e34bf397096654" title="Add a callback routine to listen for a specific event.">lsevents_add_listener</a>( <span class="stringliteral">&quot;.+&quot;</span>, <a class="code" href="lslogging_8c.html#a775318b2753a8b5be9f235589a78797b" title="Log most events.">lslogging_event_cb</a>);</div>
+<div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;}</div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="lslogging_8c.html">lslogging.c</a></li>
-    <li class="footer">Generated on Tue Jan 29 2013 14:53:25 for LS-CAT PGPMAC by
+    <li class="footer">Generated on Thu Feb 7 2013 10:09:47 for LS-CAT PGPMAC by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.2 </li>
   </ul>

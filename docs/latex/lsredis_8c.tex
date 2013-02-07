@@ -23,12 +23,16 @@ int \hyperlink{lsredis_8c_ac356cd43e46799929242dcf5214df7f6}{lsredis\-\_\-cmpnst
 int \hyperlink{lsredis_8c_ac58fca47533e695c8775e0d2b9128766}{lsredis\-\_\-regexec} (const regex\-\_\-t $\ast$preg, \hyperlink{pgpmac_8h_ad449de06d02791adf2498d2a1e1f909c}{lsredis\-\_\-obj\-\_\-t} $\ast$p, size\-\_\-t nmatch, regmatch\-\_\-t $\ast$pmatch, int eflags)
 \item 
 char $\ast$ \hyperlink{lsredis_8c_ac1994e56114b2315294527d76311f829}{lsredis\-\_\-getstr} (\hyperlink{pgpmac_8h_ad449de06d02791adf2498d2a1e1f909c}{lsredis\-\_\-obj\-\_\-t} $\ast$p)
-\begin{DoxyCompactList}\small\item\em return a copy of the key's string value \end{DoxyCompactList}\item 
+\begin{DoxyCompactList}\small\item\em return a copy of the key's string value be sure to free the result \end{DoxyCompactList}\item 
 void \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\-\_\-setstr} (\hyperlink{pgpmac_8h_ad449de06d02791adf2498d2a1e1f909c}{lsredis\-\_\-obj\-\_\-t} $\ast$p, char $\ast$fmt,...)
 \begin{DoxyCompactList}\small\item\em Set the value and update redis. \end{DoxyCompactList}\item 
+double \hyperlink{lsredis_8c_a51c33bec2c54f2d468bf8d93d981914a}{lsredis\-\_\-get\-\_\-or\-\_\-set\-\_\-d} (\hyperlink{pgpmac_8h_ad449de06d02791adf2498d2a1e1f909c}{lsredis\-\_\-obj\-\_\-t} $\ast$p, double val, int prec)
+\item 
 double \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\-\_\-getd} (\hyperlink{pgpmac_8h_ad449de06d02791adf2498d2a1e1f909c}{lsredis\-\_\-obj\-\_\-t} $\ast$p)
 \item 
 long int \hyperlink{lsredis_8c_a1923f998441f4f451204dfd214d52218}{lsredis\-\_\-getl} (\hyperlink{pgpmac_8h_ad449de06d02791adf2498d2a1e1f909c}{lsredis\-\_\-obj\-\_\-t} $\ast$p)
+\item 
+long int \hyperlink{lsredis_8c_a71689006ffc015be6a0705a7c0aef1be}{lsredis\-\_\-get\-\_\-or\-\_\-set\-\_\-l} (\hyperlink{pgpmac_8h_ad449de06d02791adf2498d2a1e1f909c}{lsredis\-\_\-obj\-\_\-t} $\ast$p, long int val)
 \item 
 char $\ast$$\ast$ \hyperlink{lsredis_8c_abe31d0e11c41b2235307612c963bb652}{lsredis\-\_\-get\-\_\-string\-\_\-array} (\hyperlink{pgpmac_8h_ad449de06d02791adf2498d2a1e1f909c}{lsredis\-\_\-obj\-\_\-t} $\ast$p)
 \item 
@@ -62,6 +66,10 @@ void \hyperlink{lsredis_8c_ace75c15c5308a0fcdafcb82c7506872a}{lsredis\-\_\-keys\
 \begin{DoxyCompactList}\small\item\em Sift through the keys to find ones we like. \end{DoxyCompactList}\item 
 int \hyperlink{lsredis_8c_a1ad60526a09ca679f39174ce5d773abe}{lsredis\-\_\-find\-\_\-preset} (char $\ast$base, char $\ast$preset\-\_\-name, double $\ast$dval)
 \item 
+void \hyperlink{lsredis_8c_ad4c059ab8209b87131b5c94883a05f39}{lsredis\-\_\-set\-\_\-preset} (char $\ast$base, char $\ast$preset\-\_\-name, double dval)
+\item 
+int \hyperlink{lsredis_8c_adfe823e3ccec7e37ac4697179bd65b10}{lsredis\-\_\-find\-\_\-preset\-\_\-index\-\_\-by\-\_\-position} (\hyperlink{pgpmac_8h_aa5067fcbaabc5bbfdc52492495518c96}{lspmac\-\_\-motor\-\_\-t} $\ast$mp)
+\item 
 void \hyperlink{lsredis_8c_aef0f12fda57e476a50b14acdc9f30b58}{lsredis\-\_\-init} (char $\ast$pub, char $\ast$re, char $\ast$head)
 \begin{DoxyCompactList}\small\item\em Initialize this module, that is, set up the connections. \end{DoxyCompactList}\item 
 void \hyperlink{lsredis_8c_ae1478efc852fef71550e0f58d602fa2b}{lsredis\-\_\-fd\-\_\-service} (struct pollfd $\ast$evt)
@@ -77,11 +85,11 @@ void \hyperlink{lsredis_8c_ad438e4368d86bbe15a93dcf86deaded5}{lsredis\-\_\-run} 
 \item 
 static pthread\-\_\-t \hyperlink{lsredis_8c_a79c33eb11ad6819247930ade3a25671f}{lsredis\-\_\-thread}
 \item 
-static pthread\-\_\-mutex\-\_\-t \hyperlink{lsredis_8c_a390e8acf789b0fa41b43a794dd27e28f}{lsredis\-\_\-mutex} = P\-T\-H\-R\-E\-A\-D\-\_\-\-R\-E\-C\-U\-R\-S\-I\-V\-E\-\_\-\-M\-U\-T\-E\-X\-\_\-\-I\-N\-I\-T\-I\-A\-L\-I\-Z\-E\-R\-\_\-\-N\-P
+pthread\-\_\-mutex\-\_\-t \hyperlink{lsredis_8c_a390e8acf789b0fa41b43a794dd27e28f}{lsredis\-\_\-mutex} = P\-T\-H\-R\-E\-A\-D\-\_\-\-R\-E\-C\-U\-R\-S\-I\-V\-E\-\_\-\-M\-U\-T\-E\-X\-\_\-\-I\-N\-I\-T\-I\-A\-L\-I\-Z\-E\-R\-\_\-\-N\-P
 \item 
-static pthread\-\_\-cond\-\_\-t \hyperlink{lsredis_8c_a2f63408d16b5603541b124a78f36a5a8}{lsredis\-\_\-cond}
+pthread\-\_\-cond\-\_\-t \hyperlink{lsredis_8c_a2f63408d16b5603541b124a78f36a5a8}{lsredis\-\_\-cond}
 \item 
-static int \hyperlink{lsredis_8c_a7461eb2b5974a2ffac2189007d39193c}{lsredis\-\_\-running} = 0
+int \hyperlink{lsredis_8c_a7461eb2b5974a2ffac2189007d39193c}{lsredis\-\_\-running} = 0
 \item 
 static \hyperlink{pgpmac_8h_ad449de06d02791adf2498d2a1e1f909c}{lsredis\-\_\-obj\-\_\-t} $\ast$ \hyperlink{lsredis_8c_a3d206e1c119f1408a7cf1078139f8189}{lsredis\-\_\-objs} = N\-U\-L\-L
 \item 
@@ -132,6 +140,7 @@ Where \char`\"{}publisher\char`\"{} is a unique name in the following format\-:
          MD2-*
    or    UI-*
    or    REDIS\_KV\_CONNECTOR
+   or    \hyperlink{namespacemk__pgpmac__redis}{mk\_pgpmac\_redis}
 \end{DoxyPre}
  (this last value is used to support the now depreciated px.\-kvs table in the L\-S-\/\-C\-A\-T postgresql server). We assume that all publisher that we are listening to O\-N\-L\-Y publish key names that have changed.
 
@@ -204,7 +213,7 @@ Maybe add a new object Used internally for this module Must be called with lsred
 
 
 
-Definition at line 438 of file lsredis.\-c.
+Definition at line 488 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -394,7 +403,7 @@ hook to mange read events
 
 
 
-Definition at line 568 of file lsredis.\-c.
+Definition at line 618 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -421,7 +430,7 @@ hook to manage write events
 
 
 
-Definition at line 592 of file lsredis.\-c.
+Definition at line 642 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -448,7 +457,7 @@ hook to clean up T\-O\-D\-O\-: figure out what we are supposed to do here and do
 
 
 
-Definition at line 617 of file lsredis.\-c.
+Definition at line 667 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -600,7 +609,7 @@ hook to manage \char`\"{}don't need to read\char`\"{} events
 
 
 
-Definition at line 580 of file lsredis.\-c.
+Definition at line 630 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -627,7 +636,7 @@ hook to manage \char`\"{}don't need to write anymore\char`\"{} events
 
 
 
-Definition at line 604 of file lsredis.\-c.
+Definition at line 654 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -654,7 +663,7 @@ service the socket requests
 
 
 
-Definition at line 889 of file lsredis.\-c.
+Definition at line 1028 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -692,7 +701,7 @@ Definition at line 889 of file lsredis.\-c.
 )}}\label{lsredis_8c_a1ad60526a09ca679f39174ce5d773abe}
 
 
-Definition at line 756 of file lsredis.\-c.
+Definition at line 806 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -703,7 +712,6 @@ Definition at line 756 of file lsredis.\-c.
   ENTRY htab\_input, *htab\_output;
   \hyperlink{structlsredis__obj__struct}{lsredis\_obj\_t} *\hyperlink{namespacemk__pgpmac__redis_a11daf2847f2dc94562b5b61b3f412574}{p};
 
-  i = 0;
   \textcolor{keywordflow}{for}( i=0; i<1024; i++) \{
     snprintf( s, \textcolor{keyword}{sizeof}( s)-1, \textcolor{stringliteral}{"%s.%s.presets.%d.name"}, \hyperlink{lsredis_8c_acdca9095c7a3288d7febe9f4c440a6e9}{lsredis\_head}
       , base, i);
@@ -750,6 +758,45 @@ Definition at line 756 of file lsredis.\-c.
   \textcolor{keywordflow}{return} 0;
 \}
 \end{DoxyCode}
+\hypertarget{lsredis_8c_adfe823e3ccec7e37ac4697179bd65b10}{\index{lsredis.\-c@{lsredis.\-c}!lsredis\-\_\-find\-\_\-preset\-\_\-index\-\_\-by\-\_\-position@{lsredis\-\_\-find\-\_\-preset\-\_\-index\-\_\-by\-\_\-position}}
+\index{lsredis\-\_\-find\-\_\-preset\-\_\-index\-\_\-by\-\_\-position@{lsredis\-\_\-find\-\_\-preset\-\_\-index\-\_\-by\-\_\-position}!lsredis.c@{lsredis.\-c}}
+\subsubsection[{lsredis\-\_\-find\-\_\-preset\-\_\-index\-\_\-by\-\_\-position}]{\setlength{\rightskip}{0pt plus 5cm}int lsredis\-\_\-find\-\_\-preset\-\_\-index\-\_\-by\-\_\-position (
+\begin{DoxyParamCaption}
+\item[{{\bf lspmac\-\_\-motor\-\_\-t} $\ast$}]{mp}
+\end{DoxyParamCaption}
+)}}\label{lsredis_8c_adfe823e3ccec7e37ac4697179bd65b10}
+
+
+Definition at line 916 of file lsredis.\-c.
+
+
+\begin{DoxyCode}
+                                                               \{
+  \hyperlink{structlsredis__obj__struct}{lsredis\_obj\_t} *\hyperlink{namespacemk__pgpmac__redis_a11daf2847f2dc94562b5b61b3f412574}{p};
+  \textcolor{keywordtype}{int} plength;
+  \textcolor{keywordtype}{int} \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i};
+  \textcolor{keywordtype}{double} ur, pos;
+
+  p = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s.presets.length"}, mp->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
+  plength = \hyperlink{lsredis_8c_a71689006ffc015be6a0705a7c0aef1be}{lsredis\_get\_or\_set\_l}( p, 0);
+  
+  \textcolor{keywordflow}{if}( plength <= 0) \{
+    \textcolor{keywordflow}{return} -1;
+  \}
+
+  ur = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( mp->\hyperlink{structlspmac__motor__struct_aefa84c7592369090eec8b211caaa3a51}{update\_resolution});
+  pos = \hyperlink{lspmac_8c_acc46bdddee59bd8c5ad662b3fd445e9f}{lspmac\_getPosition}( mp);
+
+  \textcolor{keywordflow}{for}( i=0; i<plength; i++) \{
+    p = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s.presets.%d.position"}, mp->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name},
+       i);
+    \textcolor{keywordflow}{if}( fabs( pos - \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( p)) <= ur) \{
+      \textcolor{keywordflow}{return} \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i};
+    \}
+  \}
+  \textcolor{keywordflow}{return} -1;
+\}
+\end{DoxyCode}
 \hypertarget{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{\index{lsredis.\-c@{lsredis.\-c}!lsredis\-\_\-get\-\_\-obj@{lsredis\-\_\-get\-\_\-obj}}
 \index{lsredis\-\_\-get\-\_\-obj@{lsredis\-\_\-get\-\_\-obj}!lsredis.c@{lsredis.\-c}}
 \subsubsection[{lsredis\-\_\-get\-\_\-obj}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lsredis\-\_\-obj\-\_\-t}$\ast$ lsredis\-\_\-get\-\_\-obj (
@@ -760,7 +807,7 @@ Definition at line 756 of file lsredis.\-c.
 )}}\label{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}
 
 
-Definition at line 524 of file lsredis.\-c.
+Definition at line 574 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -799,6 +846,85 @@ Definition at line 524 of file lsredis.\-c.
   \textcolor{keywordflow}{return} rtn;
 \}
 \end{DoxyCode}
+\hypertarget{lsredis_8c_a51c33bec2c54f2d468bf8d93d981914a}{\index{lsredis.\-c@{lsredis.\-c}!lsredis\-\_\-get\-\_\-or\-\_\-set\-\_\-d@{lsredis\-\_\-get\-\_\-or\-\_\-set\-\_\-d}}
+\index{lsredis\-\_\-get\-\_\-or\-\_\-set\-\_\-d@{lsredis\-\_\-get\-\_\-or\-\_\-set\-\_\-d}!lsredis.c@{lsredis.\-c}}
+\subsubsection[{lsredis\-\_\-get\-\_\-or\-\_\-set\-\_\-d}]{\setlength{\rightskip}{0pt plus 5cm}double lsredis\-\_\-get\-\_\-or\-\_\-set\-\_\-d (
+\begin{DoxyParamCaption}
+\item[{{\bf lsredis\-\_\-obj\-\_\-t} $\ast$}]{p, }
+\item[{double}]{val, }
+\item[{int}]{prec}
+\end{DoxyParamCaption}
+)}}\label{lsredis_8c_a51c33bec2c54f2d468bf8d93d981914a}
+
+
+Definition at line 340 of file lsredis.\-c.
+
+
+\begin{DoxyCode}
+                                                                     \{
+  \textcolor{keywordtype}{long} \textcolor{keywordtype}{int} rtn;
+  \textcolor{keywordtype}{int} err;
+  \textcolor{keyword}{struct }timespec timeout;
+
+  clock\_gettime( CLOCK\_REALTIME, &timeout);
+  timeout.tv\_sec += 2;
+
+  pthread\_mutex\_lock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
+  err = 0;
+  \textcolor{keywordflow}{while}( err == 0 && p->\hyperlink{structlsredis__obj__struct_a338ffa4123bd06b39c8b58f5e695575e}{valid} == 0)
+    err = pthread\_cond\_timedwait( &p->\hyperlink{structlsredis__obj__struct_a356f6a228bb19ac7d66fdb1c875d68be}{cond}, &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex}, &timeout);
+
+  \textcolor{keywordflow}{if}( err == ETIMEDOUT) \{
+    rtn = val;
+    \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( p, \textcolor{stringliteral}{"%.*f"}, prec, val);
+  \} \textcolor{keywordflow}{else} \{
+    rtn = p->\hyperlink{structlsredis__obj__struct_a26211a0ab3fc02e7776e24dbc1f1256c}{lvalue};
+  \}
+  pthread\_mutex\_unlock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
+  
+  \textcolor{keywordflow}{return} rtn;
+\}  
+\end{DoxyCode}
+\hypertarget{lsredis_8c_a71689006ffc015be6a0705a7c0aef1be}{\index{lsredis.\-c@{lsredis.\-c}!lsredis\-\_\-get\-\_\-or\-\_\-set\-\_\-l@{lsredis\-\_\-get\-\_\-or\-\_\-set\-\_\-l}}
+\index{lsredis\-\_\-get\-\_\-or\-\_\-set\-\_\-l@{lsredis\-\_\-get\-\_\-or\-\_\-set\-\_\-l}!lsredis.c@{lsredis.\-c}}
+\subsubsection[{lsredis\-\_\-get\-\_\-or\-\_\-set\-\_\-l}]{\setlength{\rightskip}{0pt plus 5cm}long int lsredis\-\_\-get\-\_\-or\-\_\-set\-\_\-l (
+\begin{DoxyParamCaption}
+\item[{{\bf lsredis\-\_\-obj\-\_\-t} $\ast$}]{p, }
+\item[{long int}]{val}
+\end{DoxyParamCaption}
+)}}\label{lsredis_8c_a71689006ffc015be6a0705a7c0aef1be}
+
+
+Definition at line 390 of file lsredis.\-c.
+
+
+\begin{DoxyCode}
+                                                               \{
+  \textcolor{keywordtype}{long} \textcolor{keywordtype}{int} rtn;
+  \textcolor{keywordtype}{int} err;
+  \textcolor{keyword}{struct }timespec timeout;
+
+  clock\_gettime( CLOCK\_REALTIME, &timeout);
+  timeout.tv\_sec += 2;
+
+  pthread\_mutex\_lock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
+  err = 0;
+  \textcolor{keywordflow}{while}( err == 0 && p->\hyperlink{structlsredis__obj__struct_a338ffa4123bd06b39c8b58f5e695575e}{valid} == 0)
+    err = pthread\_cond\_timedwait( &p->\hyperlink{structlsredis__obj__struct_a356f6a228bb19ac7d66fdb1c875d68be}{cond}, &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex}, &timeout);
+
+  \textcolor{keywordflow}{if}( err == ETIMEDOUT) \{
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lsredis\_get\_or\_set\_l: using
+       default value of %ld for redis variable %s"}, val, p->\hyperlink{structlsredis__obj__struct_aa8c5a453b9424e5666320b8675a42f5c}{key});
+    rtn = val;
+    \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( p, \textcolor{stringliteral}{"%ld"}, val);
+  \} \textcolor{keywordflow}{else} \{
+    rtn = p->\hyperlink{structlsredis__obj__struct_a26211a0ab3fc02e7776e24dbc1f1256c}{lvalue};
+  \}
+  pthread\_mutex\_unlock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
+  
+  \textcolor{keywordflow}{return} rtn;
+\}  
+\end{DoxyCode}
 \hypertarget{lsredis_8c_abe31d0e11c41b2235307612c963bb652}{\index{lsredis.\-c@{lsredis.\-c}!lsredis\-\_\-get\-\_\-string\-\_\-array@{lsredis\-\_\-get\-\_\-string\-\_\-array}}
 \index{lsredis\-\_\-get\-\_\-string\-\_\-array@{lsredis\-\_\-get\-\_\-string\-\_\-array}!lsredis.c@{lsredis.\-c}}
 \subsubsection[{lsredis\-\_\-get\-\_\-string\-\_\-array}]{\setlength{\rightskip}{0pt plus 5cm}char$\ast$$\ast$ lsredis\-\_\-get\-\_\-string\-\_\-array (
@@ -808,7 +934,7 @@ Definition at line 524 of file lsredis.\-c.
 )}}\label{lsredis_8c_abe31d0e11c41b2235307612c963bb652}
 
 
-Definition at line 365 of file lsredis.\-c.
+Definition at line 415 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -834,7 +960,7 @@ Definition at line 365 of file lsredis.\-c.
 )}}\label{lsredis_8c_abbb4e5ece19ebd130e1be18036752a08}
 
 
-Definition at line 378 of file lsredis.\-c.
+Definition at line 428 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -860,7 +986,7 @@ Definition at line 378 of file lsredis.\-c.
 )}}\label{lsredis_8c_a0b7600b1c9a4550b32d4be019d25f941}
 
 
-Definition at line 391 of file lsredis.\-c.
+Definition at line 441 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -886,7 +1012,7 @@ Definition at line 391 of file lsredis.\-c.
 )}}\label{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}
 
 
-Definition at line 339 of file lsredis.\-c.
+Definition at line 364 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -912,7 +1038,7 @@ Definition at line 339 of file lsredis.\-c.
 )}}\label{lsredis_8c_a1923f998441f4f451204dfd214d52218}
 
 
-Definition at line 352 of file lsredis.\-c.
+Definition at line 377 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -938,11 +1064,11 @@ Definition at line 352 of file lsredis.\-c.
 )}}\label{lsredis_8c_ac1994e56114b2315294527d76311f829}
 
 
-return a copy of the key's string value 
+return a copy of the key's string value be sure to free the result 
 
 
 
-Definition at line 263 of file lsredis.\-c.
+Definition at line 264 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -973,7 +1099,7 @@ Definition at line 263 of file lsredis.\-c.
 )}}\label{lsredis_8c_a8d9719b362d1b38275d734971b7988af}
 
 
-Definition at line 404 of file lsredis.\-c.
+Definition at line 454 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1032,7 +1158,7 @@ Initialize this module, that is, set up the connections.
 \end{DoxyParams}
 
 
-Definition at line 810 of file lsredis.\-c.
+Definition at line 949 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1131,7 +1257,7 @@ Sift through the keys to find ones we like.
 
 Add them to our list of followed objects 
 
-Definition at line 735 of file lsredis.\-c.
+Definition at line 785 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1167,7 +1293,7 @@ Definition at line 735 of file lsredis.\-c.
 )}}\label{lsredis_8c_ad3189a7329ca92efab0054921f608b97}
 
 
-Definition at line 727 of file lsredis.\-c.
+Definition at line 777 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1219,13 +1345,99 @@ Definition at line 247 of file lsredis.\-c.
 )}}\label{lsredis_8c_ad438e4368d86bbe15a93dcf86deaded5}
 
 
-Definition at line 1014 of file lsredis.\-c.
+Definition at line 1153 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
                    \{
   pthread\_create( &\hyperlink{lsredis_8c_a79c33eb11ad6819247930ade3a25671f}{lsredis\_thread}, NULL, \hyperlink{lsredis_8c_ade7b1ddfdc88c6964a4c90513e360f75}{lsredis\_worker}
       , NULL);
+\}
+\end{DoxyCode}
+\hypertarget{lsredis_8c_ad4c059ab8209b87131b5c94883a05f39}{\index{lsredis.\-c@{lsredis.\-c}!lsredis\-\_\-set\-\_\-preset@{lsredis\-\_\-set\-\_\-preset}}
+\index{lsredis\-\_\-set\-\_\-preset@{lsredis\-\_\-set\-\_\-preset}!lsredis.c@{lsredis.\-c}}
+\subsubsection[{lsredis\-\_\-set\-\_\-preset}]{\setlength{\rightskip}{0pt plus 5cm}void lsredis\-\_\-set\-\_\-preset (
+\begin{DoxyParamCaption}
+\item[{char $\ast$}]{base, }
+\item[{char $\ast$}]{preset\-\_\-name, }
+\item[{double}]{dval}
+\end{DoxyParamCaption}
+)}}\label{lsredis_8c_ad4c059ab8209b87131b5c94883a05f39}
+
+
+Definition at line 852 of file lsredis.\-c.
+
+
+\begin{DoxyCode}
+                                                                     \{
+  \textcolor{keywordtype}{char} s[512];
+  \textcolor{keywordtype}{int} \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i}, plength;
+  \textcolor{keywordtype}{int} err;
+  ENTRY htab\_input, *htab\_output;
+  \hyperlink{structlsredis__obj__struct}{lsredis\_obj\_t} *\hyperlink{namespacemk__pgpmac__redis_a11daf2847f2dc94562b5b61b3f412574}{p};
+
+  p = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}(  \textcolor{stringliteral}{"%s.%s.presets.length"}, \hyperlink{lsredis_8c_acdca9095c7a3288d7febe9f4c440a6e9}{lsredis\_head}
+      , base);
+  plength = \hyperlink{lsredis_8c_a71689006ffc015be6a0705a7c0aef1be}{lsredis\_get\_or\_set\_l}( p, 0);
+
+  \textcolor{keywordflow}{for}( i=0; i<plength; i++) \{
+    snprintf( s, \textcolor{keyword}{sizeof}( s)-1, \textcolor{stringliteral}{"%s.%s.presets.%d.name"}, \hyperlink{lsredis_8c_acdca9095c7a3288d7febe9f4c440a6e9}{lsredis\_head}
+      , base, i);
+    s[\textcolor{keyword}{sizeof}(s)-1] = 0;
+    htab\_input.key  = s;
+    htab\_input.data = NULL;
+    err = hsearch\_r( htab\_input, FIND, &htab\_output, &\hyperlink{lsredis_8c_a42aec6aa74072797ec0344847b0e9e39}{lsredis\_htab})
+      ;
+    \textcolor{keywordflow}{if}( err == 0) \{
+      \textcolor{comment}{//}
+      \textcolor{comment}{// Not found? odd.  Length Lied.}
+      \textcolor{comment}{// Might as well just stick our preset here.}
+      \textcolor{comment}{//}
+      p = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s"}, s);
+      \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( p, \textcolor{stringliteral}{"%s"}, preset\_name);
+    \} \textcolor{keywordflow}{else} \{
+      \textcolor{comment}{// Check if we have a match}
+      p = htab\_output->data;
+    \}
+
+    \textcolor{keywordflow}{if}( \hyperlink{lsredis_8c_a9fc8fd0db4c71c5eae68682b43103078}{lsredis\_cmpstr}( p, preset\_name)==0) \{
+      \textcolor{comment}{//}
+      \textcolor{comment}{// got a match, now look for the position}
+      \textcolor{comment}{//}
+      snprintf( s, \textcolor{keyword}{sizeof}( s)-1, \textcolor{stringliteral}{"%s.%s.presets.%d.position"}, \hyperlink{lsredis_8c_acdca9095c7a3288d7febe9f4c440a6e9}{lsredis\_head}
+      , base, i);
+      s[\textcolor{keyword}{sizeof}(s)-1] = 0;
+      htab\_input.key = s;
+      htab\_input.data = NULL;
+      err = hsearch\_r( htab\_input, FIND, &htab\_output, &\hyperlink{lsredis_8c_a42aec6aa74072797ec0344847b0e9e39}{lsredis\_htab}
+      );
+      \textcolor{keywordflow}{if}( err == 0) \{
+        \textcolor{comment}{//}
+        \textcolor{comment}{// Name but not position? odd.}
+        \textcolor{comment}{//}
+        p = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s"}, s);
+      \} \textcolor{keywordflow}{else} \{
+        p = htab\_output->data;
+      \}
+      \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( p, \textcolor{stringliteral}{"%.3f"}, dval);
+      \textcolor{keywordflow}{return};
+    \}
+  \}
+  \textcolor{comment}{//}
+  \textcolor{comment}{// OK, our preset was not found, add it}
+  \textcolor{comment}{//}
+  snprintf( s, \textcolor{keyword}{sizeof}( s)-1, \textcolor{stringliteral}{"%s.%s.presets.%d.name"}, \hyperlink{lsredis_8c_acdca9095c7a3288d7febe9f4c440a6e9}{lsredis\_head},
+       base, i);
+  s[\textcolor{keyword}{sizeof}(s)-1] = 0;
+  p = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s"}, s);
+  \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( p, \textcolor{stringliteral}{"%s"}, preset\_name);
+
+  p = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s"}, s);
+  \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( p, \textcolor{stringliteral}{"%.3f"}, dval);
+
+  p = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}(  \textcolor{stringliteral}{"%s.%s.presets.length"}, \hyperlink{lsredis_8c_acdca9095c7a3288d7febe9f4c440a6e9}{lsredis\_head}
+      , base);
+  \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( p, \textcolor{stringliteral}{"%ld"}, plength + 1);
 \}
 \end{DoxyCode}
 \hypertarget{lsredis_8c_ac3c27bda1c9b10e6db14665951746da8}{\index{lsredis.\-c@{lsredis.\-c}!lsredis\-\_\-set\-\_\-value@{lsredis\-\_\-set\-\_\-value}}
@@ -1286,7 +1498,7 @@ $<$ Unlock to prevent deadlock in case the service routine needs to set our valu
 
 $<$ redis\-Async\-Command\-Argv shouldn't need to access this after it's made up it's packet (before it returns) so we should be O\-K with this location disappearing soon. 
 
-Definition at line 288 of file lsredis.\-c.
+Definition at line 289 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1355,7 +1567,7 @@ Definition at line 288 of file lsredis.\-c.
 \end{DoxyParams}
 
 
-Definition at line 913 of file lsredis.\-c.
+Definition at line 1052 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1389,7 +1601,7 @@ Use the publication to request the new value.
 
 
 
-Definition at line 635 of file lsredis.\-c.
+Definition at line 685 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1509,7 +1721,7 @@ $<$ array of pollfd's for the poll function, one entry per connection
 
 $<$ number of active elements in fda 
 
-Definition at line 932 of file lsredis.\-c.
+Definition at line 1071 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1546,7 +1758,7 @@ Definition at line 932 of file lsredis.\-c.
   \hyperlink{lsredis_8c_a7461eb2b5974a2ffac2189007d39193c}{lsredis\_running} = 1;
 
   \textcolor{keywordflow}{if}( redisAsyncCommand( \hyperlink{lsredis_8c_a4d65536cb1094fb5deda0a852b181232}{subac}, \hyperlink{lsredis_8c_a84611531459bf3d92c45b86308b4a300}{lsredis\_subCB}, NULL, \textcolor{stringliteral}{"
-      PSUBSCRIBE REDIS\_KV\_CONNECTOR UI* MD2-*"}) == REDIS\_ERR) \{
+      PSUBSCRIBE REDIS\_KV\_CONNECTOR mk\_pgpmac\_redis UI* MD2-*"}) == REDIS\_ERR) \{
     \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"Error sending PSUBSCRIBE
        command"});
   \}
@@ -1611,7 +1823,7 @@ call back in case a redis server becomes disconnected T\-O\-D\-O\-: reconnect
 
 
 
-Definition at line 560 of file lsredis.\-c.
+Definition at line 610 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1627,7 +1839,7 @@ Definition at line 560 of file lsredis.\-c.
 \subsection{Variable Documentation}
 \hypertarget{lsredis_8c_a2f63408d16b5603541b124a78f36a5a8}{\index{lsredis.\-c@{lsredis.\-c}!lsredis\-\_\-cond@{lsredis\-\_\-cond}}
 \index{lsredis\-\_\-cond@{lsredis\-\_\-cond}!lsredis.c@{lsredis.\-c}}
-\subsubsection[{lsredis\-\_\-cond}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-cond\-\_\-t lsredis\-\_\-cond\hspace{0.3cm}{\ttfamily [static]}}}\label{lsredis_8c_a2f63408d16b5603541b124a78f36a5a8}
+\subsubsection[{lsredis\-\_\-cond}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-cond\-\_\-t lsredis\-\_\-cond}}\label{lsredis_8c_a2f63408d16b5603541b124a78f36a5a8}
 
 
 Definition at line 75 of file lsredis.\-c.
@@ -1655,10 +1867,10 @@ Definition at line 87 of file lsredis.\-c.
 
 \hypertarget{lsredis_8c_a390e8acf789b0fa41b43a794dd27e28f}{\index{lsredis.\-c@{lsredis.\-c}!lsredis\-\_\-mutex@{lsredis\-\_\-mutex}}
 \index{lsredis\-\_\-mutex@{lsredis\-\_\-mutex}!lsredis.c@{lsredis.\-c}}
-\subsubsection[{lsredis\-\_\-mutex}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-mutex\-\_\-t lsredis\-\_\-mutex = P\-T\-H\-R\-E\-A\-D\-\_\-\-R\-E\-C\-U\-R\-S\-I\-V\-E\-\_\-\-M\-U\-T\-E\-X\-\_\-\-I\-N\-I\-T\-I\-A\-L\-I\-Z\-E\-R\-\_\-\-N\-P\hspace{0.3cm}{\ttfamily [static]}}}\label{lsredis_8c_a390e8acf789b0fa41b43a794dd27e28f}
+\subsubsection[{lsredis\-\_\-mutex}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-mutex\-\_\-t lsredis\-\_\-mutex = P\-T\-H\-R\-E\-A\-D\-\_\-\-R\-E\-C\-U\-R\-S\-I\-V\-E\-\_\-\-M\-U\-T\-E\-X\-\_\-\-I\-N\-I\-T\-I\-A\-L\-I\-Z\-E\-R\-\_\-\-N\-P}}\label{lsredis_8c_a390e8acf789b0fa41b43a794dd27e28f}
 
 
-Definition at line 73 of file lsredis.\-c.
+Definition at line 74 of file lsredis.\-c.
 
 \hypertarget{lsredis_8c_a3d206e1c119f1408a7cf1078139f8189}{\index{lsredis.\-c@{lsredis.\-c}!lsredis\-\_\-objs@{lsredis\-\_\-objs}}
 \index{lsredis\-\_\-objs@{lsredis\-\_\-objs}!lsredis.c@{lsredis.\-c}}
@@ -1676,7 +1888,7 @@ Definition at line 86 of file lsredis.\-c.
 
 \hypertarget{lsredis_8c_a7461eb2b5974a2ffac2189007d39193c}{\index{lsredis.\-c@{lsredis.\-c}!lsredis\-\_\-running@{lsredis\-\_\-running}}
 \index{lsredis\-\_\-running@{lsredis\-\_\-running}!lsredis.c@{lsredis.\-c}}
-\subsubsection[{lsredis\-\_\-running}]{\setlength{\rightskip}{0pt plus 5cm}int lsredis\-\_\-running = 0\hspace{0.3cm}{\ttfamily [static]}}}\label{lsredis_8c_a7461eb2b5974a2ffac2189007d39193c}
+\subsubsection[{lsredis\-\_\-running}]{\setlength{\rightskip}{0pt plus 5cm}int lsredis\-\_\-running = 0}}\label{lsredis_8c_a7461eb2b5974a2ffac2189007d39193c}
 
 
 Definition at line 76 of file lsredis.\-c.
@@ -1686,7 +1898,7 @@ Definition at line 76 of file lsredis.\-c.
 \subsubsection[{lsredis\-\_\-thread}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-t lsredis\-\_\-thread\hspace{0.3cm}{\ttfamily [static]}}}\label{lsredis_8c_a79c33eb11ad6819247930ade3a25671f}
 
 
-Definition at line 71 of file lsredis.\-c.
+Definition at line 72 of file lsredis.\-c.
 
 \hypertarget{lsredis_8c_afc92245910ec04f9a341c092def45564}{\index{lsredis.\-c@{lsredis.\-c}!roac@{roac}}
 \index{roac@{roac}!lsredis.c@{lsredis.\-c}}

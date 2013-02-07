@@ -1,7 +1,6 @@
 var searchData=
 [
   ['f',['f',['../classiniParser_1_1iniParser.html#a108a10ca051d71b97a1328449dc5ea9f',1,'iniParser.iniParser.f()'],['../namespacemk__pgpmac__redis.html#a057fe7457503e0de97edcf855591ed58',1,'mk_pgpmac_redis.f()']]],
-  ['fd_5fservice',['fd_service',['../kvredis_8c.html#a79856d1a06c278688563be6e5219cee5',1,'kvredis.c']]],
   ['first_5ftime',['first_time',['../structlspmac__bi__struct.html#a814978c33dc99e7911faa4ddb12bfd90',1,'lspmac_bi_struct']]],
   ['flight',['flight',['../lspmac_8c.html#aeb09895663eff333b7a75acb319a9fc1',1,'flight():&#160;lspmac.c'],['../pgpmac_8h.html#aeb09895663eff333b7a75acb319a9fc1',1,'flight():&#160;lspmac.c']]],
   ['flight_5ff',['flight_f',['../lspmac_8c.html#aabf4ec595b5183c1777d029ca56134b0',1,'flight_f():&#160;lspmac.c'],['../pgpmac_8h.html#aabf4ec595b5183c1777d029ca56134b0',1,'flight_f():&#160;lspmac.c']]],

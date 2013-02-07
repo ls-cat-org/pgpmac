@@ -57,19 +57,23 @@ typedef struct \\*
 \subsection*{Functions}
 \begin{DoxyCompactItemize}
 \item 
-\hyperlink{kvredis_8c_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$ \hyperlink{lspg_8c_ad5f3ec8f197cc330c83dba70f310533c}{lspg\-\_\-query\-\_\-next} ()
+\hyperlink{pgpmac_8h_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$ \hyperlink{lspg_8c_ad5f3ec8f197cc330c83dba70f310533c}{lspg\-\_\-query\-\_\-next} ()
 \begin{DoxyCompactList}\small\item\em Return the next item in the postgresql queue. \end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_a3847589e641f7e16a0cd68ef30e37cca}{lspg\-\_\-query\-\_\-reply\-\_\-next} ()
 \begin{DoxyCompactList}\small\item\em Remove the oldest item in the queue. \end{DoxyCompactList}\item 
-\hyperlink{kvredis_8c_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$ \hyperlink{lspg_8c_ae6bf4f54117bedf903360883bb32699f}{lspg\-\_\-query\-\_\-reply\-\_\-peek} ()
+\hyperlink{pgpmac_8h_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$ \hyperlink{lspg_8c_ae6bf4f54117bedf903360883bb32699f}{lspg\-\_\-query\-\_\-reply\-\_\-peek} ()
 \begin{DoxyCompactList}\small\item\em Return the next item in the reply queue but don't pop it since we may need it more than once. \end{DoxyCompactList}\item 
-void \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\-\_\-query\-\_\-push} (void($\ast$cb)(\hyperlink{kvredis_8c_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$, P\-Gresult $\ast$), char $\ast$fmt,...)
+void \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\-\_\-query\-\_\-push} (void($\ast$cb)(\hyperlink{pgpmac_8h_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$, P\-Gresult $\ast$), char $\ast$fmt,...)
 \begin{DoxyCompactList}\small\item\em Place a query on the queue. \end{DoxyCompactList}\item 
 char $\ast$$\ast$ \hyperlink{lspg_8c_a46f23ae999129d6fd5712d7975b99aed}{lspg\-\_\-array2ptrs} (char $\ast$a)
 \begin{DoxyCompactList}\small\item\em returns a null terminated list of strings parsed from postgresql array \end{DoxyCompactList}\item 
+void \hyperlink{lspg_8c_afb8d1ff1e0f4fcdc85ad9c684271cb3d}{lspg\-\_\-allkvs\-\_\-cb} (\hyperlink{pgpmac_8h_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
+\begin{DoxyCompactList}\small\item\em set a redis variable based on an updated kv pair \end{DoxyCompactList}\item 
+void \hyperlink{lspg_8c_ad503cefdaee8112ea2129d33db2ec7fa}{lspg\-\_\-update\-\_\-kvs\-\_\-cb} (char $\ast$event)
+\begin{DoxyCompactList}\small\item\em Perhaps update the px.\-kvs table in postgresql Should be triggered by a timer event. \end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_ab98f7d254fa0f5f4826f9427ca8b4f03}{lspg\-\_\-starttransfer\-\_\-init} ()
 \item 
-void \hyperlink{lspg_8c_a289005bed571909f5ce4de2ff4e70e36}{lspg\-\_\-starttransfer\-\_\-cb} (\hyperlink{kvredis_8c_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
+void \hyperlink{lspg_8c_a289005bed571909f5ce4de2ff4e70e36}{lspg\-\_\-starttransfer\-\_\-cb} (\hyperlink{pgpmac_8h_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
 \item 
 void \hyperlink{lspg_8c_af72c4b037347737df09348ab703f6802}{lspg\-\_\-starttransfer\-\_\-call} (unsigned int nextsample, int \hyperlink{pgpmac_8h_ac59ab990e48033a811aeb0281fb588fc}{sample\-\_\-detected}, double ax, double ay, double az, double horz, double vert, double esttime)
 \item 
@@ -81,7 +85,7 @@ int \hyperlink{lspg_8c_a40fed0d8ea49206604ca5727d94b8faf}{lspg\-\_\-starttransfe
 \item 
 void \hyperlink{lspg_8c_a5d6f6c4733629fc14e4f0bc128a1ffb7}{lspg\-\_\-getcurrentsampleid\-\_\-init} ()
 \item 
-void \hyperlink{lspg_8c_a3245894737f9b496b7882c6e6ed8519d}{lspg\-\_\-getcurrentsampleid\-\_\-cb} (\hyperlink{kvredis_8c_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
+void \hyperlink{lspg_8c_a3245894737f9b496b7882c6e6ed8519d}{lspg\-\_\-getcurrentsampleid\-\_\-cb} (\hyperlink{pgpmac_8h_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
 \begin{DoxyCompactList}\small\item\em get currentsampleid \end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_acf98a9e2adec05a69847045f444a5c77}{lspg\-\_\-getcurrentsampleid\-\_\-call} ()
 \item 
@@ -89,7 +93,7 @@ unsigned int \hyperlink{lspg_8c_a7b070b4891f485b7f74c95e0e60471f3}{lspg\-\_\-get
 \item 
 void \hyperlink{lspg_8c_a2d624b228ddd560ace0cef4286a30b07}{lspg\-\_\-getcurrentsampleid\-\_\-wait\-\_\-for\-\_\-id} (unsigned int test)
 \item 
-void \hyperlink{lspg_8c_a5e1de4aa16107d1f5f801e11ae6b268c}{lspg\-\_\-nextsample\-\_\-cb} (\hyperlink{kvredis_8c_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
+void \hyperlink{lspg_8c_a5e1de4aa16107d1f5f801e11ae6b268c}{lspg\-\_\-nextsample\-\_\-cb} (\hyperlink{pgpmac_8h_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
 \begin{DoxyCompactList}\small\item\em Next Sample. \end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_a2faa901ea0a8ef00cfd93a893b34b446}{lspg\-\_\-nextsample\-\_\-init} ()
 \begin{DoxyCompactList}\small\item\em Initialize the nextsample variable, mutex, and condition. \end{DoxyCompactList}\item 
@@ -103,13 +107,13 @@ unsigned int \hyperlink{lspg_8c_a4cc866393eda0cf20276d035f6fbe206}{lspg\-\_\-nex
 \item 
 void \hyperlink{lspg_8c_a32b2bf00d66ee5fca130ee616a09cf7b}{lspg\-\_\-waitcryo\-\_\-init} ()
 \item 
-void \hyperlink{lspg_8c_a7497a7c924b31c727ea487a3efb77fb6}{lspg\-\_\-waitcryo\-\_\-cb} (\hyperlink{kvredis_8c_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
+void \hyperlink{lspg_8c_a7497a7c924b31c727ea487a3efb77fb6}{lspg\-\_\-waitcryo\-\_\-cb} (\hyperlink{pgpmac_8h_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
 \item 
 void \hyperlink{lspg_8c_a67a44f70405c8b6a01cec6ac3d166efb}{lspg\-\_\-waitcryo\-\_\-all} ()
 \begin{DoxyCompactList}\small\item\em no need to get fancy with the wait cryo command It should not return until the robot is almost ready for air rights \end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_a61e47be0d5d7154700e7e5edb889852e}{lspg\-\_\-demandairrights\-\_\-init} ()
 \begin{DoxyCompactList}\small\item\em initialize the demandairrights structure \end{DoxyCompactList}\item 
-void \hyperlink{lspg_8c_a208134de0d5bbbdaf5589126d46f1c4e}{lspg\-\_\-demandairrights\-\_\-cb} (\hyperlink{kvredis_8c_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
+void \hyperlink{lspg_8c_a208134de0d5bbbdaf5589126d46f1c4e}{lspg\-\_\-demandairrights\-\_\-cb} (\hyperlink{pgpmac_8h_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
 \begin{DoxyCompactList}\small\item\em handle the airrights response \end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_ae3f3ae783042eb1f5f2c37b517b7404a}{lspg\-\_\-demandairrights\-\_\-call} ()
 \begin{DoxyCompactList}\small\item\em call for airrights \end{DoxyCompactList}\item 
@@ -117,7 +121,7 @@ void \hyperlink{lspg_8c_a96e3098f6f87fde74a83af96bf27a638}{lspg\-\_\-demandairri
 \begin{DoxyCompactList}\small\item\em wait for the air rights request to return \end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_aaf0ad72847ccb93694b3bdc649e6d1fc}{lspg\-\_\-demandairrights\-\_\-all} ()
 \begin{DoxyCompactList}\small\item\em do nothing until we get airrights \end{DoxyCompactList}\item 
-void \hyperlink{lspg_8c_a9e92a204f606761d368ac7e06ef0f09c}{lspg\-\_\-nextshot\-\_\-cb} (\hyperlink{kvredis_8c_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
+void \hyperlink{lspg_8c_a9e92a204f606761d368ac7e06ef0f09c}{lspg\-\_\-nextshot\-\_\-cb} (\hyperlink{pgpmac_8h_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
 \begin{DoxyCompactList}\small\item\em Next Shot Callback. \end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_aff91db7d60e6c832684c023813e36dbf}{lspg\-\_\-nextshot\-\_\-init} ()
 \begin{DoxyCompactList}\small\item\em Initialize the nextshot variable, mutex, and condition. \end{DoxyCompactList}\item 
@@ -129,7 +133,7 @@ void \hyperlink{lspg_8c_a50458a014041a4118452802dfb303960}{lspg\-\_\-nextshot\-\
 \begin{DoxyCompactList}\small\item\em Called when the next shot query has been processed. \end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_a3517f8fbed91c998f6036284f9bd0c48}{lspg\-\_\-wait\-\_\-for\-\_\-detector\-\_\-init} ()
 \begin{DoxyCompactList}\small\item\em initialize the detector timing object \end{DoxyCompactList}\item 
-void \hyperlink{lspg_8c_a5747c519d1aa4c310010a862cae8a823}{lspg\-\_\-wait\-\_\-for\-\_\-detector\-\_\-cb} (\hyperlink{kvredis_8c_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
+void \hyperlink{lspg_8c_a5747c519d1aa4c310010a862cae8a823}{lspg\-\_\-wait\-\_\-for\-\_\-detector\-\_\-cb} (\hyperlink{pgpmac_8h_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
 \begin{DoxyCompactList}\small\item\em Callback for the wait for detector query. \end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_a4b5222b859a44eae616804a1e990b86d}{lspg\-\_\-wait\-\_\-for\-\_\-detector\-\_\-call} ()
 \begin{DoxyCompactList}\small\item\em initiate the wait for detector query \end{DoxyCompactList}\item 
@@ -141,7 +145,7 @@ void \hyperlink{lspg_8c_ab9780e15924a50b2a5545e10806000b3}{lspg\-\_\-wait\-\_\-f
 \begin{DoxyCompactList}\small\item\em Combined call to wait for the detector. \end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_a39bb94f8e0d47702b2b920a3dee61ebc}{lspg\-\_\-lock\-\_\-diffractometer\-\_\-init} ()
 \begin{DoxyCompactList}\small\item\em initialize the diffractometer locking object \end{DoxyCompactList}\item 
-void \hyperlink{lspg_8c_aad4f378f37c0030634dafa0d9445d916}{lspg\-\_\-lock\-\_\-diffractometer\-\_\-cb} (\hyperlink{kvredis_8c_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
+void \hyperlink{lspg_8c_aad4f378f37c0030634dafa0d9445d916}{lspg\-\_\-lock\-\_\-diffractometer\-\_\-cb} (\hyperlink{pgpmac_8h_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
 \begin{DoxyCompactList}\small\item\em Callback routine for a lock diffractometer query. \end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_ac5ebeb38e8e9926a52f024fe76201175}{lspg\-\_\-lock\-\_\-diffractometer\-\_\-call} ()
 \begin{DoxyCompactList}\small\item\em Request that the database grab the diffractometer lock. \end{DoxyCompactList}\item 
@@ -153,7 +157,7 @@ void \hyperlink{lspg_8c_a88b33e75c42197740b157a51ea726f21}{lspg\-\_\-lock\-\_\-d
 \begin{DoxyCompactList}\small\item\em Convience function that combines lock diffractometer calls. \end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_a0e9bbf847dadfe0d10830d67824d9be8}{lspg\-\_\-lock\-\_\-detector\-\_\-init} ()
 \begin{DoxyCompactList}\small\item\em Initialize detector lock object. \end{DoxyCompactList}\item 
-void \hyperlink{lspg_8c_aa760191c2b443170cebbcbf5ea5345f3}{lspg\-\_\-lock\-\_\-detector\-\_\-cb} (\hyperlink{kvredis_8c_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
+void \hyperlink{lspg_8c_aa760191c2b443170cebbcbf5ea5345f3}{lspg\-\_\-lock\-\_\-detector\-\_\-cb} (\hyperlink{pgpmac_8h_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
 \begin{DoxyCompactList}\small\item\em Callback for when the detector lock has be grabbed. \end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_a5f71a20cc297684b2afe28e7bd8e8383}{lspg\-\_\-lock\-\_\-detector\-\_\-call} ()
 \begin{DoxyCompactList}\small\item\em Request (demand) a detector lock. \end{DoxyCompactList}\item 
@@ -165,7 +169,7 @@ void \hyperlink{lspg_8c_aff93d2f5ac31aa249a0bef40a3837c84}{lspg\-\_\-lock\-\_\-d
 \begin{DoxyCompactList}\small\item\em Detector lock convinence function. \end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_a31823ecb2b44d4a6674f804059a27bce}{lspg\-\_\-seq\-\_\-run\-\_\-prep\-\_\-init} ()
 \begin{DoxyCompactList}\small\item\em Initialize the data collection object. \end{DoxyCompactList}\item 
-void \hyperlink{lspg_8c_a11cda12050dc9a86188e15e2155a6013}{lspg\-\_\-seq\-\_\-run\-\_\-prep\-\_\-cb} (\hyperlink{kvredis_8c_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
+void \hyperlink{lspg_8c_a11cda12050dc9a86188e15e2155a6013}{lspg\-\_\-seq\-\_\-run\-\_\-prep\-\_\-cb} (\hyperlink{pgpmac_8h_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
 \begin{DoxyCompactList}\small\item\em Callback for the seq\-\_\-run\-\_\-prep query. \end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_af7d6efd861b152a371442791deb42bd3}{lspg\-\_\-seq\-\_\-run\-\_\-prep\-\_\-call} (long long skey, double \hyperlink{pgpmac_8h_a0be79ccb7ebf3a665248fd856112b9fd}{kappa}, double \hyperlink{pgpmac_8h_ac8070dc568ad974a3db42b51eca828cc}{phi}, double cx, double cy, double ax, double ay, double az)
 \begin{DoxyCompactList}\small\item\em queue up the seq\-\_\-run\-\_\-prep query \end{DoxyCompactList}\item 
@@ -175,7 +179,7 @@ void \hyperlink{lspg_8c_a472b09ddf716c80207f97e2bb5d37d66}{lspg\-\_\-seq\-\_\-ru
 \begin{DoxyCompactList}\small\item\em Indicate we are done waiting. \end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_a4253474d4dd305aec0afdd5552b3ddd5}{lspg\-\_\-seq\-\_\-run\-\_\-prep\-\_\-all} (long long skey, double \hyperlink{pgpmac_8h_a0be79ccb7ebf3a665248fd856112b9fd}{kappa}, double \hyperlink{pgpmac_8h_ac8070dc568ad974a3db42b51eca828cc}{phi}, double cx, double cy, double ax, double ay, double az)
 \begin{DoxyCompactList}\small\item\em Convinence function to call seq run prep. \end{DoxyCompactList}\item 
-void \hyperlink{lspg_8c_a8184824f2b71b1d35141d7922ca69cd7}{lspg\-\_\-getcenter\-\_\-cb} (\hyperlink{kvredis_8c_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
+void \hyperlink{lspg_8c_a8184824f2b71b1d35141d7922ca69cd7}{lspg\-\_\-getcenter\-\_\-cb} (\hyperlink{pgpmac_8h_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
 \begin{DoxyCompactList}\small\item\em Retrieve the data to center the crystal. \end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_ad31db17587a02302ac4e40fb7d260b1b}{lspg\-\_\-getcenter\-\_\-init} ()
 \begin{DoxyCompactList}\small\item\em Initialize getcenter object. \end{DoxyCompactList}\item 
@@ -187,9 +191,9 @@ void \hyperlink{lspg_8c_a7c678553b44c874d08ec9966ed7bb1c0}{lspg\-\_\-getcenter\-
 \begin{DoxyCompactList}\small\item\em Done with getcenter query. \end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_a523b492d9cd4970853eabee2d3c31578}{lspg\-\_\-getcenter\-\_\-all} ()
 \begin{DoxyCompactList}\small\item\em Convenience function to complete synchronous getcenter query. \end{DoxyCompactList}\item 
-void \hyperlink{lspg_8c_aeda8dad89b03d7d61cc994dd63ee5db6}{lspg\-\_\-nextaction\-\_\-cb} (\hyperlink{kvredis_8c_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
+void \hyperlink{lspg_8c_aeda8dad89b03d7d61cc994dd63ee5db6}{lspg\-\_\-nextaction\-\_\-cb} (\hyperlink{pgpmac_8h_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
 \begin{DoxyCompactList}\small\item\em Queue the next M\-D2 instruction. \end{DoxyCompactList}\item 
-void \hyperlink{lspg_8c_a1e11f525ca0f9ac9ab71f9fbe983c42b}{lspg\-\_\-cmd\-\_\-cb} (\hyperlink{kvredis_8c_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
+void \hyperlink{lspg_8c_a1e11f525ca0f9ac9ab71f9fbe983c42b}{lspg\-\_\-cmd\-\_\-cb} (\hyperlink{pgpmac_8h_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$qqp, P\-Gresult $\ast$pgr)
 \begin{DoxyCompactList}\small\item\em Send strings directly to P\-M\-A\-C queue. \end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_af6485ac1749c5de3008dd0e0badaa09c}{lspg\-\_\-flush} ()
 \begin{DoxyCompactList}\small\item\em Flush psql output buffer (ie, send the query) \end{DoxyCompactList}\item 
@@ -209,7 +213,15 @@ void \hyperlink{lspg_8c_ab52a8c8245bf6561f40c0f224fc07ff4}{lspg\-\_\-next\-\_\-s
 \begin{DoxyCompactList}\small\item\em Implements our state machine Does not strictly only set the next state as it also calls some functions that, perhaps, alters the state mid-\/function. \end{DoxyCompactList}\item 
 void $\ast$ \hyperlink{lspg_8c_aaf4fadd2943fa3a2ecb5d840e84d68fa}{lspg\-\_\-worker} (void $\ast$dummy)
 \begin{DoxyCompactList}\small\item\em The main loop for the lspg thread. \end{DoxyCompactList}\item 
-void \hyperlink{lspg_8c_aaba848ff514781cf8468cf23bc4d214f}{lspmac\-\_\-sample\-\_\-detector\-\_\-cb} (char $\ast$event)
+void \hyperlink{lspg_8c_a69a792e1981af00b2818bcda89bdaa02}{lspg\-\_\-preset\-\_\-changed\-\_\-cb} (char $\ast$event)
+\item 
+void \hyperlink{lspg_8c_a4710c50945fce26b4ac5dc01ed61459d}{lspg\-\_\-check\-\_\-preset\-\_\-in\-\_\-position\-\_\-cb} (char $\ast$event)
+\item 
+void \hyperlink{lspg_8c_abcdcee6ef5ed0865056d42a6cf9da8bd}{lspg\-\_\-unset\-\_\-current\-\_\-preset\-\_\-moving\-\_\-cb} (char $\ast$event)
+\item 
+void \hyperlink{lspg_8c_af61ae1cf46d67e29dfc690b9a98b1b4d}{lspg\-\_\-set\-\_\-scale\-\_\-cb} (char $\ast$event)
+\begin{DoxyCompactList}\small\item\em Fix up xscale and yscale when zoom changes. \end{DoxyCompactList}\item 
+void \hyperlink{lspg_8c_a14546bac5695b536cd348d5e0a1661fa}{lspg\-\_\-sample\-\_\-detector\-\_\-cb} (char $\ast$event)
 \begin{DoxyCompactList}\small\item\em log magnet state \end{DoxyCompactList}\item 
 void \hyperlink{lspg_8c_a8a77972df14166e05c94ed0792baa09b}{lspg\-\_\-init} ()
 \begin{DoxyCompactList}\small\item\em Initiallize the lspg module. \end{DoxyCompactList}\item 
@@ -231,7 +243,7 @@ static pthread\-\_\-cond\-\_\-t \hyperlink{lspg_8c_a61a308b6a37afd645beb422653b9
 \begin{DoxyCompactList}\small\item\em keeps the queue from overflowing \end{DoxyCompactList}\item 
 static struct pollfd \hyperlink{lspg_8c_af3f897b8ffa020ca54289bc5b28cb64d}{lspgfd}
 \begin{DoxyCompactList}\small\item\em our poll info \end{DoxyCompactList}\item 
-static \hyperlink{kvredis_8c_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} \hyperlink{lspg_8c_a357d9d98f0b8c9625ccebcebfcdce955}{lspg\-\_\-query\-\_\-queue} \mbox{[}\hyperlink{lspg_8c_a08fe83fe8226002ee8b80ce0a914fd11}{L\-S\-\_\-\-P\-G\-\_\-\-Q\-U\-E\-R\-Y\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H}\mbox{]}
+static \hyperlink{pgpmac_8h_ae57432c0a6ac48a50457815dab2c5b4c}{lspg\-\_\-query\-\_\-queue\-\_\-t} \hyperlink{lspg_8c_a357d9d98f0b8c9625ccebcebfcdce955}{lspg\-\_\-query\-\_\-queue} \mbox{[}\hyperlink{lspg_8c_a08fe83fe8226002ee8b80ce0a914fd11}{L\-S\-\_\-\-P\-G\-\_\-\-Q\-U\-E\-R\-Y\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H}\mbox{]}
 \begin{DoxyCompactList}\small\item\em Our query queue. \end{DoxyCompactList}\item 
 static unsigned int \hyperlink{lspg_8c_a3cbe7f3161b3c1838ebc56a3bbcfd8a6}{lspg\-\_\-query\-\_\-queue\-\_\-on} = 0
 \begin{DoxyCompactList}\small\item\em Next position to add something to the queue. \end{DoxyCompactList}\item 
@@ -311,63 +323,63 @@ Queue length should be long enough that we do not ordinarly bump into the end We
 
 (And we can tolerate the adding thread being paused.) 
 
-Definition at line 51 of file lspg.\-c.
+Definition at line 50 of file lspg.\-c.
 
 \hypertarget{lspg_8c_aaf1dd8ba4dafb91c296554c4cbf312e3}{\index{lspg.\-c@{lspg.\-c}!L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-I\-D\-L\-E@{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-I\-D\-L\-E}}
 \index{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-I\-D\-L\-E@{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-I\-D\-L\-E}!lspg.c@{lspg.\-c}}
 \subsubsection[{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-I\-D\-L\-E}]{\setlength{\rightskip}{0pt plus 5cm}\#define L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-I\-D\-L\-E~1}}\label{lspg_8c_aaf1dd8ba4dafb91c296554c4cbf312e3}
 
 
-Definition at line 34 of file lspg.\-c.
+Definition at line 33 of file lspg.\-c.
 
 \hypertarget{lspg_8c_af443092447378c73bf93aa143576aba4}{\index{lspg.\-c@{lspg.\-c}!L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-I\-N\-I\-T@{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-I\-N\-I\-T}}
 \index{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-I\-N\-I\-T@{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-I\-N\-I\-T}!lspg.c@{lspg.\-c}}
 \subsubsection[{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-I\-N\-I\-T}]{\setlength{\rightskip}{0pt plus 5cm}\#define L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-I\-N\-I\-T~-\/4}}\label{lspg_8c_af443092447378c73bf93aa143576aba4}
 
 
-Definition at line 30 of file lspg.\-c.
+Definition at line 29 of file lspg.\-c.
 
 \hypertarget{lspg_8c_ae7ea5876846b5f04c419aee22d3c0aa1}{\index{lspg.\-c@{lspg.\-c}!L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-I\-N\-I\-T\-\_\-\-P\-O\-L\-L@{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-I\-N\-I\-T\-\_\-\-P\-O\-L\-L}}
 \index{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-I\-N\-I\-T\-\_\-\-P\-O\-L\-L@{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-I\-N\-I\-T\-\_\-\-P\-O\-L\-L}!lspg.c@{lspg.\-c}}
 \subsubsection[{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-I\-N\-I\-T\-\_\-\-P\-O\-L\-L}]{\setlength{\rightskip}{0pt plus 5cm}\#define L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-I\-N\-I\-T\-\_\-\-P\-O\-L\-L~-\/3}}\label{lspg_8c_ae7ea5876846b5f04c419aee22d3c0aa1}
 
 
-Definition at line 31 of file lspg.\-c.
+Definition at line 30 of file lspg.\-c.
 
 \hypertarget{lspg_8c_a373e668840b4795ff9a71bc3f744d209}{\index{lspg.\-c@{lspg.\-c}!L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-R\-E\-C\-V@{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-R\-E\-C\-V}}
 \index{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-R\-E\-C\-V@{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-R\-E\-C\-V}!lspg.c@{lspg.\-c}}
 \subsubsection[{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-R\-E\-C\-V}]{\setlength{\rightskip}{0pt plus 5cm}\#define L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-R\-E\-C\-V~4}}\label{lspg_8c_a373e668840b4795ff9a71bc3f744d209}
 
 
-Definition at line 37 of file lspg.\-c.
+Definition at line 36 of file lspg.\-c.
 
 \hypertarget{lspg_8c_accda8c3a598dc7f5b107b04986d8ab50}{\index{lspg.\-c@{lspg.\-c}!L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-R\-E\-S\-E\-T@{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-R\-E\-S\-E\-T}}
 \index{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-R\-E\-S\-E\-T@{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-R\-E\-S\-E\-T}!lspg.c@{lspg.\-c}}
 \subsubsection[{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-R\-E\-S\-E\-T}]{\setlength{\rightskip}{0pt plus 5cm}\#define L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-R\-E\-S\-E\-T~-\/2}}\label{lspg_8c_accda8c3a598dc7f5b107b04986d8ab50}
 
 
-Definition at line 32 of file lspg.\-c.
+Definition at line 31 of file lspg.\-c.
 
 \hypertarget{lspg_8c_ac70a1141f3b138055ea7143bd493187c}{\index{lspg.\-c@{lspg.\-c}!L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-R\-E\-S\-E\-T\-\_\-\-P\-O\-L\-L@{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-R\-E\-S\-E\-T\-\_\-\-P\-O\-L\-L}}
 \index{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-R\-E\-S\-E\-T\-\_\-\-P\-O\-L\-L@{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-R\-E\-S\-E\-T\-\_\-\-P\-O\-L\-L}!lspg.c@{lspg.\-c}}
 \subsubsection[{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-R\-E\-S\-E\-T\-\_\-\-P\-O\-L\-L}]{\setlength{\rightskip}{0pt plus 5cm}\#define L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-R\-E\-S\-E\-T\-\_\-\-P\-O\-L\-L~-\/1}}\label{lspg_8c_ac70a1141f3b138055ea7143bd493187c}
 
 
-Definition at line 33 of file lspg.\-c.
+Definition at line 32 of file lspg.\-c.
 
 \hypertarget{lspg_8c_a3c6eb19f262a990e1f9ba630d9edc309}{\index{lspg.\-c@{lspg.\-c}!L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-S\-E\-N\-D@{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-S\-E\-N\-D}}
 \index{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-S\-E\-N\-D@{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-S\-E\-N\-D}!lspg.c@{lspg.\-c}}
 \subsubsection[{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-S\-E\-N\-D}]{\setlength{\rightskip}{0pt plus 5cm}\#define L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-S\-E\-N\-D~2}}\label{lspg_8c_a3c6eb19f262a990e1f9ba630d9edc309}
 
 
-Definition at line 35 of file lspg.\-c.
+Definition at line 34 of file lspg.\-c.
 
 \hypertarget{lspg_8c_a88a7e80c12fb0449c4b0857a0c7deb21}{\index{lspg.\-c@{lspg.\-c}!L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-S\-E\-N\-D\-\_\-\-F\-L\-U\-S\-H@{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-S\-E\-N\-D\-\_\-\-F\-L\-U\-S\-H}}
 \index{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-S\-E\-N\-D\-\_\-\-F\-L\-U\-S\-H@{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-S\-E\-N\-D\-\_\-\-F\-L\-U\-S\-H}!lspg.c@{lspg.\-c}}
 \subsubsection[{L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-S\-E\-N\-D\-\_\-\-F\-L\-U\-S\-H}]{\setlength{\rightskip}{0pt plus 5cm}\#define L\-S\-\_\-\-P\-G\-\_\-\-S\-T\-A\-T\-E\-\_\-\-S\-E\-N\-D\-\_\-\-F\-L\-U\-S\-H~3}}\label{lspg_8c_a88a7e80c12fb0449c4b0857a0c7deb21}
 
 
-Definition at line 36 of file lspg.\-c.
+Definition at line 35 of file lspg.\-c.
 
 
 
@@ -403,6 +415,70 @@ Object that implements detector / spindle timing We use database locks for expos
 
 
 \subsection{Function Documentation}
+\hypertarget{lspg_8c_afb8d1ff1e0f4fcdc85ad9c684271cb3d}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-allkvs\-\_\-cb@{lspg\-\_\-allkvs\-\_\-cb}}
+\index{lspg\-\_\-allkvs\-\_\-cb@{lspg\-\_\-allkvs\-\_\-cb}!lspg.c@{lspg.\-c}}
+\subsubsection[{lspg\-\_\-allkvs\-\_\-cb}]{\setlength{\rightskip}{0pt plus 5cm}void lspg\-\_\-allkvs\-\_\-cb (
+\begin{DoxyParamCaption}
+\item[{{\bf lspg\-\_\-query\-\_\-queue\-\_\-t} $\ast$}]{qqp, }
+\item[{P\-Gresult $\ast$}]{pgr}
+\end{DoxyParamCaption}
+)}}\label{lspg_8c_afb8d1ff1e0f4fcdc85ad9c684271cb3d}
+
+
+set a redis variable based on an updated kv pair 
+
+
+\begin{DoxyParams}{Parameters}
+{\em qqp} & The query that elicited this response \\
+\hline
+{\em pgr} & The resonse from postgresql \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 279 of file lspg.\-c.
+
+
+\begin{DoxyCode}
+                                                             \{
+  \textcolor{keywordtype}{int} kvname\_col, kvvalue\_col, kvseq\_col, kvdbrtype\_col;
+  \textcolor{keywordtype}{int} \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i};
+  \hyperlink{structlsredis__obj__struct}{lsredis\_obj\_t} *robj;
+  
+  kvname\_col    = PQfnumber( pgr, \textcolor{stringliteral}{"rname"});
+  kvvalue\_col   = PQfnumber( pgr, \textcolor{stringliteral}{"rvalue"});
+  kvseq\_col     = PQfnumber( pgr, \textcolor{stringliteral}{"rseq"});
+  kvdbrtype\_col = PQfnumber( pgr, \textcolor{stringliteral}{"rdbrtype"});
+  
+  \textcolor{keywordflow}{if}( kvname\_col == -1 || kvvalue\_col == -1 || kvseq\_col == -1 || kvdbrtype\_col
+       == -1) \{
+    fprintf( stderr, \textcolor{stringliteral}{"lspg\_allkvs\_cb: bad column number(s)\(\backslash\)n"});
+    \textcolor{keywordflow}{return};
+  \}
+
+  
+  \textcolor{keywordflow}{for}( i=0; i<PQntuples( pgr); i++) \{
+    pthread\_mutex\_lock( &\hyperlink{lsredis_8c_a390e8acf789b0fa41b43a794dd27e28f}{lsredis\_mutex});
+    \textcolor{keywordflow}{while}( \hyperlink{lsredis_8c_a7461eb2b5974a2ffac2189007d39193c}{lsredis\_running} == 0)
+      pthread\_cond\_wait( &\hyperlink{lsredis_8c_a2f63408d16b5603541b124a78f36a5a8}{lsredis\_cond}, &\hyperlink{lsredis_8c_a390e8acf789b0fa41b43a794dd27e28f}{lsredis\_mutex}
+      );
+
+    robj = \hyperlink{lsredis_8c_ac3fb8589e280bfa18ecbca6619fea637}{\_lsredis\_get\_obj}( PQgetvalue( pgr, i, kvname\_col));
+    pthread\_mutex\_unlock( &\hyperlink{lsredis_8c_a390e8acf789b0fa41b43a794dd27e28f}{lsredis\_mutex});
+
+
+    \textcolor{keywordflow}{if}( robj == NULL) \{
+      \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspg\_allkvs\_cb: could not
+       find redis object named '%s'"}, PQgetvalue( pgr, i, kvname\_col));
+      \textcolor{keywordflow}{continue};
+    \}
+
+    \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( robj, \textcolor{stringliteral}{"%s"}, PQgetvalue( pgr, i, kvvalue\_col))
+      ;
+  \}
+
+\}
+\end{DoxyCode}
 \hypertarget{lspg_8c_a46f23ae999129d6fd5712d7975b99aed}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-array2ptrs@{lspg\-\_\-array2ptrs}}
 \index{lspg\-\_\-array2ptrs@{lspg\-\_\-array2ptrs}!lspg.c@{lspg.\-c}}
 \subsubsection[{lspg\-\_\-array2ptrs}]{\setlength{\rightskip}{0pt plus 5cm}char$\ast$$\ast$ lspg\-\_\-array2ptrs (
@@ -416,7 +492,7 @@ returns a null terminated list of strings parsed from postgresql array
 
 
 
-Definition at line 161 of file lspg.\-c.
+Definition at line 160 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -537,6 +613,42 @@ Definition at line 161 of file lspg.\-c.
   \textcolor{keywordflow}{return}( rtn);
 \}
 \end{DoxyCode}
+\hypertarget{lspg_8c_a4710c50945fce26b4ac5dc01ed61459d}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-check\-\_\-preset\-\_\-in\-\_\-position\-\_\-cb@{lspg\-\_\-check\-\_\-preset\-\_\-in\-\_\-position\-\_\-cb}}
+\index{lspg\-\_\-check\-\_\-preset\-\_\-in\-\_\-position\-\_\-cb@{lspg\-\_\-check\-\_\-preset\-\_\-in\-\_\-position\-\_\-cb}!lspg.c@{lspg.\-c}}
+\subsubsection[{lspg\-\_\-check\-\_\-preset\-\_\-in\-\_\-position\-\_\-cb}]{\setlength{\rightskip}{0pt plus 5cm}void lspg\-\_\-check\-\_\-preset\-\_\-in\-\_\-position\-\_\-cb (
+\begin{DoxyParamCaption}
+\item[{char $\ast$}]{event}
+\end{DoxyParamCaption}
+)}}\label{lspg_8c_a4710c50945fce26b4ac5dc01ed61459d}
+
+
+Definition at line 1868 of file lspg.\-c.
+
+
+\begin{DoxyCode}
+                                                    \{
+  \hyperlink{structlspmac__motor__struct}{lspmac\_motor\_t} *mp;
+  \textcolor{keywordtype}{char} cp[64];
+  \textcolor{keywordtype}{int} \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i};
+
+  \textcolor{keywordflow}{for}( i=0; i<strlen( event); i++) \{
+    cp[\hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i}] = 0;
+    \textcolor{keywordflow}{if}( event[i] == \textcolor{charliteral}{' '})
+      \textcolor{keywordflow}{break};
+    cp[\hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i}] = \textcolor{keyword}{event}[\hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i}];
+  \}
+
+  mp = \hyperlink{lspmac_8c_a22ef36819bdee963712691e660cfc101}{lspmac\_find\_motor\_by\_name}( cp);
+  \textcolor{keywordflow}{if}( mp == NULL) \{
+    \textcolor{keywordflow}{return};
+  \}
+  i = \hyperlink{lsredis_8c_adfe823e3ccec7e37ac4697179bd65b10}{lsredis\_find\_preset\_index\_by\_position}
+      ( mp);
+  \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"EXECUTE kvupdate(
+       '\{%s.currentPreset,%d\}')"}, cp, i);
+
+\}
+\end{DoxyCode}
 \hypertarget{lspg_8c_a1e11f525ca0f9ac9ab71f9fbe983c42b}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-cmd\-\_\-cb@{lspg\-\_\-cmd\-\_\-cb}}
 \index{lspg\-\_\-cmd\-\_\-cb@{lspg\-\_\-cmd\-\_\-cb}!lspg.c@{lspg.\-c}}
 \subsubsection[{lspg\-\_\-cmd\-\_\-cb}]{\setlength{\rightskip}{0pt plus 5cm}void lspg\-\_\-cmd\-\_\-cb (
@@ -558,7 +670,7 @@ Send strings directly to P\-M\-A\-C queue.
 \end{DoxyParams}
 
 
-Definition at line 1239 of file lspg.\-c.
+Definition at line 1338 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -582,7 +694,7 @@ Definition at line 1239 of file lspg.\-c.
       \textcolor{comment}{// This should solve a potential problem where}
       \textcolor{comment}{// more than one command is put on the queue for a given notify.}
       \textcolor{comment}{//}
-      \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_a1e11f525ca0f9ac9ab71f9fbe983c42b}{lspg\_cmd\_cb}, \textcolor{stringliteral}{"select
+      \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_a1e11f525ca0f9ac9ab71f9fbe983c42b}{lspg\_cmd\_cb}, \textcolor{stringliteral}{"select
        pmac.md2\_queue\_next()"});
     \}
   \}
@@ -601,7 +713,7 @@ do nothing until we get airrights
 
 
 
-Definition at line 556 of file lspg.\-c.
+Definition at line 655 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -624,7 +736,7 @@ call for airrights
 
 
 
-Definition at line 538 of file lspg.\-c.
+Definition at line 637 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -632,7 +744,7 @@ Definition at line 538 of file lspg.\-c.
   pthread\_mutex\_lock( &\hyperlink{lspg_8c_adf89a0299edd6a99992b95dff8992eba}{lspg\_demandairrights}.\hyperlink{structlspg__demandairrights__struct_a874970af767d4bb329f9764075b30096}{mutex});
   \hyperlink{lspg_8c_adf89a0299edd6a99992b95dff8992eba}{lspg\_demandairrights}.\hyperlink{structlspg__demandairrights__struct_ad686c9a04d0c7e10b236c234eaf03ce7}{new\_value\_ready} = 0;
   pthread\_mutex\_unlock( &\hyperlink{lspg_8c_adf89a0299edd6a99992b95dff8992eba}{lspg\_demandairrights}.\hyperlink{structlspg__demandairrights__struct_a874970af767d4bb329f9764075b30096}{mutex});
-  \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_a208134de0d5bbbdaf5589126d46f1c4e}{lspg\_demandairrights\_cb}
+  \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_a208134de0d5bbbdaf5589126d46f1c4e}{lspg\_demandairrights\_cb}
       , \textcolor{stringliteral}{"SELECT px.demandairrights())"});
 \}
 \end{DoxyCode}
@@ -650,7 +762,7 @@ handle the airrights response
 
 
 
-Definition at line 529 of file lspg.\-c.
+Definition at line 628 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -674,7 +786,7 @@ initialize the demandairrights structure
 
 
 
-Definition at line 521 of file lspg.\-c.
+Definition at line 620 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -698,7 +810,7 @@ wait for the air rights request to return
 
 
 
-Definition at line 547 of file lspg.\-c.
+Definition at line 646 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -724,7 +836,7 @@ Flush psql output buffer (ie, send the query)
 
 
 
-Definition at line 1269 of file lspg.\-c.
+Definition at line 1368 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -771,7 +883,7 @@ Convenience function to complete synchronous getcenter query.
 
 
 
-Definition at line 1201 of file lspg.\-c.
+Definition at line 1300 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -794,7 +906,7 @@ Request a getcenter query.
 
 
 
-Definition at line 1177 of file lspg.\-c.
+Definition at line 1276 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -803,7 +915,7 @@ Definition at line 1177 of file lspg.\-c.
   \hyperlink{lspg_8c_a7ef8a09203117578c9b2ce4719519f36}{lspg\_getcenter}.\hyperlink{structlspg__getcenter__struct_a4b350f11f1e375b9e9e839caaffbcb6b}{new\_value\_ready} = 0;
   pthread\_mutex\_unlock( &\hyperlink{lspg_8c_a7ef8a09203117578c9b2ce4719519f36}{lspg\_getcenter}.\hyperlink{structlspg__getcenter__struct_a214bb7e88b137162f13f41f2c43002a9}{mutex});
 
-  \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_a8184824f2b71b1d35141d7922ca69cd7}{lspg\_getcenter\_cb}, \textcolor{stringliteral}{"SELECT *
+  \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_a8184824f2b71b1d35141d7922ca69cd7}{lspg\_getcenter\_cb}, \textcolor{stringliteral}{"SELECT *
        FROM px.getcenter2()"});
 \}
 \end{DoxyCode}
@@ -821,7 +933,7 @@ Retrieve the data to center the crystal.
 
 
 
-Definition at line 1112 of file lspg.\-c.
+Definition at line 1211 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -900,7 +1012,7 @@ Done with getcenter query.
 
 
 
-Definition at line 1195 of file lspg.\-c.
+Definition at line 1294 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -921,7 +1033,7 @@ Initialize getcenter object.
 
 
 
-Definition at line 1169 of file lspg.\-c.
+Definition at line 1268 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -945,7 +1057,7 @@ Wait for a getcenter query to return.
 
 
 
-Definition at line 1187 of file lspg.\-c.
+Definition at line 1286 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -965,7 +1077,7 @@ Definition at line 1187 of file lspg.\-c.
 )}}\label{lspg_8c_acf98a9e2adec05a69847045f444a5c77}
 
 
-Definition at line 367 of file lspg.\-c.
+Definition at line 466 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -977,7 +1089,7 @@ Definition at line 367 of file lspg.\-c.
   pthread\_mutex\_unlock( &\hyperlink{lspg_8c_a5c50804e6019d47d91f3f1cb3ebd1f00}{lspg\_getcurrentsampleid}.\hyperlink{structlspg__getcurrentsampleid__struct_ace54acbdcbce620437962858ba04e256}{mutex}
       );
 
-  \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_a3245894737f9b496b7882c6e6ed8519d}{lspg\_getcurrentsampleid\_cb}
+  \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_a3245894737f9b496b7882c6e6ed8519d}{lspg\_getcurrentsampleid\_cb}
       , \textcolor{stringliteral}{"SELECT px.getcurrentsampleid()"});
 \}
 \end{DoxyCode}
@@ -995,7 +1107,7 @@ get currentsampleid
 
 
 
-Definition at line 346 of file lspg.\-c.
+Definition at line 445 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1037,7 +1149,7 @@ Definition at line 346 of file lspg.\-c.
 )}}\label{lspg_8c_a5d6f6c4733629fc14e4f0bc128a1ffb7}
 
 
-Definition at line 338 of file lspg.\-c.
+Definition at line 437 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1059,7 +1171,7 @@ Definition at line 338 of file lspg.\-c.
 )}}\label{lspg_8c_a7b070b4891f485b7f74c95e0e60471f3}
 
 
-Definition at line 377 of file lspg.\-c.
+Definition at line 476 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1092,7 +1204,7 @@ Definition at line 377 of file lspg.\-c.
 )}}\label{lspg_8c_a2d624b228ddd560ace0cef4286a30b07}
 
 
-Definition at line 393 of file lspg.\-c.
+Definition at line 492 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1121,7 +1233,7 @@ Initiallize the lspg module.
 
 
 
-Definition at line 1759 of file lspg.\-c.
+Definition at line 1951 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1155,7 +1267,7 @@ Detector lock convinence function.
 
 
 
-Definition at line 1024 of file lspg.\-c.
+Definition at line 1123 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1178,7 +1290,7 @@ Request (demand) a detector lock.
 
 
 
-Definition at line 1000 of file lspg.\-c.
+Definition at line 1099 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1187,7 +1299,7 @@ Definition at line 1000 of file lspg.\-c.
   \hyperlink{lspg_8c_adbf3b3652c6531c3d194320d1abc1c80}{lspg\_lock\_detector}.\hyperlink{structlspg__lock__detector__struct_a62373414b815fe178edd8522b3bd4d78}{new\_value\_ready} = 0;
   pthread\_mutex\_unlock( &(\hyperlink{lspg_8c_adbf3b3652c6531c3d194320d1abc1c80}{lspg\_lock\_detector}.\hyperlink{structlspg__lock__detector__struct_ab5ab5534b376a8fbafdd0b54cec4483c}{mutex}));
 
-  \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_aa760191c2b443170cebbcbf5ea5345f3}{lspg\_lock\_detector\_cb}, \textcolor{stringliteral}{"
+  \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_aa760191c2b443170cebbcbf5ea5345f3}{lspg\_lock\_detector\_cb}, \textcolor{stringliteral}{"
       SELECT px.lock\_detector()"});
 \}
 \end{DoxyCode}
@@ -1205,7 +1317,7 @@ Callback for when the detector lock has be grabbed.
 
 
 
-Definition at line 991 of file lspg.\-c.
+Definition at line 1090 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1229,7 +1341,7 @@ Finish waiting.
 
 
 
-Definition at line 1018 of file lspg.\-c.
+Definition at line 1117 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1250,7 +1362,7 @@ Initialize detector lock object.
 
 
 
-Definition at line 983 of file lspg.\-c.
+Definition at line 1082 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1274,7 +1386,7 @@ Wait for the detector lock.
 
 
 
-Definition at line 1010 of file lspg.\-c.
+Definition at line 1109 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1299,7 +1411,7 @@ Convience function that combines lock diffractometer calls.
 
 
 
-Definition at line 965 of file lspg.\-c.
+Definition at line 1064 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1322,7 +1434,7 @@ Request that the database grab the diffractometer lock.
 
 
 
-Definition at line 941 of file lspg.\-c.
+Definition at line 1040 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1334,7 +1446,7 @@ Definition at line 941 of file lspg.\-c.
   pthread\_mutex\_unlock( &(\hyperlink{lspg_8c_aaae7ce3ecd7d54a9e46c41d7a742a454}{lspg\_lock\_diffractometer}.\hyperlink{structlspg__lock__diffractometer__struct_a362e848dfd1551428b8d12d8776fd2ed}{
       mutex}));
 
-  \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_aad4f378f37c0030634dafa0d9445d916}{lspg\_lock\_diffractometer\_cb}
+  \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_aad4f378f37c0030634dafa0d9445d916}{lspg\_lock\_diffractometer\_cb}
       , \textcolor{stringliteral}{"SELECT px.lock\_diffractomter()"});
 \}
 \end{DoxyCode}
@@ -1352,7 +1464,7 @@ Callback routine for a lock diffractometer query.
 
 
 
-Definition at line 932 of file lspg.\-c.
+Definition at line 1031 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1380,7 +1492,7 @@ Finish up the lock diffractometer call.
 
 
 
-Definition at line 959 of file lspg.\-c.
+Definition at line 1058 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1402,7 +1514,7 @@ initialize the diffractometer locking object
 
 
 
-Definition at line 924 of file lspg.\-c.
+Definition at line 1023 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1428,7 +1540,7 @@ Wait for the diffractometer lock.
 
 
 
-Definition at line 951 of file lspg.\-c.
+Definition at line 1050 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1454,7 +1566,7 @@ Implements our state machine Does not strictly only set the next state as it als
 
 
 
-Definition at line 1624 of file lspg.\-c.
+Definition at line 1725 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1467,7 +1579,7 @@ Definition at line 1624 of file lspg.\-c.
       \hyperlink{lspg_8c_a4937baac0cc78ea306d58b5f027867f1}{ls\_pg\_state} == \hyperlink{lspg_8c_accda8c3a598dc7f5b107b04986d8ab50}{LS\_PG\_STATE\_RESET} ||
       \hyperlink{lspg_8c_a4937baac0cc78ea306d58b5f027867f1}{ls\_pg\_state} == \hyperlink{lspg_8c_ae7ea5876846b5f04c419aee22d3c0aa1}{LS\_PG\_STATE\_INIT\_POLL} ||
       \hyperlink{lspg_8c_a4937baac0cc78ea306d58b5f027867f1}{ls\_pg\_state} == \hyperlink{lspg_8c_ac70a1141f3b138055ea7143bd493187c}{LS\_PG\_STATE\_RESET\_POLL})
-    \hyperlink{kvredis_8c_a581c18be0368425665a40b4b7f7d9714}{lspg\_pg\_connect}( \hyperlink{lspg_8c_af3f897b8ffa020ca54289bc5b28cb64d}{lspgfd});
+    \hyperlink{lspg_8c_a581c18be0368425665a40b4b7f7d9714}{lspg\_pg\_connect}( \hyperlink{lspg_8c_af3f897b8ffa020ca54289bc5b28cb64d}{lspgfd});
 
 
   \textcolor{keywordflow}{if}( \hyperlink{lspg_8c_a4937baac0cc78ea306d58b5f027867f1}{ls\_pg\_state} == \hyperlink{lspg_8c_aaf1dd8ba4dafb91c296554c4cbf312e3}{LS\_PG\_STATE\_IDLE} && 
@@ -1534,7 +1646,7 @@ Queue the next M\-D2 instruction.
 \end{DoxyParams}
 
 
-Definition at line 1210 of file lspg.\-c.
+Definition at line 1309 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1572,7 +1684,7 @@ Definition at line 1210 of file lspg.\-c.
 )}}\label{lspg_8c_a4cc866393eda0cf20276d035f6fbe206}
 
 
-Definition at line 468 of file lspg.\-c.
+Definition at line 567 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1612,7 +1724,7 @@ Queue up a nextsample query.
 
 
 
-Definition at line 445 of file lspg.\-c.
+Definition at line 544 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1621,7 +1733,7 @@ Definition at line 445 of file lspg.\-c.
   \hyperlink{lspg_8c_adbf70f382e469e02dce77833981f9547}{lspg\_nextsample}.\hyperlink{structlspg__nextsample__struct_ab1c9e9d3dc5140137a7ccf908e95f69e}{new\_value\_ready} = 0;
   pthread\_mutex\_unlock( &(\hyperlink{lspg_8c_adbf70f382e469e02dce77833981f9547}{lspg\_nextsample}.\hyperlink{structlspg__nextsample__struct_a99408b5825e2510f07be199d2cdc3633}{mutex}));
   
-  \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_a5e1de4aa16107d1f5f801e11ae6b268c}{lspg\_nextsample\_cb}, \textcolor{stringliteral}{"SELECT
+  \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_a5e1de4aa16107d1f5f801e11ae6b268c}{lspg\_nextsample\_cb}, \textcolor{stringliteral}{"SELECT
        nextsample FROM px.nextsample()"});
 \}
 \end{DoxyCode}
@@ -1646,7 +1758,7 @@ Next Sample.
 \end{DoxyParams}
 
 
-Definition at line 404 of file lspg.\-c.
+Definition at line 503 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1695,7 +1807,7 @@ Called when the next shot query has been processed.
 
 
 
-Definition at line 463 of file lspg.\-c.
+Definition at line 562 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1716,7 +1828,7 @@ Initialize the nextsample variable, mutex, and condition.
 
 
 
-Definition at line 437 of file lspg.\-c.
+Definition at line 536 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1740,7 +1852,7 @@ Wait for the nextsample query to get processed.
 
 
 
-Definition at line 455 of file lspg.\-c.
+Definition at line 554 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1764,7 +1876,7 @@ Queue up a nextshot query.
 
 
 
-Definition at line 824 of file lspg.\-c.
+Definition at line 923 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -1773,7 +1885,7 @@ Definition at line 824 of file lspg.\-c.
   \hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_nextshot}.\hyperlink{structlspg__nextshot__struct_adb8da14444b98f556dba9420dd4666dc}{new\_value\_ready} = 0;
   pthread\_mutex\_unlock( &(\hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_nextshot}.\hyperlink{structlspg__nextshot__struct_a38b657155fbee9b73278f76912cf2333}{mutex}));
   
-  \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_a9e92a204f606761d368ac7e06ef0f09c}{lspg\_nextshot\_cb}, \textcolor{stringliteral}{"SELECT *
+  \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_a9e92a204f606761d368ac7e06ef0f09c}{lspg\_nextshot\_cb}, \textcolor{stringliteral}{"SELECT *
        FROM px.nextshot2()"});
 \}
 \end{DoxyCode}
@@ -1798,7 +1910,7 @@ This is a long and tedious routine as there are a large number of variables retu
 \end{DoxyParams}
 
 
-Definition at line 569 of file lspg.\-c.
+Definition at line 668 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2122,7 +2234,7 @@ Called when the next shot query has been processed.
 
 
 
-Definition at line 842 of file lspg.\-c.
+Definition at line 941 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2143,7 +2255,7 @@ Initialize the nextshot variable, mutex, and condition.
 
 
 
-Definition at line 816 of file lspg.\-c.
+Definition at line 915 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2166,7 +2278,7 @@ Wait for the next shot query to get processed.
 
 
 
-Definition at line 834 of file lspg.\-c.
+Definition at line 933 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2187,7 +2299,7 @@ Definition at line 834 of file lspg.\-c.
 )}}\label{lspg_8c_a62b110949d206fb22789191207e1d066}
 
 
-Definition at line 1528 of file lspg.\-c.
+Definition at line 1629 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2209,7 +2321,7 @@ Connect to the pg server.
 
 
 
-Definition at line 1535 of file lspg.\-c.
+Definition at line 1636 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2271,9 +2383,9 @@ Definition at line 1535 of file lspg.\-c.
       \hyperlink{lspg_8c_a4937baac0cc78ea306d58b5f027867f1}{ls\_pg\_state} = \hyperlink{lspg_8c_af443092447378c73bf93aa143576aba4}{LS\_PG\_STATE\_INIT};
     \} \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}( \hyperlink{lspg_8c_a69ae04978986e6413ca7cefcb692b645}{lspg\_connectPoll\_response} == 
       PGRES\_POLLING\_OK) \{
-      PQsetNoticeProcessor( \hyperlink{lspg_8c_a9012783dbbadf652a81649a289697cf3}{q}, (PQnoticeProcessor)\hyperlink{kvredis_8c_a62b110949d206fb22789191207e1d066}{lspg\_notice\_processor}
+      PQsetNoticeProcessor( \hyperlink{lspg_8c_a9012783dbbadf652a81649a289697cf3}{q}, (PQnoticeProcessor)\hyperlink{lspg_8c_a62b110949d206fb22789191207e1d066}{lspg\_notice\_processor}
       , NULL);
-      \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"select pmac.md2\_init()"});
+      \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"select pmac.md2\_init()"});
       \hyperlink{lspg_8c_a4937baac0cc78ea306d58b5f027867f1}{ls\_pg\_state} = \hyperlink{lspg_8c_aaf1dd8ba4dafb91c296554c4cbf312e3}{LS\_PG\_STATE\_IDLE};
     \}
     \textcolor{keywordflow}{break};
@@ -2298,7 +2410,7 @@ Definition at line 1535 of file lspg.\-c.
       \hyperlink{lspg_8c_a4937baac0cc78ea306d58b5f027867f1}{ls\_pg\_state} = \hyperlink{lspg_8c_af443092447378c73bf93aa143576aba4}{LS\_PG\_STATE\_INIT};
     \} \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}( \hyperlink{lspg_8c_a06c5a937e41a6c706a247777642ec1fb}{lspg\_resetPoll\_response} == 
       PGRES\_POLLING\_OK) \{
-      \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"select pmac.md2\_init()"});
+      \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"select pmac.md2\_init()"});
       \hyperlink{lspg_8c_a4937baac0cc78ea306d58b5f027867f1}{ls\_pg\_state} = \hyperlink{lspg_8c_aaf1dd8ba4dafb91c296554c4cbf312e3}{LS\_PG\_STATE\_IDLE};
     \}
     \textcolor{keywordflow}{break};
@@ -2323,7 +2435,7 @@ I/\-O control to/from the postgresql server.
 \end{DoxyParams}
 
 
-Definition at line 1429 of file lspg.\-c.
+Definition at line 1528 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2370,7 +2482,7 @@ Definition at line 1429 of file lspg.\-c.
     \}      
 
     \textcolor{keywordflow}{if}( \hyperlink{lspg_8c_a4937baac0cc78ea306d58b5f027867f1}{ls\_pg\_state} == \hyperlink{lspg_8c_a373e668840b4795ff9a71bc3f744d209}{LS\_PG\_STATE\_RECV}) \{
-      \hyperlink{kvredis_8c_a038c5af23469b789fc1c55d21cb43029}{lspg\_receive}();
+      \hyperlink{lspg_8c_a038c5af23469b789fc1c55d21cb43029}{lspg\_receive}();
     \}
 
     \textcolor{comment}{//}
@@ -2389,14 +2501,17 @@ Definition at line 1429 of file lspg.\-c.
        recieved %s"}, pgn->relname);
         
         \textcolor{keywordflow}{if}( strstr( pgn->relname, \textcolor{stringliteral}{"\_pmac"}) != NULL) \{
-          \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_a1e11f525ca0f9ac9ab71f9fbe983c42b}{lspg\_cmd\_cb}, \textcolor{stringliteral}{"SELECT
-       pmac.md2\_queue\_next()"});
-        \} \textcolor{keywordflow}{else} \textcolor{keywordflow}{if} (strstr( pgn->relname, \textcolor{stringliteral}{"\_diff"}) != NULL || strstr( pgn->
+          \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_a1e11f525ca0f9ac9ab71f9fbe983c42b}{lspg\_cmd\_cb}, \textcolor{stringliteral}{"EXEVUTE
+       md2\_queue\_next"});
+        \} \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}( strstr( pgn->relname, \textcolor{stringliteral}{"\_diff"}) != NULL || strstr( pgn->
       relname, \textcolor{stringliteral}{"\_run"}) != NULL) \{
-          \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_aeda8dad89b03d7d61cc994dd63ee5db6}{lspg\_nextaction\_cb},
-       \textcolor{stringliteral}{"SELECT action FROM px.nextaction()"});
-        \} \textcolor{keywordflow}{else} \textcolor{keywordflow}{if} (strstr( pgn->relname, \textcolor{stringliteral}{"\_sample"}) != NULL) \{
+          \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_aeda8dad89b03d7d61cc994dd63ee5db6}{lspg\_nextaction\_cb},
+       \textcolor{stringliteral}{"EXECUTE nextaction"});
+        \} \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}( strstr( pgn->relname, \textcolor{stringliteral}{"\_sample"}) != NULL) \{
           \hyperlink{lspg_8c_acf98a9e2adec05a69847045f444a5c77}{lspg\_getcurrentsampleid\_call}();
+        \} \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}( strstr( pgn->relname, \textcolor{stringliteral}{"\_kvs"}) != NULL) \{
+          \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_afb8d1ff1e0f4fcdc85ad9c684271cb3d}{lspg\_allkvs\_cb}, \textcolor{stringliteral}{"
+      EXECUTE getkvs"});
         \}
         PQfreemem( pgn);
       \}
@@ -2426,14 +2541,52 @@ Definition at line 1429 of file lspg.\-c.
 
 
     \textcolor{keywordflow}{if}( \hyperlink{lspg_8c_a4937baac0cc78ea306d58b5f027867f1}{ls\_pg\_state} == \hyperlink{lspg_8c_a3c6eb19f262a990e1f9ba630d9edc309}{LS\_PG\_STATE\_SEND}) \{
-      \hyperlink{kvredis_8c_a714b15e117ffe7bfce4f2f2ce4725b0a}{lspg\_send\_next\_query}();
+      \hyperlink{lspg_8c_a714b15e117ffe7bfce4f2f2ce4725b0a}{lspg\_send\_next\_query}();
     \}
 
     \textcolor{keywordflow}{if}( \hyperlink{lspg_8c_a4937baac0cc78ea306d58b5f027867f1}{ls\_pg\_state} == \hyperlink{lspg_8c_a88a7e80c12fb0449c4b0857a0c7deb21}{LS\_PG\_STATE\_SEND\_FLUSH})
        \{
-      \hyperlink{kvredis_8c_af6485ac1749c5de3008dd0e0badaa09c}{lspg\_flush}();
+      \hyperlink{lspg_8c_af6485ac1749c5de3008dd0e0badaa09c}{lspg\_flush}();
     \}
   \}
+\}
+\end{DoxyCode}
+\hypertarget{lspg_8c_a69a792e1981af00b2818bcda89bdaa02}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-preset\-\_\-changed\-\_\-cb@{lspg\-\_\-preset\-\_\-changed\-\_\-cb}}
+\index{lspg\-\_\-preset\-\_\-changed\-\_\-cb@{lspg\-\_\-preset\-\_\-changed\-\_\-cb}!lspg.c@{lspg.\-c}}
+\subsubsection[{lspg\-\_\-preset\-\_\-changed\-\_\-cb}]{\setlength{\rightskip}{0pt plus 5cm}void lspg\-\_\-preset\-\_\-changed\-\_\-cb (
+\begin{DoxyParamCaption}
+\item[{char $\ast$}]{event}
+\end{DoxyParamCaption}
+)}}\label{lspg_8c_a69a792e1981af00b2818bcda89bdaa02}
+
+
+Definition at line 1846 of file lspg.\-c.
+
+
+\begin{DoxyCode}
+                                          \{
+  \textcolor{keyword}{static} \textcolor{keywordtype}{char} base[] = \textcolor{stringliteral}{"Preset Changed "};
+  \textcolor{keywordtype}{char} *pn;
+  \hyperlink{structlsredis__obj__struct}{lsredis\_obj\_t} *\hyperlink{namespacemk__pgpmac__redis_a11daf2847f2dc94562b5b61b3f412574}{p};
+  \textcolor{keywordtype}{char} *\hyperlink{namespacemk__pgpmac__redis_ac732d49b0afca9a9951e3a252bae42fc}{v};
+
+  pn = strstr( event, base);
+  \textcolor{keywordflow}{if}( pn == NULL) \{
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspg\_preset\_changed\_cb: Could
+       not parse '%s'"}, event);
+    \textcolor{keywordflow}{return};
+  \}
+  pn += strlen( base);
+  
+  p = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s"}, pn);
+  \textcolor{keywordflow}{if}( p == NULL) \{
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspg\_preset\_changed\_cb: Could
+       not find variable '%s'"}, pn);
+    \textcolor{keywordflow}{return};
+  \}
+  v = \hyperlink{lsredis_8c_ac1994e56114b2315294527d76311f829}{lsredis\_getstr}( p);
+  \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"EXECUTE kvupdate('\{%s,%s\}'::text[])"}, 
+      pn, v);
 \}
 \end{DoxyCode}
 \hypertarget{lspg_8c_ad5f3ec8f197cc330c83dba70f310533c}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-query\-\_\-next@{lspg\-\_\-query\-\_\-next}}
@@ -2449,7 +2602,7 @@ Return the next item in the postgresql queue.
 
 If there is an item left in the queue then it is returned. Otherwise, N\-U\-L\-L is returned. 
 
-Definition at line 75 of file lspg.\-c.
+Definition at line 74 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2494,7 +2647,7 @@ Place a query on the queue.
 \end{DoxyParams}
 
 
-Definition at line 128 of file lspg.\-c.
+Definition at line 127 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2518,11 +2671,11 @@ Definition at line 128 of file lspg.\-c.
       ;
 
   va\_start( arg\_ptr, fmt);
-  vsnprintf( \hyperlink{lspg_8c_a357d9d98f0b8c9625ccebcebfcdce955}{lspg\_query\_queue}[idx].qs, \hyperlink{kvredis_8c_a3a8ef1b4b5994d6dd12bf74454ea891b}{
+  vsnprintf( \hyperlink{lspg_8c_a357d9d98f0b8c9625ccebcebfcdce955}{lspg\_query\_queue}[idx].qs, \hyperlink{pgpmac_8h_a3a8ef1b4b5994d6dd12bf74454ea891b}{
       LS\_PG\_QUERY\_STRING\_LENGTH}-1, fmt, arg\_ptr);
   va\_end( arg\_ptr);
 
-  \hyperlink{lspg_8c_a357d9d98f0b8c9625ccebcebfcdce955}{lspg\_query\_queue}[idx].\hyperlink{structlspgQueryQueueStruct_a1389b3ec4ddf9ed5cc0344d229a7ff9e}{qs}[\hyperlink{kvredis_8c_a3a8ef1b4b5994d6dd12bf74454ea891b}{LS\_PG\_QUERY\_STRING\_LENGTH}
+  \hyperlink{lspg_8c_a357d9d98f0b8c9625ccebcebfcdce955}{lspg\_query\_queue}[idx].\hyperlink{structlspgQueryQueueStruct_abf8c9c581b38a5e3e269eda69e47de15}{qs}[\hyperlink{pgpmac_8h_a3a8ef1b4b5994d6dd12bf74454ea891b}{LS\_PG\_QUERY\_STRING\_LENGTH}
        - 1] = 0;
   \hyperlink{lspg_8c_a357d9d98f0b8c9625ccebcebfcdce955}{lspg\_query\_queue}[idx].\hyperlink{structlspgQueryQueueStruct_a53bac5ae4cab775423940bff5092a831}{onResponse} = cb;
   \hyperlink{lspg_8c_a3cbe7f3161b3c1838ebc56a3bbcfd8a6}{lspg\_query\_queue\_on}++;
@@ -2544,7 +2697,7 @@ Remove the oldest item in the queue.
 
 this is called only when there is nothing else to service the reply\-: this pop does not return anything. We use the ...reply\-\_\-peek function to return the next item in the reply queue 
 
-Definition at line 99 of file lspg.\-c.
+Definition at line 98 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2570,9 +2723,9 @@ Definition at line 99 of file lspg.\-c.
 
 Return the next item in the reply queue but don't pop it since we may need it more than once. 
 
-Call \hyperlink{kvredis_8c_a3847589e641f7e16a0cd68ef30e37cca}{lspg\-\_\-query\-\_\-reply\-\_\-next()} when done. 
+Call \hyperlink{lspg_8c_a3847589e641f7e16a0cd68ef30e37cca}{lspg\-\_\-query\-\_\-reply\-\_\-next()} when done. 
 
-Definition at line 112 of file lspg.\-c.
+Definition at line 111 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2605,7 +2758,7 @@ Receive a result of a query.
 
 
 
-Definition at line 1346 of file lspg.\-c.
+Definition at line 1445 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2635,7 +2788,7 @@ Definition at line 1346 of file lspg.\-c.
   \textcolor{keywordflow}{while}( !PQisBusy( \hyperlink{lspg_8c_a9012783dbbadf652a81649a289697cf3}{q})) \{
     pgr = PQgetResult( \hyperlink{lspg_8c_a9012783dbbadf652a81649a289697cf3}{q});
     \textcolor{keywordflow}{if}( pgr == NULL) \{
-      \hyperlink{kvredis_8c_a3847589e641f7e16a0cd68ef30e37cca}{lspg\_query\_reply\_next}();
+      \hyperlink{lspg_8c_a3847589e641f7e16a0cd68ef30e37cca}{lspg\_query\_reply\_next}();
       \textcolor{comment}{//}
       \textcolor{comment}{// we are now done reading the response from the database}
       \textcolor{comment}{//}
@@ -2644,7 +2797,7 @@ Definition at line 1346 of file lspg.\-c.
     \} \textcolor{keywordflow}{else} \{
       ExecStatusType es;
 
-      qqp = \hyperlink{kvredis_8c_ae6bf4f54117bedf903360883bb32699f}{lspg\_query\_reply\_peek}();
+      qqp = \hyperlink{lspg_8c_ae6bf4f54117bedf903360883bb32699f}{lspg\_query\_reply\_peek}();
       es = PQresultStatus( pgr);
 
       \textcolor{keywordflow}{if}( es != PGRES\_COMMAND\_OK && es != PGRES\_TUPLES\_OK) \{
@@ -2652,7 +2805,7 @@ Definition at line 1346 of file lspg.\-c.
         emess = PQresultErrorMessage( pgr);
         \textcolor{keywordflow}{if}( emess != NULL && emess[0] != 0) \{
           \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"Error from query '%s':\(\backslash\)n
-      %s"}, qqp->\hyperlink{structlspgQueryQueueStruct_a1389b3ec4ddf9ed5cc0344d229a7ff9e}{qs}, emess);
+      %s"}, qqp->\hyperlink{structlspgQueryQueueStruct_abf8c9c581b38a5e3e269eda69e47de15}{qs}, emess);
         \}
       \} \textcolor{keywordflow}{else} \{
         \textcolor{comment}{//}
@@ -2685,15 +2838,56 @@ Start 'er runnin'.
 
 
 
-Definition at line 1778 of file lspg.\-c.
+Definition at line 1970 of file lspg.\-c.
 
 
 \begin{DoxyCode}
                 \{
   pthread\_create( &\hyperlink{lspg_8c_a04eb0cda0d5e5afeae7c393b51689765}{lspg\_thread}, NULL, \hyperlink{lspg_8c_aaf4fadd2943fa3a2ecb5d840e84d68fa}{lspg\_worker}, NULL);
+  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"(appy|appz|capy|capz|scint) In
+       Position"},        \hyperlink{lspg_8c_a4710c50945fce26b4ac5dc01ed61459d}{lspg\_check\_preset\_in\_position\_cb}
+      );
+  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"(appy|appz|capy|capz|scint)
+       Moving"},             \hyperlink{lspg_8c_abcdcee6ef5ed0865056d42a6cf9da8bd}{lspg\_unset\_current\_preset\_moving\_cb}
+      );
+  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Preset Changed (.+)"},     
+      \hyperlink{lspg_8c_a69a792e1981af00b2818bcda89bdaa02}{lspg\_preset\_changed\_cb});
   \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Sample(Detected|Absent)"}, 
-      \hyperlink{lspg_8c_aaba848ff514781cf8468cf23bc4d214f}{lspmac\_sample\_detector\_cb});
+      \hyperlink{lspg_8c_a14546bac5695b536cd348d5e0a1661fa}{lspg\_sample\_detector\_cb});
+  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Timer Update KVs"},        
+      \hyperlink{lspg_8c_ad503cefdaee8112ea2129d33db2ec7fa}{lspg\_update\_kvs\_cb});
+  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"cam.zoom In Position"},    
+      \hyperlink{lspg_8c_af61ae1cf46d67e29dfc690b9a98b1b4d}{lspg\_set\_scale\_cb});
+  \hyperlink{lstimer_8c_a14f35a979ca0537d8180d90cbc56c577}{lstimer\_add\_timer}(     \textcolor{stringliteral}{"Timer Update KVs"}, -1, 0, 500000000)
+      ;
+\}
+\end{DoxyCode}
+\hypertarget{lspg_8c_a14546bac5695b536cd348d5e0a1661fa}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-sample\-\_\-detector\-\_\-cb@{lspg\-\_\-sample\-\_\-detector\-\_\-cb}}
+\index{lspg\-\_\-sample\-\_\-detector\-\_\-cb@{lspg\-\_\-sample\-\_\-detector\-\_\-cb}!lspg.c@{lspg.\-c}}
+\subsubsection[{lspg\-\_\-sample\-\_\-detector\-\_\-cb}]{\setlength{\rightskip}{0pt plus 5cm}void lspg\-\_\-sample\-\_\-detector\-\_\-cb (
+\begin{DoxyParamCaption}
+\item[{char $\ast$}]{event}
+\end{DoxyParamCaption}
+)}}\label{lspg_8c_a14546bac5695b536cd348d5e0a1661fa}
 
+
+log magnet state 
+
+
+
+Definition at line 1939 of file lspg.\-c.
+
+
+\begin{DoxyCode}
+                                           \{
+  \textcolor{keywordtype}{int} present;
+  \textcolor{keywordflow}{if}( strcmp( event, \textcolor{stringliteral}{"SampleDetected"}) == 0)
+    present = 1;
+  \textcolor{keywordflow}{else}
+    present = 0;
+
+  \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"SELECT px.logmagnetstate(%s)"}, present
+       ? \textcolor{stringliteral}{"TRUE"} : \textcolor{stringliteral}{"FALSE"});
 \}
 \end{DoxyCode}
 \hypertarget{lspg_8c_a714b15e117ffe7bfce4f2f2ce4725b0a}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-send\-\_\-next\-\_\-query@{lspg\-\_\-send\-\_\-next\-\_\-query}}
@@ -2709,7 +2903,7 @@ send the next queued query to the D\-B server
 
 
 
-Definition at line 1299 of file lspg.\-c.
+Definition at line 1398 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2723,7 +2917,7 @@ Definition at line 1299 of file lspg.\-c.
   \hyperlink{structlspgQueryQueueStruct}{lspg\_query\_queue\_t} *qqp;
   \textcolor{keywordtype}{int} err;
 
-  qqp = \hyperlink{kvredis_8c_ad5f3ec8f197cc330c83dba70f310533c}{lspg\_query\_next}();
+  qqp = \hyperlink{lspg_8c_ad5f3ec8f197cc330c83dba70f310533c}{lspg\_query\_next}();
   \textcolor{keywordflow}{if}( qqp == NULL) \{
     \textcolor{comment}{//}
     \textcolor{comment}{// A send without a query?  Should never happen.}
@@ -2732,7 +2926,7 @@ Definition at line 1299 of file lspg.\-c.
     \textcolor{keywordflow}{return};
   \}
 
-  \textcolor{keywordflow}{if}( qqp->\hyperlink{structlspgQueryQueueStruct_a1389b3ec4ddf9ed5cc0344d229a7ff9e}{qs}[0] == 0) \{
+  \textcolor{keywordflow}{if}( qqp->\hyperlink{structlspgQueryQueueStruct_abf8c9c581b38a5e3e269eda69e47de15}{qs}[0] == 0) \{
     \textcolor{comment}{//}
     \textcolor{comment}{// Do we really have to check this case?}
     \textcolor{comment}{// It would only come up if we stupidly pushed an empty query string}
@@ -2741,10 +2935,10 @@ Definition at line 1299 of file lspg.\-c.
     \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"Popped empty query string. 
        Probably bad things are going on."});
 
-    \hyperlink{kvredis_8c_a3847589e641f7e16a0cd68ef30e37cca}{lspg\_query\_reply\_next}();
+    \hyperlink{lspg_8c_a3847589e641f7e16a0cd68ef30e37cca}{lspg\_query\_reply\_next}();
     \hyperlink{lspg_8c_a4937baac0cc78ea306d58b5f027867f1}{ls\_pg\_state} = \hyperlink{lspg_8c_aaf1dd8ba4dafb91c296554c4cbf312e3}{LS\_PG\_STATE\_IDLE};
   \} \textcolor{keywordflow}{else} \{
-    err = PQsendQuery( \hyperlink{lspg_8c_a9012783dbbadf652a81649a289697cf3}{q}, qqp->\hyperlink{structlspgQueryQueueStruct_a1389b3ec4ddf9ed5cc0344d229a7ff9e}{qs});
+    err = PQsendQuery( \hyperlink{lspg_8c_a9012783dbbadf652a81649a289697cf3}{q}, qqp->\hyperlink{structlspgQueryQueueStruct_abf8c9c581b38a5e3e269eda69e47de15}{qs});
     \textcolor{keywordflow}{if}( err == 0) \{
       \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"query failed: %s\(\backslash\)n"}, 
       PQerrorMessage( \hyperlink{lspg_8c_a9012783dbbadf652a81649a289697cf3}{q}));
@@ -2752,7 +2946,7 @@ Definition at line 1299 of file lspg.\-c.
       \textcolor{comment}{//}
       \textcolor{comment}{// Don't wait for a reply, just reset the connection}
       \textcolor{comment}{//}
-      \hyperlink{kvredis_8c_a3847589e641f7e16a0cd68ef30e37cca}{lspg\_query\_reply\_next}();
+      \hyperlink{lspg_8c_a3847589e641f7e16a0cd68ef30e37cca}{lspg\_query\_reply\_next}();
       \hyperlink{lspg_8c_a4937baac0cc78ea306d58b5f027867f1}{ls\_pg\_state} = \hyperlink{lspg_8c_accda8c3a598dc7f5b107b04986d8ab50}{LS\_PG\_STATE\_RESET};
     \} \textcolor{keywordflow}{else} \{
       \hyperlink{lspg_8c_a4937baac0cc78ea306d58b5f027867f1}{ls\_pg\_state} = \hyperlink{lspg_8c_a88a7e80c12fb0449c4b0857a0c7deb21}{LS\_PG\_STATE\_SEND\_FLUSH};
@@ -2799,7 +2993,7 @@ Convinence function to call seq run prep.
 \end{DoxyParams}
 
 
-Definition at line 1095 of file lspg.\-c.
+Definition at line 1194 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2849,7 +3043,7 @@ queue up the seq\-\_\-run\-\_\-prep query
 \end{DoxyParams}
 
 
-Definition at line 1061 of file lspg.\-c.
+Definition at line 1160 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2858,7 +3052,7 @@ Definition at line 1061 of file lspg.\-c.
   \hyperlink{lspg_8c_a1b0d9fc30bcea6905b075d2362149172}{lspg\_seq\_run\_prep}.\hyperlink{structlspg__seq__run__prep__struct_a42d08888327e9059ddd69ddfec31b8a9}{new\_value\_ready} = 0;
   pthread\_mutex\_unlock( &(\hyperlink{lspg_8c_a1b0d9fc30bcea6905b075d2362149172}{lspg\_seq\_run\_prep}.\hyperlink{structlspg__seq__run__prep__struct_ad146cb91b5f7dd8bb283092c28781fe7}{mutex}));
 
-  \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_a11cda12050dc9a86188e15e2155a6013}{lspg\_seq\_run\_prep\_cb}, \textcolor{stringliteral}{"
+  \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_a11cda12050dc9a86188e15e2155a6013}{lspg\_seq\_run\_prep\_cb}, \textcolor{stringliteral}{"
       SELECT px.seq\_run\_prep( %lld, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f)"},
                    skey, \hyperlink{lspmac_8c_a0be79ccb7ebf3a665248fd856112b9fd}{kappa}, \hyperlink{lspmac_8c_ac8070dc568ad974a3db42b51eca828cc}{phi}, cx, cy, ax, ay, az);
 \}
@@ -2884,7 +3078,7 @@ Callback for the seq\-\_\-run\-\_\-prep query.
 \end{DoxyParams}
 
 
-Definition at line 1049 of file lspg.\-c.
+Definition at line 1148 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2908,7 +3102,7 @@ Indicate we are done waiting.
 
 
 
-Definition at line 1089 of file lspg.\-c.
+Definition at line 1188 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2929,7 +3123,7 @@ Initialize the data collection object.
 
 
 
-Definition at line 1041 of file lspg.\-c.
+Definition at line 1140 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2952,7 +3146,7 @@ Wait for seq run prep query to return.
 
 
 
-Definition at line 1081 of file lspg.\-c.
+Definition at line 1180 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -2962,6 +3156,47 @@ Definition at line 1081 of file lspg.\-c.
       )
     pthread\_cond\_wait( &(\hyperlink{lspg_8c_a1b0d9fc30bcea6905b075d2362149172}{lspg\_seq\_run\_prep}.\hyperlink{structlspg__seq__run__prep__struct_acd83ea6994f57377716ff01c8ee7ce43}{cond}), &(
       \hyperlink{lspg_8c_a1b0d9fc30bcea6905b075d2362149172}{lspg\_seq\_run\_prep}.\hyperlink{structlspg__seq__run__prep__struct_ad146cb91b5f7dd8bb283092c28781fe7}{mutex}));
+\}
+\end{DoxyCode}
+\hypertarget{lspg_8c_af61ae1cf46d67e29dfc690b9a98b1b4d}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-set\-\_\-scale\-\_\-cb@{lspg\-\_\-set\-\_\-scale\-\_\-cb}}
+\index{lspg\-\_\-set\-\_\-scale\-\_\-cb@{lspg\-\_\-set\-\_\-scale\-\_\-cb}!lspg.c@{lspg.\-c}}
+\subsubsection[{lspg\-\_\-set\-\_\-scale\-\_\-cb}]{\setlength{\rightskip}{0pt plus 5cm}void lspg\-\_\-set\-\_\-scale\-\_\-cb (
+\begin{DoxyParamCaption}
+\item[{char $\ast$}]{event}
+\end{DoxyParamCaption}
+)}}\label{lspg_8c_af61ae1cf46d67e29dfc690b9a98b1b4d}
+
+
+Fix up xscale and yscale when zoom changes. 
+
+
+
+Definition at line 1912 of file lspg.\-c.
+
+
+\begin{DoxyCode}
+                                     \{
+  \textcolor{keywordtype}{int} mag;
+  \hyperlink{structlsredis__obj__struct}{lsredis\_obj\_t} *px, *py;
+  \textcolor{keywordtype}{char} *sx, *sy;
+
+  \textcolor{comment}{//}
+  \textcolor{comment}{// There is already a call back to set the redis variables xScale and yScale}
+  \textcolor{comment}{// we just need to set the KV's}
+  \textcolor{comment}{//}
+
+  mag = \hyperlink{lspmac_8c_acc46bdddee59bd8c5ad662b3fd445e9f}{lspmac\_getPosition}( \hyperlink{lspmac_8c_ad53a42cfaa04eff0336a44c8c9986333}{zoom});
+  
+  px  = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"cam.zoom.%d.ScaleX"}, mag);
+  sx = \hyperlink{lsredis_8c_ac1994e56114b2315294527d76311f829}{lsredis\_getstr}( px);
+
+  py  = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"cam.zoom.%d.ScaleY"}, mag);
+  sy = \hyperlink{lsredis_8c_ac1994e56114b2315294527d76311f829}{lsredis\_getstr}( py);
+
+  \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"EXECUTE kvupdate(
+       '\{cam.xScale,%s,cam.yScale,%s\}')"}, sx, sy);
+  free( sx);
+  free( sy);
 \}
 \end{DoxyCode}
 \hypertarget{lspg_8c_a049f4422994aa2eb2b841ffb2937f895}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-sig\-\_\-service@{lspg\-\_\-sig\-\_\-service}}
@@ -2982,7 +3217,7 @@ Service a signal Signals here are treated as file descriptors and fits into our 
 \end{DoxyParams}
 
 
-Definition at line 1407 of file lspg.\-c.
+Definition at line 1506 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -3021,7 +3256,7 @@ Definition at line 1407 of file lspg.\-c.
 )}}\label{lspg_8c_a40fed0d8ea49206604ca5727d94b8faf}
 
 
-Definition at line 322 of file lspg.\-c.
+Definition at line 421 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -3060,7 +3295,7 @@ Definition at line 322 of file lspg.\-c.
 )}}\label{lspg_8c_af72c4b037347737df09348ab703f6802}
 
 
-Definition at line 302 of file lspg.\-c.
+Definition at line 401 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -3070,7 +3305,7 @@ Definition at line 302 of file lspg.\-c.
   \hyperlink{lspg_8c_af18499d17171eff473cfc49d4a0a5562}{lspg\_starttransfer}.\hyperlink{structlspg__starttransfer__struct_ad3a6356e5ccce15c982ddecf9634999f}{new\_value\_ready} = 0;
   pthread\_mutex\_unlock( &(\hyperlink{lspg_8c_af18499d17171eff473cfc49d4a0a5562}{lspg\_starttransfer}.\hyperlink{structlspg__starttransfer__struct_a47824bb2701a699d43a7a916e2010705}{mutex}));
 
-  \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_a289005bed571909f5ce4de2ff4e70e36}{lspg\_starttransfer\_cb}, \textcolor{stringliteral}{"
+  \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_a289005bed571909f5ce4de2ff4e70e36}{lspg\_starttransfer\_cb}, \textcolor{stringliteral}{"
       SELECT px.starttransfer( %d, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f"},
                    nextsample, \hyperlink{lspmac_8c_ac59ab990e48033a811aeb0281fb588fc}{sample\_detected}, ax, ay, az, horz
       , vert, esttime);
@@ -3093,7 +3328,7 @@ Definition at line 302 of file lspg.\-c.
 \end{DoxyParams}
 
 
-Definition at line 281 of file lspg.\-c.
+Definition at line 380 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -3125,7 +3360,7 @@ Definition at line 281 of file lspg.\-c.
 )}}\label{lspg_8c_ad989179281d8b65b940250a4580007d0}
 
 
-Definition at line 317 of file lspg.\-c.
+Definition at line 416 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -3142,7 +3377,7 @@ Definition at line 317 of file lspg.\-c.
 )}}\label{lspg_8c_ab98f7d254fa0f5f4826f9427ca8b4f03}
 
 
-Definition at line 275 of file lspg.\-c.
+Definition at line 374 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -3161,7 +3396,7 @@ Definition at line 275 of file lspg.\-c.
 )}}\label{lspg_8c_a189e9fd5cbc06dd09e5549f6e229fa5e}
 
 
-Definition at line 311 of file lspg.\-c.
+Definition at line 410 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -3171,6 +3406,116 @@ Definition at line 311 of file lspg.\-c.
        0)
     pthread\_cond\_wait( &(\hyperlink{lspg_8c_af18499d17171eff473cfc49d4a0a5562}{lspg\_starttransfer}.\hyperlink{structlspg__starttransfer__struct_a1a569a2afabd7910219ff9d2d48c1b38}{cond}), &(
       \hyperlink{lspg_8c_af18499d17171eff473cfc49d4a0a5562}{lspg\_starttransfer}.\hyperlink{structlspg__starttransfer__struct_a47824bb2701a699d43a7a916e2010705}{mutex}));
+\}
+\end{DoxyCode}
+\hypertarget{lspg_8c_abcdcee6ef5ed0865056d42a6cf9da8bd}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-unset\-\_\-current\-\_\-preset\-\_\-moving\-\_\-cb@{lspg\-\_\-unset\-\_\-current\-\_\-preset\-\_\-moving\-\_\-cb}}
+\index{lspg\-\_\-unset\-\_\-current\-\_\-preset\-\_\-moving\-\_\-cb@{lspg\-\_\-unset\-\_\-current\-\_\-preset\-\_\-moving\-\_\-cb}!lspg.c@{lspg.\-c}}
+\subsubsection[{lspg\-\_\-unset\-\_\-current\-\_\-preset\-\_\-moving\-\_\-cb}]{\setlength{\rightskip}{0pt plus 5cm}void lspg\-\_\-unset\-\_\-current\-\_\-preset\-\_\-moving\-\_\-cb (
+\begin{DoxyParamCaption}
+\item[{char $\ast$}]{event}
+\end{DoxyParamCaption}
+)}}\label{lspg_8c_abcdcee6ef5ed0865056d42a6cf9da8bd}
+
+
+Definition at line 1889 of file lspg.\-c.
+
+
+\begin{DoxyCode}
+                                                       \{
+  \hyperlink{structlspmac__motor__struct}{lspmac\_motor\_t} *mp;
+  \textcolor{keywordtype}{char} cp[64];
+  \textcolor{keywordtype}{int} \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i};
+
+  \textcolor{keywordflow}{for}( i=0; i<strlen( event); i++) \{
+    cp[\hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i}] = 0;
+    \textcolor{keywordflow}{if}( event[i] == \textcolor{charliteral}{' '})
+      \textcolor{keywordflow}{break};
+    cp[\hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i}] = \textcolor{keyword}{event}[\hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i}];
+  \}
+
+  mp = \hyperlink{lspmac_8c_a22ef36819bdee963712691e660cfc101}{lspmac\_find\_motor\_by\_name}( cp);
+  \textcolor{keywordflow}{if}( mp == NULL) \{
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"
+      lspg\_unset\_current\_reset\_moving\_cb: Could not find motor '%s'"}, cp);
+    \textcolor{keywordflow}{return};
+  \}
+  \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"EXECUTE kvupdate(
+       '\{%s.currentPreset,-1\}')"}, cp);
+\}
+\end{DoxyCode}
+\hypertarget{lspg_8c_ad503cefdaee8112ea2129d33db2ec7fa}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-update\-\_\-kvs\-\_\-cb@{lspg\-\_\-update\-\_\-kvs\-\_\-cb}}
+\index{lspg\-\_\-update\-\_\-kvs\-\_\-cb@{lspg\-\_\-update\-\_\-kvs\-\_\-cb}!lspg.c@{lspg.\-c}}
+\subsubsection[{lspg\-\_\-update\-\_\-kvs\-\_\-cb}]{\setlength{\rightskip}{0pt plus 5cm}void lspg\-\_\-update\-\_\-kvs\-\_\-cb (
+\begin{DoxyParamCaption}
+\item[{char $\ast$}]{event}
+\end{DoxyParamCaption}
+)}}\label{lspg_8c_ad503cefdaee8112ea2129d33db2ec7fa}
+
+
+Perhaps update the px.\-kvs table in postgresql Should be triggered by a timer event. 
+
+
+
+Definition at line 317 of file lspg.\-c.
+
+
+\begin{DoxyCode}
+                                      \{
+  \textcolor{keyword}{static} \textcolor{keywordtype}{char} s[\hyperlink{pgpmac_8h_a3a8ef1b4b5994d6dd12bf74454ea891b}{LS\_PG\_QUERY\_STRING\_LENGTH} - 64], *fmt;
+  \textcolor{keywordtype}{int} \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i}, need\_comma, n;
+  \hyperlink{structlspmac__motor__struct}{lspmac\_motor\_t} *mp;
+  \textcolor{keywordtype}{int} updateme;
+  \textcolor{keywordtype}{double} new\_value;
+
+  s[0] = 0;
+  need\_comma = 0;
+
+  \textcolor{keywordflow}{for}( i=0; i<\hyperlink{lspmac_8c_a56260f012c50a591ee7f97e500f16994}{lspmac\_nmotors}; i++ ) \{
+    mp = &(\hyperlink{lspmac_8c_afbfbc3160d5ed6afefdb07f6a25924f7}{lspmac\_motors}[\hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i}]);
+    pthread\_mutex\_lock( &mp->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex});
+    \textcolor{keywordflow}{if}( fabs(mp->\hyperlink{structlspmac__motor__struct_a959bd55eb5c88a30cd4873ea567944d8}{reported\_pg\_position} - mp->\hyperlink{structlspmac__motor__struct_af8ffb3aed907d8664b65b37601954411}{position}
+      ) >= \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}(mp->\hyperlink{structlspmac__motor__struct_aefa84c7592369090eec8b211caaa3a51}{update\_resolution})) \{
+      new\_value = mp->\hyperlink{structlspmac__motor__struct_af8ffb3aed907d8664b65b37601954411}{position};
+      mp->\hyperlink{structlspmac__motor__struct_a959bd55eb5c88a30cd4873ea567944d8}{reported\_pg\_position} = mp->\hyperlink{structlspmac__motor__struct_af8ffb3aed907d8664b65b37601954411}{position};
+      fmt = \hyperlink{lsredis_8c_ac1994e56114b2315294527d76311f829}{lsredis\_getstr}( mp->\hyperlink{structlspmac__motor__struct_a91c38b2072d878b71f4e77de2f1375a4}{redis\_fmt});      \textcolor{comment}{//
+       borrow the redis format}
+      updateme = 1;
+    \} \textcolor{keywordflow}{else} \{
+      updateme = 0;
+    \}
+    pthread\_mutex\_unlock( &mp->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex});
+    \textcolor{keywordflow}{if}( !updateme)
+      \textcolor{keywordflow}{continue};
+    
+    n = strlen( s);
+    snprintf( &(s[n]), \textcolor{keyword}{sizeof}(s)-n-1, \textcolor{stringliteral}{"%s%s.position,"}, need\_comma++ ? \textcolor{stringliteral}{","} : \textcolor{stringliteral}{""}
+      , mp->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
+
+    n = strlen( s);
+    snprintf( &(s[n]), \textcolor{keyword}{sizeof}(s)-n-1, fmt, new\_value);
+
+    \textcolor{comment}{//}
+    \textcolor{comment}{// And again for the original remote interface}
+    \textcolor{comment}{// We'll be able to remove this, someday}
+    \textcolor{comment}{//}
+    n = strlen( s);
+    snprintf( &(s[n]), \textcolor{keyword}{sizeof}(s)-n-1, \textcolor{stringliteral}{",%s,"},  mp->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
+
+    n = strlen( s);
+    snprintf( &(s[n]), \textcolor{keyword}{sizeof}(s)-n-1, fmt, new\_value);
+    free( fmt);
+
+    n = strlen( s);
+    \textcolor{keywordflow}{if}( n >= \textcolor{keyword}{sizeof}(s) - 64) \{
+      \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"EXECUTE kvupdate('\{%s\}')"}, s);
+      s[0] = 0;
+      need\_comma = 0;
+    \}
+  \}
+
+  \textcolor{keywordflow}{if}( strlen(s)) \{
+    \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"EXECUTE kvupdate('\{%s\}')"}, s);
+  \}
 \}
 \end{DoxyCode}
 \hypertarget{lspg_8c_ab9780e15924a50b2a5545e10806000b3}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-wait\-\_\-for\-\_\-detector\-\_\-all@{lspg\-\_\-wait\-\_\-for\-\_\-detector\-\_\-all}}
@@ -3186,7 +3531,7 @@ Combined call to wait for the detector.
 
 
 
-Definition at line 905 of file lspg.\-c.
+Definition at line 1004 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -3209,7 +3554,7 @@ initiate the wait for detector query
 
 
 
-Definition at line 879 of file lspg.\-c.
+Definition at line 978 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -3221,7 +3566,7 @@ Definition at line 879 of file lspg.\-c.
   pthread\_mutex\_unlock( &(\hyperlink{lspg_8c_a0dfc8d0410cd2d7f7da7a70d3ef88e58}{lspg\_wait\_for\_detector}.\hyperlink{structlspg__wait__for__detector__struct_a958e9fe59e671e61f95c2ce796ba24ce}{mutex}
       ));
   
-  \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_a5747c519d1aa4c310010a862cae8a823}{lspg\_wait\_for\_detector\_cb}
+  \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_a5747c519d1aa4c310010a862cae8a823}{lspg\_wait\_for\_detector\_cb}
       , \textcolor{stringliteral}{"SELECT px.lock\_detector\_test\_block()"});
 \}
 \end{DoxyCode}
@@ -3239,7 +3584,7 @@ Callback for the wait for detector query.
 
 
 
-Definition at line 870 of file lspg.\-c.
+Definition at line 969 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -3267,7 +3612,7 @@ Done waiting for the detector.
 
 
 
-Definition at line 898 of file lspg.\-c.
+Definition at line 997 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -3289,7 +3634,7 @@ initialize the detector timing object
 
 
 
-Definition at line 862 of file lspg.\-c.
+Definition at line 961 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -3315,7 +3660,7 @@ Pause the calling thread until the detector is ready Called by the M\-D2 thread.
 
 
 
-Definition at line 890 of file lspg.\-c.
+Definition at line 989 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -3341,7 +3686,7 @@ no need to get fancy with the wait cryo command It should not return until the r
 
 
 
-Definition at line 507 of file lspg.\-c.
+Definition at line 606 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -3349,7 +3694,7 @@ Definition at line 507 of file lspg.\-c.
   pthread\_mutex\_lock( &\hyperlink{lspg_8c_a5f699604dcc5d3d64fd6cb5c363d29c9}{lspg\_waitcryo}.\hyperlink{structlspg__waitcryo__struct_a62b50ead380fc8a6be35956eba384ba6}{mutex});
   \hyperlink{lspg_8c_a5f699604dcc5d3d64fd6cb5c363d29c9}{lspg\_waitcryo}.\hyperlink{structlspg__waitcryo__struct_a97298b773fd8c1f2ef20159093a08246}{new\_value\_ready} = 0;
 
-  \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_a7497a7c924b31c727ea487a3efb77fb6}{lspg\_waitcryo\_cb}, \textcolor{stringliteral}{"SELECT
+  \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( \hyperlink{lspg_8c_a7497a7c924b31c727ea487a3efb77fb6}{lspg\_waitcryo\_cb}, \textcolor{stringliteral}{"SELECT
        px.waitcryo())"});
 
   \textcolor{keywordflow}{while}( \hyperlink{lspg_8c_a5f699604dcc5d3d64fd6cb5c363d29c9}{lspg\_waitcryo}.\hyperlink{structlspg__waitcryo__struct_a97298b773fd8c1f2ef20159093a08246}{new\_value\_ready} == 0)
@@ -3369,7 +3714,7 @@ Definition at line 507 of file lspg.\-c.
 )}}\label{lspg_8c_a7497a7c924b31c727ea487a3efb77fb6}
 
 
-Definition at line 497 of file lspg.\-c.
+Definition at line 596 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -3389,7 +3734,7 @@ Definition at line 497 of file lspg.\-c.
 )}}\label{lspg_8c_a32b2bf00d66ee5fca130ee616a09cf7b}
 
 
-Definition at line 491 of file lspg.\-c.
+Definition at line 590 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -3417,7 +3762,7 @@ The main loop for the lspg thread.
 \end{DoxyParams}
 
 
-Definition at line 1675 of file lspg.\-c.
+Definition at line 1776 of file lspg.\-c.
 
 
 \begin{DoxyCode}
@@ -3453,7 +3798,7 @@ Definition at line 1675 of file lspg.\-c.
     \textcolor{keywordtype}{int} pollrtn;
     \textcolor{keywordtype}{int} poll\_timeout\_ms;
 
-   \hyperlink{kvredis_8c_ab52a8c8245bf6561f40c0f224fc07ff4}{lspg\_next\_state}();
+   \hyperlink{lspg_8c_ab52a8c8245bf6561f40c0f224fc07ff4}{lspg\_next\_state}();
 
     \textcolor{keywordflow}{if}( \hyperlink{lspg_8c_af3f897b8ffa020ca54289bc5b28cb64d}{lspgfd}.fd == -1) \{
       \textcolor{comment}{//}
@@ -3484,38 +3829,10 @@ Definition at line 1675 of file lspg.\-c.
       pollrtn--;
     \} 
     \textcolor{keywordflow}{if}( pollrtn && fda[1].revents) \{
-      \hyperlink{kvredis_8c_aa8d1fed4b461c2139a21826d524777d5}{lspg\_pg\_service}( &(fda[1]));
+      \hyperlink{lspg_8c_aa8d1fed4b461c2139a21826d524777d5}{lspg\_pg\_service}( &(fda[1]));
       pollrtn--;
     \} 
   \}
-\}
-\end{DoxyCode}
-\hypertarget{lspg_8c_aaba848ff514781cf8468cf23bc4d214f}{\index{lspg.\-c@{lspg.\-c}!lspmac\-\_\-sample\-\_\-detector\-\_\-cb@{lspmac\-\_\-sample\-\_\-detector\-\_\-cb}}
-\index{lspmac\-\_\-sample\-\_\-detector\-\_\-cb@{lspmac\-\_\-sample\-\_\-detector\-\_\-cb}!lspg.c@{lspg.\-c}}
-\subsubsection[{lspmac\-\_\-sample\-\_\-detector\-\_\-cb}]{\setlength{\rightskip}{0pt plus 5cm}void lspmac\-\_\-sample\-\_\-detector\-\_\-cb (
-\begin{DoxyParamCaption}
-\item[{char $\ast$}]{event}
-\end{DoxyParamCaption}
-)}}\label{lspg_8c_aaba848ff514781cf8468cf23bc4d214f}
-
-
-log magnet state 
-
-
-
-Definition at line 1747 of file lspg.\-c.
-
-
-\begin{DoxyCode}
-                                             \{
-  \textcolor{keywordtype}{int} present;
-  \textcolor{keywordflow}{if}( strcmp( event, \textcolor{stringliteral}{"SampleDetected"}) == 0)
-    present = 1;
-  \textcolor{keywordflow}{else}
-    present = 0;
-
-  \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"SELECT px.logmagnetstate(%s)"}, present
-       ? \textcolor{stringliteral}{"TRUE"} : \textcolor{stringliteral}{"FALSE"});
 \}
 \end{DoxyCode}
 
@@ -3530,7 +3847,7 @@ State of the lspg state machine.
 
 
 
-Definition at line 39 of file lspg.\-c.
+Definition at line 38 of file lspg.\-c.
 
 \hypertarget{lspg_8c_a69ae04978986e6413ca7cefcb692b645}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-connect\-Poll\-\_\-response@{lspg\-\_\-connect\-Poll\-\_\-response}}
 \index{lspg\-\_\-connect\-Poll\-\_\-response@{lspg\-\_\-connect\-Poll\-\_\-response}!lspg.c@{lspg.\-c}}
@@ -3541,7 +3858,7 @@ Used to determine state while connecting.
 
 
 
-Definition at line 60 of file lspg.\-c.
+Definition at line 59 of file lspg.\-c.
 
 \hypertarget{lspg_8c_adf89a0299edd6a99992b95dff8992eba}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-demandairrights@{lspg\-\_\-demandairrights}}
 \index{lspg\-\_\-demandairrights@{lspg\-\_\-demandairrights}!lspg.c@{lspg.\-c}}
@@ -3552,7 +3869,7 @@ our demandairrights object
 
 
 
-Definition at line 66 of file lspg.\-c.
+Definition at line 65 of file lspg.\-c.
 
 \hypertarget{lspg_8c_a7ef8a09203117578c9b2ce4719519f36}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-getcenter@{lspg\-\_\-getcenter}}
 \index{lspg\-\_\-getcenter@{lspg\-\_\-getcenter}!lspg.c@{lspg.\-c}}
@@ -3563,7 +3880,7 @@ the getcenter object
 
 
 
-Definition at line 65 of file lspg.\-c.
+Definition at line 64 of file lspg.\-c.
 
 \hypertarget{lspg_8c_a5c50804e6019d47d91f3f1cb3ebd1f00}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-getcurrentsampleid@{lspg\-\_\-getcurrentsampleid}}
 \index{lspg\-\_\-getcurrentsampleid@{lspg\-\_\-getcurrentsampleid}!lspg.c@{lspg.\-c}}
@@ -3574,21 +3891,21 @@ our currentsample id
 
 
 
-Definition at line 67 of file lspg.\-c.
+Definition at line 66 of file lspg.\-c.
 
 \hypertarget{lspg_8c_adbf3b3652c6531c3d194320d1abc1c80}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-lock\-\_\-detector@{lspg\-\_\-lock\-\_\-detector}}
 \index{lspg\-\_\-lock\-\_\-detector@{lspg\-\_\-lock\-\_\-detector}!lspg.c@{lspg.\-c}}
 \subsubsection[{lspg\-\_\-lock\-\_\-detector}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lspg\-\_\-lock\-\_\-detector\-\_\-t} lspg\-\_\-lock\-\_\-detector\hspace{0.3cm}{\ttfamily [static]}}}\label{lspg_8c_adbf3b3652c6531c3d194320d1abc1c80}
 
 
-Definition at line 979 of file lspg.\-c.
+Definition at line 1078 of file lspg.\-c.
 
 \hypertarget{lspg_8c_aaae7ce3ecd7d54a9e46c41d7a742a454}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-lock\-\_\-diffractometer@{lspg\-\_\-lock\-\_\-diffractometer}}
 \index{lspg\-\_\-lock\-\_\-diffractometer@{lspg\-\_\-lock\-\_\-diffractometer}!lspg.c@{lspg.\-c}}
 \subsubsection[{lspg\-\_\-lock\-\_\-diffractometer}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lspg\-\_\-lock\-\_\-diffractometer\-\_\-t} lspg\-\_\-lock\-\_\-diffractometer\hspace{0.3cm}{\ttfamily [static]}}}\label{lspg_8c_aaae7ce3ecd7d54a9e46c41d7a742a454}
 
 
-Definition at line 920 of file lspg.\-c.
+Definition at line 1019 of file lspg.\-c.
 
 \hypertarget{lspg_8c_adbf70f382e469e02dce77833981f9547}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-nextsample@{lspg\-\_\-nextsample}}
 \index{lspg\-\_\-nextsample@{lspg\-\_\-nextsample}!lspg.c@{lspg.\-c}}
@@ -3599,7 +3916,7 @@ the very next sample
 
 
 
-Definition at line 63 of file lspg.\-c.
+Definition at line 62 of file lspg.\-c.
 
 \hypertarget{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-nextshot@{lspg\-\_\-nextshot}}
 \index{lspg\-\_\-nextshot@{lspg\-\_\-nextshot}!lspg.c@{lspg.\-c}}
@@ -3610,7 +3927,7 @@ the nextshot object
 
 
 
-Definition at line 64 of file lspg.\-c.
+Definition at line 63 of file lspg.\-c.
 
 \hypertarget{lspg_8c_a357d9d98f0b8c9625ccebcebfcdce955}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-query\-\_\-queue@{lspg\-\_\-query\-\_\-queue}}
 \index{lspg\-\_\-query\-\_\-queue@{lspg\-\_\-query\-\_\-queue}!lspg.c@{lspg.\-c}}
@@ -3621,7 +3938,7 @@ Our query queue.
 
 
 
-Definition at line 52 of file lspg.\-c.
+Definition at line 51 of file lspg.\-c.
 
 \hypertarget{lspg_8c_aca86bb77d6cecfae9251743f4171bafb}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-query\-\_\-queue\-\_\-off@{lspg\-\_\-query\-\_\-queue\-\_\-off}}
 \index{lspg\-\_\-query\-\_\-queue\-\_\-off@{lspg\-\_\-query\-\_\-queue\-\_\-off}!lspg.c@{lspg.\-c}}
@@ -3632,7 +3949,7 @@ The last item still being used (on == off means nothing in queue)
 
 
 
-Definition at line 54 of file lspg.\-c.
+Definition at line 53 of file lspg.\-c.
 
 \hypertarget{lspg_8c_a3cbe7f3161b3c1838ebc56a3bbcfd8a6}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-query\-\_\-queue\-\_\-on@{lspg\-\_\-query\-\_\-queue\-\_\-on}}
 \index{lspg\-\_\-query\-\_\-queue\-\_\-on@{lspg\-\_\-query\-\_\-queue\-\_\-on}!lspg.c@{lspg.\-c}}
@@ -3643,7 +3960,7 @@ Next position to add something to the queue.
 
 
 
-Definition at line 53 of file lspg.\-c.
+Definition at line 52 of file lspg.\-c.
 
 \hypertarget{lspg_8c_a2603b071afdbff7c0924b13de2454264}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-query\-\_\-queue\-\_\-reply@{lspg\-\_\-query\-\_\-queue\-\_\-reply}}
 \index{lspg\-\_\-query\-\_\-queue\-\_\-reply@{lspg\-\_\-query\-\_\-queue\-\_\-reply}!lspg.c@{lspg.\-c}}
@@ -3654,7 +3971,7 @@ The current item being digested.
 
 Normally off $<$= reply $<$= on. Corner case of queue wrap arround works because we only increment and compare for equality. 
 
-Definition at line 55 of file lspg.\-c.
+Definition at line 54 of file lspg.\-c.
 
 \hypertarget{lspg_8c_a61a308b6a37afd645beb422653b95baa}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-queue\-\_\-cond@{lspg\-\_\-queue\-\_\-cond}}
 \index{lspg\-\_\-queue\-\_\-cond@{lspg\-\_\-queue\-\_\-cond}!lspg.c@{lspg.\-c}}
@@ -3665,7 +3982,7 @@ keeps the queue from overflowing
 
 
 
-Definition at line 44 of file lspg.\-c.
+Definition at line 43 of file lspg.\-c.
 
 \hypertarget{lspg_8c_aed46a94106c583796e3a8ca0e89aa8e4}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-queue\-\_\-mutex@{lspg\-\_\-queue\-\_\-mutex}}
 \index{lspg\-\_\-queue\-\_\-mutex@{lspg\-\_\-queue\-\_\-mutex}!lspg.c@{lspg.\-c}}
@@ -3676,7 +3993,7 @@ keep the queue from getting tangled
 
 
 
-Definition at line 43 of file lspg.\-c.
+Definition at line 42 of file lspg.\-c.
 
 \hypertarget{lspg_8c_a06c5a937e41a6c706a247777642ec1fb}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-reset\-Poll\-\_\-response@{lspg\-\_\-reset\-Poll\-\_\-response}}
 \index{lspg\-\_\-reset\-Poll\-\_\-response@{lspg\-\_\-reset\-Poll\-\_\-response}!lspg.c@{lspg.\-c}}
@@ -3687,14 +4004,14 @@ Used to determine state while reconnecting.
 
 
 
-Definition at line 61 of file lspg.\-c.
+Definition at line 60 of file lspg.\-c.
 
 \hypertarget{lspg_8c_a1b0d9fc30bcea6905b075d2362149172}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-seq\-\_\-run\-\_\-prep@{lspg\-\_\-seq\-\_\-run\-\_\-prep}}
 \index{lspg\-\_\-seq\-\_\-run\-\_\-prep@{lspg\-\_\-seq\-\_\-run\-\_\-prep}!lspg.c@{lspg.\-c}}
 \subsubsection[{lspg\-\_\-seq\-\_\-run\-\_\-prep}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lspg\-\_\-seq\-\_\-run\-\_\-prep\-\_\-t} lspg\-\_\-seq\-\_\-run\-\_\-prep\hspace{0.3cm}{\ttfamily [static]}}}\label{lspg_8c_a1b0d9fc30bcea6905b075d2362149172}
 
 
-Definition at line 1037 of file lspg.\-c.
+Definition at line 1136 of file lspg.\-c.
 
 \hypertarget{lspg_8c_af18499d17171eff473cfc49d4a0a5562}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-starttransfer@{lspg\-\_\-starttransfer}}
 \index{lspg\-\_\-starttransfer@{lspg\-\_\-starttransfer}!lspg.c@{lspg.\-c}}
@@ -3705,7 +4022,7 @@ start a sample transfer
 
 
 
-Definition at line 68 of file lspg.\-c.
+Definition at line 67 of file lspg.\-c.
 
 \hypertarget{lspg_8c_a04eb0cda0d5e5afeae7c393b51689765}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-thread@{lspg\-\_\-thread}}
 \index{lspg\-\_\-thread@{lspg\-\_\-thread}!lspg.c@{lspg.\-c}}
@@ -3716,7 +4033,7 @@ our worker thread
 
 
 
-Definition at line 42 of file lspg.\-c.
+Definition at line 41 of file lspg.\-c.
 
 \hypertarget{lspg_8c_a0dfc8d0410cd2d7f7da7a70d3ef88e58}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-wait\-\_\-for\-\_\-detector@{lspg\-\_\-wait\-\_\-for\-\_\-detector}}
 \index{lspg\-\_\-wait\-\_\-for\-\_\-detector@{lspg\-\_\-wait\-\_\-for\-\_\-detector}!lspg.c@{lspg.\-c}}
@@ -3727,7 +4044,7 @@ Instance of the detector timing object.
 
 
 
-Definition at line 858 of file lspg.\-c.
+Definition at line 957 of file lspg.\-c.
 
 \hypertarget{lspg_8c_a5f699604dcc5d3d64fd6cb5c363d29c9}{\index{lspg.\-c@{lspg.\-c}!lspg\-\_\-waitcryo@{lspg\-\_\-waitcryo}}
 \index{lspg\-\_\-waitcryo@{lspg\-\_\-waitcryo}!lspg.c@{lspg.\-c}}
@@ -3738,7 +4055,7 @@ signal the robot
 
 
 
-Definition at line 69 of file lspg.\-c.
+Definition at line 68 of file lspg.\-c.
 
 \hypertarget{lspg_8c_af3f897b8ffa020ca54289bc5b28cb64d}{\index{lspg.\-c@{lspg.\-c}!lspgfd@{lspgfd}}
 \index{lspgfd@{lspgfd}!lspg.c@{lspg.\-c}}
@@ -3749,7 +4066,7 @@ our poll info
 
 
 
-Definition at line 45 of file lspg.\-c.
+Definition at line 44 of file lspg.\-c.
 
 \hypertarget{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{\index{lspg.\-c@{lspg.\-c}!now@{now}}
 \index{now@{now}!lspg.c@{lspg.\-c}}
@@ -3760,7 +4077,7 @@ used to ensure we do not inundate the db server with connection requests
 
 
 
-Definition at line 40 of file lspg.\-c.
+Definition at line 39 of file lspg.\-c.
 
 \hypertarget{lspg_8c_a9012783dbbadf652a81649a289697cf3}{\index{lspg.\-c@{lspg.\-c}!q@{q}}
 \index{q@{q}!lspg.c@{lspg.\-c}}
@@ -3771,5 +4088,5 @@ Database connector.
 
 
 
-Definition at line 59 of file lspg.\-c.
+Definition at line 58 of file lspg.\-c.
 
