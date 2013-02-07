@@ -1,15 +1,22 @@
 #include "pgpmac.h"
 /*! \file lspmac.c
  *  \brief Routines concerned with communication with PMAC.
- *  \date 2012
+ *  \date 2012 – 2013
  *  \author Keith Brister
  *  \copyright All Rights Reserved
 
   This is a state machine (surprise!)
-  Lacking is support for writingbuffer, control writing and reading, as well as double buffered memory
-  It looks like several different methods of managing PMAC communications are possible.  Here is set up a queue
-  of outgoing commands and deal completely with the result before sending the next.  A full handshake of acknowledgements
-  and "readready" is expected.
+
+  Lacking is support for writingbuffer, control writing and reading,
+  as well as double buffered memory It looks like several different
+  methods of managing PMAC communications are possible.  Here is set
+  up a queue of outgoing commands and deal completely with the result
+  before sending the next.  A full handshake of acknowledgements and
+  "readready" is expected.
+
+  Most of these states are to deal with the "serial-port" style of
+  communications.  Things are surprisingly simple for the double
+  buffer ascii and control character methods.
 
 
 <pre>
@@ -84,8 +91,11 @@ static int getmvars = 0;			//!< flag set at initialization to send m vars to db
 lspmac_bi_t lspmac_bis[32];			//!< array of binary inputs
 int lspmac_nbis = 0;				//!< number of active binary inputs
 
-lspmac_motor_t lspmac_motors[48];		//!< All our motors
+#define LSPMAC_MAX_MOTORS 48
+lspmac_motor_t lspmac_motors[LSPMAC_MAX_MOTORS];//!< All our motors
 int lspmac_nmotors = 0;				//!< The number of motors we manage
+struct hsearch_data motors_ht;			//!< A hash table to find motors by name
+
 lspmac_motor_t *omega;				//!< MD2 omega axis (the air bearing)
 lspmac_motor_t *alignx;				//!< Alignment stage X
 lspmac_motor_t *aligny;				//!< Alignment stage Y
@@ -2328,27 +2338,50 @@ int lspmac_movezoom_queue(
 			   lspmac_motor_t *mp,			/**< [in] the zoom motor		*/
 			   double requested_position		/**< [in] our desired zoom		*/
 			   ) {
-  double y;
   int motor_num;
+  int in_position_band;
 
+  lslogging_log_message( "lspmac_movezoom_queue: Here I am");
   pthread_mutex_lock( &(mp->mutex));
 
-  motor_num = lsredis_getl( mp->motor_num);
+  motor_num        = lsredis_getl( mp->motor_num);
+  in_position_band = lsredis_getl( mp->in_position_band);
 
   mp->requested_position = requested_position;
 
   if( mp->nlut > 0 && mp->lut != NULL) {
-    y = lspmac_lut( mp->nlut, mp->lut, requested_position);
+    mp->requested_pos_cnts = lspmac_lut( mp->nlut, mp->lut, requested_position);
 
-    mp->requested_pos_cnts = (int)y;
+    if( abs( mp->requested_pos_cnts - mp->actual_pos_cnts) * 16 <= in_position_band) {
+      lslogging_log_message( "lspmac_movezoom_queue: Faking move");
+      //
+      // fake the move
+      //
+      mp->not_done     = 1;
+      mp->motion_seen  = 0;
+      mp->command_sent = 1;
+      lsevents_send_event( "zoom Moving");
+      pthread_mutex_unlock( &(mp->mutex));
+
+      //
+      // Perhaps give someone else a chance to process the move
+      //
+      pthread_mutex_lock( &(mp->mutex));
+      mp->not_done     = 0;
+      mp->motion_seen  = 1;
+      mp->command_sent = 1;
+      lsevents_send_event( "zoom In Position");
+      pthread_mutex_unlock( &(mp->mutex));
+      return 0;
+    }
+
     mp->not_done    = 1;
     mp->motion_seen = 0;
-
-
+    
     lspmac_SockSendDPline( mp->name, "#%d j=%d", motor_num, mp->requested_pos_cnts);
-
   }
   pthread_mutex_unlock( &(mp->mutex));
+  lslogging_log_message( "lspmac_movezoom_queue: There you were");
   return 0;
 }
 
@@ -2657,81 +2690,81 @@ int lspmac_est_move_time( double *est_time, int *mmask, lspmac_motor_t *mp_1, in
   va_start( arg_ptr, end_point_1);
   while( 1) {
     /*
-      :                  |       Constant       |
-      :                  |<---   Velocity   --->|
-      :                  |       Time (Ct)      |
-      V :                   ----------------------              ---------
-      e :                 /                        \               ^
-      l :                /                          \              |
-      o :               /                            \             |
-      c :              /                              \            V
-      i :             /                                \           |
-      t :            /                                  \          |
-      y :___________/....................................\_________v___________
-      |      |         Time              
-      |      |
-      -->|      |<-- Acceleration Time  (At)
-      |
-      |<-----    Total  Time (Tt)  ------->|
-
-      Assumption 1: We can replace S curve acceleration with linear acceleration
-      for the purposes of distance and time calculations for the timeout
-      period that we are attempting to calculate here.
-
-      Ct  = Constant Velocity Time.  The time spent at constant velocity.
-
-      At  = Acceleration Time.  Time spent accelerating at either end of the ramp, that is,
-      1/2 the total time spent accelerating and decelerating.
-
-      D   = the total distance we need to travel
-
-      V   = constant velocity.  Here we use the motor's maximum velocity.
-
-      A   = the motor acceleration, Here it's the maximum acceleration.
-
-      V = A * At   
-
-      or  At = V/A
-
-      The Total Time (Tt) is
-
-      Tt = Ct + 2 * At
-
-
-
-      If we had infinite acceleration the total time would be D/V.  To account for finite acceleration we just need to
-      adjust this for the average velocity while accelerating (0.5 V).  This neatly adds a single V/A term:
-
-      (1)     Tt = D/V  + V/A
-
-      When the distance is short, we need a different calculation:
-
-      D = 0.5 * A * T1^2  + 0.5 * A * T2^2  (T1 = acceleration time and T2 = deceleration time)
-
-      or, since total time  Tt = T1 + T2 and T1 = T2,
-
-      D = A * (0.5*Tt)^2
-
-      or
-      
-      (2)    Tt = 2 * sqrt( D/A)
-
-
-      When we accelerate to the maximum speed the time it takes is V/A so the distance we travel (Da) is
-
-      Da = 0.5 * A * (V/A)^2
-
-      or
-
-      Da = 0.5 * V^2 / A
-
-      So when D > 2 * Da, or
-
-      D > V^2 / A
-         
-      we need to use equation (1) otherwise we need to use equation (2)
-
-    */
+     *    :                  |       Constant       |
+     *    :                  |<---   Velocity   --->|
+     *    :                  |       Time (Ct)      |
+     *  V :                   ----------------------              ---------
+     *  e :                 /                        \               ^
+     *  l :                /                          \              |
+     *  o :               /                            \             |
+     *  c :              /                              \            V
+     *  i :             /                                \           |
+     *  t :            /                                  \          |
+     *  y :___________/....................................\_________v___________
+     *                |      |         Time              
+     *                |      |
+     *             -->|      |<-- Acceleration Time  (At)
+     *                |
+     *                |<-----    Total  Time (Tt)  ------->|
+     *
+     *      Assumption 1: We can replace S curve acceleration with linear acceleration
+     *      for the purposes of distance and time calculations for the timeout
+     *      period that we are attempting to calculate here.
+     *
+     *      Ct  = Constant Velocity Time.  The time spent at constant velocity.
+     *
+     *      At  = Acceleration Time.  Time spent accelerating at either end of the ramp, that is,
+     *      1/2 the total time spent accelerating and decelerating.
+     *
+     *      D   = the total distance we need to travel
+     *
+     *      V   = constant velocity.  Here we use the motor's maximum velocity.
+     *
+     *      A   = the motor acceleration, Here it's the maximum acceleration.
+     *
+     *      V = A * At   
+     *
+     *      or  At = V/A
+     *
+     *      The Total Time (Tt) is
+     *
+     *      Tt = Ct + 2 * At
+     *
+     *
+     *
+     *      If we had infinite acceleration the total time would be D/V.  To account for finite acceleration we just need to
+     *      adjust this for the average velocity while accelerating (0.5 V).  This neatly adds a single V/A term:
+     *
+     *      (1)     Tt = D/V  + V/A
+     *
+     *      When the distance is short, we need a different calculation:
+     *
+     *      D = 0.5 * A * T1^2  + 0.5 * A * T2^2  (T1 = acceleration time and T2 = deceleration time)
+     *
+     *      or, since total time  Tt = T1 + T2 and T1 = T2,
+     *
+     *      D = A * (0.5*Tt)^2
+     *
+     *      or
+     *      
+     *      (2)    Tt = 2 * sqrt( D/A)
+     *
+     *
+     *      When we accelerate to the maximum speed the time it takes is V/A so the distance we travel (Da) is
+     *
+     *      Da = 0.5 * A * (V/A)^2
+     *
+     *      or
+     *
+     *      Da = 0.5 * V^2 / A
+     *
+     *      So when D > 2 * Da, or
+     *
+     *      D > V^2 / A
+     *         
+     *      we need to use equation (1) otherwise we need to use equation (2)
+     *
+     */
 
     Tt = 0.0;
     if( mp != NULL && mp->max_speed != NULL && mp->max_accel != NULL && mp->u2c != NULL) {
@@ -2785,7 +2818,7 @@ int lspmac_est_move_time( double *est_time, int *mmask, lspmac_motor_t *mp_1, in
 	  Tt = fabs(D)/V + V/A;
 	} else {
 	  //
-	  // Never reach constantanve velocity, just ramp up a bit and back down
+	  // Never reach constantant velocity, just ramp up a bit and back down
 	  //
 	  Tt = 2.0 * sqrt( fabs(D)/A);
 	}
@@ -3032,34 +3065,42 @@ int lspmac_move_or_jog_abs_queue(
 
   mp->requested_position = requested_position;
   if( mp->nlut > 0 && mp->lut != NULL) {
-    mp->requested_pos_cnts = (int)lspmac_lut( mp->nlut, mp->lut, requested_position);
+    mp->requested_pos_cnts = lspmac_lut( mp->nlut, mp->lut, requested_position);
   } else {
     mp->requested_pos_cnts = u2c * (requested_position + neutral_pos);
   }
   requested_pos_cnts = mp->requested_pos_cnts;
 
   //
-  // Only consider bluffing for coordinated moves.
+  // Bluff if we are already there
   //
-  if( !use_jog) {
-    if( (abs( requested_pos_cnts - mp->actual_pos_cnts) * 16 < in_position_band) || (lsredis_getb( mp->active) != 1)) {
-      //
-      // Lie and say we moved even though we didn't.  Who will know? We are within the deadband or not active.
-      //
-      mp->not_done     = 0;
-      mp->motion_seen  = 1;
-      mp->command_sent = 1;
+  if( (abs( requested_pos_cnts - mp->actual_pos_cnts) * 16 < in_position_band) || (lsredis_getb( mp->active) != 1)) {
+    //
+    // Lie and say we moved even though we didn't.  Who will know? We are within the deadband or not active.
+    //
+    mp->not_done     = 1;
+    mp->motion_seen  = 0;
+    mp->command_sent = 0;
 
-      if( lsredis_getb( mp->active) != 1) {
-	//
-	// fake the motion for simulated motors
-	//
-	mp->position = requested_position;
-	mp->actual_pos_cnts = requested_pos_cnts;
-      }
-      pthread_mutex_unlock( &(mp->mutex));
-      return 0;
+    lsevents_send_event( "%s Moving", mp->name);
+
+    mp->not_done     = 0;
+    mp->motion_seen  = 1;
+    mp->command_sent = 1;
+    
+
+
+    if( lsredis_getb( mp->active) != 1) {
+      //
+      // fake the motion for simulated motors
+      //
+      mp->position = requested_position;
+      mp->actual_pos_cnts = requested_pos_cnts;
     }
+    pthread_mutex_unlock( &(mp->mutex));
+
+    lsevents_send_event( "%s In Position", mp->name);
+    return 0;
   }
 
   mp->not_done     = 1;
@@ -3351,6 +3392,7 @@ void _lspmac_motor_init( lspmac_motor_t *d, char *name) {
   d->win                 = NULL;
   d->read                = NULL;
   d->reported_position   = INFINITY;
+  d->reported_pg_position= INFINITY;
 }
 
 
@@ -3493,6 +3535,9 @@ void lspmac_init(
 		 int ivarsflag,		/**< [in]  Set global flag to harvest i variables			*/
 		 int mvarsflag		/**< [in]  Set global flag to harvest m variables			*/
 		 ) {
+  int i;
+  int err;
+  ENTRY entry_in, *entry_outp;
   md2_status_t *p;
   pthread_mutexattr_t mutex_initializer;
 
@@ -3568,11 +3613,29 @@ void lspmac_init(
   smart_mag_off   = lspmac_bi_init( &(lspmac_bis[16]), &(md2_status.acc11c_5),  0x01, "Smart Magnet Off",     "Smart Magnet Not Off");
   
 
+
+  // Set up hash table
+  //
+  err = hcreate_r( LSPMAC_MAX_MOTORS * 2, &motors_ht);
+  if( err == 0) {
+    lslogging_log_message( "lspmac_init: hcreate_r failed: '%s'", strerror( errno));
+    exit( -1);
+  }
+  for( i=0; i<lspmac_nmotors; i++) {
+    entry_in.key   = lspmac_motors[i].name;
+    entry_in.data  = &(lspmac_motors[i]);
+    err = hsearch_r( entry_in, ENTER, &entry_outp, &motors_ht);
+    if( err == 0) {
+      lslogging_log_message( "lspmac_init: hsearch_r failed for motor %s: '%s'", lspmac_motors[i].name, strerror( errno));
+      exit( -1);
+    }
+  }
+
+
+
   //
   // Initialize several commands that get called, perhaps, alot
   //
-  
-
   rr_cmd.RequestType = VR_UPLOAD;
   rr_cmd.Request     = VR_PMAC_READREADY;
   rr_cmd.wValue      = 0;
@@ -3688,7 +3751,9 @@ void lspmac_backLight_down_cb( char *event) {
 void lspmac_light_zoom_cb( char *event) {
   int z;
 
-  z = (int)(lspmac_getPosition( zoom));
+  pthread_mutex_lock( &zoom->mutex);
+  z = zoom->requested_position;
+  pthread_mutex_unlock( &zoom->mutex);
 
   lslogging_log_message( "lspmac_light_zoom_cb: zoom = %d", z);
 
@@ -3894,21 +3959,41 @@ void lspmac_fscint_lut_setup() {
   pthread_mutex_unlock( &fscint->mutex);
 }
 
+lspmac_motor_t *lspmac_find_motor_by_name( char *name) {
+  lspmac_motor_t *rtn;
+  ENTRY entry_in, *entry_outp;
+  int err;
+  
+  entry_in.key  = name;
+  entry_in.data = NULL;
+  err = hsearch_r( entry_in, FIND, &entry_outp, &motors_ht);
+  if( err == 0) {
+    lslogging_log_message( "lspmac_find_motor_by_name: hsearch_r failed for motor '%s': %s", name, strerror( errno));
+    return NULL;
+  }    
+  rtn = entry_outp->data;
+
+  return rtn;
+}
+
 void lspmac_command_done_cb( char *event) {
   int i;
+  char s[32];
   lspmac_motor_t *mp;
 
-  // O(n).  Bad.
-  //
-  for( i=0; i<lspmac_nmotors; i++) {
-    if( strncmp( lspmac_motors[i].name, event, strlen( lspmac_motors[i].name)) == 0)
+  s[0] = 0;
+  for( i=0; i<sizeof(s)-1 && event[i]; i++) {
+    s[i] = 0;
+    if( event[i] == ' ')
       break;
+    s[i] = event[i];
   }
 
-  if( i >= lspmac_nmotors)
+  mp = lspmac_find_motor_by_name( s);
+
+  if( mp == NULL)
     return;
 
-  mp = &(lspmac_motors[i]);
   pthread_mutex_lock( &(mp->mutex));
 
   mp->command_sent = 1;
@@ -3939,7 +4024,7 @@ void lspmac_run() {
   lsevents_add_listener( "scintDried",           lspmac_scint_dried_cb);
   lsevents_add_listener( "backLight 1",	         lspmac_backLight_up_cb);
   lsevents_add_listener( "backLight 0",	         lspmac_backLight_down_cb);
-  lsevents_add_listener( "cam.zoom In Position", lspmac_light_zoom_cb);
+  lsevents_add_listener( "cam.zoom Moving",      lspmac_light_zoom_cb);
 
   for( i=0; i<lspmac_nmotors; i++) {
     snprintf( evts, sizeof( evts)-1, "%s command accepted", lspmac_motors[i].name);
