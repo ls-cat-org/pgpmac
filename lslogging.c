@@ -71,6 +71,15 @@ void lslogging_log_message( char *fmt, ...) {
   
 }
 
+/** Log most events
+ */
+void lslogging_event_cb( char *event) {
+  if( strcmp( event, "Timer Update KVs") != 0) {
+    lslogging_log_message( "EVENT: %s", event);
+  }
+}
+
+
 /** Service the queue, write to the file.
  */
 void *lslogging_worker(
@@ -105,4 +114,5 @@ void *lslogging_worker(
 void lslogging_run() {
   pthread_create( &lslogging_thread, NULL, &lslogging_worker, NULL);
   lslogging_log_message( "Start up");
+  lsevents_add_listener( ".+", lslogging_event_cb);
 }
