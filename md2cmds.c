@@ -33,6 +33,9 @@ static double md2cmds_capz_moving_time = NAN;
 
 static struct hsearch_data md2cmds_hmap;
 
+static regex_t md2cmds_cmd_regex;
+
+
 typedef struct md2cmds_cmd_kv_struct {
   char *k;
   int (*v)( const char *);
@@ -42,9 +45,12 @@ int md2cmds_abort(        const char *);
 int md2cmds_center(       const char *);
 int md2cmds_collect(      const char *);
 int md2cmds_moveAbs(      const char *);
+int md2cmds_moveRel(      const char *);
 int md2cmds_phase_change( const char *);
-int md2cmds_test(         const char *);
+int md2cmds_run_cmd(      const char *);
 int md2cmds_rotate(       const char *);
+int md2cmds_set(          const char *);
+int md2cmds_test(         const char *);
 int md2cmds_transfer(     const char *);
 
 static md2cmds_cmd_kv_t md2cmds_cmd_kvs[] = {
@@ -53,8 +59,11 @@ static md2cmds_cmd_kv_t md2cmds_cmd_kvs[] = {
   { "changeMode", md2cmds_phase_change},
   { "collect",    md2cmds_collect},
   { "moveAbs",    md2cmds_moveAbs},
+  { "moveRel",    md2cmds_moveRel},
   { "rotate",     md2cmds_rotate},
+  { "run",        md2cmds_run_cmd},
   { "test",       md2cmds_test},
+  { "set",        md2cmds_set},
   { "transfer",   md2cmds_transfer}
 };
 
@@ -452,7 +461,6 @@ int md2cmds_moveAbs(
   double fpos;
   char *endptr;
   lspmac_motor_t *mp;
-  int i;
   int err;
 
   // ignore nothing
@@ -478,27 +486,21 @@ int md2cmds_moveAbs(
   
   mtr = strtok_r( NULL, " ", &ptr);
   if( mtr == NULL) {
-    lslogging_log_message( "md2cmds moveAbs error: missing motor name");
+    lslogging_log_message( "md2cmds_moveAbs: missing motor name");
     free( cmd);
     return 1;
   }
 
-  mp = NULL;
-  for( i=0; i<lspmac_nmotors; i++) {
-    if( strcmp( lspmac_motors[i].name, mtr) == 0) {
-      mp = &(lspmac_motors[i]);
-      break;
-    }
-  }
+  mp = lspmac_find_motor_by_name( mtr);
   if( mp == NULL) {
-    lslogging_log_message( "md2cmds moveAbs error: cannot find motor %s", mtr);
+    lslogging_log_message( "md2cmds_moveAbs: cannot find motor %s", mtr);
     free( cmd);
     return 1;
   }
 
   pos = strtok_r( NULL, " ", &ptr);
   if( pos == NULL) {
-    lslogging_log_message( "md2cmds moveAbs error: missing position");
+    lslogging_log_message( "md2cmds_moveAbs: missing position");
     free( cmd);
     return 1;
   }
@@ -523,6 +525,87 @@ int md2cmds_moveAbs(
   free( cmd);
   return err;
 }
+
+/** Move a motor to the position requested
+ *  Returns non zero on error
+ */
+int md2cmds_moveRel(
+		     const char *ccmd			/**< [in] The full command string to parse, ie, "moveAbs omega 180"	*/
+		     ) {
+  char *cmd;
+  char *ignore;
+  char *ptr;
+  char *mtr;
+  char *pos;
+  double fpos;
+  char *endptr;
+  lspmac_motor_t *mp;
+  int err;
+
+  // ignore nothing
+  if( ccmd == NULL || *ccmd == 0) {
+    return 1;
+  }
+
+  // operate on a copy of the string since strtok_r will modify its argument
+  //
+  cmd = strdup( ccmd);
+
+  // Parse the command string
+  //
+  ignore = strtok_r( cmd, " ", &ptr);
+  if( ignore == NULL) {
+    lslogging_log_message( "md2cmds_moveAbs: ignoring blank command '%s'", cmd);
+    free( cmd);
+    return 1;
+  }
+
+  // The first string should be "moveAbs" cause that's how we got here.
+  // Toss it.
+  
+  mtr = strtok_r( NULL, " ", &ptr);
+  if( mtr == NULL) {
+    lslogging_log_message( "md2cmds_moveRel: missing motor name");
+    free( cmd);
+    return 1;
+  }
+
+  mp = lspmac_find_motor_by_name( mtr);
+
+  if( mp == NULL) {
+    lslogging_log_message( "md2cmds_moveRel: cannot find motor %s", mtr);
+    free( cmd);
+    return 1;
+  }
+
+  pos = strtok_r( NULL, " ", &ptr);
+  if( pos == NULL) {
+    lslogging_log_message( "md2cmds_moveRel: missing position");
+    free( cmd);
+    return 1;
+  }
+
+  fpos = strtod( pos, &endptr);
+  if( pos == endptr) {
+    //
+    // No incrememtnal position found
+    //
+    lslogging_log_message( "md2cmds_moveRel: no new position requested");
+    return 1;
+  }
+
+  if( mp != NULL && mp->moveAbs != NULL) {
+    wprintw( term_output, "Moving %s by %f\n", mtr, fpos);
+    wnoutrefresh( term_output);
+    err = mp->moveAbs( mp, lspmac_getPosition(mp) + fpos);
+  }
+
+  free( cmd);
+  return err;
+}
+
+
+
 
 
 /** Move md2 devices to a preconfigured state.
@@ -1119,7 +1202,7 @@ int md2cmds_rotate( const char *dummy) {
       cy  += lspg_getcenter.dcy;
 
     //
-    // Slightly complicated proceedure for alignment stage since we might want to update
+    // Slightly complicated procedure for alignment stage since we might want to update
     // the presets.  Use the preset Back_Vector to calculate the new Back preset from our
     // current position.
     //
@@ -1177,16 +1260,19 @@ int md2cmds_rotate( const char *dummy) {
 			    alignz, 0,  NULL, az,
 			    zoom,   1,  NULL, zm,
 			    NULL)) {
+    lslogging_log_message( "md2cmds_rotate: organ motion request failed");
     lsevents_send_event( "Rotate Aborted");
     return 1;
   }
 
   if( lspmac_est_move_time_wait( move_time + 2.0, mmask)) {
+    lslogging_log_message( "md2cmds_rotate: organ motion timed out %f seconds", move_time + 2.0);
     lsevents_send_event( "Rotate Aborted");
     return 1;
   }
 
   if( lspmac_moveabs_wait( zoom, move_time + 2.0)) {
+    lslogging_log_message( "md2cmds_rotate: zoom timed out %f seconds", move_time + 2.0);
     lsevents_send_event( "Rotate Aborted");
     return 1;
   }
@@ -1248,9 +1334,10 @@ void md2cmds_set_scale_cb( char *event) {
   lsredis_obj_t *p1, *p2;
   char *vp;
 
-  mag = lspmac_getPosition( zoom);
+  pthread_mutex_lock( &zoom->mutex);
+  mag = zoom->requested_position;
+  pthread_mutex_unlock( &zoom->mutex);
   
-
   p1  = lsredis_get_obj( "cam.xScale");
   p2  = lsredis_get_obj( "cam.zoom.%d.ScaleX", mag);
 
@@ -1388,6 +1475,118 @@ int md2cmds_test( const char *dummy) {
 }
 
 
+int md2cmds_run_cmd( const char *cmd) {
+  int err, i;
+  lspmac_motor_t *mp;
+  regmatch_t pmatch[16];
+  char cp[64];
+  
+  if( strlen(cmd) > sizeof( cp)-1) {
+    lslogging_log_message( "md2cmds_set: command too long '%s'", cmd);
+    return 1;
+  }
+  
+  err = regexec( &md2cmds_cmd_regex, cmd, 16, pmatch, 0);
+  if( err) {
+    lslogging_log_message( "md2cmds_set: no match found from '%s'", cmd);
+    return 1;
+  }
+
+  for( i=0; i<16; i++) {
+    if( pmatch[i].rm_so == -1)
+      continue;
+    lslogging_log_message( "md2cmds_run: %d '%.*s'", i, pmatch[i].rm_eo - pmatch[i].rm_so, cmd+pmatch[i].rm_so);
+  }
+
+  //
+  // get motor name
+  //
+  snprintf( cp, sizeof( cp)-1, "%.*s", pmatch[4].rm_eo - pmatch[4].rm_so, cmd+pmatch[4].rm_so);
+  cp[sizeof( cp)-1] = 0;
+
+  mp = lspmac_find_motor_by_name( cp);
+  if( mp == NULL) {
+    lslogging_log_message( "md2cmds_set: could not find motor '%s'", cp);
+    return 1;
+  }
+
+  if( pmatch[5].rm_so != -1) {
+    if( strncmp( cmd+pmatch[5].rm_so, "home", pmatch[5].rm_eo-pmatch[5].rm_so)==0) {
+      lslogging_log_message( "md2cmds_run_cmd: homing motor '%s'", cp);
+      lspmac_home1_queue( mp);
+    } else if( strncmp( cmd+pmatch[5].rm_so, "stop", pmatch[5].rm_eo-pmatch[5].rm_so)==0) {
+      lslogging_log_message( "md2cmds_run_cmd: stoping motor '%s'", cp);
+      lspmac_abort();
+    }
+  }
+
+
+  return 0;
+}
+
+int md2cmds_set( const char *cmd) {
+  int err;
+  lsredis_obj_t *p;
+  lspmac_motor_t *mp;
+  regmatch_t pmatch[16];
+  char cp[64];
+  char *rp;
+  
+  if( strlen(cmd) > sizeof( cp)-1) {
+    lslogging_log_message( "md2cmds_set: command too long '%s'", cmd);
+    return 1;
+  }
+
+  lslogging_log_message( "md2cmds_set: recieved '%s'", cmd);
+  
+
+  err = regexec( &md2cmds_cmd_regex, cmd, 16, pmatch, 0);
+  if( err) {
+    lslogging_log_message( "md2cmds_set: no match found from '%s'", cmd);
+    return 1;
+  }
+
+  if( pmatch[2].rm_so == -1) {
+    lslogging_log_message( "md2cmds_set: could not parse preset name from '%s'", cmd);
+    return 1;
+  }
+
+  
+  //
+  // get motor name
+  //
+  snprintf( cp, sizeof( cp)-1, "%.*s", pmatch[3].rm_eo - pmatch[3].rm_so, cmd+pmatch[3].rm_so);
+  cp[sizeof( cp)-1] = 0;
+
+  mp = lspmac_find_motor_by_name( cp);
+  if( mp == NULL) {
+    lslogging_log_message( "md2cmds_set: could not find motor '%s'", cp);
+    return 1;
+  }
+
+  //
+  // get redis preset position name
+  //
+
+  p = lsredis_get_obj( "%.*s.position", pmatch[2].rm_eo - pmatch[2].rm_so, cmd+pmatch[2].rm_so);
+  if( p == NULL) {
+    lslogging_log_message( "md2cmds_set: could not find preset name in '%s'", cmd);
+    return 1;
+  }
+    
+  rp = lsredis_getstr( mp->redis_position);
+
+  //
+  // set the preset to the current position
+  //
+  lsredis_setstr( p, "%s", rp);
+  lsevents_send_event( "Preset Changed %s", p->events_name);
+
+  free( rp);
+  return 0;
+}
+
+
 /** Our worker thread
  */
 void *md2cmds_worker(
@@ -1427,7 +1626,7 @@ void *md2cmds_worker(
     errno = 0;
     err = hsearch_r( hsearcher, FIND, &hrtnval, &md2cmds_hmap);
     if( err == 0) {
-      lslogging_log_message( "md2cmds_worker: hsearch_r failed.  theCmd = '%s' Errno: %d: %s", theCmd, errno, strerror( errno));
+      lslogging_log_message( "md2cmds_worker: hsearch_r failed.  theCmd = '%s' from string '%s'", theCmd, md2cmds_cmd);
       md2cmds_cmd[0] = 0;
       continue;
     }
@@ -1482,6 +1681,20 @@ void md2cmds_init() {
   pthread_mutex_init( &md2cmds_homing_mutex, &mutex_initializer);
   pthread_cond_init(  &md2cmds_homing_cond, NULL);
 
+  err = regcomp( &md2cmds_cmd_regex, " *([^ ]+) (([^ ]+)\\.presets\\..)*([^ ]*) *([^ ]*)", REG_EXTENDED);
+  if( err != 0) {
+    int nerrmsg;
+    char *errmsg;
+
+    nerrmsg = regerror( err, &md2cmds_cmd_regex, NULL, 0);
+    if( nerrmsg > 0) {
+      errmsg = calloc( nerrmsg, sizeof( char));
+      nerrmsg = regerror( err, &md2cmds_cmd_regex, errmsg, nerrmsg);
+      lslogging_log_message( "md2cmds_init: %s", errmsg);
+      free( errmsg);
+    }
+  }
+
   md2cmds_md_status_code = lsredis_get_obj( "md2_status_code");
   lsredis_setstr( md2cmds_md_status_code, "7");
 
@@ -1512,5 +1725,5 @@ void md2cmds_run() {
   lsevents_add_listener( "Coordsys 4 Stopped",        md2cmds_coordsys_4_stopped_cb);
   lsevents_add_listener( "Coordsys 5 Stopped",        md2cmds_coordsys_5_stopped_cb);
   lsevents_add_listener( "Coordsys 7 Stopped",        md2cmds_coordsys_7_stopped_cb);
-  lsevents_add_listener( "cam.zoom In Position",      md2cmds_set_scale_cb);
+  lsevents_add_listener( "cam.zoom Moving",	      md2cmds_set_scale_cb);
 }
