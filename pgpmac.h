@@ -567,3 +567,4 @@ extern int lsredis_running;
 extern lsredis_obj_t *_lsredis_get_obj( char *key);
 extern lspmac_motor_t *lspmac_find_motor_by_name( char *name);
 extern int lsredis_find_preset_index_by_position( lspmac_motor_t *mp);
+void lspmac_SockSendDPControlChar( char *event, char c);

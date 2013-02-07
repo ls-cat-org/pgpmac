@@ -608,10 +608,341 @@ int md2cmds_moveRel(
 
 
 
-/** Move md2 devices to a preconfigured state.
- *  EMBL calls these states "phases" and this language is partially retained here
- *
- *  \param ccmd The full text of the command that sent us here
+/** Go to the manual mount phase                                                                                                                                                                                                                                                
+ */
+int md2cmds_phase_manualMount() {
+  double move_time;
+  int mmask, err;
+
+  lsevents_send_event( "Mode manualMount Starting");
+  //                                                                                                                                                                                                                                                                            
+  // Get ready to move some motors                                                                                                                                                                                                                                              
+  //                                                                                                                                                                                                                                                                            
+  md2cmds_move_prep();
+  //                                                                                                                                                                                                                                                                            
+  // Move 'em                                                                                                                                                                                                                                                                   
+  //                                                                                                                                                                                                                                                                            
+  err = lspmac_est_move_time( &move_time, &mmask,
+                              kappa,     0, "manualMount", 0.0,
+                              omega,     0, "manualMount", 0.0,
+                              phi,       0, NULL,          0.0,
+                              aperz,     1, "Cover",       0.0,
+                              capz,      1, "Cover",       0.0,
+                              scint,     1, "Cover",       0.0,
+                              blight,    1, NULL,          0.0,
+                              blight_ud, 1, NULL,          0.0,
+                              cryo,      1, NULL,          1.0,
+                              fluo,      1, NULL,          0.0,
+                              zoom,      0, NULL,          1.0,
+                              NULL);
+
+
+  if( err) {
+    lsevents_send_event( "Mode manualMount Aborted");
+    return err;
+  }
+
+  //                                                                                                                                                                                                                                                                            
+  // Wait for motion programs                                                                                                                                                                                                                                                   
+  //                                                                                                                                                                                                                                                                            
+  err = lspmac_est_move_time_wait( move_time+2.0, mmask);
+  if( err) {
+    lsevents_send_event( "Mode manualMount Aborted");
+    return err;
+  }
+
+  //                                                                                                                                                                                                                                                                            
+  // Wait for jogs                                                                                                                                                                                                                                                              
+  // We've over estimated the move time since we've already waited a bit.                                                                                                                                                                                                       
+  // This would only ever cause problems for really slow motions.                                                                                                                                                                                                               
+  //                                                                                                                                                                                                                                                                            
+  err = md2cmds_move_wait( move_time+2.0);
+  if( err) {
+    lsevents_send_event( "Mode manualMount Aborted");
+    return err;
+  }
+
+  lsevents_send_event( "Mode manualMount Done");
+  return 0;
+}
+
+
+/** Go to robot mount phase                                                                                                                                                                                                                                                     */
+int md2cmds_phase_robotMount() {
+  double move_time;
+  int mmask, err;
+
+  lsevents_send_event( "Mode robotMount Starting");
+  //                                                                                                                                                                                                                                                                            
+  // Get ready to move some motors                                                                                                                                                                                                                                              
+  //                                                                                                                                                                                                                                                                            
+  md2cmds_move_prep();
+  md2cmds_home_prep();
+  //                                                                                                                                                                                                                                                                            
+  // Move 'em                                                                                                                                                                                                                                                                   
+  //                                                                                                                                                                                                                                                                            
+  lspmac_home1_queue( kappa);
+  lspmac_home1_queue( omega);
+
+  err = lspmac_est_move_time( &move_time, &mmask,
+                              phi,       0, NULL,    0.0,
+                              apery,     1, "In",    0.0,
+                              aperz,     1, "In",    0.0,
+                              capz,      1, "Cover", 0.0,
+                              scint,     1, "Cover", 0.0,
+                              blight,    1, NULL,    0.0,
+                              blight_ud, 1, NULL,    0.0,
+                              cryo,      1, NULL,    1.0,
+                              fluo,      1, NULL,    0.0,
+                              zoom,      0, NULL,    1.0,
+                              NULL);
+
+  err = lspmac_est_move_time_wait( move_time + 2.0, mmask);
+  if( err) {
+    lsevents_send_event( "Mode robotMount Aborted");
+    return err;
+  }
+
+  err = md2cmds_move_wait( move_time + 2.0);
+  if( err) {
+    lsevents_send_event( "Mode robotMount Aborted");
+    return err;
+  }
+
+  err = md2cmds_home_wait( 60.0);
+  if( err) {
+    lsevents_send_event( "Mode robotMount Aborted");
+    return err;
+  }
+
+  lsevents_send_event( "Mode robotMount Done");
+  return 0;
+}
+
+/** Go to center phase                                                                                                                                                                                                                                                          
+ */
+int md2cmds_phase_center() {
+  double move_time;
+  int mmask, err;
+
+  lsevents_send_event( "Mode center Starting");
+  //                                                                                                                                                                                                                                                                            
+  // Get ready to move some motors                                                                                                                                                                                                                                              
+  //                                                                                                                                                                                                                                                                            
+  md2cmds_move_prep();
+  //                                                                                                                                                                                                                                                                            
+  // Move 'em                                                                                                                                                                                                                                                                   
+  //                                                                                                                                                                                                                                                                            
+  err = lspmac_est_move_time( &move_time, &mmask,
+                              omega,     0, NULL,    0.0,
+                              kappa,     0, NULL,    0.0,
+                              phi,       0, NULL,    0.0,
+                              apery,     0, "In",    0.0,
+                              aperz,     0, "In",    0.0,
+                              capy,      0, "In",    0.0,
+                              capz,      0, "In",    0.0,
+                              scint,     0, "Cover", 0.0,
+                              blight_ud, 1, NULL,    0.0,
+                              zoom,      0, NULL,    1.0,
+                              cryo,      1, NULL,    0.0,
+                              fluo,      1, NULL,    0.0,
+                              NULL);
+  if( err) {
+    lsevents_send_event( "Mode center Aborted");
+    return err;
+  }
+
+  err = lspmac_est_move_time_wait( move_time + 2.0, mmask);
+  if( err) {
+    lsevents_send_event( "Mode center Aborted");
+    return err;
+  }
+
+  lsevents_send_event( "Mode center Done");
+  return 0;
+}
+
+
+/** Go to data collection phase                                                                                                                                                                                                                                                 
+ */
+int md2cmds_phase_dataCollection() {
+  double move_time;
+  int mmask, err;
+
+  lsevents_send_event( "Mode dataCollection Starting");
+  //                                                                                                                                                                                                                                                                            
+  // Get ready to move some motors                                                                                                                                                                                                                                              
+  //                                                                                                                                                                                                                                                                            
+  md2cmds_move_prep();
+  //                                                                                                                                                                                                                                                                            
+  // Move 'em                                                                                                                                                                                                                                                                   
+  //                                                                                                                                                                                                                                                                            
+  err = lspmac_est_move_time( &move_time, &mmask,
+                              apery,     1, "In",     0.0,
+                              aperz,     1, "In",     0.0,
+                              capy,      1, "In",     0.0,
+                              capz,      1, "In",     0.0,
+                              scint,     1, "Cover",  0.0,
+                              blight,    1, NULL,     0.0,
+                              blight_ud, 1, NULL,     0.0,
+                              cryo,      1, NULL,     0.0,
+                              fluo,      1, NULL,     0.0,
+                              NULL);
+  if( err) {
+    lsevents_send_event( "Mode dataCollection Aborted");
+    return err;
+  }
+
+  err = lspmac_moveabs_wait( apery, move_time+2);
+  if( err) {
+    lsevents_send_event( "Mode dataCollection Aborted");
+    return err;
+  }
+
+  err = lspmac_moveabs_wait( aperz, move_time+2);
+  if( err) {
+    lsevents_send_event( "Mode dataCollection Aborted");
+    return err;
+  }
+
+  err = lspmac_moveabs_wait( capy, move_time+2);
+  if( err) {
+    lsevents_send_event( "Mode dataCollection Aborted");
+    return err;
+  }
+
+  err = lspmac_moveabs_wait( capz, move_time+2);
+  if( err) {
+    lsevents_send_event( "Mode dataCollection Aborted");
+    return err;
+  }
+
+  err = lspmac_moveabs_wait( scint, move_time+2);
+  if( err) {
+    lsevents_send_event( "Mode dataCollection Aborted");
+    return err;
+  }
+
+  lsevents_send_event( "Mode dataCollection Done");
+  return 0;
+}
+
+
+/** Go to beam location phase                                                                                                                                                                                                                                                   
+ */
+int md2cmds_phase_beamLocation() {
+  double move_time;
+  int mmask, err;
+
+  lsevents_send_event( "Mode beamLocation Starting");
+  //                                                                                                                                                                                                                                                                            
+  // Get ready to move some motors                                                                                                                                                                                                                                              
+  //                                                                                                                                                                                                                                                                            
+  md2cmds_move_prep();
+
+  //                                                                                                                                                                                                                                                                            
+  // Move 'em                                                                                                                                                                                                                                                                   
+  //                                                                                                                                                                                                                                                                            
+  err = lspmac_est_move_time( &move_time, &mmask,
+                              //motor   jog, preset,      position if no preset                                                                                                                                                                                                 
+                              kappa,      0, NULL,           0.0,
+                              omega,      0, NULL,           0.0,
+                              apery,      0, "In",           0.0,
+                              aperz,      0, "In",           0.0,
+                              capy,       0, "In",           0.0,
+                              capz,       0, "In",           0.0,
+                              scint,      0, "Scintillator", 0.0,
+                              blight,     1, NULL,           0.0,
+                              blight_ud,  1, NULL,           0.0,
+                              zoom,       0, NULL,           1.0,
+                              cryo,       1, NULL,           0.0,
+                              fluo,       1, NULL,           0.0,
+                              NULL);
+  if( err) {
+    lsevents_send_event( "Mode beamLocation Aborted");
+    return err;
+  }
+
+  err = lspmac_est_move_time_wait( move_time + 2.0, mmask);
+  if( err) {
+    lsevents_send_event( "Mode beamLocation Aborted");
+    return err;
+  }
+
+  //                                                                                                                                                                                                                                                                            
+  // This should be redundant, at least until someone changes a jog=0 to a jog=1 for a real motor                                                                                                                                                                               
+  //                                                                                                                                                                                                                                                                            
+  err = md2cmds_move_wait( move_time + 2.0);
+  if( err) {
+    lsevents_send_event( "Mode beamLocation Aborted");
+    return err;
+  }
+
+
+  lsevents_send_event( "Mode beamLocation Done");
+  return 0;
+}
+
+
+/** Go to safe phase                                                                                                                                                                                                                                                            
+ */
+int md2cmds_phase_safe() {
+  double move_time;
+  int mmask, err;
+
+  lsevents_send_event( "Mode safe Starting");
+  //                                                                                                                                                                                                                                                                            
+  // Get ready to move some motors                                                                                                                                                                                                                                              
+  //                                                                                                                                                                                                                                                                            
+  md2cmds_move_prep();
+
+  //                                                                                                                                                                                                                                                                            
+  // Move 'em                                                                                                                                                                                                                                                                   
+  //                                                                                                                                                                                                                                                                            
+  err = lspmac_est_move_time( &move_time, &mmask,
+                              //motor   jog, preset,      position if no preset                                                                                                                                                                                                 
+                              kappa,      0, NULL,           0.0,
+                              omega,      0, NULL,           0.0,
+                              apery,      1, "In",           0.0,
+                              aperz,      1, "Cover",        0.0,
+                              capy,       1, "In",           0.0,
+                              capz,       1, "Cover",        0.0,
+                              scint,      1, "Cover",        0.0,
+                              blight,     1, NULL,           0.0,
+                              blight_ud,  1, NULL,           0.0,
+                              zoom,       0, NULL,           1.0,
+                              cryo,       1, NULL,           0.0,
+                              fluo,       1, NULL,           0.0,
+                              NULL);
+
+
+  if( err) {
+    lsevents_send_event( "Mode safe Aborted");
+    return err;
+  }
+
+  err = lspmac_est_move_time_wait( move_time + 2.0, mmask);
+  if( err) {
+    lsevents_send_event( "Mode safe Aborted");
+    return err;
+  }
+
+  err =  md2cmds_move_wait( move_time + 2.0);
+  if( err) {
+    lsevents_send_event( "Mode safe Aborted");
+    return err;
+  }
+
+  lsevents_send_event( "Mode safe Done");
+  return 0;
+}
+
+
+
+/** Move md2 devices to a preconfigured state.                                                                                                                                                                                                                                  
+ *  EMBL calls these states "phases" and this language is partially retained here                                                                                                                                                                                               
+ *                                                                                                                                                                                                                                                                              
+ *  \param ccmd The full text of the command that sent us here                                                                                                                                                                                                                  
  */
 int md2cmds_phase_change( const char *ccmd) {
   char *cmd;
@@ -619,12 +950,12 @@ int md2cmds_phase_change( const char *ccmd) {
   char *ptr;
   char *mode;
   int err;
-  
+
   if( ccmd == NULL || *ccmd == 0)
     return 1;
 
-  // use a copy as strtok_r modifies the string it is parsing
-  //
+  // use a copy as strtok_r modifies the string it is parsing                                                                                                                                                                                                                   
+  //                                                                                                                                                                                                                                                                            
   cmd = strdup( ccmd);
 
   ignore = strtok_r( cmd, " ", &ptr);
@@ -634,157 +965,45 @@ int md2cmds_phase_change( const char *ccmd) {
     return 1;
   }
 
-  //
-  // ignore should point to "mode" cause that's how we got here.  Ignore it
-  //
+  //                                                                                                                                                                                                                                                                            
+  // ignore should point to "mode" cause that's how we got here.  Ignore it                                                                                                                                                                                                     
+  //                                                                                                                                                                                                                                                                            
   mode = strtok_r( NULL, " ", &ptr);
   if( mode == NULL) {
     lslogging_log_message( "md2cmds_phase_change: no mode specified");
-    free( cmd);
     return 1;
   }
-  
-  if( strcmp( mode, "manualMount") == 0) {
-    lsevents_send_event( "Mode manualMount Starting");
 
-    //
-    // Try all motions, flag errors at the end
-    //
-    md2cmds_move_prep();
-    err =  lspmac_move_or_jog_preset_queue( kappa, "manualMount", 1);
-    err += lspmac_move_or_jog_preset_queue( omega, "manualMount", 0);
-    err += lspmac_move_or_jog_abs_queue( phi,   0.0, 0);
-    err += lspmac_move_or_jog_preset_queue( aperz, "Cover", 1);
-    err += lspmac_move_or_jog_preset_queue( capz,  "Cover", 1);
-    err += lspmac_move_or_jog_preset_queue( scint, "Cover", 1);
-    err += md2cmds_moveAbs( "moveAbs backLight 0");
-    err += md2cmds_moveAbs( "moveAbs backLight.intensity 0");
-    err += md2cmds_moveAbs( "moveAbs cryo 1");
-    err += md2cmds_moveAbs( "moveAbs fluo 0");
-    err += md2cmds_moveAbs( "moveAbs cam.zoom 1");
-
-    if( md2cmds_move_wait( 60.0) || err)
-      lsevents_send_event( "Mode manualMount Aborted");
-    else
-      lsevents_send_event( "Mode manualMount Done");
-
-  } else if( strcmp( mode, "robotMount") == 0) {
-
-    lsevents_send_event( "Mode robotMount Starting");
-    md2cmds_home_prep();
-    md2cmds_move_prep();
-    lspmac_home1_queue( kappa);
-    lspmac_home1_queue( omega);
-    lspmac_move_or_jog_abs_queue( phi,  0.0, 0);
-    lspmac_move_or_jog_preset_queue( apery, "In", 1);
-    lspmac_move_or_jog_preset_queue( aperz, "In", 1);
-    lspmac_move_or_jog_preset_queue( capz,  "Cover", 1);
-    lspmac_move_or_jog_preset_queue( scint, "Cover", 1);
-    md2cmds_moveAbs( "moveAbs backLight 0");
-    md2cmds_moveAbs( "moveAbs backLight.intensity 0");
-    md2cmds_moveAbs( "moveAbs cryo 1");
-    md2cmds_moveAbs( "moveAbs fluo 0");
-    md2cmds_moveAbs( "moveAbs cam.zoom 1");
-    if( md2cmds_home_wait( 60.0)) {
-      lsevents_send_event( "Mode robotMount Aborted");
-    } else {
-      if( md2cmds_move_wait( 60.0))
-	lsevents_send_event( "Mode robotMount Aborted");
-      else
-	lsevents_send_event( "Mode robotMount Done");
+  if( md2cmds_is_moving()) {
+    int err;
+    lspmac_SockSendDPControlChar( "Aborting Motions", '\x01');
+    err = md2cmds_move_wait( 2.0);
+    if( err) {
+      lslogging_log_message( "md2cmds_phase_change: Timed out waiting for previous moves to finish");
+      return 1;
     }
-  } else if( strcmp( mode, "center") == 0) {
-    lsevents_send_event( "Mode center Starting");
-
-    md2cmds_move_prep();
-    md2cmds_moveAbs( "moveAbs kappa 0");
-    md2cmds_moveAbs( "moveAbs omega 0");
-    lspmac_move_or_jog_abs_queue(    phi,   0.0, 0);
-    lspmac_move_or_jog_preset_queue( apery, "In", 1);
-    lspmac_move_or_jog_preset_queue( aperz, "In", 1);
-    lspmac_move_or_jog_preset_queue( capy,  "In", 1);
-    lspmac_move_or_jog_preset_queue( capz,  "In", 1);
-    lspmac_move_or_jog_preset_queue( scint, "Cover", 1);
-    md2cmds_moveAbs( "moveAbs backLight 1");
-    md2cmds_moveAbs( "moveAbs cam.zoom 1");
-    md2cmds_moveAbs( "moveAbs cryo 0");
-    md2cmds_moveAbs( "moveAbs fluo 0");
-
-    if( md2cmds_move_wait( 60.0))
-      lsevents_send_event( "Mode center Aborted");
-    else
-      lsevents_send_event( "Mode center Done");
-
-  } else if( strcmp( mode, "dataCollection") == 0) {
-
-    lsevents_send_event( "Mode dataCollection Starting");
-
-    md2cmds_move_prep();
-    lspmac_move_or_jog_preset_queue( apery, "In", 1);
-    lspmac_move_or_jog_preset_queue( aperz, "In", 1);
-    lspmac_move_or_jog_preset_queue( capy,  "In", 1);
-    lspmac_move_or_jog_preset_queue( capz,  "In", 1);
-    lspmac_move_or_jog_preset_queue( scint, "Cover", 1);
-    md2cmds_moveAbs( "moveAbs backLight 0");
-    md2cmds_moveAbs( "moveAbs backLight.intensity 0");
-    md2cmds_moveAbs( "moveAbs cryo 0");
-    md2cmds_moveAbs( "moveAbs fluo 0");
-
-    if( md2cmds_move_wait( 60.0))
-      lsevents_send_event( "Mode dataCollection Aborted");
-    else
-      lsevents_send_event( "Mode dataCollection Done");
-
-  } else if( strcmp( mode, "beamLocation") == 0) {
-
-    lsevents_send_event( "Mode beamLocation Starting");
-
-    md2cmds_moveAbs( "moveAbs kappa 0");
-    md2cmds_moveAbs( "moveAbs omega 0");
-    lspmac_move_or_jog_preset_queue( apery, "In", 1);
-    lspmac_move_or_jog_preset_queue( aperz, "In", 1);
-    lspmac_move_or_jog_preset_queue( capy,  "In", 1);
-    lspmac_move_or_jog_preset_queue( capz,  "In", 1);
-    lspmac_move_or_jog_preset_queue( scint, "Scintillator", 1);
-    md2cmds_moveAbs( "moveAbs backLight 0");
-    md2cmds_moveAbs( "moveAbs cam.zoom 1");
-    md2cmds_moveAbs( "moveAbs cryo 0");
-    md2cmds_moveAbs( "moveAbs fluo 0");
-
-    if( md2cmds_move_wait( 60.0))
-      lsevents_send_event( "Mode beamLocation Aborted");
-    else
-      lsevents_send_event( "Mode beamLocation Done");
-
-  } else if( strcmp( mode, "safe") == 0) {
-
-    lsevents_send_event( "Mode safe Starting");
-
-    md2cmds_moveAbs( "moveAbs kappa 0");
-    md2cmds_moveAbs( "moveAbs omega 0");
-    lspmac_move_or_jog_preset_queue( apery, "In", 1);
-    lspmac_move_or_jog_preset_queue( aperz, "Cover", 1);
-    lspmac_move_or_jog_preset_queue( capy,  "In", 1);
-    lspmac_move_or_jog_preset_queue( capz,  "Cover", 1);
-    lspmac_move_or_jog_preset_queue( scint, "Cover", 1);
-    md2cmds_moveAbs( "moveAbs backLight 0");
-    md2cmds_moveAbs( "moveAbs cam.zoom 1");
-    md2cmds_moveAbs( "moveAbs cryo 0");
-    md2cmds_moveAbs( "moveAbs fluo 0");
-
-    if( md2cmds_move_wait( 60.0))
-      lsevents_send_event( "Mode safe Aborted");
-    else
-      lsevents_send_event( "Mode safe Done");
   }
-  
+
+  //                                                                                                                                                                                                                                                                            
+  // Tangled web.  Probably not worth fixing.  O(N) but N is 6.                                                                                                                                                                                                                 
+  //                                                                                                                                                                                                                                                                            
+  if( strcmp( mode, "manualMount") == 0) {
+    err = md2cmds_phase_manualMount();
+  } else if( strcmp( mode, "robotMount") == 0) {
+    err = md2cmds_phase_robotMount();
+  } else if( strcmp( mode, "center") == 0) {
+    err = md2cmds_phase_center();
+  } else if( strcmp( mode, "dataCollection") == 0) {
+    err = md2cmds_phase_dataCollection();
+  } else if( strcmp( mode, "beamLocation") == 0) {
+    err = md2cmds_phase_beamLocation();
+  } else if( strcmp( mode, "safe") == 0) {
+    err = md2cmds_phase_safe();
+  }
+
   free( cmd);
-
-  return 0;
+  return err;
 }
-
-
-
 
 
 
