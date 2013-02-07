@@ -71,10 +71,9 @@
 
 static pthread_t lsredis_thread;
 
-static pthread_mutex_t lsredis_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
-
-static pthread_cond_t  lsredis_cond;
-static int lsredis_running = 0;
+pthread_mutex_t lsredis_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+pthread_cond_t  lsredis_cond;
+int lsredis_running = 0;
 
 
 static lsredis_obj_t *lsredis_objs = NULL;
@@ -260,6 +259,7 @@ int lsredis_regexec( const regex_t *preg, lsredis_obj_t *p, size_t nmatch, regma
 }
 
 /** return a copy of the key's string value
+ *  be sure to free the result
  */
 char *lsredis_getstr( lsredis_obj_t *p) {
   char *rtn;
@@ -401,6 +401,7 @@ long int lsredis_get_or_set_l( lsredis_obj_t *p, long int val) {
     err = pthread_cond_timedwait( &p->cond, &p->mutex, &timeout);
 
   if( err == ETIMEDOUT) {
+    lslogging_log_message( "lsredis_get_or_set_l: using default value of %ld for redis variable %s", val, p->key);
     rtn = val;
     lsredis_setstr( p, "%ld", val);
   } else {
@@ -910,7 +911,31 @@ void lsredis_set_preset( char *base, char *preset_name, double dval) {
 
   p = lsredis_get_obj(  "%s.%s.presets.length", lsredis_head, base);
   lsredis_setstr( p, "%ld", plength + 1);
+}
 
+int lsredis_find_preset_index_by_position( lspmac_motor_t *mp) {
+  lsredis_obj_t *p;
+  int plength;
+  int i;
+  double ur, pos;
+
+  p = lsredis_get_obj( "%s.presets.length", mp->name);
+  plength = lsredis_get_or_set_l( p, 0);
+  
+  if( plength <= 0) {
+    return -1;
+  }
+
+  ur = lsredis_getd( mp->update_resolution);
+  pos = lspmac_getPosition( mp);
+
+  for( i=0; i<plength; i++) {
+    p = lsredis_get_obj( "%s.presets.%d.position", mp->name, i);
+    if( fabs( pos - lsredis_getd( p)) <= ur) {
+      return i;
+    }
+  }
+  return -1;
 }
 
 
