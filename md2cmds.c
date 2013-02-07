@@ -1038,7 +1038,7 @@ int md2cmds_collect( const char *dummy) {
     //
     md2cmds_move_prep();
     lspmac_SockSendDPline( "Exposure", "&1 P170=%.1f P171=%.1f P173=%.1f P174=0 P175=%.1f P176=0 P177=1 P178=0 P180=%.1f M431=1 &1B131R",
-			     p170,     p171,     p173,            p175,                          p180);
+         			     p170,     p171,     p173,            p175,                          p180);
 
     //
     // We could look for the "Exposure command accepted" event at this point.
