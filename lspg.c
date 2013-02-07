@@ -26,7 +26,6 @@ State		Description
 
 #include "pgpmac.h"
 
-
 #define LS_PG_STATE_INIT	-4
 #define LS_PG_STATE_INIT_POLL	-3
 #define LS_PG_STATE_RESET	-2
