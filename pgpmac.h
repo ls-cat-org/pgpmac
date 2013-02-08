@@ -92,13 +92,14 @@ typedef struct lspmac_cmd_queue_struct {
 } pmac_cmd_queue_t;
 
 
-
+#define LSPMAC_MAGIC_NUMBER 0x9700436
 /** Motor information.
  *
  * A catchall for motors and motor like objects.
  * Not all members are used by all objects.
  */
 typedef struct lspmac_motor_struct {
+  int magic;					//!< magic number identifying this as a motor structure
   pthread_mutex_t mutex;			//!< coordinate waiting for motor to be done
   pthread_cond_t cond;				//!< used to signal when a motor is done moving
   int not_done;					//!< set to 1 when request is queued, zero after motion has toggled
@@ -559,7 +560,7 @@ extern void md2cmds_run();
 extern void pgpmac_printf( char *fmt, ...);
 extern void lstest_main();
 extern int lspmac_est_move_time( double *est_time, int *mmask, lspmac_motor_t *mp_1, int jog_1, char *preset_1, double end_point_1, ...);
-extern int lspmac_est_move_time_wait( double move_time, int mmask);
+extern int lspmac_est_move_time_wait( double move_time, int cmask, lspmac_motor_t *mp_1, ...);
 extern void lsredis_set_preset( char *base, char *preset_name, double dval);
 extern pthread_mutex_t lsredis_mutex;
 extern pthread_cond_t  lsredis_cond;
@@ -568,3 +569,4 @@ extern lsredis_obj_t *_lsredis_get_obj( char *key);
 extern lspmac_motor_t *lspmac_find_motor_by_name( char *name);
 extern int lsredis_find_preset_index_by_position( lspmac_motor_t *mp);
 void lspmac_SockSendDPControlChar( char *event, char c);
+extern int lspmac_set_motion_flags( int *mmaskp, lspmac_motor_t *mp_1, ...);
