@@ -378,7 +378,7 @@ typedef struct lspmac_combined_move_struct {
   int    Delta;			// change from curent position in counts
   int    moveme;		// flag: non-zero means move this motor
   int    coord_num;		// Our coordinate system
-  char   axis;			// The axes to move
+  int    axis;			// The axes to move
 } lspmac_combined_move_t;
 
 
@@ -2034,6 +2034,11 @@ void lspmac_abort() {
   //
   lspmac_SockSendDPControlChar( "Abort Request", 0x01);
 
+  //
+  // and reset motion flag
+  //
+  lspmac_SockSendDPline( "Reset", "%s", "M5075=0");
+
 }
 
 
@@ -2360,7 +2365,6 @@ int lspmac_movezoom_queue(
       mp->not_done     = 1;
       mp->motion_seen  = 0;
       mp->command_sent = 1;
-      lsevents_send_event( "zoom Moving");
       pthread_mutex_unlock( &(mp->mutex));
 
       //
@@ -2370,7 +2374,6 @@ int lspmac_movezoom_queue(
       mp->not_done     = 0;
       mp->motion_seen  = 1;
       mp->command_sent = 1;
-      lsevents_send_event( "zoom In Position");
       pthread_mutex_unlock( &(mp->mutex));
       return 0;
     }
@@ -2636,10 +2639,94 @@ void lspmac_video_rotate( double secs) {
 }
 
 
+
+/** Set the coordinate system motion flags (m5075)
+ *  for the null terminated list of motors that we are planning
+ *  on running a motion program with.  Note that lspmac_est_move_time
+ *  already takes care of this, use when calling a motion program directly
+ *
+ * \param mmaskp Returned value of the mask generated.  Ignored if null.
+ * \param mp_1 start of null terminated list of motors.
+ */
+int lspmac_set_motion_flags( int *mmaskp, lspmac_motor_t *mp_1, ...) {
+  va_list arg_ptr;
+  struct timespec timeout;
+  int err;
+  int cn;
+  int need_flag;
+  lspmac_motor_t *mp;
+  int mmask;
+
+  mmask = 0;
+  if( mmaskp != NULL)
+    *mmaskp = 0;
+
+  if( mp_1==NULL)
+    return 0;
+  
+  
+  //
+  // add the coordinate system flags to mmask
+  //
+  va_start( arg_ptr, mp_1);
+  for( mp = mp_1; mp!=NULL; mp = va_arg( arg_ptr, lspmac_motor_t *)) {
+    if( mp->magic != LSPMAC_MAGIC_NUMBER) {
+      lslogging_log_message( "lspmac_set_motion_flags: WARNING: motor list must be NULL terminated.  Check your call to lspmac_set_motion_flags.");
+      break;
+    }
+    cn = lsredis_getl( mp->coord_num);
+    if( cn < 1 || cn > 16)
+      continue;
+    
+    mmask |= 1 << (cn - 1);
+  }
+  va_end( arg_ptr);
+
+  if( mmaskp != NULL)
+    *mmaskp = mmask;
+    
+  //
+  // It could be the flag is already what we want.  We might set up a race condition if we
+  // try to set it again.  (so don't)
+  //
+  pthread_mutex_lock( &lspmac_moving_mutex);
+
+  if( (lspmac_moving_flags & mmask) != 0)
+    need_flag = 0;
+  else
+    need_flag = 1;
+  
+  pthread_mutex_unlock( &lspmac_moving_mutex);
+
+  if( !need_flag)
+    return 0;
+  
+  //
+  // Set m5075 and make sure it propagates
+  //
+  lspmac_SockSendDPline( NULL, "M5075=(M5075 | %d)", mmask);
+  clock_gettime( CLOCK_REALTIME, &timeout);
+  timeout.tv_sec += 2;
+
+  err = 0;
+  pthread_mutex_lock( &lspmac_moving_mutex);
+  while( err == 0 && (lspmac_moving_flags & mmask) != mmask)
+    err = pthread_cond_timedwait( &lspmac_moving_cond, &lspmac_moving_mutex, &timeout);
+
+  pthread_mutex_unlock( &lspmac_moving_mutex);
+  
+  if( err == ETIMEDOUT) {
+    lslogging_log_message( "lspmac_set_motion_flags: timed out waiting for motion %d flag to be set", mmask);
+    return 1;
+  }
+  return 0;
+}
+
+
 /** Move the motors and estimate the time it'll take to finish the job.
  * Returns the estimate time and the coordinate system mask to waite for
  * \param est_time     Returns number of seconds we estimate the move(s) will take
- * \param mmask        Mask of coordinate systems we are trying to move, excluding jogs.  Used to wait for motions to complete
+ * \param mmaskp       Mask of coordinate systems we are trying to move, excluding jogs.  Used to wait for motions to complete
  * \param mp_1         Pointer to first motor
  * \param jog_1        1 to force a jog, 0 to try a motion program  DO NOT MIX JOGS AND MOTION PROGRAMS IN THE SAME COORDINATE SYSTEM!
  * \param preset_1     Name of preset we'd like to move to or NULL if end_point_1 should be used instead
@@ -2647,11 +2734,14 @@ void lspmac_video_rotate( double secs) {
  * \param ...          Perhaps more quads of motors, jog flags, preset names, and end points.  End is a NULL motor pointer
  * MUST END ARG LIST WITH NULL
  */
-int lspmac_est_move_time( double *est_time, int *mmask, lspmac_motor_t *mp_1, int jog_1, char *preset_1, double end_point_1, ...) {
+int lspmac_est_move_time( double *est_time, int *mmaskp, lspmac_motor_t *mp_1, int jog_1, char *preset_1, double end_point_1, ...) {
   static char axes[] = "XYZUVWABC";
   static int qs[9];
   static lspmac_combined_move_t motions[32];
-
+  char s[256];
+  int foundone;
+  int moving_flags;
+  struct timespec timeout;
   int j;
   va_list arg_ptr;
   lspmac_motor_t *mp;
@@ -2669,14 +2759,16 @@ int lspmac_est_move_time( double *est_time, int *mmask, lspmac_motor_t *mp_1, in
   int err;
   int jog;
   int i;
-  int m5075;		//!< coordinate system motion flags
+  uint32_t m5075;		//!< coordinate system motion flags
 
   // reset our coordinate flags and command strings
   //
   for( i=0; i<32; i++) {
     motions[i].moveme = 0;
   }
-  m5075 = 0;
+  m5075  = 0;
+  if( mmaskp != NULL)
+    *mmaskp = 0;
 
   //
   // Initialze first iteration
@@ -2765,6 +2857,15 @@ int lspmac_est_move_time( double *est_time, int *mmask, lspmac_motor_t *mp_1, in
      *      we need to use equation (1) otherwise we need to use equation (2)
      *
      */
+
+    if( mp->magic != LSPMAC_MAGIC_NUMBER) {
+      lslogging_log_message( "lspmac_est_move_time: WARNING: bad motor structure.  Check that your motor list is NULL terminated.");
+      break;
+    }
+
+
+    lslogging_log_message( "lspmac_est_move_time: find motor %s, jog %d, preset %s, endpoint %f",
+			   mp->name, jog, ps == NULL ? "NULL" : ps, ep);
 
     Tt = 0.0;
     if( mp != NULL && mp->max_speed != NULL && mp->max_accel != NULL && mp->u2c != NULL) {
@@ -2872,9 +2973,12 @@ int lspmac_est_move_time( double *est_time, int *mmask, lspmac_motor_t *mp_1, in
 	  //
 	  //
 	  if( abs(motions[motor_num - 1].Delta)*16 >= in_position_band) {
-	    m5075 |= 1 << (cn - 1);
+	    m5075 |= (1 << (cn - 1));
 	    motions[motor_num - 1].moveme    = 1;
 	  }	  
+	  lslogging_log_message( "lspmac_est_move_time: moveme=%d  motor '%s' motions index=%d coord_num=%d axis=%d Delta=%d   m5075=%u",
+				 motions[motor_num-1].moveme,  mp->name, motor_num -1, motions[motor_num-1].coord_num, motions[motor_num-1].axis, motions[motor_num-1].Delta,
+				 m5075);
 	}
       } else {
 	//
@@ -2903,70 +3007,66 @@ int lspmac_est_move_time( double *est_time, int *mmask, lspmac_motor_t *mp_1, in
     jog = va_arg( arg_ptr, int);
     ps  = va_arg( arg_ptr, char *);
     ep  = va_arg( arg_ptr, double);
+
   }
   va_end( arg_ptr);
 
   
-  // Call the motion program(s)
-  {
-    char s[256];
-    int foundone;
-    int err;
-    int moving_flags;
-    struct timespec timeout;
+  // Set the motion program flags
+  //
+  if( m5075 != 0) {
+    if( mmaskp != NULL)
+      *mmaskp |= m5075;	// Tell the caller about our new mask
 
-    if( m5075 != 0) {
-      *mmask |= m5075;	// Tell the caller about our new mask
-
-      pthread_mutex_lock( &lspmac_moving_mutex);
-      if( (lspmac_moving_flags & m5075) != m5075)
-	lspmac_SockSendDPline( NULL, "M5075=(M5075 | %d)", m5075);
-
-      clock_gettime( CLOCK_REALTIME, &timeout);
-      //
-      timeout.tv_sec += 2;	// 2 seconds should be more than enough time to set the flags
-      err = 0;
-      while( err == 0 && (lspmac_moving_flags & m5075) != m5075)
-	err = pthread_cond_timedwait( &lspmac_moving_cond, &lspmac_moving_mutex, &timeout);
-      moving_flags = lspmac_moving_flags;
-      pthread_mutex_unlock( &lspmac_moving_mutex);
-
-      if( err == ETIMEDOUT) {
-	lslogging_log_message( "lspmac_est_move_time: Timed out waiting for moving flags.  lspmac_moving_flags = %0x", moving_flags);
-	lsevents_send_event( "%s Move Aborted Combined Motors");
-	return 1;
-      }
+    
+    pthread_mutex_lock( &lspmac_moving_mutex);
+    if( (lspmac_moving_flags & m5075) != m5075)
+      lspmac_SockSendDPline( NULL, "M5075=(M5075 | %d)", m5075);
+    
+    clock_gettime( CLOCK_REALTIME, &timeout);
+    //
+    timeout.tv_sec += 2;	// 2 seconds should be more than enough time to set the flags
+    err = 0;
+    while( err == 0 && (lspmac_moving_flags & m5075) != m5075)
+      err = pthread_cond_timedwait( &lspmac_moving_cond, &lspmac_moving_mutex, &timeout);
+    moving_flags = lspmac_moving_flags;
+    pthread_mutex_unlock( &lspmac_moving_mutex);
+    
+    if( err == ETIMEDOUT) {
+      lslogging_log_message( "lspmac_est_move_time: Timed out waiting for moving flags.  lspmac_moving_flags = %0x", moving_flags);
+      lsevents_send_event( "Combined Move Aborted");
+      return 1;
     }
+  }
 
 
-    for( i=1; i<=16; i++) {
+  for( i=1; i<=16; i++) {
+    //
+    // Loop over coordinate systems
+    //
+    foundone = 0;
+    
+    for( j=0; j<9; j++)
+      qs[j] = 0;
+    
+    for( j=0; j<31; j++) {
       //
-      // Loop over coordinate systems
+      // Loop over motors
       //
-      foundone = 0;
-
-      for( j=0; j<9; j++)
-	qs[j] = 0;
-
-      for( j=0; j<31; j++) {
-	//
-	// Loop over motors
-	//
-	if( motions[j].moveme && motions[j].coord_num == i) {
-	  if( abs(motions[j].Delta) > 0) {
-	    qs[(int)(motions[j].axis)] = motions[j].Delta;
-	    foundone=1;
-	  }
+      if( motions[j].moveme && motions[j].coord_num == i) {
+	if( abs(motions[j].Delta) > 0) {
+	  qs[(int)(motions[j].axis)] = motions[j].Delta;
+	  foundone=1;
 	}
       }
+    }
+    
+    if( foundone) {
+      sprintf( s, "&%d Q40=%d Q41=%d Q42=%d Q43=%d Q44=%d Q45=%d Q46=%d Q47=%d Q48=%d Q49=%.1f Q100=%d B180R",
+	       i, qs[0], qs[1], qs[2], qs[3], qs[4], qs[5], qs[6], qs[7], qs[8], *est_time * 1000., 1 << (i-1));
       
-      if( foundone) {
-	sprintf( s, "&%d Q40=%d Q41=%d Q42=%d Q43=%d Q44=%d Q45=%d Q46=%d Q47=%d Q48=%d Q49=%.1f Q100=%d B180R",
-		 i, qs[0], qs[1], qs[2], qs[3], qs[4], qs[5], qs[6], qs[7], qs[8], *est_time * 1000., 1 << (i-1));
-
-	lspmac_SockSendDPline( NULL, s);
-
-      }
+      lspmac_SockSendDPline( NULL, s);
+      
     }
   }
   return 0;
@@ -2976,14 +3076,17 @@ int lspmac_est_move_time( double *est_time, int *mmask, lspmac_motor_t *mp_1, in
 /** wait for motion to stop
  * returns non-zero if the wait timed out
  * \param move_time The time out in seconds
- * \param mmask     A coordinate system mask to wait for
+ * \param cmask     A coordinate system mask to wait for
+ * \param mp_1      NULL terminated list of individual motors to wait for
  *
  * Both values are returned from lspmac_est_move_time
  */
-int lspmac_est_move_time_wait( double move_time, int mmask) {
+int lspmac_est_move_time_wait( double move_time, int cmask, lspmac_motor_t *mp_1, ...) {
   int err;
   double isecs, fsecs;
   struct timespec timeout;
+  va_list arg_ptr;
+  lspmac_motor_t *mp;
 
   clock_gettime( CLOCK_REALTIME, &timeout);
   fsecs = modf( move_time, &isecs);
@@ -2994,16 +3097,31 @@ int lspmac_est_move_time_wait( double move_time, int mmask) {
 
   err = 0;
   pthread_mutex_lock( &lspmac_moving_mutex);
-  while( err == 0 && (lspmac_moving_flags & mmask) != 0)
+  while( err == 0 && (lspmac_moving_flags & cmask) != 0)
     err = pthread_cond_timedwait( &lspmac_moving_cond, &lspmac_moving_mutex, &timeout);
   pthread_mutex_unlock( &lspmac_moving_mutex);
 
   if( err != 0) {
     if( err == ETIMEDOUT) {
-      lslogging_log_message( "lstest_lspmac_est_move_time: timed out waiting %f seconds", move_time);
+      lslogging_log_message( "lstest_lspmac_est_move_time_wait: timed out waiting %f seconds, cmask = 0x%0x", move_time, cmask);
     }
+    lspmac_abort();
     return 1;
   }
+
+  va_start( arg_ptr, mp_1);
+  for( mp = mp_1; mp != NULL; mp = va_arg( arg_ptr, lspmac_motor_t *)) {
+    if( mp->magic != LSPMAC_MAGIC_NUMBER) {
+      lslogging_log_message( "lspmac_est_move_time_wait: WARNING: motor list must be NULL terminated.  Check your call to lspmac_est_move_time_wait.");
+    }
+
+    if( lspmac_moveabs_wait( mp, move_time)) {
+      lslogging_log_message( "lspmac_est_move_time_wait: timed out waiting %f seconds for motor %s", move_time, mp->name);
+      return 1;
+    }
+  }
+  va_end( arg_ptr);
+
   return 0;
 }
 
@@ -3358,6 +3476,7 @@ void _lspmac_motor_init( lspmac_motor_t *d, char *name) {
   pthread_mutex_init( &(d->mutex), NULL);
   pthread_cond_init(  &(d->cond), NULL);
 
+  d->magic               = LSPMAC_MAGIC_NUMBER;
   d->name                = strdup(name);
   d->active		 = lsredis_get_obj( "%s.active",	    d->name);
   d->active_init	 = lsredis_get_obj( "%s.active_init",	    d->name);
@@ -3710,12 +3829,25 @@ void lspmac_cryoSwitchChanged_cb( char *event) {
  *  \param event required by protocol
  */
 void lspmac_scint_inPosition_cb( char *event) {
+  static int trigger = 0;
   double pos;
   double cover;
   int err;
 
   pthread_mutex_lock( &(scint->mutex));
   pos = scint->position;
+
+  if( pos > 20.0) {
+    trigger = 1;
+    pthread_mutex_unlock( &(scint->mutex));
+    return;
+  }
+
+  if( trigger == 0) {
+    pthread_mutex_unlock( &(scint->mutex));
+    return;
+  }
+
   err = lsredis_find_preset( scint->name, "Cover", &cover);
   pthread_mutex_unlock( &(scint->mutex));
 
@@ -3728,6 +3860,7 @@ void lspmac_scint_inPosition_cb( char *event) {
     dryer->moveAbs( dryer, 1.0);
     lslogging_log_message( "lspmac_scint_inPosition_cb: Starting dryer");
     lstimer_add_timer( "scintDried", 1, 120, 0);
+    trigger = 0;
   }
 }
 
@@ -3773,6 +3906,7 @@ void lspmac_light_zoom_cb( char *event) {
 /** Perhaps we need to move the sample out of the way
  */
 void lspmac_scint_maybe_move_sample_cb( char *event) {
+  static int trigger = 0;
   double scint_target;
   int err;
   double move_time;
@@ -3785,22 +3919,29 @@ void lspmac_scint_maybe_move_sample_cb( char *event) {
   // This should be pretty conservative since the out position is around 80
   //
   if( scint_target > 10.0) {
-    err = lspmac_est_move_time( &move_time, &mmask,
-				alignx, 0, "Back", -2.0,
-				aligny, 0, "Back",  1.0,
-				alignz, 0, "Back",  1.0,
-				NULL);
-    if( err) {
-      lspmac_abort();
-      lsevents_send_event( "Aborting Motion");
-      lslogging_log_message( "lspmac_scint_maybe_move_sample_cb: Failed move request, aborting motion to keep scint from hitting sample");
-    }    
+    if( trigger) {
+      mmask = 0;
+      err = lspmac_est_move_time( &move_time, &mmask,
+				  alignx, 0, "Back", -2.0,
+				  aligny, 0, "Back",  1.0,
+				  alignz, 0, "Back",  1.0,
+				  NULL);
+      if( err) {
+	lspmac_abort();
+	lsevents_send_event( "Aborting Motion");
+	lslogging_log_message( "lspmac_scint_maybe_move_sample_cb: Failed move request, aborting motion to keep scint from hitting sample");
+      }    
+      trigger = 0;
+    }
+  } else {
+    trigger = 1;
   }
 }
 
 /** Perhaps we need to return the sample to the beam
  */
 void lspmac_scint_maybe_return_sample_cb( char *event) {
+  static int trigger = 0;
   double scint_target;
   double move_time;
   int mmask;
@@ -3812,12 +3953,19 @@ void lspmac_scint_maybe_return_sample_cb( char *event) {
   // This should be pretty conservative since the out position is around 80
   //
   if( scint_target < 10.0) {
-    lspmac_est_move_time( &move_time, &mmask,
-			  alignx, 0, "Beam",  0.0,
-			  aligny, 0, "Beam",  0.0,
-			  alignz, 0, "Beam",  0.0,
-			  NULL);
+    if( trigger) {
+      mmask = 0;
+      lspmac_est_move_time( &move_time, &mmask,
+			    alignx, 0, "Beam",  0.0,
+			    aligny, 0, "Beam",  0.0,
+			    alignz, 0, "Beam",  0.0,
+			    NULL);
+      trigger = 0;
+    }
+  } else {
+    trigger = 1;
   }
+
 }
 
 
