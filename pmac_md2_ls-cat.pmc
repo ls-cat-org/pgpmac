@@ -4332,7 +4332,7 @@ CLOSE
 ; P180->Exposure Time (ms)
 
 OPEN PROG 131 CLEAR
-%100
+M5075 = (M5075 | 1)		; Raise the running flag (should have been set in application program)
 dwell0
 dwell0
 FastShutterOpenHist = 0 ; clear shutter openings history
@@ -4436,8 +4436,7 @@ If (P171 != 0)
   RAPID X(P170+P171-P5000-P178)      ;  Move Phi to the next start position
 EndIf
 DWELL0
-
-M431=0                         ;  Clear the VB synchro. flag
+M5075 = (M5075 | 1) ^ 1		; Lower the running flag
 CLOSE
 
 ;140		LS-CAT Move X Absolute
