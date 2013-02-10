@@ -41,21 +41,37 @@ static pthread_cond_t  lstimer_cond;	//!< allows us to be idle when there is not
 static timer_t lstimer_timerid;		//!< our real time timer
 static int new_timer = 0;		//!< indicate that a new timer exists and a call to service_timers is required
 
+/** Unsets all timers for the given event
+ */
+void lstimer_unset_timer( char *event) {
+  int i;
+
+  for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
+    if( strcmp( event, lstimer_list[i].event) == 0) {
+      lstimer_list[i].shots = 0;
+    }
+  }
+}
+
+
 /** Create a timer
  * \param event  Name of the event to send when the timer goes off
  * \param shots  Number of times to run.  0 means never, -1 means forever
  * \param secs   Number of seconds to wait
  * \param nsecs  Number of nano-seconds to run in addition to secs
  */
-void lstimer_add_timer( char *event, int shots, unsigned long int secs, unsigned long int nsecs) {
+void lstimer_set_timer( char *event, int shots, unsigned long int secs, unsigned long int nsecs) {
   int i;
   struct timespec now;
-
 
   // Time we were called.  Delay is based on call time, not queued time
   //
   clock_gettime( CLOCK_REALTIME, &now);
   
+
+  // Make sure our event is registered (saves a tiny bit of time later)
+  //
+  lsevents_preregister_event( event);
 
   pthread_mutex_lock( &lstimer_mutex);
 
@@ -67,7 +83,7 @@ void lstimer_add_timer( char *event, int shots, unsigned long int secs, unsigned
   if( i == LSTIMER_LIST_LENGTH) {
     pthread_mutex_unlock( &lstimer_mutex);
     
-    lslogging_log_message( "lstimer_add_timer: out of timers for event: %s, shots: %d,  secs: %u, nsecs: %u",
+    lslogging_log_message( "lstimer_set_timer: out of timers for event: %s, shots: %d,  secs: %u, nsecs: %u",
 			  event, shots, secs, nsecs);
     return;
   }
