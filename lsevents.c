@@ -294,7 +294,7 @@ lsevents_callbacks_t *lsevents_register_event( char *event) {
     return new_event_name->cbl;
   }
 
-  if( (++lsevents_n_events)*2  >= lsevents_max_events) {
+  if( ++lsevents_n_events  >= lsevents_max_events) {
     hdestroy_r( &lsevents_event_name_ht);
     lslogging_log_message( "lsevents_register_event: Increasing event name hash table to %d. lsevents_n_events=%d", 2 * lsevents_max_events, lsevents_n_events);
     lsevents_max_events *= 2;
