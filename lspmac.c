@@ -3853,7 +3853,7 @@ void lspmac_cryoSwitchChanged_cb( char *event) {
 /** Maybe start drying off the scintilator
  *  \param event required by protocol
  */
-void lspmac_scint_inPosition_cb( char *event) {
+void lspmac_scint_maybe_turn_on_dryer_cb( char *event) {
   static int trigger = 0;
   double pos;
   double cover;
@@ -3861,20 +3861,18 @@ void lspmac_scint_inPosition_cb( char *event) {
 
   pthread_mutex_lock( &(scint->mutex));
   pos = scint->position;
+  pthread_mutex_unlock( &(scint->mutex));
 
   if( pos > 20.0) {
     trigger = 1;
-    pthread_mutex_unlock( &(scint->mutex));
     return;
   }
 
   if( trigger == 0) {
-    pthread_mutex_unlock( &(scint->mutex));
     return;
   }
 
   err = lsredis_find_preset( scint->name, "Cover", &cover);
-  pthread_mutex_unlock( &(scint->mutex));
 
   lslogging_log_message( "lspmac_scint_inPosition_cb: pos %f, cover %f, diff %f, err %d", pos, cover, fabs( pos-cover), err);
 
@@ -3884,9 +3882,29 @@ void lspmac_scint_inPosition_cb( char *event) {
   if( fabs( pos - cover) <= 0.1) {
     dryer->moveAbs( dryer, 1.0);
     lslogging_log_message( "lspmac_scint_inPosition_cb: Starting dryer");
-    lstimer_add_timer( "scintDried", 1, 120, 0);
+    lstimer_set_timer( "scintDried", 1, 120, 0);
     trigger = 0;
   }
+}
+
+/** Maybe stop drying off the scintilator
+ *  \param event required by protocol
+ */
+void lspmac_scint_maybe_turn_off_dryer_cb( char *event) {
+  double pos;
+
+  //
+  // See if the dryer is on
+  //
+  pos = lspmac_getPosition( dryer);
+
+  if( pos == 0.0)
+    return;
+
+  dryer->moveAbs( dryer, 0.0);
+  
+  lstimer_unset_timer( "scintDried");
+
 }
 
 /** Turn on the backlight whenever it goes up
@@ -3990,7 +4008,6 @@ void lspmac_scint_maybe_return_sample_cb( char *event) {
   } else {
     trigger = 1;
   }
-
 }
 
 
@@ -4191,9 +4208,10 @@ void lspmac_run() {
   pthread_create( &pmac_thread, NULL, lspmac_worker, NULL);
 
   lsevents_add_listener( "CryoSwitchChanged",    lspmac_cryoSwitchChanged_cb);
-  lsevents_add_listener( "scint Moving",         lspmac_scint_maybe_move_sample_cb);
+  lsevents_add_listener( "scint In Position",    lspmac_scint_maybe_turn_on_dryer_cb);
+  lsevents_add_listener( "scint Moving",         lspmac_scint_maybe_turn_off_dryer_cb);
   lsevents_add_listener( "scint In Position",    lspmac_scint_maybe_return_sample_cb);
-  lsevents_add_listener( "scint In Position",    lspmac_scint_inPosition_cb);
+  lsevents_add_listener( "scint Moving",         lspmac_scint_maybe_move_sample_cb);
   lsevents_add_listener( "scintDried",           lspmac_scint_dried_cb);
   lsevents_add_listener( "backLight 1",	         lspmac_backLight_up_cb);
   lsevents_add_listener( "backLight 0",	         lspmac_backLight_down_cb);
