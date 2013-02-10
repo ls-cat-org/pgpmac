@@ -41,13 +41,13 @@ typedef struct lsevents_listener_struct {
 
 static lsevents_listener_t *lsevents_listeners_p = NULL;	//!< Pointer to the first item in the link list of listeners
 
-/** linked list of callbacks for each event
- *   Used to find all the callbacks for a given event
+/** lsevents linked list of callbacks for each event
  */
 typedef struct lsevents_callbacks_struct {
   struct lsevents_callbacks_struct *next;
   void (*cb)( char *);
 } lsevents_callbacks_t;
+
 
 /** linked list of all the event names
  *  used to regenerate the hash table
@@ -93,11 +93,13 @@ void lsevents_send_event( char *fmt, ...) {
 
 
 /** Add a callback routine to listen for a specific event
- *  \param event the name of the event to listen for
+ *  \param raw_regexp String value of regular expression to listen to
  *  \param cb the routine to call
  */
-void lsevents_add_listener( char *event, void (*cb)(char *)) {
-  lsevents_listener_t *new;
+void lsevents_add_listener( char *raw_regexp, void (*cb)(char *)) {
+  lsevents_listener_t    *new;
+  lsevents_event_names_t *enp;
+  lsevents_callbacks_t   *cbp;
   int err;
   char *errbuf;
   int nerrbuf;
@@ -110,7 +112,7 @@ void lsevents_add_listener( char *event, void (*cb)(char *)) {
     exit( -1);
   }
 
-  err = regcomp( &new->re, event, REG_EXTENDED | REG_NOSUB);
+  err = regcomp( &new->re, raw_regexp, REG_EXTENDED | REG_NOSUB);
   if( err != 0) {
     nerrbuf = regerror( err, &new->re, NULL, 0);
     errbuf = calloc( nerrbuf, sizeof( char));
@@ -125,28 +127,38 @@ void lsevents_add_listener( char *event, void (*cb)(char *)) {
     return;
   }
 
-  new->raw_regexp = strdup( event);
+  new->raw_regexp = strdup( raw_regexp);
   new->cb   = cb;
 
   pthread_mutex_lock( &lsevents_listener_mutex);
   new->next = lsevents_listeners_p;
   lsevents_listeners_p = new;
+
+  for( enp = lsevents_event_names; enp != NULL; enp = enp->next) {
+    if( regexec( &new->re, enp->event, 0, NULL, 0) == 0) {
+      cbp       = calloc( 1, sizeof( lsevents_callbacks_t));
+      cbp->cb   = cb;
+      cbp->next = enp->cbl;
+      enp->cbl  = cbp;
+    }
+  }
+  
+
   pthread_mutex_unlock( &lsevents_listener_mutex);
 
-  // TODO: go through list of event names and perhaps add ourselves to the callback list
-  //
-
-  lslogging_log_message( "lsevents_add_listener: added listener for event %s", event);
+  lslogging_log_message( "lsevents_add_listener: added listener for event '%s'", raw_regexp);
 
 }
 
 /** Remove a listener previously added with lsevents_add_listener
- *  \param event The name of the event
+ *  \param event The name of the event (possibly a regular expression string)
  *  \param cb The callback routine to remove
  */
 void lsevents_remove_listener (char *event, void (*cb)(char *)) {
   
   lsevents_listener_t *last, *current;
+  lsevents_event_names_t *enp;
+  lsevents_callbacks_t   *cbp, *last_cbp;
 
   //
   // Find the listener to remove
@@ -163,23 +175,155 @@ void lsevents_remove_listener (char *event, void (*cb)(char *)) {
       }
       break;
     }
+    last = current;
   }
+
+  if( current == NULL) {
+    lslogging_log_message( "lsevents_remove_listener: Could not find this listener for event '%s'", event);
+    pthread_mutex_unlock( &lsevents_listener_mutex);
+    return;
+  }
+
+  //
+  // Remove callback from lists of event names
+  //
+  for( enp = lsevents_event_names; enp != NULL; enp = enp->next) {
+    if( regexec( &current->re, enp->event, 0, NULL, 0) == 0) {
+      last_cbp = NULL;
+      for( cbp = enp->cbl; cbp != NULL; cbp = cbp->next) {
+	if( cbp->cb == cb) {
+	  if( last_cbp == NULL)
+	    enp->cbl = NULL;
+	  else
+	    last_cbp->next = cbp->next;
+	  free( cbp);
+	  break;
+	}
+      }
+    }
+  }
+
+
   pthread_mutex_unlock( &lsevents_listener_mutex);
 
   //
   // Now remove it
   //
-  if( current != NULL) {
-    if( current->raw_regexp != NULL)
-      free( current->raw_regexp);
-    free(current);
-  }
-
-  // TODO: go through list of event names and perhaps remove ourselves to the callback list
-  //
-
+  if( current->raw_regexp != NULL)
+    free( current->raw_regexp);
+  free(current);
 
 }
+
+/** Add a new event name and find matching callbacks as a returned linked list
+ *
+ */
+lsevents_callbacks_t *lsevents_register_event( char *event) {
+  ENTRY entry_in, *entry_outp;
+  int err;
+  lsevents_callbacks_t *new_cb;
+  lsevents_event_names_t *new_event_name, *enp;
+  lsevents_listener_t *p;
+
+
+  //
+  // Search for event
+  //
+  entry_in.key  = event;
+  entry_in.data = NULL;
+
+  pthread_mutex_lock( &lsevents_listener_mutex);
+  err = hsearch_r( entry_in, FIND, &entry_outp, &lsevents_event_name_ht);
+  if( err != 0) {
+    //
+    // Success, we found the entry
+    //
+    enp = entry_outp->data;
+    pthread_mutex_unlock( &lsevents_listener_mutex);
+    return enp->cbl;
+  }
+
+  if( errno != ESRCH) {
+    //
+    // Something awful happened.  At least log it
+    //
+    lslogging_log_message( "lsevents_register_event: hsearch_r returnd %d: %s", errno, strerror( errno));
+    pthread_mutex_unlock( &lsevents_listener_mutex);
+    return NULL;
+  }
+
+  lslogging_log_message( "lsevents_register_event: adding event '%s'", event);
+  //
+  // Not Found
+  //
+  // Create new event name item
+  new_event_name = calloc( 1, sizeof( lsevents_event_names_t));
+  new_event_name->event = strdup( event);
+  new_event_name->cbl   = NULL;
+
+  //
+  // Find matching callbacks
+  //
+  for( p = lsevents_listeners_p; p != NULL; p = p->next) {
+    if( regexec( &p->re, event, 0, NULL, 0) == 0) {
+      new_cb = calloc( 1, sizeof( lsevents_callbacks_t));
+      new_cb->cb = p->cb;
+      new_cb->next = new_event_name->cbl;
+      new_event_name->cbl = new_cb;
+    }
+  }
+
+  //
+  // Add the new event to our linked list
+  //
+  new_event_name->next  = lsevents_event_names;
+  lsevents_event_names  = new_event_name;
+
+  //
+  // Also add the new event to our hash table
+  //
+  entry_in.key  = new_event_name->event;
+  entry_in.data = new_event_name;
+  err = hsearch_r( entry_in, ENTER, &entry_outp, &lsevents_event_name_ht);
+  if( err == 0) {
+    //
+    // Something bad happend but we can still return a valid callback list.  We just can't use the hash table to find it again later
+    //
+    lslogging_log_message( "lsevents_register_event: Could not add event name: hsearch_r returned %d: %s", errno, strerror( errno));
+    pthread_mutex_unlock( &lsevents_listener_mutex);
+    return new_event_name->cbl;
+  }
+
+  if( (++lsevents_n_events)*2  >= lsevents_max_events) {
+    hdestroy_r( &lsevents_event_name_ht);
+    lslogging_log_message( "lsevents_register_event: Increasing event name hash table to %d. lsevents_n_events=%d", 2 * lsevents_max_events, lsevents_n_events);
+    lsevents_max_events *= 2;
+    hcreate_r( lsevents_max_events * 2, &lsevents_event_name_ht);
+    for( enp = lsevents_event_names; enp != NULL; enp = enp->next) {
+      entry_in.key  = enp->event;
+      entry_in.data = enp;
+      hsearch_r( entry_in, ENTER, &entry_outp, &lsevents_event_name_ht);
+    }
+  }
+  lslogging_log_message( "lsevents_register_event: added event '%s'", event);
+  pthread_mutex_unlock( &lsevents_listener_mutex);
+  return new_event_name->cbl;
+}  
+
+
+void lsevents_preregister_event( char *fmt, ...) {
+  char  s[128];
+  va_list arg_ptr;
+
+  va_start( arg_ptr, fmt);
+  vsnprintf( s, sizeof( s) - 1, fmt, arg_ptr);
+  s[sizeof(s)-1] = 0;
+  va_end( arg_ptr);
+
+  lsevents_register_event( s);
+}
+
+
 
 /** Our worker
  *  \param dummy Unused but needed by pthreads to be happy
@@ -188,12 +332,8 @@ void *lsevents_worker(
 		     void *dummy
 		     ) {
   
-  lsevents_listener_t *p;
-  ENTRY entry_in, *entry_outp;
   char *event;
-  int err;
-  lsevents_callbacks_t *last_cb, *new_cb, *cbi;
-  lsevents_event_names_t *new_event_name, *event_name_list;
+  lsevents_callbacks_t *cbi;
 
   while( 1) {
     pthread_mutex_lock( &lsevents_queue_mutex);
@@ -215,75 +355,13 @@ void *lsevents_worker(
     pthread_cond_signal(  &lsevents_queue_cond);
     pthread_mutex_unlock( &lsevents_queue_mutex);
 
-
-    // Have we seen this event before?
-    //
-    entry_in.key  = event;
-    entry_in.data = NULL;
-
-    //
-    // protect the hash table: add_listener and remove_listener may also mess with it
-    //
-    pthread_mutex_lock( &lsevents_listener_mutex);
-    err = hsearch_r( entry_in, FIND, &entry_outp, &lsevents_event_name_ht);
-    if( err == 0) {
-      if( errno != ESRCH) {
-	lslogging_log_message( "lsevents_worker: hsearch_r returned %d: %s", errno, strerror( errno));
-	free( event);
-	continue;
-      } else {
-	//
-	// Not Found
-	//
-	// Make an array of matching events;
-	//
-	last_cb = NULL;
-	
-	for( p=lsevents_listeners_p; p != NULL; p = p->next) {
-	  if( regexec( &p->re, event, 0, NULL, 0) == 0) {
-	    new_cb = calloc( 1, sizeof( lsevents_callbacks_t));
-	    new_cb->cb = p->cb;
-	    new_cb->next = last_cb;
-	    last_cb = new_cb;
-	  }
-	}
-	new_event_name = calloc( 1, sizeof( lsevents_event_names_t));
-	new_event_name->event = strdup( event);
-	new_event_name->cbl   = last_cb;
-	new_event_name->next  = lsevents_event_names;
-	lsevents_event_names  = new_event_name;
-
-	entry_in.key  = new_event_name->event;
-	entry_in.data = new_event_name;
-	hsearch_r( entry_in, ENTER, &entry_outp, &lsevents_event_name_ht);
-	if( ++lsevents_n_events  >= lsevents_max_events) {
-	  hdestroy_r( &lsevents_event_name_ht);
-	  lsevents_max_events *= 2;
-	  hcreate_r( lsevents_max_events * 2, &lsevents_event_name_ht);
-	  for( new_event_name = lsevents_event_names; new_event_name != NULL; new_event_name = new_event_name->next) {
-	    entry_in.key  = new_event_name->event;
-	    entry_in.data = new_event_name;
-	    hsearch_r( entry_in, ENTER, &entry_outp, &lsevents_event_name_ht);
-	  }
-	}
-	err = hsearch_r( entry_in, FIND, &entry_outp, &lsevents_event_name_ht);
-	if( err == 0) {
-	  lslogging_log_message( "lsevents_worker: For some reason we can find a hash table entry for event '%s'", event);
-	  free( event);
-	  pthread_mutex_unlock( &lsevents_listener_mutex);
-	  continue;
-	}
-      }
-    }
-    pthread_mutex_unlock( &lsevents_listener_mutex);
-
-
     // call our callbacks
     //
-    event_name_list = entry_in.data;
-    for( cbi = event_name_list->cbl; cbi != NULL; cbi = cbi->next) {
+    pthread_mutex_lock( &lsevents_listener_mutex);
+    for( cbi = lsevents_register_event( event); cbi != NULL; cbi = cbi->next) {
       cbi->cb( event);
     }
+    pthread_mutex_unlock( &lsevents_listener_mutex);
 
     free( event);
   }
@@ -293,20 +371,18 @@ void *lsevents_worker(
 /** Initialize this module
  */
 void lsevents_init() {
-  pthread_mutex_init( &lsevents_queue_mutex, NULL);
-  pthread_cond_init(  &lsevents_queue_cond, NULL);
-  pthread_mutex_init( &lsevents_listener_mutex, NULL);
+  pthread_mutexattr_t mutex_initializer;
+
+  // Use recursive mutexs
+  //
+  pthread_mutexattr_init( &mutex_initializer);
+  pthread_mutexattr_settype( &mutex_initializer, PTHREAD_MUTEX_RECURSIVE);
+
+  pthread_mutex_init( &lsevents_queue_mutex,    &mutex_initializer);
+  pthread_cond_init(  &lsevents_queue_cond,     NULL);
+  pthread_mutex_init( &lsevents_listener_mutex, &mutex_initializer);
 
   hcreate_r( 2*lsevents_max_events, &lsevents_event_name_ht);
-
-
-       int hcreate_r(size_t nel, struct hsearch_data *htab);
-
-       int hsearch_r(ENTRY item, ACTION action, ENTRY **retval,
-                     struct hsearch_data *htab);
-
-       void hdestroy_r(struct hsearch_data *htab);
-  
 }
 
 /** Start up the thread and get out of the way.
