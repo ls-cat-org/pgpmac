@@ -3512,6 +3512,9 @@ void _lspmac_motor_init( lspmac_motor_t *d, char *name) {
   d->read                = NULL;
   d->reported_position   = INFINITY;
   d->reported_pg_position= INFINITY;
+
+  lsevents_preregister_event( "%s queued", d->name);
+  lsevents_preregister_event( "%s command accepted", d->name);
 }
 
 
@@ -3538,10 +3541,18 @@ lspmac_motor_t *lspmac_motor_init(
   d->actual_pos_cnts_p   = posp;
   d->status1_p           = stat1p;
   d->status2_p           = stat2p;
+
   d->win = newwin( LS_DISPLAY_WINDOW_HEIGHT, LS_DISPLAY_WINDOW_WIDTH, wy*LS_DISPLAY_WINDOW_HEIGHT, wx*LS_DISPLAY_WINDOW_WIDTH);
   box( d->win, 0, 0);
   mvwprintw( d->win, 1, 1, "%s", wtitle);
   wnoutrefresh( d->win);
+
+  lsevents_preregister_event( "%s Homing",       d->name);
+  lsevents_preregister_event( "%s Homed",        d->name);
+  lsevents_preregister_event( "%s Moving",       d->name);
+  lsevents_preregister_event( "%s In Position",  d->name);
+  lsevents_preregister_event( "%s Move Aborted", d->name);
+
 
   return d;
 }
@@ -3582,6 +3593,8 @@ lspmac_motor_t *lspmac_bo_init(
   d->read_ptr	       = read_ptr;
   d->read_mask         = read_mask;
 
+  lsevents_preregister_event( "%s 1", d->name);
+  lsevents_preregister_event( "%s 0", d->name);
   return d;
 }
 
@@ -3642,6 +3655,9 @@ lspmac_bi_t *lspmac_bi_init( lspmac_bi_t *d, int *ptr, int mask, char *onEvent, 
   d->changeEventOn  = strdup( onEvent);
   d->changeEventOff = strdup( offEvent);
   d->first_time     = 1;
+
+  lsevents_preregister_event( "%s", d->changeEventOn);
+  lsevents_preregister_event( "%s", d->changeEventOff);
 
   return d;
 }
@@ -3812,6 +3828,15 @@ void lspmac_init(
   lspmac_SockSendDPline( NULL, "ENABLE PLCC 0,2");
   lspmac_SockSendDPline( NULL, "DISABLE PLCC 1");
   lspmac_SockSendDPline( NULL, "I5=3");
+
+
+  lsevents_preregister_event( "omega crossed zero");
+  lsevents_preregister_event( "Move Aborted");
+  lsevents_preregister_event( "Combined Move Aborted");
+
+  for( i=1; i<=16; i++) {
+    lsevents_preregister_event( "Coordsys %d Stopped", i);
+  }
 }
 
 
@@ -3928,7 +3953,7 @@ void lspmac_scint_maybe_move_sample_cb( char *event) {
 				  NULL);
       if( err) {
 	lspmac_abort();
-	lsevents_send_event( "Aborting Motion");
+	lsevents_send_event( "Move Aborted");
 	lslogging_log_message( "lspmac_scint_maybe_move_sample_cb: Failed move request, aborting motion to keep scint from hitting sample");
       }    
       trigger = 0;
