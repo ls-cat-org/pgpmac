@@ -1975,5 +1975,5 @@ void lspg_run() {
   lsevents_add_listener( "Sample(Detected|Absent)", lspg_sample_detector_cb);
   lsevents_add_listener( "Timer Update KVs",        lspg_update_kvs_cb);
   lsevents_add_listener( "cam.zoom In Position",    lspg_set_scale_cb);
-  lstimer_add_timer(     "Timer Update KVs", -1, 0, 500000000);
+  lstimer_set_timer(     "Timer Update KVs", -1, 0, 500000000);
 }
