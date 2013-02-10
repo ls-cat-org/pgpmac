@@ -505,6 +505,7 @@ extern void lsevents_init();
 extern void lsevents_remove_listener( char *, void (*cb)(char *));
 extern void lsevents_run();
 extern void lsevents_send_event( char *, ...);
+extern void lsevents_preregister_event( char *fmt, ...);
 extern void lslogging_init();
 extern void lslogging_log_message( char *fmt, ...);
 extern void lslogging_run();
@@ -570,3 +571,4 @@ extern lspmac_motor_t *lspmac_find_motor_by_name( char *name);
 extern int lsredis_find_preset_index_by_position( lspmac_motor_t *mp);
 void lspmac_SockSendDPControlChar( char *event, char c);
 extern int lspmac_set_motion_flags( int *mmaskp, lspmac_motor_t *mp_1, ...);
+
