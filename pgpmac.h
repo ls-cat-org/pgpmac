@@ -572,4 +572,4 @@ extern lspmac_motor_t *lspmac_find_motor_by_name( char *name);
 extern int lsredis_find_preset_index_by_position( lspmac_motor_t *mp);
 void lspmac_SockSendDPControlChar( char *event, char c);
 extern int lspmac_set_motion_flags( int *mmaskp, lspmac_motor_t *mp_1, ...);
-
+extern void lsredis_load_presets( char *motor_name);

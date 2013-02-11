@@ -3515,6 +3515,8 @@ void _lspmac_motor_init( lspmac_motor_t *d, char *name) {
 
   lsevents_preregister_event( "%s queued", d->name);
   lsevents_preregister_event( "%s command accepted", d->name);
+
+  lsredis_load_presets( d->name);
 }
 
 

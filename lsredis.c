@@ -91,6 +91,23 @@ static struct pollfd subfd;
 static struct pollfd rofd;
 static struct pollfd wrfd;
 
+typedef struct lsredis_preset_list_struct {
+  struct lsredis_preset_list_struct *next;	// next in the list or null if none
+  char *key;					// our key (motor name concatenated with the preset name)
+  int index;					// our index in the motor's preset array
+  lsredis_obj_t *name;				// object containing the name
+  lsredis_obj_t *position;			// object containing the position
+} lsredis_preset_list_t;
+
+static lsredis_preset_list_t *lsredis_preset_list = NULL;	// our list of presets
+static struct hsearch_data lsredis_preset_ht;			// hash table to find list items
+static int lsredis_preset_n = 0;				// number of entries in the hash table
+static int lsredis_preset_max_n = 1024;				// size of the hash table
+static pthread_mutex_t lsredis_preset_list_mutex;
+
+
+
+
 /** Log the reply
  */
 void lsredis_debugCB( redisAsyncContext *ac, void *reply, void *privdata) {
@@ -803,116 +820,163 @@ void lsredis_keysCB( redisAsyncContext *ac, void *reply, void *privdata) {
   }
 }
 
-int lsredis_find_preset( char *base, char *preset_name, double *dval) {
-  char s[512];
-  int i;
-  int err;
-  ENTRY htab_input, *htab_output;
+/** update the presets hash table for the named motor
+ */
+void lsredis_load_presets( char *motor_name) {
   lsredis_obj_t *p;
+  lsredis_preset_list_t *pl;
+  int plength;
+  char *preset_name;
+  int i;
+  int key_length;
+  ENTRY entry_in, *entry_outp;
 
-  for( i=0; i<1024; i++) {
-    snprintf( s, sizeof( s)-1, "%s.%s.presets.%d.name", lsredis_head, base, i);
-    s[sizeof(s)-1] = 0;
-    htab_input.key  = s;
-    htab_input.data = NULL;
-    err = hsearch_r( htab_input, FIND, &htab_output, &lsredis_htab);
+  p = lsredis_get_obj( "%s.presets.length", motor_name);
+  plength = lsredis_get_or_set_l( p, 0);
+  if( plength <= 0)
+    return;
+
+  pthread_mutex_lock( &lsredis_preset_list_mutex);
+
+  for( i=0; i<plength; i++) {
+    pl = calloc( 1, sizeof( lsredis_preset_list_t));
+    pl->name      = lsredis_get_obj( "%s.presets.%d.name",     motor_name, i);
+    pl->position  = lsredis_get_obj( "%s.presets.%d.position", motor_name, i);
+    pl->index     = i;
+    
+    preset_name   = lsredis_getstr( pl->name);
+    key_length    = strlen( motor_name) + strlen( preset_name) + 1;
+    pl->key       = calloc( key_length, 1);
+
+    pl->next            = lsredis_preset_list;
+    lsredis_preset_list = pl;
+
+    snprintf( pl->key, key_length, "%s%s", motor_name, preset_name);
+
+    entry_in.key  = pl->key;
+    entry_in.data = pl;
+    hsearch_r( entry_in, ENTER, &entry_outp, &lsredis_preset_ht);
+    if( entry_outp->data != pl) {
+      //
+      // The key was already there or we couldn't add it
+      //
+      if( entry_outp->data == NULL)
+	lslogging_log_message( "lsredis_load_presets: could not add preset '%s' for motor '%s'", preset_name, motor_name);
+
+      free( pl->key);
+      free( pl);
+    } else {
+      //
+      // We've successfully added the new key
+      //
+      lsredis_preset_n++;
+      //
+      // Resize the hash table if we are starting to fill it up
+      // Generally we prefer a sparse table
+      //
+      if( lsredis_preset_n >= lsredis_preset_max_n) {
+	lslogging_log_message( "lsredis_load_presets: increasing preset hash table size.  max now %d", lsredis_preset_max_n);
+	hdestroy_r( &lsredis_preset_ht);
+	lsredis_preset_max_n *= 2;
+	hcreate_r( 2 * lsredis_preset_max_n, &lsredis_preset_ht);
+	for( pl = lsredis_preset_list; pl != NULL; pl = pl->next) {
+	  entry_in.key  = pl->key;
+	  entry_in.data = pl;
+	  hsearch_r( entry_in, ENTER, &entry_outp, &lsredis_preset_ht);
+	}
+	lslogging_log_message( "lsredis_load_presets: done increasing preset hash table size.", lsredis_preset_max_n);
+      }
+    }
+    free( preset_name);
+  }
+  pthread_mutex_unlock( &lsredis_preset_list_mutex);
+}
+
+/** Get the value of the given preset and return it in dval
+ *  Returns 0 on error, non-zero on success;
+ */
+int lsredis_find_preset( char *motor_name, char *preset_name, double *dval) {
+  char s[512];
+  int err;
+  ENTRY entry_in, *entry_outp;
+  lsredis_preset_list_t *pl;
+
+  snprintf( s, sizeof( s)-1, "%s%s", motor_name, preset_name);
+  s[sizeof(s)-1] = 0;
+
+  entry_in.key  = s;
+  entry_in.data = NULL;
+  err = hsearch_r( entry_in, FIND, &entry_outp, &lsredis_preset_ht);
+
+  if( err == 0) {
+    // not found (or some other problem that means we don't have an answer
+    //
+    // Maybe someone added a new preset and we don't know about it yet
+    //
+    lsredis_load_presets( motor_name);
+    err = hsearch_r( entry_in, FIND, &entry_outp, &lsredis_preset_ht);
     if( err == 0) {
-      // We've run out of names to look for: done
-      lslogging_log_message( "lsredis_find_preset: no preset for motor %s named '%s'", base, preset_name);
+      //
+      // Guess not.  Give up.  We tried
+      //
       *dval = 0.0;
       return 0;
     }
-
-    // Check if we have a match
-    p = htab_output->data;
-    if( lsredis_cmpstr( p, preset_name)==0) {
-      // got a match, now look for the position
-      snprintf( s, sizeof( s)-1, "%s.%s.presets.%d.position", lsredis_head, base, i);
-      s[sizeof(s)-1] = 0;
-      htab_input.key = s;
-      htab_input.data = NULL;
-      err = hsearch_r( htab_input, FIND, &htab_output, &lsredis_htab);
-      if( err == 0) {
-	// Name but not position? odd.
-	lslogging_log_message( "lsredis_find_preset: Error, motor %s preset '%s' has no position defined", base, preset_name);
-	*dval = 0.0;
-	return 0;
-      }
-      p = htab_output->data;
-      *dval = lsredis_getd( p);
-      return 1;
-    }
   }
-  // How'd we get here?
-  // did someone really define that many presets?  And then looked for one that's not there?
-  *dval = 0;
-  return 0;
+  pl = entry_outp->data;
+  *dval = lsredis_getd( pl->position);
+  return 1;
 }
 
-void lsredis_set_preset( char *base, char *preset_name, double dval) {
+
+/** set the given preset to the given value
+ *  create a new preset if we can't find it
+ */
+void lsredis_set_preset( char *motor_name, char *preset_name, double dval) {
   char s[512];
-  int i, plength;
+  int plength;
   int err;
-  ENTRY htab_input, *htab_output;
-  lsredis_obj_t *p;
+  ENTRY entry_in, *entry_outp;
+  lsredis_obj_t *p, *presets_length_p;
+  lsredis_preset_list_t *pl;
 
-  p = lsredis_get_obj(  "%s.%s.presets.length", lsredis_head, base);
-  plength = lsredis_get_or_set_l( p, 0);
+  snprintf( s, sizeof( s)-1, "%s%s", motor_name, preset_name);
+  s[sizeof(s)-1] = 0;
 
-  for( i=0; i<plength; i++) {
-    snprintf( s, sizeof( s)-1, "%s.%s.presets.%d.name", lsredis_head, base, i);
-    s[sizeof(s)-1] = 0;
-    htab_input.key  = s;
-    htab_input.data = NULL;
-    err = hsearch_r( htab_input, FIND, &htab_output, &lsredis_htab);
-    if( err == 0) {
-      //
-      // Not found? odd.  Length Lied.
-      // Might as well just stick our preset here.
-      //
-      p = lsredis_get_obj( "%s", s);
-      lsredis_setstr( p, "%s", preset_name);
-    } else {
-      // Check if we have a match
-      p = htab_output->data;
-    }
-
-    if( lsredis_cmpstr( p, preset_name)==0) {
-      //
-      // got a match, now look for the position
-      //
-      snprintf( s, sizeof( s)-1, "%s.%s.presets.%d.position", lsredis_head, base, i);
-      s[sizeof(s)-1] = 0;
-      htab_input.key = s;
-      htab_input.data = NULL;
-      err = hsearch_r( htab_input, FIND, &htab_output, &lsredis_htab);
-      if( err == 0) {
-	//
-	// Name but not position? odd.
-	//
-	p = lsredis_get_obj( "%s", s);
-      } else {
-	p = htab_output->data;
-      }
-      lsredis_setstr( p, "%.3f", dval);
-      return;
-    }
+  entry_in.key  = s;
+  entry_in.data = NULL;
+  err = hsearch_r( entry_in, FIND, &entry_outp, &lsredis_preset_ht);
+  if( err != 0) {
+    //
+    // Found it.  Things are simple.
+    //
+    pl = entry_outp->data;
+    lsredis_setstr( pl->position, "%.3f", dval);
+    return;
   }
   //
   // OK, our preset was not found, add it
   //
-  snprintf( s, sizeof( s)-1, "%s.%s.presets.%d.name", lsredis_head, base, i);
+  presets_length_p = lsredis_get_obj(  "%s.presets.length", motor_name);
+  plength = lsredis_get_or_set_l( presets_length_p, 0);
+  plength += 1;
+
+  snprintf( s, sizeof( s)-1, "%s.%s.presets.%d.name", lsredis_head, motor_name, plength-1);
   s[sizeof(s)-1] = 0;
-  p = lsredis_get_obj( "%s", s);
+
+  p = lsredis_get_obj( "%s.presets.%d.name", motor_name, plength-1);
   lsredis_setstr( p, "%s", preset_name);
 
-  p = lsredis_get_obj( "%s", s);
+  p = lsredis_get_obj( "%s.presets.%d.position", motor_name, plength-1);
   lsredis_setstr( p, "%.3f", dval);
+  
+  lsredis_setstr( presets_length_p, "%ld", plength);
 
-  p = lsredis_get_obj(  "%s.%s.presets.length", lsredis_head, base);
-  lsredis_setstr( p, "%ld", plength + 1);
+  lsredis_load_presets( motor_name);
 }
 
+/** For the given motor object return the index of the current preset or -1 if we are not at a preset position
+ */
 int lsredis_find_preset_index_by_position( lspmac_motor_t *mp) {
   lsredis_obj_t *p;
   int plength;
@@ -937,7 +1001,6 @@ int lsredis_find_preset_index_by_position( lspmac_motor_t *mp) {
   }
   return -1;
 }
-
 
 
 
@@ -1018,6 +1081,9 @@ void lsredis_init( char *pub, char *re, char *head) {
       free( errmsg);
     }
   }
+
+  hcreate_r( lsredis_preset_max_n * 2, &lsredis_preset_ht);
+  pthread_mutex_init( &lsredis_preset_list_mutex, NULL);
 }
 
 
