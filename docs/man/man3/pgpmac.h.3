@@ -1,4 +1,4 @@
-.TH "pgpmac.h" 3 "Thu Feb 7 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "pgpmac.h" 3 "Tue Feb 12 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -134,6 +134,9 @@ Headers for the entire pgpmac project\&.
 .br
 .RI "\fIFixed length for event names: simplifies string handling\&. \fP"
 .ti -1c
+.RI "#define \fBLSPMAC_MAGIC_NUMBER\fP   0x9700436"
+.br
+.ti -1c
 .RI "#define \fBMD2CMDS_CMD_LENGTH\fP   32"
 .br
 .in -1c
@@ -263,6 +266,9 @@ Headers for the entire pgpmac project\&.
 .RI "void \fBlsevents_send_event\fP (char *,\&.\&.\&.)"
 .br
 .RI "\fICall the callback routines for the given event\&. \fP"
+.ti -1c
+.RI "void \fBlsevents_preregister_event\fP (char *fmt,\&.\&.\&.)"
+.br
 .ti -1c
 .RI "void \fBlslogging_init\fP ()"
 .br
@@ -405,6 +411,7 @@ Headers for the entire pgpmac project\&.
 .ti -1c
 .RI "int \fBlsredis_find_preset\fP (char *base, char *preset_name, double *dval)"
 .br
+.RI "\fIGet the value of the given preset and return it in dval Returns 0 on error, non-zero on success;\&. \fP"
 .ti -1c
 .RI "int \fBlsredis_getb\fP (\fBlsredis_obj_t\fP *p)"
 .br
@@ -426,9 +433,13 @@ Headers for the entire pgpmac project\&.
 .br
 .RI "\fISet the value and update redis\&. \fP"
 .ti -1c
-.RI "void \fBlstimer_add_timer\fP (char *, int, unsigned long int, unsigned long int)"
+.RI "void \fBlstimer_set_timer\fP (char *, int, unsigned long int, unsigned long int)"
 .br
 .RI "\fICreate a timer\&. \fP"
+.ti -1c
+.RI "void \fBlstimer_unset_timer\fP (char *event)"
+.br
+.RI "\fIUnsets all timers for the given event\&. \fP"
 .ti -1c
 .RI "void \fBlstimer_init\fP ()"
 .br
@@ -463,12 +474,13 @@ Headers for the entire pgpmac project\&.
 .br
 .RI "\fIMove the motors and estimate the time it'll take to finish the job\&. \fP"
 .ti -1c
-.RI "int \fBlspmac_est_move_time_wait\fP (double move_time, int mmask)"
+.RI "int \fBlspmac_est_move_time_wait\fP (double move_time, int cmask, \fBlspmac_motor_t\fP *mp_1,\&.\&.\&.)"
 .br
 .RI "\fIwait for motion to stop returns non-zero if the wait timed out \fP"
 .ti -1c
 .RI "void \fBlsredis_set_preset\fP (char *base, char *preset_name, double dval)"
 .br
+.RI "\fIset the given preset to the given value create a new preset if we can't find it \fP"
 .ti -1c
 .RI "\fBlsredis_obj_t\fP * \fB_lsredis_get_obj\fP (char *key)"
 .br
@@ -479,10 +491,19 @@ Headers for the entire pgpmac project\&.
 .ti -1c
 .RI "int \fBlsredis_find_preset_index_by_position\fP (\fBlspmac_motor_t\fP *mp)"
 .br
+.RI "\fIFor the given motor object return the index of the current preset or -1 if we are not at a preset position\&. \fP"
 .ti -1c
 .RI "void \fBlspmac_SockSendDPControlChar\fP (char *event, char c)"
 .br
 .RI "\fIuse dpram ascii interface to send a control character \fP"
+.ti -1c
+.RI "int \fBlspmac_set_motion_flags\fP (int *mmaskp, \fBlspmac_motor_t\fP *mp_1,\&.\&.\&.)"
+.br
+.RI "\fISet the coordinate system motion flags (m5075) for the null terminated list of motors that we are planning on running a motion program with\&. \fP"
+.ti -1c
+.RI "void \fBlsredis_load_presets\fP (char *motor_name)"
+.br
+.RI "\fIupdate the presets hash table for the named motor \fP"
 .in -1c
 .SS "Variables"
 
@@ -846,10 +867,14 @@ Definition at line 64 of file pgpmac\&.h\&.
 Fixed length for event names: simplifies string handling\&. 
 .PP
 Definition at line 67 of file pgpmac\&.h\&.
+.SS "#define LSPMAC_MAGIC_NUMBER   0x9700436"
+
+.PP
+Definition at line 95 of file pgpmac\&.h\&.
 .SS "#define MD2CMDS_CMD_LENGTH   32"
 
 .PP
-Definition at line 487 of file pgpmac\&.h\&.
+Definition at line 488 of file pgpmac\&.h\&.
 .SH "Typedef Documentation"
 .PP 
 .SS "typedef struct \fBlspg_demandairrights_struct\fP  \fBlspg_demandairrights_t\fP"
@@ -905,7 +930,7 @@ PMAC ethernet packet definition\&. Taken directly from the Delta Tau documentati
 .PP
 Maybe add a new object Used internally for this module Must be called with lsredis_mutex locked\&. 
 .PP
-Definition at line 488 of file lsredis\&.c\&.
+Definition at line 505 of file lsredis\&.c\&.
 .PP
 .nf
                                             {
@@ -993,23 +1018,25 @@ Definition at line 488 of file lsredis\&.c\&.
   return p;
 }
 .fi
-.SS "void lsevents_add_listener (char *event, void(*)(char *)cb)"
+.SS "void lsevents_add_listener (char *raw_regexp, void(*)(char *)cb)"
 
 .PP
 Add a callback routine to listen for a specific event\&. \fBParameters:\fP
 .RS 4
-\fIevent\fP the name of the event to listen for 
+\fIraw_regexp\fP String value of regular expression to listen to 
 .br
 \fIcb\fP the routine to call 
 .RE
 .PP
 
 .PP
-Definition at line 72 of file lsevents\&.c\&.
+Definition at line 99 of file lsevents\&.c\&.
 .PP
 .nf
-                                                             {
-  lsevents_listener_t *new;
+                                                                  {
+  lsevents_listener_t    *new;
+  lsevents_event_names_t *enp;
+  lsevents_callbacks_t   *cbp;
   int err;
   char *errbuf;
   int nerrbuf;
@@ -1022,7 +1049,7 @@ Definition at line 72 of file lsevents\&.c\&.
     exit( -1);
   }
 
-  err = regcomp( &new->re, event, REG_EXTENDED | REG_NOSUB);
+  err = regcomp( &new->re, raw_regexp, REG_EXTENDED | REG_NOSUB);
   if( err != 0) {
     nerrbuf = regerror( err, &new->re, NULL, 0);
     errbuf = calloc( nerrbuf, sizeof( char));
@@ -1037,15 +1064,26 @@ Definition at line 72 of file lsevents\&.c\&.
     return;
   }
 
-  new->raw_regexp = strdup( event);
+  new->raw_regexp = strdup( raw_regexp);
   new->cb   = cb;
 
   pthread_mutex_lock( &lsevents_listener_mutex);
   new->next = lsevents_listeners_p;
   lsevents_listeners_p = new;
+
+  for( enp = lsevents_event_names; enp != NULL; enp = enp->next) {
+    if( regexec( &new->re, enp->event, 0, NULL, 0) == 0) {
+      cbp       = calloc( 1, sizeof( lsevents_callbacks_t));
+      cbp->cb   = cb;
+      cbp->next = enp->cbl;
+      enp->cbl  = cbp;
+    }
+  }
+  
+
   pthread_mutex_unlock( &lsevents_listener_mutex);
 
-  lslogging_log_message( 'lsevents_add_listener: added listener for event %s', event);
+  lslogging_log_message( 'lsevents_add_listener: added listener for event '%s'', raw_regexp);
 
 }
 .fi
@@ -1054,13 +1092,40 @@ Definition at line 72 of file lsevents\&.c\&.
 .PP
 Initialize this module\&. 
 .PP
-Definition at line 211 of file lsevents\&.c\&.
+Definition at line 373 of file lsevents\&.c\&.
 .PP
 .nf
                      {
-  pthread_mutex_init( &lsevents_queue_mutex, NULL);
-  pthread_cond_init(  &lsevents_queue_cond, NULL);
-  pthread_mutex_init( &lsevents_listener_mutex, NULL);
+  pthread_mutexattr_t mutex_initializer;
+
+  // Use recursive mutexs
+  //
+  pthread_mutexattr_init( &mutex_initializer);
+  pthread_mutexattr_settype( &mutex_initializer, PTHREAD_MUTEX_RECURSIVE);
+
+  pthread_mutex_init( &lsevents_queue_mutex,    &mutex_initializer);
+  pthread_cond_init(  &lsevents_queue_cond,     NULL);
+  pthread_mutex_init( &lsevents_listener_mutex, &mutex_initializer);
+
+  hcreate_r( 2*lsevents_max_events, &lsevents_event_name_ht);
+}
+.fi
+.SS "void lsevents_preregister_event (char *fmt, \&.\&.\&.)"
+
+.PP
+Definition at line 314 of file lsevents\&.c\&.
+.PP
+.nf
+                                                 {
+  char  s[128];
+  va_list arg_ptr;
+
+  va_start( arg_ptr, fmt);
+  vsnprintf( s, sizeof( s) - 1, fmt, arg_ptr);
+  s[sizeof(s)-1] = 0;
+  va_end( arg_ptr);
+
+  lsevents_register_event( s);
 }
 .fi
 .SS "void lsevents_remove_listener (char *event, void(*)(char *)cb)"
@@ -1068,19 +1133,21 @@ Definition at line 211 of file lsevents\&.c\&.
 .PP
 Remove a listener previously added with lsevents_add_listener\&. \fBParameters:\fP
 .RS 4
-\fIevent\fP The name of the event 
+\fIevent\fP The name of the event (possibly a regular expression string) 
 .br
 \fIcb\fP The callback routine to remove 
 .RE
 .PP
 
 .PP
-Definition at line 117 of file lsevents\&.c\&.
+Definition at line 157 of file lsevents\&.c\&.
 .PP
 .nf
                                                                 {
   
   lsevents_listener_t *last, *current;
+  lsevents_event_names_t *enp;
+  lsevents_callbacks_t   *cbp, *last_cbp;
 
   //
   // Find the listener to remove
@@ -1097,17 +1164,44 @@ Definition at line 117 of file lsevents\&.c\&.
       }
       break;
     }
+    last = current;
   }
+
+  if( current == NULL) {
+    lslogging_log_message( 'lsevents_remove_listener: Could not find this listener for event '%s'', event);
+    pthread_mutex_unlock( &lsevents_listener_mutex);
+    return;
+  }
+
+  //
+  // Remove callback from lists of event names
+  //
+  for( enp = lsevents_event_names; enp != NULL; enp = enp->next) {
+    if( regexec( &current->re, enp->event, 0, NULL, 0) == 0) {
+      last_cbp = NULL;
+      for( cbp = enp->cbl; cbp != NULL; cbp = cbp->next) {
+        if( cbp->cb == cb) {
+          if( last_cbp == NULL)
+            enp->cbl = NULL;
+          else
+            last_cbp->next = cbp->next;
+          free( cbp);
+          break;
+        }
+      }
+    }
+  }
+
+
   pthread_mutex_unlock( &lsevents_listener_mutex);
 
   //
   // Now remove it
   //
-  if( current != NULL) {
-    if( current->raw_regexp != NULL)
-      free( current->raw_regexp);
-    free(current);
-  }
+  if( current->raw_regexp != NULL)
+    free( current->raw_regexp);
+  free(current);
+
 }
 .fi
 .SS "void lsevents_run ()"
@@ -1115,7 +1209,7 @@ Definition at line 117 of file lsevents\&.c\&.
 .PP
 Start up the thread and get out of the way\&. 
 .PP
-Definition at line 219 of file lsevents\&.c\&.
+Definition at line 390 of file lsevents\&.c\&.
 .PP
 .nf
                     {
@@ -1134,7 +1228,7 @@ Call the callback routines for the given event\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 45 of file lsevents\&.c\&.
+Definition at line 73 of file lsevents\&.c\&.
 .PP
 .nf
                                           {
@@ -1156,7 +1250,6 @@ Definition at line 45 of file lsevents\&.c\&.
 
   pthread_cond_signal(  &lsevents_queue_cond);
   pthread_mutex_unlock( &lsevents_queue_mutex);
-
 }
 .fi
 .SS "void lslogging_init ()"
@@ -1575,7 +1668,7 @@ Definition at line 1970 of file lspg\&.c\&.
   lsevents_add_listener( 'Sample(Detected|Absent)', lspg_sample_detector_cb);
   lsevents_add_listener( 'Timer Update KVs',        lspg_update_kvs_cb);
   lsevents_add_listener( 'cam\&.zoom In Position',    lspg_set_scale_cb);
-  lstimer_add_timer(     'Timer Update KVs', -1, 0, 500000000);
+  lstimer_set_timer(     'Timer Update KVs', -1, 0, 500000000);
 }
 .fi
 .SS "void lspg_seq_run_prep_all (long longskey, doublekappa, doublephi, doublecx, doublecy, doubleax, doubleay, doubleaz)"
@@ -1697,9 +1790,14 @@ Definition at line 2031 of file lspmac\&.c\&.
   //
   lspmac_SockSendDPControlChar( 'Abort Request', 0x01);
 
+  //
+  // and reset motion flag
+  //
+  lspmac_SockSendDPline( 'Reset', '%s', 'M5075=0');
+
 }
 .fi
-.SS "int lspmac_est_move_time (double *est_time, int *mmask, \fBlspmac_motor_t\fP *mp_1, intjog_1, char *preset_1, doubleend_point_1, \&.\&.\&.)"
+.SS "int lspmac_est_move_time (double *est_time, int *mmaskp, \fBlspmac_motor_t\fP *mp_1, intjog_1, char *preset_1, doubleend_point_1, \&.\&.\&.)"
 
 .PP
 Move the motors and estimate the time it'll take to finish the job\&. Returns the estimate time and the coordinate system mask to waite for 
@@ -1708,7 +1806,7 @@ Move the motors and estimate the time it'll take to finish the job\&. Returns th
 .RS 4
 \fIest_time\fP Returns number of seconds we estimate the move(s) will take 
 .br
-\fImmask\fP Mask of coordinate systems we are trying to move, excluding jogs\&. Used to wait for motions to complete 
+\fImmaskp\fP Mask of coordinate systems we are trying to move, excluding jogs\&. Used to wait for motions to complete 
 .br
 \fImp_1\fP Pointer to first motor 
 .br
@@ -1733,14 +1831,17 @@ Move the motors and estimate the time it'll take to finish the job\&. Returns th
 .PP
 < coordinate system motion flags 
 .PP
-Definition at line 2650 of file lspmac\&.c\&.
+Definition at line 2737 of file lspmac\&.c\&.
 .PP
 .nf
-                                                                                                                                  {
+                                                                                                                                   {
   static char axes[] = 'XYZUVWABC';
   static int qs[9];
   static lspmac_combined_move_t motions[32];
-
+  char s[256];
+  int foundone;
+  int moving_flags;
+  struct timespec timeout;
   int j;
   va_list arg_ptr;
   lspmac_motor_t *mp;
@@ -1758,14 +1859,16 @@ Definition at line 2650 of file lspmac\&.c\&.
   int err;
   int jog;
   int i;
-  int m5075;            
+  uint32_t m5075;               
 
   // reset our coordinate flags and command strings
   //
   for( i=0; i<32; i++) {
     motions[i]\&.moveme = 0;
   }
-  m5075 = 0;
+  m5075  = 0;
+  if( mmaskp != NULL)
+    *mmaskp = 0;
 
   //
   // Initialze first iteration
@@ -1854,6 +1957,15 @@ Definition at line 2650 of file lspmac\&.c\&.
      *      we need to use equation (1) otherwise we need to use equation (2)
      *
      */
+
+    if( mp->magic != LSPMAC_MAGIC_NUMBER) {
+      lslogging_log_message( 'lspmac_est_move_time: WARNING: bad motor structure\&.  Check that your motor list is NULL terminated\&.');
+      break;
+    }
+
+
+    lslogging_log_message( 'lspmac_est_move_time: find motor %s, jog %d, preset %s, endpoint %f',
+                           mp->name, jog, ps == NULL ? 'NULL' : ps, ep);
 
     Tt = 0\&.0;
     if( mp != NULL && mp->max_speed != NULL && mp->max_accel != NULL && mp->u2c != NULL) {
@@ -1961,9 +2073,12 @@ Definition at line 2650 of file lspmac\&.c\&.
           //
           //
           if( abs(motions[motor_num - 1]\&.Delta)*16 >= in_position_band) {
-            m5075 |= 1 << (cn - 1);
+            m5075 |= (1 << (cn - 1));
             motions[motor_num - 1]\&.moveme    = 1;
           }       
+          lslogging_log_message( 'lspmac_est_move_time: moveme=%d  motor '%s' motions index=%d coord_num=%d axis=%d Delta=%d   m5075=%u',
+                                 motions[motor_num-1]\&.moveme,  mp->name, motor_num -1, motions[motor_num-1]\&.coord_num, motions[motor_num-1]\&.axis, motions[motor_num-1]\&.Delta,
+                                 m5075);
         }
       } else {
         //
@@ -1992,94 +2107,94 @@ Definition at line 2650 of file lspmac\&.c\&.
     jog = va_arg( arg_ptr, int);
     ps  = va_arg( arg_ptr, char *);
     ep  = va_arg( arg_ptr, double);
+
   }
   va_end( arg_ptr);
 
   
-  // Call the motion program(s)
-  {
-    char s[256];
-    int foundone;
-    int err;
-    int moving_flags;
-    struct timespec timeout;
+  // Set the motion program flags
+  //
+  if( m5075 != 0) {
+    if( mmaskp != NULL)
+      *mmaskp |= m5075; // Tell the caller about our new mask
 
-    if( m5075 != 0) {
-      *mmask |= m5075;  // Tell the caller about our new mask
-
-      pthread_mutex_lock( &lspmac_moving_mutex);
-      if( (lspmac_moving_flags & m5075) != m5075)
-        lspmac_SockSendDPline( NULL, 'M5075=(M5075 | %d)', m5075);
-
-      clock_gettime( CLOCK_REALTIME, &timeout);
-      //
-      timeout\&.tv_sec += 2;       // 2 seconds should be more than enough time to set the flags
-      err = 0;
-      while( err == 0 && (lspmac_moving_flags & m5075) != m5075)
-        err = pthread_cond_timedwait( &lspmac_moving_cond, &lspmac_moving_mutex, &timeout);
-      moving_flags = lspmac_moving_flags;
-      pthread_mutex_unlock( &lspmac_moving_mutex);
-
-      if( err == ETIMEDOUT) {
-        lslogging_log_message( 'lspmac_est_move_time: Timed out waiting for moving flags\&.  lspmac_moving_flags = %0x', moving_flags);
-        lsevents_send_event( '%s Move Aborted Combined Motors');
-        return 1;
-      }
+    
+    pthread_mutex_lock( &lspmac_moving_mutex);
+    if( (lspmac_moving_flags & m5075) != m5075)
+      lspmac_SockSendDPline( NULL, 'M5075=(M5075 | %d)', m5075);
+    
+    clock_gettime( CLOCK_REALTIME, &timeout);
+    //
+    timeout\&.tv_sec += 2; // 2 seconds should be more than enough time to set the flags
+    err = 0;
+    while( err == 0 && (lspmac_moving_flags & m5075) != m5075)
+      err = pthread_cond_timedwait( &lspmac_moving_cond, &lspmac_moving_mutex, &timeout);
+    moving_flags = lspmac_moving_flags;
+    pthread_mutex_unlock( &lspmac_moving_mutex);
+    
+    if( err == ETIMEDOUT) {
+      lslogging_log_message( 'lspmac_est_move_time: Timed out waiting for moving flags\&.  lspmac_moving_flags = %0x', moving_flags);
+      lsevents_send_event( 'Combined Move Aborted');
+      return 1;
     }
+  }
 
 
-    for( i=1; i<=16; i++) {
+  for( i=1; i<=16; i++) {
+    //
+    // Loop over coordinate systems
+    //
+    foundone = 0;
+    
+    for( j=0; j<9; j++)
+      qs[j] = 0;
+    
+    for( j=0; j<31; j++) {
       //
-      // Loop over coordinate systems
+      // Loop over motors
       //
-      foundone = 0;
-
-      for( j=0; j<9; j++)
-        qs[j] = 0;
-
-      for( j=0; j<31; j++) {
-        //
-        // Loop over motors
-        //
-        if( motions[j]\&.moveme && motions[j]\&.coord_num == i) {
-          if( abs(motions[j]\&.Delta) > 0) {
-            qs[(int)(motions[j]\&.axis)] = motions[j]\&.Delta;
-            foundone=1;
-          }
+      if( motions[j]\&.moveme && motions[j]\&.coord_num == i) {
+        if( abs(motions[j]\&.Delta) > 0) {
+          qs[(int)(motions[j]\&.axis)] = motions[j]\&.Delta;
+          foundone=1;
         }
       }
+    }
+    
+    if( foundone) {
+      sprintf( s, '&%d Q40=%d Q41=%d Q42=%d Q43=%d Q44=%d Q45=%d Q46=%d Q47=%d Q48=%d Q49=%\&.1f Q100=%d B180R',
+               i, qs[0], qs[1], qs[2], qs[3], qs[4], qs[5], qs[6], qs[7], qs[8], *est_time * 1000\&., 1 << (i-1));
       
-      if( foundone) {
-        sprintf( s, '&%d Q40=%d Q41=%d Q42=%d Q43=%d Q44=%d Q45=%d Q46=%d Q47=%d Q48=%d Q49=%\&.1f Q100=%d B180R',
-                 i, qs[0], qs[1], qs[2], qs[3], qs[4], qs[5], qs[6], qs[7], qs[8], *est_time * 1000\&., 1 << (i-1));
-
-        lspmac_SockSendDPline( NULL, s);
-
-      }
+      lspmac_SockSendDPline( NULL, s);
+      
     }
   }
   return 0;
 }
 .fi
-.SS "int lspmac_est_move_time_wait (doublemove_time, intmmask)"
+.SS "int lspmac_est_move_time_wait (doublemove_time, intcmask, \fBlspmac_motor_t\fP *mp_1, \&.\&.\&.)"
 
 .PP
 wait for motion to stop returns non-zero if the wait timed out \fBParameters:\fP
 .RS 4
 \fImove_time\fP The time out in seconds 
 .br
-\fImmask\fP A coordinate system mask to wait for
+\fIcmask\fP A coordinate system mask to wait for 
+.br
+\fImp_1\fP NULL terminated list of individual motors to wait for
 .RE
 .PP
 Both values are returned from lspmac_est_move_time 
 .PP
-Definition at line 2983 of file lspmac\&.c\&.
+Definition at line 3084 of file lspmac\&.c\&.
 .PP
 .nf
-                                                            {
+                                                                                       {
   int err;
   double isecs, fsecs;
   struct timespec timeout;
+  va_list arg_ptr;
+  lspmac_motor_t *mp;
 
   clock_gettime( CLOCK_REALTIME, &timeout);
   fsecs = modf( move_time, &isecs);
@@ -2090,23 +2205,38 @@ Definition at line 2983 of file lspmac\&.c\&.
 
   err = 0;
   pthread_mutex_lock( &lspmac_moving_mutex);
-  while( err == 0 && (lspmac_moving_flags & mmask) != 0)
+  while( err == 0 && (lspmac_moving_flags & cmask) != 0)
     err = pthread_cond_timedwait( &lspmac_moving_cond, &lspmac_moving_mutex, &timeout);
   pthread_mutex_unlock( &lspmac_moving_mutex);
 
   if( err != 0) {
     if( err == ETIMEDOUT) {
-      lslogging_log_message( 'lstest_lspmac_est_move_time: timed out waiting %f seconds', move_time);
+      lslogging_log_message( 'lstest_lspmac_est_move_time_wait: timed out waiting %f seconds, cmask = 0x%0x', move_time, cmask);
     }
+    lspmac_abort();
     return 1;
   }
+
+  va_start( arg_ptr, mp_1);
+  for( mp = mp_1; mp != NULL; mp = va_arg( arg_ptr, lspmac_motor_t *)) {
+    if( mp->magic != LSPMAC_MAGIC_NUMBER) {
+      lslogging_log_message( 'lspmac_est_move_time_wait: WARNING: motor list must be NULL terminated\&.  Check your call to lspmac_est_move_time_wait\&.');
+    }
+
+    if( lspmac_moveabs_wait( mp, move_time)) {
+      lslogging_log_message( 'lspmac_est_move_time_wait: timed out waiting %f seconds for motor %s', move_time, mp->name);
+      return 1;
+    }
+  }
+  va_end( arg_ptr);
+
   return 0;
 }
 .fi
 .SS "\fBlspmac_motor_t\fP* lspmac_find_motor_by_name (char *name)"
 
 .PP
-Definition at line 3962 of file lspmac\&.c\&.
+Definition at line 4154 of file lspmac\&.c\&.
 .PP
 .nf
                                                        {
@@ -2318,7 +2448,7 @@ Definition at line 1309 of file lspmac\&.c\&.
 .PP
 Initialize this module\&. 
 .PP
-Definition at line 3534 of file lspmac\&.c\&.
+Definition at line 3671 of file lspmac\&.c\&.
 .PP
 .nf
                    {
@@ -2480,6 +2610,15 @@ Definition at line 3534 of file lspmac\&.c\&.
   lspmac_SockSendDPline( NULL, 'ENABLE PLCC 0,2');
   lspmac_SockSendDPline( NULL, 'DISABLE PLCC 1');
   lspmac_SockSendDPline( NULL, 'I5=3');
+
+
+  lsevents_preregister_event( 'omega crossed zero');
+  lsevents_preregister_event( 'Move Aborted');
+  lsevents_preregister_event( 'Combined Move Aborted');
+
+  for( i=1; i<=16; i++) {
+    lsevents_preregister_event( 'Coordsys %d Stopped', i);
+  }
 }
 .fi
 .SS "int lspmac_jogabs_queue (\fBlspmac_motor_t\fP *, double)"
@@ -2487,7 +2626,7 @@ Definition at line 3534 of file lspmac\&.c\&.
 .PP
 Use jog to move motor to requested position\&. 
 .PP
-Definition at line 3265 of file lspmac\&.c\&.
+Definition at line 3383 of file lspmac\&.c\&.
 .PP
 .nf
                             {
@@ -2517,7 +2656,7 @@ Move method for normal stepper and servo motor objects Returns non-zero on abort
 .PP
 
 .PP
-Definition at line 3017 of file lspmac\&.c\&.
+Definition at line 3135 of file lspmac\&.c\&.
 .PP
 .nf
                                    {
@@ -2727,7 +2866,7 @@ Definition at line 3017 of file lspmac\&.c\&.
 .PP
 move using a preset value returns 0 on success, non-zero on error 
 .PP
-Definition at line 3226 of file lspmac\&.c\&.
+Definition at line 3344 of file lspmac\&.c\&.
 .PP
 .nf
                                        {
@@ -2767,7 +2906,7 @@ Move a given motor to one of its preset positions\&. No movement if the preset i
 .PP
 
 .PP
-Definition at line 2393 of file lspmac\&.c\&.
+Definition at line 2396 of file lspmac\&.c\&.
 .PP
 .nf
                                                                      {
@@ -2794,7 +2933,7 @@ Definition at line 2393 of file lspmac\&.c\&.
 .PP
 Use coordinate system motion program, if available, to move motor to requested position\&. 
 .PP
-Definition at line 3254 of file lspmac\&.c\&.
+Definition at line 3372 of file lspmac\&.c\&.
 .PP
 .nf
                             {
@@ -2816,7 +2955,7 @@ Wait for motor to finish moving\&. Assume motion already queued, now just wait
 .PP
 
 .PP
-Definition at line 3280 of file lspmac\&.c\&.
+Definition at line 3398 of file lspmac\&.c\&.
 .PP
 .nf
                                                                   {
@@ -2897,7 +3036,7 @@ Definition at line 3280 of file lspmac\&.c\&.
 .PP
 Start up the lspmac thread\&. 
 .PP
-Definition at line 4010 of file lspmac\&.c\&.
+Definition at line 4202 of file lspmac\&.c\&.
 .PP
 .nf
                   {
@@ -2911,9 +3050,10 @@ Definition at line 4010 of file lspmac\&.c\&.
   pthread_create( &pmac_thread, NULL, lspmac_worker, NULL);
 
   lsevents_add_listener( 'CryoSwitchChanged',    lspmac_cryoSwitchChanged_cb);
-  lsevents_add_listener( 'scint Moving',         lspmac_scint_maybe_move_sample_cb);
+  lsevents_add_listener( 'scint In Position',    lspmac_scint_maybe_turn_on_dryer_cb);
+  lsevents_add_listener( 'scint Moving',         lspmac_scint_maybe_turn_off_dryer_cb);
   lsevents_add_listener( 'scint In Position',    lspmac_scint_maybe_return_sample_cb);
-  lsevents_add_listener( 'scint In Position',    lspmac_scint_inPosition_cb);
+  lsevents_add_listener( 'scint Moving',         lspmac_scint_maybe_move_sample_cb);
   lsevents_add_listener( 'scintDried',           lspmac_scint_dried_cb);
   lsevents_add_listener( 'backLight 1',          lspmac_backLight_up_cb);
   lsevents_add_listener( 'backLight 0',          lspmac_backLight_down_cb);
@@ -2996,6 +3136,97 @@ Definition at line 4010 of file lspmac\&.c\&.
   }
 }
 .fi
+.SS "int lspmac_set_motion_flags (int *mmaskp, \fBlspmac_motor_t\fP *mp_1, \&.\&.\&.)"
+
+.PP
+Set the coordinate system motion flags (m5075) for the null terminated list of motors that we are planning on running a motion program with\&. Note that lspmac_est_move_time already takes care of this, use when calling a motion program directly
+.PP
+\fBParameters:\fP
+.RS 4
+\fImmaskp\fP Returned value of the mask generated\&. Ignored if null\&. 
+.br
+\fImp_1\fP start of null terminated list of motors\&. 
+.RE
+.PP
+
+.PP
+Definition at line 2651 of file lspmac\&.c\&.
+.PP
+.nf
+                                                                     {
+  va_list arg_ptr;
+  struct timespec timeout;
+  int err;
+  int cn;
+  int need_flag;
+  lspmac_motor_t *mp;
+  int mmask;
+
+  mmask = 0;
+  if( mmaskp != NULL)
+    *mmaskp = 0;
+
+  if( mp_1==NULL)
+    return 0;
+  
+  
+  //
+  // add the coordinate system flags to mmask
+  //
+  va_start( arg_ptr, mp_1);
+  for( mp = mp_1; mp!=NULL; mp = va_arg( arg_ptr, lspmac_motor_t *)) {
+    if( mp->magic != LSPMAC_MAGIC_NUMBER) {
+      lslogging_log_message( 'lspmac_set_motion_flags: WARNING: motor list must be NULL terminated\&.  Check your call to lspmac_set_motion_flags\&.');
+      break;
+    }
+    cn = lsredis_getl( mp->coord_num);
+    if( cn < 1 || cn > 16)
+      continue;
+    
+    mmask |= 1 << (cn - 1);
+  }
+  va_end( arg_ptr);
+
+  if( mmaskp != NULL)
+    *mmaskp = mmask;
+    
+  //
+  // It could be the flag is already what we want\&.  We might set up a race condition if we
+  // try to set it again\&.  (so don't)
+  //
+  pthread_mutex_lock( &lspmac_moving_mutex);
+
+  if( (lspmac_moving_flags & mmask) != 0)
+    need_flag = 0;
+  else
+    need_flag = 1;
+  
+  pthread_mutex_unlock( &lspmac_moving_mutex);
+
+  if( !need_flag)
+    return 0;
+  
+  //
+  // Set m5075 and make sure it propagates
+  //
+  lspmac_SockSendDPline( NULL, 'M5075=(M5075 | %d)', mmask);
+  clock_gettime( CLOCK_REALTIME, &timeout);
+  timeout\&.tv_sec += 2;
+
+  err = 0;
+  pthread_mutex_lock( &lspmac_moving_mutex);
+  while( err == 0 && (lspmac_moving_flags & mmask) != mmask)
+    err = pthread_cond_timedwait( &lspmac_moving_cond, &lspmac_moving_mutex, &timeout);
+
+  pthread_mutex_unlock( &lspmac_moving_mutex);
+  
+  if( err == ETIMEDOUT) {
+    lslogging_log_message( 'lspmac_set_motion_flags: timed out waiting for motion %d flag to be set', mmask);
+    return 1;
+  }
+  return 0;
+}
+.fi
 .SS "void lspmac_SockSendDPControlChar (char *event, charc)"
 
 .PP
@@ -3074,7 +3305,7 @@ Definition at line 1076 of file lspmac\&.c\&.
 .PP
 Special motion program to collect centering video\&. 
 .PP
-Definition at line 2610 of file lspmac\&.c\&.
+Definition at line 2613 of file lspmac\&.c\&.
 .PP
 .nf
                                        {
@@ -3108,7 +3339,7 @@ Definition at line 2610 of file lspmac\&.c\&.
 .SS "int lsredis_cmpnstr (\fBlsredis_obj_t\fP *p, char *s, intn)"
 
 .PP
-Definition at line 236 of file lsredis\&.c\&.
+Definition at line 253 of file lsredis\&.c\&.
 .PP
 .nf
                                                        {
@@ -3125,7 +3356,7 @@ Definition at line 236 of file lsredis\&.c\&.
 .SS "int lsredis_cmpstr (\fBlsredis_obj_t\fP *p, char *s)"
 
 .PP
-Definition at line 225 of file lsredis\&.c\&.
+Definition at line 242 of file lsredis\&.c\&.
 .PP
 .nf
                                                {
@@ -3142,59 +3373,50 @@ Definition at line 225 of file lsredis\&.c\&.
 .SS "int lsredis_find_preset (char *base, char *preset_name, double *dval)"
 
 .PP
-Definition at line 806 of file lsredis\&.c\&.
+Get the value of the given preset and return it in dval Returns 0 on error, non-zero on success;\&. 
+.PP
+Definition at line 898 of file lsredis\&.c\&.
 .PP
 .nf
-                                                                      {
+                                                                            {
   char s[512];
-  int i;
   int err;
-  ENTRY htab_input, *htab_output;
-  lsredis_obj_t *p;
+  ENTRY entry_in, *entry_outp;
+  lsredis_preset_list_t *pl;
 
-  for( i=0; i<1024; i++) {
-    snprintf( s, sizeof( s)-1, '%s\&.%s\&.presets\&.%d\&.name', lsredis_head, base, i);
-    s[sizeof(s)-1] = 0;
-    htab_input\&.key  = s;
-    htab_input\&.data = NULL;
-    err = hsearch_r( htab_input, FIND, &htab_output, &lsredis_htab);
+  snprintf( s, sizeof( s)-1, '%s%s', motor_name, preset_name);
+  s[sizeof(s)-1] = 0;
+
+  entry_in\&.key  = s;
+  entry_in\&.data = NULL;
+  err = hsearch_r( entry_in, FIND, &entry_outp, &lsredis_preset_ht);
+
+  if( err == 0) {
+    // not found (or some other problem that means we don't have an answer
+    //
+    // Maybe someone added a new preset and we don't know about it yet
+    //
+    lsredis_load_presets( motor_name);
+    err = hsearch_r( entry_in, FIND, &entry_outp, &lsredis_preset_ht);
     if( err == 0) {
-      // We've run out of names to look for: done
-      lslogging_log_message( 'lsredis_find_preset: no preset for motor %s named '%s'', base, preset_name);
+      //
+      // Guess not\&.  Give up\&.  We tried
+      //
       *dval = 0\&.0;
       return 0;
     }
-
-    // Check if we have a match
-    p = htab_output->data;
-    if( lsredis_cmpstr( p, preset_name)==0) {
-      // got a match, now look for the position
-      snprintf( s, sizeof( s)-1, '%s\&.%s\&.presets\&.%d\&.position', lsredis_head, base, i);
-      s[sizeof(s)-1] = 0;
-      htab_input\&.key = s;
-      htab_input\&.data = NULL;
-      err = hsearch_r( htab_input, FIND, &htab_output, &lsredis_htab);
-      if( err == 0) {
-        // Name but not position? odd\&.
-        lslogging_log_message( 'lsredis_find_preset: Error, motor %s preset '%s' has no position defined', base, preset_name);
-        *dval = 0\&.0;
-        return 0;
-      }
-      p = htab_output->data;
-      *dval = lsredis_getd( p);
-      return 1;
-    }
   }
-  // How'd we get here?
-  // did someone really define that many presets?  And then looked for one that's not there?
-  *dval = 0;
-  return 0;
+  pl = entry_outp->data;
+  *dval = lsredis_getd( pl->position);
+  return 1;
 }
 .fi
 .SS "int lsredis_find_preset_index_by_position (\fBlspmac_motor_t\fP *mp)"
 
 .PP
-Definition at line 916 of file lsredis\&.c\&.
+For the given motor object return the index of the current preset or -1 if we are not at a preset position\&. 
+.PP
+Definition at line 980 of file lsredis\&.c\&.
 .PP
 .nf
                                                                {
@@ -3225,7 +3447,7 @@ Definition at line 916 of file lsredis\&.c\&.
 .SS "\fBlsredis_obj_t\fP* lsredis_get_obj (char *, \&.\&.\&.)"
 
 .PP
-Definition at line 574 of file lsredis\&.c\&.
+Definition at line 591 of file lsredis\&.c\&.
 .PP
 .nf
                                                 {
@@ -3264,7 +3486,7 @@ Definition at line 574 of file lsredis\&.c\&.
 .SS "char** lsredis_get_string_array (\fBlsredis_obj_t\fP *p)"
 
 .PP
-Definition at line 415 of file lsredis\&.c\&.
+Definition at line 432 of file lsredis\&.c\&.
 .PP
 .nf
                                                    {
@@ -3283,7 +3505,7 @@ Definition at line 415 of file lsredis\&.c\&.
 .SS "int lsredis_getb (\fBlsredis_obj_t\fP *p)"
 
 .PP
-Definition at line 428 of file lsredis\&.c\&.
+Definition at line 445 of file lsredis\&.c\&.
 .PP
 .nf
                                     {
@@ -3302,7 +3524,7 @@ Definition at line 428 of file lsredis\&.c\&.
 .SS "char lsredis_getc (\fBlsredis_obj_t\fP *p)"
 
 .PP
-Definition at line 441 of file lsredis\&.c\&.
+Definition at line 458 of file lsredis\&.c\&.
 .PP
 .nf
                                      {
@@ -3321,7 +3543,7 @@ Definition at line 441 of file lsredis\&.c\&.
 .SS "double lsredis_getd (\fBlsredis_obj_t\fP *p)"
 
 .PP
-Definition at line 364 of file lsredis\&.c\&.
+Definition at line 381 of file lsredis\&.c\&.
 .PP
 .nf
                                        {
@@ -3340,7 +3562,7 @@ Definition at line 364 of file lsredis\&.c\&.
 .SS "long int lsredis_getl (\fBlsredis_obj_t\fP *p)"
 
 .PP
-Definition at line 377 of file lsredis\&.c\&.
+Definition at line 394 of file lsredis\&.c\&.
 .PP
 .nf
                                          {
@@ -3361,7 +3583,7 @@ Definition at line 377 of file lsredis\&.c\&.
 .PP
 return a copy of the key's string value be sure to free the result 
 .PP
-Definition at line 264 of file lsredis\&.c\&.
+Definition at line 281 of file lsredis\&.c\&.
 .PP
 .nf
                                         {
@@ -3393,7 +3615,7 @@ Initialize this module, that is, set up the connections\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 949 of file lsredis\&.c\&.
+Definition at line 1012 of file lsredis\&.c\&.
 .PP
 .nf
                                                     {
@@ -3468,12 +3690,93 @@ Definition at line 949 of file lsredis\&.c\&.
       free( errmsg);
     }
   }
+
+  hcreate_r( lsredis_preset_max_n * 2, &lsredis_preset_ht);
+  pthread_mutex_init( &lsredis_preset_list_mutex, NULL);
+}
+.fi
+.SS "void lsredis_load_presets (char *motor_name)"
+
+.PP
+update the presets hash table for the named motor 
+.PP
+Definition at line 825 of file lsredis\&.c\&.
+.PP
+.nf
+                                             {
+  lsredis_obj_t *p;
+  lsredis_preset_list_t *pl;
+  int plength;
+  char *preset_name;
+  int i;
+  int key_length;
+  ENTRY entry_in, *entry_outp;
+
+  p = lsredis_get_obj( '%s\&.presets\&.length', motor_name);
+  plength = lsredis_get_or_set_l( p, 0);
+  if( plength <= 0)
+    return;
+
+  pthread_mutex_lock( &lsredis_preset_list_mutex);
+
+  for( i=0; i<plength; i++) {
+    pl = calloc( 1, sizeof( lsredis_preset_list_t));
+    pl->name      = lsredis_get_obj( '%s\&.presets\&.%d\&.name',     motor_name, i);
+    pl->position  = lsredis_get_obj( '%s\&.presets\&.%d\&.position', motor_name, i);
+    pl->index     = i;
+    
+    preset_name   = lsredis_getstr( pl->name);
+    key_length    = strlen( motor_name) + strlen( preset_name) + 1;
+    pl->key       = calloc( key_length, 1);
+
+    pl->next            = lsredis_preset_list;
+    lsredis_preset_list = pl;
+
+    snprintf( pl->key, key_length, '%s%s', motor_name, preset_name);
+
+    entry_in\&.key  = pl->key;
+    entry_in\&.data = pl;
+    hsearch_r( entry_in, ENTER, &entry_outp, &lsredis_preset_ht);
+    if( entry_outp->data != pl) {
+      //
+      // The key was already there or we couldn't add it
+      //
+      if( entry_outp->data == NULL)
+        lslogging_log_message( 'lsredis_load_presets: could not add preset '%s' for motor '%s'', preset_name, motor_name);
+
+      free( pl->key);
+      free( pl);
+    } else {
+      //
+      // We've successfully added the new key
+      //
+      lsredis_preset_n++;
+      //
+      // Resize the hash table if we are starting to fill it up
+      // Generally we prefer a sparse table
+      //
+      if( lsredis_preset_n >= lsredis_preset_max_n) {
+        lslogging_log_message( 'lsredis_load_presets: increasing preset hash table size\&.  max now %d', lsredis_preset_max_n);
+        hdestroy_r( &lsredis_preset_ht);
+        lsredis_preset_max_n *= 2;
+        hcreate_r( 2 * lsredis_preset_max_n, &lsredis_preset_ht);
+        for( pl = lsredis_preset_list; pl != NULL; pl = pl->next) {
+          entry_in\&.key  = pl->key;
+          entry_in\&.data = pl;
+          hsearch_r( entry_in, ENTER, &entry_outp, &lsredis_preset_ht);
+        }
+        lslogging_log_message( 'lsredis_load_presets: done increasing preset hash table size\&.', lsredis_preset_max_n);
+      }
+    }
+    free( preset_name);
+  }
+  pthread_mutex_unlock( &lsredis_preset_list_mutex);
 }
 .fi
 .SS "int lsredis_regexec (const regex_t *preg, \fBlsredis_obj_t\fP *p, size_tnmatch, regmatch_t *pmatch, inteflags)"
 
 .PP
-Definition at line 247 of file lsredis\&.c\&.
+Definition at line 264 of file lsredis\&.c\&.
 .PP
 .nf
                                                                                                            {
@@ -3493,7 +3796,7 @@ Definition at line 247 of file lsredis\&.c\&.
 .SS "void lsredis_run ()"
 
 .PP
-Definition at line 1153 of file lsredis\&.c\&.
+Definition at line 1219 of file lsredis\&.c\&.
 .PP
 .nf
                    {
@@ -3503,71 +3806,52 @@ Definition at line 1153 of file lsredis\&.c\&.
 .SS "void lsredis_set_preset (char *base, char *preset_name, doubledval)"
 
 .PP
-Definition at line 852 of file lsredis\&.c\&.
+set the given preset to the given value create a new preset if we can't find it 
+.PP
+Definition at line 935 of file lsredis\&.c\&.
 .PP
 .nf
-                                                                     {
+                                                                           {
   char s[512];
-  int i, plength;
+  int plength;
   int err;
-  ENTRY htab_input, *htab_output;
-  lsredis_obj_t *p;
+  ENTRY entry_in, *entry_outp;
+  lsredis_obj_t *p, *presets_length_p;
+  lsredis_preset_list_t *pl;
 
-  p = lsredis_get_obj(  '%s\&.%s\&.presets\&.length', lsredis_head, base);
-  plength = lsredis_get_or_set_l( p, 0);
+  snprintf( s, sizeof( s)-1, '%s%s', motor_name, preset_name);
+  s[sizeof(s)-1] = 0;
 
-  for( i=0; i<plength; i++) {
-    snprintf( s, sizeof( s)-1, '%s\&.%s\&.presets\&.%d\&.name', lsredis_head, base, i);
-    s[sizeof(s)-1] = 0;
-    htab_input\&.key  = s;
-    htab_input\&.data = NULL;
-    err = hsearch_r( htab_input, FIND, &htab_output, &lsredis_htab);
-    if( err == 0) {
-      //
-      // Not found? odd\&.  Length Lied\&.
-      // Might as well just stick our preset here\&.
-      //
-      p = lsredis_get_obj( '%s', s);
-      lsredis_setstr( p, '%s', preset_name);
-    } else {
-      // Check if we have a match
-      p = htab_output->data;
-    }
-
-    if( lsredis_cmpstr( p, preset_name)==0) {
-      //
-      // got a match, now look for the position
-      //
-      snprintf( s, sizeof( s)-1, '%s\&.%s\&.presets\&.%d\&.position', lsredis_head, base, i);
-      s[sizeof(s)-1] = 0;
-      htab_input\&.key = s;
-      htab_input\&.data = NULL;
-      err = hsearch_r( htab_input, FIND, &htab_output, &lsredis_htab);
-      if( err == 0) {
-        //
-        // Name but not position? odd\&.
-        //
-        p = lsredis_get_obj( '%s', s);
-      } else {
-        p = htab_output->data;
-      }
-      lsredis_setstr( p, '%\&.3f', dval);
-      return;
-    }
+  entry_in\&.key  = s;
+  entry_in\&.data = NULL;
+  err = hsearch_r( entry_in, FIND, &entry_outp, &lsredis_preset_ht);
+  if( err != 0) {
+    //
+    // Found it\&.  Things are simple\&.
+    //
+    pl = entry_outp->data;
+    lsredis_setstr( pl->position, '%\&.3f', dval);
+    return;
   }
   //
   // OK, our preset was not found, add it
   //
-  snprintf( s, sizeof( s)-1, '%s\&.%s\&.presets\&.%d\&.name', lsredis_head, base, i);
+  presets_length_p = lsredis_get_obj(  '%s\&.presets\&.length', motor_name);
+  plength = lsredis_get_or_set_l( presets_length_p, 0);
+  plength += 1;
+
+  snprintf( s, sizeof( s)-1, '%s\&.%s\&.presets\&.%d\&.name', lsredis_head, motor_name, plength-1);
   s[sizeof(s)-1] = 0;
-  p = lsredis_get_obj( '%s', s);
+
+  p = lsredis_get_obj( '%s\&.presets\&.%d\&.name', motor_name, plength-1);
   lsredis_setstr( p, '%s', preset_name);
 
-  p = lsredis_get_obj( '%s', s);
+  p = lsredis_get_obj( '%s\&.presets\&.%d\&.position', motor_name, plength-1);
   lsredis_setstr( p, '%\&.3f', dval);
+  
+  lsredis_setstr( presets_length_p, '%ld', plength);
 
-  p = lsredis_get_obj(  '%s\&.%s\&.presets\&.length', lsredis_head, base);
-  lsredis_setstr( p, '%ld', plength + 1);
+  lsredis_load_presets( motor_name);
 }
 .fi
 .SS "void lsredis_setstr (\fBlsredis_obj_t\fP *p, char *fmt, \&.\&.\&.)"
@@ -3581,7 +3865,7 @@ redisAsyncCommandArgv used instead of redisAsyncCommand 'cause it's easier (and 
 .PP
 < redisAsyncCommandArgv shouldn't need to access this after it's made up it's packet (before it returns) so we should be OK with this location disappearing soon\&. 
 .PP
-Definition at line 289 of file lsredis\&.c\&.
+Definition at line 306 of file lsredis\&.c\&.
 .PP
 .nf
                                                        {
@@ -3644,7 +3928,39 @@ Definition at line 92 of file lstest\&.c\&.
   lstest_lspmac_est_move_time();
 }
 .fi
-.SS "void lstimer_add_timer (char *event, intshots, unsigned long intsecs, unsigned long intnsecs)"
+.SS "void lstimer_init ()"
+
+.PP
+Initialize the timer list and pthread stuff\&. 
+.PP
+Definition at line 270 of file lstimer\&.c\&.
+.PP
+.nf
+                    {
+  int i;
+
+  for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
+    lstimer_list[i]\&.shots = 0;
+  }
+
+
+  pthread_mutex_init( &lstimer_mutex, NULL);
+  pthread_cond_init(  &lstimer_cond, NULL);
+}
+.fi
+.SS "void lstimer_run ()"
+
+.PP
+Start up our thread\&. 
+.PP
+Definition at line 284 of file lstimer\&.c\&.
+.PP
+.nf
+                   {
+  pthread_create( &lstimer_thread, NULL, lstimer_worker, NULL);
+}
+.fi
+.SS "void lstimer_set_timer (char *event, intshots, unsigned long intsecs, unsigned long intnsecs)"
 
 .PP
 Create a timer\&. \fBParameters:\fP
@@ -3660,18 +3976,21 @@ Create a timer\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 50 of file lstimer\&.c\&.
+Definition at line 63 of file lstimer\&.c\&.
 .PP
 .nf
                                                                                                  {
   int i;
   struct timespec now;
 
-
   // Time we were called\&.  Delay is based on call time, not queued time
   //
   clock_gettime( CLOCK_REALTIME, &now);
   
+
+  // Make sure our event is registered (saves a tiny bit of time later)
+  //
+  lsevents_preregister_event( event);
 
   pthread_mutex_lock( &lstimer_mutex);
 
@@ -3683,7 +4002,7 @@ Definition at line 50 of file lstimer\&.c\&.
   if( i == LSTIMER_LIST_LENGTH) {
     pthread_mutex_unlock( &lstimer_mutex);
     
-    lslogging_log_message( 'lstimer_add_timer: out of timers for event: %s, shots: %d,  secs: %u, nsecs: %u',
+    lslogging_log_message( 'lstimer_set_timer: out of timers for event: %s, shots: %d,  secs: %u, nsecs: %u',
                           event, shots, secs, nsecs);
     return;
   }
@@ -3712,36 +4031,22 @@ Definition at line 50 of file lstimer\&.c\&.
   pthread_mutex_unlock( &lstimer_mutex);
 }
 .fi
-.SS "void lstimer_init ()"
+.SS "void lstimer_unset_timer (char *event)"
 
 .PP
-Initialize the timer list and pthread stuff\&. 
+Unsets all timers for the given event\&. 
 .PP
-Definition at line 254 of file lstimer\&.c\&.
+Definition at line 46 of file lstimer\&.c\&.
 .PP
 .nf
-                    {
+                                       {
   int i;
 
   for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
-    lstimer_list[i]\&.shots = 0;
+    if( strcmp( event, lstimer_list[i]\&.event) == 0) {
+      lstimer_list[i]\&.shots = 0;
+    }
   }
-
-
-  pthread_mutex_init( &lstimer_mutex, NULL);
-  pthread_cond_init(  &lstimer_cond, NULL);
-}
-.fi
-.SS "void lstimer_run ()"
-
-.PP
-Start up our thread\&. 
-.PP
-Definition at line 268 of file lstimer\&.c\&.
-.PP
-.nf
-                   {
-  pthread_create( &lstimer_thread, NULL, lstimer_worker, NULL);
 }
 .fi
 .SS "void lsupdate_init ()"
@@ -3753,7 +4058,7 @@ Definition at line 268 of file lstimer\&.c\&.
 .PP
 Initialize the md2cmds module\&. 
 .PP
-Definition at line 1884 of file md2cmds\&.c\&.
+Definition at line 1853 of file md2cmds\&.c\&.
 .PP
 .nf
                     {
@@ -3809,7 +4114,7 @@ Definition at line 1884 of file md2cmds\&.c\&.
 .PP
 Start up the thread\&. 
 .PP
-Definition at line 1934 of file md2cmds\&.c\&.
+Definition at line 1903 of file md2cmds\&.c\&.
 .PP
 .nf
                    {

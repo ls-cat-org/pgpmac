@@ -15,6 +15,7 @@ var structlspmac__motor__struct =
     [ "inactive_init", "structlspmac__motor__struct.html#ab329ce9b277eca9984c18417dece7bf7", null ],
     [ "jogAbs", "structlspmac__motor__struct.html#a86380d221e4b17eb8cf87a5ac656b669", null ],
     [ "lut", "structlspmac__motor__struct.html#a7b43671f7f3e06521f6cf91fb9ac707d", null ],
+    [ "magic", "structlspmac__motor__struct.html#a3342670c97c0b2646409f2ef28f63d1c", null ],
     [ "max_accel", "structlspmac__motor__struct.html#a50cf4c0711cea164e332bc34705a1a68", null ],
     [ "max_pos", "structlspmac__motor__struct.html#aac8c31a857910cdcbb409331e128e766", null ],
     [ "max_speed", "structlspmac__motor__struct.html#a69e49769a1001665377efc7193d88a0a", null ],

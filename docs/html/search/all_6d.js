@@ -1,5 +1,6 @@
 var searchData=
 [
+  ['magic',['magic',['../structlspmac__motor__struct.html#a3342670c97c0b2646409f2ef28f63d1c',1,'lspmac_motor_struct']]],
   ['main',['main',['../pgpmac_8c.html#a3c04138a5bfe5d72780bb7e82a18e627',1,'pgpmac.c']]],
   ['mask',['mask',['../structlspmac__bi__struct.html#ac010058c9883088705059dee1d90ee72',1,'lspmac_bi_struct']]],
   ['max_5faccel',['max_accel',['../structlspmac__motor__struct.html#a50cf4c0711cea164e332bc34705a1a68',1,'lspmac_motor_struct']]],
@@ -68,6 +69,7 @@ var searchData=
   ['md2cmds_5frun_5fcmd',['md2cmds_run_cmd',['../md2cmds_8c.html#a577b62b66ed5589a171550e26478633f',1,'md2cmds.c']]],
   ['md2cmds_5fset',['md2cmds_set',['../md2cmds_8c.html#aee4a35d084bc0fdd4598576469deeed0',1,'md2cmds.c']]],
   ['md2cmds_5fset_5fscale_5fcb',['md2cmds_set_scale_cb',['../md2cmds_8c.html#a4eb608d012f8a471671e10fb19b366d6',1,'md2cmds.c']]],
+  ['md2cmds_5fsettransferpoint',['md2cmds_settransferpoint',['../md2cmds_8c.html#a3403a357a4b3ffd715a2f3d1dac3da5b',1,'md2cmds.c']]],
   ['md2cmds_5ftest',['md2cmds_test',['../md2cmds_8c.html#a4a321d5e1621948eecb33a51a58041f6',1,'md2cmds.c']]],
   ['md2cmds_5fthread',['md2cmds_thread',['../md2cmds_8c.html#aa230921945149692de98fff15c01962f',1,'md2cmds.c']]],
   ['md2cmds_5ftime_5fcapz_5fcb',['md2cmds_time_capz_cb',['../md2cmds_8c.html#aab9e2aa02903648acc342068f0664a96',1,'md2cmds.c']]],

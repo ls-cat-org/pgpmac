@@ -72,6 +72,8 @@ struct \hyperlink{structlspg__nextshot__struct}{lspg\-\_\-nextshot\-\_\-struct}
 \begin{DoxyCompactList}\small\item\em Fixed length postgresql query strings. Queries should all be function calls so this is not as weird as one might think. \end{DoxyCompactList}\item 
 \#define \hyperlink{pgpmac_8h_ab61d790b5572f116e091babfda53627b}{L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-E\-V\-E\-N\-T\-\_\-\-L\-E\-N\-G\-T\-H}~256
 \begin{DoxyCompactList}\small\item\em Fixed length for event names\-: simplifies string handling. \end{DoxyCompactList}\item 
+\#define \hyperlink{pgpmac_8h_abe2a74d23400d8d8fe02dc407c242035}{L\-S\-P\-M\-A\-C\-\_\-\-M\-A\-G\-I\-C\-\_\-\-N\-U\-M\-B\-E\-R}~0x9700436
+\item 
 \#define \hyperlink{pgpmac_8h_a30f0f377b0f0695284145d420ea51846}{M\-D2\-C\-M\-D\-S\-\_\-\-C\-M\-D\-\_\-\-L\-E\-N\-G\-T\-H}~32
 \end{DoxyCompactItemize}
 \subsection*{Typedefs}
@@ -144,6 +146,8 @@ void \hyperlink{pgpmac_8h_a4ddde538b603e3d4580ae9356bf9b89d}{lsevents\-\_\-run} 
 \begin{DoxyCompactList}\small\item\em Start up the thread and get out of the way. \end{DoxyCompactList}\item 
 void \hyperlink{pgpmac_8h_a3661dfc51537c05b11f4fd184fdff07d}{lsevents\-\_\-send\-\_\-event} (char $\ast$,...)
 \begin{DoxyCompactList}\small\item\em Call the callback routines for the given event. \end{DoxyCompactList}\item 
+void \hyperlink{pgpmac_8h_ae09cfa92dba806d8f8808e5822ea713c}{lsevents\-\_\-preregister\-\_\-event} (char $\ast$fmt,...)
+\item 
 void \hyperlink{pgpmac_8h_a3418b9ab57811d28632794236e056408}{lslogging\-\_\-init} ()
 \begin{DoxyCompactList}\small\item\em Initialize the lslogging objects. \end{DoxyCompactList}\item 
 void \hyperlink{pgpmac_8h_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\-\_\-log\-\_\-message} (char $\ast$fmt,...)
@@ -219,7 +223,7 @@ int \hyperlink{pgpmac_8h_ac356cd43e46799929242dcf5214df7f6}{lsredis\-\_\-cmpnstr
 int \hyperlink{pgpmac_8h_a9fc8fd0db4c71c5eae68682b43103078}{lsredis\-\_\-cmpstr} (\hyperlink{pgpmac_8h_ad449de06d02791adf2498d2a1e1f909c}{lsredis\-\_\-obj\-\_\-t} $\ast$p, char $\ast$s)
 \item 
 int \hyperlink{pgpmac_8h_a1ad60526a09ca679f39174ce5d773abe}{lsredis\-\_\-find\-\_\-preset} (char $\ast$base, char $\ast$preset\-\_\-name, double $\ast$dval)
-\item 
+\begin{DoxyCompactList}\small\item\em Get the value of the given preset and return it in dval Returns 0 on error, non-\/zero on success;. \end{DoxyCompactList}\item 
 int \hyperlink{pgpmac_8h_abbb4e5ece19ebd130e1be18036752a08}{lsredis\-\_\-getb} (\hyperlink{pgpmac_8h_ad449de06d02791adf2498d2a1e1f909c}{lsredis\-\_\-obj\-\_\-t} $\ast$p)
 \item 
 double \hyperlink{pgpmac_8h_aa8daf63b794b6b6341018feec205cb7d}{lsredis\-\_\-getd} (\hyperlink{pgpmac_8h_ad449de06d02791adf2498d2a1e1f909c}{lsredis\-\_\-obj\-\_\-t} $\ast$p)
@@ -232,8 +236,10 @@ void \hyperlink{pgpmac_8h_ad438e4368d86bbe15a93dcf86deaded5}{lsredis\-\_\-run} (
 \item 
 void \hyperlink{pgpmac_8h_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\-\_\-setstr} (\hyperlink{pgpmac_8h_ad449de06d02791adf2498d2a1e1f909c}{lsredis\-\_\-obj\-\_\-t} $\ast$p, char $\ast$fmt,...)
 \begin{DoxyCompactList}\small\item\em Set the value and update redis. \end{DoxyCompactList}\item 
-void \hyperlink{pgpmac_8h_af712dd2e9419026eff2762ba062eeaf1}{lstimer\-\_\-add\-\_\-timer} (char $\ast$, int, unsigned long int, unsigned long int)
+void \hyperlink{pgpmac_8h_a264897effdf49ed8d5aa34e8ed05c2d3}{lstimer\-\_\-set\-\_\-timer} (char $\ast$, int, unsigned long int, unsigned long int)
 \begin{DoxyCompactList}\small\item\em Create a timer. \end{DoxyCompactList}\item 
+void \hyperlink{pgpmac_8h_a5738e4146b4691aad038b622b0381cac}{lstimer\-\_\-unset\-\_\-timer} (char $\ast$event)
+\begin{DoxyCompactList}\small\item\em Unsets all timers for the given event. \end{DoxyCompactList}\item 
 void \hyperlink{pgpmac_8h_a8cd37a8fb0f061456456a5d79bdd5189}{lstimer\-\_\-init} ()
 \begin{DoxyCompactList}\small\item\em Initialize the timer list and pthread stuff. \end{DoxyCompactList}\item 
 void \hyperlink{pgpmac_8h_a0b918acc1a4bf737cb62b5a70f8b553a}{lstimer\-\_\-run} ()
@@ -252,18 +258,22 @@ void \hyperlink{pgpmac_8h_a7b84b6a923167d84c1aefbd2241864c3}{lstest\-\_\-main} (
 \item 
 int \hyperlink{pgpmac_8h_a83ba40e81c04ecc11009be6cbed0c5e1}{lspmac\-\_\-est\-\_\-move\-\_\-time} (double $\ast$est\-\_\-time, int $\ast$mmask, \hyperlink{pgpmac_8h_aa5067fcbaabc5bbfdc52492495518c96}{lspmac\-\_\-motor\-\_\-t} $\ast$mp\-\_\-1, int jog\-\_\-1, char $\ast$preset\-\_\-1, double end\-\_\-point\-\_\-1,...)
 \begin{DoxyCompactList}\small\item\em Move the motors and estimate the time it'll take to finish the job. \end{DoxyCompactList}\item 
-int \hyperlink{pgpmac_8h_a1273ffacbd1a28282a019460bf6bc9b5}{lspmac\-\_\-est\-\_\-move\-\_\-time\-\_\-wait} (double move\-\_\-time, int mmask)
+int \hyperlink{pgpmac_8h_a570b4a359adc4da4ab80d53506d06963}{lspmac\-\_\-est\-\_\-move\-\_\-time\-\_\-wait} (double move\-\_\-time, int cmask, \hyperlink{pgpmac_8h_aa5067fcbaabc5bbfdc52492495518c96}{lspmac\-\_\-motor\-\_\-t} $\ast$mp\-\_\-1,...)
 \begin{DoxyCompactList}\small\item\em wait for motion to stop returns non-\/zero if the wait timed out \end{DoxyCompactList}\item 
 void \hyperlink{pgpmac_8h_ad4c059ab8209b87131b5c94883a05f39}{lsredis\-\_\-set\-\_\-preset} (char $\ast$base, char $\ast$preset\-\_\-name, double dval)
-\item 
+\begin{DoxyCompactList}\small\item\em set the given preset to the given value create a new preset if we can't find it \end{DoxyCompactList}\item 
 \hyperlink{pgpmac_8h_ad449de06d02791adf2498d2a1e1f909c}{lsredis\-\_\-obj\-\_\-t} $\ast$ \hyperlink{pgpmac_8h_ac3fb8589e280bfa18ecbca6619fea637}{\-\_\-lsredis\-\_\-get\-\_\-obj} (char $\ast$key)
 \begin{DoxyCompactList}\small\item\em Maybe add a new object Used internally for this module Must be called with lsredis\-\_\-mutex locked. \end{DoxyCompactList}\item 
 \hyperlink{pgpmac_8h_aa5067fcbaabc5bbfdc52492495518c96}{lspmac\-\_\-motor\-\_\-t} $\ast$ \hyperlink{pgpmac_8h_a22ef36819bdee963712691e660cfc101}{lspmac\-\_\-find\-\_\-motor\-\_\-by\-\_\-name} (char $\ast$name)
 \item 
 int \hyperlink{pgpmac_8h_adfe823e3ccec7e37ac4697179bd65b10}{lsredis\-\_\-find\-\_\-preset\-\_\-index\-\_\-by\-\_\-position} (\hyperlink{pgpmac_8h_aa5067fcbaabc5bbfdc52492495518c96}{lspmac\-\_\-motor\-\_\-t} $\ast$mp)
-\item 
+\begin{DoxyCompactList}\small\item\em For the given motor object return the index of the current preset or -\/1 if we are not at a preset position. \end{DoxyCompactList}\item 
 void \hyperlink{pgpmac_8h_a0575fc751cecf35ffe8b290ab483ac21}{lspmac\-\_\-\-Sock\-Send\-D\-P\-Control\-Char} (char $\ast$event, char c)
-\begin{DoxyCompactList}\small\item\em use dpram ascii interface to send a control character \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{DoxyCompactList}\small\item\em use dpram ascii interface to send a control character \end{DoxyCompactList}\item 
+int \hyperlink{pgpmac_8h_ad7cd6c8e4ea1132ac4a4b90e6468e2d6}{lspmac\-\_\-set\-\_\-motion\-\_\-flags} (int $\ast$mmaskp, \hyperlink{pgpmac_8h_aa5067fcbaabc5bbfdc52492495518c96}{lspmac\-\_\-motor\-\_\-t} $\ast$mp\-\_\-1,...)
+\begin{DoxyCompactList}\small\item\em Set the coordinate system motion flags (m5075) for the null terminated list of motors that we are planning on running a motion program with. \end{DoxyCompactList}\item 
+void \hyperlink{pgpmac_8h_af48b297b5679750a131fa1e982a078b7}{lsredis\-\_\-load\-\_\-presets} (char $\ast$motor\-\_\-name)
+\begin{DoxyCompactList}\small\item\em update the presets hash table for the named motor \end{DoxyCompactList}\end{DoxyCompactItemize}
 \subsection*{Variables}
 \begin{DoxyCompactItemize}
 \item 
@@ -493,12 +503,19 @@ Fixed length for event names\-: simplifies string handling.
 
 Definition at line 67 of file pgpmac.\-h.
 
+\hypertarget{pgpmac_8h_abe2a74d23400d8d8fe02dc407c242035}{\index{pgpmac.\-h@{pgpmac.\-h}!L\-S\-P\-M\-A\-C\-\_\-\-M\-A\-G\-I\-C\-\_\-\-N\-U\-M\-B\-E\-R@{L\-S\-P\-M\-A\-C\-\_\-\-M\-A\-G\-I\-C\-\_\-\-N\-U\-M\-B\-E\-R}}
+\index{L\-S\-P\-M\-A\-C\-\_\-\-M\-A\-G\-I\-C\-\_\-\-N\-U\-M\-B\-E\-R@{L\-S\-P\-M\-A\-C\-\_\-\-M\-A\-G\-I\-C\-\_\-\-N\-U\-M\-B\-E\-R}!pgpmac.h@{pgpmac.\-h}}
+\subsubsection[{L\-S\-P\-M\-A\-C\-\_\-\-M\-A\-G\-I\-C\-\_\-\-N\-U\-M\-B\-E\-R}]{\setlength{\rightskip}{0pt plus 5cm}\#define L\-S\-P\-M\-A\-C\-\_\-\-M\-A\-G\-I\-C\-\_\-\-N\-U\-M\-B\-E\-R~0x9700436}}\label{pgpmac_8h_abe2a74d23400d8d8fe02dc407c242035}
+
+
+Definition at line 95 of file pgpmac.\-h.
+
 \hypertarget{pgpmac_8h_a30f0f377b0f0695284145d420ea51846}{\index{pgpmac.\-h@{pgpmac.\-h}!M\-D2\-C\-M\-D\-S\-\_\-\-C\-M\-D\-\_\-\-L\-E\-N\-G\-T\-H@{M\-D2\-C\-M\-D\-S\-\_\-\-C\-M\-D\-\_\-\-L\-E\-N\-G\-T\-H}}
 \index{M\-D2\-C\-M\-D\-S\-\_\-\-C\-M\-D\-\_\-\-L\-E\-N\-G\-T\-H@{M\-D2\-C\-M\-D\-S\-\_\-\-C\-M\-D\-\_\-\-L\-E\-N\-G\-T\-H}!pgpmac.h@{pgpmac.\-h}}
 \subsubsection[{M\-D2\-C\-M\-D\-S\-\_\-\-C\-M\-D\-\_\-\-L\-E\-N\-G\-T\-H}]{\setlength{\rightskip}{0pt plus 5cm}\#define M\-D2\-C\-M\-D\-S\-\_\-\-C\-M\-D\-\_\-\-L\-E\-N\-G\-T\-H~32}}\label{pgpmac_8h_a30f0f377b0f0695284145d420ea51846}
 
 
-Definition at line 487 of file pgpmac.\-h.
+Definition at line 488 of file pgpmac.\-h.
 
 
 
@@ -598,7 +615,7 @@ Maybe add a new object Used internally for this module Must be called with lsred
 
 
 
-Definition at line 488 of file lsredis.\-c.
+Definition at line 505 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -703,7 +720,7 @@ Definition at line 488 of file lsredis.\-c.
 \index{lsevents\-\_\-add\-\_\-listener@{lsevents\-\_\-add\-\_\-listener}!pgpmac.h@{pgpmac.\-h}}
 \subsubsection[{lsevents\-\_\-add\-\_\-listener}]{\setlength{\rightskip}{0pt plus 5cm}void lsevents\-\_\-add\-\_\-listener (
 \begin{DoxyParamCaption}
-\item[{char $\ast$}]{event, }
+\item[{char $\ast$}]{raw\-\_\-regexp, }
 \item[{void($\ast$)(char $\ast$)}]{cb}
 \end{DoxyParamCaption}
 )}}\label{pgpmac_8h_aac89b916c1152c44042875feac35a9e4}
@@ -713,19 +730,21 @@ Add a callback routine to listen for a specific event.
 
 
 \begin{DoxyParams}{Parameters}
-{\em event} & the name of the event to listen for \\
+{\em raw\-\_\-regexp} & String value of regular expression to listen to \\
 \hline
 {\em cb} & the routine to call \\
 \hline
 \end{DoxyParams}
 
 
-Definition at line 72 of file lsevents.\-c.
+Definition at line 99 of file lsevents.\-c.
 
 
 \begin{DoxyCode}
-                                                             \{
-  \hyperlink{structlsevents__listener__struct}{lsevents\_listener\_t} *\textcolor{keyword}{new};
+                                                                  \{
+  \hyperlink{structlsevents__listener__struct}{lsevents\_listener\_t}    *\textcolor{keyword}{new};
+  \hyperlink{structlsevents__event__names__struct}{lsevents\_event\_names\_t} *enp;
+  \hyperlink{structlsevents__callbacks__struct}{lsevents\_callbacks\_t}   *cbp;
   \textcolor{keywordtype}{int} err;
   \textcolor{keywordtype}{char} *errbuf;
   \textcolor{keywordtype}{int} nerrbuf;
@@ -739,7 +758,7 @@ Definition at line 72 of file lsevents.\-c.
     exit( -1);
   \}
 
-  err = regcomp( &new->re, event, REG\_EXTENDED | REG\_NOSUB);
+  err = regcomp( &new->re, raw\_regexp, REG\_EXTENDED | REG\_NOSUB);
   \textcolor{keywordflow}{if}( err != 0) \{
     nerrbuf = regerror( err, &new->re, NULL, 0);
     errbuf = calloc( nerrbuf, \textcolor{keyword}{sizeof}( \textcolor{keywordtype}{char}));
@@ -756,16 +775,29 @@ Definition at line 72 of file lsevents.\-c.
     \textcolor{keywordflow}{return};
   \}
 
-  \textcolor{keyword}{new}->raw\_regexp = strdup( event);
+  \textcolor{keyword}{new}->raw\_regexp = strdup( raw\_regexp);
   \textcolor{keyword}{new}->cb   = cb;
 
   pthread\_mutex\_lock( &\hyperlink{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{lsevents\_listener\_mutex});
   \textcolor{keyword}{new}->next = \hyperlink{lsevents_8c_a300dc3edfa8546d75e9f8bab8fa06c5c}{lsevents\_listeners\_p};
   \hyperlink{lsevents_8c_a300dc3edfa8546d75e9f8bab8fa06c5c}{lsevents\_listeners\_p} = \textcolor{keyword}{new};
+
+  \textcolor{keywordflow}{for}( enp = \hyperlink{lsevents_8c_abec6bcf8613a6268e59e6c5409ee344c}{lsevents\_event\_names}; enp != NULL; enp = enp->
+      \hyperlink{structlsevents__event__names__struct_a748e63bd8825f239936c5bf165ca869e}{next}) \{
+    \textcolor{keywordflow}{if}( regexec( &new->re, enp->\hyperlink{structlsevents__event__names__struct_a07e5a0f2b74c08f388626f18b37cd1b0}{event}, 0, NULL, 0) == 0) \{
+      cbp       = calloc( 1, \textcolor{keyword}{sizeof}( \hyperlink{structlsevents__callbacks__struct}{lsevents\_callbacks\_t}))
+      ;
+      cbp->\hyperlink{structlsevents__callbacks__struct_a523024faf274afe9056748ddbe6def5c}{cb}   = cb;
+      cbp->\hyperlink{structlsevents__callbacks__struct_a6d673746e36b16df34d53e143c1ba881}{next} = enp->\hyperlink{structlsevents__event__names__struct_afdd17d4d473fcf095a279953ea5e0f1c}{cbl};
+      enp->\hyperlink{structlsevents__event__names__struct_afdd17d4d473fcf095a279953ea5e0f1c}{cbl}  = cbp;
+    \}
+  \}
+  
+
   pthread\_mutex\_unlock( &\hyperlink{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{lsevents\_listener\_mutex});
 
   \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lsevents\_add\_listener: added
-       listener for event %s"}, event);
+       listener for event '%s'"}, raw\_regexp);
 
 \}
 \end{DoxyCode}
@@ -782,14 +814,52 @@ Initialize this module.
 
 
 
-Definition at line 211 of file lsevents.\-c.
+Definition at line 373 of file lsevents.\-c.
 
 
 \begin{DoxyCode}
                      \{
-  pthread\_mutex\_init( &\hyperlink{lsevents_8c_ab46f4ebda5e926a213faedac1a545ec1}{lsevents\_queue\_mutex}, NULL);
-  pthread\_cond\_init(  &\hyperlink{lsevents_8c_a8079d9fb8c35db3ca5f83be5aeb2a747}{lsevents\_queue\_cond}, NULL);
-  pthread\_mutex\_init( &\hyperlink{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{lsevents\_listener\_mutex}, NULL);
+  pthread\_mutexattr\_t mutex\_initializer;
+
+  \textcolor{comment}{// Use recursive mutexs}
+  \textcolor{comment}{//}
+  pthread\_mutexattr\_init( &mutex\_initializer);
+  pthread\_mutexattr\_settype( &mutex\_initializer, PTHREAD\_MUTEX\_RECURSIVE);
+
+  pthread\_mutex\_init( &\hyperlink{lsevents_8c_ab46f4ebda5e926a213faedac1a545ec1}{lsevents\_queue\_mutex},    &
+      mutex\_initializer);
+  pthread\_cond\_init(  &\hyperlink{lsevents_8c_a8079d9fb8c35db3ca5f83be5aeb2a747}{lsevents\_queue\_cond},     NULL);
+  pthread\_mutex\_init( &\hyperlink{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{lsevents\_listener\_mutex}, &
+      mutex\_initializer);
+
+  hcreate\_r( 2*\hyperlink{lsevents_8c_ad09b507c9a79282374a0474470454bb8}{lsevents\_max\_events}, &\hyperlink{lsevents_8c_a274c60d870a1b91ab606dcf024be1bf7}{lsevents\_event\_name\_ht}
+      );
+\}
+\end{DoxyCode}
+\hypertarget{pgpmac_8h_ae09cfa92dba806d8f8808e5822ea713c}{\index{pgpmac.\-h@{pgpmac.\-h}!lsevents\-\_\-preregister\-\_\-event@{lsevents\-\_\-preregister\-\_\-event}}
+\index{lsevents\-\_\-preregister\-\_\-event@{lsevents\-\_\-preregister\-\_\-event}!pgpmac.h@{pgpmac.\-h}}
+\subsubsection[{lsevents\-\_\-preregister\-\_\-event}]{\setlength{\rightskip}{0pt plus 5cm}void lsevents\-\_\-preregister\-\_\-event (
+\begin{DoxyParamCaption}
+\item[{char $\ast$}]{fmt, }
+\item[{}]{...}
+\end{DoxyParamCaption}
+)}}\label{pgpmac_8h_ae09cfa92dba806d8f8808e5822ea713c}
+
+
+Definition at line 314 of file lsevents.\-c.
+
+
+\begin{DoxyCode}
+                                                 \{
+  \textcolor{keywordtype}{char}  s[128];
+  va\_list arg\_ptr;
+
+  va\_start( arg\_ptr, fmt);
+  vsnprintf( s, \textcolor{keyword}{sizeof}( s) - 1, fmt, arg\_ptr);
+  s[\textcolor{keyword}{sizeof}(s)-1] = 0;
+  va\_end( arg\_ptr);
+
+  \hyperlink{lsevents_8c_a5e3fd5e3c6d11f8a74d79978e00f8835}{lsevents\_register\_event}( s);
 \}
 \end{DoxyCode}
 \hypertarget{pgpmac_8h_a024b08c7820bb31c3d5b8f281e07f3e8}{\index{pgpmac.\-h@{pgpmac.\-h}!lsevents\-\_\-remove\-\_\-listener@{lsevents\-\_\-remove\-\_\-listener}}
@@ -806,20 +876,22 @@ Remove a listener previously added with lsevents\-\_\-add\-\_\-listener.
 
 
 \begin{DoxyParams}{Parameters}
-{\em event} & The name of the event \\
+{\em event} & The name of the event (possibly a regular expression string) \\
 \hline
 {\em cb} & The callback routine to remove \\
 \hline
 \end{DoxyParams}
 
 
-Definition at line 117 of file lsevents.\-c.
+Definition at line 157 of file lsevents.\-c.
 
 
 \begin{DoxyCode}
                                                                 \{
   
   \hyperlink{structlsevents__listener__struct}{lsevents\_listener\_t} *last, *current;
+  \hyperlink{structlsevents__event__names__struct}{lsevents\_event\_names\_t} *enp;
+  \hyperlink{structlsevents__callbacks__struct}{lsevents\_callbacks\_t}   *cbp, *last\_cbp;
 
   \textcolor{comment}{//}
   \textcolor{comment}{// Find the listener to remove}
@@ -837,17 +909,46 @@ Definition at line 117 of file lsevents.\-c.
       \}
       \textcolor{keywordflow}{break};
     \}
+    last = current;
   \}
+
+  \textcolor{keywordflow}{if}( current == NULL) \{
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lsevents\_remove\_listener:
+       Could not find this listener for event '%s'"}, event);
+    pthread\_mutex\_unlock( &\hyperlink{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{lsevents\_listener\_mutex});
+    \textcolor{keywordflow}{return};
+  \}
+
+  \textcolor{comment}{//}
+  \textcolor{comment}{// Remove callback from lists of event names}
+  \textcolor{comment}{//}
+  \textcolor{keywordflow}{for}( enp = \hyperlink{lsevents_8c_abec6bcf8613a6268e59e6c5409ee344c}{lsevents\_event\_names}; enp != NULL; enp = enp->
+      \hyperlink{structlsevents__event__names__struct_a748e63bd8825f239936c5bf165ca869e}{next}) \{
+    \textcolor{keywordflow}{if}( regexec( &current->\hyperlink{structlsevents__listener__struct_a60b0f9e188a08e6101c494af89052d3f}{re}, enp->\hyperlink{structlsevents__event__names__struct_a07e5a0f2b74c08f388626f18b37cd1b0}{event}, 0, NULL, 0) == 0) \{
+      last\_cbp = NULL;
+      \textcolor{keywordflow}{for}( cbp = enp->\hyperlink{structlsevents__event__names__struct_afdd17d4d473fcf095a279953ea5e0f1c}{cbl}; cbp != NULL; cbp = cbp->\hyperlink{structlsevents__callbacks__struct_a6d673746e36b16df34d53e143c1ba881}{next}) \{
+        \textcolor{keywordflow}{if}( cbp->\hyperlink{structlsevents__callbacks__struct_a523024faf274afe9056748ddbe6def5c}{cb} == cb) \{
+          \textcolor{keywordflow}{if}( last\_cbp == NULL)
+            enp->\hyperlink{structlsevents__event__names__struct_afdd17d4d473fcf095a279953ea5e0f1c}{cbl} = NULL;
+          \textcolor{keywordflow}{else}
+            last\_cbp->\hyperlink{structlsevents__callbacks__struct_a6d673746e36b16df34d53e143c1ba881}{next} = cbp->\hyperlink{structlsevents__callbacks__struct_a6d673746e36b16df34d53e143c1ba881}{next};
+          free( cbp);
+          \textcolor{keywordflow}{break};
+        \}
+      \}
+    \}
+  \}
+
+
   pthread\_mutex\_unlock( &\hyperlink{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{lsevents\_listener\_mutex});
 
   \textcolor{comment}{//}
   \textcolor{comment}{// Now remove it}
   \textcolor{comment}{//}
-  \textcolor{keywordflow}{if}( current != NULL) \{
-    \textcolor{keywordflow}{if}( current->\hyperlink{structlsevents__listener__struct_afffe7a6889fda47a3a7a91beefed9168}{raw\_regexp} != NULL)
-      free( current->\hyperlink{structlsevents__listener__struct_afffe7a6889fda47a3a7a91beefed9168}{raw\_regexp});
-    free(current);
-  \}
+  \textcolor{keywordflow}{if}( current->\hyperlink{structlsevents__listener__struct_afffe7a6889fda47a3a7a91beefed9168}{raw\_regexp} != NULL)
+    free( current->\hyperlink{structlsevents__listener__struct_afffe7a6889fda47a3a7a91beefed9168}{raw\_regexp});
+  free(current);
+
 \}
 \end{DoxyCode}
 \hypertarget{pgpmac_8h_a4ddde538b603e3d4580ae9356bf9b89d}{\index{pgpmac.\-h@{pgpmac.\-h}!lsevents\-\_\-run@{lsevents\-\_\-run}}
@@ -863,7 +964,7 @@ Start up the thread and get out of the way.
 
 
 
-Definition at line 219 of file lsevents.\-c.
+Definition at line 390 of file lsevents.\-c.
 
 
 \begin{DoxyCode}
@@ -893,7 +994,7 @@ Call the callback routines for the given event.
 \end{DoxyParams}
 
 
-Definition at line 45 of file lsevents.\-c.
+Definition at line 73 of file lsevents.\-c.
 
 
 \begin{DoxyCode}
@@ -920,7 +1021,6 @@ Definition at line 45 of file lsevents.\-c.
 
   pthread\_cond\_signal(  &\hyperlink{lsevents_8c_a8079d9fb8c35db3ca5f83be5aeb2a747}{lsevents\_queue\_cond});
   pthread\_mutex\_unlock( &\hyperlink{lsevents_8c_ab46f4ebda5e926a213faedac1a545ec1}{lsevents\_queue\_mutex});
-
 \}
 \end{DoxyCode}
 \hypertarget{pgpmac_8h_a3418b9ab57811d28632794236e056408}{\index{pgpmac.\-h@{pgpmac.\-h}!lslogging\-\_\-init@{lslogging\-\_\-init}}
@@ -1024,7 +1124,7 @@ Definition at line 114 of file lslogging.\-c.
   pthread\_create( &\hyperlink{lslogging_8c_ad7629be92d1bec1c621b5cc0800f497f}{lslogging\_thread}, NULL, &\hyperlink{lslogging_8c_a33ec49aea69b5e4b1b551a34e7bacfca}{lslogging\_worker}
       , NULL);
   \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"Start up"});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{".+"}, \hyperlink{lslogging_8c_a775318b2753a8b5be9f235589a78797b}{lslogging\_event\_cb}
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{".+"}, \hyperlink{lslogging_8c_a775318b2753a8b5be9f235589a78797b}{lslogging\_event\_cb}
       );
 \}
 \end{DoxyCode}
@@ -1500,21 +1600,21 @@ Definition at line 1970 of file lspg.\-c.
 \begin{DoxyCode}
                 \{
   pthread\_create( &\hyperlink{lspg_8c_a04eb0cda0d5e5afeae7c393b51689765}{lspg\_thread}, NULL, \hyperlink{lspg_8c_aaf4fadd2943fa3a2ecb5d840e84d68fa}{lspg\_worker}, NULL);
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"(appy|appz|capy|capz|scint) In
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"(appy|appz|capy|capz|scint) In
        Position"},        \hyperlink{lspg_8c_a4710c50945fce26b4ac5dc01ed61459d}{lspg\_check\_preset\_in\_position\_cb}
       );
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"(appy|appz|capy|capz|scint)
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"(appy|appz|capy|capz|scint)
        Moving"},             \hyperlink{lspg_8c_abcdcee6ef5ed0865056d42a6cf9da8bd}{lspg\_unset\_current\_preset\_moving\_cb}
       );
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Preset Changed (.+)"},     
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Preset Changed (.+)"},     
       \hyperlink{lspg_8c_a69a792e1981af00b2818bcda89bdaa02}{lspg\_preset\_changed\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Sample(Detected|Absent)"}, 
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Sample(Detected|Absent)"}, 
       \hyperlink{lspg_8c_a14546bac5695b536cd348d5e0a1661fa}{lspg\_sample\_detector\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Timer Update KVs"},        
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Timer Update KVs"},        
       \hyperlink{lspg_8c_ad503cefdaee8112ea2129d33db2ec7fa}{lspg\_update\_kvs\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"cam.zoom In Position"},    
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"cam.zoom In Position"},    
       \hyperlink{lspg_8c_af61ae1cf46d67e29dfc690b9a98b1b4d}{lspg\_set\_scale\_cb});
-  \hyperlink{lstimer_8c_a14f35a979ca0537d8180d90cbc56c577}{lstimer\_add\_timer}(     \textcolor{stringliteral}{"Timer Update KVs"}, -1, 0, 500000000)
+  \hyperlink{lstimer_8c_a7b3e725fbe1bb3cc9f8465941cf1e381}{lstimer\_set\_timer}(     \textcolor{stringliteral}{"Timer Update KVs"}, -1, 0, 500000000)
       ;
 \}
 \end{DoxyCode}
@@ -1721,6 +1821,11 @@ Definition at line 2031 of file lspmac.\-c.
   \hyperlink{lspmac_8c_a0575fc751cecf35ffe8b290ab483ac21}{lspmac\_SockSendDPControlChar}( \textcolor{stringliteral}{"Abort Request"}, 0
       x01);
 
+  \textcolor{comment}{//}
+  \textcolor{comment}{// and reset motion flag}
+  \textcolor{comment}{//}
+  \hyperlink{lspmac_8c_afab9e8f0502a92ee5cf93209af710f81}{lspmac\_SockSendDPline}( \textcolor{stringliteral}{"Reset"}, \textcolor{stringliteral}{"%s"}, \textcolor{stringliteral}{"M5075=0"});
+
 \}
 \end{DoxyCode}
 \hypertarget{pgpmac_8h_a83ba40e81c04ecc11009be6cbed0c5e1}{\index{pgpmac.\-h@{pgpmac.\-h}!lspmac\-\_\-est\-\_\-move\-\_\-time@{lspmac\-\_\-est\-\_\-move\-\_\-time}}
@@ -1728,7 +1833,7 @@ Definition at line 2031 of file lspmac.\-c.
 \subsubsection[{lspmac\-\_\-est\-\_\-move\-\_\-time}]{\setlength{\rightskip}{0pt plus 5cm}int lspmac\-\_\-est\-\_\-move\-\_\-time (
 \begin{DoxyParamCaption}
 \item[{double $\ast$}]{est\-\_\-time, }
-\item[{int $\ast$}]{mmask, }
+\item[{int $\ast$}]{mmaskp, }
 \item[{{\bf lspmac\-\_\-motor\-\_\-t} $\ast$}]{mp\-\_\-1, }
 \item[{int}]{jog\-\_\-1, }
 \item[{char $\ast$}]{preset\-\_\-1, }
@@ -1744,7 +1849,7 @@ Returns the estimate time and the coordinate system mask to waite for
 \begin{DoxyParams}{Parameters}
 {\em est\-\_\-time} & Returns number of seconds we estimate the move(s) will take \\
 \hline
-{\em mmask} & Mask of coordinate systems we are trying to move, excluding jogs. Used to wait for motions to complete \\
+{\em mmaskp} & Mask of coordinate systems we are trying to move, excluding jogs. Used to wait for motions to complete \\
 \hline
 {\em mp\-\_\-1} & Pointer to first motor \\
 \hline
@@ -1769,16 +1874,19 @@ $<$ Total time for this motor
 
 $<$ coordinate system motion flags 
 
-Definition at line 2650 of file lspmac.\-c.
+Definition at line 2737 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
                                                                                
-                                                         \{
+                                                          \{
   \textcolor{keyword}{static} \textcolor{keywordtype}{char} axes[] = \textcolor{stringliteral}{"XYZUVWABC"};
   \textcolor{keyword}{static} \textcolor{keywordtype}{int} qs[9];
   \textcolor{keyword}{static} \hyperlink{structlspmac__combined__move__struct}{lspmac\_combined\_move\_t} motions[32];
-
+  \textcolor{keywordtype}{char} s[256];
+  \textcolor{keywordtype}{int} foundone;
+  \textcolor{keywordtype}{int} moving\_flags;
+  \textcolor{keyword}{struct }timespec timeout;
   \textcolor{keywordtype}{int} j;
   va\_list arg\_ptr;
   \hyperlink{structlspmac__motor__struct}{lspmac\_motor\_t} *mp;
@@ -1796,14 +1904,16 @@ Definition at line 2650 of file lspmac.\-c.
   \textcolor{keywordtype}{int} err;
   \textcolor{keywordtype}{int} jog;
   \textcolor{keywordtype}{int} \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i};
-  \textcolor{keywordtype}{int} m5075;            
+  uint32\_t m5075;               
 
   \textcolor{comment}{// reset our coordinate flags and command strings}
   \textcolor{comment}{//}
   \textcolor{keywordflow}{for}( i=0; i<32; i++) \{
     motions[\hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i}].\hyperlink{structlspmac__combined__move__struct_a650f35e534bd22bdb45d5361f75eaae8}{moveme} = 0;
   \}
-  m5075 = 0;
+  m5075  = 0;
+  \textcolor{keywordflow}{if}( mmaskp != NULL)
+    *mmaskp = 0;
 
   \textcolor{comment}{//}
   \textcolor{comment}{// Initialze first iteration}
@@ -1900,6 +2010,17 @@ Definition at line 2650 of file lspmac.\-c.
 \textcolor{comment}{     *}
 \textcolor{comment}{     */}
 
+    \textcolor{keywordflow}{if}( mp->\hyperlink{structlspmac__motor__struct_a3342670c97c0b2646409f2ef28f63d1c}{magic} != \hyperlink{pgpmac_8h_abe2a74d23400d8d8fe02dc407c242035}{LSPMAC\_MAGIC\_NUMBER}) \{
+      \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_est\_move\_time:
+       WARNING: bad motor structure.  Check that your motor list is NULL terminated."});
+      \textcolor{keywordflow}{break};
+    \}
+
+
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_est\_move\_time: find
+       motor %s, jog %d, preset %s, endpoint %f"},
+                           mp->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name}, jog, ps == NULL ? \textcolor{stringliteral}{"NULL"} : ps, ep);
+
     Tt = 0.0;
     \textcolor{keywordflow}{if}( mp != NULL && mp->\hyperlink{structlspmac__motor__struct_a69e49769a1001665377efc7193d88a0a}{max\_speed} != NULL && mp->\hyperlink{structlspmac__motor__struct_a50cf4c0711cea164e332bc34705a1a68}{max\_accel} 
       != NULL && mp->\hyperlink{structlspmac__motor__struct_a8838915ebb6f9989944117c8197d5e86}{u2c} != NULL) \{
@@ -1908,7 +2029,7 @@ Definition at line 2650 of file lspmac.\-c.
       \textcolor{comment}{// get the real endpoint if a preset was mentioned}
       \textcolor{comment}{//}
       \textcolor{keywordflow}{if}( ps != NULL && *ps != 0) \{
-        err = \hyperlink{lsredis_8c_a1ad60526a09ca679f39174ce5d773abe}{lsredis\_find\_preset}( mp->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name}, ps, &
+        err = \hyperlink{lsredis_8c_a87d7bb0ade6f247edfbb7803aac9e694}{lsredis\_find\_preset}( mp->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name}, ps, &
       maybe\_ep);
         \textcolor{keywordflow}{if}( err != 0)
           ep = maybe\_ep;
@@ -2016,7 +2137,7 @@ Definition at line 2650 of file lspmac.\-c.
       );
 
           motions[motor\_num - 1].\hyperlink{structlspmac__combined__move__struct_a2ae011832de3009f7a08b3081b51b7a3}{coord\_num} = cn;
-          motions[motor\_num - 1].\hyperlink{structlspmac__combined__move__struct_afb7613644145027494f9120d5ad42d05}{axis}      = j;
+          motions[motor\_num - 1].\hyperlink{structlspmac__combined__move__struct_afedb95467295e8a6aa535974f5ad6300}{axis}      = j;
           motions[motor\_num - 1].\hyperlink{structlspmac__combined__move__struct_a5389f07fcf2b24b0e912aefb4141001d}{Delta}     = D * u2c;
           \textcolor{comment}{//}
           \textcolor{comment}{// Don't ask to run a motion program if we are already where we want
@@ -2027,9 +2148,15 @@ Definition at line 2650 of file lspmac.\-c.
           \textcolor{comment}{//}
           \textcolor{comment}{//}
           \textcolor{keywordflow}{if}( abs(motions[motor\_num - 1].Delta)*16 >= in\_position\_band) \{
-            m5075 |= 1 << (cn - 1);
+            m5075 |= (1 << (cn - 1));
             motions[motor\_num - 1].\hyperlink{structlspmac__combined__move__struct_a650f35e534bd22bdb45d5361f75eaae8}{moveme}    = 1;
           \}       
+          \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_est\_move\_time:
+       moveme=%d  motor '%s' motions index=%d coord\_num=%d axis=%d Delta=%d   m5075=%u"},
+                                 motions[motor\_num-1].moveme,  mp->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name}, 
+      motor\_num -1, motions[motor\_num-1].\hyperlink{structlspmac__combined__move__struct_a2ae011832de3009f7a08b3081b51b7a3}{coord\_num}, motions[motor\_num-1].\hyperlink{structlspmac__combined__move__struct_afedb95467295e8a6aa535974f5ad6300}{axis}
+      , motions[motor\_num-1].\hyperlink{structlspmac__combined__move__struct_a5389f07fcf2b24b0e912aefb4141001d}{Delta},
+                                 m5075);
         \}
       \} \textcolor{keywordflow}{else} \{
         \textcolor{comment}{//}
@@ -2061,91 +2188,88 @@ Definition at line 2650 of file lspmac.\-c.
     jog = va\_arg( arg\_ptr, \textcolor{keywordtype}{int});
     ps  = va\_arg( arg\_ptr, \textcolor{keywordtype}{char} *);
     ep  = va\_arg( arg\_ptr, \textcolor{keywordtype}{double});
+
   \}
   va\_end( arg\_ptr);
 
   
-  \textcolor{comment}{// Call the motion program(s)}
-  \{
-    \textcolor{keywordtype}{char} s[256];
-    \textcolor{keywordtype}{int} foundone;
-    \textcolor{keywordtype}{int} err;
-    \textcolor{keywordtype}{int} moving\_flags;
-    \textcolor{keyword}{struct }timespec timeout;
+  \textcolor{comment}{// Set the motion program flags}
+  \textcolor{comment}{//}
+  \textcolor{keywordflow}{if}( m5075 != 0) \{
+    \textcolor{keywordflow}{if}( mmaskp != NULL)
+      *mmaskp |= m5075; \textcolor{comment}{// Tell the caller about our new mask}
 
-    \textcolor{keywordflow}{if}( m5075 != 0) \{
-      *mmask |= m5075;  \textcolor{comment}{// Tell the caller about our new mask}
-
-      pthread\_mutex\_lock( &\hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
-      \textcolor{keywordflow}{if}( (\hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags} & m5075) != m5075)
-        \hyperlink{lspmac_8c_afab9e8f0502a92ee5cf93209af710f81}{lspmac\_SockSendDPline}( NULL, \textcolor{stringliteral}{"M5075=(M5075 | %d)"},
-       m5075);
-
-      clock\_gettime( CLOCK\_REALTIME, &timeout);
-      \textcolor{comment}{//}
-      timeout.tv\_sec += 2;      \textcolor{comment}{// 2 seconds should be more than enough time to
+    
+    pthread\_mutex\_lock( &\hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
+    \textcolor{keywordflow}{if}( (\hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags} & m5075) != m5075)
+      \hyperlink{lspmac_8c_afab9e8f0502a92ee5cf93209af710f81}{lspmac\_SockSendDPline}( NULL, \textcolor{stringliteral}{"M5075=(M5075 | %d)"}, 
+      m5075);
+    
+    clock\_gettime( CLOCK\_REALTIME, &timeout);
+    \textcolor{comment}{//}
+    timeout.tv\_sec += 2;        \textcolor{comment}{// 2 seconds should be more than enough time to
        set the flags}
-      err = 0;
-      \textcolor{keywordflow}{while}( err == 0 && (\hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags} & m5075) != 
+    err = 0;
+    \textcolor{keywordflow}{while}( err == 0 && (\hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags} & m5075) != 
       m5075)
-        err = pthread\_cond\_timedwait( &\hyperlink{lspmac_8c_a57547d211906c981ef20257eba99f8df}{lspmac\_moving\_cond}, &
+      err = pthread\_cond\_timedwait( &\hyperlink{lspmac_8c_a57547d211906c981ef20257eba99f8df}{lspmac\_moving\_cond}, &
       \hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex}, &timeout);
-      moving\_flags = \hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags};
-      pthread\_mutex\_unlock( &\hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
-
-      \textcolor{keywordflow}{if}( err == ETIMEDOUT) \{
-        \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_est\_move\_time:
-       Timed out waiting for moving flags.  lspmac\_moving\_flags = %0x"}, moving\_flags);
-        \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"%s Move Aborted Combined
-       Motors"});
-        \textcolor{keywordflow}{return} 1;
-      \}
+    moving\_flags = \hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags};
+    pthread\_mutex\_unlock( &\hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
+    
+    \textcolor{keywordflow}{if}( err == ETIMEDOUT) \{
+      \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_est\_move\_time: Timed
+       out waiting for moving flags.  lspmac\_moving\_flags = %0x"}, moving\_flags);
+      \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Combined Move Aborted"});
+      \textcolor{keywordflow}{return} 1;
     \}
+  \}
 
 
-    \textcolor{keywordflow}{for}( i=1; i<=16; i++) \{
+  \textcolor{keywordflow}{for}( i=1; i<=16; i++) \{
+    \textcolor{comment}{//}
+    \textcolor{comment}{// Loop over coordinate systems}
+    \textcolor{comment}{//}
+    foundone = 0;
+    
+    \textcolor{keywordflow}{for}( j=0; j<9; j++)
+      qs[j] = 0;
+    
+    \textcolor{keywordflow}{for}( j=0; j<31; j++) \{
       \textcolor{comment}{//}
-      \textcolor{comment}{// Loop over coordinate systems}
+      \textcolor{comment}{// Loop over motors}
       \textcolor{comment}{//}
-      foundone = 0;
-
-      \textcolor{keywordflow}{for}( j=0; j<9; j++)
-        qs[j] = 0;
-
-      \textcolor{keywordflow}{for}( j=0; j<31; j++) \{
-        \textcolor{comment}{//}
-        \textcolor{comment}{// Loop over motors}
-        \textcolor{comment}{//}
-        \textcolor{keywordflow}{if}( motions[j].moveme && motions[j].coord\_num == i) \{
-          \textcolor{keywordflow}{if}( abs(motions[j].Delta) > 0) \{
-            qs[(int)(motions[j].axis)] = motions[j].\hyperlink{structlspmac__combined__move__struct_a5389f07fcf2b24b0e912aefb4141001d}{Delta};
-            foundone=1;
-          \}
+      \textcolor{keywordflow}{if}( motions[j].moveme && motions[j].coord\_num == i) \{
+        \textcolor{keywordflow}{if}( abs(motions[j].Delta) > 0) \{
+          qs[(int)(motions[j].axis)] = motions[j].\hyperlink{structlspmac__combined__move__struct_a5389f07fcf2b24b0e912aefb4141001d}{Delta};
+          foundone=1;
         \}
       \}
+    \}
+    
+    \textcolor{keywordflow}{if}( foundone) \{
+      sprintf( s, \textcolor{stringliteral}{"&%d Q40=%d Q41=%d Q42=%d Q43=%d Q44=%d Q45=%d Q46=%d Q47=%d
+       Q48=%d Q49=%.1f Q100=%d B180R"},
+               i, qs[0], qs[1], qs[2], qs[3], qs[4], qs[5], qs[6], qs[7], qs[8]
+      , *est\_time * 1000., 1 << (i-1));
       
-      \textcolor{keywordflow}{if}( foundone) \{
-        sprintf( s, \textcolor{stringliteral}{"&%d Q40=%d Q41=%d Q42=%d Q43=%d Q44=%d Q45=%d Q46=%d
-       Q47=%d Q48=%d Q49=%.1f Q100=%d B180R"},
-                 i, qs[0], qs[1], qs[2], qs[3], qs[4], qs[5], qs[6], qs[7], qs[
-      8], *est\_time * 1000., 1 << (i-1));
-
-        \hyperlink{lspmac_8c_afab9e8f0502a92ee5cf93209af710f81}{lspmac\_SockSendDPline}( NULL, s);
-
-      \}
+      \hyperlink{lspmac_8c_afab9e8f0502a92ee5cf93209af710f81}{lspmac\_SockSendDPline}( NULL, s);
+      
     \}
   \}
   \textcolor{keywordflow}{return} 0;
 \}
 \end{DoxyCode}
-\hypertarget{pgpmac_8h_a1273ffacbd1a28282a019460bf6bc9b5}{\index{pgpmac.\-h@{pgpmac.\-h}!lspmac\-\_\-est\-\_\-move\-\_\-time\-\_\-wait@{lspmac\-\_\-est\-\_\-move\-\_\-time\-\_\-wait}}
+\hypertarget{pgpmac_8h_a570b4a359adc4da4ab80d53506d06963}{\index{pgpmac.\-h@{pgpmac.\-h}!lspmac\-\_\-est\-\_\-move\-\_\-time\-\_\-wait@{lspmac\-\_\-est\-\_\-move\-\_\-time\-\_\-wait}}
 \index{lspmac\-\_\-est\-\_\-move\-\_\-time\-\_\-wait@{lspmac\-\_\-est\-\_\-move\-\_\-time\-\_\-wait}!pgpmac.h@{pgpmac.\-h}}
 \subsubsection[{lspmac\-\_\-est\-\_\-move\-\_\-time\-\_\-wait}]{\setlength{\rightskip}{0pt plus 5cm}int lspmac\-\_\-est\-\_\-move\-\_\-time\-\_\-wait (
 \begin{DoxyParamCaption}
 \item[{double}]{move\-\_\-time, }
-\item[{int}]{mmask}
+\item[{int}]{cmask, }
+\item[{{\bf lspmac\-\_\-motor\-\_\-t} $\ast$}]{mp\-\_\-1, }
+\item[{}]{...}
 \end{DoxyParamCaption}
-)}}\label{pgpmac_8h_a1273ffacbd1a28282a019460bf6bc9b5}
+)}}\label{pgpmac_8h_a570b4a359adc4da4ab80d53506d06963}
 
 
 wait for motion to stop returns non-\/zero if the wait timed out 
@@ -2154,19 +2278,24 @@ wait for motion to stop returns non-\/zero if the wait timed out
 \begin{DoxyParams}{Parameters}
 {\em move\-\_\-time} & The time out in seconds \\
 \hline
-{\em mmask} & A coordinate system mask to wait for\\
+{\em cmask} & A coordinate system mask to wait for \\
+\hline
+{\em mp\-\_\-1} & N\-U\-L\-L terminated list of individual motors to wait for\\
 \hline
 \end{DoxyParams}
 Both values are returned from lspmac\-\_\-est\-\_\-move\-\_\-time 
 
-Definition at line 2983 of file lspmac.\-c.
+Definition at line 3084 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
-                                                            \{
+                                                                               
+              \{
   \textcolor{keywordtype}{int} err;
   \textcolor{keywordtype}{double} isecs, fsecs;
   \textcolor{keyword}{struct }timespec timeout;
+  va\_list arg\_ptr;
+  \hyperlink{structlspmac__motor__struct}{lspmac\_motor\_t} *mp;
 
   clock\_gettime( CLOCK\_REALTIME, &timeout);
   fsecs = modf( move\_time, &isecs);
@@ -2177,18 +2306,37 @@ Definition at line 2983 of file lspmac.\-c.
 
   err = 0;
   pthread\_mutex\_lock( &\hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
-  \textcolor{keywordflow}{while}( err == 0 && (\hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags} & mmask) != 0)
+  \textcolor{keywordflow}{while}( err == 0 && (\hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags} & cmask) != 0)
     err = pthread\_cond\_timedwait( &\hyperlink{lspmac_8c_a57547d211906c981ef20257eba99f8df}{lspmac\_moving\_cond}, &
       \hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex}, &timeout);
   pthread\_mutex\_unlock( &\hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
 
   \textcolor{keywordflow}{if}( err != 0) \{
     \textcolor{keywordflow}{if}( err == ETIMEDOUT) \{
-      \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lstest\_lspmac\_est\_move\_time:
-       timed out waiting %f seconds"}, move\_time);
+      \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"
+      lstest\_lspmac\_est\_move\_time\_wait: timed out waiting %f seconds, cmask = 0x%0x"}, move\_time, cmask);
     \}
+    \hyperlink{lspmac_8c_a85f7a5e4d853b7a86ddde1006dd4dc1f}{lspmac\_abort}();
     \textcolor{keywordflow}{return} 1;
   \}
+
+  va\_start( arg\_ptr, mp\_1);
+  \textcolor{keywordflow}{for}( mp = mp\_1; mp != NULL; mp = va\_arg( arg\_ptr, \hyperlink{structlspmac__motor__struct}{lspmac\_motor\_t}
+       *)) \{
+    \textcolor{keywordflow}{if}( mp->\hyperlink{structlspmac__motor__struct_a3342670c97c0b2646409f2ef28f63d1c}{magic} != \hyperlink{pgpmac_8h_abe2a74d23400d8d8fe02dc407c242035}{LSPMAC\_MAGIC\_NUMBER}) \{
+      \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_est\_move\_time\_wait:
+       WARNING: motor list must be NULL terminated.  Check your call to
+       lspmac\_est\_move\_time\_wait."});
+    \}
+
+    \textcolor{keywordflow}{if}( \hyperlink{lspmac_8c_a55ffe2b135854f75079ecd39d507d3b4}{lspmac\_moveabs\_wait}( mp, move\_time)) \{
+      \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_est\_move\_time\_wait:
+       timed out waiting %f seconds for motor %s"}, move\_time, mp->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
+      \textcolor{keywordflow}{return} 1;
+    \}
+  \}
+  va\_end( arg\_ptr);
+
   \textcolor{keywordflow}{return} 0;
 \}
 \end{DoxyCode}
@@ -2201,7 +2349,7 @@ Definition at line 2983 of file lspmac.\-c.
 )}}\label{pgpmac_8h_a22ef36819bdee963712691e660cfc101}
 
 
-Definition at line 3962 of file lspmac.\-c.
+Definition at line 4154 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2468,7 +2616,7 @@ Initialize this module.
 
 
 
-Definition at line 3534 of file lspmac.\-c.
+Definition at line 3671 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2758,6 +2906,17 @@ Definition at line 3534 of file lspmac.\-c.
   \hyperlink{lspmac_8c_afab9e8f0502a92ee5cf93209af710f81}{lspmac\_SockSendDPline}( NULL, \textcolor{stringliteral}{"ENABLE PLCC 0,2"});
   \hyperlink{lspmac_8c_afab9e8f0502a92ee5cf93209af710f81}{lspmac\_SockSendDPline}( NULL, \textcolor{stringliteral}{"DISABLE PLCC 1"});
   \hyperlink{lspmac_8c_afab9e8f0502a92ee5cf93209af710f81}{lspmac\_SockSendDPline}( NULL, \textcolor{stringliteral}{"I5=3"});
+
+
+  \hyperlink{lsevents_8c_ae09cfa92dba806d8f8808e5822ea713c}{lsevents\_preregister\_event}( \textcolor{stringliteral}{"omega crossed zero"});
+  \hyperlink{lsevents_8c_ae09cfa92dba806d8f8808e5822ea713c}{lsevents\_preregister\_event}( \textcolor{stringliteral}{"Move Aborted"});
+  \hyperlink{lsevents_8c_ae09cfa92dba806d8f8808e5822ea713c}{lsevents\_preregister\_event}( \textcolor{stringliteral}{"Combined Move Aborted"}
+      );
+
+  \textcolor{keywordflow}{for}( i=1; i<=16; i++) \{
+    \hyperlink{lsevents_8c_ae09cfa92dba806d8f8808e5822ea713c}{lsevents\_preregister\_event}( \textcolor{stringliteral}{"Coordsys %d Stopped"}
+      , i);
+  \}
 \}
 \end{DoxyCode}
 \hypertarget{pgpmac_8h_ae2df697311878e1b93d1b26169ff06fc}{\index{pgpmac.\-h@{pgpmac.\-h}!lspmac\-\_\-jogabs\-\_\-queue@{lspmac\-\_\-jogabs\-\_\-queue}}
@@ -2774,7 +2933,7 @@ Use jog to move motor to requested position.
 
 
 
-Definition at line 3265 of file lspmac.\-c.
+Definition at line 3383 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -2816,7 +2975,7 @@ $<$ our axis
 \end{DoxyParams}
 
 
-Definition at line 3017 of file lspmac.\-c.
+Definition at line 3135 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3063,7 +3222,7 @@ move using a preset value returns 0 on success, non-\/zero on error
 
 
 
-Definition at line 3226 of file lspmac.\-c.
+Definition at line 3344 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3077,7 +3236,7 @@ Definition at line 3226 of file lspmac.\-c.
     \textcolor{keywordflow}{return} 0;
   \}
 
-  err = \hyperlink{lsredis_8c_a1ad60526a09ca679f39174ce5d773abe}{lsredis\_find\_preset}( mp->name, preset, &pos);
+  err = \hyperlink{lsredis_8c_a87d7bb0ade6f247edfbb7803aac9e694}{lsredis\_find\_preset}( mp->name, preset, &pos);
 
   \textcolor{keywordflow}{if}( err != 0)
     rtn = \hyperlink{lspmac_8c_a2ab30559739e0232331f53d16c0cb5ac}{lspmac\_move\_or\_jog\_abs\_queue}( mp, pos, 
@@ -3119,7 +3278,7 @@ No movement if the preset is not found.
 \end{DoxyParams}
 
 
-Definition at line 2393 of file lspmac.\-c.
+Definition at line 2396 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3130,7 +3289,7 @@ Definition at line 2393 of file lspmac.\-c.
   \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_move\_preset\_queue: Called
        with motor %s and preset named '%s'"}, mp->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name}, preset\_name);
 
-  err = \hyperlink{lsredis_8c_a1ad60526a09ca679f39174ce5d773abe}{lsredis\_find\_preset}( mp->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name}, preset\_name, &pos
+  err = \hyperlink{lsredis_8c_a87d7bb0ade6f247edfbb7803aac9e694}{lsredis\_find\_preset}( mp->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name}, preset\_name, &pos
       );
   \textcolor{keywordflow}{if}( err == 0)
     \textcolor{keywordflow}{return} 1;
@@ -3159,7 +3318,7 @@ Use coordinate system motion program, if available, to move motor to requested p
 
 
 
-Definition at line 3254 of file lspmac.\-c.
+Definition at line 3372 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3192,7 +3351,7 @@ Assume motion already queued, now just wait
 \end{DoxyParams}
 
 
-Definition at line 3280 of file lspmac.\-c.
+Definition at line 3398 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3290,7 +3449,7 @@ Start up the lspmac thread.
 
 
 
-Definition at line 4010 of file lspmac.\-c.
+Definition at line 4202 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3305,28 +3464,30 @@ Definition at line 4010 of file lspmac.\-c.
   pthread\_create( &\hyperlink{lspmac_8c_a6b7011dd7d2c2d3afadff8d3e50e7677}{pmac\_thread}, NULL, \hyperlink{lspmac_8c_abdec5883055967b1eda043670870f55f}{lspmac\_worker}, 
       NULL);
 
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"CryoSwitchChanged"},    
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"CryoSwitchChanged"},    
       \hyperlink{lspmac_8c_afc00ddac633f8c8a3a699e3d22de2770}{lspmac\_cryoSwitchChanged\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"scint Moving"},         
-      \hyperlink{lspmac_8c_a05d91f9bef2b669640935fa140a07934}{lspmac\_scint\_maybe\_move\_sample\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"scint In Position"},    
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"scint In Position"},    
+      \hyperlink{lspmac_8c_af06c25c2ff55f63a621847a5d06f735f}{lspmac\_scint\_maybe\_turn\_on\_dryer\_cb});
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"scint Moving"},         
+      \hyperlink{lspmac_8c_a107f77bf42c0f86eb29ddad9119e2b3b}{lspmac\_scint\_maybe\_turn\_off\_dryer\_cb});
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"scint In Position"},    
       \hyperlink{lspmac_8c_ac3da09d0a08834c22a20d907275ae403}{lspmac\_scint\_maybe\_return\_sample\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"scint In Position"},    
-      \hyperlink{lspmac_8c_a8707350625ca81a089a90f8b64ce6d28}{lspmac\_scint\_inPosition\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"scintDried"},           
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"scint Moving"},         
+      \hyperlink{lspmac_8c_a05d91f9bef2b669640935fa140a07934}{lspmac\_scint\_maybe\_move\_sample\_cb});
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"scintDried"},           
       \hyperlink{lspmac_8c_a585676eb411025c7b44da958d4e98eb2}{lspmac\_scint\_dried\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"backLight 1"},             
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"backLight 1"},             
       \hyperlink{lspmac_8c_a094f66824c57b27c9dad2ca36bd75e44}{lspmac\_backLight\_up\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"backLight 0"},             
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"backLight 0"},             
       \hyperlink{lspmac_8c_a571cf14b82b5aae163af5aec3201cd3e}{lspmac\_backLight\_down\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"cam.zoom Moving"},      
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"cam.zoom Moving"},      
       \hyperlink{lspmac_8c_a55791bd8a07e5ca1dd2aeedf3c23942c}{lspmac\_light\_zoom\_cb});
 
   \textcolor{keywordflow}{for}( i=0; i<\hyperlink{lspmac_8c_a56260f012c50a591ee7f97e500f16994}{lspmac\_nmotors}; i++) \{
     snprintf( evts, \textcolor{keyword}{sizeof}( evts)-1, \textcolor{stringliteral}{"%s command accepted"}, \hyperlink{lspmac_8c_afbfbc3160d5ed6afefdb07f6a25924f7}{lspmac\_motors}
       [i].name);
     evts[\textcolor{keyword}{sizeof}(evts)-1] = 0;
-    \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( evts, \hyperlink{lspmac_8c_a611168a1076b2de45c596ed95c68445a}{lspmac\_command\_done\_cb}
+    \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( evts, \hyperlink{lspmac_8c_a611168a1076b2de45c596ed95c68445a}{lspmac\_command\_done\_cb}
       );
   \}
 
@@ -3410,6 +3571,115 @@ Definition at line 4010 of file lspmac.\-c.
       \}
     \}
   \}
+\}
+\end{DoxyCode}
+\hypertarget{pgpmac_8h_ad7cd6c8e4ea1132ac4a4b90e6468e2d6}{\index{pgpmac.\-h@{pgpmac.\-h}!lspmac\-\_\-set\-\_\-motion\-\_\-flags@{lspmac\-\_\-set\-\_\-motion\-\_\-flags}}
+\index{lspmac\-\_\-set\-\_\-motion\-\_\-flags@{lspmac\-\_\-set\-\_\-motion\-\_\-flags}!pgpmac.h@{pgpmac.\-h}}
+\subsubsection[{lspmac\-\_\-set\-\_\-motion\-\_\-flags}]{\setlength{\rightskip}{0pt plus 5cm}int lspmac\-\_\-set\-\_\-motion\-\_\-flags (
+\begin{DoxyParamCaption}
+\item[{int $\ast$}]{mmaskp, }
+\item[{{\bf lspmac\-\_\-motor\-\_\-t} $\ast$}]{mp\-\_\-1, }
+\item[{}]{...}
+\end{DoxyParamCaption}
+)}}\label{pgpmac_8h_ad7cd6c8e4ea1132ac4a4b90e6468e2d6}
+
+
+Set the coordinate system motion flags (m5075) for the null terminated list of motors that we are planning on running a motion program with. 
+
+Note that lspmac\-\_\-est\-\_\-move\-\_\-time already takes care of this, use when calling a motion program directly
+
+
+\begin{DoxyParams}{Parameters}
+{\em mmaskp} & Returned value of the mask generated. Ignored if null. \\
+\hline
+{\em mp\-\_\-1} & start of null terminated list of motors. \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 2651 of file lspmac.\-c.
+
+
+\begin{DoxyCode}
+                                                                     \{
+  va\_list arg\_ptr;
+  \textcolor{keyword}{struct }timespec timeout;
+  \textcolor{keywordtype}{int} err;
+  \textcolor{keywordtype}{int} cn;
+  \textcolor{keywordtype}{int} need\_flag;
+  \hyperlink{structlspmac__motor__struct}{lspmac\_motor\_t} *mp;
+  \textcolor{keywordtype}{int} mmask;
+
+  mmask = 0;
+  \textcolor{keywordflow}{if}( mmaskp != NULL)
+    *mmaskp = 0;
+
+  \textcolor{keywordflow}{if}( mp\_1==NULL)
+    \textcolor{keywordflow}{return} 0;
+  
+  
+  \textcolor{comment}{//}
+  \textcolor{comment}{// add the coordinate system flags to mmask}
+  \textcolor{comment}{//}
+  va\_start( arg\_ptr, mp\_1);
+  \textcolor{keywordflow}{for}( mp = mp\_1; mp!=NULL; mp = va\_arg( arg\_ptr, \hyperlink{structlspmac__motor__struct}{lspmac\_motor\_t} 
+      *)) \{
+    \textcolor{keywordflow}{if}( mp->\hyperlink{structlspmac__motor__struct_a3342670c97c0b2646409f2ef28f63d1c}{magic} != \hyperlink{pgpmac_8h_abe2a74d23400d8d8fe02dc407c242035}{LSPMAC\_MAGIC\_NUMBER}) \{
+      \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_set\_motion\_flags:
+       WARNING: motor list must be NULL terminated.  Check your call to
+       lspmac\_set\_motion\_flags."});
+      \textcolor{keywordflow}{break};
+    \}
+    cn = \hyperlink{lsredis_8c_a1923f998441f4f451204dfd214d52218}{lsredis\_getl}( mp->\hyperlink{structlspmac__motor__struct_a5614e003272e8323f8809bf7b6559532}{coord\_num});
+    \textcolor{keywordflow}{if}( cn < 1 || cn > 16)
+      \textcolor{keywordflow}{continue};
+    
+    mmask |= 1 << (cn - 1);
+  \}
+  va\_end( arg\_ptr);
+
+  \textcolor{keywordflow}{if}( mmaskp != NULL)
+    *mmaskp = mmask;
+    
+  \textcolor{comment}{//}
+  \textcolor{comment}{// It could be the flag is already what we want.  We might set up a race
+       condition if we}
+  \textcolor{comment}{// try to set it again.  (so don't)}
+  \textcolor{comment}{//}
+  pthread\_mutex\_lock( &\hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
+
+  \textcolor{keywordflow}{if}( (\hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags} & mmask) != 0)
+    need\_flag = 0;
+  \textcolor{keywordflow}{else}
+    need\_flag = 1;
+  
+  pthread\_mutex\_unlock( &\hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
+
+  \textcolor{keywordflow}{if}( !need\_flag)
+    \textcolor{keywordflow}{return} 0;
+  
+  \textcolor{comment}{//}
+  \textcolor{comment}{// Set m5075 and make sure it propagates}
+  \textcolor{comment}{//}
+  \hyperlink{lspmac_8c_afab9e8f0502a92ee5cf93209af710f81}{lspmac\_SockSendDPline}( NULL, \textcolor{stringliteral}{"M5075=(M5075 | %d)"}, mmask
+      );
+  clock\_gettime( CLOCK\_REALTIME, &timeout);
+  timeout.tv\_sec += 2;
+
+  err = 0;
+  pthread\_mutex\_lock( &\hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
+  \textcolor{keywordflow}{while}( err == 0 && (\hyperlink{lspmac_8c_a7a32c617c183166308241e270959df56}{lspmac\_moving\_flags} & mmask) != mmask)
+    err = pthread\_cond\_timedwait( &\hyperlink{lspmac_8c_a57547d211906c981ef20257eba99f8df}{lspmac\_moving\_cond}, &
+      \hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex}, &timeout);
+
+  pthread\_mutex\_unlock( &\hyperlink{lspmac_8c_a85679cac947e199c88794f8e5a12bf5f}{lspmac\_moving\_mutex});
+  
+  \textcolor{keywordflow}{if}( err == ETIMEDOUT) \{
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lspmac\_set\_motion\_flags: timed
+       out waiting for motion %d flag to be set"}, mmask);
+    \textcolor{keywordflow}{return} 1;
+  \}
+  \textcolor{keywordflow}{return} 0;
 \}
 \end{DoxyCode}
 \hypertarget{pgpmac_8h_a0575fc751cecf35ffe8b290ab483ac21}{\index{pgpmac.\-h@{pgpmac.\-h}!lspmac\-\_\-\-Sock\-Send\-D\-P\-Control\-Char@{lspmac\-\_\-\-Sock\-Send\-D\-P\-Control\-Char}}
@@ -3535,7 +3805,7 @@ Special motion program to collect centering video.
 
 
 
-Definition at line 2610 of file lspmac.\-c.
+Definition at line 2613 of file lspmac.\-c.
 
 
 \begin{DoxyCode}
@@ -3580,7 +3850,7 @@ Definition at line 2610 of file lspmac.\-c.
 )}}\label{pgpmac_8h_ac356cd43e46799929242dcf5214df7f6}
 
 
-Definition at line 236 of file lsredis.\-c.
+Definition at line 253 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -3605,7 +3875,7 @@ Definition at line 236 of file lsredis.\-c.
 )}}\label{pgpmac_8h_a9fc8fd0db4c71c5eae68682b43103078}
 
 
-Definition at line 225 of file lsredis.\-c.
+Definition at line 242 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -3631,61 +3901,47 @@ Definition at line 225 of file lsredis.\-c.
 )}}\label{pgpmac_8h_a1ad60526a09ca679f39174ce5d773abe}
 
 
-Definition at line 806 of file lsredis.\-c.
+Get the value of the given preset and return it in dval Returns 0 on error, non-\/zero on success;. 
+
+
+
+Definition at line 898 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
-                                                                      \{
+                                                                            \{
   \textcolor{keywordtype}{char} s[512];
-  \textcolor{keywordtype}{int} \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i};
   \textcolor{keywordtype}{int} err;
-  ENTRY htab\_input, *htab\_output;
-  \hyperlink{structlsredis__obj__struct}{lsredis\_obj\_t} *\hyperlink{namespacemk__pgpmac__redis_a11daf2847f2dc94562b5b61b3f412574}{p};
+  ENTRY entry\_in, *entry\_outp;
+  \hyperlink{structlsredis__preset__list__struct}{lsredis\_preset\_list\_t} *pl;
 
-  \textcolor{keywordflow}{for}( i=0; i<1024; i++) \{
-    snprintf( s, \textcolor{keyword}{sizeof}( s)-1, \textcolor{stringliteral}{"%s.%s.presets.%d.name"}, \hyperlink{lsredis_8c_acdca9095c7a3288d7febe9f4c440a6e9}{lsredis\_head}
-      , base, i);
-    s[\textcolor{keyword}{sizeof}(s)-1] = 0;
-    htab\_input.key  = s;
-    htab\_input.data = NULL;
-    err = hsearch\_r( htab\_input, FIND, &htab\_output, &\hyperlink{lsredis_8c_a42aec6aa74072797ec0344847b0e9e39}{lsredis\_htab})
-      ;
+  snprintf( s, \textcolor{keyword}{sizeof}( s)-1, \textcolor{stringliteral}{"%s%s"}, motor\_name, preset\_name);
+  s[\textcolor{keyword}{sizeof}(s)-1] = 0;
+
+  entry\_in.key  = s;
+  entry\_in.data = NULL;
+  err = hsearch\_r( entry\_in, FIND, &entry\_outp, &\hyperlink{lsredis_8c_ade00a383533fdefb2af9f3f53f37cf97}{lsredis\_preset\_ht}
+      );
+
+  \textcolor{keywordflow}{if}( err == 0) \{
+    \textcolor{comment}{// not found (or some other problem that means we don't have an answer}
+    \textcolor{comment}{//}
+    \textcolor{comment}{// Maybe someone added a new preset and we don't know about it yet}
+    \textcolor{comment}{//}
+    \hyperlink{lsredis_8c_af48b297b5679750a131fa1e982a078b7}{lsredis\_load\_presets}( motor\_name);
+    err = hsearch\_r( entry\_in, FIND, &entry\_outp, &\hyperlink{lsredis_8c_ade00a383533fdefb2af9f3f53f37cf97}{lsredis\_preset\_ht}
+      );
     \textcolor{keywordflow}{if}( err == 0) \{
-      \textcolor{comment}{// We've run out of names to look for: done}
-      \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lsredis\_find\_preset: no
-       preset for motor %s named '%s'"}, base, preset\_name);
+      \textcolor{comment}{//}
+      \textcolor{comment}{// Guess not.  Give up.  We tried}
+      \textcolor{comment}{//}
       *dval = 0.0;
       \textcolor{keywordflow}{return} 0;
     \}
-
-    \textcolor{comment}{// Check if we have a match}
-    p = htab\_output->data;
-    \textcolor{keywordflow}{if}( \hyperlink{lsredis_8c_a9fc8fd0db4c71c5eae68682b43103078}{lsredis\_cmpstr}( p, preset\_name)==0) \{
-      \textcolor{comment}{// got a match, now look for the position}
-      snprintf( s, \textcolor{keyword}{sizeof}( s)-1, \textcolor{stringliteral}{"%s.%s.presets.%d.position"}, \hyperlink{lsredis_8c_acdca9095c7a3288d7febe9f4c440a6e9}{lsredis\_head}
-      , base, i);
-      s[\textcolor{keyword}{sizeof}(s)-1] = 0;
-      htab\_input.key = s;
-      htab\_input.data = NULL;
-      err = hsearch\_r( htab\_input, FIND, &htab\_output, &\hyperlink{lsredis_8c_a42aec6aa74072797ec0344847b0e9e39}{lsredis\_htab}
-      );
-      \textcolor{keywordflow}{if}( err == 0) \{
-        \textcolor{comment}{// Name but not position? odd.}
-        \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lsredis\_find\_preset:
-       Error, motor %s preset '%s' has no position defined"}, base, preset\_name);
-        *dval = 0.0;
-        \textcolor{keywordflow}{return} 0;
-      \}
-      p = htab\_output->data;
-      *dval = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( p);
-      \textcolor{keywordflow}{return} 1;
-    \}
   \}
-  \textcolor{comment}{// How'd we get here?}
-  \textcolor{comment}{// did someone really define that many presets?  And then looked for one
-       that's not there?}
-  *dval = 0;
-  \textcolor{keywordflow}{return} 0;
+  pl = entry\_outp->data;
+  *dval = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( pl->\hyperlink{structlsredis__preset__list__struct_ae365a576448adeccb66fbb85cfcf4b23}{position});
+  \textcolor{keywordflow}{return} 1;
 \}
 \end{DoxyCode}
 \hypertarget{pgpmac_8h_adfe823e3ccec7e37ac4697179bd65b10}{\index{pgpmac.\-h@{pgpmac.\-h}!lsredis\-\_\-find\-\_\-preset\-\_\-index\-\_\-by\-\_\-position@{lsredis\-\_\-find\-\_\-preset\-\_\-index\-\_\-by\-\_\-position}}
@@ -3697,7 +3953,11 @@ Definition at line 806 of file lsredis.\-c.
 )}}\label{pgpmac_8h_adfe823e3ccec7e37ac4697179bd65b10}
 
 
-Definition at line 916 of file lsredis.\-c.
+For the given motor object return the index of the current preset or -\/1 if we are not at a preset position. 
+
+
+
+Definition at line 980 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -3737,7 +3997,7 @@ Definition at line 916 of file lsredis.\-c.
 )}}\label{pgpmac_8h_a6d9f550b9ba36acd237925164abe3ffc}
 
 
-Definition at line 574 of file lsredis.\-c.
+Definition at line 591 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -3785,7 +4045,7 @@ Definition at line 574 of file lsredis.\-c.
 )}}\label{pgpmac_8h_abe31d0e11c41b2235307612c963bb652}
 
 
-Definition at line 415 of file lsredis.\-c.
+Definition at line 432 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -3811,7 +4071,7 @@ Definition at line 415 of file lsredis.\-c.
 )}}\label{pgpmac_8h_abbb4e5ece19ebd130e1be18036752a08}
 
 
-Definition at line 428 of file lsredis.\-c.
+Definition at line 445 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -3837,7 +4097,7 @@ Definition at line 428 of file lsredis.\-c.
 )}}\label{pgpmac_8h_a0b7600b1c9a4550b32d4be019d25f941}
 
 
-Definition at line 441 of file lsredis.\-c.
+Definition at line 458 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -3863,7 +4123,7 @@ Definition at line 441 of file lsredis.\-c.
 )}}\label{pgpmac_8h_aa8daf63b794b6b6341018feec205cb7d}
 
 
-Definition at line 364 of file lsredis.\-c.
+Definition at line 381 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -3889,7 +4149,7 @@ Definition at line 364 of file lsredis.\-c.
 )}}\label{pgpmac_8h_a1923f998441f4f451204dfd214d52218}
 
 
-Definition at line 377 of file lsredis.\-c.
+Definition at line 394 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -3919,7 +4179,7 @@ return a copy of the key's string value be sure to free the result
 
 
 
-Definition at line 264 of file lsredis.\-c.
+Definition at line 281 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -3963,7 +4223,7 @@ Initialize this module, that is, set up the connections.
 \end{DoxyParams}
 
 
-Definition at line 949 of file lsredis.\-c.
+Definition at line 1012 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -4045,6 +4305,109 @@ Definition at line 949 of file lsredis.\-c.
       free( errmsg);
     \}
   \}
+
+  hcreate\_r( \hyperlink{lsredis_8c_ace88a236f88278adaac5419a7281c490}{lsredis\_preset\_max\_n} * 2, &\hyperlink{lsredis_8c_ade00a383533fdefb2af9f3f53f37cf97}{lsredis\_preset\_ht}
+      );
+  pthread\_mutex\_init( &\hyperlink{lsredis_8c_a1d0b14b31b12d1b2a79dc50eac09de39}{lsredis\_preset\_list\_mutex}, NULL
+      );
+\}
+\end{DoxyCode}
+\hypertarget{pgpmac_8h_af48b297b5679750a131fa1e982a078b7}{\index{pgpmac.\-h@{pgpmac.\-h}!lsredis\-\_\-load\-\_\-presets@{lsredis\-\_\-load\-\_\-presets}}
+\index{lsredis\-\_\-load\-\_\-presets@{lsredis\-\_\-load\-\_\-presets}!pgpmac.h@{pgpmac.\-h}}
+\subsubsection[{lsredis\-\_\-load\-\_\-presets}]{\setlength{\rightskip}{0pt plus 5cm}void lsredis\-\_\-load\-\_\-presets (
+\begin{DoxyParamCaption}
+\item[{char $\ast$}]{motor\-\_\-name}
+\end{DoxyParamCaption}
+)}}\label{pgpmac_8h_af48b297b5679750a131fa1e982a078b7}
+
+
+update the presets hash table for the named motor 
+
+
+
+Definition at line 825 of file lsredis.\-c.
+
+
+\begin{DoxyCode}
+                                             \{
+  \hyperlink{structlsredis__obj__struct}{lsredis\_obj\_t} *\hyperlink{namespacemk__pgpmac__redis_a11daf2847f2dc94562b5b61b3f412574}{p};
+  \hyperlink{structlsredis__preset__list__struct}{lsredis\_preset\_list\_t} *pl;
+  \textcolor{keywordtype}{int} plength;
+  \textcolor{keywordtype}{char} *preset\_name;
+  \textcolor{keywordtype}{int} \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i};
+  \textcolor{keywordtype}{int} key\_length;
+  ENTRY entry\_in, *entry\_outp;
+
+  p = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s.presets.length"}, motor\_name);
+  plength = \hyperlink{lsredis_8c_a71689006ffc015be6a0705a7c0aef1be}{lsredis\_get\_or\_set\_l}( p, 0);
+  \textcolor{keywordflow}{if}( plength <= 0)
+    \textcolor{keywordflow}{return};
+
+  pthread\_mutex\_lock( &\hyperlink{lsredis_8c_a1d0b14b31b12d1b2a79dc50eac09de39}{lsredis\_preset\_list\_mutex});
+
+  \textcolor{keywordflow}{for}( i=0; i<plength; i++) \{
+    pl = calloc( 1, \textcolor{keyword}{sizeof}( \hyperlink{structlsredis__preset__list__struct}{lsredis\_preset\_list\_t}));
+    pl->\hyperlink{structlsredis__preset__list__struct_a285a79dd419ae70c5b75ef57914d3331}{name}      = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s.presets.%d.name"},  
+         motor\_name, i);
+    pl->\hyperlink{structlsredis__preset__list__struct_ae365a576448adeccb66fbb85cfcf4b23}{position}  = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"
+      %s.presets.%d.position"}, motor\_name, i);
+    pl->\hyperlink{structlsredis__preset__list__struct_abadcee1d288db4b988946f62bb28d5df}{index}     = \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i};
+    
+    preset\_name   = \hyperlink{lsredis_8c_ac1994e56114b2315294527d76311f829}{lsredis\_getstr}( pl->\hyperlink{structlsredis__preset__list__struct_a285a79dd419ae70c5b75ef57914d3331}{name});
+    key\_length    = strlen( motor\_name) + strlen( preset\_name) + 1;
+    pl->\hyperlink{structlsredis__preset__list__struct_ab3a50b52cf845fa70667d8be9ea7d73b}{key}       = calloc( key\_length, 1);
+
+    pl->\hyperlink{structlsredis__preset__list__struct_a14422c8bfa270e5620c66be871091f67}{next}            = \hyperlink{lsredis_8c_a232f994f0d91ba8157cbcfe429fc90de}{lsredis\_preset\_list};
+    \hyperlink{lsredis_8c_a232f994f0d91ba8157cbcfe429fc90de}{lsredis\_preset\_list} = pl;
+
+    snprintf( pl->\hyperlink{structlsredis__preset__list__struct_ab3a50b52cf845fa70667d8be9ea7d73b}{key}, key\_length, \textcolor{stringliteral}{"%s%s"}, motor\_name, preset\_name);
+
+    entry\_in.key  = pl->\hyperlink{structlsredis__preset__list__struct_ab3a50b52cf845fa70667d8be9ea7d73b}{key};
+    entry\_in.data = pl;
+    hsearch\_r( entry\_in, ENTER, &entry\_outp, &\hyperlink{lsredis_8c_ade00a383533fdefb2af9f3f53f37cf97}{lsredis\_preset\_ht}
+      );
+    \textcolor{keywordflow}{if}( entry\_outp->data != pl) \{
+      \textcolor{comment}{//}
+      \textcolor{comment}{// The key was already there or we couldn't add it}
+      \textcolor{comment}{//}
+      \textcolor{keywordflow}{if}( entry\_outp->data == NULL)
+        \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lsredis\_load\_presets:
+       could not add preset '%s' for motor '%s'"}, preset\_name, motor\_name);
+
+      free( pl->\hyperlink{structlsredis__preset__list__struct_ab3a50b52cf845fa70667d8be9ea7d73b}{key});
+      free( pl);
+    \} \textcolor{keywordflow}{else} \{
+      \textcolor{comment}{//}
+      \textcolor{comment}{// We've successfully added the new key}
+      \textcolor{comment}{//}
+      \hyperlink{lsredis_8c_adace74d8fa7d2dd58854fa09e66da807}{lsredis\_preset\_n}++;
+      \textcolor{comment}{//}
+      \textcolor{comment}{// Resize the hash table if we are starting to fill it up}
+      \textcolor{comment}{// Generally we prefer a sparse table}
+      \textcolor{comment}{//}
+      \textcolor{keywordflow}{if}( \hyperlink{lsredis_8c_adace74d8fa7d2dd58854fa09e66da807}{lsredis\_preset\_n} >= \hyperlink{lsredis_8c_ace88a236f88278adaac5419a7281c490}{lsredis\_preset\_max\_n}
+      ) \{
+        \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lsredis\_load\_presets:
+       increasing preset hash table size.  max now %d"}, \hyperlink{lsredis_8c_ace88a236f88278adaac5419a7281c490}{lsredis\_preset\_max\_n}
+      );
+        hdestroy\_r( &\hyperlink{lsredis_8c_ade00a383533fdefb2af9f3f53f37cf97}{lsredis\_preset\_ht});
+        \hyperlink{lsredis_8c_ace88a236f88278adaac5419a7281c490}{lsredis\_preset\_max\_n} *= 2;
+        hcreate\_r( 2 * \hyperlink{lsredis_8c_ace88a236f88278adaac5419a7281c490}{lsredis\_preset\_max\_n}, &
+      \hyperlink{lsredis_8c_ade00a383533fdefb2af9f3f53f37cf97}{lsredis\_preset\_ht});
+        \textcolor{keywordflow}{for}( pl = \hyperlink{lsredis_8c_a232f994f0d91ba8157cbcfe429fc90de}{lsredis\_preset\_list}; pl != NULL; pl = pl->
+      \hyperlink{structlsredis__preset__list__struct_a14422c8bfa270e5620c66be871091f67}{next}) \{
+          entry\_in.key  = pl->\hyperlink{structlsredis__preset__list__struct_ab3a50b52cf845fa70667d8be9ea7d73b}{key};
+          entry\_in.data = pl;
+          hsearch\_r( entry\_in, ENTER, &entry\_outp, &\hyperlink{lsredis_8c_ade00a383533fdefb2af9f3f53f37cf97}{lsredis\_preset\_ht}
+      );
+        \}
+        \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lsredis\_load\_presets: done
+       increasing preset hash table size."}, \hyperlink{lsredis_8c_ace88a236f88278adaac5419a7281c490}{lsredis\_preset\_max\_n});
+      \}
+    \}
+    free( preset\_name);
+  \}
+  pthread\_mutex\_unlock( &\hyperlink{lsredis_8c_a1d0b14b31b12d1b2a79dc50eac09de39}{lsredis\_preset\_list\_mutex});
 \}
 \end{DoxyCode}
 \hypertarget{pgpmac_8h_ac58fca47533e695c8775e0d2b9128766}{\index{pgpmac.\-h@{pgpmac.\-h}!lsredis\-\_\-regexec@{lsredis\-\_\-regexec}}
@@ -4060,7 +4423,7 @@ Definition at line 949 of file lsredis.\-c.
 )}}\label{pgpmac_8h_ac58fca47533e695c8775e0d2b9128766}
 
 
-Definition at line 247 of file lsredis.\-c.
+Definition at line 264 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -4088,7 +4451,7 @@ Definition at line 247 of file lsredis.\-c.
 )}}\label{pgpmac_8h_ad438e4368d86bbe15a93dcf86deaded5}
 
 
-Definition at line 1153 of file lsredis.\-c.
+Definition at line 1219 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -4108,79 +4471,60 @@ Definition at line 1153 of file lsredis.\-c.
 )}}\label{pgpmac_8h_ad4c059ab8209b87131b5c94883a05f39}
 
 
-Definition at line 852 of file lsredis.\-c.
+set the given preset to the given value create a new preset if we can't find it 
+
+
+
+Definition at line 935 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
-                                                                     \{
+                                                                           \{
   \textcolor{keywordtype}{char} s[512];
-  \textcolor{keywordtype}{int} \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i}, plength;
+  \textcolor{keywordtype}{int} plength;
   \textcolor{keywordtype}{int} err;
-  ENTRY htab\_input, *htab\_output;
-  \hyperlink{structlsredis__obj__struct}{lsredis\_obj\_t} *\hyperlink{namespacemk__pgpmac__redis_a11daf2847f2dc94562b5b61b3f412574}{p};
+  ENTRY entry\_in, *entry\_outp;
+  \hyperlink{structlsredis__obj__struct}{lsredis\_obj\_t} *\hyperlink{namespacemk__pgpmac__redis_a11daf2847f2dc94562b5b61b3f412574}{p}, *presets\_length\_p;
+  \hyperlink{structlsredis__preset__list__struct}{lsredis\_preset\_list\_t} *pl;
 
-  p = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}(  \textcolor{stringliteral}{"%s.%s.presets.length"}, \hyperlink{lsredis_8c_acdca9095c7a3288d7febe9f4c440a6e9}{lsredis\_head}
-      , base);
-  plength = \hyperlink{lsredis_8c_a71689006ffc015be6a0705a7c0aef1be}{lsredis\_get\_or\_set\_l}( p, 0);
+  snprintf( s, \textcolor{keyword}{sizeof}( s)-1, \textcolor{stringliteral}{"%s%s"}, motor\_name, preset\_name);
+  s[\textcolor{keyword}{sizeof}(s)-1] = 0;
 
-  \textcolor{keywordflow}{for}( i=0; i<plength; i++) \{
-    snprintf( s, \textcolor{keyword}{sizeof}( s)-1, \textcolor{stringliteral}{"%s.%s.presets.%d.name"}, \hyperlink{lsredis_8c_acdca9095c7a3288d7febe9f4c440a6e9}{lsredis\_head}
-      , base, i);
-    s[\textcolor{keyword}{sizeof}(s)-1] = 0;
-    htab\_input.key  = s;
-    htab\_input.data = NULL;
-    err = hsearch\_r( htab\_input, FIND, &htab\_output, &\hyperlink{lsredis_8c_a42aec6aa74072797ec0344847b0e9e39}{lsredis\_htab})
-      ;
-    \textcolor{keywordflow}{if}( err == 0) \{
-      \textcolor{comment}{//}
-      \textcolor{comment}{// Not found? odd.  Length Lied.}
-      \textcolor{comment}{// Might as well just stick our preset here.}
-      \textcolor{comment}{//}
-      p = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s"}, s);
-      \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( p, \textcolor{stringliteral}{"%s"}, preset\_name);
-    \} \textcolor{keywordflow}{else} \{
-      \textcolor{comment}{// Check if we have a match}
-      p = htab\_output->data;
-    \}
-
-    \textcolor{keywordflow}{if}( \hyperlink{lsredis_8c_a9fc8fd0db4c71c5eae68682b43103078}{lsredis\_cmpstr}( p, preset\_name)==0) \{
-      \textcolor{comment}{//}
-      \textcolor{comment}{// got a match, now look for the position}
-      \textcolor{comment}{//}
-      snprintf( s, \textcolor{keyword}{sizeof}( s)-1, \textcolor{stringliteral}{"%s.%s.presets.%d.position"}, \hyperlink{lsredis_8c_acdca9095c7a3288d7febe9f4c440a6e9}{lsredis\_head}
-      , base, i);
-      s[\textcolor{keyword}{sizeof}(s)-1] = 0;
-      htab\_input.key = s;
-      htab\_input.data = NULL;
-      err = hsearch\_r( htab\_input, FIND, &htab\_output, &\hyperlink{lsredis_8c_a42aec6aa74072797ec0344847b0e9e39}{lsredis\_htab}
+  entry\_in.key  = s;
+  entry\_in.data = NULL;
+  err = hsearch\_r( entry\_in, FIND, &entry\_outp, &\hyperlink{lsredis_8c_ade00a383533fdefb2af9f3f53f37cf97}{lsredis\_preset\_ht}
       );
-      \textcolor{keywordflow}{if}( err == 0) \{
-        \textcolor{comment}{//}
-        \textcolor{comment}{// Name but not position? odd.}
-        \textcolor{comment}{//}
-        p = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s"}, s);
-      \} \textcolor{keywordflow}{else} \{
-        p = htab\_output->data;
-      \}
-      \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( p, \textcolor{stringliteral}{"%.3f"}, dval);
-      \textcolor{keywordflow}{return};
-    \}
+  \textcolor{keywordflow}{if}( err != 0) \{
+    \textcolor{comment}{//}
+    \textcolor{comment}{// Found it.  Things are simple.}
+    \textcolor{comment}{//}
+    pl = entry\_outp->data;
+    \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( pl->\hyperlink{structlsredis__preset__list__struct_ae365a576448adeccb66fbb85cfcf4b23}{position}, \textcolor{stringliteral}{"%.3f"}, dval);
+    \textcolor{keywordflow}{return};
   \}
   \textcolor{comment}{//}
   \textcolor{comment}{// OK, our preset was not found, add it}
   \textcolor{comment}{//}
+  presets\_length\_p = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}(  \textcolor{stringliteral}{"%s.presets.length"}, 
+      motor\_name);
+  plength = \hyperlink{lsredis_8c_a71689006ffc015be6a0705a7c0aef1be}{lsredis\_get\_or\_set\_l}( presets\_length\_p, 0);
+  plength += 1;
+
   snprintf( s, \textcolor{keyword}{sizeof}( s)-1, \textcolor{stringliteral}{"%s.%s.presets.%d.name"}, \hyperlink{lsredis_8c_acdca9095c7a3288d7febe9f4c440a6e9}{lsredis\_head},
-       base, i);
+       motor\_name, plength-1);
   s[\textcolor{keyword}{sizeof}(s)-1] = 0;
-  p = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s"}, s);
+
+  p = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s.presets.%d.name"}, motor\_name, plength
+      -1);
   \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( p, \textcolor{stringliteral}{"%s"}, preset\_name);
 
-  p = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s"}, s);
+  p = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s.presets.%d.position"}, motor\_name, 
+      plength-1);
   \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( p, \textcolor{stringliteral}{"%.3f"}, dval);
+  
+  \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( presets\_length\_p, \textcolor{stringliteral}{"%ld"}, plength);
 
-  p = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}(  \textcolor{stringliteral}{"%s.%s.presets.length"}, \hyperlink{lsredis_8c_acdca9095c7a3288d7febe9f4c440a6e9}{lsredis\_head}
-      , base);
-  \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( p, \textcolor{stringliteral}{"%ld"}, plength + 1);
+  \hyperlink{lsredis_8c_af48b297b5679750a131fa1e982a078b7}{lsredis\_load\_presets}( motor\_name);
 \}
 \end{DoxyCode}
 \hypertarget{pgpmac_8h_a9b9c64f883c7ded60badfe89cb15fa78}{\index{pgpmac.\-h@{pgpmac.\-h}!lsredis\-\_\-setstr@{lsredis\-\_\-setstr}}
@@ -4204,7 +4548,7 @@ $<$ Unlock to prevent deadlock in case the service routine needs to set our valu
 
 $<$ redis\-Async\-Command\-Argv shouldn't need to access this after it's made up it's packet (before it returns) so we should be O\-K with this location disappearing soon. 
 
-Definition at line 289 of file lsredis.\-c.
+Definition at line 306 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -4276,16 +4620,67 @@ Definition at line 92 of file lstest.\-c.
   \hyperlink{lstest_8c_acaa27d0c837aa325ad6b6212e67b182d}{lstest\_lspmac\_est\_move\_time}();
 \}
 \end{DoxyCode}
-\hypertarget{pgpmac_8h_af712dd2e9419026eff2762ba062eeaf1}{\index{pgpmac.\-h@{pgpmac.\-h}!lstimer\-\_\-add\-\_\-timer@{lstimer\-\_\-add\-\_\-timer}}
-\index{lstimer\-\_\-add\-\_\-timer@{lstimer\-\_\-add\-\_\-timer}!pgpmac.h@{pgpmac.\-h}}
-\subsubsection[{lstimer\-\_\-add\-\_\-timer}]{\setlength{\rightskip}{0pt plus 5cm}void lstimer\-\_\-add\-\_\-timer (
+\hypertarget{pgpmac_8h_a8cd37a8fb0f061456456a5d79bdd5189}{\index{pgpmac.\-h@{pgpmac.\-h}!lstimer\-\_\-init@{lstimer\-\_\-init}}
+\index{lstimer\-\_\-init@{lstimer\-\_\-init}!pgpmac.h@{pgpmac.\-h}}
+\subsubsection[{lstimer\-\_\-init}]{\setlength{\rightskip}{0pt plus 5cm}void lstimer\-\_\-init (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{pgpmac_8h_a8cd37a8fb0f061456456a5d79bdd5189}
+
+
+Initialize the timer list and pthread stuff. 
+
+
+
+Definition at line 270 of file lstimer.\-c.
+
+
+\begin{DoxyCode}
+                    \{
+  \textcolor{keywordtype}{int} \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i};
+
+  \textcolor{keywordflow}{for}( i=0; i<\hyperlink{lstimer_8c_af020a0f708e86162a32d2ca6373c96bb}{LSTIMER\_LIST\_LENGTH}; i++) \{
+    \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[\hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i}].\hyperlink{structlstimer__list__struct_ac7ab4cd1f3065156f95b49e66bf05283}{shots} = 0;
+  \}
+
+
+  pthread\_mutex\_init( &\hyperlink{lstimer_8c_a170993cbed9b9ec8bc64b6642a3ed581}{lstimer\_mutex}, NULL);
+  pthread\_cond\_init(  &\hyperlink{lstimer_8c_a96b7516e4a15c4b879de82a569cd5f0a}{lstimer\_cond}, NULL);
+\}
+\end{DoxyCode}
+\hypertarget{pgpmac_8h_a0b918acc1a4bf737cb62b5a70f8b553a}{\index{pgpmac.\-h@{pgpmac.\-h}!lstimer\-\_\-run@{lstimer\-\_\-run}}
+\index{lstimer\-\_\-run@{lstimer\-\_\-run}!pgpmac.h@{pgpmac.\-h}}
+\subsubsection[{lstimer\-\_\-run}]{\setlength{\rightskip}{0pt plus 5cm}void lstimer\-\_\-run (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{pgpmac_8h_a0b918acc1a4bf737cb62b5a70f8b553a}
+
+
+Start up our thread. 
+
+
+
+Definition at line 284 of file lstimer.\-c.
+
+
+\begin{DoxyCode}
+                   \{
+  pthread\_create( &\hyperlink{lstimer_8c_a76660e8720b08f4adee2be9f44b5f419}{lstimer\_thread}, NULL, \hyperlink{lstimer_8c_ab8b409bb2a7ff78da22d988cfb3b537a}{lstimer\_worker}
+      , NULL);
+\}
+\end{DoxyCode}
+\hypertarget{pgpmac_8h_a264897effdf49ed8d5aa34e8ed05c2d3}{\index{pgpmac.\-h@{pgpmac.\-h}!lstimer\-\_\-set\-\_\-timer@{lstimer\-\_\-set\-\_\-timer}}
+\index{lstimer\-\_\-set\-\_\-timer@{lstimer\-\_\-set\-\_\-timer}!pgpmac.h@{pgpmac.\-h}}
+\subsubsection[{lstimer\-\_\-set\-\_\-timer}]{\setlength{\rightskip}{0pt plus 5cm}void lstimer\-\_\-set\-\_\-timer (
 \begin{DoxyParamCaption}
 \item[{char $\ast$}]{event, }
 \item[{int}]{shots, }
 \item[{unsigned long int}]{secs, }
 \item[{unsigned long int}]{nsecs}
 \end{DoxyParamCaption}
-)}}\label{pgpmac_8h_af712dd2e9419026eff2762ba062eeaf1}
+)}}\label{pgpmac_8h_a264897effdf49ed8d5aa34e8ed05c2d3}
 
 
 Create a timer. 
@@ -4303,7 +4698,7 @@ Create a timer.
 \end{DoxyParams}
 
 
-Definition at line 50 of file lstimer.\-c.
+Definition at line 63 of file lstimer.\-c.
 
 
 \begin{DoxyCode}
@@ -4312,11 +4707,14 @@ Definition at line 50 of file lstimer.\-c.
   \textcolor{keywordtype}{int} \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i};
   \textcolor{keyword}{struct }timespec \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now};
 
-
   \textcolor{comment}{// Time we were called.  Delay is based on call time, not queued time}
   \textcolor{comment}{//}
   clock\_gettime( CLOCK\_REALTIME, &\hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now});
   
+
+  \textcolor{comment}{// Make sure our event is registered (saves a tiny bit of time later)}
+  \textcolor{comment}{//}
+  \hyperlink{lsevents_8c_ae09cfa92dba806d8f8808e5822ea713c}{lsevents\_preregister\_event}( event);
 
   pthread\_mutex\_lock( &\hyperlink{lstimer_8c_a170993cbed9b9ec8bc64b6642a3ed581}{lstimer\_mutex});
 
@@ -4328,7 +4726,7 @@ Definition at line 50 of file lstimer.\-c.
   \textcolor{keywordflow}{if}( i == LSTIMER\_LIST\_LENGTH) \{
     pthread\_mutex\_unlock( &\hyperlink{lstimer_8c_a170993cbed9b9ec8bc64b6642a3ed581}{lstimer\_mutex});
     
-    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lstimer\_add\_timer: out of
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lstimer\_set\_timer: out of
        timers for event: %s, shots: %d,  secs: %u, nsecs: %u"},
                           event, shots, secs, nsecs);
     \textcolor{keywordflow}{return};
@@ -4362,55 +4760,31 @@ Definition at line 50 of file lstimer.\-c.
   pthread\_mutex\_unlock( &\hyperlink{lstimer_8c_a170993cbed9b9ec8bc64b6642a3ed581}{lstimer\_mutex});
 \}
 \end{DoxyCode}
-\hypertarget{pgpmac_8h_a8cd37a8fb0f061456456a5d79bdd5189}{\index{pgpmac.\-h@{pgpmac.\-h}!lstimer\-\_\-init@{lstimer\-\_\-init}}
-\index{lstimer\-\_\-init@{lstimer\-\_\-init}!pgpmac.h@{pgpmac.\-h}}
-\subsubsection[{lstimer\-\_\-init}]{\setlength{\rightskip}{0pt plus 5cm}void lstimer\-\_\-init (
+\hypertarget{pgpmac_8h_a5738e4146b4691aad038b622b0381cac}{\index{pgpmac.\-h@{pgpmac.\-h}!lstimer\-\_\-unset\-\_\-timer@{lstimer\-\_\-unset\-\_\-timer}}
+\index{lstimer\-\_\-unset\-\_\-timer@{lstimer\-\_\-unset\-\_\-timer}!pgpmac.h@{pgpmac.\-h}}
+\subsubsection[{lstimer\-\_\-unset\-\_\-timer}]{\setlength{\rightskip}{0pt plus 5cm}void lstimer\-\_\-unset\-\_\-timer (
 \begin{DoxyParamCaption}
-{}
+\item[{char $\ast$}]{event}
 \end{DoxyParamCaption}
-)}}\label{pgpmac_8h_a8cd37a8fb0f061456456a5d79bdd5189}
+)}}\label{pgpmac_8h_a5738e4146b4691aad038b622b0381cac}
 
 
-Initialize the timer list and pthread stuff. 
+Unsets all timers for the given event. 
 
 
 
-Definition at line 254 of file lstimer.\-c.
+Definition at line 46 of file lstimer.\-c.
 
 
 \begin{DoxyCode}
-                    \{
+                                       \{
   \textcolor{keywordtype}{int} \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i};
 
   \textcolor{keywordflow}{for}( i=0; i<\hyperlink{lstimer_8c_af020a0f708e86162a32d2ca6373c96bb}{LSTIMER\_LIST\_LENGTH}; i++) \{
-    \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[\hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i}].\hyperlink{structlstimer__list__struct_ac7ab4cd1f3065156f95b49e66bf05283}{shots} = 0;
+    \textcolor{keywordflow}{if}( strcmp( event, \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[i].event) == 0) \{
+      \hyperlink{lstimer_8c_a35b456765fe2c955cef445768d12ca6c}{lstimer\_list}[\hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i}].\hyperlink{structlstimer__list__struct_ac7ab4cd1f3065156f95b49e66bf05283}{shots} = 0;
+    \}
   \}
-
-
-  pthread\_mutex\_init( &\hyperlink{lstimer_8c_a170993cbed9b9ec8bc64b6642a3ed581}{lstimer\_mutex}, NULL);
-  pthread\_cond\_init(  &\hyperlink{lstimer_8c_a96b7516e4a15c4b879de82a569cd5f0a}{lstimer\_cond}, NULL);
-\}
-\end{DoxyCode}
-\hypertarget{pgpmac_8h_a0b918acc1a4bf737cb62b5a70f8b553a}{\index{pgpmac.\-h@{pgpmac.\-h}!lstimer\-\_\-run@{lstimer\-\_\-run}}
-\index{lstimer\-\_\-run@{lstimer\-\_\-run}!pgpmac.h@{pgpmac.\-h}}
-\subsubsection[{lstimer\-\_\-run}]{\setlength{\rightskip}{0pt plus 5cm}void lstimer\-\_\-run (
-\begin{DoxyParamCaption}
-{}
-\end{DoxyParamCaption}
-)}}\label{pgpmac_8h_a0b918acc1a4bf737cb62b5a70f8b553a}
-
-
-Start up our thread. 
-
-
-
-Definition at line 268 of file lstimer.\-c.
-
-
-\begin{DoxyCode}
-                   \{
-  pthread\_create( &\hyperlink{lstimer_8c_a76660e8720b08f4adee2be9f44b5f419}{lstimer\_thread}, NULL, \hyperlink{lstimer_8c_ab8b409bb2a7ff78da22d988cfb3b537a}{lstimer\_worker}
-      , NULL);
 \}
 \end{DoxyCode}
 \hypertarget{pgpmac_8h_adf63440ffbc65024fef87ea6a11ea8b0}{\index{pgpmac.\-h@{pgpmac.\-h}!lsupdate\-\_\-init@{lsupdate\-\_\-init}}
@@ -4440,7 +4814,7 @@ Initialize the md2cmds module.
 
 
 
-Definition at line 1884 of file md2cmds.\-c.
+Definition at line 1853 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -4514,36 +4888,36 @@ Start up the thread.
 
 
 
-Definition at line 1934 of file md2cmds.\-c.
+Definition at line 1903 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
                    \{
   pthread\_create( &\hyperlink{md2cmds_8c_aa230921945149692de98fff15c01962f}{md2cmds\_thread}, NULL,              
       \hyperlink{md2cmds_8c_ae967e769d23555a631f615e630f25b00}{md2cmds\_worker}, NULL);
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"omega crossed zero"},        
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"omega crossed zero"},        
       \hyperlink{md2cmds_8c_aa43887b7c9799bc88d51df13745d0e5c}{md2cmds\_rotate\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"omega In Position"},         
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"omega In Position"},         
       \hyperlink{md2cmds_8c_a136f278c9f5a2742b2e9b4987b063faa}{md2cmds\_maybe\_rotate\_done\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{".+ (Moving|In Position)"},   
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{".+ (Moving|In Position)"},   
       \hyperlink{md2cmds_8c_a3970ef1a233dabcc5c1408e9d3865f13}{md2cmds\_maybe\_done\_moving\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"(.+) (Homing|Homed)"},       
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"(.+) (Homing|Homed)"},       
       \hyperlink{md2cmds_8c_ad0618ee44e2e800c445d7d8726ec8ec2}{md2cmds\_maybe\_done\_homing\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"capz (Moving|In Position)"}, 
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"capz (Moving|In Position)"}, 
       \hyperlink{md2cmds_8c_aab9e2aa02903648acc342068f0664a96}{md2cmds\_time\_capz\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 1 Stopped"},        
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 1 Stopped"},        
       \hyperlink{md2cmds_8c_a4cf5215fdb88407144f582d829c03c7b}{md2cmds\_coordsys\_1\_stopped\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 2 Stopped"},        
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 2 Stopped"},        
       \hyperlink{md2cmds_8c_a1ab8f6d08c82ee2130202d65d44ef3fe}{md2cmds\_coordsys\_2\_stopped\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 3 Stopped"},        
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 3 Stopped"},        
       \hyperlink{md2cmds_8c_a3640785c2fc9cd2f27ce0bafd7959179}{md2cmds\_coordsys\_3\_stopped\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 4 Stopped"},        
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 4 Stopped"},        
       \hyperlink{md2cmds_8c_a6069cb2f6e9f662edd54e1aeb6e78370}{md2cmds\_coordsys\_4\_stopped\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 5 Stopped"},        
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 5 Stopped"},        
       \hyperlink{md2cmds_8c_a846ed10de4e5ad48cfa429a93c853308}{md2cmds\_coordsys\_5\_stopped\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 7 Stopped"},        
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 7 Stopped"},        
       \hyperlink{md2cmds_8c_ab172a83eaf3e74799159e6720e4f5268}{md2cmds\_coordsys\_7\_stopped\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"cam.zoom Moving"},              
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"cam.zoom Moving"},              
       \hyperlink{md2cmds_8c_a4eb608d012f8a471671e10fb19b366d6}{md2cmds\_set\_scale\_cb});
 \}
 \end{DoxyCode}

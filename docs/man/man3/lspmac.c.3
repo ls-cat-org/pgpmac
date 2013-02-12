@@ -1,4 +1,4 @@
-.TH "lspmac.c" 3 "Thu Feb 7 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lspmac.c" 3 "Tue Feb 12 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -420,11 +420,15 @@ Routines concerned with communication with PMAC\&.
 .br
 .RI "\fISpecial motion program to collect centering video\&. \fP"
 .ti -1c
-.RI "int \fBlspmac_est_move_time\fP (double *est_time, int *mmask, \fBlspmac_motor_t\fP *mp_1, int jog_1, char *preset_1, double end_point_1,\&.\&.\&.)"
+.RI "int \fBlspmac_set_motion_flags\fP (int *mmaskp, \fBlspmac_motor_t\fP *mp_1,\&.\&.\&.)"
+.br
+.RI "\fISet the coordinate system motion flags (m5075) for the null terminated list of motors that we are planning on running a motion program with\&. \fP"
+.ti -1c
+.RI "int \fBlspmac_est_move_time\fP (double *est_time, int *mmaskp, \fBlspmac_motor_t\fP *mp_1, int jog_1, char *preset_1, double end_point_1,\&.\&.\&.)"
 .br
 .RI "\fIMove the motors and estimate the time it'll take to finish the job\&. \fP"
 .ti -1c
-.RI "int \fBlspmac_est_move_time_wait\fP (double move_time, int mmask)"
+.RI "int \fBlspmac_est_move_time_wait\fP (double move_time, int cmask, \fBlspmac_motor_t\fP *mp_1,\&.\&.\&.)"
 .br
 .RI "\fIwait for motion to stop returns non-zero if the wait timed out \fP"
 .ti -1c
@@ -486,9 +490,13 @@ Routines concerned with communication with PMAC\&.
 .RI "void \fBlspmac_cryoSwitchChanged_cb\fP (char *event)"
 .br
 .ti -1c
-.RI "void \fBlspmac_scint_inPosition_cb\fP (char *event)"
+.RI "void \fBlspmac_scint_maybe_turn_on_dryer_cb\fP (char *event)"
 .br
 .RI "\fIMaybe start drying off the scintilator\&. \fP"
+.ti -1c
+.RI "void \fBlspmac_scint_maybe_turn_off_dryer_cb\fP (char *event)"
+.br
+.RI "\fIMaybe stop drying off the scintilator\&. \fP"
 .ti -1c
 .RI "void \fBlspmac_backLight_up_cb\fP (char *event)"
 .br
@@ -1150,7 +1158,7 @@ The block of memory retrieved in a status request\&.
 .PP
 Helper funciton for the init calls\&. 
 .PP
-Definition at line 3355 of file lspmac\&.c\&.
+Definition at line 3473 of file lspmac\&.c\&.
 .PP
 .nf
                                                         {
@@ -1159,6 +1167,7 @@ Definition at line 3355 of file lspmac\&.c\&.
   pthread_mutex_init( &(d->mutex), NULL);
   pthread_cond_init(  &(d->cond), NULL);
 
+  d->magic               = LSPMAC_MAGIC_NUMBER;
   d->name                = strdup(name);
   d->active              = lsredis_get_obj( '%s\&.active',     d->name);
   d->active_init         = lsredis_get_obj( '%s\&.active_init',        d->name);
@@ -1194,6 +1203,11 @@ Definition at line 3355 of file lspmac\&.c\&.
   d->read                = NULL;
   d->reported_position   = INFINITY;
   d->reported_pg_position= INFINITY;
+
+  lsevents_preregister_event( '%s queued', d->name);
+  lsevents_preregister_event( '%s command accepted', d->name);
+
+  lsredis_load_presets( d->name);
 }
 .fi
 .SS "void cleanstr (char *s)"
@@ -1337,6 +1351,11 @@ Definition at line 2031 of file lspmac\&.c\&.
   //
   lspmac_SockSendDPControlChar( 'Abort Request', 0x01);
 
+  //
+  // and reset motion flag
+  //
+  lspmac_SockSendDPline( 'Reset', '%s', 'M5075=0');
+
 }
 .fi
 .SS "void lspmac_asciicmdCB (\fBpmac_cmd_queue_t\fP *cmd, intnreceived, char *buf)"
@@ -1361,7 +1380,7 @@ Turn off the backlight whenever it goes down\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 3744 of file lspmac\&.c\&.
+Definition at line 3922 of file lspmac\&.c\&.
 .PP
 .nf
                                             {
@@ -1378,7 +1397,7 @@ Turn on the backlight whenever it goes up\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 3737 of file lspmac\&.c\&.
+Definition at line 3915 of file lspmac\&.c\&.
 .PP
 .nf
                                           {
@@ -1390,7 +1409,7 @@ Definition at line 3737 of file lspmac\&.c\&.
 .PP
 Initialize binary input\&. 
 .PP
-Definition at line 3518 of file lspmac\&.c\&.
+Definition at line 3652 of file lspmac\&.c\&.
 .PP
 .nf
                                                                                                 {
@@ -1402,6 +1421,9 @@ Definition at line 3518 of file lspmac\&.c\&.
   d->changeEventOff = strdup( offEvent);
   d->first_time     = 1;
 
+  lsevents_preregister_event( '%s', d->changeEventOn);
+  lsevents_preregister_event( '%s', d->changeEventOff);
+
   return d;
 }
 .fi
@@ -1410,7 +1432,7 @@ Definition at line 3518 of file lspmac\&.c\&.
 .PP
 Set up lookup table for blight\&. 
 .PP
-Definition at line 3902 of file lspmac\&.c\&.
+Definition at line 4094 of file lspmac\&.c\&.
 .PP
 .nf
                                {
@@ -1470,7 +1492,7 @@ Initialize binary i/o motor\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 3449 of file lspmac\&.c\&.
+Definition at line 3581 of file lspmac\&.c\&.
 .PP
 .nf
                                   {
@@ -1484,6 +1506,8 @@ Definition at line 3449 of file lspmac\&.c\&.
   d->read_ptr          = read_ptr;
   d->read_mask         = read_mask;
 
+  lsevents_preregister_event( '%s 1', d->name);
+  lsevents_preregister_event( '%s 0', d->name);
   return d;
 }
 .fi
@@ -1519,7 +1543,7 @@ Definition at line 1137 of file lspmac\&.c\&.
 .SS "void lspmac_command_done_cb (char *event)"
 
 .PP
-Definition at line 3979 of file lspmac\&.c\&.
+Definition at line 4171 of file lspmac\&.c\&.
 .PP
 .nf
                                           {
@@ -1553,7 +1577,7 @@ Definition at line 3979 of file lspmac\&.c\&.
 .SS "void lspmac_cryoSwitchChanged_cb (char *event)"
 
 .PP
-Definition at line 3699 of file lspmac\&.c\&.
+Definition at line 3845 of file lspmac\&.c\&.
 .PP
 .nf
                                                {
@@ -1584,7 +1608,7 @@ Initialize DAC motor Note that some motors require further initialization from a
 .PP
 
 .PP
-Definition at line 3476 of file lspmac\&.c\&.
+Definition at line 3610 of file lspmac\&.c\&.
 .PP
 .nf
                                   {
@@ -1670,7 +1694,7 @@ Definition at line 783 of file lspmac\&.c\&.
   lspmac_Reset();
 }
 .fi
-.SS "int lspmac_est_move_time (double *est_time, int *mmask, \fBlspmac_motor_t\fP *mp_1, intjog_1, char *preset_1, doubleend_point_1, \&.\&.\&.)"
+.SS "int lspmac_est_move_time (double *est_time, int *mmaskp, \fBlspmac_motor_t\fP *mp_1, intjog_1, char *preset_1, doubleend_point_1, \&.\&.\&.)"
 
 .PP
 Move the motors and estimate the time it'll take to finish the job\&. Returns the estimate time and the coordinate system mask to waite for 
@@ -1679,7 +1703,7 @@ Move the motors and estimate the time it'll take to finish the job\&. Returns th
 .RS 4
 \fIest_time\fP Returns number of seconds we estimate the move(s) will take 
 .br
-\fImmask\fP Mask of coordinate systems we are trying to move, excluding jogs\&. Used to wait for motions to complete 
+\fImmaskp\fP Mask of coordinate systems we are trying to move, excluding jogs\&. Used to wait for motions to complete 
 .br
 \fImp_1\fP Pointer to first motor 
 .br
@@ -1704,14 +1728,17 @@ Move the motors and estimate the time it'll take to finish the job\&. Returns th
 .PP
 < coordinate system motion flags 
 .PP
-Definition at line 2650 of file lspmac\&.c\&.
+Definition at line 2737 of file lspmac\&.c\&.
 .PP
 .nf
-                                                                                                                                  {
+                                                                                                                                   {
   static char axes[] = 'XYZUVWABC';
   static int qs[9];
   static lspmac_combined_move_t motions[32];
-
+  char s[256];
+  int foundone;
+  int moving_flags;
+  struct timespec timeout;
   int j;
   va_list arg_ptr;
   lspmac_motor_t *mp;
@@ -1729,14 +1756,16 @@ Definition at line 2650 of file lspmac\&.c\&.
   int err;
   int jog;
   int i;
-  int m5075;            
+  uint32_t m5075;               
 
   // reset our coordinate flags and command strings
   //
   for( i=0; i<32; i++) {
     motions[i]\&.moveme = 0;
   }
-  m5075 = 0;
+  m5075  = 0;
+  if( mmaskp != NULL)
+    *mmaskp = 0;
 
   //
   // Initialze first iteration
@@ -1825,6 +1854,15 @@ Definition at line 2650 of file lspmac\&.c\&.
      *      we need to use equation (1) otherwise we need to use equation (2)
      *
      */
+
+    if( mp->magic != LSPMAC_MAGIC_NUMBER) {
+      lslogging_log_message( 'lspmac_est_move_time: WARNING: bad motor structure\&.  Check that your motor list is NULL terminated\&.');
+      break;
+    }
+
+
+    lslogging_log_message( 'lspmac_est_move_time: find motor %s, jog %d, preset %s, endpoint %f',
+                           mp->name, jog, ps == NULL ? 'NULL' : ps, ep);
 
     Tt = 0\&.0;
     if( mp != NULL && mp->max_speed != NULL && mp->max_accel != NULL && mp->u2c != NULL) {
@@ -1932,9 +1970,12 @@ Definition at line 2650 of file lspmac\&.c\&.
           //
           //
           if( abs(motions[motor_num - 1]\&.Delta)*16 >= in_position_band) {
-            m5075 |= 1 << (cn - 1);
+            m5075 |= (1 << (cn - 1));
             motions[motor_num - 1]\&.moveme    = 1;
           }       
+          lslogging_log_message( 'lspmac_est_move_time: moveme=%d  motor '%s' motions index=%d coord_num=%d axis=%d Delta=%d   m5075=%u',
+                                 motions[motor_num-1]\&.moveme,  mp->name, motor_num -1, motions[motor_num-1]\&.coord_num, motions[motor_num-1]\&.axis, motions[motor_num-1]\&.Delta,
+                                 m5075);
         }
       } else {
         //
@@ -1963,94 +2004,94 @@ Definition at line 2650 of file lspmac\&.c\&.
     jog = va_arg( arg_ptr, int);
     ps  = va_arg( arg_ptr, char *);
     ep  = va_arg( arg_ptr, double);
+
   }
   va_end( arg_ptr);
 
   
-  // Call the motion program(s)
-  {
-    char s[256];
-    int foundone;
-    int err;
-    int moving_flags;
-    struct timespec timeout;
+  // Set the motion program flags
+  //
+  if( m5075 != 0) {
+    if( mmaskp != NULL)
+      *mmaskp |= m5075; // Tell the caller about our new mask
 
-    if( m5075 != 0) {
-      *mmask |= m5075;  // Tell the caller about our new mask
-
-      pthread_mutex_lock( &lspmac_moving_mutex);
-      if( (lspmac_moving_flags & m5075) != m5075)
-        lspmac_SockSendDPline( NULL, 'M5075=(M5075 | %d)', m5075);
-
-      clock_gettime( CLOCK_REALTIME, &timeout);
-      //
-      timeout\&.tv_sec += 2;       // 2 seconds should be more than enough time to set the flags
-      err = 0;
-      while( err == 0 && (lspmac_moving_flags & m5075) != m5075)
-        err = pthread_cond_timedwait( &lspmac_moving_cond, &lspmac_moving_mutex, &timeout);
-      moving_flags = lspmac_moving_flags;
-      pthread_mutex_unlock( &lspmac_moving_mutex);
-
-      if( err == ETIMEDOUT) {
-        lslogging_log_message( 'lspmac_est_move_time: Timed out waiting for moving flags\&.  lspmac_moving_flags = %0x', moving_flags);
-        lsevents_send_event( '%s Move Aborted Combined Motors');
-        return 1;
-      }
+    
+    pthread_mutex_lock( &lspmac_moving_mutex);
+    if( (lspmac_moving_flags & m5075) != m5075)
+      lspmac_SockSendDPline( NULL, 'M5075=(M5075 | %d)', m5075);
+    
+    clock_gettime( CLOCK_REALTIME, &timeout);
+    //
+    timeout\&.tv_sec += 2; // 2 seconds should be more than enough time to set the flags
+    err = 0;
+    while( err == 0 && (lspmac_moving_flags & m5075) != m5075)
+      err = pthread_cond_timedwait( &lspmac_moving_cond, &lspmac_moving_mutex, &timeout);
+    moving_flags = lspmac_moving_flags;
+    pthread_mutex_unlock( &lspmac_moving_mutex);
+    
+    if( err == ETIMEDOUT) {
+      lslogging_log_message( 'lspmac_est_move_time: Timed out waiting for moving flags\&.  lspmac_moving_flags = %0x', moving_flags);
+      lsevents_send_event( 'Combined Move Aborted');
+      return 1;
     }
+  }
 
 
-    for( i=1; i<=16; i++) {
+  for( i=1; i<=16; i++) {
+    //
+    // Loop over coordinate systems
+    //
+    foundone = 0;
+    
+    for( j=0; j<9; j++)
+      qs[j] = 0;
+    
+    for( j=0; j<31; j++) {
       //
-      // Loop over coordinate systems
+      // Loop over motors
       //
-      foundone = 0;
-
-      for( j=0; j<9; j++)
-        qs[j] = 0;
-
-      for( j=0; j<31; j++) {
-        //
-        // Loop over motors
-        //
-        if( motions[j]\&.moveme && motions[j]\&.coord_num == i) {
-          if( abs(motions[j]\&.Delta) > 0) {
-            qs[(int)(motions[j]\&.axis)] = motions[j]\&.Delta;
-            foundone=1;
-          }
+      if( motions[j]\&.moveme && motions[j]\&.coord_num == i) {
+        if( abs(motions[j]\&.Delta) > 0) {
+          qs[(int)(motions[j]\&.axis)] = motions[j]\&.Delta;
+          foundone=1;
         }
       }
+    }
+    
+    if( foundone) {
+      sprintf( s, '&%d Q40=%d Q41=%d Q42=%d Q43=%d Q44=%d Q45=%d Q46=%d Q47=%d Q48=%d Q49=%\&.1f Q100=%d B180R',
+               i, qs[0], qs[1], qs[2], qs[3], qs[4], qs[5], qs[6], qs[7], qs[8], *est_time * 1000\&., 1 << (i-1));
       
-      if( foundone) {
-        sprintf( s, '&%d Q40=%d Q41=%d Q42=%d Q43=%d Q44=%d Q45=%d Q46=%d Q47=%d Q48=%d Q49=%\&.1f Q100=%d B180R',
-                 i, qs[0], qs[1], qs[2], qs[3], qs[4], qs[5], qs[6], qs[7], qs[8], *est_time * 1000\&., 1 << (i-1));
-
-        lspmac_SockSendDPline( NULL, s);
-
-      }
+      lspmac_SockSendDPline( NULL, s);
+      
     }
   }
   return 0;
 }
 .fi
-.SS "int lspmac_est_move_time_wait (doublemove_time, intmmask)"
+.SS "int lspmac_est_move_time_wait (doublemove_time, intcmask, \fBlspmac_motor_t\fP *mp_1, \&.\&.\&.)"
 
 .PP
 wait for motion to stop returns non-zero if the wait timed out \fBParameters:\fP
 .RS 4
 \fImove_time\fP The time out in seconds 
 .br
-\fImmask\fP A coordinate system mask to wait for
+\fIcmask\fP A coordinate system mask to wait for 
+.br
+\fImp_1\fP NULL terminated list of individual motors to wait for
 .RE
 .PP
 Both values are returned from lspmac_est_move_time 
 .PP
-Definition at line 2983 of file lspmac\&.c\&.
+Definition at line 3084 of file lspmac\&.c\&.
 .PP
 .nf
-                                                            {
+                                                                                       {
   int err;
   double isecs, fsecs;
   struct timespec timeout;
+  va_list arg_ptr;
+  lspmac_motor_t *mp;
 
   clock_gettime( CLOCK_REALTIME, &timeout);
   fsecs = modf( move_time, &isecs);
@@ -2061,23 +2102,38 @@ Definition at line 2983 of file lspmac\&.c\&.
 
   err = 0;
   pthread_mutex_lock( &lspmac_moving_mutex);
-  while( err == 0 && (lspmac_moving_flags & mmask) != 0)
+  while( err == 0 && (lspmac_moving_flags & cmask) != 0)
     err = pthread_cond_timedwait( &lspmac_moving_cond, &lspmac_moving_mutex, &timeout);
   pthread_mutex_unlock( &lspmac_moving_mutex);
 
   if( err != 0) {
     if( err == ETIMEDOUT) {
-      lslogging_log_message( 'lstest_lspmac_est_move_time: timed out waiting %f seconds', move_time);
+      lslogging_log_message( 'lstest_lspmac_est_move_time_wait: timed out waiting %f seconds, cmask = 0x%0x', move_time, cmask);
     }
+    lspmac_abort();
     return 1;
   }
+
+  va_start( arg_ptr, mp_1);
+  for( mp = mp_1; mp != NULL; mp = va_arg( arg_ptr, lspmac_motor_t *)) {
+    if( mp->magic != LSPMAC_MAGIC_NUMBER) {
+      lslogging_log_message( 'lspmac_est_move_time_wait: WARNING: motor list must be NULL terminated\&.  Check your call to lspmac_est_move_time_wait\&.');
+    }
+
+    if( lspmac_moveabs_wait( mp, move_time)) {
+      lslogging_log_message( 'lspmac_est_move_time_wait: timed out waiting %f seconds for motor %s', move_time, mp->name);
+      return 1;
+    }
+  }
+  va_end( arg_ptr);
+
   return 0;
 }
 .fi
 .SS "\fBlspmac_motor_t\fP* lspmac_find_motor_by_name (char *name)"
 
 .PP
-Definition at line 3962 of file lspmac\&.c\&.
+Definition at line 4154 of file lspmac\&.c\&.
 .PP
 .nf
                                                        {
@@ -2102,7 +2158,7 @@ Definition at line 3962 of file lspmac\&.c\&.
 .PP
 Set up lookup table for flight\&. 
 .PP
-Definition at line 3869 of file lspmac\&.c\&.
+Definition at line 4061 of file lspmac\&.c\&.
 .PP
 .nf
                                {
@@ -2141,7 +2197,7 @@ Definition at line 3869 of file lspmac\&.c\&.
 .PP
 Set up lookup table for fscint\&. 
 .PP
-Definition at line 3943 of file lspmac\&.c\&.
+Definition at line 4135 of file lspmac\&.c\&.
 .PP
 .nf
                                {
@@ -2173,7 +2229,7 @@ Initalize the fast shutter motor\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 3432 of file lspmac\&.c\&.
+Definition at line 3564 of file lspmac\&.c\&.
 .PP
 .nf
                                     {
@@ -2565,7 +2621,7 @@ Definition at line 1610 of file lspmac\&.c\&.
 .PP
 Request the values of all the I variables\&. 
 .PP
-Definition at line 2061 of file lspmac\&.c\&.
+Definition at line 2066 of file lspmac\&.c\&.
 .PP
 .nf
                           {
@@ -2587,7 +2643,7 @@ Receive the values of all the I variables Update our Postgresql database with th
 .PP
 
 .PP
-Definition at line 2044 of file lspmac\&.c\&.
+Definition at line 2049 of file lspmac\&.c\&.
 .PP
 .nf
                             {
@@ -2606,7 +2662,7 @@ Definition at line 2044 of file lspmac\&.c\&.
 .PP
 Request the values of all the M variables\&. 
 .PP
-Definition at line 2086 of file lspmac\&.c\&.
+Definition at line 2091 of file lspmac\&.c\&.
 .PP
 .nf
                           {
@@ -2628,7 +2684,7 @@ Receive the values of all the M variables Update our database with the results\&
 .PP
 
 .PP
-Definition at line 2069 of file lspmac\&.c\&.
+Definition at line 2074 of file lspmac\&.c\&.
 .PP
 .nf
                             {
@@ -2925,7 +2981,7 @@ Initialize this module\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 3534 of file lspmac\&.c\&.
+Definition at line 3671 of file lspmac\&.c\&.
 .PP
 .nf
                    {
@@ -3087,6 +3143,15 @@ Definition at line 3534 of file lspmac\&.c\&.
   lspmac_SockSendDPline( NULL, 'ENABLE PLCC 0,2');
   lspmac_SockSendDPline( NULL, 'DISABLE PLCC 1');
   lspmac_SockSendDPline( NULL, 'I5=3');
+
+
+  lsevents_preregister_event( 'omega crossed zero');
+  lsevents_preregister_event( 'Move Aborted');
+  lsevents_preregister_event( 'Combined Move Aborted');
+
+  for( i=1; i<=16; i++) {
+    lsevents_preregister_event( 'Coordsys %d Stopped', i);
+  }
 }
 .fi
 .SS "int lspmac_jogabs_queue (\fBlspmac_motor_t\fP *mp, doublerequested_position)"
@@ -3101,7 +3166,7 @@ Use jog to move motor to requested position\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 3265 of file lspmac\&.c\&.
+Definition at line 3383 of file lspmac\&.c\&.
 .PP
 .nf
                             {
@@ -3119,7 +3184,7 @@ Set the backlight intensity whenever the zoom is changed (and the backlight is u
 .PP
 
 .PP
-Definition at line 3751 of file lspmac\&.c\&.
+Definition at line 3929 of file lspmac\&.c\&.
 .PP
 .nf
                                         {
@@ -3254,7 +3319,7 @@ Initialize a pmac stepper or servo motor\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 3401 of file lspmac\&.c\&.
+Definition at line 3525 of file lspmac\&.c\&.
 .PP
 .nf
                                     {
@@ -3267,10 +3332,18 @@ Definition at line 3401 of file lspmac\&.c\&.
   d->actual_pos_cnts_p   = posp;
   d->status1_p           = stat1p;
   d->status2_p           = stat2p;
+
   d->win = newwin( LS_DISPLAY_WINDOW_HEIGHT, LS_DISPLAY_WINDOW_WIDTH, wy*LS_DISPLAY_WINDOW_HEIGHT, wx*LS_DISPLAY_WINDOW_WIDTH);
   box( d->win, 0, 0);
   mvwprintw( d->win, 1, 1, '%s', wtitle);
   wnoutrefresh( d->win);
+
+  lsevents_preregister_event( '%s Homing',       d->name);
+  lsevents_preregister_event( '%s Homed',        d->name);
+  lsevents_preregister_event( '%s Moving',       d->name);
+  lsevents_preregister_event( '%s In Position',  d->name);
+  lsevents_preregister_event( '%s Move Aborted', d->name);
+
 
   return d;
 }
@@ -3297,7 +3370,7 @@ Move method for normal stepper and servo motor objects Returns non-zero on abort
 .PP
 
 .PP
-Definition at line 3017 of file lspmac\&.c\&.
+Definition at line 3135 of file lspmac\&.c\&.
 .PP
 .nf
                                    {
@@ -3516,7 +3589,7 @@ move using a preset value returns 0 on success, non-zero on error \fBParameters:
 .PP
 
 .PP
-Definition at line 3226 of file lspmac\&.c\&.
+Definition at line 3344 of file lspmac\&.c\&.
 .PP
 .nf
                                        {
@@ -3554,7 +3627,7 @@ Move a given motor to one of its preset positions\&. No movement if the preset i
 .PP
 
 .PP
-Definition at line 2393 of file lspmac\&.c\&.
+Definition at line 2396 of file lspmac\&.c\&.
 .PP
 .nf
                                                                      {
@@ -3579,7 +3652,7 @@ Definition at line 2393 of file lspmac\&.c\&.
 .SS "int lspmac_moveabs_blight_factor_queue (\fBlspmac_motor_t\fP *mp, doublepos)"
 
 .PP
-Definition at line 2586 of file lspmac\&.c\&.
+Definition at line 2589 of file lspmac\&.c\&.
 .PP
 .nf
                                                                         {
@@ -3615,7 +3688,7 @@ Move method for binary i/o motor objects\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 2467 of file lspmac\&.c\&.
+Definition at line 2470 of file lspmac\&.c\&.
 .PP
 .nf
                                 {
@@ -3637,7 +3710,7 @@ Definition at line 2467 of file lspmac\&.c\&.
 .SS "int lspmac_moveabs_flight_factor_queue (\fBlspmac_motor_t\fP *mp, doublepos)"
 
 .PP
-Definition at line 2563 of file lspmac\&.c\&.
+Definition at line 2566 of file lspmac\&.c\&.
 .PP
 .nf
                                                                         {
@@ -3668,7 +3741,7 @@ Definition at line 2563 of file lspmac\&.c\&.
 .PP
 'move' frontlight on/off 
 .PP
-Definition at line 2550 of file lspmac\&.c\&.
+Definition at line 2553 of file lspmac\&.c\&.
 .PP
 .nf
                                                                         {
@@ -3696,7 +3769,7 @@ Move method for the fast shutter\&. Slightly more complicated than a binary io a
 .PP
 
 .PP
-Definition at line 2437 of file lspmac\&.c\&.
+Definition at line 2440 of file lspmac\&.c\&.
 .PP
 .nf
                                   {
@@ -3736,7 +3809,7 @@ Use coordinate system motion program, if available, to move motor to requested p
 .PP
 
 .PP
-Definition at line 3254 of file lspmac\&.c\&.
+Definition at line 3372 of file lspmac\&.c\&.
 .PP
 .nf
                             {
@@ -3760,7 +3833,7 @@ timed motor move \fBParameters:\fP
 .PP
 < Flags needed for wait routine 
 .PP
-Definition at line 2493 of file lspmac\&.c\&.
+Definition at line 2496 of file lspmac\&.c\&.
 .PP
 .nf
                                   {
@@ -3827,7 +3900,7 @@ Wait for motor to finish moving\&. Assume motion already queued, now just wait
 .PP
 
 .PP
-Definition at line 3280 of file lspmac\&.c\&.
+Definition at line 3398 of file lspmac\&.c\&.
 .PP
 .nf
                                                                   {
@@ -3915,7 +3988,7 @@ Move method for dac motor objects (ie, lights) \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 2304 of file lspmac\&.c\&.
+Definition at line 2309 of file lspmac\&.c\&.
 .PP
 .nf
                             {
@@ -3957,7 +4030,7 @@ Move method for the zoom motor\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 2337 of file lspmac\&.c\&.
+Definition at line 2342 of file lspmac\&.c\&.
 .PP
 .nf
                              {
@@ -3983,7 +4056,6 @@ Definition at line 2337 of file lspmac\&.c\&.
       mp->not_done     = 1;
       mp->motion_seen  = 0;
       mp->command_sent = 1;
-      lsevents_send_event( 'zoom Moving');
       pthread_mutex_unlock( &(mp->mutex));
 
       //
@@ -3993,7 +4065,6 @@ Definition at line 2337 of file lspmac\&.c\&.
       mp->not_done     = 0;
       mp->motion_seen  = 1;
       mp->command_sent = 1;
-      lsevents_send_event( 'zoom In Position');
       pthread_mutex_unlock( &(mp->mutex));
       return 0;
     }
@@ -4013,7 +4084,7 @@ Definition at line 2337 of file lspmac\&.c\&.
 .PP
 State machine logic\&. Given the current state, generate the next one 
 .PP
-Definition at line 2135 of file lspmac\&.c\&.
+Definition at line 2140 of file lspmac\&.c\&.
 .PP
 .nf
                          {
@@ -4562,7 +4633,7 @@ Definition at line 452 of file lspmac\&.c\&.
 .PP
 Start up the lspmac thread\&. 
 .PP
-Definition at line 4010 of file lspmac\&.c\&.
+Definition at line 4202 of file lspmac\&.c\&.
 .PP
 .nf
                   {
@@ -4576,9 +4647,10 @@ Definition at line 4010 of file lspmac\&.c\&.
   pthread_create( &pmac_thread, NULL, lspmac_worker, NULL);
 
   lsevents_add_listener( 'CryoSwitchChanged',    lspmac_cryoSwitchChanged_cb);
-  lsevents_add_listener( 'scint Moving',         lspmac_scint_maybe_move_sample_cb);
+  lsevents_add_listener( 'scint In Position',    lspmac_scint_maybe_turn_on_dryer_cb);
+  lsevents_add_listener( 'scint Moving',         lspmac_scint_maybe_turn_off_dryer_cb);
   lsevents_add_listener( 'scint In Position',    lspmac_scint_maybe_return_sample_cb);
-  lsevents_add_listener( 'scint In Position',    lspmac_scint_inPosition_cb);
+  lsevents_add_listener( 'scint Moving',         lspmac_scint_maybe_move_sample_cb);
   lsevents_add_listener( 'scintDried',           lspmac_scint_dried_cb);
   lsevents_add_listener( 'backLight 1',          lspmac_backLight_up_cb);
   lsevents_add_listener( 'backLight 0',          lspmac_backLight_down_cb);
@@ -4671,7 +4743,7 @@ Turn off the dryer\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 3827 of file lspmac\&.c\&.
+Definition at line 4019 of file lspmac\&.c\&.
 .PP
 .nf
                                          {
@@ -4679,50 +4751,16 @@ Definition at line 3827 of file lspmac\&.c\&.
   dryer->moveAbs( dryer, 0\&.0);
 }
 .fi
-.SS "void lspmac_scint_inPosition_cb (char *event)"
-
-.PP
-Maybe start drying off the scintilator\&. \fBParameters:\fP
-.RS 4
-\fIevent\fP required by protocol 
-.RE
-.PP
-
-.PP
-Definition at line 3712 of file lspmac\&.c\&.
-.PP
-.nf
-                                              {
-  double pos;
-  double cover;
-  int err;
-
-  pthread_mutex_lock( &(scint->mutex));
-  pos = scint->position;
-  err = lsredis_find_preset( scint->name, 'Cover', &cover);
-  pthread_mutex_unlock( &(scint->mutex));
-
-  lslogging_log_message( 'lspmac_scint_inPosition_cb: pos %f, cover %f, diff %f, err %d', pos, cover, fabs( pos-cover), err);
-
-  if( err == 0)
-    return;
-
-  if( fabs( pos - cover) <= 0\&.1) {
-    dryer->moveAbs( dryer, 1\&.0);
-    lslogging_log_message( 'lspmac_scint_inPosition_cb: Starting dryer');
-    lstimer_add_timer( 'scintDried', 1, 120, 0);
-  }
-}
-.fi
 .SS "void lspmac_scint_maybe_move_sample_cb (char *event)"
 
 .PP
 Perhaps we need to move the sample out of the way\&. 
 .PP
-Definition at line 3775 of file lspmac\&.c\&.
+Definition at line 3953 of file lspmac\&.c\&.
 .PP
 .nf
                                                      {
+  static int trigger = 0;
   double scint_target;
   int err;
   double move_time;
@@ -4735,16 +4773,22 @@ Definition at line 3775 of file lspmac\&.c\&.
   // This should be pretty conservative since the out position is around 80
   //
   if( scint_target > 10\&.0) {
-    err = lspmac_est_move_time( &move_time, &mmask,
-                                alignx, 0, 'Back', -2\&.0,
-                                aligny, 0, 'Back',  1\&.0,
-                                alignz, 0, 'Back',  1\&.0,
-                                NULL);
-    if( err) {
-      lspmac_abort();
-      lsevents_send_event( 'Aborting Motion');
-      lslogging_log_message( 'lspmac_scint_maybe_move_sample_cb: Failed move request, aborting motion to keep scint from hitting sample');
-    }    
+    if( trigger) {
+      mmask = 0;
+      err = lspmac_est_move_time( &move_time, &mmask,
+                                  alignx, 0, 'Back', -2\&.0,
+                                  aligny, 0, 'Back',  1\&.0,
+                                  alignz, 0, 'Back',  1\&.0,
+                                  NULL);
+      if( err) {
+        lspmac_abort();
+        lsevents_send_event( 'Move Aborted');
+        lslogging_log_message( 'lspmac_scint_maybe_move_sample_cb: Failed move request, aborting motion to keep scint from hitting sample');
+      }    
+      trigger = 0;
+    }
+  } else {
+    trigger = 1;
   }
 }
 .fi
@@ -4753,10 +4797,11 @@ Definition at line 3775 of file lspmac\&.c\&.
 .PP
 Perhaps we need to return the sample to the beam\&. 
 .PP
-Definition at line 3803 of file lspmac\&.c\&.
+Definition at line 3988 of file lspmac\&.c\&.
 .PP
 .nf
                                                        {
+  static int trigger = 0;
   double scint_target;
   double move_time;
   int mmask;
@@ -4768,11 +4813,94 @@ Definition at line 3803 of file lspmac\&.c\&.
   // This should be pretty conservative since the out position is around 80
   //
   if( scint_target < 10\&.0) {
-    lspmac_est_move_time( &move_time, &mmask,
-                          alignx, 0, 'Beam',  0\&.0,
-                          aligny, 0, 'Beam',  0\&.0,
-                          alignz, 0, 'Beam',  0\&.0,
-                          NULL);
+    if( trigger) {
+      mmask = 0;
+      lspmac_est_move_time( &move_time, &mmask,
+                            alignx, 0, 'Beam',  0\&.0,
+                            aligny, 0, 'Beam',  0\&.0,
+                            alignz, 0, 'Beam',  0\&.0,
+                            NULL);
+      trigger = 0;
+    }
+  } else {
+    trigger = 1;
+  }
+}
+.fi
+.SS "void lspmac_scint_maybe_turn_off_dryer_cb (char *event)"
+
+.PP
+Maybe stop drying off the scintilator\&. \fBParameters:\fP
+.RS 4
+\fIevent\fP required by protocol 
+.RE
+.PP
+
+.PP
+Definition at line 3895 of file lspmac\&.c\&.
+.PP
+.nf
+                                                        {
+  double pos;
+
+  //
+  // See if the dryer is on
+  //
+  pos = lspmac_getPosition( dryer);
+
+  if( pos == 0\&.0)
+    return;
+
+  dryer->moveAbs( dryer, 0\&.0);
+  
+  lstimer_unset_timer( 'scintDried');
+
+}
+.fi
+.SS "void lspmac_scint_maybe_turn_on_dryer_cb (char *event)"
+
+.PP
+Maybe start drying off the scintilator\&. \fBParameters:\fP
+.RS 4
+\fIevent\fP required by protocol 
+.RE
+.PP
+
+.PP
+Definition at line 3858 of file lspmac\&.c\&.
+.PP
+.nf
+                                                       {
+  static int trigger = 0;
+  double pos;
+  double cover;
+  int err;
+
+  pthread_mutex_lock( &(scint->mutex));
+  pos = scint->position;
+  pthread_mutex_unlock( &(scint->mutex));
+
+  if( pos > 20\&.0) {
+    trigger = 1;
+    return;
+  }
+
+  if( trigger == 0) {
+    return;
+  }
+
+  err = lsredis_find_preset( scint->name, 'Cover', &cover);
+
+  lslogging_log_message( 'lspmac_scint_inPosition_cb: pos %f, cover %f, diff %f, err %d', pos, cover, fabs( pos-cover), err);
+
+  if( err == 0)
+    return;
+
+  if( fabs( pos - cover) <= 0\&.1) {
+    dryer->moveAbs( dryer, 1\&.0);
+    lslogging_log_message( 'lspmac_scint_inPosition_cb: Starting dryer');
+    lstimer_set_timer( 'scintDried', 1, 120, 0);
+    trigger = 0;
   }
 }
 .fi
@@ -4858,7 +4986,7 @@ PMAC command with call back\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 2114 of file lspmac\&.c\&.
+Definition at line 2119 of file lspmac\&.c\&.
 .PP
 .nf
                           {
@@ -4883,7 +5011,7 @@ Send a command that does not need to deal with the reply\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 2095 of file lspmac\&.c\&.
+Definition at line 2100 of file lspmac\&.c\&.
 .PP
 .nf
                            {
@@ -5115,6 +5243,97 @@ Definition at line 814 of file lspmac\&.c\&.
       receiveBufferIn = 0;
     }
   }
+}
+.fi
+.SS "int lspmac_set_motion_flags (int *mmaskp, \fBlspmac_motor_t\fP *mp_1, \&.\&.\&.)"
+
+.PP
+Set the coordinate system motion flags (m5075) for the null terminated list of motors that we are planning on running a motion program with\&. Note that lspmac_est_move_time already takes care of this, use when calling a motion program directly
+.PP
+\fBParameters:\fP
+.RS 4
+\fImmaskp\fP Returned value of the mask generated\&. Ignored if null\&. 
+.br
+\fImp_1\fP start of null terminated list of motors\&. 
+.RE
+.PP
+
+.PP
+Definition at line 2651 of file lspmac\&.c\&.
+.PP
+.nf
+                                                                     {
+  va_list arg_ptr;
+  struct timespec timeout;
+  int err;
+  int cn;
+  int need_flag;
+  lspmac_motor_t *mp;
+  int mmask;
+
+  mmask = 0;
+  if( mmaskp != NULL)
+    *mmaskp = 0;
+
+  if( mp_1==NULL)
+    return 0;
+  
+  
+  //
+  // add the coordinate system flags to mmask
+  //
+  va_start( arg_ptr, mp_1);
+  for( mp = mp_1; mp!=NULL; mp = va_arg( arg_ptr, lspmac_motor_t *)) {
+    if( mp->magic != LSPMAC_MAGIC_NUMBER) {
+      lslogging_log_message( 'lspmac_set_motion_flags: WARNING: motor list must be NULL terminated\&.  Check your call to lspmac_set_motion_flags\&.');
+      break;
+    }
+    cn = lsredis_getl( mp->coord_num);
+    if( cn < 1 || cn > 16)
+      continue;
+    
+    mmask |= 1 << (cn - 1);
+  }
+  va_end( arg_ptr);
+
+  if( mmaskp != NULL)
+    *mmaskp = mmask;
+    
+  //
+  // It could be the flag is already what we want\&.  We might set up a race condition if we
+  // try to set it again\&.  (so don't)
+  //
+  pthread_mutex_lock( &lspmac_moving_mutex);
+
+  if( (lspmac_moving_flags & mmask) != 0)
+    need_flag = 0;
+  else
+    need_flag = 1;
+  
+  pthread_mutex_unlock( &lspmac_moving_mutex);
+
+  if( !need_flag)
+    return 0;
+  
+  //
+  // Set m5075 and make sure it propagates
+  //
+  lspmac_SockSendDPline( NULL, 'M5075=(M5075 | %d)', mmask);
+  clock_gettime( CLOCK_REALTIME, &timeout);
+  timeout\&.tv_sec += 2;
+
+  err = 0;
+  pthread_mutex_lock( &lspmac_moving_mutex);
+  while( err == 0 && (lspmac_moving_flags & mmask) != mmask)
+    err = pthread_cond_timedwait( &lspmac_moving_cond, &lspmac_moving_mutex, &timeout);
+
+  pthread_mutex_unlock( &lspmac_moving_mutex);
+  
+  if( err == ETIMEDOUT) {
+    lslogging_log_message( 'lspmac_set_motion_flags: timed out waiting for motion %d flag to be set', mmask);
+    return 1;
+  }
+  return 0;
 }
 .fi
 .SS "void lspmac_shutter_read (\fBlspmac_motor_t\fP *mp)"
@@ -5357,7 +5576,7 @@ Definition at line 1099 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* lspmac_soft_motor_init (\fBlspmac_motor_t\fP *d, char *name, int(*)(\fBlspmac_motor_t\fP *, double)moveAbs)"
 
 .PP
-Definition at line 3502 of file lspmac\&.c\&.
+Definition at line 3636 of file lspmac\&.c\&.
 .PP
 .nf
                                                                                                                  {
@@ -5378,7 +5597,7 @@ Definition at line 3502 of file lspmac\&.c\&.
 .PP
 Dummy routine to read a soft motor\&. 
 .PP
-Definition at line 3497 of file lspmac\&.c\&.
+Definition at line 3631 of file lspmac\&.c\&.
 .PP
 .nf
                                                 {
@@ -5390,7 +5609,7 @@ Definition at line 3497 of file lspmac\&.c\&.
 .PP
 see if the motor is within tolerance of the preset 1 means yes, it is 0 mean no it isn't or that the preset was not found 
 .PP
-Definition at line 2416 of file lspmac\&.c\&.
+Definition at line 2419 of file lspmac\&.c\&.
 .PP
 .nf
                                                                                  {
@@ -5412,7 +5631,7 @@ Definition at line 2416 of file lspmac\&.c\&.
 .PP
 Special motion program to collect centering video\&. 
 .PP
-Definition at line 2610 of file lspmac\&.c\&.
+Definition at line 2613 of file lspmac\&.c\&.
 .PP
 .nf
                                        {
@@ -5453,7 +5672,7 @@ Our lspmac worker thread\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 2253 of file lspmac\&.c\&.
+Definition at line 2258 of file lspmac\&.c\&.
 .PP
 .nf
                       {
@@ -5504,7 +5723,7 @@ Definition at line 2253 of file lspmac\&.c\&.
 .PP
 Set up lookup table for zoom\&. 
 .PP
-Definition at line 3835 of file lspmac\&.c\&.
+Definition at line 4027 of file lspmac\&.c\&.
 .PP
 .nf
                              {

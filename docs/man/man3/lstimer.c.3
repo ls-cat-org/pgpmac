@@ -1,4 +1,4 @@
-.TH "lstimer.c" 3 "Thu Feb 7 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lstimer.c" 3 "Tue Feb 12 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -44,7 +44,11 @@ Support for delayed and periodic events\&.
 
 .in +1c
 .ti -1c
-.RI "void \fBlstimer_add_timer\fP (char *event, int shots, unsigned long int secs, unsigned long int nsecs)"
+.RI "void \fBlstimer_unset_timer\fP (char *event)"
+.br
+.RI "\fIUnsets all timers for the given event\&. \fP"
+.ti -1c
+.RI "void \fBlstimer_set_timer\fP (char *event, int shots, unsigned long int secs, unsigned long int nsecs)"
 .br
 .RI "\fICreate a timer\&. \fP"
 .ti -1c
@@ -149,7 +153,7 @@ Everything we need to know about a timer\&.
 .PP
 Service the signal\&. 
 .PP
-Definition at line 174 of file lstimer\&.c\&.
+Definition at line 190 of file lstimer\&.c\&.
 .PP
 .nf
                                                           {
@@ -158,7 +162,39 @@ Definition at line 174 of file lstimer\&.c\&.
   pthread_mutex_unlock( &lstimer_mutex);
 }
 .fi
-.SS "void lstimer_add_timer (char *event, intshots, unsigned long intsecs, unsigned long intnsecs)"
+.SS "void lstimer_init ()"
+
+.PP
+Initialize the timer list and pthread stuff\&. 
+.PP
+Definition at line 270 of file lstimer\&.c\&.
+.PP
+.nf
+                    {
+  int i;
+
+  for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
+    lstimer_list[i]\&.shots = 0;
+  }
+
+
+  pthread_mutex_init( &lstimer_mutex, NULL);
+  pthread_cond_init(  &lstimer_cond, NULL);
+}
+.fi
+.SS "void lstimer_run ()"
+
+.PP
+Start up our thread\&. 
+.PP
+Definition at line 284 of file lstimer\&.c\&.
+.PP
+.nf
+                   {
+  pthread_create( &lstimer_thread, NULL, lstimer_worker, NULL);
+}
+.fi
+.SS "void lstimer_set_timer (char *event, intshots, unsigned long intsecs, unsigned long intnsecs)"
 
 .PP
 Create a timer\&. \fBParameters:\fP
@@ -174,18 +210,21 @@ Create a timer\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 50 of file lstimer\&.c\&.
+Definition at line 63 of file lstimer\&.c\&.
 .PP
 .nf
                                                                                                  {
   int i;
   struct timespec now;
 
-
   // Time we were called\&.  Delay is based on call time, not queued time
   //
   clock_gettime( CLOCK_REALTIME, &now);
   
+
+  // Make sure our event is registered (saves a tiny bit of time later)
+  //
+  lsevents_preregister_event( event);
 
   pthread_mutex_lock( &lstimer_mutex);
 
@@ -197,7 +236,7 @@ Definition at line 50 of file lstimer\&.c\&.
   if( i == LSTIMER_LIST_LENGTH) {
     pthread_mutex_unlock( &lstimer_mutex);
     
-    lslogging_log_message( 'lstimer_add_timer: out of timers for event: %s, shots: %d,  secs: %u, nsecs: %u',
+    lslogging_log_message( 'lstimer_set_timer: out of timers for event: %s, shots: %d,  secs: %u, nsecs: %u',
                           event, shots, secs, nsecs);
     return;
   }
@@ -226,36 +265,22 @@ Definition at line 50 of file lstimer\&.c\&.
   pthread_mutex_unlock( &lstimer_mutex);
 }
 .fi
-.SS "void lstimer_init ()"
+.SS "void lstimer_unset_timer (char *event)"
 
 .PP
-Initialize the timer list and pthread stuff\&. 
+Unsets all timers for the given event\&. 
 .PP
-Definition at line 254 of file lstimer\&.c\&.
+Definition at line 46 of file lstimer\&.c\&.
 .PP
 .nf
-                    {
+                                       {
   int i;
 
   for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
-    lstimer_list[i]\&.shots = 0;
+    if( strcmp( event, lstimer_list[i]\&.event) == 0) {
+      lstimer_list[i]\&.shots = 0;
+    }
   }
-
-
-  pthread_mutex_init( &lstimer_mutex, NULL);
-  pthread_cond_init(  &lstimer_cond, NULL);
-}
-.fi
-.SS "void lstimer_run ()"
-
-.PP
-Start up our thread\&. 
-.PP
-Definition at line 268 of file lstimer\&.c\&.
-.PP
-.nf
-                   {
-  pthread_create( &lstimer_thread, NULL, lstimer_worker, NULL);
 }
 .fi
 .SS "static void* lstimer_worker (void *dummy)\fC [static]\fP"
@@ -268,7 +293,7 @@ Our worker\&. The main loop runs when a new timer is added\&. The service routin
 .PP
 
 .PP
-Definition at line 184 of file lstimer\&.c\&.
+Definition at line 200 of file lstimer\&.c\&.
 .PP
 .nf
                        {
@@ -341,7 +366,7 @@ Definition at line 184 of file lstimer\&.c\&.
 .PP
 Send events that are past due, due, or just about to be due\&. 
 .PP
-Definition at line 102 of file lstimer\&.c\&.
+Definition at line 118 of file lstimer\&.c\&.
 .PP
 .nf
                              {

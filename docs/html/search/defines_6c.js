@@ -32,6 +32,7 @@ var searchData=
   ['lslogging_5fmsg_5flength',['LSLOGGING_MSG_LENGTH',['../lslogging_8c.html#a0526e4aa12fbaf357fe315d6b3209c54',1,'lslogging.c']]],
   ['lslogging_5fqueue_5flength',['LSLOGGING_QUEUE_LENGTH',['../lslogging_8c.html#a5b1cb610bee26b000a2d64caa7d77a8d',1,'lslogging.c']]],
   ['lspmac_5fdpascii_5fqueue_5flength',['LSPMAC_DPASCII_QUEUE_LENGTH',['../lspmac_8c.html#a3a407e2e4d57ac45ecd700f8bad3d3b5',1,'lspmac.c']]],
+  ['lspmac_5fmagic_5fnumber',['LSPMAC_MAGIC_NUMBER',['../pgpmac_8h.html#abe2a74d23400d8d8fe02dc407c242035',1,'pgpmac.h']]],
   ['lspmac_5fmax_5fmotors',['LSPMAC_MAX_MOTORS',['../lspmac_8c.html#a633db3afda918c8cd29f9728d45b9f73',1,'lspmac.c']]],
   ['lspmac_5fpreset_5fregex',['LSPMAC_PRESET_REGEX',['../lspmac_8c.html#a86ef4ac4630165f30f6c16e4783ed89f',1,'lspmac.c']]],
   ['lstimer_5flist_5flength',['LSTIMER_LIST_LENGTH',['../lstimer_8c.html#af020a0f708e86162a32d2ca6373c96bb',1,'lstimer.c']]],

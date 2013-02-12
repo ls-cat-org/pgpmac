@@ -1,5 +1,6 @@
 var searchData=
 [
+  ['magic',['magic',['../structlspmac__motor__struct.html#a3342670c97c0b2646409f2ef28f63d1c',1,'lspmac_motor_struct']]],
   ['mask',['mask',['../structlspmac__bi__struct.html#ac010058c9883088705059dee1d90ee72',1,'lspmac_bi_struct']]],
   ['max_5faccel',['max_accel',['../structlspmac__motor__struct.html#a50cf4c0711cea164e332bc34705a1a68',1,'lspmac_motor_struct']]],
   ['max_5fpos',['max_pos',['../structlspmac__motor__struct.html#aac8c31a857910cdcbb409331e128e766',1,'lspmac_motor_struct']]],

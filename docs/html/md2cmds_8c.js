@@ -41,6 +41,7 @@ var md2cmds_8c =
     [ "md2cmds_run_cmd", "md2cmds_8c.html#a577b62b66ed5589a171550e26478633f", null ],
     [ "md2cmds_set", "md2cmds_8c.html#aee4a35d084bc0fdd4598576469deeed0", null ],
     [ "md2cmds_set_scale_cb", "md2cmds_8c.html#a4eb608d012f8a471671e10fb19b366d6", null ],
+    [ "md2cmds_settransferpoint", "md2cmds_8c.html#a3403a357a4b3ffd715a2f3d1dac3da5b", null ],
     [ "md2cmds_test", "md2cmds_8c.html#a4a321d5e1621948eecb33a51a58041f6", null ],
     [ "md2cmds_time_capz_cb", "md2cmds_8c.html#aab9e2aa02903648acc342068f0664a96", null ],
     [ "md2cmds_transfer", "md2cmds_8c.html#a87efed33b7a49cdfeaf5d64df4ca09aa", null ],

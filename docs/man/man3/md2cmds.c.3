@@ -1,4 +1,4 @@
-.TH "md2cmds.c" 3 "Thu Feb 7 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "md2cmds.c" 3 "Tue Feb 12 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -64,6 +64,9 @@ Implements commands to run the md2 diffractometer attached to a PMAC controled b
 .RI "\fISpin 360 and make a video (recenter first, maybe) \fP"
 .ti -1c
 .RI "int \fBmd2cmds_set\fP (const char *)"
+.br
+.ti -1c
+.RI "int \fBmd2cmds_settransferpoint\fP (const char *)"
 .br
 .ti -1c
 .RI "int \fBmd2cmds_test\fP (const char *dummy)"
@@ -147,7 +150,7 @@ Implements commands to run the md2 diffractometer attached to a PMAC controled b
 .ti -1c
 .RI "void \fBmd2cmds_set_scale_cb\fP (char *event)"
 .br
-.RI "\fIFix up xscale and yscale when zoom changes\&. \fP"
+.RI "\fIFix up xscale and yscale when zoom changes xscale and yscale have units of microns per pixel\&. \fP"
 .ti -1c
 .RI "void \fBmd2cmds_time_capz_cb\fP (char *event)"
 .br
@@ -287,7 +290,7 @@ Definition in file \fBmd2cmds\&.c\fP\&.
 .PP
 abort the current motion and put the system into a known state /param dummy Unused here 
 .PP
-Definition at line 1653 of file md2cmds\&.c\&.
+Definition at line 1572 of file md2cmds\&.c\&.
 .PP
 .nf
                                       {
@@ -321,7 +324,7 @@ Definition at line 1653 of file md2cmds\&.c\&.
 .SS "int md2cmds_action_queue (doubletimeout, char *action)"
 
 .PP
-Definition at line 1615 of file md2cmds\&.c\&.
+Definition at line 1534 of file md2cmds\&.c\&.
 .PP
 .nf
                                                         {
@@ -364,7 +367,7 @@ Definition at line 1615 of file md2cmds\&.c\&.
 .PP
 pause until md2cmds_worker has finished running the command 
 .PP
-Definition at line 1683 of file md2cmds\&.c\&.
+Definition at line 1602 of file md2cmds\&.c\&.
 .PP
 .nf
                            {
@@ -377,7 +380,7 @@ Definition at line 1683 of file md2cmds\&.c\&.
 .PP
 Move centering and alignment tables as requested TODO: Implement\&. 
 .PP
-Definition at line 1578 of file md2cmds\&.c\&.
+Definition at line 1497 of file md2cmds\&.c\&.
 .PP
 .nf
                                        {
@@ -418,7 +421,7 @@ Collect some data\&. \fBParameters:\fP
 .PP
 < setup timeouts for shutter 
 .PP
-Definition at line 1114 of file md2cmds\&.c\&.
+Definition at line 1017 of file md2cmds\&.c\&.
 .PP
 .nf
                                         {
@@ -436,19 +439,29 @@ Definition at line 1114 of file md2cmds\&.c\&.
   double phi_pos;       
   struct timespec now, timeout; 
   int err;
+  double move_time;
+  int mmask;
 
   u2c         = lsredis_getd( omega->u2c);
   neutral_pos = lsredis_getd( omega->neutral_pos);
   max_accel   = lsredis_getd( omega->max_accel);
 
-  md2cmds_move_prep();
-  md2cmds_organs_move_presets( 'In', 'In', 'In', 'In', 'Cover');
-  //
-  if( md2cmds_move_wait( 30\&.0)) {
-    lslogging_log_message( 'md2cmds_collect: Timed out waiting for organs to move\&.  Aborting data collection\&.');
-    lsevents_send_event( 'Data Colection Aborted');
+  mmask = 0;
+  err = lspmac_est_move_time( &move_time, &mmask,
+                              apery,     1, 'In',    0\&.0,        // Aperture to the In position
+                              aperz,     1, 'In',    0\&.0,
+                              capy,      1, 'In',    0\&.0,        // Capillary / Beamstop to the In position
+                              capz,      1, 'In',    0\&.0,
+                              scint,     1, 'Cover', 0\&.0,        // Hide the scintillator
+                              blight_ud, 1, NULL,    0\&.0,        // put the backlight down
+                              NULL);
+
+  err = lspmac_est_move_time_wait( move_time + 2\&.0, mmask, NULL);
+  if( err) {
+    lsevents_send_event( 'Data Collection Aborted');
     return 1;
   }
+
 
   //
   // reset shutter has opened flag
@@ -482,10 +495,21 @@ Definition at line 1114 of file md2cmds\&.c\&.
 
 
         lslogging_log_message( 'md2cmds_collect: moving center to cx=%f, cy=%f, ax=%f, ay=%f, az=%f',lspg_nextshot\&.cx, lspg_nextshot\&.cy, lspg_nextshot\&.ax, lspg_nextshot\&.ay, lspg_nextshot\&.az);
-        md2cmds_move_prep();
-        md2cmds_mvcenter_move( lspg_nextshot\&.cx, lspg_nextshot\&.cy, lspg_nextshot\&.ax, lspg_nextshot\&.ay, lspg_nextshot\&.az);
-        if( md2cmds_move_wait( 2\&.0)) {
-          lslogging_log_message( 'md2cmds_collect: Timed out waiting for alignment or centering stage (or both) to stop moving\&.  Aborting data collection\&.');
+
+        err = lspmac_est_move_time( &move_time, &mmask,
+                                    cenx,   0, NULL, lspg_nextshot\&.cx,
+                                    ceny,   0, NULL, lspg_nextshot\&.cy,
+                                    alignx, 0, NULL, lspg_nextshot\&.ax,
+                                    aligny, 0, NULL, lspg_nextshot\&.ay,
+                                    alignz, 0, NULL, lspg_nextshot\&.az,
+                                    NULL);
+        if( err) {
+          lsevents_send_event( 'Data Colection Aborted');
+          return 1;
+        }
+
+        err = lspmac_est_move_time_wait( move_time, mmask, NULL);
+        if( err) {
           lsevents_send_event( 'Data Colection Aborted');
           return 1;
         }
@@ -500,10 +524,18 @@ Definition at line 1114 of file md2cmds\&.c\&.
       phi_pos   = lspg_nextshot\&.dsphi_isnull   ? lspmac_getPosition( phi)   : lspg_nextshot\&.dsphi;
 
       lslogging_log_message( 'md2cmds_collect: move phy/kappa: kappa=%f  phi=%f', kappa_pos, phi_pos);
-      md2cmds_move_prep();
-      md2cmds_kappaphi_move( kappa_pos, phi_pos);
-      if( md2cmds_move_wait( 30\&.0)) {
-          lslogging_log_message( 'md2cmds_collect: Timed out waiting for kappa or phi (or both) to stop moving\&.  Aborting data collection\&.');
+
+      err = lspmac_est_move_time( &move_time, &mmask,
+                                  kappa, 0, NULL, kappa_pos,
+                                  phi,   0, NULL, phi_pos,
+                                  NULL);
+      if( err) {
+          lsevents_send_event( 'Data Colection Aborted');
+          return 1;
+      } 
+
+      err = lspmac_est_move_time_wait( move_time + 2, mmask, NULL);
+      if( err) {
           lsevents_send_event( 'Data Colection Aborted');
           return 1;
       } 
@@ -565,9 +597,10 @@ Definition at line 1114 of file md2cmds\&.c\&.
     //
     // Start the exposure
     //
-    md2cmds_move_prep();
-    lspmac_SockSendDPline( 'Exposure', '&1 P170=%\&.1f P171=%\&.1f P173=%\&.1f P174=0 P175=%\&.1f P176=0 P177=1 P178=0 P180=%\&.1f M431=1 &1B131R',
-                                     p170,     p171,     p173,            p175,                          p180);
+    lspmac_set_motion_flags( &mmask, omega);
+    lspmac_SockSendDPline( 'Exposure',
+                           '&1 P170=%\&.1f P171=%\&.1f P173=%\&.1f P174=0 P175=%\&.1f P176=0 P177=1 P178=0 P180=%\&.1f M431=1 &1B131R',
+                           p170,         p171,     p173,            p175,                          p180);
 
     //
     // We could look for the 'Exposure command accepted' event at this point\&.
@@ -665,7 +698,7 @@ Definition at line 1114 of file md2cmds\&.c\&.
 .SS "void md2cmds_coordsys_1_stopped_cb (char *event)"
 
 .PP
-Definition at line 1868 of file md2cmds\&.c\&.
+Definition at line 1837 of file md2cmds\&.c\&.
 .PP
 .nf
                                                  {
@@ -674,7 +707,7 @@ Definition at line 1868 of file md2cmds\&.c\&.
 .SS "void md2cmds_coordsys_2_stopped_cb (char *event)"
 
 .PP
-Definition at line 1870 of file md2cmds\&.c\&.
+Definition at line 1839 of file md2cmds\&.c\&.
 .PP
 .nf
                                                  {
@@ -683,7 +716,7 @@ Definition at line 1870 of file md2cmds\&.c\&.
 .SS "void md2cmds_coordsys_3_stopped_cb (char *event)"
 
 .PP
-Definition at line 1872 of file md2cmds\&.c\&.
+Definition at line 1841 of file md2cmds\&.c\&.
 .PP
 .nf
                                                  {
@@ -692,7 +725,7 @@ Definition at line 1872 of file md2cmds\&.c\&.
 .SS "void md2cmds_coordsys_4_stopped_cb (char *event)"
 
 .PP
-Definition at line 1874 of file md2cmds\&.c\&.
+Definition at line 1843 of file md2cmds\&.c\&.
 .PP
 .nf
                                                  {
@@ -701,7 +734,7 @@ Definition at line 1874 of file md2cmds\&.c\&.
 .SS "void md2cmds_coordsys_5_stopped_cb (char *event)"
 
 .PP
-Definition at line 1876 of file md2cmds\&.c\&.
+Definition at line 1845 of file md2cmds\&.c\&.
 .PP
 .nf
                                                  {
@@ -710,7 +743,7 @@ Definition at line 1876 of file md2cmds\&.c\&.
 .SS "void md2cmds_coordsys_7_stopped_cb (char *event)"
 
 .PP
-Definition at line 1878 of file md2cmds\&.c\&.
+Definition at line 1847 of file md2cmds\&.c\&.
 .PP
 .nf
                                                  {
@@ -719,7 +752,7 @@ Definition at line 1878 of file md2cmds\&.c\&.
 .SS "void md2cmds_home_prep ()"
 
 .PP
-Definition at line 70 of file md2cmds\&.c\&.
+Definition at line 72 of file md2cmds\&.c\&.
 .PP
 .nf
                          {
@@ -731,7 +764,7 @@ Definition at line 70 of file md2cmds\&.c\&.
 .SS "int md2cmds_home_wait (doubletimeout_secs)"
 
 .PP
-Definition at line 77 of file md2cmds\&.c\&.
+Definition at line 79 of file md2cmds\&.c\&.
 .PP
 .nf
                                             {
@@ -781,7 +814,7 @@ Definition at line 77 of file md2cmds\&.c\&.
 .PP
 Initialize the md2cmds module\&. 
 .PP
-Definition at line 1884 of file md2cmds\&.c\&.
+Definition at line 1853 of file md2cmds\&.c\&.
 .PP
 .nf
                     {
@@ -837,7 +870,7 @@ Definition at line 1884 of file md2cmds\&.c\&.
 .PP
 returns non-zero if we think a motor is moving, 0 otherwise 
 .PP
-Definition at line 176 of file md2cmds\&.c\&.
+Definition at line 178 of file md2cmds\&.c\&.
 .PP
 .nf
                         {
@@ -853,7 +886,7 @@ Definition at line 176 of file md2cmds\&.c\&.
 .SS "void md2cmds_kappaphi_move (doublekappa_deg, doublephi_deg)"
 
 .PP
-Definition at line 1092 of file md2cmds\&.c\&.
+Definition at line 995 of file md2cmds\&.c\&.
 .PP
 .nf
                                                               {
@@ -878,7 +911,7 @@ Definition at line 1092 of file md2cmds\&.c\&.
 .PP
 Track motors homing\&. 
 .PP
-Definition at line 1068 of file md2cmds\&.c\&.
+Definition at line 971 of file md2cmds\&.c\&.
 .PP
 .nf
                                                 {
@@ -908,7 +941,7 @@ Definition at line 1068 of file md2cmds\&.c\&.
 .PP
 Track how many motors are moving\&. 
 .PP
-Definition at line 1039 of file md2cmds\&.c\&.
+Definition at line 942 of file md2cmds\&.c\&.
 .PP
 .nf
                                                 {
@@ -942,7 +975,7 @@ Definition at line 1039 of file md2cmds\&.c\&.
 .PP
 Now that we are done with the 360 rotation lets rehome right quick\&. 
 .PP
-Definition at line 1541 of file md2cmds\&.c\&.
+Definition at line 1458 of file md2cmds\&.c\&.
 .PP
 .nf
                                                 {
@@ -957,7 +990,7 @@ Definition at line 1541 of file md2cmds\&.c\&.
 .PP
 prepare for new movements 
 .PP
-Definition at line 122 of file md2cmds\&.c\&.
+Definition at line 124 of file md2cmds\&.c\&.
 .PP
 .nf
                          {
@@ -978,7 +1011,7 @@ There are two waits involved: First to wait for the first 'Moving' to be seen an
 .PP
 returns 0 on success and 1 if we timedout\&. 
 .PP
-Definition at line 139 of file md2cmds\&.c\&.
+Definition at line 141 of file md2cmds\&.c\&.
 .PP
 .nf
                                             {
@@ -1026,7 +1059,7 @@ Move a motor to the position requested Returns non zero on error\&. \fBParameter
 .PP
 
 .PP
-Definition at line 453 of file md2cmds\&.c\&.
+Definition at line 452 of file md2cmds\&.c\&.
 .PP
 .nf
                        {
@@ -1113,7 +1146,7 @@ Move a motor to the position requested Returns non zero on error\&. \fBParameter
 .PP
 
 .PP
-Definition at line 532 of file md2cmds\&.c\&.
+Definition at line 531 of file md2cmds\&.c\&.
 .PP
 .nf
                        {
@@ -1207,7 +1240,7 @@ Move the centering and alignment tables\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1012 of file md2cmds\&.c\&.
+Definition at line 915 of file md2cmds\&.c\&.
 .PP
 .nf
                              {
@@ -1232,7 +1265,7 @@ Definition at line 1012 of file md2cmds\&.c\&.
 .SS "void md2cmds_organs_move_presets (char *pay, char *paz, char *pcy, char *pcz, char *psz)"
 
 .PP
-Definition at line 209 of file md2cmds\&.c\&.
+Definition at line 211 of file md2cmds\&.c\&.
 .PP
 .nf
                                                                                          {
@@ -1294,7 +1327,7 @@ Definition at line 209 of file md2cmds\&.c\&.
 .PP
 Go to beam location phase\&. 
 .PP
-Definition at line 833 of file md2cmds\&.c\&.
+Definition at line 774 of file md2cmds\&.c\&.
 .PP
 .nf
                                  {
@@ -1302,17 +1335,10 @@ Definition at line 833 of file md2cmds\&.c\&.
   int mmask, err;
 
   lsevents_send_event( 'Mode beamLocation Starting');
-  //                                                                                                                                                                                                                                                                            
-  // Get ready to move some motors                                                                                                                                                                                                                                              
-  //                                                                                                                                                                                                                                                                            
-  md2cmds_move_prep();
 
-  //                                                                                                                                                                                                                                                                            
-  // Move 'em                                                                                                                                                                                                                                                                   
-  //                                                                                                                                                                                                                                                                            
+  mmask = 0;
   err = lspmac_est_move_time( &move_time, &mmask,
-                              //motor   jog, preset,      position if no preset                                                                                                                                                                                                 
-                              kappa,      0, NULL,           0\&.0,
+                              //motor   jog, preset,      position if no preset                                                                                                                                                                                                                              kappa,      0, NULL,           0\&.0,
                               omega,      0, NULL,           0\&.0,
                               apery,      0, 'In',           0\&.0,
                               aperz,      0, 'In',           0\&.0,
@@ -1330,21 +1356,11 @@ Definition at line 833 of file md2cmds\&.c\&.
     return err;
   }
 
-  err = lspmac_est_move_time_wait( move_time + 2\&.0, mmask);
+  err = lspmac_est_move_time_wait( move_time + 2\&.0, mmask, blight_ud, cryo, fluo, NULL);
   if( err) {
     lsevents_send_event( 'Mode beamLocation Aborted');
     return err;
   }
-
-  //                                                                                                                                                                                                                                                                            
-  // This should be redundant, at least until someone changes a jog=0 to a jog=1 for a real motor                                                                                                                                                                               
-  //                                                                                                                                                                                                                                                                            
-  err = md2cmds_move_wait( move_time + 2\&.0);
-  if( err) {
-    lsevents_send_event( 'Mode beamLocation Aborted');
-    return err;
-  }
-
 
   lsevents_send_event( 'Mode beamLocation Done');
   return 0;
@@ -1355,7 +1371,7 @@ Definition at line 833 of file md2cmds\&.c\&.
 .PP
 Go to center phase\&. 
 .PP
-Definition at line 724 of file md2cmds\&.c\&.
+Definition at line 699 of file md2cmds\&.c\&.
 .PP
 .nf
                            {
@@ -1363,13 +1379,8 @@ Definition at line 724 of file md2cmds\&.c\&.
   int mmask, err;
 
   lsevents_send_event( 'Mode center Starting');
-  //                                                                                                                                                                                                                                                                            
-  // Get ready to move some motors                                                                                                                                                                                                                                              
-  //                                                                                                                                                                                                                                                                            
-  md2cmds_move_prep();
-  //                                                                                                                                                                                                                                                                            
-  // Move 'em                                                                                                                                                                                                                                                                   
-  //                                                                                                                                                                                                                                                                            
+  //                                                                                                                                                                                                                                                                             // Move 'em                                                                                                                                                                                                                                                                    //                                                                                                                                                                                                                                                                            
+  mmask = 0;
   err = lspmac_est_move_time( &move_time, &mmask,
                               omega,     0, NULL,    0\&.0,
                               kappa,     0, NULL,    0\&.0,
@@ -1389,7 +1400,7 @@ Definition at line 724 of file md2cmds\&.c\&.
     return err;
   }
 
-  err = lspmac_est_move_time_wait( move_time + 2\&.0, mmask);
+  err = lspmac_est_move_time_wait( move_time + 2\&.0, mmask, cryo, fluo, NULL);
   if( err) {
     lsevents_send_event( 'Mode center Aborted');
     return err;
@@ -1402,7 +1413,8 @@ Definition at line 724 of file md2cmds\&.c\&.
 .SS "int md2cmds_phase_change (const char *ccmd)"
 
 .PP
-Move md2 devices to a preconfigured state\&. EMBL calls these states 'phases' and this language is partially retained here
+Move md2 devices to a preconfigured state\&. .IP "\(bu" 2
+EMBL calls these states 'phases' and this language is partially retained here * * 
 .PP
 \fBParameters:\fP
 .RS 4
@@ -1411,7 +1423,9 @@ Move md2 devices to a preconfigured state\&. EMBL calls these states 'phases' an
 .PP
 
 .PP
-Definition at line 947 of file md2cmds\&.c\&.
+
+.PP
+Definition at line 855 of file md2cmds\&.c\&.
 .PP
 .nf
                                             {
@@ -1424,8 +1438,7 @@ Definition at line 947 of file md2cmds\&.c\&.
   if( ccmd == NULL || *ccmd == 0)
     return 1;
 
-  // use a copy as strtok_r modifies the string it is parsing                                                                                                                                                                                                                   
-  //                                                                                                                                                                                                                                                                            
+  // use a copy as strtok_r modifies the string it is parsing                                                                                                                                                                                                                    //                                                                                                                                                                                                                                                                            
   cmd = strdup( ccmd);
 
   ignore = strtok_r( cmd, ' ', &ptr);
@@ -1435,9 +1448,7 @@ Definition at line 947 of file md2cmds\&.c\&.
     return 1;
   }
 
-  //                                                                                                                                                                                                                                                                            
-  // ignore should point to 'mode' cause that's how we got here\&.  Ignore it                                                                                                                                                                                                     
-  //                                                                                                                                                                                                                                                                            
+  //                                                                                                                                                                                                                                                                             // ignore should point to 'mode' cause that's how we got here\&.  Ignore it                                                                                                                                                                                                      //                                                                                                                                                                                                                                                                            
   mode = strtok_r( NULL, ' ', &ptr);
   if( mode == NULL) {
     lslogging_log_message( 'md2cmds_phase_change: no mode specified');
@@ -1454,9 +1465,7 @@ Definition at line 947 of file md2cmds\&.c\&.
     }
   }
 
-  //                                                                                                                                                                                                                                                                            
-  // Tangled web\&.  Probably not worth fixing\&.  O(N) but N is 6\&.                                                                                                                                                                                                                 
-  //                                                                                                                                                                                                                                                                            
+  //                                                                                                                                                                                                                                                                             // Tangled web\&.  Probably not worth fixing\&.  O(N) but N is 6\&.                                                                                                                                                                                                                  //                                                                                                                                                                                                                                                                            
   if( strcmp( mode, 'manualMount') == 0) {
     err = md2cmds_phase_manualMount();
   } else if( strcmp( mode, 'robotMount') == 0) {
@@ -1480,7 +1489,7 @@ Definition at line 947 of file md2cmds\&.c\&.
 .PP
 Go to data collection phase\&. 
 .PP
-Definition at line 768 of file md2cmds\&.c\&.
+Definition at line 738 of file md2cmds\&.c\&.
 .PP
 .nf
                                    {
@@ -1488,13 +1497,8 @@ Definition at line 768 of file md2cmds\&.c\&.
   int mmask, err;
 
   lsevents_send_event( 'Mode dataCollection Starting');
-  //                                                                                                                                                                                                                                                                            
-  // Get ready to move some motors                                                                                                                                                                                                                                              
-  //                                                                                                                                                                                                                                                                            
-  md2cmds_move_prep();
-  //                                                                                                                                                                                                                                                                            
-  // Move 'em                                                                                                                                                                                                                                                                   
-  //                                                                                                                                                                                                                                                                            
+
+  mmask = 0;
   err = lspmac_est_move_time( &move_time, &mmask,
                               apery,     1, 'In',     0\&.0,
                               aperz,     1, 'In',     0\&.0,
@@ -1511,31 +1515,7 @@ Definition at line 768 of file md2cmds\&.c\&.
     return err;
   }
 
-  err = lspmac_moveabs_wait( apery, move_time+2);
-  if( err) {
-    lsevents_send_event( 'Mode dataCollection Aborted');
-    return err;
-  }
-
-  err = lspmac_moveabs_wait( aperz, move_time+2);
-  if( err) {
-    lsevents_send_event( 'Mode dataCollection Aborted');
-    return err;
-  }
-
-  err = lspmac_moveabs_wait( capy, move_time+2);
-  if( err) {
-    lsevents_send_event( 'Mode dataCollection Aborted');
-    return err;
-  }
-
-  err = lspmac_moveabs_wait( capz, move_time+2);
-  if( err) {
-    lsevents_send_event( 'Mode dataCollection Aborted');
-    return err;
-  }
-
-  err = lspmac_moveabs_wait( scint, move_time+2);
+  err = lspmac_est_move_time_wait( move_time + 2\&.0, mmask, apery, aperz, capy, capz, scint, blight_ud, cryo, fluo, NULL);
   if( err) {
     lsevents_send_event( 'Mode dataCollection Aborted');
     return err;
@@ -1550,7 +1530,7 @@ Definition at line 768 of file md2cmds\&.c\&.
 .PP
 Go to the manual mount phase\&. 
 .PP
-Definition at line 613 of file md2cmds\&.c\&.
+Definition at line 612 of file md2cmds\&.c\&.
 .PP
 .nf
                                 {
@@ -1558,13 +1538,10 @@ Definition at line 613 of file md2cmds\&.c\&.
   int mmask, err;
 
   lsevents_send_event( 'Mode manualMount Starting');
-  //                                                                                                                                                                                                                                                                            
-  // Get ready to move some motors                                                                                                                                                                                                                                              
-  //                                                                                                                                                                                                                                                                            
-  md2cmds_move_prep();
-  //                                                                                                                                                                                                                                                                            
-  // Move 'em                                                                                                                                                                                                                                                                   
-  //                                                                                                                                                                                                                                                                            
+  //
+  // Move stuff
+  //
+  mmask = 0;
   err = lspmac_est_move_time( &move_time, &mmask,
                               kappa,     0, 'manualMount', 0\&.0,
                               omega,     0, 'manualMount', 0\&.0,
@@ -1588,18 +1565,7 @@ Definition at line 613 of file md2cmds\&.c\&.
   //                                                                                                                                                                                                                                                                            
   // Wait for motion programs                                                                                                                                                                                                                                                   
   //                                                                                                                                                                                                                                                                            
-  err = lspmac_est_move_time_wait( move_time+2\&.0, mmask);
-  if( err) {
-    lsevents_send_event( 'Mode manualMount Aborted');
-    return err;
-  }
-
-  //                                                                                                                                                                                                                                                                            
-  // Wait for jogs                                                                                                                                                                                                                                                              
-  // We've over estimated the move time since we've already waited a bit\&.                                                                                                                                                                                                       
-  // This would only ever cause problems for really slow motions\&.                                                                                                                                                                                                               
-  //                                                                                                                                                                                                                                                                            
-  err = md2cmds_move_wait( move_time+2\&.0);
+  err = lspmac_est_move_time_wait( move_time+2\&.0, mmask, aperz, scint, blight_ud, cryo, fluo, NULL);
   if( err) {
     lsevents_send_event( 'Mode manualMount Aborted');
     return err;
@@ -1614,7 +1580,7 @@ Definition at line 613 of file md2cmds\&.c\&.
 .PP
 Go to robot mount phase\&. 
 .PP
-Definition at line 671 of file md2cmds\&.c\&.
+Definition at line 656 of file md2cmds\&.c\&.
 .PP
 .nf
                                {
@@ -1622,17 +1588,13 @@ Definition at line 671 of file md2cmds\&.c\&.
   int mmask, err;
 
   lsevents_send_event( 'Mode robotMount Starting');
-  //                                                                                                                                                                                                                                                                            
-  // Get ready to move some motors                                                                                                                                                                                                                                              
-  //                                                                                                                                                                                                                                                                            
-  md2cmds_move_prep();
+
   md2cmds_home_prep();
-  //                                                                                                                                                                                                                                                                            
-  // Move 'em                                                                                                                                                                                                                                                                   
-  //                                                                                                                                                                                                                                                                            
-  lspmac_home1_queue( kappa);
+
+  //                                                                                                                                                                                                                                                                             // Move 'em                                                                                                                                                                                                                                                                    //                                                                                                                                                                                                                                                                             lspmac_home1_queue( kappa);
   lspmac_home1_queue( omega);
 
+  mmask = 0;
   err = lspmac_est_move_time( &move_time, &mmask,
                               phi,       0, NULL,    0\&.0,
                               apery,     1, 'In',    0\&.0,
@@ -1646,13 +1608,7 @@ Definition at line 671 of file md2cmds\&.c\&.
                               zoom,      0, NULL,    1\&.0,
                               NULL);
 
-  err = lspmac_est_move_time_wait( move_time + 2\&.0, mmask);
-  if( err) {
-    lsevents_send_event( 'Mode robotMount Aborted');
-    return err;
-  }
-
-  err = md2cmds_move_wait( move_time + 2\&.0);
+  err = lspmac_est_move_time_wait( move_time + 2\&.0, mmask, apery, aperz, capz, scint, blight_ud, cryo, fluo, NULL);
   if( err) {
     lsevents_send_event( 'Mode robotMount Aborted');
     return err;
@@ -1673,7 +1629,7 @@ Definition at line 671 of file md2cmds\&.c\&.
 .PP
 Go to safe phase\&. 
 .PP
-Definition at line 889 of file md2cmds\&.c\&.
+Definition at line 813 of file md2cmds\&.c\&.
 .PP
 .nf
                          {
@@ -1681,14 +1637,8 @@ Definition at line 889 of file md2cmds\&.c\&.
   int mmask, err;
 
   lsevents_send_event( 'Mode safe Starting');
-  //                                                                                                                                                                                                                                                                            
-  // Get ready to move some motors                                                                                                                                                                                                                                              
-  //                                                                                                                                                                                                                                                                            
-  md2cmds_move_prep();
 
-  //                                                                                                                                                                                                                                                                            
-  // Move 'em                                                                                                                                                                                                                                                                   
-  //                                                                                                                                                                                                                                                                            
+  mmask = 0;
   err = lspmac_est_move_time( &move_time, &mmask,
                               //motor   jog, preset,      position if no preset                                                                                                                                                                                                 
                               kappa,      0, NULL,           0\&.0,
@@ -1711,13 +1661,7 @@ Definition at line 889 of file md2cmds\&.c\&.
     return err;
   }
 
-  err = lspmac_est_move_time_wait( move_time + 2\&.0, mmask);
-  if( err) {
-    lsevents_send_event( 'Mode safe Aborted');
-    return err;
-  }
-
-  err =  md2cmds_move_wait( move_time + 2\&.0);
+  err = lspmac_est_move_time_wait( move_time + 2\&.0, mmask, apery, aperz, capy, capz, scint, blight_ud, cryo, fluo, NULL);
   if( err) {
     lsevents_send_event( 'Mode safe Aborted');
     return err;
@@ -1730,7 +1674,7 @@ Definition at line 889 of file md2cmds\&.c\&.
 .SS "double md2cmds_prep_axis (\fBlspmac_motor_t\fP *mp, doublepos)"
 
 .PP
-Definition at line 187 of file md2cmds\&.c\&.
+Definition at line 189 of file md2cmds\&.c\&.
 .PP
 .nf
                                                           {
@@ -1763,7 +1707,7 @@ Spin 360 and make a video (recenter first, maybe) \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1360 of file md2cmds\&.c\&.
+Definition at line 1293 of file md2cmds\&.c\&.
 .PP
 .nf
                                        {
@@ -1790,7 +1734,6 @@ Definition at line 1360 of file md2cmds\&.c\&.
 
   //
   // Get ready to move our motors
-  md2cmds_move_prep();
   md2cmds_home_prep();
 
   //
@@ -1867,45 +1810,30 @@ Definition at line 1360 of file md2cmds\&.c\&.
       az  += lspg_getcenter\&.daz;
       lsredis_set_preset( 'align\&.z', 'Beam', az);
     }
-                          
-
-    lslogging_log_message( 'md2cmds_rotate: requested positions cx %f, cy %f, ax %f, ay %f, az %f', cx, cy, ax, ay, az);
-
-    lslogging_log_message( 'md2cmds_rotate: moving center');
-    md2cmds_mvcenter_move( cx, cy, ax, ay, az);
-
-    lslogging_log_message( 'md2cmds_rotate: waiting for center move');
-    lslogging_log_message( 'md2cmds_rotate: done waiting');
   }
   lspg_getcenter_done();
 
 
   if( lspmac_est_move_time( &move_time, &mmask,
-                            cenx,   0,  NULL, cx,
-                            ceny,   0,  NULL, cy,
-                            alignx, 0,  NULL, ax,
-                            aligny, 0,  NULL, ay,
-                            alignz, 0,  NULL, az,
-                            zoom,   1,  NULL, zm,
+                            scint,  1,  'Cover', 0\&.0,
+                            capz,   1,  'Cover', 0\&.0,
+                            cenx,   0,  NULL,    cx,
+                            ceny,   0,  NULL,    cy,
+                            alignx, 0,  NULL,    ax,
+                            aligny, 0,  NULL,    ay,
+                            alignz, 0,  NULL,    az,
+                            zoom,   1,  NULL,    zm,
                             NULL)) {
     lslogging_log_message( 'md2cmds_rotate: organ motion request failed');
     lsevents_send_event( 'Rotate Aborted');
     return 1;
   }
 
-  if( lspmac_est_move_time_wait( move_time + 2\&.0, mmask)) {
+  if( lspmac_est_move_time_wait( move_time + 2\&.0, mmask, scint, capz, zoom, NULL)) {
     lslogging_log_message( 'md2cmds_rotate: organ motion timed out %f seconds', move_time + 2\&.0);
     lsevents_send_event( 'Rotate Aborted');
     return 1;
   }
-
-  if( lspmac_moveabs_wait( zoom, move_time + 2\&.0)) {
-    lslogging_log_message( 'md2cmds_rotate: zoom timed out %f seconds', move_time + 2\&.0);
-    lsevents_send_event( 'Rotate Aborted');
-    return 1;
-  }
-
-
 
   if( md2cmds_home_wait( 20\&.0)) {
     lslogging_log_message( 'md2cmds_rotate: homing motors timed out\&.  Rotate aborted');
@@ -1934,7 +1862,7 @@ Definition at line 1360 of file md2cmds\&.c\&.
 .PP
 Tell the database about the time we went through omega=zero\&. This should trigger the video feed server to starting making a movie\&. 
 .PP
-Definition at line 1526 of file md2cmds\&.c\&.
+Definition at line 1443 of file md2cmds\&.c\&.
 .PP
 .nf
                                      {
@@ -1955,7 +1883,7 @@ Definition at line 1526 of file md2cmds\&.c\&.
 .PP
 Start up the thread\&. 
 .PP
-Definition at line 1934 of file md2cmds\&.c\&.
+Definition at line 1903 of file md2cmds\&.c\&.
 .PP
 .nf
                    {
@@ -1977,7 +1905,7 @@ Definition at line 1934 of file md2cmds\&.c\&.
 .SS "int md2cmds_run_cmd (const char *cmd)"
 
 .PP
-Definition at line 1697 of file md2cmds\&.c\&.
+Definition at line 1616 of file md2cmds\&.c\&.
 .PP
 .nf
                                       {
@@ -1987,20 +1915,20 @@ Definition at line 1697 of file md2cmds\&.c\&.
   char cp[64];
   
   if( strlen(cmd) > sizeof( cp)-1) {
-    lslogging_log_message( 'md2cmds_set: command too long '%s'', cmd);
+    lslogging_log_message( 'md2cmds_run_cmd: command too long '%s'', cmd);
     return 1;
   }
   
   err = regexec( &md2cmds_cmd_regex, cmd, 16, pmatch, 0);
   if( err) {
-    lslogging_log_message( 'md2cmds_set: no match found from '%s'', cmd);
+    lslogging_log_message( 'md2cmds_run_cmd: no match found from '%s'', cmd);
     return 1;
   }
 
   for( i=0; i<16; i++) {
     if( pmatch[i]\&.rm_so == -1)
       continue;
-    lslogging_log_message( 'md2cmds_run: %d '%\&.*s'', i, pmatch[i]\&.rm_eo - pmatch[i]\&.rm_so, cmd+pmatch[i]\&.rm_so);
+    lslogging_log_message( 'md2cmds_run_cmd: %d '%\&.*s'', i, pmatch[i]\&.rm_eo - pmatch[i]\&.rm_so, cmd+pmatch[i]\&.rm_so);
   }
 
   //
@@ -2011,7 +1939,7 @@ Definition at line 1697 of file md2cmds\&.c\&.
 
   mp = lspmac_find_motor_by_name( cp);
   if( mp == NULL) {
-    lslogging_log_message( 'md2cmds_set: could not find motor '%s'', cp);
+    lslogging_log_message( 'md2cmds_run_cmd: could not find motor '%s'', cp);
     return 1;
   }
 
@@ -2032,7 +1960,7 @@ Definition at line 1697 of file md2cmds\&.c\&.
 .SS "int md2cmds_set (const char *cmd)"
 
 .PP
-Definition at line 1746 of file md2cmds\&.c\&.
+Definition at line 1715 of file md2cmds\&.c\&.
 .PP
 .nf
                                   {
@@ -2100,9 +2028,9 @@ Definition at line 1746 of file md2cmds\&.c\&.
 .SS "void md2cmds_set_scale_cb (char *event)"
 
 .PP
-Fix up xscale and yscale when zoom changes\&. 
+Fix up xscale and yscale when zoom changes xscale and yscale have units of microns per pixel\&. 
 .PP
-Definition at line 1551 of file md2cmds\&.c\&.
+Definition at line 1470 of file md2cmds\&.c\&.
 .PP
 .nf
                                         {
@@ -2129,6 +2057,61 @@ Definition at line 1551 of file md2cmds\&.c\&.
   free( vp);
 }
 .fi
+.SS "int md2cmds_settransferpoint (const char *cmd)"
+
+.PP
+Definition at line 1665 of file md2cmds\&.c\&.
+.PP
+.nf
+                                               {
+  double ax, ay, az, cx, cy;
+
+  md2cmds_home_prep();
+
+  //
+  // Home Kappa
+  //
+  lspmac_home1_queue( kappa);
+
+  //
+  // Home omega
+  //
+  lspmac_home1_queue( omega);
+
+  //
+  // wait for kappa cause we can't home phi until kappa's done
+  //
+  lspmac_moveabs_wait( kappa, 60\&.0);
+  
+  //
+  // Home phi (whatever that means)
+  //
+  lspmac_home1_queue( phi);
+
+  //
+  // Wait for the homing routines to finish
+  //
+  if( md2cmds_home_wait( 30\&.0)) {
+    lslogging_log_message( 'md2cmds_transfer: homing routines taking too long\&.  Aborting transfer\&.');
+    lsevents_send_event( 'Settransferpoint Aborted');
+    return 1;
+  }
+
+  //
+  // get positions we'll be needed to report to postgres
+  //
+  ax = lspmac_getPosition(alignx);
+  ay = lspmac_getPosition(aligny);
+  az = lspmac_getPosition(alignz);
+  cx = lspmac_getPosition(cenx);
+  cy = lspmac_getPosition(ceny);
+
+  lspg_query_push( NULL, 'SELECT px\&.settransferpoint( %0\&.3f, %0\&.3f, %0\&.3f, %0\&.3f, %0\&.3f)', ax, ay, az, cx, cy);
+
+  lsevents_send_event( 'Settransferpoint Done');
+  return 0;
+}
+.fi
 .SS "int md2cmds_test (const char *dummy)"
 
 .PP
@@ -2139,7 +2122,7 @@ Run the test routine(s) \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1691 of file md2cmds\&.c\&.
+Definition at line 1610 of file md2cmds\&.c\&.
 .PP
 .nf
                                      {
@@ -2152,7 +2135,7 @@ Definition at line 1691 of file md2cmds\&.c\&.
 .PP
 Time the capillary motion for the transfer routine\&. < track the time spent moving capz 
 .PP
-Definition at line 1585 of file md2cmds\&.c\&.
+Definition at line 1504 of file md2cmds\&.c\&.
 .PP
 .nf
                                         {
@@ -2186,7 +2169,7 @@ Transfer a sample\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 267 of file md2cmds\&.c\&.
+Definition at line 269 of file md2cmds\&.c\&.
 .PP
 .nf
                                          {
@@ -2194,6 +2177,8 @@ Definition at line 267 of file md2cmds\&.c\&.
   double esttime;
   double ax, ay, az, cx, cy, horz, vert, oref;
   int err;
+  int mmask;
+  double move_time;
 
   nextsample = lspg_nextsample_all( &err);
   if( err) {
@@ -2248,25 +2233,16 @@ Definition at line 267 of file md2cmds\&.c\&.
 
   lspg_starttransfer_call( nextsample, lspmac_getBIPosition( sample_detected), ax, ay, az, horz, vert, esttime);
 
-  // put the light down if it's not already
-  //
-  if( lspmac_getBIPosition( blight_down) != 1)
-    blight_ud->moveAbs( blight_ud, 0);
-  
-  // Pull the fluorescence detector out of the way
-  //
-  if( lspmac_getBIPosition( fluor_back) != 1)
-    blight_ud->moveAbs( fluo, 0);
-  
-  //
-  // Prepare for moving stuff
-  //
-  md2cmds_move_prep();
-
-  //
-  // Put the organs into position
-  //
-  md2cmds_organs_move_presets( 'In', 'Cover', 'In', 'Cover', 'Cover');
+  mmask = 0;
+  err = lspmac_est_move_time( &move_time, &mmask,
+                              apery,     1, 'In',    0\&.0,
+                              aperz,     1, 'Cover', 0\&.0,
+                              capy,      1, 'In',    0\&.0,
+                              capz,      1, 'Cover', 0\&.0,
+                              scint,     1, 'Cover', 0\&.0,
+                              blight_ud, 1, NULL,    0\&.0,
+                              fluo,      1, NULL,    0\&.0,
+                              NULL);
 
 
   md2cmds_home_prep();
@@ -2317,17 +2293,21 @@ Definition at line 267 of file md2cmds\&.c\&.
   }
 
   //
-  // Wait for all the motors to stop moving
+  // Wait for all those other motors to stop moving
   //
-  if( md2cmds_move_wait( 30\&.0)) {
-    lslogging_log_message( 'md2cmds_transfer: We got bored waiting for the motors to stop\&.  Aborting transfer\&.  Later\&.');
+  err = lspmac_est_move_time_wait( move_time + 2\&.0, mmask, apery, aperz, capy, capz, scint, blight_ud, fluo, NULL);
+  if( err) {
     lsevents_send_event( 'Transfer Aborted');
     return 1;
   }
 
+
   // TODO: check that all the motors are where we told them to go  
   //
 
+  //
+  // see if we have a sample mounted problem (is abort_now misnamed?)
+  //
   if( abort_now) {
     lslogging_log_message( 'md2cmds_transfer: Apparently there is a sample mounted already but we don't know where it is supposed to go');
     lsevents_send_event( 'Transfer Aborted');
@@ -2335,7 +2315,7 @@ Definition at line 267 of file md2cmds\&.c\&.
   }
   
   // refuse to go on if we do not have positive confirmation that the backlight is down and the
-  // fluorescence detector is back
+  // fluorescence detector is back  (TODO: how about all those organs?)
   //
   if( lspmac_getBIPosition( blight_down) != 1 ||lspmac_getBIPosition( fluor_back) != 1) {
     lslogging_log_message( 'md2cmds_transfer: It looks like either the back light is not down or the fluoescence dectector is not back');
@@ -2386,7 +2366,7 @@ Our worker thread\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1811 of file md2cmds\&.c\&.
+Definition at line 1780 of file md2cmds\&.c\&.
 .PP
 .nf
                        {
@@ -2461,21 +2441,22 @@ Definition at line 24 of file md2cmds\&.c\&.
 .PP
 .nf
 = {
-  { 'abort',      md2cmds_abort},
-  { 'center',     md2cmds_center},
-  { 'changeMode', md2cmds_phase_change},
-  { 'collect',    md2cmds_collect},
-  { 'moveAbs',    md2cmds_moveAbs},
-  { 'moveRel',    md2cmds_moveRel},
-  { 'rotate',     md2cmds_rotate},
-  { 'run',        md2cmds_run_cmd},
-  { 'test',       md2cmds_test},
-  { 'set',        md2cmds_set},
-  { 'transfer',   md2cmds_transfer}
+  { 'abort',            md2cmds_abort},
+  { 'center',           md2cmds_center},
+  { 'changeMode',       md2cmds_phase_change},
+  { 'collect',          md2cmds_collect},
+  { 'moveAbs',          md2cmds_moveAbs},
+  { 'moveRel',          md2cmds_moveRel},
+  { 'rotate',           md2cmds_rotate},
+  { 'run',              md2cmds_run_cmd},
+  { 'test',             md2cmds_test},
+  { 'set',              md2cmds_set},
+  { 'settransferpoint', md2cmds_settransferpoint},
+  { 'transfer',         md2cmds_transfer}
 }
 .fi
 .PP
-Definition at line 56 of file md2cmds\&.c\&.
+Definition at line 57 of file md2cmds\&.c\&.
 .SS "regex_t md2cmds_cmd_regex\fC [static]\fP"
 
 .PP

@@ -39,6 +39,8 @@ int \hyperlink{md2cmds_8c_ab562f807493aaaaf5a6a377ac6d5a45e}{md2cmds\-\_\-rotate
 \begin{DoxyCompactList}\small\item\em Spin 360 and make a video (recenter first, maybe) \end{DoxyCompactList}\item 
 int \hyperlink{md2cmds_8c_aee4a35d084bc0fdd4598576469deeed0}{md2cmds\-\_\-set} (const char $\ast$)
 \item 
+int \hyperlink{md2cmds_8c_a3403a357a4b3ffd715a2f3d1dac3da5b}{md2cmds\-\_\-settransferpoint} (const char $\ast$)
+\item 
 int \hyperlink{md2cmds_8c_a4a321d5e1621948eecb33a51a58041f6}{md2cmds\-\_\-test} (const char $\ast$dummy)
 \begin{DoxyCompactList}\small\item\em Run the test routine(s) \end{DoxyCompactList}\item 
 int \hyperlink{md2cmds_8c_a87efed33b7a49cdfeaf5d64df4ca09aa}{md2cmds\-\_\-transfer} (const char $\ast$dummy)
@@ -82,7 +84,7 @@ void \hyperlink{md2cmds_8c_aa43887b7c9799bc88d51df13745d0e5c}{md2cmds\-\_\-rotat
 void \hyperlink{md2cmds_8c_a136f278c9f5a2742b2e9b4987b063faa}{md2cmds\-\_\-maybe\-\_\-rotate\-\_\-done\-\_\-cb} (char $\ast$event)
 \begin{DoxyCompactList}\small\item\em Now that we are done with the 360 rotation lets rehome right quick. \end{DoxyCompactList}\item 
 void \hyperlink{md2cmds_8c_a4eb608d012f8a471671e10fb19b366d6}{md2cmds\-\_\-set\-\_\-scale\-\_\-cb} (char $\ast$event)
-\begin{DoxyCompactList}\small\item\em Fix up xscale and yscale when zoom changes. \end{DoxyCompactList}\item 
+\begin{DoxyCompactList}\small\item\em Fix up xscale and yscale when zoom changes xscale and yscale have units of microns per pixel. \end{DoxyCompactList}\item 
 void \hyperlink{md2cmds_8c_aab9e2aa02903648acc342068f0664a96}{md2cmds\-\_\-time\-\_\-capz\-\_\-cb} (char $\ast$event)
 \begin{DoxyCompactList}\small\item\em Time the capillary motion for the transfer routine. \end{DoxyCompactList}\item 
 int \hyperlink{md2cmds_8c_aea8abad4c01250c1c88d6eff766bb83e}{md2cmds\-\_\-action\-\_\-queue} (double timeout, char $\ast$action)
@@ -182,7 +184,7 @@ abort the current motion and put the system into a known state /param dummy Unus
 
 
 
-Definition at line 1653 of file md2cmds.\-c.
+Definition at line 1572 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -227,7 +229,7 @@ Definition at line 1653 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_aea8abad4c01250c1c88d6eff766bb83e}
 
 
-Definition at line 1615 of file md2cmds.\-c.
+Definition at line 1534 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -282,7 +284,7 @@ pause until md2cmds\-\_\-worker has finished running the command
 
 
 
-Definition at line 1683 of file md2cmds.\-c.
+Definition at line 1602 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -304,7 +306,7 @@ Move centering and alignment tables as requested T\-O\-D\-O\-: Implement.
 
 
 
-Definition at line 1578 of file md2cmds.\-c.
+Definition at line 1497 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -354,7 +356,7 @@ $<$ current phi position in case we need to move kappa only
 
 $<$ setup timeouts for shutter 
 
-Definition at line 1114 of file md2cmds.\-c.
+Definition at line 1017 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -373,21 +375,34 @@ Definition at line 1114 of file md2cmds.\-c.
   \textcolor{keywordtype}{double} phi\_pos;       
   \textcolor{keyword}{struct }timespec \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}, timeout;      
   \textcolor{keywordtype}{int} err;
+  \textcolor{keywordtype}{double} move\_time;
+  \textcolor{keywordtype}{int} mmask;
 
   u2c         = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( \hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega}->\hyperlink{structlspmac__motor__struct_a8838915ebb6f9989944117c8197d5e86}{u2c});
   neutral\_pos = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( \hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega}->\hyperlink{structlspmac__motor__struct_ae931e9bc9fc2fa82ca649334fc052fbe}{neutral\_pos});
   max\_accel   = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( \hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega}->\hyperlink{structlspmac__motor__struct_a50cf4c0711cea164e332bc34705a1a68}{max\_accel});
 
-  \hyperlink{md2cmds_8c_aa64b87b8aaf962a33e89f5086aeeabaa}{md2cmds\_move\_prep}();
-  \hyperlink{md2cmds_8c_a09a28007e7d8df7b8f97207474e5e516}{md2cmds\_organs\_move\_presets}( \textcolor{stringliteral}{"In"}, \textcolor{stringliteral}{"In"}, \textcolor{stringliteral}{"In"}, \textcolor{stringliteral}{"In
-      "}, \textcolor{stringliteral}{"Cover"});
-  \textcolor{comment}{//}
-  \textcolor{keywordflow}{if}( \hyperlink{md2cmds_8c_a7cd262eaeafc85a6111cf06de4f29601}{md2cmds\_move\_wait}( 30.0)) \{
-    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_collect: Timed out
-       waiting for organs to move.  Aborting data collection."});
-    \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Data Colection Aborted"});
+  mmask = 0;
+  err = \hyperlink{lspmac_8c_a984a1d6e49ad53d6a1184666881bf117}{lspmac\_est\_move\_time}( &move\_time, &mmask,
+                              \hyperlink{lspmac_8c_a139200ddaa9856a7ffcec0e6cbaa8f1b}{apery},     1, \textcolor{stringliteral}{"In"},    0.0,  \textcolor{comment}{// Aperture to
+       the In position}
+                              \hyperlink{lspmac_8c_ab93bd6ee850b285ca3a95e64d15e9477}{aperz},     1, \textcolor{stringliteral}{"In"},    0.0,
+                              \hyperlink{lspmac_8c_a51358daaea8b5236f08414877d8af6c2}{capy},      1, \textcolor{stringliteral}{"In"},    0.0,   \textcolor{comment}{// Capillary /
+       Beamstop to the In position}
+                              \hyperlink{lspmac_8c_aa45f268d0af9f3d465acfab128919718}{capz},      1, \textcolor{stringliteral}{"In"},    0.0,
+                              \hyperlink{lspmac_8c_a589431b3a79c21c251fcb97cc9126991}{scint},     1, \textcolor{stringliteral}{"Cover"}, 0.0,  \textcolor{comment}{// Hide the
+       scintillator}
+                              \hyperlink{lspmac_8c_af813a2eff0b7efa4c70633559054e84c}{blight\_ud}, 1, NULL,    0.0,      \textcolor{comment}{// put
+       the backlight down}
+                              NULL);
+
+  err = \hyperlink{lspmac_8c_a570b4a359adc4da4ab80d53506d06963}{lspmac\_est\_move\_time\_wait}( move\_time + 2.0, 
+      mmask, NULL);
+  \textcolor{keywordflow}{if}( err) \{
+    \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Data Collection Aborted"});
     \textcolor{keywordflow}{return} 1;
   \}
+
 
   \textcolor{comment}{//}
   \textcolor{comment}{// reset shutter has opened flag}
@@ -430,14 +445,27 @@ Definition at line 1114 of file md2cmds.\-c.
        center to cx=%f, cy=%f, ax=%f, ay=%f, az=%f"},\hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_nextshot}.\hyperlink{structlspg__nextshot__struct_ad9eb2013fa6f295f72f0891fe98c863f}{cx}, 
       \hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_nextshot}.\hyperlink{structlspg__nextshot__struct_ab7a7b37a17f06c4e9ebdcdf056946098}{cy}, \hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_nextshot}.\hyperlink{structlspg__nextshot__struct_a7f57874223897ab7d9c7531a9522904d}{ax}, \hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_nextshot}
       .\hyperlink{structlspg__nextshot__struct_a9e20b9a0aeb41f7f7d653a1c60335bf1}{ay}, \hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_nextshot}.\hyperlink{structlspg__nextshot__struct_a66e678866ce79f6398b66d033ae45a17}{az});
-        \hyperlink{md2cmds_8c_aa64b87b8aaf962a33e89f5086aeeabaa}{md2cmds\_move\_prep}();
-        \hyperlink{md2cmds_8c_afdc46152b46ae4d37c73407b83016b78}{md2cmds\_mvcenter\_move}( \hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_nextshot}.
-      \hyperlink{structlspg__nextshot__struct_ad9eb2013fa6f295f72f0891fe98c863f}{cx}, \hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_nextshot}.\hyperlink{structlspg__nextshot__struct_ab7a7b37a17f06c4e9ebdcdf056946098}{cy}, \hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_nextshot}.\hyperlink{structlspg__nextshot__struct_a7f57874223897ab7d9c7531a9522904d}{ax}, 
-      \hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_nextshot}.\hyperlink{structlspg__nextshot__struct_a9e20b9a0aeb41f7f7d653a1c60335bf1}{ay}, \hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_nextshot}.\hyperlink{structlspg__nextshot__struct_a66e678866ce79f6398b66d033ae45a17}{az});
-        \textcolor{keywordflow}{if}( \hyperlink{md2cmds_8c_a7cd262eaeafc85a6111cf06de4f29601}{md2cmds\_move\_wait}( 2.0)) \{
-          \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_collect: Timed
-       out waiting for alignment or centering stage (or both) to stop moving.  Aborting
-       data collection."});
+
+        err = \hyperlink{lspmac_8c_a984a1d6e49ad53d6a1184666881bf117}{lspmac\_est\_move\_time}( &move\_time, &mmask,
+                                    \hyperlink{lspmac_8c_ac940d950d9efeaf3f0ae67e9bf331188}{cenx},   0, NULL, \hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_nextshot}
+      .\hyperlink{structlspg__nextshot__struct_ad9eb2013fa6f295f72f0891fe98c863f}{cx},
+                                    \hyperlink{lspmac_8c_aaed18e738ba7bfb6c771a44f5d7ea827}{ceny},   0, NULL, \hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_nextshot}
+      .\hyperlink{structlspg__nextshot__struct_ab7a7b37a17f06c4e9ebdcdf056946098}{cy},
+                                    \hyperlink{lspmac_8c_a6cb218bdccfe5a93471c161f15a15cab}{alignx}, 0, NULL, \hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_nextshot}
+      .\hyperlink{structlspg__nextshot__struct_a7f57874223897ab7d9c7531a9522904d}{ax},
+                                    \hyperlink{lspmac_8c_a737c246c3948e644a18d191a931e1acd}{aligny}, 0, NULL, \hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_nextshot}
+      .\hyperlink{structlspg__nextshot__struct_a9e20b9a0aeb41f7f7d653a1c60335bf1}{ay},
+                                    \hyperlink{lspmac_8c_ae7642b1da0f7c7f8448104c691d40a12}{alignz}, 0, NULL, \hyperlink{lspg_8c_ad8d8e2f578ca79189a80c1fd5b60cefd}{lspg\_nextshot}
+      .\hyperlink{structlspg__nextshot__struct_a66e678866ce79f6398b66d033ae45a17}{az},
+                                    NULL);
+        \textcolor{keywordflow}{if}( err) \{
+          \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Data Colection Aborted"});
+          \textcolor{keywordflow}{return} 1;
+        \}
+
+        err = \hyperlink{lspmac_8c_a570b4a359adc4da4ab80d53506d06963}{lspmac\_est\_move\_time\_wait}( move\_time, 
+      mmask, NULL);
+        \textcolor{keywordflow}{if}( err) \{
           \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Data Colection Aborted"});
           \textcolor{keywordflow}{return} 1;
         \}
@@ -458,12 +486,19 @@ Definition at line 1114 of file md2cmds.\-c.
 
       \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_collect: move
        phy/kappa: kappa=%f  phi=%f"}, kappa\_pos, phi\_pos);
-      \hyperlink{md2cmds_8c_aa64b87b8aaf962a33e89f5086aeeabaa}{md2cmds\_move\_prep}();
-      \hyperlink{md2cmds_8c_ab0ee93046bd7bc476c9f8ec50342e89e}{md2cmds\_kappaphi\_move}( kappa\_pos, phi\_pos);
-      \textcolor{keywordflow}{if}( \hyperlink{md2cmds_8c_a7cd262eaeafc85a6111cf06de4f29601}{md2cmds\_move\_wait}( 30.0)) \{
-          \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_collect: Timed
-       out waiting for kappa or phi (or both) to stop moving.  Aborting data collection.
-      "});
+
+      err = \hyperlink{lspmac_8c_a984a1d6e49ad53d6a1184666881bf117}{lspmac\_est\_move\_time}( &move\_time, &mmask,
+                                  \hyperlink{lspmac_8c_a0be79ccb7ebf3a665248fd856112b9fd}{kappa}, 0, NULL, kappa\_pos,
+                                  \hyperlink{lspmac_8c_ac8070dc568ad974a3db42b51eca828cc}{phi},   0, NULL, phi\_pos,
+                                  NULL);
+      \textcolor{keywordflow}{if}( err) \{
+          \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Data Colection Aborted"});
+          \textcolor{keywordflow}{return} 1;
+      \} 
+
+      err = \hyperlink{lspmac_8c_a570b4a359adc4da4ab80d53506d06963}{lspmac\_est\_move\_time\_wait}( move\_time + 2, 
+      mmask, NULL);
+      \textcolor{keywordflow}{if}( err) \{
           \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Data Colection Aborted"});
           \textcolor{keywordflow}{return} 1;
       \} 
@@ -528,11 +563,12 @@ Definition at line 1114 of file md2cmds.\-c.
     \textcolor{comment}{//}
     \textcolor{comment}{// Start the exposure}
     \textcolor{comment}{//}
-    \hyperlink{md2cmds_8c_aa64b87b8aaf962a33e89f5086aeeabaa}{md2cmds\_move\_prep}();
-    \hyperlink{lspmac_8c_afab9e8f0502a92ee5cf93209af710f81}{lspmac\_SockSendDPline}( \textcolor{stringliteral}{"Exposure"}, \textcolor{stringliteral}{"&1 P170=%.1f
-       P171=%.1f P173=%.1f P174=0 P175=%.1f P176=0 P177=1 P178=0 P180=%.1f M431=1 &1B131R"},
-                                     p170,     p171,     p173,            p175,
-                                p180);
+    \hyperlink{lspmac_8c_ad7cd6c8e4ea1132ac4a4b90e6468e2d6}{lspmac\_set\_motion\_flags}( &mmask, \hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega});
+    \hyperlink{lspmac_8c_afab9e8f0502a92ee5cf93209af710f81}{lspmac\_SockSendDPline}( \textcolor{stringliteral}{"Exposure"},
+                           \textcolor{stringliteral}{"&1 P170=%.1f P171=%.1f P173=%.1f P174=0 P175=%.1f
+       P176=0 P177=1 P178=0 P180=%.1f M431=1 &1B131R"},
+                           p170,         p171,     p173,            p175,      
+                          p180);
 
     \textcolor{comment}{//}
     \textcolor{comment}{// We could look for the "Exposure command accepted" event at this point.}
@@ -654,7 +690,7 @@ Definition at line 1114 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_a4cf5215fdb88407144f582d829c03c7b}
 
 
-Definition at line 1868 of file md2cmds.\-c.
+Definition at line 1837 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -670,7 +706,7 @@ Definition at line 1868 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_a1ab8f6d08c82ee2130202d65d44ef3fe}
 
 
-Definition at line 1870 of file md2cmds.\-c.
+Definition at line 1839 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -686,7 +722,7 @@ Definition at line 1870 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_a3640785c2fc9cd2f27ce0bafd7959179}
 
 
-Definition at line 1872 of file md2cmds.\-c.
+Definition at line 1841 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -702,7 +738,7 @@ Definition at line 1872 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_a6069cb2f6e9f662edd54e1aeb6e78370}
 
 
-Definition at line 1874 of file md2cmds.\-c.
+Definition at line 1843 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -718,7 +754,7 @@ Definition at line 1874 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_a846ed10de4e5ad48cfa429a93c853308}
 
 
-Definition at line 1876 of file md2cmds.\-c.
+Definition at line 1845 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -734,7 +770,7 @@ Definition at line 1876 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_ab172a83eaf3e74799159e6720e4f5268}
 
 
-Definition at line 1878 of file md2cmds.\-c.
+Definition at line 1847 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -750,7 +786,7 @@ Definition at line 1878 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_a408a01640e74152304b10ae05f5d09e1}
 
 
-Definition at line 70 of file md2cmds.\-c.
+Definition at line 72 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -769,7 +805,7 @@ Definition at line 70 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_aaf5225dbdfe8b04318070c1167ff6a22}
 
 
-Definition at line 77 of file md2cmds.\-c.
+Definition at line 79 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -833,7 +869,7 @@ Initialize the md2cmds module.
 
 
 
-Definition at line 1884 of file md2cmds.\-c.
+Definition at line 1853 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -907,7 +943,7 @@ returns non-\/zero if we think a motor is moving, 0 otherwise
 
 
 
-Definition at line 176 of file md2cmds.\-c.
+Definition at line 178 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -931,7 +967,7 @@ Definition at line 176 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_ab0ee93046bd7bc476c9f8ec50342e89e}
 
 
-Definition at line 1092 of file md2cmds.\-c.
+Definition at line 995 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -966,7 +1002,7 @@ Track motors homing.
 
 
 
-Definition at line 1068 of file md2cmds.\-c.
+Definition at line 971 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1006,7 +1042,7 @@ Track how many motors are moving.
 
 
 
-Definition at line 1039 of file md2cmds.\-c.
+Definition at line 942 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1050,7 +1086,7 @@ Now that we are done with the 360 rotation lets rehome right quick.
 
 
 
-Definition at line 1541 of file md2cmds.\-c.
+Definition at line 1458 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1074,7 +1110,7 @@ prepare for new movements
 
 
 
-Definition at line 122 of file md2cmds.\-c.
+Definition at line 124 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1104,7 +1140,7 @@ There are two waits involved\-: First to wait for the first \char`\"{}\-Moving\c
 
 returns 0 on success and 1 if we timedout. 
 
-Definition at line 139 of file md2cmds.\-c.
+Definition at line 141 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1163,7 +1199,7 @@ Move a motor to the position requested Returns non zero on error.
 \end{DoxyParams}
 
 
-Definition at line 453 of file md2cmds.\-c.
+Definition at line 452 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1263,7 +1299,7 @@ Move a motor to the position requested Returns non zero on error.
 \end{DoxyParams}
 
 
-Definition at line 532 of file md2cmds.\-c.
+Definition at line 531 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1376,7 +1412,7 @@ Move the centering and alignment tables.
 \end{DoxyParams}
 
 
-Definition at line 1012 of file md2cmds.\-c.
+Definition at line 915 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1414,7 +1450,7 @@ Definition at line 1012 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_a09a28007e7d8df7b8f97207474e5e516}
 
 
-Definition at line 209 of file md2cmds.\-c.
+Definition at line 211 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1424,7 +1460,7 @@ Definition at line 209 of file md2cmds.\-c.
   \textcolor{keywordtype}{int}    cay, caz, ccy, ccz, csz;
   \textcolor{keywordtype}{int} err;
 
-  err = \hyperlink{lsredis_8c_a1ad60526a09ca679f39174ce5d773abe}{lsredis\_find\_preset}( \hyperlink{lspmac_8c_a139200ddaa9856a7ffcec0e6cbaa8f1b}{apery}->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name}, pay, &ay)
+  err = \hyperlink{lsredis_8c_a87d7bb0ade6f247edfbb7803aac9e694}{lsredis\_find\_preset}( \hyperlink{lspmac_8c_a139200ddaa9856a7ffcec0e6cbaa8f1b}{apery}->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name}, pay, &ay)
       ;
   \textcolor{keywordflow}{if}( err == 0) \{
     \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_move\_organs\_presets:
@@ -1432,7 +1468,7 @@ Definition at line 209 of file md2cmds.\-c.
     \textcolor{keywordflow}{return};
   \}
   
-  err = \hyperlink{lsredis_8c_a1ad60526a09ca679f39174ce5d773abe}{lsredis\_find\_preset}( \hyperlink{lspmac_8c_ab93bd6ee850b285ca3a95e64d15e9477}{aperz}->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name}, paz, &az)
+  err = \hyperlink{lsredis_8c_a87d7bb0ade6f247edfbb7803aac9e694}{lsredis\_find\_preset}( \hyperlink{lspmac_8c_ab93bd6ee850b285ca3a95e64d15e9477}{aperz}->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name}, paz, &az)
       ;
   \textcolor{keywordflow}{if}( err == 0) \{
     \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_move\_organs\_presets:
@@ -1440,21 +1476,21 @@ Definition at line 209 of file md2cmds.\-c.
     \textcolor{keywordflow}{return};
   \}
   
-  err = \hyperlink{lsredis_8c_a1ad60526a09ca679f39174ce5d773abe}{lsredis\_find\_preset}( \hyperlink{lspmac_8c_a51358daaea8b5236f08414877d8af6c2}{capy}->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name}, pcy, &cy);
+  err = \hyperlink{lsredis_8c_a87d7bb0ade6f247edfbb7803aac9e694}{lsredis\_find\_preset}( \hyperlink{lspmac_8c_a51358daaea8b5236f08414877d8af6c2}{capy}->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name}, pcy, &cy);
   \textcolor{keywordflow}{if}( err == 0) \{
     \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_organs\_move\_presets:
        no preset '%s' for motor '%s'"}, pcy, \hyperlink{lspmac_8c_a51358daaea8b5236f08414877d8af6c2}{capy}->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
     \textcolor{keywordflow}{return};
   \}
 
-  err = \hyperlink{lsredis_8c_a1ad60526a09ca679f39174ce5d773abe}{lsredis\_find\_preset}( \hyperlink{lspmac_8c_aa45f268d0af9f3d465acfab128919718}{capz}->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name}, pcz, &cz);
+  err = \hyperlink{lsredis_8c_a87d7bb0ade6f247edfbb7803aac9e694}{lsredis\_find\_preset}( \hyperlink{lspmac_8c_aa45f268d0af9f3d465acfab128919718}{capz}->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name}, pcz, &cz);
   \textcolor{keywordflow}{if}( err == 0) \{
     \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_organs\_move\_presets:
        no preset '%s' for motor '%s'"}, pcz, \hyperlink{lspmac_8c_aa45f268d0af9f3d465acfab128919718}{capz}->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name});
     \textcolor{keywordflow}{return};
   \}
 
-  err = \hyperlink{lsredis_8c_a1ad60526a09ca679f39174ce5d773abe}{lsredis\_find\_preset}( \hyperlink{lspmac_8c_a589431b3a79c21c251fcb97cc9126991}{scint}->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name}, psz, &sz)
+  err = \hyperlink{lsredis_8c_a87d7bb0ade6f247edfbb7803aac9e694}{lsredis\_find\_preset}( \hyperlink{lspmac_8c_a589431b3a79c21c251fcb97cc9126991}{scint}->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name}, psz, &sz)
       ;
   \textcolor{keywordflow}{if}( err == 0) \{
     \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_organs\_move\_presets:
@@ -1495,7 +1531,7 @@ Go to beam location phase.
 
 
 
-Definition at line 833 of file md2cmds.\-c.
+Definition at line 774 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1504,38 +1540,14 @@ Definition at line 833 of file md2cmds.\-c.
   \textcolor{keywordtype}{int} mmask, err;
 
   \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Mode beamLocation Starting"});
-  \textcolor{comment}{//                                                                           
-                                                                                      
-                                                                                      
-                                       }
-  \textcolor{comment}{// Get ready to move some motors                                             
-                                                                                      
-                                                                                      
-                                       }
-  \textcolor{comment}{//                                                                           
-                                                                                      
-                                                                                      
-                                       }
-  \hyperlink{md2cmds_8c_aa64b87b8aaf962a33e89f5086aeeabaa}{md2cmds\_move\_prep}();
 
-  \textcolor{comment}{//                                                                           
-                                                                                      
-                                                                                      
-                                       }
-  \textcolor{comment}{// Move 'em                                                                  
-                                                                                      
-                                                                                      
-                                       }
-  \textcolor{comment}{//                                                                           
-                                                                                      
-                                                                                      
-                                       }
-  err = \hyperlink{lspmac_8c_a83ba40e81c04ecc11009be6cbed0c5e1}{lspmac\_est\_move\_time}( &move\_time, &mmask,
+  mmask = 0;
+  err = \hyperlink{lspmac_8c_a984a1d6e49ad53d6a1184666881bf117}{lspmac\_est\_move\_time}( &move\_time, &mmask,
                               \textcolor{comment}{//motor   jog, preset,      position if no preset
                                                                                       
                                                                                       
-                                       }
-                              \hyperlink{lspmac_8c_a0be79ccb7ebf3a665248fd856112b9fd}{kappa},      0, NULL,           0.0,
+                                                                    kappa,      0,
+       NULL,           0.0,}
                               \hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega},      0, NULL,           0.0,
                               \hyperlink{lspmac_8c_a139200ddaa9856a7ffcec0e6cbaa8f1b}{apery},      0, \textcolor{stringliteral}{"In"},           0.0,
                               \hyperlink{lspmac_8c_ab93bd6ee850b285ca3a95e64d15e9477}{aperz},      0, \textcolor{stringliteral}{"In"},           0.0,
@@ -1553,31 +1565,12 @@ Definition at line 833 of file md2cmds.\-c.
     \textcolor{keywordflow}{return} err;
   \}
 
-  err = \hyperlink{lspmac_8c_a1273ffacbd1a28282a019460bf6bc9b5}{lspmac\_est\_move\_time\_wait}( move\_time + 2.0, 
-      mmask);
+  err = \hyperlink{lspmac_8c_a570b4a359adc4da4ab80d53506d06963}{lspmac\_est\_move\_time\_wait}( move\_time + 2.0, 
+      mmask, \hyperlink{lspmac_8c_af813a2eff0b7efa4c70633559054e84c}{blight\_ud}, \hyperlink{lspmac_8c_ae78d9a757d4c85419fff9c94b15e25d7}{cryo}, \hyperlink{lspmac_8c_addb26c80065506faa1de3c1b468fe03f}{fluo}, NULL);
   \textcolor{keywordflow}{if}( err) \{
     \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Mode beamLocation Aborted"});
     \textcolor{keywordflow}{return} err;
   \}
-
-  \textcolor{comment}{//                                                                           
-                                                                                      
-                                                                                      
-                                       }
-  \textcolor{comment}{// This should be redundant, at least until someone changes a jog=0 to a
-       jog=1 for a real motor                                                              
-                                                                                      
-                                       }
-  \textcolor{comment}{//                                                                           
-                                                                                      
-                                                                                      
-                                       }
-  err = \hyperlink{md2cmds_8c_a7cd262eaeafc85a6111cf06de4f29601}{md2cmds\_move\_wait}( move\_time + 2.0);
-  \textcolor{keywordflow}{if}( err) \{
-    \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Mode beamLocation Aborted"});
-    \textcolor{keywordflow}{return} err;
-  \}
-
 
   \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Mode beamLocation Done"});
   \textcolor{keywordflow}{return} 0;
@@ -1596,7 +1589,7 @@ Go to center phase.
 
 
 
-Definition at line 724 of file md2cmds.\-c.
+Definition at line 699 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1608,29 +1601,16 @@ Definition at line 724 of file md2cmds.\-c.
   \textcolor{comment}{//                                                                           
                                                                                       
                                                                                       
-                                       }
-  \textcolor{comment}{// Get ready to move some motors                                             
+                                        // Move 'em                                   
                                                                                       
                                                                                       
-                                       }
-  \textcolor{comment}{//                                                                           
+                                                                       //             
                                                                                       
                                                                                       
-                                       }
-  \hyperlink{md2cmds_8c_aa64b87b8aaf962a33e89f5086aeeabaa}{md2cmds\_move\_prep}();
-  \textcolor{comment}{//                                                                           
                                                                                       
-                                                                                      
-                                       }
-  \textcolor{comment}{// Move 'em                                                                  
-                                                                                      
-                                                                                      
-                                       }
-  \textcolor{comment}{//                                                                           
-                                                                                      
-                                                                                      
-                                       }
-  err = \hyperlink{lspmac_8c_a83ba40e81c04ecc11009be6cbed0c5e1}{lspmac\_est\_move\_time}( &move\_time, &mmask,
+                     }
+  mmask = 0;
+  err = \hyperlink{lspmac_8c_a984a1d6e49ad53d6a1184666881bf117}{lspmac\_est\_move\_time}( &move\_time, &mmask,
                               \hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega},     0, NULL,    0.0,
                               \hyperlink{lspmac_8c_a0be79ccb7ebf3a665248fd856112b9fd}{kappa},     0, NULL,    0.0,
                               \hyperlink{lspmac_8c_ac8070dc568ad974a3db42b51eca828cc}{phi},       0, NULL,    0.0,
@@ -1649,8 +1629,8 @@ Definition at line 724 of file md2cmds.\-c.
     \textcolor{keywordflow}{return} err;
   \}
 
-  err = \hyperlink{lspmac_8c_a1273ffacbd1a28282a019460bf6bc9b5}{lspmac\_est\_move\_time\_wait}( move\_time + 2.0, 
-      mmask);
+  err = \hyperlink{lspmac_8c_a570b4a359adc4da4ab80d53506d06963}{lspmac\_est\_move\_time\_wait}( move\_time + 2.0, 
+      mmask, \hyperlink{lspmac_8c_ae78d9a757d4c85419fff9c94b15e25d7}{cryo}, \hyperlink{lspmac_8c_addb26c80065506faa1de3c1b468fe03f}{fluo}, NULL);
   \textcolor{keywordflow}{if}( err) \{
     \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Mode center Aborted"});
     \textcolor{keywordflow}{return} err;
@@ -1671,16 +1651,17 @@ Definition at line 724 of file md2cmds.\-c.
 
 Move md2 devices to a preconfigured state. 
 
-E\-M\-B\-L calls these states \char`\"{}phases\char`\"{} and this language is partially retained here
 
-
+\begin{DoxyItemize}
+\item E\-M\-B\-L calls these states \char`\"{}phases\char`\"{} and this language is partially retained here $\ast$ $\ast$ 
 \begin{DoxyParams}{Parameters}
 {\em ccmd} & The full text of the command that sent us here \\
 \hline
 \end{DoxyParams}
 
+\end{DoxyItemize}
 
-Definition at line 947 of file md2cmds.\-c.
+Definition at line 855 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1697,11 +1678,10 @@ Definition at line 947 of file md2cmds.\-c.
   \textcolor{comment}{// use a copy as strtok\_r modifies the string it is parsing                  
                                                                                       
                                                                                       
-                                       }
-  \textcolor{comment}{//                                                                           
+                                        //                                            
                                                                                       
                                                                                       
-                                       }
+                                                                      }
   cmd = strdup( ccmd);
 
   ignore = strtok\_r( cmd, \textcolor{stringliteral}{" "}, &ptr);
@@ -1715,15 +1695,14 @@ Definition at line 947 of file md2cmds.\-c.
   \textcolor{comment}{//                                                                           
                                                                                       
                                                                                       
-                                       }
-  \textcolor{comment}{// ignore should point to "mode" cause that's how we got here.  Ignore it    
+                                        // ignore should point to "mode" cause that's
+       how we got here.  Ignore it                                                     
+                                                                                      
+                                                                       //             
                                                                                       
                                                                                       
-                                       }
-  \textcolor{comment}{//                                                                           
                                                                                       
-                                                                                      
-                                       }
+                     }
   mode = strtok\_r( NULL, \textcolor{stringliteral}{" "}, &ptr);
   \textcolor{keywordflow}{if}( mode == NULL) \{
     \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_phase\_change: no mode
@@ -1746,15 +1725,14 @@ Definition at line 947 of file md2cmds.\-c.
   \textcolor{comment}{//                                                                           
                                                                                       
                                                                                       
-                                       }
-  \textcolor{comment}{// Tangled web.  Probably not worth fixing.  O(N) but N is 6.                
+                                        // Tangled web.  Probably not worth fixing. 
+       O(N) but N is 6.                                                                 
+                                                                                      
+                                                                       //             
                                                                                       
                                                                                       
-                                       }
-  \textcolor{comment}{//                                                                           
                                                                                       
-                                                                                      
-                                       }
+                     }
   \textcolor{keywordflow}{if}( strcmp( mode, \textcolor{stringliteral}{"manualMount"}) == 0) \{
     err = \hyperlink{md2cmds_8c_a7ecd73ece729c96219eb83f51a3c0b60}{md2cmds\_phase\_manualMount}();
   \} \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}( strcmp( mode, \textcolor{stringliteral}{"robotMount"}) == 0) \{
@@ -1786,7 +1764,7 @@ Go to data collection phase.
 
 
 
-Definition at line 768 of file md2cmds.\-c.
+Definition at line 738 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1795,32 +1773,9 @@ Definition at line 768 of file md2cmds.\-c.
   \textcolor{keywordtype}{int} mmask, err;
 
   \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Mode dataCollection Starting"});
-  \textcolor{comment}{//                                                                           
-                                                                                      
-                                                                                      
-                                       }
-  \textcolor{comment}{// Get ready to move some motors                                             
-                                                                                      
-                                                                                      
-                                       }
-  \textcolor{comment}{//                                                                           
-                                                                                      
-                                                                                      
-                                       }
-  \hyperlink{md2cmds_8c_aa64b87b8aaf962a33e89f5086aeeabaa}{md2cmds\_move\_prep}();
-  \textcolor{comment}{//                                                                           
-                                                                                      
-                                                                                      
-                                       }
-  \textcolor{comment}{// Move 'em                                                                  
-                                                                                      
-                                                                                      
-                                       }
-  \textcolor{comment}{//                                                                           
-                                                                                      
-                                                                                      
-                                       }
-  err = \hyperlink{lspmac_8c_a83ba40e81c04ecc11009be6cbed0c5e1}{lspmac\_est\_move\_time}( &move\_time, &mmask,
+
+  mmask = 0;
+  err = \hyperlink{lspmac_8c_a984a1d6e49ad53d6a1184666881bf117}{lspmac\_est\_move\_time}( &move\_time, &mmask,
                               \hyperlink{lspmac_8c_a139200ddaa9856a7ffcec0e6cbaa8f1b}{apery},     1, \textcolor{stringliteral}{"In"},     0.0,
                               \hyperlink{lspmac_8c_ab93bd6ee850b285ca3a95e64d15e9477}{aperz},     1, \textcolor{stringliteral}{"In"},     0.0,
                               \hyperlink{lspmac_8c_a51358daaea8b5236f08414877d8af6c2}{capy},      1, \textcolor{stringliteral}{"In"},     0.0,
@@ -1836,31 +1791,9 @@ Definition at line 768 of file md2cmds.\-c.
     \textcolor{keywordflow}{return} err;
   \}
 
-  err = \hyperlink{lspmac_8c_a55ffe2b135854f75079ecd39d507d3b4}{lspmac\_moveabs\_wait}( \hyperlink{lspmac_8c_a139200ddaa9856a7ffcec0e6cbaa8f1b}{apery}, move\_time+2);
-  \textcolor{keywordflow}{if}( err) \{
-    \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Mode dataCollection Aborted"});
-    \textcolor{keywordflow}{return} err;
-  \}
-
-  err = \hyperlink{lspmac_8c_a55ffe2b135854f75079ecd39d507d3b4}{lspmac\_moveabs\_wait}( \hyperlink{lspmac_8c_ab93bd6ee850b285ca3a95e64d15e9477}{aperz}, move\_time+2);
-  \textcolor{keywordflow}{if}( err) \{
-    \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Mode dataCollection Aborted"});
-    \textcolor{keywordflow}{return} err;
-  \}
-
-  err = \hyperlink{lspmac_8c_a55ffe2b135854f75079ecd39d507d3b4}{lspmac\_moveabs\_wait}( \hyperlink{lspmac_8c_a51358daaea8b5236f08414877d8af6c2}{capy}, move\_time+2);
-  \textcolor{keywordflow}{if}( err) \{
-    \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Mode dataCollection Aborted"});
-    \textcolor{keywordflow}{return} err;
-  \}
-
-  err = \hyperlink{lspmac_8c_a55ffe2b135854f75079ecd39d507d3b4}{lspmac\_moveabs\_wait}( \hyperlink{lspmac_8c_aa45f268d0af9f3d465acfab128919718}{capz}, move\_time+2);
-  \textcolor{keywordflow}{if}( err) \{
-    \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Mode dataCollection Aborted"});
-    \textcolor{keywordflow}{return} err;
-  \}
-
-  err = \hyperlink{lspmac_8c_a55ffe2b135854f75079ecd39d507d3b4}{lspmac\_moveabs\_wait}( \hyperlink{lspmac_8c_a589431b3a79c21c251fcb97cc9126991}{scint}, move\_time+2);
+  err = \hyperlink{lspmac_8c_a570b4a359adc4da4ab80d53506d06963}{lspmac\_est\_move\_time\_wait}( move\_time + 2.0, 
+      mmask, \hyperlink{lspmac_8c_a139200ddaa9856a7ffcec0e6cbaa8f1b}{apery}, \hyperlink{lspmac_8c_ab93bd6ee850b285ca3a95e64d15e9477}{aperz}, \hyperlink{lspmac_8c_a51358daaea8b5236f08414877d8af6c2}{capy}, \hyperlink{lspmac_8c_aa45f268d0af9f3d465acfab128919718}{capz}, \hyperlink{lspmac_8c_a589431b3a79c21c251fcb97cc9126991}{scint}, \hyperlink{lspmac_8c_af813a2eff0b7efa4c70633559054e84c}{blight\_ud},
+       \hyperlink{lspmac_8c_ae78d9a757d4c85419fff9c94b15e25d7}{cryo}, \hyperlink{lspmac_8c_addb26c80065506faa1de3c1b468fe03f}{fluo}, NULL);
   \textcolor{keywordflow}{if}( err) \{
     \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Mode dataCollection Aborted"});
     \textcolor{keywordflow}{return} err;
@@ -1883,7 +1816,7 @@ Go to the manual mount phase.
 
 
 
-Definition at line 613 of file md2cmds.\-c.
+Definition at line 612 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1892,32 +1825,11 @@ Definition at line 613 of file md2cmds.\-c.
   \textcolor{keywordtype}{int} mmask, err;
 
   \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Mode manualMount Starting"});
-  \textcolor{comment}{//                                                                           
-                                                                                      
-                                                                                      
-                                       }
-  \textcolor{comment}{// Get ready to move some motors                                             
-                                                                                      
-                                                                                      
-                                       }
-  \textcolor{comment}{//                                                                           
-                                                                                      
-                                                                                      
-                                       }
-  \hyperlink{md2cmds_8c_aa64b87b8aaf962a33e89f5086aeeabaa}{md2cmds\_move\_prep}();
-  \textcolor{comment}{//                                                                           
-                                                                                      
-                                                                                      
-                                       }
-  \textcolor{comment}{// Move 'em                                                                  
-                                                                                      
-                                                                                      
-                                       }
-  \textcolor{comment}{//                                                                           
-                                                                                      
-                                                                                      
-                                       }
-  err = \hyperlink{lspmac_8c_a83ba40e81c04ecc11009be6cbed0c5e1}{lspmac\_est\_move\_time}( &move\_time, &mmask,
+  \textcolor{comment}{//}
+  \textcolor{comment}{// Move stuff}
+  \textcolor{comment}{//}
+  mmask = 0;
+  err = \hyperlink{lspmac_8c_a984a1d6e49ad53d6a1184666881bf117}{lspmac\_est\_move\_time}( &move\_time, &mmask,
                               \hyperlink{lspmac_8c_a0be79ccb7ebf3a665248fd856112b9fd}{kappa},     0, \textcolor{stringliteral}{"manualMount"}, 0.0,
                               \hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega},     0, \textcolor{stringliteral}{"manualMount"}, 0.0,
                               \hyperlink{lspmac_8c_ac8070dc568ad974a3db42b51eca828cc}{phi},       0, NULL,          0.0,
@@ -1949,34 +1861,8 @@ Definition at line 613 of file md2cmds.\-c.
                                                                                       
                                                                                       
                                        }
-  err = \hyperlink{lspmac_8c_a1273ffacbd1a28282a019460bf6bc9b5}{lspmac\_est\_move\_time\_wait}( move\_time+2.0, 
-      mmask);
-  \textcolor{keywordflow}{if}( err) \{
-    \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Mode manualMount Aborted"});
-    \textcolor{keywordflow}{return} err;
-  \}
-
-  \textcolor{comment}{//                                                                           
-                                                                                      
-                                                                                      
-                                       }
-  \textcolor{comment}{// Wait for jogs                                                             
-                                                                                      
-                                                                                      
-                                       }
-  \textcolor{comment}{// We've over estimated the move time since we've already waited a bit.      
-                                                                                      
-                                                                                      
-                                       }
-  \textcolor{comment}{// This would only ever cause problems for really slow motions.              
-                                                                                      
-                                                                                      
-                                       }
-  \textcolor{comment}{//                                                                           
-                                                                                      
-                                                                                      
-                                       }
-  err = \hyperlink{md2cmds_8c_a7cd262eaeafc85a6111cf06de4f29601}{md2cmds\_move\_wait}( move\_time+2.0);
+  err = \hyperlink{lspmac_8c_a570b4a359adc4da4ab80d53506d06963}{lspmac\_est\_move\_time\_wait}( move\_time+2.0, 
+      mmask, \hyperlink{lspmac_8c_ab93bd6ee850b285ca3a95e64d15e9477}{aperz}, \hyperlink{lspmac_8c_a589431b3a79c21c251fcb97cc9126991}{scint}, \hyperlink{lspmac_8c_af813a2eff0b7efa4c70633559054e84c}{blight\_ud}, \hyperlink{lspmac_8c_ae78d9a757d4c85419fff9c94b15e25d7}{cryo}, \hyperlink{lspmac_8c_addb26c80065506faa1de3c1b468fe03f}{fluo}, NULL);
   \textcolor{keywordflow}{if}( err) \{
     \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Mode manualMount Aborted"});
     \textcolor{keywordflow}{return} err;
@@ -1999,7 +1885,7 @@ Go to robot mount phase.
 
 
 
-Definition at line 671 of file md2cmds.\-c.
+Definition at line 656 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -2008,36 +1894,24 @@ Definition at line 671 of file md2cmds.\-c.
   \textcolor{keywordtype}{int} mmask, err;
 
   \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Mode robotMount Starting"});
-  \textcolor{comment}{//                                                                           
-                                                                                      
-                                                                                      
-                                       }
-  \textcolor{comment}{// Get ready to move some motors                                             
-                                                                                      
-                                                                                      
-                                       }
-  \textcolor{comment}{//                                                                           
-                                                                                      
-                                                                                      
-                                       }
-  \hyperlink{md2cmds_8c_aa64b87b8aaf962a33e89f5086aeeabaa}{md2cmds\_move\_prep}();
+
   \hyperlink{md2cmds_8c_a408a01640e74152304b10ae05f5d09e1}{md2cmds\_home\_prep}();
+
   \textcolor{comment}{//                                                                           
                                                                                       
                                                                                       
-                                       }
-  \textcolor{comment}{// Move 'em                                                                  
+                                        // Move 'em                                   
                                                                                       
                                                                                       
-                                       }
-  \textcolor{comment}{//                                                                           
+                                                                       //             
                                                                                       
                                                                                       
-                                       }
-  \hyperlink{lspmac_8c_a9fbadf816a842c8f131cf8ee47b54e29}{lspmac\_home1\_queue}( \hyperlink{lspmac_8c_a0be79ccb7ebf3a665248fd856112b9fd}{kappa});
+                                                                                      
+                      lspmac\_home1\_queue( kappa);}
   \hyperlink{lspmac_8c_a9fbadf816a842c8f131cf8ee47b54e29}{lspmac\_home1\_queue}( \hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega});
 
-  err = \hyperlink{lspmac_8c_a83ba40e81c04ecc11009be6cbed0c5e1}{lspmac\_est\_move\_time}( &move\_time, &mmask,
+  mmask = 0;
+  err = \hyperlink{lspmac_8c_a984a1d6e49ad53d6a1184666881bf117}{lspmac\_est\_move\_time}( &move\_time, &mmask,
                               \hyperlink{lspmac_8c_ac8070dc568ad974a3db42b51eca828cc}{phi},       0, NULL,    0.0,
                               \hyperlink{lspmac_8c_a139200ddaa9856a7ffcec0e6cbaa8f1b}{apery},     1, \textcolor{stringliteral}{"In"},    0.0,
                               \hyperlink{lspmac_8c_ab93bd6ee850b285ca3a95e64d15e9477}{aperz},     1, \textcolor{stringliteral}{"In"},    0.0,
@@ -2050,14 +1924,9 @@ Definition at line 671 of file md2cmds.\-c.
                               \hyperlink{lspmac_8c_ad53a42cfaa04eff0336a44c8c9986333}{zoom},      0, NULL,    1.0,
                               NULL);
 
-  err = \hyperlink{lspmac_8c_a1273ffacbd1a28282a019460bf6bc9b5}{lspmac\_est\_move\_time\_wait}( move\_time + 2.0, 
-      mmask);
-  \textcolor{keywordflow}{if}( err) \{
-    \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Mode robotMount Aborted"});
-    \textcolor{keywordflow}{return} err;
-  \}
-
-  err = \hyperlink{md2cmds_8c_a7cd262eaeafc85a6111cf06de4f29601}{md2cmds\_move\_wait}( move\_time + 2.0);
+  err = \hyperlink{lspmac_8c_a570b4a359adc4da4ab80d53506d06963}{lspmac\_est\_move\_time\_wait}( move\_time + 2.0, 
+      mmask, \hyperlink{lspmac_8c_a139200ddaa9856a7ffcec0e6cbaa8f1b}{apery}, \hyperlink{lspmac_8c_ab93bd6ee850b285ca3a95e64d15e9477}{aperz}, \hyperlink{lspmac_8c_aa45f268d0af9f3d465acfab128919718}{capz}, \hyperlink{lspmac_8c_a589431b3a79c21c251fcb97cc9126991}{scint}, \hyperlink{lspmac_8c_af813a2eff0b7efa4c70633559054e84c}{blight\_ud}, \hyperlink{lspmac_8c_ae78d9a757d4c85419fff9c94b15e25d7}{cryo},
+       \hyperlink{lspmac_8c_addb26c80065506faa1de3c1b468fe03f}{fluo}, NULL);
   \textcolor{keywordflow}{if}( err) \{
     \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Mode robotMount Aborted"});
     \textcolor{keywordflow}{return} err;
@@ -2086,7 +1955,7 @@ Go to safe phase.
 
 
 
-Definition at line 889 of file md2cmds.\-c.
+Definition at line 813 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -2095,33 +1964,9 @@ Definition at line 889 of file md2cmds.\-c.
   \textcolor{keywordtype}{int} mmask, err;
 
   \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Mode safe Starting"});
-  \textcolor{comment}{//                                                                           
-                                                                                      
-                                                                                      
-                                       }
-  \textcolor{comment}{// Get ready to move some motors                                             
-                                                                                      
-                                                                                      
-                                       }
-  \textcolor{comment}{//                                                                           
-                                                                                      
-                                                                                      
-                                       }
-  \hyperlink{md2cmds_8c_aa64b87b8aaf962a33e89f5086aeeabaa}{md2cmds\_move\_prep}();
 
-  \textcolor{comment}{//                                                                           
-                                                                                      
-                                                                                      
-                                       }
-  \textcolor{comment}{// Move 'em                                                                  
-                                                                                      
-                                                                                      
-                                       }
-  \textcolor{comment}{//                                                                           
-                                                                                      
-                                                                                      
-                                       }
-  err = \hyperlink{lspmac_8c_a83ba40e81c04ecc11009be6cbed0c5e1}{lspmac\_est\_move\_time}( &move\_time, &mmask,
+  mmask = 0;
+  err = \hyperlink{lspmac_8c_a984a1d6e49ad53d6a1184666881bf117}{lspmac\_est\_move\_time}( &move\_time, &mmask,
                               \textcolor{comment}{//motor   jog, preset,      position if no preset
                                                                                       
                                                                                       
@@ -2146,14 +1991,9 @@ Definition at line 889 of file md2cmds.\-c.
     \textcolor{keywordflow}{return} err;
   \}
 
-  err = \hyperlink{lspmac_8c_a1273ffacbd1a28282a019460bf6bc9b5}{lspmac\_est\_move\_time\_wait}( move\_time + 2.0, 
-      mmask);
-  \textcolor{keywordflow}{if}( err) \{
-    \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Mode safe Aborted"});
-    \textcolor{keywordflow}{return} err;
-  \}
-
-  err =  \hyperlink{md2cmds_8c_a7cd262eaeafc85a6111cf06de4f29601}{md2cmds\_move\_wait}( move\_time + 2.0);
+  err = \hyperlink{lspmac_8c_a570b4a359adc4da4ab80d53506d06963}{lspmac\_est\_move\_time\_wait}( move\_time + 2.0, 
+      mmask, \hyperlink{lspmac_8c_a139200ddaa9856a7ffcec0e6cbaa8f1b}{apery}, \hyperlink{lspmac_8c_ab93bd6ee850b285ca3a95e64d15e9477}{aperz}, \hyperlink{lspmac_8c_a51358daaea8b5236f08414877d8af6c2}{capy}, \hyperlink{lspmac_8c_aa45f268d0af9f3d465acfab128919718}{capz}, \hyperlink{lspmac_8c_a589431b3a79c21c251fcb97cc9126991}{scint}, \hyperlink{lspmac_8c_af813a2eff0b7efa4c70633559054e84c}{blight\_ud},
+       \hyperlink{lspmac_8c_ae78d9a757d4c85419fff9c94b15e25d7}{cryo}, \hyperlink{lspmac_8c_addb26c80065506faa1de3c1b468fe03f}{fluo}, NULL);
   \textcolor{keywordflow}{if}( err) \{
     \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Mode safe Aborted"});
     \textcolor{keywordflow}{return} err;
@@ -2173,7 +2013,7 @@ Definition at line 889 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_ab1cc77bc7476714a419c7db69c7c4be4}
 
 
-Definition at line 187 of file md2cmds.\-c.
+Definition at line 189 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -2215,7 +2055,7 @@ Spin 360 and make a video (recenter first, maybe)
 \end{DoxyParams}
 
 
-Definition at line 1360 of file md2cmds.\-c.
+Definition at line 1293 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -2243,7 +2083,6 @@ Definition at line 1360 of file md2cmds.\-c.
 
   \textcolor{comment}{//}
   \textcolor{comment}{// Get ready to move our motors}
-  \hyperlink{md2cmds_8c_aa64b87b8aaf962a33e89f5086aeeabaa}{md2cmds\_move\_prep}();
   \hyperlink{md2cmds_8c_a408a01640e74152304b10ae05f5d09e1}{md2cmds\_home\_prep}();
 
   \textcolor{comment}{//}
@@ -2294,65 +2133,54 @@ Definition at line 1360 of file md2cmds.\-c.
     \textcolor{comment}{// current position.}
     \textcolor{comment}{//}
     \textcolor{keywordflow}{if}( \hyperlink{lspg_8c_a7ef8a09203117578c9b2ce4719519f36}{lspg\_getcenter}.\hyperlink{structlspg__getcenter__struct_a621b489777d61e9db8b33b784b8d70f9}{dax\_isnull} == 0) \{
-      err = \hyperlink{lsredis_8c_a1ad60526a09ca679f39174ce5d773abe}{lsredis\_find\_preset}( \textcolor{stringliteral}{"align.x"}, \textcolor{stringliteral}{"Back\_Vector"}, &
+      err = \hyperlink{lsredis_8c_a87d7bb0ade6f247edfbb7803aac9e694}{lsredis\_find\_preset}( \textcolor{stringliteral}{"align.x"}, \textcolor{stringliteral}{"Back\_Vector"}, &
       bax);
       \textcolor{keywordflow}{if}( err == 0)
         bax = 0.0;
       bax += \hyperlink{lspg_8c_a7ef8a09203117578c9b2ce4719519f36}{lspg\_getcenter}.\hyperlink{structlspg__getcenter__struct_a17db52848c28852a470222ec93ae8886}{dax};
-      \hyperlink{lsredis_8c_ad4c059ab8209b87131b5c94883a05f39}{lsredis\_set\_preset}( \textcolor{stringliteral}{"align.x"}, \textcolor{stringliteral}{"Back"}, bax);
+      \hyperlink{lsredis_8c_a2b48f29f489bcbdaf4fb29e7fbf1d4d2}{lsredis\_set\_preset}( \textcolor{stringliteral}{"align.x"}, \textcolor{stringliteral}{"Back"}, bax);
 
       ax  += \hyperlink{lspg_8c_a7ef8a09203117578c9b2ce4719519f36}{lspg\_getcenter}.\hyperlink{structlspg__getcenter__struct_a17db52848c28852a470222ec93ae8886}{dax};
-      \hyperlink{lsredis_8c_ad4c059ab8209b87131b5c94883a05f39}{lsredis\_set\_preset}( \textcolor{stringliteral}{"align.x"}, \textcolor{stringliteral}{"Beam"}, ax);
+      \hyperlink{lsredis_8c_a2b48f29f489bcbdaf4fb29e7fbf1d4d2}{lsredis\_set\_preset}( \textcolor{stringliteral}{"align.x"}, \textcolor{stringliteral}{"Beam"}, ax);
     \}      
 
 
     \textcolor{keywordflow}{if}( \hyperlink{lspg_8c_a7ef8a09203117578c9b2ce4719519f36}{lspg\_getcenter}.\hyperlink{structlspg__getcenter__struct_a36f57a319288810caf365cca7827ff96}{day\_isnull} == 0) \{
-      err = \hyperlink{lsredis_8c_a1ad60526a09ca679f39174ce5d773abe}{lsredis\_find\_preset}( \textcolor{stringliteral}{"align.y"}, \textcolor{stringliteral}{"Back\_Vector"}, &
+      err = \hyperlink{lsredis_8c_a87d7bb0ade6f247edfbb7803aac9e694}{lsredis\_find\_preset}( \textcolor{stringliteral}{"align.y"}, \textcolor{stringliteral}{"Back\_Vector"}, &
       bay);
       \textcolor{keywordflow}{if}( err == 0)
         bay = 0.0;
       bay += \hyperlink{lspg_8c_a7ef8a09203117578c9b2ce4719519f36}{lspg\_getcenter}.\hyperlink{structlspg__getcenter__struct_a9ce0f29540f2ff47be9788565d19f1b8}{day};
-      \hyperlink{lsredis_8c_ad4c059ab8209b87131b5c94883a05f39}{lsredis\_set\_preset}( \textcolor{stringliteral}{"align.y"}, \textcolor{stringliteral}{"Back"}, bay);
+      \hyperlink{lsredis_8c_a2b48f29f489bcbdaf4fb29e7fbf1d4d2}{lsredis\_set\_preset}( \textcolor{stringliteral}{"align.y"}, \textcolor{stringliteral}{"Back"}, bay);
 
       ay  += \hyperlink{lspg_8c_a7ef8a09203117578c9b2ce4719519f36}{lspg\_getcenter}.\hyperlink{structlspg__getcenter__struct_a9ce0f29540f2ff47be9788565d19f1b8}{day};
-      \hyperlink{lsredis_8c_ad4c059ab8209b87131b5c94883a05f39}{lsredis\_set\_preset}( \textcolor{stringliteral}{"align.y"}, \textcolor{stringliteral}{"Beam"}, ay);
+      \hyperlink{lsredis_8c_a2b48f29f489bcbdaf4fb29e7fbf1d4d2}{lsredis\_set\_preset}( \textcolor{stringliteral}{"align.y"}, \textcolor{stringliteral}{"Beam"}, ay);
     \}
                           
     \textcolor{keywordflow}{if}( \hyperlink{lspg_8c_a7ef8a09203117578c9b2ce4719519f36}{lspg\_getcenter}.\hyperlink{structlspg__getcenter__struct_a36742b6bd0f4bf9356414930ba893617}{daz\_isnull} == 0) \{
-      err = \hyperlink{lsredis_8c_a1ad60526a09ca679f39174ce5d773abe}{lsredis\_find\_preset}( \textcolor{stringliteral}{"align.z"}, \textcolor{stringliteral}{"Back\_Vector"}, &
+      err = \hyperlink{lsredis_8c_a87d7bb0ade6f247edfbb7803aac9e694}{lsredis\_find\_preset}( \textcolor{stringliteral}{"align.z"}, \textcolor{stringliteral}{"Back\_Vector"}, &
       baz);
       \textcolor{keywordflow}{if}( err == 0)
         baz = 0.0;
       baz += \hyperlink{lspg_8c_a7ef8a09203117578c9b2ce4719519f36}{lspg\_getcenter}.\hyperlink{structlspg__getcenter__struct_a1170bab2161f03ab29c39f79519ed9ae}{daz};
-      \hyperlink{lsredis_8c_ad4c059ab8209b87131b5c94883a05f39}{lsredis\_set\_preset}( \textcolor{stringliteral}{"align.z"}, \textcolor{stringliteral}{"Back"}, baz);
+      \hyperlink{lsredis_8c_a2b48f29f489bcbdaf4fb29e7fbf1d4d2}{lsredis\_set\_preset}( \textcolor{stringliteral}{"align.z"}, \textcolor{stringliteral}{"Back"}, baz);
 
       az  += \hyperlink{lspg_8c_a7ef8a09203117578c9b2ce4719519f36}{lspg\_getcenter}.\hyperlink{structlspg__getcenter__struct_a1170bab2161f03ab29c39f79519ed9ae}{daz};
-      \hyperlink{lsredis_8c_ad4c059ab8209b87131b5c94883a05f39}{lsredis\_set\_preset}( \textcolor{stringliteral}{"align.z"}, \textcolor{stringliteral}{"Beam"}, az);
+      \hyperlink{lsredis_8c_a2b48f29f489bcbdaf4fb29e7fbf1d4d2}{lsredis\_set\_preset}( \textcolor{stringliteral}{"align.z"}, \textcolor{stringliteral}{"Beam"}, az);
     \}
-                          
-
-    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_rotate: requested
-       positions cx %f, cy %f, ax %f, ay %f, az %f"}, cx, cy, ax, ay, az);
-
-    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_rotate: moving center"}
-      );
-    \hyperlink{md2cmds_8c_afdc46152b46ae4d37c73407b83016b78}{md2cmds\_mvcenter\_move}( cx, cy, ax, ay, az);
-
-    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_rotate: waiting for
-       center move"});
-    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_rotate: done waiting"})
-      ;
   \}
   \hyperlink{lspg_8c_a7c678553b44c874d08ec9966ed7bb1c0}{lspg\_getcenter\_done}();
 
 
-  \textcolor{keywordflow}{if}( \hyperlink{lspmac_8c_a83ba40e81c04ecc11009be6cbed0c5e1}{lspmac\_est\_move\_time}( &move\_time, &mmask,
-                            \hyperlink{lspmac_8c_ac940d950d9efeaf3f0ae67e9bf331188}{cenx},   0,  NULL, cx,
-                            \hyperlink{lspmac_8c_aaed18e738ba7bfb6c771a44f5d7ea827}{ceny},   0,  NULL, cy,
-                            \hyperlink{lspmac_8c_a6cb218bdccfe5a93471c161f15a15cab}{alignx}, 0,  NULL, ax,
-                            \hyperlink{lspmac_8c_a737c246c3948e644a18d191a931e1acd}{aligny}, 0,  NULL, ay,
-                            \hyperlink{lspmac_8c_ae7642b1da0f7c7f8448104c691d40a12}{alignz}, 0,  NULL, az,
-                            \hyperlink{lspmac_8c_ad53a42cfaa04eff0336a44c8c9986333}{zoom},   1,  NULL, zm,
+  \textcolor{keywordflow}{if}( \hyperlink{lspmac_8c_a984a1d6e49ad53d6a1184666881bf117}{lspmac\_est\_move\_time}( &move\_time, &mmask,
+                            \hyperlink{lspmac_8c_a589431b3a79c21c251fcb97cc9126991}{scint},  1,  \textcolor{stringliteral}{"Cover"}, 0.0,
+                            \hyperlink{lspmac_8c_aa45f268d0af9f3d465acfab128919718}{capz},   1,  \textcolor{stringliteral}{"Cover"}, 0.0,
+                            \hyperlink{lspmac_8c_ac940d950d9efeaf3f0ae67e9bf331188}{cenx},   0,  NULL,    cx,
+                            \hyperlink{lspmac_8c_aaed18e738ba7bfb6c771a44f5d7ea827}{ceny},   0,  NULL,    cy,
+                            \hyperlink{lspmac_8c_a6cb218bdccfe5a93471c161f15a15cab}{alignx}, 0,  NULL,    ax,
+                            \hyperlink{lspmac_8c_a737c246c3948e644a18d191a931e1acd}{aligny}, 0,  NULL,    ay,
+                            \hyperlink{lspmac_8c_ae7642b1da0f7c7f8448104c691d40a12}{alignz}, 0,  NULL,    az,
+                            \hyperlink{lspmac_8c_ad53a42cfaa04eff0336a44c8c9986333}{zoom},   1,  NULL,    zm,
                             NULL)) \{
     \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_rotate: organ motion
        request failed"});
@@ -2360,22 +2188,13 @@ Definition at line 1360 of file md2cmds.\-c.
     \textcolor{keywordflow}{return} 1;
   \}
 
-  \textcolor{keywordflow}{if}( \hyperlink{lspmac_8c_a1273ffacbd1a28282a019460bf6bc9b5}{lspmac\_est\_move\_time\_wait}( move\_time + 2.0, 
-      mmask)) \{
+  \textcolor{keywordflow}{if}( \hyperlink{lspmac_8c_a570b4a359adc4da4ab80d53506d06963}{lspmac\_est\_move\_time\_wait}( move\_time + 2.0, 
+      mmask, \hyperlink{lspmac_8c_a589431b3a79c21c251fcb97cc9126991}{scint}, \hyperlink{lspmac_8c_aa45f268d0af9f3d465acfab128919718}{capz}, \hyperlink{lspmac_8c_ad53a42cfaa04eff0336a44c8c9986333}{zoom}, NULL)) \{
     \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_rotate: organ motion
        timed out %f seconds"}, move\_time + 2.0);
     \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Rotate Aborted"});
     \textcolor{keywordflow}{return} 1;
   \}
-
-  \textcolor{keywordflow}{if}( \hyperlink{lspmac_8c_a55ffe2b135854f75079ecd39d507d3b4}{lspmac\_moveabs\_wait}( \hyperlink{lspmac_8c_ad53a42cfaa04eff0336a44c8c9986333}{zoom}, move\_time + 2.0)) \{
-    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_rotate: zoom timed out
-       %f seconds"}, move\_time + 2.0);
-    \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Rotate Aborted"});
-    \textcolor{keywordflow}{return} 1;
-  \}
-
-
 
   \textcolor{keywordflow}{if}( \hyperlink{md2cmds_8c_aaf5225dbdfe8b04318070c1167ff6a22}{md2cmds\_home\_wait}( 20.0)) \{
     \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_rotate: homing motors
@@ -2417,7 +2236,7 @@ Tell the database about the time we went through omega=zero.
 
 This should trigger the video feed server to starting making a movie. 
 
-Definition at line 1526 of file md2cmds.\-c.
+Definition at line 1443 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -2449,36 +2268,36 @@ Start up the thread.
 
 
 
-Definition at line 1934 of file md2cmds.\-c.
+Definition at line 1903 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
                    \{
   pthread\_create( &\hyperlink{md2cmds_8c_aa230921945149692de98fff15c01962f}{md2cmds\_thread}, NULL,              
       \hyperlink{md2cmds_8c_ae967e769d23555a631f615e630f25b00}{md2cmds\_worker}, NULL);
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"omega crossed zero"},        
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"omega crossed zero"},        
       \hyperlink{md2cmds_8c_aa43887b7c9799bc88d51df13745d0e5c}{md2cmds\_rotate\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"omega In Position"},         
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"omega In Position"},         
       \hyperlink{md2cmds_8c_a136f278c9f5a2742b2e9b4987b063faa}{md2cmds\_maybe\_rotate\_done\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{".+ (Moving|In Position)"},   
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{".+ (Moving|In Position)"},   
       \hyperlink{md2cmds_8c_a3970ef1a233dabcc5c1408e9d3865f13}{md2cmds\_maybe\_done\_moving\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"(.+) (Homing|Homed)"},       
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"(.+) (Homing|Homed)"},       
       \hyperlink{md2cmds_8c_ad0618ee44e2e800c445d7d8726ec8ec2}{md2cmds\_maybe\_done\_homing\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"capz (Moving|In Position)"}, 
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"capz (Moving|In Position)"}, 
       \hyperlink{md2cmds_8c_aab9e2aa02903648acc342068f0664a96}{md2cmds\_time\_capz\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 1 Stopped"},        
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 1 Stopped"},        
       \hyperlink{md2cmds_8c_a4cf5215fdb88407144f582d829c03c7b}{md2cmds\_coordsys\_1\_stopped\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 2 Stopped"},        
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 2 Stopped"},        
       \hyperlink{md2cmds_8c_a1ab8f6d08c82ee2130202d65d44ef3fe}{md2cmds\_coordsys\_2\_stopped\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 3 Stopped"},        
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 3 Stopped"},        
       \hyperlink{md2cmds_8c_a3640785c2fc9cd2f27ce0bafd7959179}{md2cmds\_coordsys\_3\_stopped\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 4 Stopped"},        
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 4 Stopped"},        
       \hyperlink{md2cmds_8c_a6069cb2f6e9f662edd54e1aeb6e78370}{md2cmds\_coordsys\_4\_stopped\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 5 Stopped"},        
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 5 Stopped"},        
       \hyperlink{md2cmds_8c_a846ed10de4e5ad48cfa429a93c853308}{md2cmds\_coordsys\_5\_stopped\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 7 Stopped"},        
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"Coordsys 7 Stopped"},        
       \hyperlink{md2cmds_8c_ab172a83eaf3e74799159e6720e4f5268}{md2cmds\_coordsys\_7\_stopped\_cb});
-  \hyperlink{lsevents_8c_ab0617d3f0594b51d10e34bf397096654}{lsevents\_add\_listener}( \textcolor{stringliteral}{"cam.zoom Moving"},              
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"cam.zoom Moving"},              
       \hyperlink{md2cmds_8c_a4eb608d012f8a471671e10fb19b366d6}{md2cmds\_set\_scale\_cb});
 \}
 \end{DoxyCode}
@@ -2491,7 +2310,7 @@ Definition at line 1934 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_a577b62b66ed5589a171550e26478633f}
 
 
-Definition at line 1697 of file md2cmds.\-c.
+Definition at line 1616 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -2502,23 +2321,23 @@ Definition at line 1697 of file md2cmds.\-c.
   \textcolor{keywordtype}{char} cp[64];
   
   \textcolor{keywordflow}{if}( strlen(cmd) > \textcolor{keyword}{sizeof}( cp)-1) \{
-    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_set: command too long
-       '%s'"}, cmd);
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_run\_cmd: command too
+       long '%s'"}, cmd);
     \textcolor{keywordflow}{return} 1;
   \}
   
   err = regexec( &\hyperlink{md2cmds_8c_ad07af354194cb9a8eac1f200257dcacd}{md2cmds\_cmd\_regex}, cmd, 16, pmatch, 0);
   \textcolor{keywordflow}{if}( err) \{
-    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_set: no match found
-       from '%s'"}, cmd);
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_run\_cmd: no match
+       found from '%s'"}, cmd);
     \textcolor{keywordflow}{return} 1;
   \}
 
   \textcolor{keywordflow}{for}( i=0; i<16; i++) \{
     \textcolor{keywordflow}{if}( pmatch[i].rm\_so == -1)
       \textcolor{keywordflow}{continue};
-    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_run: %d '%.*s'"}, i, 
-      pmatch[i].rm\_eo - pmatch[i].rm\_so, cmd+pmatch[i].rm\_so);
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_run\_cmd: %d '%.*s'"}, i
+      , pmatch[i].rm\_eo - pmatch[i].rm\_so, cmd+pmatch[i].rm\_so);
   \}
 
   \textcolor{comment}{//}
@@ -2530,8 +2349,8 @@ Definition at line 1697 of file md2cmds.\-c.
 
   mp = \hyperlink{lspmac_8c_a22ef36819bdee963712691e660cfc101}{lspmac\_find\_motor\_by\_name}( cp);
   \textcolor{keywordflow}{if}( mp == NULL) \{
-    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_set: could not find
-       motor '%s'"}, cp);
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_run\_cmd: could not
+       find motor '%s'"}, cp);
     \textcolor{keywordflow}{return} 1;
   \}
 
@@ -2562,7 +2381,7 @@ Definition at line 1697 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_aee4a35d084bc0fdd4598576469deeed0}
 
 
-Definition at line 1746 of file md2cmds.\-c.
+Definition at line 1715 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -2646,11 +2465,11 @@ Definition at line 1746 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_a4eb608d012f8a471671e10fb19b366d6}
 
 
-Fix up xscale and yscale when zoom changes. 
+Fix up xscale and yscale when zoom changes xscale and yscale have units of microns per pixel. 
 
 
 
-Definition at line 1551 of file md2cmds.\-c.
+Definition at line 1470 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -2678,6 +2497,70 @@ Definition at line 1551 of file md2cmds.\-c.
   free( vp);
 \}
 \end{DoxyCode}
+\hypertarget{md2cmds_8c_a3403a357a4b3ffd715a2f3d1dac3da5b}{\index{md2cmds.\-c@{md2cmds.\-c}!md2cmds\-\_\-settransferpoint@{md2cmds\-\_\-settransferpoint}}
+\index{md2cmds\-\_\-settransferpoint@{md2cmds\-\_\-settransferpoint}!md2cmds.c@{md2cmds.\-c}}
+\subsubsection[{md2cmds\-\_\-settransferpoint}]{\setlength{\rightskip}{0pt plus 5cm}int md2cmds\-\_\-settransferpoint (
+\begin{DoxyParamCaption}
+\item[{const char $\ast$}]{cmd}
+\end{DoxyParamCaption}
+)}}\label{md2cmds_8c_a3403a357a4b3ffd715a2f3d1dac3da5b}
+
+
+Definition at line 1665 of file md2cmds.\-c.
+
+
+\begin{DoxyCode}
+                                               \{
+  \textcolor{keywordtype}{double} ax, ay, az, cx, cy;
+
+  \hyperlink{md2cmds_8c_a408a01640e74152304b10ae05f5d09e1}{md2cmds\_home\_prep}();
+
+  \textcolor{comment}{//}
+  \textcolor{comment}{// Home Kappa}
+  \textcolor{comment}{//}
+  \hyperlink{lspmac_8c_a9fbadf816a842c8f131cf8ee47b54e29}{lspmac\_home1\_queue}( \hyperlink{lspmac_8c_a0be79ccb7ebf3a665248fd856112b9fd}{kappa});
+
+  \textcolor{comment}{//}
+  \textcolor{comment}{// Home omega}
+  \textcolor{comment}{//}
+  \hyperlink{lspmac_8c_a9fbadf816a842c8f131cf8ee47b54e29}{lspmac\_home1\_queue}( \hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega});
+
+  \textcolor{comment}{//}
+  \textcolor{comment}{// wait for kappa cause we can't home phi until kappa's done}
+  \textcolor{comment}{//}
+  \hyperlink{lspmac_8c_a55ffe2b135854f75079ecd39d507d3b4}{lspmac\_moveabs\_wait}( \hyperlink{lspmac_8c_a0be79ccb7ebf3a665248fd856112b9fd}{kappa}, 60.0);
+  
+  \textcolor{comment}{//}
+  \textcolor{comment}{// Home phi (whatever that means)}
+  \textcolor{comment}{//}
+  \hyperlink{lspmac_8c_a9fbadf816a842c8f131cf8ee47b54e29}{lspmac\_home1\_queue}( \hyperlink{lspmac_8c_ac8070dc568ad974a3db42b51eca828cc}{phi});
+
+  \textcolor{comment}{//}
+  \textcolor{comment}{// Wait for the homing routines to finish}
+  \textcolor{comment}{//}
+  \textcolor{keywordflow}{if}( \hyperlink{md2cmds_8c_aaf5225dbdfe8b04318070c1167ff6a22}{md2cmds\_home\_wait}( 30.0)) \{
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_transfer: homing
+       routines taking too long.  Aborting transfer."});
+    \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Settransferpoint Aborted"});
+    \textcolor{keywordflow}{return} 1;
+  \}
+
+  \textcolor{comment}{//}
+  \textcolor{comment}{// get positions we'll be needed to report to postgres}
+  \textcolor{comment}{//}
+  ax = \hyperlink{lspmac_8c_acc46bdddee59bd8c5ad662b3fd445e9f}{lspmac\_getPosition}(\hyperlink{lspmac_8c_a6cb218bdccfe5a93471c161f15a15cab}{alignx});
+  ay = \hyperlink{lspmac_8c_acc46bdddee59bd8c5ad662b3fd445e9f}{lspmac\_getPosition}(\hyperlink{lspmac_8c_a737c246c3948e644a18d191a931e1acd}{aligny});
+  az = \hyperlink{lspmac_8c_acc46bdddee59bd8c5ad662b3fd445e9f}{lspmac\_getPosition}(\hyperlink{lspmac_8c_ae7642b1da0f7c7f8448104c691d40a12}{alignz});
+  cx = \hyperlink{lspmac_8c_acc46bdddee59bd8c5ad662b3fd445e9f}{lspmac\_getPosition}(\hyperlink{lspmac_8c_ac940d950d9efeaf3f0ae67e9bf331188}{cenx});
+  cy = \hyperlink{lspmac_8c_acc46bdddee59bd8c5ad662b3fd445e9f}{lspmac\_getPosition}(\hyperlink{lspmac_8c_aaed18e738ba7bfb6c771a44f5d7ea827}{ceny});
+
+  \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"SELECT px.settransferpoint( %0.3f,
+       %0.3f, %0.3f, %0.3f, %0.3f)"}, ax, ay, az, cx, cy);
+
+  \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Settransferpoint Done"});
+  \textcolor{keywordflow}{return} 0;
+\}
+\end{DoxyCode}
 \hypertarget{md2cmds_8c_a4a321d5e1621948eecb33a51a58041f6}{\index{md2cmds.\-c@{md2cmds.\-c}!md2cmds\-\_\-test@{md2cmds\-\_\-test}}
 \index{md2cmds\-\_\-test@{md2cmds\-\_\-test}!md2cmds.c@{md2cmds.\-c}}
 \subsubsection[{md2cmds\-\_\-test}]{\setlength{\rightskip}{0pt plus 5cm}int md2cmds\-\_\-test (
@@ -2696,7 +2579,7 @@ Run the test routine(s)
 \end{DoxyParams}
 
 
-Definition at line 1691 of file md2cmds.\-c.
+Definition at line 1610 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -2718,7 +2601,7 @@ Time the capillary motion for the transfer routine.
 
 $<$ track the time spent moving capz 
 
-Definition at line 1585 of file md2cmds.\-c.
+Definition at line 1504 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -2762,7 +2645,7 @@ Transfer a sample.
 \end{DoxyParams}
 
 
-Definition at line 267 of file md2cmds.\-c.
+Definition at line 269 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -2771,6 +2654,8 @@ Definition at line 267 of file md2cmds.\-c.
   \textcolor{keywordtype}{double} esttime;
   \textcolor{keywordtype}{double} ax, ay, az, cx, cy, horz, vert, oref;
   \textcolor{keywordtype}{int} err;
+  \textcolor{keywordtype}{int} mmask;
+  \textcolor{keywordtype}{double} move\_time;
 
   nextsample = \hyperlink{lspg_8c_a4cc866393eda0cf20276d035f6fbe206}{lspg\_nextsample\_all}( &err);
   \textcolor{keywordflow}{if}( err) \{
@@ -2843,26 +2728,16 @@ Definition at line 267 of file md2cmds.\-c.
       \hyperlink{lspmac_8c_af57fb3f335edcfd2adff8186e1efd458}{lspmac\_getBIPosition}( \hyperlink{lspmac_8c_ac59ab990e48033a811aeb0281fb588fc}{sample\_detected}), ax, 
       ay, az, horz, vert, esttime);
 
-  \textcolor{comment}{// put the light down if it's not already}
-  \textcolor{comment}{//}
-  \textcolor{keywordflow}{if}( \hyperlink{lspmac_8c_af57fb3f335edcfd2adff8186e1efd458}{lspmac\_getBIPosition}( \hyperlink{lspmac_8c_ac0d0bc95bcbcbd154b30c72a9645c8b2}{blight\_down}) != 1)
-    \hyperlink{lspmac_8c_af813a2eff0b7efa4c70633559054e84c}{blight\_ud}->\hyperlink{structlspmac__motor__struct_a38b6eee046c3ceff84f908af3335ebcf}{moveAbs}( \hyperlink{lspmac_8c_af813a2eff0b7efa4c70633559054e84c}{blight\_ud}, 0);
-  
-  \textcolor{comment}{// Pull the fluorescence detector out of the way}
-  \textcolor{comment}{//}
-  \textcolor{keywordflow}{if}( \hyperlink{lspmac_8c_af57fb3f335edcfd2adff8186e1efd458}{lspmac\_getBIPosition}( \hyperlink{lspmac_8c_a67092de6f3fcc0b245e4970437eaff6b}{fluor\_back}) != 1)
-    \hyperlink{lspmac_8c_af813a2eff0b7efa4c70633559054e84c}{blight\_ud}->\hyperlink{structlspmac__motor__struct_a38b6eee046c3ceff84f908af3335ebcf}{moveAbs}( \hyperlink{lspmac_8c_addb26c80065506faa1de3c1b468fe03f}{fluo}, 0);
-  
-  \textcolor{comment}{//}
-  \textcolor{comment}{// Prepare for moving stuff}
-  \textcolor{comment}{//}
-  \hyperlink{md2cmds_8c_aa64b87b8aaf962a33e89f5086aeeabaa}{md2cmds\_move\_prep}();
-
-  \textcolor{comment}{//}
-  \textcolor{comment}{// Put the organs into position}
-  \textcolor{comment}{//}
-  \hyperlink{md2cmds_8c_a09a28007e7d8df7b8f97207474e5e516}{md2cmds\_organs\_move\_presets}( \textcolor{stringliteral}{"In"}, \textcolor{stringliteral}{"Cover"}, \textcolor{stringliteral}{"In"}, \textcolor{stringliteral}{
-      "Cover"}, \textcolor{stringliteral}{"Cover"});
+  mmask = 0;
+  err = \hyperlink{lspmac_8c_a984a1d6e49ad53d6a1184666881bf117}{lspmac\_est\_move\_time}( &move\_time, &mmask,
+                              \hyperlink{lspmac_8c_a139200ddaa9856a7ffcec0e6cbaa8f1b}{apery},     1, \textcolor{stringliteral}{"In"},    0.0,
+                              \hyperlink{lspmac_8c_ab93bd6ee850b285ca3a95e64d15e9477}{aperz},     1, \textcolor{stringliteral}{"Cover"}, 0.0,
+                              \hyperlink{lspmac_8c_a51358daaea8b5236f08414877d8af6c2}{capy},      1, \textcolor{stringliteral}{"In"},    0.0,
+                              \hyperlink{lspmac_8c_aa45f268d0af9f3d465acfab128919718}{capz},      1, \textcolor{stringliteral}{"Cover"}, 0.0,
+                              \hyperlink{lspmac_8c_a589431b3a79c21c251fcb97cc9126991}{scint},     1, \textcolor{stringliteral}{"Cover"}, 0.0,
+                              \hyperlink{lspmac_8c_af813a2eff0b7efa4c70633559054e84c}{blight\_ud}, 1, NULL,    0.0,
+                              \hyperlink{lspmac_8c_addb26c80065506faa1de3c1b468fe03f}{fluo},      1, NULL,    0.0,
+                              NULL);
 
 
   \hyperlink{md2cmds_8c_a408a01640e74152304b10ae05f5d09e1}{md2cmds\_home\_prep}();
@@ -2915,18 +2790,23 @@ Definition at line 267 of file md2cmds.\-c.
   \}
 
   \textcolor{comment}{//}
-  \textcolor{comment}{// Wait for all the motors to stop moving}
+  \textcolor{comment}{// Wait for all those other motors to stop moving}
   \textcolor{comment}{//}
-  \textcolor{keywordflow}{if}( \hyperlink{md2cmds_8c_a7cd262eaeafc85a6111cf06de4f29601}{md2cmds\_move\_wait}( 30.0)) \{
-    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_transfer: We got bored
-       waiting for the motors to stop.  Aborting transfer.  Later."});
+  err = \hyperlink{lspmac_8c_a570b4a359adc4da4ab80d53506d06963}{lspmac\_est\_move\_time\_wait}( move\_time + 2.0, 
+      mmask, \hyperlink{lspmac_8c_a139200ddaa9856a7ffcec0e6cbaa8f1b}{apery}, \hyperlink{lspmac_8c_ab93bd6ee850b285ca3a95e64d15e9477}{aperz}, \hyperlink{lspmac_8c_a51358daaea8b5236f08414877d8af6c2}{capy}, \hyperlink{lspmac_8c_aa45f268d0af9f3d465acfab128919718}{capz}, \hyperlink{lspmac_8c_a589431b3a79c21c251fcb97cc9126991}{scint}, \hyperlink{lspmac_8c_af813a2eff0b7efa4c70633559054e84c}{blight\_ud},
+       \hyperlink{lspmac_8c_addb26c80065506faa1de3c1b468fe03f}{fluo}, NULL);
+  \textcolor{keywordflow}{if}( err) \{
     \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Transfer Aborted"});
     \textcolor{keywordflow}{return} 1;
   \}
 
+
   \textcolor{comment}{// TODO: check that all the motors are where we told them to go  }
   \textcolor{comment}{//}
 
+  \textcolor{comment}{//}
+  \textcolor{comment}{// see if we have a sample mounted problem (is abort\_now misnamed?)}
+  \textcolor{comment}{//}
   \textcolor{keywordflow}{if}( abort\_now) \{
     \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_transfer: Apparently
        there is a sample mounted already but we don't know where it is supposed to go"});
@@ -2936,7 +2816,7 @@ Definition at line 267 of file md2cmds.\-c.
   
   \textcolor{comment}{// refuse to go on if we do not have positive confirmation that the backlight
        is down and the}
-  \textcolor{comment}{// fluorescence detector is back}
+  \textcolor{comment}{// fluorescence detector is back  (TODO: how about all those organs?)}
   \textcolor{comment}{//}
   \textcolor{keywordflow}{if}( \hyperlink{lspmac_8c_af57fb3f335edcfd2adff8186e1efd458}{lspmac\_getBIPosition}( \hyperlink{lspmac_8c_ac0d0bc95bcbcbd154b30c72a9645c8b2}{blight\_down}) != 1 ||
       \hyperlink{lspmac_8c_af57fb3f335edcfd2adff8186e1efd458}{lspmac\_getBIPosition}( \hyperlink{lspmac_8c_a67092de6f3fcc0b245e4970437eaff6b}{fluor\_back}) != 1) \{
@@ -2996,7 +2876,7 @@ Our worker thread.
 \end{DoxyParams}
 
 
-Definition at line 1811 of file md2cmds.\-c.
+Definition at line 1780 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -3087,22 +2967,23 @@ Definition at line 24 of file md2cmds.\-c.
 {\bfseries Initial value\-:}
 \begin{DoxyCode}
 = \{
-  \{ \textcolor{stringliteral}{"abort"},      \hyperlink{md2cmds_8c_ac196e3bcdae79c1ba70cf0bf40a9e299}{md2cmds\_abort}\},
-  \{ \textcolor{stringliteral}{"center"},     \hyperlink{md2cmds_8c_aa85ebd51f9c8268f4044be52201d3f1c}{md2cmds\_center}\},
-  \{ \textcolor{stringliteral}{"changeMode"}, \hyperlink{md2cmds_8c_a4569e8e2b269463b2a60b8407d9ce4d9}{md2cmds\_phase\_change}\},
-  \{ \textcolor{stringliteral}{"collect"},    \hyperlink{md2cmds_8c_ad8f399e3ea3c2c77c23989c0fa0ccd86}{md2cmds\_collect}\},
-  \{ \textcolor{stringliteral}{"moveAbs"},    \hyperlink{md2cmds_8c_ae1122d11f5198c7e8ee22125da65407c}{md2cmds\_moveAbs}\},
-  \{ \textcolor{stringliteral}{"moveRel"},    \hyperlink{md2cmds_8c_a8e8eba6f3c5855910ba3cde22dd3a4b2}{md2cmds\_moveRel}\},
-  \{ \textcolor{stringliteral}{"rotate"},     \hyperlink{md2cmds_8c_ab562f807493aaaaf5a6a377ac6d5a45e}{md2cmds\_rotate}\},
-  \{ \textcolor{stringliteral}{"run"},        \hyperlink{md2cmds_8c_a577b62b66ed5589a171550e26478633f}{md2cmds\_run\_cmd}\},
-  \{ \textcolor{stringliteral}{"test"},       \hyperlink{md2cmds_8c_a4a321d5e1621948eecb33a51a58041f6}{md2cmds\_test}\},
-  \{ \textcolor{stringliteral}{"set"},        \hyperlink{md2cmds_8c_aee4a35d084bc0fdd4598576469deeed0}{md2cmds\_set}\},
-  \{ \textcolor{stringliteral}{"transfer"},   \hyperlink{md2cmds_8c_a87efed33b7a49cdfeaf5d64df4ca09aa}{md2cmds\_transfer}\}
+  \{ \textcolor{stringliteral}{"abort"},            \hyperlink{md2cmds_8c_ac196e3bcdae79c1ba70cf0bf40a9e299}{md2cmds\_abort}\},
+  \{ \textcolor{stringliteral}{"center"},           \hyperlink{md2cmds_8c_aa85ebd51f9c8268f4044be52201d3f1c}{md2cmds\_center}\},
+  \{ \textcolor{stringliteral}{"changeMode"},       \hyperlink{md2cmds_8c_a4569e8e2b269463b2a60b8407d9ce4d9}{md2cmds\_phase\_change}\},
+  \{ \textcolor{stringliteral}{"collect"},          \hyperlink{md2cmds_8c_ad8f399e3ea3c2c77c23989c0fa0ccd86}{md2cmds\_collect}\},
+  \{ \textcolor{stringliteral}{"moveAbs"},          \hyperlink{md2cmds_8c_ae1122d11f5198c7e8ee22125da65407c}{md2cmds\_moveAbs}\},
+  \{ \textcolor{stringliteral}{"moveRel"},          \hyperlink{md2cmds_8c_a8e8eba6f3c5855910ba3cde22dd3a4b2}{md2cmds\_moveRel}\},
+  \{ \textcolor{stringliteral}{"rotate"},           \hyperlink{md2cmds_8c_ab562f807493aaaaf5a6a377ac6d5a45e}{md2cmds\_rotate}\},
+  \{ \textcolor{stringliteral}{"run"},              \hyperlink{md2cmds_8c_a577b62b66ed5589a171550e26478633f}{md2cmds\_run\_cmd}\},
+  \{ \textcolor{stringliteral}{"test"},             \hyperlink{md2cmds_8c_a4a321d5e1621948eecb33a51a58041f6}{md2cmds\_test}\},
+  \{ \textcolor{stringliteral}{"set"},              \hyperlink{md2cmds_8c_aee4a35d084bc0fdd4598576469deeed0}{md2cmds\_set}\},
+  \{ \textcolor{stringliteral}{"settransferpoint"}, \hyperlink{md2cmds_8c_a3403a357a4b3ffd715a2f3d1dac3da5b}{md2cmds\_settransferpoint}\},
+  \{ \textcolor{stringliteral}{"transfer"},         \hyperlink{md2cmds_8c_a87efed33b7a49cdfeaf5d64df4ca09aa}{md2cmds\_transfer}\}
 \}
 \end{DoxyCode}
 
 
-Definition at line 56 of file md2cmds.\-c.
+Definition at line 57 of file md2cmds.\-c.
 
 \hypertarget{md2cmds_8c_ad07af354194cb9a8eac1f200257dcacd}{\index{md2cmds.\-c@{md2cmds.\-c}!md2cmds\-\_\-cmd\-\_\-regex@{md2cmds\-\_\-cmd\-\_\-regex}}
 \index{md2cmds\-\_\-cmd\-\_\-regex@{md2cmds\-\_\-cmd\-\_\-regex}!md2cmds.c@{md2cmds.\-c}}

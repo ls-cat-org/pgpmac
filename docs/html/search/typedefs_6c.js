@@ -1,5 +1,7 @@
 var searchData=
 [
+  ['lsevents_5fcallbacks_5ft',['lsevents_callbacks_t',['../lsevents_8c.html#af904cc333bdd09b03bf41131d9744e94',1,'lsevents.c']]],
+  ['lsevents_5fevent_5fnames_5ft',['lsevents_event_names_t',['../lsevents_8c.html#af0673d1651902ed62acb18dd99c01197',1,'lsevents.c']]],
   ['lsevents_5flistener_5ft',['lsevents_listener_t',['../lsevents_8c.html#a8be5b9ff7269a3b057e354536cf9b0aa',1,'lsevents.c']]],
   ['lsevents_5fqueue_5ft',['lsevents_queue_t',['../lsevents_8c.html#a82bd12b9e91198e33f44262d324616c4',1,'lsevents.c']]],
   ['lslogging_5fqueue_5ft',['lslogging_queue_t',['../lslogging_8c.html#a953a02b9db989cbb60724b06bd33b038',1,'lslogging.c']]],
@@ -21,5 +23,6 @@ var searchData=
   ['lspmac_5fdpascii_5fqueue_5ft',['lspmac_dpascii_queue_t',['../lspmac_8c.html#a93786bb32f3e2ef44e7967210beeeca3',1,'lspmac.c']]],
   ['lspmac_5fmotor_5ft',['lspmac_motor_t',['../pgpmac_8h.html#aa5067fcbaabc5bbfdc52492495518c96',1,'pgpmac.h']]],
   ['lsredis_5fobj_5ft',['lsredis_obj_t',['../pgpmac_8h.html#ad449de06d02791adf2498d2a1e1f909c',1,'pgpmac.h']]],
+  ['lsredis_5fpreset_5flist_5ft',['lsredis_preset_list_t',['../lsredis_8c.html#a8eac570b2b69ea0b7948b6c581cf6002',1,'lsredis.c']]],
   ['lstimer_5flist_5ft',['lstimer_list_t',['../lstimer_8c.html#abae36af84be0a2f4529aa0424edc6fbf',1,'lstimer.c']]]
 ];

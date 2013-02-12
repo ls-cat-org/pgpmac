@@ -2,6 +2,8 @@ var annotated =
 [
     [ "iniParser", "namespaceiniParser.html", "namespaceiniParser" ],
     [ "mk_pgpmac_redis", "namespacemk__pgpmac__redis.html", null ],
+    [ "lsevents_callbacks_struct", "structlsevents__callbacks__struct.html", "structlsevents__callbacks__struct" ],
+    [ "lsevents_event_names_struct", "structlsevents__event__names__struct.html", "structlsevents__event__names__struct" ],
     [ "lsevents_listener_struct", "structlsevents__listener__struct.html", "structlsevents__listener__struct" ],
     [ "lsevents_queue_struct", "structlsevents__queue__struct.html", "structlsevents__queue__struct" ],
     [ "lslogging_queue_struct", "structlslogging__queue__struct.html", "structlslogging__queue__struct" ],
@@ -24,6 +26,7 @@ var annotated =
     [ "lspmac_dpascii_queue_struct", "structlspmac__dpascii__queue__struct.html", "structlspmac__dpascii__queue__struct" ],
     [ "lspmac_motor_struct", "structlspmac__motor__struct.html", "structlspmac__motor__struct" ],
     [ "lsredis_obj_struct", "structlsredis__obj__struct.html", "structlsredis__obj__struct" ],
+    [ "lsredis_preset_list_struct", "structlsredis__preset__list__struct.html", "structlsredis__preset__list__struct" ],
     [ "lstimer_list_struct", "structlstimer__list__struct.html", "structlstimer__list__struct" ],
     [ "md2cmds_cmd_kv_struct", "structmd2cmds__cmd__kv__struct.html", "structmd2cmds__cmd__kv__struct" ],
     [ "md2StatusStruct", "structmd2StatusStruct.html", "structmd2StatusStruct" ],

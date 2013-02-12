@@ -1,5 +1,7 @@
 var searchData=
 [
+  ['lsevents_5fcallbacks_5fstruct',['lsevents_callbacks_struct',['../structlsevents__callbacks__struct.html',1,'']]],
+  ['lsevents_5fevent_5fnames_5fstruct',['lsevents_event_names_struct',['../structlsevents__event__names__struct.html',1,'']]],
   ['lsevents_5flistener_5fstruct',['lsevents_listener_struct',['../structlsevents__listener__struct.html',1,'']]],
   ['lsevents_5fqueue_5fstruct',['lsevents_queue_struct',['../structlsevents__queue__struct.html',1,'']]],
   ['lslogging_5fqueue_5fstruct',['lslogging_queue_struct',['../structlslogging__queue__struct.html',1,'']]],
@@ -22,5 +24,6 @@ var searchData=
   ['lspmac_5fdpascii_5fqueue_5fstruct',['lspmac_dpascii_queue_struct',['../structlspmac__dpascii__queue__struct.html',1,'']]],
   ['lspmac_5fmotor_5fstruct',['lspmac_motor_struct',['../structlspmac__motor__struct.html',1,'']]],
   ['lsredis_5fobj_5fstruct',['lsredis_obj_struct',['../structlsredis__obj__struct.html',1,'']]],
+  ['lsredis_5fpreset_5flist_5fstruct',['lsredis_preset_list_struct',['../structlsredis__preset__list__struct.html',1,'']]],
   ['lstimer_5flist_5fstruct',['lstimer_list_struct',['../structlstimer__list__struct.html',1,'']]]
 ];
