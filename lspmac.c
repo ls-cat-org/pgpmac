@@ -2477,10 +2477,22 @@ int lspmac_moveabs_bo_queue(
   mp->requested_position = requested_position == 0.0 ? 0.0 : 1.0;
   mp->requested_pos_cnts = requested_position == 0.0 ? 0 : 1;
 
-  mp->not_done    = 1;
-  mp->motion_seen = 0;
-  lspmac_SockSendDPline( mp->name, mp->write_fmt, mp->requested_pos_cnts);
-
+  if( mp->requested_position == mp->position) {
+    //
+    // No real move requested
+    //
+    mp->not_done     = 0;
+    mp->motion_seen  = 1;
+    mp->command_sent = 1;
+  } else {
+    //
+    // Go ahead and send the request
+    //
+    mp->not_done     = 1;
+    mp->motion_seen  = 0;
+    mp->command_sent = 0;
+    lspmac_SockSendDPline( mp->name, mp->write_fmt, mp->requested_pos_cnts);
+  }
 
   pthread_mutex_unlock( &(mp->mutex));
   return 0;
@@ -2982,7 +2994,7 @@ int lspmac_est_move_time( double *est_time, int *mmaskp, lspmac_motor_t *mp_1, i
 	}
       } else {
 	//
-	// Here we are dealling with a DAC or BO motor or just want to jog.
+	// Here we are dealing with a DAC or BO motor or just want to jog.
 	//
 	if( mp->jogAbs( mp, ep)) {
 	  lslogging_log_message( "lspmac_est_move_time: motor %s failed to queue move of distance %f from %f", mp->name, D, lspmac_getPosition(mp));
@@ -3951,7 +3963,7 @@ void lspmac_light_zoom_cb( char *event) {
 /** Perhaps we need to move the sample out of the way
  */
 void lspmac_scint_maybe_move_sample_cb( char *event) {
-  static int trigger = 0;
+  static int trigger = 1;
   double scint_target;
   int err;
   double move_time;
