@@ -403,8 +403,8 @@ void lspg_starttransfer_call( unsigned int nextsample, int sample_detected, doub
   lspg_starttransfer.new_value_ready = 0;
   pthread_mutex_unlock( &(lspg_starttransfer.mutex));
 
-  lspg_query_push( lspg_starttransfer_cb, "SELECT px.starttransfer( %d, %d, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f",
-		   nextsample, sample_detected, ax, ay, az, horz, vert, esttime);
+  lspg_query_push( lspg_starttransfer_cb, "SELECT px.starttransfer( %d, %s, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f)",
+		   nextsample, sample_detected ? "True" : "False", ax, ay, az, horz, vert, esttime);
 }
 
 void lspg_starttransfer_wait() {
@@ -456,6 +456,9 @@ void lspg_getcurrentsampleid_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   lspg_getcurrentsampleid.getcurrentsampleid_isnull = PQgetisnull( pgr, 0, 0);
   if( lspg_getcurrentsampleid.getcurrentsampleid_isnull == 0)
     lspg_getcurrentsampleid.getcurrentsampleid = strtol( PQgetvalue( pgr, 0, 0), NULL, 0);
+
+  lslogging_log_message( "lspg_getcurrentsampleid_cb: current sample id: %d",
+			 lspg_getcurrentsampleid.getcurrentsampleid);
 
   pthread_cond_signal( &lspg_getcurrentsampleid.cond);
   pthread_mutex_unlock( &lspg_getcurrentsampleid.mutex);
@@ -1584,7 +1587,7 @@ void lspg_pg_service(
 	lslogging_log_message( "lspg_pg_service: notify recieved %s", pgn->relname);
 	
 	if( strstr( pgn->relname, "_pmac") != NULL) {
-	  lspg_query_push( lspg_cmd_cb, "EXEVUTE md2_queue_next");
+	  lspg_query_push( lspg_cmd_cb, "EXECUTE md2_queue_next");
 	} else if( strstr( pgn->relname, "_diff") != NULL || strstr( pgn->relname, "_run") != NULL) {
 	  lspg_query_push( lspg_nextaction_cb, "EXECUTE nextaction");
 	} else if( strstr( pgn->relname, "_sample") != NULL) {
