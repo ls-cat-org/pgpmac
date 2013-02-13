@@ -268,7 +268,6 @@ void md2cmds_organs_move_presets( char *pay, char *paz, char *pcy, char *pcz, ch
  */
 int md2cmds_transfer( const char *dummy) {
   int nextsample, abort_now;
-  double esttime;
   double ax, ay, az, cx, cy, horz, vert, oref;
   int err;
   int mmask;
@@ -307,25 +306,6 @@ int md2cmds_transfer( const char *dummy) {
   horz = cx * cos(oref) + cy * sin(oref);
   vert = cx * sin(oref) - cy * cos(oref);
 
-  if( lsredis_getd( capz->u2c) <= 0.0 || lsredis_getd( capz->max_speed) <= 0.0 || lsredis_getd( capz->max_accel) <= 0.0) {
-    esttime = 0.0;
-  } else {
-    
-    // Here we assume moving the capilary is the rate limiting step in preparing the MD2.
-    //
-    // TODO: look at factors in which something besides the capilary determines the time such as if the scintilator is out.
-    //
-    // pretend we are going to zero instead of the "Out" position.  We should probably arrange for
-    // neutralPosition such that "Out" is zero.
-    //
-    // This also treats S curve acceleration as taking the same time as linear acceleration.
-    //
-    esttime  = lspmac_getPosition( capz)/lsredis_getd( capz->u2c)/(lsredis_getd( capz->max_speed));	// Time if we moved at constant velocity
-    esttime += lsredis_getd( capz->max_speed)/lsredis_getd(capz->max_accel);				// Correction for time spent accelerating
-    esttime /= 1000.;											// convert from milliseconds to seconds
-  }
-
-  lspg_starttransfer_call( nextsample, lspmac_getBIPosition( sample_detected), ax, ay, az, horz, vert, esttime);
 
   mmask = 0;
   err = lspmac_est_move_time( &move_time, &mmask,
@@ -338,6 +318,7 @@ int md2cmds_transfer( const char *dummy) {
 			      fluo,      1, NULL,    0.0,
 			      NULL);
 
+  lspg_starttransfer_call( nextsample, lspmac_getBIPosition( sample_detected), ax, ay, az, horz, vert, move_time);
 
   md2cmds_home_prep();
 
@@ -627,7 +608,7 @@ int md2cmds_phase_manualMount() {
                               scint,     1, "Cover",       0.0,
                               blight,    1, NULL,          0.0,
                               blight_ud, 1, NULL,          0.0,
-                              cryo,      1, NULL,          1.0,
+                              cryo,      1, NULL,          0.0,
                               fluo,      1, NULL,          0.0,
                               zoom,      0, NULL,          1.0,
                               NULL);
@@ -663,17 +644,17 @@ int md2cmds_phase_robotMount() {
 
   //                                                                                                                                                                                                                                                                             // Move 'em                                                                                                                                                                                                                                                                    //                                                                                                                                                                                                                                                                             lspmac_home1_queue( kappa);
   lspmac_home1_queue( omega);
+  lspmac_home1_queue( kappa);
 
   mmask = 0;
   err = lspmac_est_move_time( &move_time, &mmask,
-                              phi,       0, NULL,    0.0,
                               apery,     1, "In",    0.0,
                               aperz,     1, "In",    0.0,
                               capz,      1, "Cover", 0.0,
                               scint,     1, "Cover", 0.0,
                               blight,    1, NULL,    0.0,
                               blight_ud, 1, NULL,    0.0,
-                              cryo,      1, NULL,    1.0,
+                              cryo,      1, NULL,    0.0,
                               fluo,      1, NULL,    0.0,
                               zoom,      0, NULL,    1.0,
                               NULL);
@@ -689,6 +670,15 @@ int md2cmds_phase_robotMount() {
     lsevents_send_event( "Mode robotMount Aborted");
     return err;
   }
+
+  md2cmds_home_prep();
+  lspmac_home1_queue( phi);
+  err = md2cmds_home_wait( 60.0);
+  if( err) {
+    lsevents_send_event( "Mode robotMount Aborted");
+    return err;
+  }
+
 
   lsevents_send_event( "Mode robotMount Done");
   return 0;
@@ -712,7 +702,7 @@ int md2cmds_phase_center() {
                               capy,      0, "In",    0.0,
                               capz,      0, "In",    0.0,
                               scint,     0, "Cover", 0.0,
-                              blight_ud, 1, NULL,    0.0,
+                              blight_ud, 1, NULL,    1.0,
                               zoom,      0, NULL,    1.0,
                               cryo,      1, NULL,    0.0,
                               fluo,      1, NULL,    0.0,
@@ -1677,11 +1667,13 @@ int md2cmds_settransferpoint( const char *cmd) {
   //
   lspmac_home1_queue( omega);
 
-  //
-  // wait for kappa cause we can't home phi until kappa's done
-  //
-  lspmac_moveabs_wait( kappa, 60.0);
-  
+  if( md2cmds_home_wait( 30.0)) {
+    lslogging_log_message( "md2cmds_transfer: homing routines taking too long.  Aborting transfer.");
+    lsevents_send_event( "Settransferpoint Aborted");
+    return 1;
+  }
+
+  md2cmds_home_prep();
   //
   // Home phi (whatever that means)
   //
