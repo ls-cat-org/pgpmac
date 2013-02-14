@@ -333,13 +333,18 @@ int md2cmds_transfer( const char *dummy) {
   lspmac_home1_queue( omega);
 
   //
-  // wait for kappa cause we can't home phi until kappa's done
+  // Wait for the kappa/omega homing routines to finish
   //
-  lspmac_moveabs_wait( kappa, 60.0);
-  
+  if( md2cmds_home_wait( 30.0)) {
+    lslogging_log_message( "md2cmds_transfer: kappa/omega homing routines taking too long.  Aborting transfer.");
+    lsevents_send_event( "Transfer Aborted");
+    return 1;
+  }
+
   //
   // Home phi (whatever that means)
   //
+  md2cmds_home_prep();
   lspmac_home1_queue( phi);
 
   // Now let's get back to postresql (remember our query so long ago?)
@@ -350,6 +355,8 @@ int md2cmds_transfer( const char *dummy) {
   // It's possible that the sample that's mounted is unknown to the robot.
   // If so then we need to abort after we're done moving stuff
   //
+  lslogging_log_message( "md2cmds_transfer: no_rows_returned %d, starttransfer %d",
+			 lspg_starttransfer.no_rows_returned, lspg_starttransfer.starttransfer);
   if( lspg_starttransfer.no_rows_returned || lspg_starttransfer.starttransfer != 1)
     abort_now = 1;
   else
@@ -362,7 +369,7 @@ int md2cmds_transfer( const char *dummy) {
   // Wait for the homing routines to finish
   //
   if( md2cmds_home_wait( 30.0)) {
-    lslogging_log_message( "md2cmds_transfer: homing routines taking too long.  Aborting transfer.");
+    lslogging_log_message( "md2cmds_transfer: phi homing routine taking too long.  Aborting transfer.");
     lsevents_send_event( "Transfer Aborted");
     return 1;
   }
@@ -410,7 +417,7 @@ int md2cmds_transfer( const char *dummy) {
   lspmac_moveabs_wait( cryo, 10.0);
 
   // simplest query yet!
-  lspg_query_push( lspg_waitcryo_cb, "SELECT px.dropairrights()");
+  lspg_query_push( NULL, "SELECT px.dropairrights()");
 
   // wait for the result
   // TODO: find an easy way out of this in case of error
@@ -420,6 +427,11 @@ int md2cmds_transfer( const char *dummy) {
   // grab the airrights again
   //
   lspg_demandairrights_all();
+
+  // Return the cryo
+  //
+  cryo->moveAbs( cryo, 0);
+  lspmac_moveabs_wait( cryo, 10.0);
 
   lsevents_send_event( "Transfer Done");
 
@@ -667,6 +679,7 @@ int md2cmds_phase_robotMount() {
 
   err = md2cmds_home_wait( 60.0);
   if( err) {
+    lslogging_log_message( "md2cmds_phase_robotMount: timed out homing omega or kappa");
     lsevents_send_event( "Mode robotMount Aborted");
     return err;
   }
@@ -675,6 +688,7 @@ int md2cmds_phase_robotMount() {
   lspmac_home1_queue( phi);
   err = md2cmds_home_wait( 60.0);
   if( err) {
+    lslogging_log_message( "md2cmds_phase_robotMount: timed out homing phi");
     lsevents_send_event( "Mode robotMount Aborted");
     return err;
   }
@@ -961,8 +975,8 @@ void md2cmds_maybe_done_moving_cb( char *event) {
 void md2cmds_maybe_done_homing_cb( char *event) {
   pthread_mutex_lock( &md2cmds_homing_mutex);
   
-  if( strstr( event, "Homing") == NULL) {
-    if( md2cmds_homing_count != -1)
+  if( strstr( event, "Homing") != NULL) {
+    if( md2cmds_homing_count == -1)
       md2cmds_homing_count = 1;
     else
       md2cmds_homing_count++;
@@ -1668,7 +1682,7 @@ int md2cmds_settransferpoint( const char *cmd) {
   lspmac_home1_queue( omega);
 
   if( md2cmds_home_wait( 30.0)) {
-    lslogging_log_message( "md2cmds_transfer: homing routines taking too long.  Aborting transfer.");
+    lslogging_log_message( "md2cmds_settransferpoint: homing routines taking too long.  Aborting transfer.");
     lsevents_send_event( "Settransferpoint Aborted");
     return 1;
   }
@@ -1683,7 +1697,7 @@ int md2cmds_settransferpoint( const char *cmd) {
   // Wait for the homing routines to finish
   //
   if( md2cmds_home_wait( 30.0)) {
-    lslogging_log_message( "md2cmds_transfer: homing routines taking too long.  Aborting transfer.");
+    lslogging_log_message( "md2cmds_settransferpoint: homing routines taking too long.  Aborting transfer.");
     lsevents_send_event( "Settransferpoint Aborted");
     return 1;
   }
@@ -1893,17 +1907,17 @@ void md2cmds_init() {
 /** Start up the thread
  */
 void md2cmds_run() {
-  pthread_create( &md2cmds_thread, NULL,              md2cmds_worker, NULL);
-  lsevents_add_listener( "omega crossed zero",        md2cmds_rotate_cb);
-  lsevents_add_listener( "omega In Position",         md2cmds_maybe_rotate_done_cb);
-  lsevents_add_listener( ".+ (Moving|In Position)",   md2cmds_maybe_done_moving_cb);
-  lsevents_add_listener( "(.+) (Homing|Homed)",       md2cmds_maybe_done_homing_cb);
-  lsevents_add_listener( "capz (Moving|In Position)", md2cmds_time_capz_cb);
-  lsevents_add_listener( "Coordsys 1 Stopped",        md2cmds_coordsys_1_stopped_cb);
-  lsevents_add_listener( "Coordsys 2 Stopped",        md2cmds_coordsys_2_stopped_cb);
-  lsevents_add_listener( "Coordsys 3 Stopped",        md2cmds_coordsys_3_stopped_cb);
-  lsevents_add_listener( "Coordsys 4 Stopped",        md2cmds_coordsys_4_stopped_cb);
-  lsevents_add_listener( "Coordsys 5 Stopped",        md2cmds_coordsys_5_stopped_cb);
-  lsevents_add_listener( "Coordsys 7 Stopped",        md2cmds_coordsys_7_stopped_cb);
-  lsevents_add_listener( "cam.zoom Moving",	      md2cmds_set_scale_cb);
+  pthread_create( &md2cmds_thread, NULL,                md2cmds_worker, NULL);
+  lsevents_add_listener( "^omega crossed zero$",        md2cmds_rotate_cb);
+  lsevents_add_listener( "^omega In Position$",         md2cmds_maybe_rotate_done_cb);
+  lsevents_add_listener( ".+ (Moving|In Position)$",    md2cmds_maybe_done_moving_cb);
+  lsevents_add_listener( "(.+) (Homing|Homed)$",        md2cmds_maybe_done_homing_cb);
+  lsevents_add_listener( "^capz (Moving|In Position)$", md2cmds_time_capz_cb);
+  lsevents_add_listener( "^Coordsys 1 Stopped$",        md2cmds_coordsys_1_stopped_cb);
+  lsevents_add_listener( "^Coordsys 2 Stopped$",        md2cmds_coordsys_2_stopped_cb);
+  lsevents_add_listener( "^Coordsys 3 Stopped$",        md2cmds_coordsys_3_stopped_cb);
+  lsevents_add_listener( "^Coordsys 4 Stopped$",        md2cmds_coordsys_4_stopped_cb);
+  lsevents_add_listener( "^Coordsys 5 Stopped$",        md2cmds_coordsys_5_stopped_cb);
+  lsevents_add_listener( "^Coordsys 7 Stopped$",        md2cmds_coordsys_7_stopped_cb);
+  lsevents_add_listener( "^cam.zoom Moving$",	        md2cmds_set_scale_cb);
 }
