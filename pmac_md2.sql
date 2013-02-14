@@ -130,13 +130,16 @@ CREATE OR REPLACE FUNCTION pmac.md2_init( the_stn int) returns void as $$
     PERFORM px.md2clearqueue( the_stn);
     PERFORM px.runqueue_clear( the_stn);
     PERFORM cats._clearqueue( the_stn);
+    
 
     -- Prepare some common queries
     --
-    PREPARE getkvs AS SELECT pmac.getkvs();
-    PREPARE nextaction AS SELECT action FROM px.nextaction();
-    PREPARE md2_queue_next AS SELECT pmac.md2_queue_next();
-    PREPARE kvupdate( text[]) AS SELECT px.kvupdate($1);
+    PREPARE getkvs                 AS SELECT pmac.getkvs();
+    PREPARE nextaction             AS SELECT action FROM px.nextaction();
+    PREPARE md2_queue_next         AS SELECT pmac.md2_queue_next();
+    PREPARE kvupdate( text[])      AS SELECT px.kvupdate($1);
+    PREPARE nexterrors             AS SELECT * FROM px.nexterrors();
+    PREPARE acknowledgeerror( int) AS SELECT px.acknowledgeerror( $1);
 
   END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
