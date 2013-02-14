@@ -106,6 +106,8 @@ void *lslogging_worker(
     msecs = lslogging_queue[off].ltime.tv_nsec / 1000;
     fprintf( lslogging_file, "%s.%.06u  %s\n", tstr, msecs, lslogging_queue[off].lmsg);
     fflush( lslogging_file);
+
+    pgpmac_printf( "%s\n", lslogging_queue[off].lmsg);
   }
 }
 
