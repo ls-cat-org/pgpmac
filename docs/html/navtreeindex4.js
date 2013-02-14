@@ -1,5 +1,9 @@
 var NAVTREEINDEX4 =
 {
+"structlspg__nextshot__struct.html#a846845b0b9ecf6517ef85554771ec71d":[2,0,13,6],
+"structlspg__nextshot__struct.html#a84ae35abfa725d1bdbff5403f6384ee4":[2,0,13,46],
+"structlspg__nextshot__struct.html#a8571a0b95fb6ea6356fd7204b9c9e371":[2,0,13,38],
+"structlspg__nextshot__struct.html#a8dc11eaa094d59f61642c4abc226918f":[2,0,13,74],
 "structlspg__nextshot__struct.html#a8dea57b78b92d67d83ccbb6ed6da13ca":[2,0,13,26],
 "structlspg__nextshot__struct.html#a94698a030fd5b2abf1f10a2ad33476a4":[2,0,13,13],
 "structlspg__nextshot__struct.html#a95d080f13a4e02b9aa883821ee3e721c":[2,0,13,14],
@@ -245,9 +249,5 @@ var NAVTREEINDEX4 =
 "structmd2StatusStruct.html#af4f8869f8954c6162cae80000c54694f":[2,0,29,40],
 "structmd2StatusStruct.html#af6891f5f8dcfc62668f64c583042c6bc":[2,0,29,53],
 "structmd2StatusStruct.html#af6cf3cd65b9ef205685a0d970f168907":[2,0,29,57],
-"structmd2cmds__cmd__kv__struct.html":[2,0,28],
-"structmd2cmds__cmd__kv__struct.html#a4cd5cce8339ed8cc9f0a5835a9bc5c69":[2,0,28,0],
-"structmd2cmds__cmd__kv__struct.html#ab12171e8ea4148dedcb13673e05ca92c":[2,0,28,1],
-"structtagEthernetCmd.html":[2,0,30],
-"structtagEthernetCmd.html#a0dc566e7edbb226f1a4ea443d93d56e2":[2,0,30,1]
+"structmd2cmds__cmd__kv__struct.html":[2,0,28]
 };

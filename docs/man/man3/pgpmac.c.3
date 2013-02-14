@@ -1,4 +1,4 @@
-.TH "pgpmac.c" 3 "Tue Feb 12 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "pgpmac.c" 3 "Thu Feb 14 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -23,6 +23,10 @@ Main for the pgpmac project\&.
 .RI "void \fBpgpmac_printf\fP (char *fmt,\&.\&.\&.)"
 .br
 .RI "\fITerminal output routine ala printf\&. \fP"
+.ti -1c
+.RI "void \fBpgpmac_quit_cb\fP (char *event)"
+.br
+.RI "\fIquit the program \fP"
 .ti -1c
 .RI "int \fBmain\fP (int argc, char **argv)"
 .br
@@ -95,7 +99,7 @@ Our main routine\&. < argument flags \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 353 of file pgpmac\&.c\&.
+Definition at line 362 of file pgpmac\&.c\&.
 .PP
 .nf
            {
@@ -113,6 +117,7 @@ Definition at line 353 of file pgpmac\&.c\&.
   mvars    = 0;
   ivars    = 0;
   int i;                        // standard loop counter
+  pthread_mutexattr_t mutex_initializer;
 
   while( 1) {
     c=getopt_long( argc, argv, 'im', long_options, NULL);
@@ -138,7 +143,12 @@ Definition at line 353 of file pgpmac\&.c\&.
   keypad( stdscr, TRUE);                // Why is F1 nifty?
   refresh();
 
-  pthread_mutex_init( &ncurses_mutex, NULL);    // don't lock this mutex yet because we are not multi-threaded until the '_run' functions
+  // Use recursive mutexs
+  //
+  pthread_mutexattr_init( &mutex_initializer);
+  pthread_mutexattr_settype( &mutex_initializer, PTHREAD_MUTEX_RECURSIVE);
+
+  pthread_mutex_init( &ncurses_mutex, &mutex_initializer);      // don't lock this mutex yet because we are not multi-threaded until the '_run' functions
 
   //
   // Since the modules reference objects in other modules it is important
@@ -148,6 +158,9 @@ Definition at line 353 of file pgpmac\&.c\&.
   lslogging_run();
   lsevents_init();
   lsevents_run();
+
+  lsevents_add_listener( '^Quit Program$', pgpmac_quit_cb);
+
   lstimer_init();
   lstimer_run();
   lsredis_init( 'MD2-21-ID-E', 'redis\\\&.kvseq|stns\\\&.2\\\&.(\&.+)', 'stns\&.2');
@@ -157,6 +170,10 @@ Definition at line 353 of file pgpmac\&.c\&.
   lspg_init();
   md2cmds_init();
 
+
+
+
+  pthread_mutex_lock( &ncurses_mutex);
   term_status = newwin( LS_DISPLAY_WINDOW_HEIGHT, LS_DISPLAY_WINDOW_WIDTH, 3*LS_DISPLAY_WINDOW_HEIGHT, 0*LS_DISPLAY_WINDOW_WIDTH);
   box( term_status, 0, 0);
   wnoutrefresh( term_status);
@@ -177,6 +194,7 @@ Definition at line 353 of file pgpmac\&.c\&.
   wnoutrefresh( term_input);                          
                                                       
   doupdate();                                         
+  pthread_mutex_unlock( &ncurses_mutex);
 
   lspmac_run();
   lspg_run();
@@ -232,7 +250,7 @@ Terminal output routine ala printf\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 330 of file pgpmac\&.c\&.
+Definition at line 332 of file pgpmac\&.c\&.
 .PP
 .nf
                      {
@@ -250,6 +268,18 @@ Definition at line 330 of file pgpmac\&.c\&.
 
   pthread_mutex_unlock( &ncurses_mutex);
 
+}
+.fi
+.SS "void pgpmac_quit_cb (char *event)"
+
+.PP
+quit the program 
+.PP
+Definition at line 355 of file pgpmac\&.c\&.
+.PP
+.nf
+                                  {
+  running = 0;
 }
 .fi
 .SS "void stdinService (struct pollfd *evt)"
@@ -273,14 +303,14 @@ Definition at line 254 of file pgpmac\&.c\&.
 
 
   for( ch=wgetch(term_input); ch != ERR && running; ch=wgetch(term_input)) {
-    // wprintw( term_output, '%04x\n', ch);
-    // wnoutrefresh( term_output);
 
     switch( ch) {
     case KEY_F(1):
     case KEY_F(2):
     case KEY_F(3):
-      running = 0;
+      lspmac_abort();
+      lsevents_send_event( 'Quitting Program');
+      lstimer_set_timer( 'Quit Program', 1, 10, 0);
       break;
 
     case 0x0001:        // Control-A
@@ -328,11 +358,13 @@ Definition at line 254 of file pgpmac\&.c\&.
     }
     
     if( running) {
+      pthread_mutex_lock( &ncurses_mutex);
       mvwprintw( term_input, 1, 1, 'PMAC> %s', cmds);
       wclrtoeol( term_input);
       box( term_input, 0, 0);
       wnoutrefresh( term_input);
       doupdate();
+      pthread_mutex_unlock( &ncurses_mutex);
     }
   }
 }

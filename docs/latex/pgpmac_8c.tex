@@ -14,6 +14,8 @@ void \hyperlink{pgpmac_8c_a9127a8f722451b5996ffbc6966f4aa95}{stdin\-Service} (st
 \begin{DoxyCompactList}\small\item\em Handle keyboard input. \end{DoxyCompactList}\item 
 void \hyperlink{pgpmac_8c_a7762ca7b97b44b979e23ce88ca3b4249}{pgpmac\-\_\-printf} (char $\ast$fmt,...)
 \begin{DoxyCompactList}\small\item\em Terminal output routine ala printf. \end{DoxyCompactList}\item 
+void \hyperlink{pgpmac_8c_ac5c3f94664514a4b101ad5d3d32581fe}{pgpmac\-\_\-quit\-\_\-cb} (char $\ast$event)
+\begin{DoxyCompactList}\small\item\em quit the program \end{DoxyCompactList}\item 
 int \hyperlink{pgpmac_8c_a3c04138a5bfe5d72780bb7e82a18e627}{main} (int argc, char $\ast$$\ast$argv)
 \begin{DoxyCompactList}\small\item\em Our main routine. \end{DoxyCompactList}\end{DoxyCompactItemize}
 \subsection*{Variables}
@@ -73,7 +75,7 @@ $<$ argument flags
 \end{DoxyParams}
 
 
-Definition at line 353 of file pgpmac.\-c.
+Definition at line 362 of file pgpmac.\-c.
 
 
 \begin{DoxyCode}
@@ -93,6 +95,7 @@ Definition at line 353 of file pgpmac.\-c.
   mvars    = 0;
   ivars    = 0;
   \textcolor{keywordtype}{int} \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i};                       \textcolor{comment}{// standard loop counter}
+  pthread\_mutexattr\_t mutex\_initializer;
 
   \textcolor{keywordflow}{while}( 1) \{
     c=getopt\_long( argc, argv, \textcolor{stringliteral}{"im"}, long\_options, NULL);
@@ -119,8 +122,14 @@ Definition at line 353 of file pgpmac.\-c.
   keypad( stdscr, TRUE);                \textcolor{comment}{// Why is F1 nifty?}
   refresh();
 
-  pthread\_mutex\_init( &\hyperlink{pgpmac_8c_ad128c64890c7c0d4f836d9ec6e99216a}{ncurses\_mutex}, NULL);       \textcolor{comment}{// don't lock
-       this mutex yet because we are not multi-threaded until the "\_run" functions}
+  \textcolor{comment}{// Use recursive mutexs}
+  \textcolor{comment}{//}
+  pthread\_mutexattr\_init( &mutex\_initializer);
+  pthread\_mutexattr\_settype( &mutex\_initializer, PTHREAD\_MUTEX\_RECURSIVE);
+
+  pthread\_mutex\_init( &\hyperlink{pgpmac_8c_ad128c64890c7c0d4f836d9ec6e99216a}{ncurses\_mutex}, &mutex\_initializer); \textcolor{comment}{//
+       don't lock this mutex yet because we are not multi-threaded until the "\_run"
+       functions}
 
   \textcolor{comment}{//}
   \textcolor{comment}{// Since the modules reference objects in other modules it is important}
@@ -130,6 +139,10 @@ Definition at line 353 of file pgpmac.\-c.
   \hyperlink{lslogging_8c_ad9f65252584e65957f461b809d59e3a2}{lslogging\_run}();
   \hyperlink{lsevents_8c_af19a77187e7406fc87d36bd26e672e6d}{lsevents\_init}();
   \hyperlink{lsevents_8c_a4ddde538b603e3d4580ae9356bf9b89d}{lsevents\_run}();
+
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"^Quit Program$"}, \hyperlink{pgpmac_8c_ac5c3f94664514a4b101ad5d3d32581fe}{pgpmac\_quit\_cb}
+      );
+
   \hyperlink{lstimer_8c_a8cd37a8fb0f061456456a5d79bdd5189}{lstimer\_init}();
   \hyperlink{lstimer_8c_a0b918acc1a4bf737cb62b5a70f8b553a}{lstimer\_run}();
   \hyperlink{lsredis_8c_aef0f12fda57e476a50b14acdc9f30b58}{lsredis\_init}( \textcolor{stringliteral}{"MD2-21-ID-E"}, \textcolor{stringliteral}{"redis\(\backslash\)\(\backslash\).kvseq|stns\(\backslash\)\(\backslash\).2\(\backslash\)\(\backslash\).(.+)"}, \textcolor{stringliteral}{"
@@ -140,6 +153,10 @@ Definition at line 353 of file pgpmac.\-c.
   \hyperlink{lspg_8c_a8a77972df14166e05c94ed0792baa09b}{lspg\_init}();
   \hyperlink{md2cmds_8c_a0851b1baecda6a67993efde41d77b1c1}{md2cmds\_init}();
 
+
+
+
+  pthread\_mutex\_lock( &\hyperlink{pgpmac_8c_ad128c64890c7c0d4f836d9ec6e99216a}{ncurses\_mutex});
   \hyperlink{pgpmac_8c_ae746a6903fb8a4ea216def88eccedc3c}{term\_status} = newwin( \hyperlink{pgpmac_8h_a3bae94e8e4e4347dd5f87b6bda058de6}{LS\_DISPLAY\_WINDOW\_HEIGHT}
       , \hyperlink{pgpmac_8h_a1f96754f00a1f82414cebc66f75ded78}{LS\_DISPLAY\_WINDOW\_WIDTH}, 3*\hyperlink{pgpmac_8h_a3bae94e8e4e4347dd5f87b6bda058de6}{LS\_DISPLAY\_WINDOW\_HEIGHT}
       , 0*\hyperlink{pgpmac_8h_a1f96754f00a1f82414cebc66f75ded78}{LS\_DISPLAY\_WINDOW\_WIDTH});
@@ -166,6 +183,7 @@ Definition at line 353 of file pgpmac.\-c.
   wnoutrefresh( \hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input});                        
                                                       
   doupdate();                                         
+  pthread\_mutex\_unlock( &\hyperlink{pgpmac_8c_ad128c64890c7c0d4f836d9ec6e99216a}{ncurses\_mutex});
 
   \hyperlink{lspmac_8c_a3a7fb93fb3fb9c4454613f30bfb0b1ee}{lspmac\_run}();
   \hyperlink{lspg_8c_a1adfdb5ca9fdb5060849d726bf540117}{lspg\_run}();
@@ -230,7 +248,7 @@ Terminal output routine ala printf.
 \end{DoxyParams}
 
 
-Definition at line 330 of file pgpmac.\-c.
+Definition at line 332 of file pgpmac.\-c.
 
 
 \begin{DoxyCode}
@@ -249,6 +267,27 @@ Definition at line 330 of file pgpmac.\-c.
 
   pthread\_mutex\_unlock( &\hyperlink{pgpmac_8c_ad128c64890c7c0d4f836d9ec6e99216a}{ncurses\_mutex});
 
+\}
+\end{DoxyCode}
+\hypertarget{pgpmac_8c_ac5c3f94664514a4b101ad5d3d32581fe}{\index{pgpmac.\-c@{pgpmac.\-c}!pgpmac\-\_\-quit\-\_\-cb@{pgpmac\-\_\-quit\-\_\-cb}}
+\index{pgpmac\-\_\-quit\-\_\-cb@{pgpmac\-\_\-quit\-\_\-cb}!pgpmac.c@{pgpmac.\-c}}
+\subsubsection[{pgpmac\-\_\-quit\-\_\-cb}]{\setlength{\rightskip}{0pt plus 5cm}void pgpmac\-\_\-quit\-\_\-cb (
+\begin{DoxyParamCaption}
+\item[{char $\ast$}]{event}
+\end{DoxyParamCaption}
+)}}\label{pgpmac_8c_ac5c3f94664514a4b101ad5d3d32581fe}
+
+
+quit the program 
+
+
+
+Definition at line 355 of file pgpmac.\-c.
+
+
+\begin{DoxyCode}
+                                  \{
+  \hyperlink{pgpmac_8c_a2f45113638a0b749a8a205d2cd7fb42b}{running} = 0;
 \}
 \end{DoxyCode}
 \hypertarget{pgpmac_8c_a9127a8f722451b5996ffbc6966f4aa95}{\index{pgpmac.\-c@{pgpmac.\-c}!stdin\-Service@{stdin\-Service}}
@@ -282,14 +321,14 @@ Definition at line 254 of file pgpmac.\-c.
 
   \textcolor{keywordflow}{for}( ch=wgetch(\hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input}); ch != ERR && \hyperlink{pgpmac_8c_a2f45113638a0b749a8a205d2cd7fb42b}{running}; ch=wgetch(
       \hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input})) \{
-    \textcolor{comment}{// wprintw( term\_output, "%04x\(\backslash\)n", ch);}
-    \textcolor{comment}{// wnoutrefresh( term\_output);}
 
     \textcolor{keywordflow}{switch}( ch) \{
     \textcolor{keywordflow}{case} KEY\_F(1):
     case KEY\_F(2):
     case KEY\_F(3):
-      running = 0;
+      \hyperlink{lspmac_8c_a85f7a5e4d853b7a86ddde1006dd4dc1f}{lspmac\_abort}();
+      \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Quitting Program"});
+      \hyperlink{lstimer_8c_a7b3e725fbe1bb3cc9f8465941cf1e381}{lstimer\_set\_timer}( \textcolor{stringliteral}{"Quit Program"}, 1, 10, 0);
       \textcolor{keywordflow}{break};
 
     \textcolor{keywordflow}{case} 0x0001:        \textcolor{comment}{// Control-A}
@@ -337,11 +376,13 @@ Definition at line 254 of file pgpmac.\-c.
     \}
     
     \textcolor{keywordflow}{if}( running) \{
+      pthread\_mutex\_lock( &\hyperlink{pgpmac_8c_ad128c64890c7c0d4f836d9ec6e99216a}{ncurses\_mutex});
       mvwprintw( \hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input}, 1, 1, \textcolor{stringliteral}{"PMAC> %s"}, cmds);
       wclrtoeol( \hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input});
       box( \hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input}, 0, 0);
       wnoutrefresh( \hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input});
       doupdate();
+      pthread\_mutex\_unlock( &\hyperlink{pgpmac_8c_ad128c64890c7c0d4f836d9ec6e99216a}{ncurses\_mutex});
     \}
   \}
 \}

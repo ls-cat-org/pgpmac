@@ -1,4 +1,4 @@
-.TH "lslogging.c" 3 "Tue Feb 12 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lslogging.c" 3 "Thu Feb 14 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -227,7 +227,7 @@ Definition at line 48 of file lslogging\&.c\&.
 .PP
 Start up the worker thread\&. 
 .PP
-Definition at line 114 of file lslogging\&.c\&.
+Definition at line 116 of file lslogging\&.c\&.
 .PP
 .nf
                      {
@@ -271,6 +271,8 @@ Definition at line 85 of file lslogging\&.c\&.
     msecs = lslogging_queue[off]\&.ltime\&.tv_nsec / 1000;
     fprintf( lslogging_file, '%s\&.%\&.06u  %s\n', tstr, msecs, lslogging_queue[off]\&.lmsg);
     fflush( lslogging_file);
+
+    pgpmac_printf( '%s\n', lslogging_queue[off]\&.lmsg);
   }
 }
 .fi

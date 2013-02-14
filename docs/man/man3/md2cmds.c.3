@@ -1,4 +1,4 @@
-.TH "md2cmds.c" 3 "Tue Feb 12 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "md2cmds.c" 3 "Thu Feb 14 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -290,7 +290,7 @@ Definition in file \fBmd2cmds\&.c\fP\&.
 .PP
 abort the current motion and put the system into a known state /param dummy Unused here 
 .PP
-Definition at line 1572 of file md2cmds\&.c\&.
+Definition at line 1576 of file md2cmds\&.c\&.
 .PP
 .nf
                                       {
@@ -324,7 +324,7 @@ Definition at line 1572 of file md2cmds\&.c\&.
 .SS "int md2cmds_action_queue (doubletimeout, char *action)"
 
 .PP
-Definition at line 1534 of file md2cmds\&.c\&.
+Definition at line 1538 of file md2cmds\&.c\&.
 .PP
 .nf
                                                         {
@@ -367,7 +367,7 @@ Definition at line 1534 of file md2cmds\&.c\&.
 .PP
 pause until md2cmds_worker has finished running the command 
 .PP
-Definition at line 1602 of file md2cmds\&.c\&.
+Definition at line 1606 of file md2cmds\&.c\&.
 .PP
 .nf
                            {
@@ -380,7 +380,7 @@ Definition at line 1602 of file md2cmds\&.c\&.
 .PP
 Move centering and alignment tables as requested TODO: Implement\&. 
 .PP
-Definition at line 1497 of file md2cmds\&.c\&.
+Definition at line 1501 of file md2cmds\&.c\&.
 .PP
 .nf
                                        {
@@ -421,7 +421,7 @@ Collect some data\&. \fBParameters:\fP
 .PP
 < setup timeouts for shutter 
 .PP
-Definition at line 1017 of file md2cmds\&.c\&.
+Definition at line 1021 of file md2cmds\&.c\&.
 .PP
 .nf
                                         {
@@ -698,7 +698,7 @@ Definition at line 1017 of file md2cmds\&.c\&.
 .SS "void md2cmds_coordsys_1_stopped_cb (char *event)"
 
 .PP
-Definition at line 1837 of file md2cmds\&.c\&.
+Definition at line 1843 of file md2cmds\&.c\&.
 .PP
 .nf
                                                  {
@@ -707,7 +707,7 @@ Definition at line 1837 of file md2cmds\&.c\&.
 .SS "void md2cmds_coordsys_2_stopped_cb (char *event)"
 
 .PP
-Definition at line 1839 of file md2cmds\&.c\&.
+Definition at line 1845 of file md2cmds\&.c\&.
 .PP
 .nf
                                                  {
@@ -716,7 +716,7 @@ Definition at line 1839 of file md2cmds\&.c\&.
 .SS "void md2cmds_coordsys_3_stopped_cb (char *event)"
 
 .PP
-Definition at line 1841 of file md2cmds\&.c\&.
+Definition at line 1847 of file md2cmds\&.c\&.
 .PP
 .nf
                                                  {
@@ -725,7 +725,7 @@ Definition at line 1841 of file md2cmds\&.c\&.
 .SS "void md2cmds_coordsys_4_stopped_cb (char *event)"
 
 .PP
-Definition at line 1843 of file md2cmds\&.c\&.
+Definition at line 1849 of file md2cmds\&.c\&.
 .PP
 .nf
                                                  {
@@ -734,7 +734,7 @@ Definition at line 1843 of file md2cmds\&.c\&.
 .SS "void md2cmds_coordsys_5_stopped_cb (char *event)"
 
 .PP
-Definition at line 1845 of file md2cmds\&.c\&.
+Definition at line 1851 of file md2cmds\&.c\&.
 .PP
 .nf
                                                  {
@@ -743,7 +743,7 @@ Definition at line 1845 of file md2cmds\&.c\&.
 .SS "void md2cmds_coordsys_7_stopped_cb (char *event)"
 
 .PP
-Definition at line 1847 of file md2cmds\&.c\&.
+Definition at line 1853 of file md2cmds\&.c\&.
 .PP
 .nf
                                                  {
@@ -814,7 +814,7 @@ Definition at line 79 of file md2cmds\&.c\&.
 .PP
 Initialize the md2cmds module\&. 
 .PP
-Definition at line 1853 of file md2cmds\&.c\&.
+Definition at line 1859 of file md2cmds\&.c\&.
 .PP
 .nf
                     {
@@ -886,7 +886,7 @@ Definition at line 178 of file md2cmds\&.c\&.
 .SS "void md2cmds_kappaphi_move (doublekappa_deg, doublephi_deg)"
 
 .PP
-Definition at line 995 of file md2cmds\&.c\&.
+Definition at line 999 of file md2cmds\&.c\&.
 .PP
 .nf
                                                               {
@@ -911,14 +911,14 @@ Definition at line 995 of file md2cmds\&.c\&.
 .PP
 Track motors homing\&. 
 .PP
-Definition at line 971 of file md2cmds\&.c\&.
+Definition at line 975 of file md2cmds\&.c\&.
 .PP
 .nf
                                                 {
   pthread_mutex_lock( &md2cmds_homing_mutex);
   
-  if( strstr( event, 'Homing') == NULL) {
-    if( md2cmds_homing_count != -1)
+  if( strstr( event, 'Homing') != NULL) {
+    if( md2cmds_homing_count == -1)
       md2cmds_homing_count = 1;
     else
       md2cmds_homing_count++;
@@ -941,7 +941,7 @@ Definition at line 971 of file md2cmds\&.c\&.
 .PP
 Track how many motors are moving\&. 
 .PP
-Definition at line 942 of file md2cmds\&.c\&.
+Definition at line 946 of file md2cmds\&.c\&.
 .PP
 .nf
                                                 {
@@ -975,7 +975,7 @@ Definition at line 942 of file md2cmds\&.c\&.
 .PP
 Now that we are done with the 360 rotation lets rehome right quick\&. 
 .PP
-Definition at line 1458 of file md2cmds\&.c\&.
+Definition at line 1462 of file md2cmds\&.c\&.
 .PP
 .nf
                                                 {
@@ -1059,7 +1059,7 @@ Move a motor to the position requested Returns non zero on error\&. \fBParameter
 .PP
 
 .PP
-Definition at line 452 of file md2cmds\&.c\&.
+Definition at line 445 of file md2cmds\&.c\&.
 .PP
 .nf
                        {
@@ -1146,7 +1146,7 @@ Move a motor to the position requested Returns non zero on error\&. \fBParameter
 .PP
 
 .PP
-Definition at line 531 of file md2cmds\&.c\&.
+Definition at line 524 of file md2cmds\&.c\&.
 .PP
 .nf
                        {
@@ -1240,7 +1240,7 @@ Move the centering and alignment tables\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 915 of file md2cmds\&.c\&.
+Definition at line 919 of file md2cmds\&.c\&.
 .PP
 .nf
                              {
@@ -1327,7 +1327,7 @@ Definition at line 211 of file md2cmds\&.c\&.
 .PP
 Go to beam location phase\&. 
 .PP
-Definition at line 774 of file md2cmds\&.c\&.
+Definition at line 778 of file md2cmds\&.c\&.
 .PP
 .nf
                                  {
@@ -1371,7 +1371,7 @@ Definition at line 774 of file md2cmds\&.c\&.
 .PP
 Go to center phase\&. 
 .PP
-Definition at line 699 of file md2cmds\&.c\&.
+Definition at line 703 of file md2cmds\&.c\&.
 .PP
 .nf
                            {
@@ -1390,7 +1390,7 @@ Definition at line 699 of file md2cmds\&.c\&.
                               capy,      0, 'In',    0\&.0,
                               capz,      0, 'In',    0\&.0,
                               scint,     0, 'Cover', 0\&.0,
-                              blight_ud, 1, NULL,    0\&.0,
+                              blight_ud, 1, NULL,    1\&.0,
                               zoom,      0, NULL,    1\&.0,
                               cryo,      1, NULL,    0\&.0,
                               fluo,      1, NULL,    0\&.0,
@@ -1425,7 +1425,7 @@ EMBL calls these states 'phases' and this language is partially retained here * 
 .PP
 
 .PP
-Definition at line 855 of file md2cmds\&.c\&.
+Definition at line 859 of file md2cmds\&.c\&.
 .PP
 .nf
                                             {
@@ -1489,7 +1489,7 @@ Definition at line 855 of file md2cmds\&.c\&.
 .PP
 Go to data collection phase\&. 
 .PP
-Definition at line 738 of file md2cmds\&.c\&.
+Definition at line 742 of file md2cmds\&.c\&.
 .PP
 .nf
                                    {
@@ -1530,7 +1530,7 @@ Definition at line 738 of file md2cmds\&.c\&.
 .PP
 Go to the manual mount phase\&. 
 .PP
-Definition at line 612 of file md2cmds\&.c\&.
+Definition at line 605 of file md2cmds\&.c\&.
 .PP
 .nf
                                 {
@@ -1551,7 +1551,7 @@ Definition at line 612 of file md2cmds\&.c\&.
                               scint,     1, 'Cover',       0\&.0,
                               blight,    1, NULL,          0\&.0,
                               blight_ud, 1, NULL,          0\&.0,
-                              cryo,      1, NULL,          1\&.0,
+                              cryo,      1, NULL,          0\&.0,
                               fluo,      1, NULL,          0\&.0,
                               zoom,      0, NULL,          1\&.0,
                               NULL);
@@ -1580,7 +1580,7 @@ Definition at line 612 of file md2cmds\&.c\&.
 .PP
 Go to robot mount phase\&. 
 .PP
-Definition at line 656 of file md2cmds\&.c\&.
+Definition at line 649 of file md2cmds\&.c\&.
 .PP
 .nf
                                {
@@ -1593,17 +1593,17 @@ Definition at line 656 of file md2cmds\&.c\&.
 
   //                                                                                                                                                                                                                                                                             // Move 'em                                                                                                                                                                                                                                                                    //                                                                                                                                                                                                                                                                             lspmac_home1_queue( kappa);
   lspmac_home1_queue( omega);
+  lspmac_home1_queue( kappa);
 
   mmask = 0;
   err = lspmac_est_move_time( &move_time, &mmask,
-                              phi,       0, NULL,    0\&.0,
                               apery,     1, 'In',    0\&.0,
                               aperz,     1, 'In',    0\&.0,
                               capz,      1, 'Cover', 0\&.0,
                               scint,     1, 'Cover', 0\&.0,
                               blight,    1, NULL,    0\&.0,
                               blight_ud, 1, NULL,    0\&.0,
-                              cryo,      1, NULL,    1\&.0,
+                              cryo,      1, NULL,    0\&.0,
                               fluo,      1, NULL,    0\&.0,
                               zoom,      0, NULL,    1\&.0,
                               NULL);
@@ -1616,9 +1616,20 @@ Definition at line 656 of file md2cmds\&.c\&.
 
   err = md2cmds_home_wait( 60\&.0);
   if( err) {
+    lslogging_log_message( 'md2cmds_phase_robotMount: timed out homing omega or kappa');
     lsevents_send_event( 'Mode robotMount Aborted');
     return err;
   }
+
+  md2cmds_home_prep();
+  lspmac_home1_queue( phi);
+  err = md2cmds_home_wait( 60\&.0);
+  if( err) {
+    lslogging_log_message( 'md2cmds_phase_robotMount: timed out homing phi');
+    lsevents_send_event( 'Mode robotMount Aborted');
+    return err;
+  }
+
 
   lsevents_send_event( 'Mode robotMount Done');
   return 0;
@@ -1629,7 +1640,7 @@ Definition at line 656 of file md2cmds\&.c\&.
 .PP
 Go to safe phase\&. 
 .PP
-Definition at line 813 of file md2cmds\&.c\&.
+Definition at line 817 of file md2cmds\&.c\&.
 .PP
 .nf
                          {
@@ -1707,7 +1718,7 @@ Spin 360 and make a video (recenter first, maybe) \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1293 of file md2cmds\&.c\&.
+Definition at line 1297 of file md2cmds\&.c\&.
 .PP
 .nf
                                        {
@@ -1862,7 +1873,7 @@ Definition at line 1293 of file md2cmds\&.c\&.
 .PP
 Tell the database about the time we went through omega=zero\&. This should trigger the video feed server to starting making a movie\&. 
 .PP
-Definition at line 1443 of file md2cmds\&.c\&.
+Definition at line 1447 of file md2cmds\&.c\&.
 .PP
 .nf
                                      {
@@ -1883,29 +1894,29 @@ Definition at line 1443 of file md2cmds\&.c\&.
 .PP
 Start up the thread\&. 
 .PP
-Definition at line 1903 of file md2cmds\&.c\&.
+Definition at line 1909 of file md2cmds\&.c\&.
 .PP
 .nf
                    {
-  pthread_create( &md2cmds_thread, NULL,              md2cmds_worker, NULL);
-  lsevents_add_listener( 'omega crossed zero',        md2cmds_rotate_cb);
-  lsevents_add_listener( 'omega In Position',         md2cmds_maybe_rotate_done_cb);
-  lsevents_add_listener( '\&.+ (Moving|In Position)',   md2cmds_maybe_done_moving_cb);
-  lsevents_add_listener( '(\&.+) (Homing|Homed)',       md2cmds_maybe_done_homing_cb);
-  lsevents_add_listener( 'capz (Moving|In Position)', md2cmds_time_capz_cb);
-  lsevents_add_listener( 'Coordsys 1 Stopped',        md2cmds_coordsys_1_stopped_cb);
-  lsevents_add_listener( 'Coordsys 2 Stopped',        md2cmds_coordsys_2_stopped_cb);
-  lsevents_add_listener( 'Coordsys 3 Stopped',        md2cmds_coordsys_3_stopped_cb);
-  lsevents_add_listener( 'Coordsys 4 Stopped',        md2cmds_coordsys_4_stopped_cb);
-  lsevents_add_listener( 'Coordsys 5 Stopped',        md2cmds_coordsys_5_stopped_cb);
-  lsevents_add_listener( 'Coordsys 7 Stopped',        md2cmds_coordsys_7_stopped_cb);
-  lsevents_add_listener( 'cam\&.zoom Moving',            md2cmds_set_scale_cb);
+  pthread_create( &md2cmds_thread, NULL,                md2cmds_worker, NULL);
+  lsevents_add_listener( '^omega crossed zero$',        md2cmds_rotate_cb);
+  lsevents_add_listener( '^omega In Position$',         md2cmds_maybe_rotate_done_cb);
+  lsevents_add_listener( '\&.+ (Moving|In Position)$',    md2cmds_maybe_done_moving_cb);
+  lsevents_add_listener( '(\&.+) (Homing|Homed)$',        md2cmds_maybe_done_homing_cb);
+  lsevents_add_listener( '^capz (Moving|In Position)$', md2cmds_time_capz_cb);
+  lsevents_add_listener( '^Coordsys 1 Stopped$',        md2cmds_coordsys_1_stopped_cb);
+  lsevents_add_listener( '^Coordsys 2 Stopped$',        md2cmds_coordsys_2_stopped_cb);
+  lsevents_add_listener( '^Coordsys 3 Stopped$',        md2cmds_coordsys_3_stopped_cb);
+  lsevents_add_listener( '^Coordsys 4 Stopped$',        md2cmds_coordsys_4_stopped_cb);
+  lsevents_add_listener( '^Coordsys 5 Stopped$',        md2cmds_coordsys_5_stopped_cb);
+  lsevents_add_listener( '^Coordsys 7 Stopped$',        md2cmds_coordsys_7_stopped_cb);
+  lsevents_add_listener( '^cam\&.zoom Moving$',            md2cmds_set_scale_cb);
 }
 .fi
 .SS "int md2cmds_run_cmd (const char *cmd)"
 
 .PP
-Definition at line 1616 of file md2cmds\&.c\&.
+Definition at line 1620 of file md2cmds\&.c\&.
 .PP
 .nf
                                       {
@@ -1960,7 +1971,7 @@ Definition at line 1616 of file md2cmds\&.c\&.
 .SS "int md2cmds_set (const char *cmd)"
 
 .PP
-Definition at line 1715 of file md2cmds\&.c\&.
+Definition at line 1721 of file md2cmds\&.c\&.
 .PP
 .nf
                                   {
@@ -2030,7 +2041,7 @@ Definition at line 1715 of file md2cmds\&.c\&.
 .PP
 Fix up xscale and yscale when zoom changes xscale and yscale have units of microns per pixel\&. 
 .PP
-Definition at line 1470 of file md2cmds\&.c\&.
+Definition at line 1474 of file md2cmds\&.c\&.
 .PP
 .nf
                                         {
@@ -2060,7 +2071,7 @@ Definition at line 1470 of file md2cmds\&.c\&.
 .SS "int md2cmds_settransferpoint (const char *cmd)"
 
 .PP
-Definition at line 1665 of file md2cmds\&.c\&.
+Definition at line 1669 of file md2cmds\&.c\&.
 .PP
 .nf
                                                {
@@ -2078,11 +2089,13 @@ Definition at line 1665 of file md2cmds\&.c\&.
   //
   lspmac_home1_queue( omega);
 
-  //
-  // wait for kappa cause we can't home phi until kappa's done
-  //
-  lspmac_moveabs_wait( kappa, 60\&.0);
-  
+  if( md2cmds_home_wait( 30\&.0)) {
+    lslogging_log_message( 'md2cmds_settransferpoint: homing routines taking too long\&.  Aborting transfer\&.');
+    lsevents_send_event( 'Settransferpoint Aborted');
+    return 1;
+  }
+
+  md2cmds_home_prep();
   //
   // Home phi (whatever that means)
   //
@@ -2092,7 +2105,7 @@ Definition at line 1665 of file md2cmds\&.c\&.
   // Wait for the homing routines to finish
   //
   if( md2cmds_home_wait( 30\&.0)) {
-    lslogging_log_message( 'md2cmds_transfer: homing routines taking too long\&.  Aborting transfer\&.');
+    lslogging_log_message( 'md2cmds_settransferpoint: homing routines taking too long\&.  Aborting transfer\&.');
     lsevents_send_event( 'Settransferpoint Aborted');
     return 1;
   }
@@ -2122,7 +2135,7 @@ Run the test routine(s) \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1610 of file md2cmds\&.c\&.
+Definition at line 1614 of file md2cmds\&.c\&.
 .PP
 .nf
                                      {
@@ -2135,7 +2148,7 @@ Definition at line 1610 of file md2cmds\&.c\&.
 .PP
 Time the capillary motion for the transfer routine\&. < track the time spent moving capz 
 .PP
-Definition at line 1504 of file md2cmds\&.c\&.
+Definition at line 1508 of file md2cmds\&.c\&.
 .PP
 .nf
                                         {
@@ -2174,7 +2187,6 @@ Definition at line 269 of file md2cmds\&.c\&.
 .nf
                                          {
   int nextsample, abort_now;
-  double esttime;
   double ax, ay, az, cx, cy, horz, vert, oref;
   int err;
   int mmask;
@@ -2213,25 +2225,6 @@ Definition at line 269 of file md2cmds\&.c\&.
   horz = cx * cos(oref) + cy * sin(oref);
   vert = cx * sin(oref) - cy * cos(oref);
 
-  if( lsredis_getd( capz->u2c) <= 0\&.0 || lsredis_getd( capz->max_speed) <= 0\&.0 || lsredis_getd( capz->max_accel) <= 0\&.0) {
-    esttime = 0\&.0;
-  } else {
-    
-    // Here we assume moving the capilary is the rate limiting step in preparing the MD2\&.
-    //
-    // TODO: look at factors in which something besides the capilary determines the time such as if the scintilator is out\&.
-    //
-    // pretend we are going to zero instead of the 'Out' position\&.  We should probably arrange for
-    // neutralPosition such that 'Out' is zero\&.
-    //
-    // This also treats S curve acceleration as taking the same time as linear acceleration\&.
-    //
-    esttime  = lspmac_getPosition( capz)/lsredis_getd( capz->u2c)/(lsredis_getd( capz->max_speed));     // Time if we moved at constant velocity
-    esttime += lsredis_getd( capz->max_speed)/lsredis_getd(capz->max_accel);                            // Correction for time spent accelerating
-    esttime /= 1000\&.;                                                                                    // convert from milliseconds to seconds
-  }
-
-  lspg_starttransfer_call( nextsample, lspmac_getBIPosition( sample_detected), ax, ay, az, horz, vert, esttime);
 
   mmask = 0;
   err = lspmac_est_move_time( &move_time, &mmask,
@@ -2244,6 +2237,7 @@ Definition at line 269 of file md2cmds\&.c\&.
                               fluo,      1, NULL,    0\&.0,
                               NULL);
 
+  lspg_starttransfer_call( nextsample, lspmac_getBIPosition( sample_detected), ax, ay, az, horz, vert, move_time);
 
   md2cmds_home_prep();
 
@@ -2258,13 +2252,18 @@ Definition at line 269 of file md2cmds\&.c\&.
   lspmac_home1_queue( omega);
 
   //
-  // wait for kappa cause we can't home phi until kappa's done
+  // Wait for the kappa/omega homing routines to finish
   //
-  lspmac_moveabs_wait( kappa, 60\&.0);
-  
+  if( md2cmds_home_wait( 30\&.0)) {
+    lslogging_log_message( 'md2cmds_transfer: kappa/omega homing routines taking too long\&.  Aborting transfer\&.');
+    lsevents_send_event( 'Transfer Aborted');
+    return 1;
+  }
+
   //
   // Home phi (whatever that means)
   //
+  md2cmds_home_prep();
   lspmac_home1_queue( phi);
 
   // Now let's get back to postresql (remember our query so long ago?)
@@ -2275,6 +2274,8 @@ Definition at line 269 of file md2cmds\&.c\&.
   // It's possible that the sample that's mounted is unknown to the robot\&.
   // If so then we need to abort after we're done moving stuff
   //
+  lslogging_log_message( 'md2cmds_transfer: no_rows_returned %d, starttransfer %d',
+                         lspg_starttransfer\&.no_rows_returned, lspg_starttransfer\&.starttransfer);
   if( lspg_starttransfer\&.no_rows_returned || lspg_starttransfer\&.starttransfer != 1)
     abort_now = 1;
   else
@@ -2287,7 +2288,7 @@ Definition at line 269 of file md2cmds\&.c\&.
   // Wait for the homing routines to finish
   //
   if( md2cmds_home_wait( 30\&.0)) {
-    lslogging_log_message( 'md2cmds_transfer: homing routines taking too long\&.  Aborting transfer\&.');
+    lslogging_log_message( 'md2cmds_transfer: phi homing routine taking too long\&.  Aborting transfer\&.');
     lsevents_send_event( 'Transfer Aborted');
     return 1;
   }
@@ -2335,7 +2336,7 @@ Definition at line 269 of file md2cmds\&.c\&.
   lspmac_moveabs_wait( cryo, 10\&.0);
 
   // simplest query yet!
-  lspg_query_push( lspg_waitcryo_cb, 'SELECT px\&.dropairrights()');
+  lspg_query_push( NULL, 'SELECT px\&.dropairrights()');
 
   // wait for the result
   // TODO: find an easy way out of this in case of error
@@ -2345,6 +2346,11 @@ Definition at line 269 of file md2cmds\&.c\&.
   // grab the airrights again
   //
   lspg_demandairrights_all();
+
+  // Return the cryo
+  //
+  cryo->moveAbs( cryo, 0);
+  lspmac_moveabs_wait( cryo, 10\&.0);
 
   lsevents_send_event( 'Transfer Done');
 
@@ -2366,7 +2372,7 @@ Our worker thread\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1780 of file md2cmds\&.c\&.
+Definition at line 1786 of file md2cmds\&.c\&.
 .PP
 .nf
                        {

@@ -121,6 +121,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a7762ca7b97b44b979e23ce88ca3b4249"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pgpmac_8c.html#a7762ca7b97b44b979e23ce88ca3b4249">pgpmac_printf</a> (char *fmt,...)</td></tr>
 <tr class="memdesc:a7762ca7b97b44b979e23ce88ca3b4249"><td class="mdescLeft">&#160;</td><td class="mdescRight">Terminal output routine ala printf.  <a href="#a7762ca7b97b44b979e23ce88ca3b4249"></a><br/></td></tr>
 <tr class="separator:a7762ca7b97b44b979e23ce88ca3b4249"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac5c3f94664514a4b101ad5d3d32581fe"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pgpmac_8c.html#ac5c3f94664514a4b101ad5d3d32581fe">pgpmac_quit_cb</a> (char *event)</td></tr>
+<tr class="memdesc:ac5c3f94664514a4b101ad5d3d32581fe"><td class="mdescLeft">&#160;</td><td class="mdescRight">quit the program  <a href="#ac5c3f94664514a4b101ad5d3d32581fe"></a><br/></td></tr>
+<tr class="separator:ac5c3f94664514a4b101ad5d3d32581fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3c04138a5bfe5d72780bb7e82a18e627"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pgpmac_8c.html#a3c04138a5bfe5d72780bb7e82a18e627">main</a> (int argc, char **argv)</td></tr>
 <tr class="memdesc:a3c04138a5bfe5d72780bb7e82a18e627"><td class="mdescLeft">&#160;</td><td class="mdescRight">Our main routine.  <a href="#a3c04138a5bfe5d72780bb7e82a18e627"></a><br/></td></tr>
 <tr class="separator:a3c04138a5bfe5d72780bb7e82a18e627"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -190,7 +193,7 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="pgpmac_8c_source.html#l00353">353</a> of file <a class="el" href="pgpmac_8c_source.html">pgpmac.c</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8c_source.html#l00362">362</a> of file <a class="el" href="pgpmac_8c_source.html">pgpmac.c</a>.</p>
 <div class="fragment"><div class="line">           {</div>
 <div class="line"></div>
 <div class="line">  <span class="keyword">static</span> <span class="keyword">struct </span>pollfd fda[3];          <span class="comment">// input for poll: room for postgres, pmac, and stdin</span></div>
@@ -206,6 +209,7 @@ Variables</h2></td></tr>
 <div class="line">  mvars    = 0;</div>
 <div class="line">  ivars    = 0;</div>
 <div class="line">  <span class="keywordtype">int</span> <a class="code" href="namespacemk__pgpmac__redis.html#afa643a23a5984fe44c2182ada3dfa401">i</a>;                        <span class="comment">// standard loop counter</span></div>
+<div class="line">  pthread_mutexattr_t mutex_initializer;</div>
 <div class="line"></div>
 <div class="line">  <span class="keywordflow">while</span>( 1) {</div>
 <div class="line">    c=getopt_long( argc, argv, <span class="stringliteral">&quot;im&quot;</span>, long_options, NULL);</div>
@@ -231,7 +235,12 @@ Variables</h2></td></tr>
 <div class="line">  keypad( stdscr, TRUE);                <span class="comment">// Why is F1 nifty?</span></div>
 <div class="line">  refresh();</div>
 <div class="line"></div>
-<div class="line">  pthread_mutex_init( &amp;<a class="code" href="pgpmac_8c.html#ad128c64890c7c0d4f836d9ec6e99216a" title="allow more than one thread access to the screen">ncurses_mutex</a>, NULL);    <span class="comment">// don&#39;t lock this mutex yet because we are not multi-threaded until the &quot;_run&quot; functions</span></div>
+<div class="line">  <span class="comment">// Use recursive mutexs</span></div>
+<div class="line">  <span class="comment">//</span></div>
+<div class="line">  pthread_mutexattr_init( &amp;mutex_initializer);</div>
+<div class="line">  pthread_mutexattr_settype( &amp;mutex_initializer, PTHREAD_MUTEX_RECURSIVE);</div>
+<div class="line"></div>
+<div class="line">  pthread_mutex_init( &amp;<a class="code" href="pgpmac_8c.html#ad128c64890c7c0d4f836d9ec6e99216a" title="allow more than one thread access to the screen">ncurses_mutex</a>, &amp;mutex_initializer);      <span class="comment">// don&#39;t lock this mutex yet because we are not multi-threaded until the &quot;_run&quot; functions</span></div>
 <div class="line"></div>
 <div class="line">  <span class="comment">//</span></div>
 <div class="line">  <span class="comment">// Since the modules reference objects in other modules it is important</span></div>
@@ -241,6 +250,9 @@ Variables</h2></td></tr>
 <div class="line">  <a class="code" href="lslogging_8c.html#ad9f65252584e65957f461b809d59e3a2" title="Start up the worker thread.">lslogging_run</a>();</div>
 <div class="line">  <a class="code" href="lsevents_8c.html#af19a77187e7406fc87d36bd26e672e6d" title="Initialize this module.">lsevents_init</a>();</div>
 <div class="line">  <a class="code" href="lsevents_8c.html#a4ddde538b603e3d4580ae9356bf9b89d" title="Start up the thread and get out of the way.">lsevents_run</a>();</div>
+<div class="line"></div>
+<div class="line">  <a class="code" href="lsevents_8c.html#a1efedb183d9558ae0f3573712e7918b2" title="Add a callback routine to listen for a specific event.">lsevents_add_listener</a>( <span class="stringliteral">&quot;^Quit Program$&quot;</span>, <a class="code" href="pgpmac_8c.html#ac5c3f94664514a4b101ad5d3d32581fe" title="quit the program">pgpmac_quit_cb</a>);</div>
+<div class="line"></div>
 <div class="line">  <a class="code" href="lstimer_8c.html#a8cd37a8fb0f061456456a5d79bdd5189" title="Initialize the timer list and pthread stuff.">lstimer_init</a>();</div>
 <div class="line">  <a class="code" href="lstimer_8c.html#a0b918acc1a4bf737cb62b5a70f8b553a" title="Start up our thread.">lstimer_run</a>();</div>
 <div class="line">  <a class="code" href="lsredis_8c.html#aef0f12fda57e476a50b14acdc9f30b58" title="Initialize this module, that is, set up the connections.">lsredis_init</a>( <span class="stringliteral">&quot;MD2-21-ID-E&quot;</span>, <span class="stringliteral">&quot;redis\\.kvseq|stns\\.2\\.(.+)&quot;</span>, <span class="stringliteral">&quot;stns.2&quot;</span>);</div>
@@ -250,6 +262,10 @@ Variables</h2></td></tr>
 <div class="line">  <a class="code" href="lspg_8c.html#a8a77972df14166e05c94ed0792baa09b" title="Initiallize the lspg module.">lspg_init</a>();</div>
 <div class="line">  <a class="code" href="md2cmds_8c.html#a0851b1baecda6a67993efde41d77b1c1" title="Initialize the md2cmds module.">md2cmds_init</a>();</div>
 <div class="line"></div>
+<div class="line"></div>
+<div class="line"></div>
+<div class="line"></div>
+<div class="line">  pthread_mutex_lock( &amp;<a class="code" href="pgpmac_8c.html#ad128c64890c7c0d4f836d9ec6e99216a" title="allow more than one thread access to the screen">ncurses_mutex</a>);</div>
 <div class="line">  <a class="code" href="pgpmac_8c.html#ae746a6903fb8a4ea216def88eccedc3c" title="shutter, lamp, air, etc status">term_status</a> = newwin( <a class="code" href="pgpmac_8h.html#a3bae94e8e4e4347dd5f87b6bda058de6" title="Number of status box rows.">LS_DISPLAY_WINDOW_HEIGHT</a>, <a class="code" href="pgpmac_8h.html#a1f96754f00a1f82414cebc66f75ded78" title="Number of status box columns.">LS_DISPLAY_WINDOW_WIDTH</a>, 3*<a class="code" href="pgpmac_8h.html#a3bae94e8e4e4347dd5f87b6bda058de6" title="Number of status box rows.">LS_DISPLAY_WINDOW_HEIGHT</a>, 0*<a class="code" href="pgpmac_8h.html#a1f96754f00a1f82414cebc66f75ded78" title="Number of status box columns.">LS_DISPLAY_WINDOW_WIDTH</a>);</div>
 <div class="line">  box( <a class="code" href="pgpmac_8c.html#ae746a6903fb8a4ea216def88eccedc3c" title="shutter, lamp, air, etc status">term_status</a>, 0, 0);</div>
 <div class="line">  wnoutrefresh( <a class="code" href="pgpmac_8c.html#ae746a6903fb8a4ea216def88eccedc3c" title="shutter, lamp, air, etc status">term_status</a>);</div>
@@ -270,6 +286,7 @@ Variables</h2></td></tr>
 <div class="line">  wnoutrefresh( <a class="code" href="pgpmac_8c.html#ab0487111dbe3c05d0bd835eb2fb9a3f7" title="place to put the cursor">term_input</a>);                          </div>
 <div class="line">                                                      </div>
 <div class="line">  doupdate();                                         </div>
+<div class="line">  pthread_mutex_unlock( &amp;<a class="code" href="pgpmac_8c.html#ad128c64890c7c0d4f836d9ec6e99216a" title="allow more than one thread access to the screen">ncurses_mutex</a>);</div>
 <div class="line"></div>
 <div class="line">  <a class="code" href="lspmac_8c.html#a3a7fb93fb3fb9c4454613f30bfb0b1ee" title="Start up the lspmac thread.">lspmac_run</a>();</div>
 <div class="line">  <a class="code" href="lspg_8c.html#a1adfdb5ca9fdb5060849d726bf540117" title="Start &#39;er runnin&#39;.">lspg_run</a>();</div>
@@ -349,7 +366,7 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="pgpmac_8c_source.html#l00330">330</a> of file <a class="el" href="pgpmac_8c_source.html">pgpmac.c</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8c_source.html#l00332">332</a> of file <a class="el" href="pgpmac_8c_source.html">pgpmac.c</a>.</p>
 <div class="fragment"><div class="line">                     {</div>
 <div class="line">  va_list arg_ptr;</div>
 <div class="line"></div>
@@ -365,6 +382,29 @@ Variables</h2></td></tr>
 <div class="line"></div>
 <div class="line">  pthread_mutex_unlock( &amp;<a class="code" href="pgpmac_8c.html#ad128c64890c7c0d4f836d9ec6e99216a" title="allow more than one thread access to the screen">ncurses_mutex</a>);</div>
 <div class="line"></div>
+<div class="line">}</div>
+</div><!-- fragment -->
+</div>
+</div>
+<a class="anchor" id="ac5c3f94664514a4b101ad5d3d32581fe"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void pgpmac_quit_cb </td>
+          <td>(</td>
+          <td class="paramtype">char *&#160;</td>
+          <td class="paramname"><em>event</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>quit the program </p>
+
+<p>Definition at line <a class="el" href="pgpmac_8c_source.html#l00355">355</a> of file <a class="el" href="pgpmac_8c_source.html">pgpmac.c</a>.</p>
+<div class="fragment"><div class="line">                                  {</div>
+<div class="line">  <a class="code" href="pgpmac_8c.html#a2f45113638a0b749a8a205d2cd7fb42b">running</a> = 0;</div>
 <div class="line">}</div>
 </div><!-- fragment -->
 </div>
@@ -400,14 +440,14 @@ Variables</h2></td></tr>
 <div class="line"></div>
 <div class="line"></div>
 <div class="line">  <span class="keywordflow">for</span>( ch=wgetch(<a class="code" href="pgpmac_8c.html#ab0487111dbe3c05d0bd835eb2fb9a3f7" title="place to put the cursor">term_input</a>); ch != ERR &amp;&amp; <a class="code" href="pgpmac_8c.html#a2f45113638a0b749a8a205d2cd7fb42b">running</a>; ch=wgetch(<a class="code" href="pgpmac_8c.html#ab0487111dbe3c05d0bd835eb2fb9a3f7" title="place to put the cursor">term_input</a>)) {</div>
-<div class="line">    <span class="comment">// wprintw( term_output, &quot;%04x\n&quot;, ch);</span></div>
-<div class="line">    <span class="comment">// wnoutrefresh( term_output);</span></div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">switch</span>( ch) {</div>
 <div class="line">    <span class="keywordflow">case</span> KEY_F(1):</div>
 <div class="line">    case KEY_F(2):</div>
 <div class="line">    case KEY_F(3):</div>
-<div class="line">      running = 0;</div>
+<div class="line">      <a class="code" href="lspmac_8c.html#a85f7a5e4d853b7a86ddde1006dd4dc1f" title="abort motion and try to recover">lspmac_abort</a>();</div>
+<div class="line">      <a class="code" href="lsevents_8c.html#a5c6f122382dea3dcc231b772e5e75b46" title="Call the callback routines for the given event.">lsevents_send_event</a>( <span class="stringliteral">&quot;Quitting Program&quot;</span>);</div>
+<div class="line">      <a class="code" href="lstimer_8c.html#a7b3e725fbe1bb3cc9f8465941cf1e381" title="Create a timer.">lstimer_set_timer</a>( <span class="stringliteral">&quot;Quit Program&quot;</span>, 1, 10, 0);</div>
 <div class="line">      <span class="keywordflow">break</span>;</div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">case</span> 0x0001:        <span class="comment">// Control-A</span></div>
@@ -455,11 +495,13 @@ Variables</h2></td></tr>
 <div class="line">    }</div>
 <div class="line">    </div>
 <div class="line">    <span class="keywordflow">if</span>( running) {</div>
+<div class="line">      pthread_mutex_lock( &amp;<a class="code" href="pgpmac_8c.html#ad128c64890c7c0d4f836d9ec6e99216a" title="allow more than one thread access to the screen">ncurses_mutex</a>);</div>
 <div class="line">      mvwprintw( <a class="code" href="pgpmac_8c.html#ab0487111dbe3c05d0bd835eb2fb9a3f7" title="place to put the cursor">term_input</a>, 1, 1, <span class="stringliteral">&quot;PMAC&gt; %s&quot;</span>, cmds);</div>
 <div class="line">      wclrtoeol( <a class="code" href="pgpmac_8c.html#ab0487111dbe3c05d0bd835eb2fb9a3f7" title="place to put the cursor">term_input</a>);</div>
 <div class="line">      box( <a class="code" href="pgpmac_8c.html#ab0487111dbe3c05d0bd835eb2fb9a3f7" title="place to put the cursor">term_input</a>, 0, 0);</div>
 <div class="line">      wnoutrefresh( <a class="code" href="pgpmac_8c.html#ab0487111dbe3c05d0bd835eb2fb9a3f7" title="place to put the cursor">term_input</a>);</div>
 <div class="line">      doupdate();</div>
+<div class="line">      pthread_mutex_unlock( &amp;<a class="code" href="pgpmac_8c.html#ad128c64890c7c0d4f836d9ec6e99216a" title="allow more than one thread access to the screen">ncurses_mutex</a>);</div>
 <div class="line">    }</div>
 <div class="line">  }</div>
 <div class="line">}</div>
@@ -599,7 +641,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="pgpmac_8c.html">pgpmac.c</a></li>
-    <li class="footer">Generated on Tue Feb 12 2013 08:37:17 for LS-CAT PGPMAC by
+    <li class="footer">Generated on Thu Feb 14 2013 17:00:22 for LS-CAT PGPMAC by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.2 </li>
   </ul>
