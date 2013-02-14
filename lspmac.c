@@ -793,13 +793,6 @@ void lspmac_Error(
     err = atoi( &(buff[4]));
     if( err > 0 && err < 20) {
       lslogging_log_message( pmac_error_strs[err]);
-
-      pthread_mutex_lock( &ncurses_mutex);
-      wprintw( term_output, "\n%s\n", pmac_error_strs[err]);
-      wnoutrefresh( term_output);
-      wnoutrefresh( term_input);
-      doupdate();
-      pthread_mutex_unlock( &ncurses_mutex);
     }
   }
   lspmac_Reset();
@@ -1007,19 +1000,17 @@ void lspmac_GetShortReplyCB(
 
   sp = (char *)(cmd->pcmd.bData);
 
+  pthread_mutex_lock( &ncurses_mutex);
   if( *buff == 0) {
-    pthread_mutex_lock( &ncurses_mutex);
     wprintw( term_output, "%s\n", sp);
-    pthread_mutex_unlock( &ncurses_mutex);
   } else {
-    pthread_mutex_lock( &ncurses_mutex);
     wprintw( term_output, "%s: ", sp);
-    pthread_mutex_unlock( &ncurses_mutex);
     cleanstr( buff);
   }
   wnoutrefresh( term_output);
   wnoutrefresh( term_input);
   doupdate();
+  pthread_mutex_unlock( &ncurses_mutex);
 
   memset( cmd->pcmd.bData, 0, sizeof( cmd->pcmd.bData));
 }
@@ -1035,9 +1026,7 @@ void lspmac_SendControlReplyPrintCB(
 				    ) {
   pthread_mutex_lock( &ncurses_mutex);
   wprintw( term_output, "control-%c: ", '@'+ ntohs(cmd->pcmd.wValue));
-  pthread_mutex_unlock( &ncurses_mutex);
   hex_dump( nreceived, (unsigned char *)buff);
-  pthread_mutex_lock( &ncurses_mutex);
   wnoutrefresh( term_output);
   wnoutrefresh( term_input);
   doupdate();
@@ -1146,10 +1135,14 @@ void lspmac_bo_read(
   changed = pos != mp->position;
   mp->position = pos;
 
-  pthread_mutex_unlock( &(mp->mutex));
-
-  if( changed)
+  if( changed) {
+    mp->motion_seen  = 1;
+    mp->not_done     = 0;
+    mp->command_sent = 1;
+    pthread_cond_signal( &(mp->cond));
     lsevents_send_event( "%s %d", mp->name, pos);
+  }
+  pthread_mutex_unlock( &(mp->mutex));
 }
 
 /** Read a DAC motor position
@@ -1205,6 +1198,7 @@ void lspmac_shutter_read(
     pthread_cond_signal( &lspmac_shutter_cond);
   }
 
+  pthread_mutex_lock( &ncurses_mutex);
   if( md2_status.fs_is_open) {
     mvwprintw( term_status2, 1, 1, "Shutter Open  ");
     mp->position = 1;
@@ -1212,6 +1206,7 @@ void lspmac_shutter_read(
     mvwprintw( term_status2, 1, 1, "Shutter Closed");
     mp->position = 0;
   }
+  pthread_mutex_unlock( &ncurses_mutex);
 
   pthread_mutex_unlock( &lspmac_shutter_mutex);
 }
@@ -1336,11 +1331,7 @@ void lspmac_home2_queue(
 
   for( spp = home; *spp != NULL; spp++) {
 
-    pthread_mutex_lock( &ncurses_mutex);
-    wprintw( term_output, "home2 is queuing '%s'\n", *spp);
-    wnoutrefresh( term_output);
-    doupdate();
-    pthread_mutex_unlock( &ncurses_mutex);
+    lslogging_log_message( "home2 is queuing '%s'\n", *spp);
 
     lspmac_SockSendDPline( mp->name, *spp);
   }
@@ -1485,9 +1476,11 @@ void lspmac_pmacmotor_read(
     }
   }
 
+  pthread_mutex_lock( &ncurses_mutex);
   mvwprintw( mp->win, 2, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, " ");
   mvwprintw( mp->win, 2, 1, "%*d cts", LS_DISPLAY_WINDOW_WIDTH-6, mp->actual_pos_cnts);
   mvwprintw( mp->win, 3, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, " ");
+  pthread_mutex_unlock( &ncurses_mutex);
 
   if( mp->nlut >0 && mp->lut != NULL) {
     mp->position = lspmac_rlut( mp->nlut, mp->lut, mp->actual_pos_cnts);
@@ -1539,6 +1532,7 @@ void lspmac_pmacmotor_read(
     lsevents_send_event( "%s Homed", mp->name);
   }
 
+  pthread_mutex_lock( &ncurses_mutex);
   s[sizeof(s)-1] = 0;
   mvwprintw( mp->win, 3, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-6, s);
 
@@ -1580,6 +1574,7 @@ void lspmac_pmacmotor_read(
     lsredis_setstr( mp->status_str, sp);
   }
   wnoutrefresh( mp->win);
+  pthread_mutex_unlock( &ncurses_mutex);
 
   pthread_mutex_unlock( &(mp->mutex));
 
@@ -2748,8 +2743,8 @@ int lspmac_set_motion_flags( int *mmaskp, lspmac_motor_t *mp_1, ...) {
  */
 int lspmac_est_move_time( double *est_time, int *mmaskp, lspmac_motor_t *mp_1, int jog_1, char *preset_1, double end_point_1, ...) {
   static char axes[] = "XYZUVWABC";
-  static int qs[9];
-  static lspmac_combined_move_t motions[32];
+  int qs[9];
+  lspmac_combined_move_t motions[32];
   char s[256];
   int foundone;
   int moving_flags;
@@ -2893,9 +2888,6 @@ int lspmac_est_move_time( double *est_time, int *mmaskp, lspmac_motor_t *mp_1, i
 
       u2c = lsredis_getd( mp->u2c);
 
-      if( u2c <= 0.0)
-	continue;
-
       //
       // For look up tables user units are (or should be) counts and u2c should be 1
       //
@@ -2919,6 +2911,10 @@ int lspmac_est_move_time( double *est_time, int *mmaskp, lspmac_motor_t *mp_1, i
 	lsevents_send_event( "%s Move Aborted", mp->name);
 	return 1;
       }
+
+      mp->requested_position = ep;
+      mp->requested_pos_cnts = u2c * (mp->requested_position + neutral_pos);
+
 
       //
       // Don't bother with motors without velocity or acceleration defined
@@ -3032,22 +3028,29 @@ int lspmac_est_move_time( double *est_time, int *mmaskp, lspmac_motor_t *mp_1, i
 
     
     pthread_mutex_lock( &lspmac_moving_mutex);
-    if( (lspmac_moving_flags & m5075) != m5075)
-      lspmac_SockSendDPline( NULL, "M5075=(M5075 | %d)", m5075);
-    
-    clock_gettime( CLOCK_REALTIME, &timeout);
-    //
-    timeout.tv_sec += 2;	// 2 seconds should be more than enough time to set the flags
-    err = 0;
-    while( err == 0 && (lspmac_moving_flags & m5075) != m5075)
-      err = pthread_cond_timedwait( &lspmac_moving_cond, &lspmac_moving_mutex, &timeout);
     moving_flags = lspmac_moving_flags;
     pthread_mutex_unlock( &lspmac_moving_mutex);
+
+    if( (moving_flags & m5075) != m5075) {
+      lspmac_SockSendDPline( NULL, "M5075=(M5075 | %d)", m5075);
     
-    if( err == ETIMEDOUT) {
-      lslogging_log_message( "lspmac_est_move_time: Timed out waiting for moving flags.  lspmac_moving_flags = %0x", moving_flags);
-      lsevents_send_event( "Combined Move Aborted");
-      return 1;
+
+      pthread_mutex_lock( &lspmac_moving_mutex);
+      clock_gettime( CLOCK_REALTIME, &timeout);
+      //
+      timeout.tv_sec += 2;	// 2 seconds should be more than enough time to set the flags
+      err = 0;
+      while( err == 0 && ((lspmac_moving_flags & m5075) != m5075))
+	err = pthread_cond_timedwait( &lspmac_moving_cond, &lspmac_moving_mutex, &timeout);
+      moving_flags = lspmac_moving_flags;
+      pthread_mutex_unlock( &lspmac_moving_mutex);
+    
+      if( ((moving_flags & m5075) != m5075) && err == ETIMEDOUT) {
+	lslogging_log_message( "lspmac_est_move_time: Timed out waiting for moving flags.  lspmac_moving_flags = 0x%0x, looking for 0x%0x  test exp: 0x%0x  test: %d",
+			       moving_flags, m5075, (moving_flags & m5075), (moving_flags & m5075) != m5075);
+	lsevents_send_event( "Combined Move Aborted");
+	return 1;
+      }
     }
   }
 
@@ -3483,9 +3486,15 @@ int lspmac_moveabs_wait( lspmac_motor_t *mp, double timeout_secs) {
 /** Helper funciton for the init calls
  */
 void _lspmac_motor_init( lspmac_motor_t *d, char *name) {
+  pthread_mutexattr_t mutex_initializer;
+  // Use recursive mutexs
+  //
+  pthread_mutexattr_init( &mutex_initializer);
+  pthread_mutexattr_settype( &mutex_initializer, PTHREAD_MUTEX_RECURSIVE);
+
   lspmac_nmotors++;
 
-  pthread_mutex_init( &(d->mutex), NULL);
+  pthread_mutex_init( &(d->mutex), &mutex_initializer);
   pthread_cond_init(  &(d->cond), NULL);
 
   d->magic               = LSPMAC_MAGIC_NUMBER;
@@ -3810,7 +3819,6 @@ void lspmac_init(
   // Initialize some mutexs and conditions
   //
 
-
   pthread_mutex_init( &pmac_queue_mutex, &mutex_initializer);
   pthread_cond_init(  &pmac_queue_cond, NULL);
 
@@ -3847,6 +3855,13 @@ void lspmac_init(
   lsevents_preregister_event( "omega crossed zero");
   lsevents_preregister_event( "Move Aborted");
   lsevents_preregister_event( "Combined Move Aborted");
+  lsevents_preregister_event( "Abort Request queued");
+  lsevents_preregister_event( "Abort Request accepted");
+  lsevents_preregister_event( "Quit Program");
+  lsevents_preregister_event( "Quitting Program");
+  lsevents_preregister_event( "Reset queued");
+  lsevents_preregister_event( "Reset command accepted");
+  
 
   for( i=1; i<=16; i++) {
     lsevents_preregister_event( "Coordsys %d Stopped", i);
@@ -3959,6 +3974,11 @@ void lspmac_light_zoom_cb( char *event) {
   }
 }
 
+/** prepare to exit program in a couple of seconds
+ */
+void lspmac_quitting_cb( char *event) {
+  dryer->moveAbs( dryer, 0.0);
+}
 
 /** Perhaps we need to move the sample out of the way
  */
@@ -3998,7 +4018,7 @@ void lspmac_scint_maybe_move_sample_cb( char *event) {
 /** Perhaps we need to return the sample to the beam
  */
 void lspmac_scint_maybe_return_sample_cb( char *event) {
-  static int trigger = 0;
+  static int trigger = 1;
   double scint_target;
   double move_time;
   int mmask;
@@ -4221,18 +4241,19 @@ void lspmac_run() {
 
   pthread_create( &pmac_thread, NULL, lspmac_worker, NULL);
 
-  lsevents_add_listener( "CryoSwitchChanged",    lspmac_cryoSwitchChanged_cb);
-  lsevents_add_listener( "scint In Position",    lspmac_scint_maybe_turn_on_dryer_cb);
-  lsevents_add_listener( "scint Moving",         lspmac_scint_maybe_turn_off_dryer_cb);
-  lsevents_add_listener( "scint In Position",    lspmac_scint_maybe_return_sample_cb);
-  lsevents_add_listener( "scint Moving",         lspmac_scint_maybe_move_sample_cb);
-  lsevents_add_listener( "scintDried",           lspmac_scint_dried_cb);
-  lsevents_add_listener( "backLight 1",	         lspmac_backLight_up_cb);
-  lsevents_add_listener( "backLight 0",	         lspmac_backLight_down_cb);
-  lsevents_add_listener( "cam.zoom Moving",      lspmac_light_zoom_cb);
+  lsevents_add_listener( "^CryoSwitchChanged$",    lspmac_cryoSwitchChanged_cb);
+  lsevents_add_listener( "^scint In Position$",    lspmac_scint_maybe_turn_on_dryer_cb);
+  lsevents_add_listener( "^scint Moving$",         lspmac_scint_maybe_turn_off_dryer_cb);
+  lsevents_add_listener( "^scint In Position$",    lspmac_scint_maybe_return_sample_cb);
+  lsevents_add_listener( "^scint Moving$",         lspmac_scint_maybe_move_sample_cb);
+  lsevents_add_listener( "^scintDried$",           lspmac_scint_dried_cb);
+  lsevents_add_listener( "^backLight 1$",	   lspmac_backLight_up_cb);
+  lsevents_add_listener( "^backLight 0$",	   lspmac_backLight_down_cb);
+  lsevents_add_listener( "^cam.zoom Moving$",      lspmac_light_zoom_cb);
+  lsevents_add_listener( "^Quitting$",             lspmac_quitting_cb);
 
   for( i=0; i<lspmac_nmotors; i++) {
-    snprintf( evts, sizeof( evts)-1, "%s command accepted", lspmac_motors[i].name);
+    snprintf( evts, sizeof( evts)-1, "^%s command accepted$", lspmac_motors[i].name);
     evts[sizeof(evts)-1] = 0;
     lsevents_add_listener( evts, lspmac_command_done_cb);
   }
