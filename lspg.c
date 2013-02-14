@@ -385,14 +385,15 @@ void lspg_starttransfer_cb(
 
   lspg_starttransfer.new_value_ready = 1;
   if( PQntuples( pgr) <=0) {
-    lspg_starttransfer.no_rows_returned = 0;
+    lspg_starttransfer.no_rows_returned = 1;
     lspg_starttransfer.starttransfer = 0;
   } else {
-    lspg_starttransfer.no_rows_returned = 1;
-    if( PQgetisnull( pgr, 0, 0) || strtol( PQgetvalue( pgr, 0, 0), NULL, 0) != 1)
-    lspg_starttransfer.starttransfer = 0;
-  else
-    lspg_starttransfer.starttransfer = 1;
+    lspg_starttransfer.no_rows_returned = 0;
+    lslogging_log_message( "lspg_starttransfer_cb: received '%s' from strattransfer query", PQgetvalue( pgr,0,0));
+    if( PQgetisnull( pgr, 0, 0) || strcmp( PQgetvalue( pgr,0,0), "1") != 0)
+      lspg_starttransfer.starttransfer = 0;
+    else
+      lspg_starttransfer.starttransfer = 1;
   }
   pthread_cond_signal( &(lspg_starttransfer.cond));
   pthread_mutex_unlock( &(lspg_starttransfer.mutex));
@@ -610,7 +611,7 @@ void lspg_waitcryo_all() {
   pthread_mutex_lock( &lspg_waitcryo.mutex);
   lspg_waitcryo.new_value_ready = 0;
 
-  lspg_query_push( lspg_waitcryo_cb, "SELECT px.waitcryo())");
+  lspg_query_push( lspg_waitcryo_cb, "SELECT px.waitcryo()");
 
   while( lspg_waitcryo.new_value_ready == 0)
     pthread_cond_wait( &lspg_waitcryo.cond, &lspg_waitcryo.mutex);
@@ -633,6 +634,7 @@ void lspg_demandairrights_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   lspg_demandairrights.new_value_ready = 1;
   pthread_cond_signal( &lspg_demandairrights.cond);
   pthread_mutex_unlock( &lspg_demandairrights.mutex);
+  lslogging_log_message( "lspg_demandairrights_cb: Here I am");
 }
 
 /** call for airrights
@@ -641,7 +643,7 @@ void lspg_demandairrights_call() {
   pthread_mutex_lock( &lspg_demandairrights.mutex);
   lspg_demandairrights.new_value_ready = 0;
   pthread_mutex_unlock( &lspg_demandairrights.mutex);
-  lspg_query_push( lspg_demandairrights_cb, "SELECT px.demandairrights())");
+  lspg_query_push( lspg_demandairrights_cb, "SELECT px.demandairrights()");
 }
 
 /** wait for the air rights request to return
@@ -1334,6 +1336,36 @@ void lspg_nextaction_cb(
   }
 }
 
+void lspg_nexterrors_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+  static int etid_col, etseverity_col, etterse_col, etverbose_col, etdetails_col;
+  static int first_time=1;
+  int i;
+  char *terse, *verbose, *details, *severity, *id;
+  
+  if( first_time) {
+    etid_col       = PQfnumber( pgr, "etid");
+    etseverity_col = PQfnumber( pgr, "etseverity");
+    etterse_col    = PQfnumber( pgr, "etterse");
+    etverbose_col  = PQfnumber( pgr, "etverbose");
+    etdetails_col  = PQfnumber( pgr, "etdetails");
+    first_time     = 0;
+  }
+
+  for( i=0; i<PQntuples( pgr); i++) {
+    id       = PQgetvalue( pgr, i, etid_col);
+    terse    = PQgetvalue( pgr, i, etterse_col);
+    verbose  = PQgetvalue( pgr, i, etverbose_col);
+    details  = PQgetvalue( pgr, i, etdetails_col);
+    severity = PQgetvalue( pgr, i, etseverity_col);
+    
+    lspg_query_push( NULL, "EXECUTE acknowledgeerror(%s)", id);
+
+    lslogging_log_message( "lspg_nexterrors_cb: %s %s\n", severity, strlen(verbose)>0 ? verbose : terse);
+    if( strlen( details) > 0)
+      lslogging_log_message( "lspg_nexterrors_cb: %s\n", details);
+  }
+}
+
 
 
 /** Send strings directly to PMAC queue
@@ -1594,6 +1626,8 @@ void lspg_pg_service(
 	  lspg_getcurrentsampleid_call();
 	} else if( strstr( pgn->relname, "_kvs") != NULL) {
 	  lspg_query_push( lspg_allkvs_cb, "EXECUTE getkvs");
+	} else if( strstr( pgn->relname, "_mess") != NULL) {
+	  lspg_query_push( lspg_nexterrors_cb, "EXECUTE nexterrors");
 	}
 	PQfreemem( pgn);
       }
@@ -1949,6 +1983,12 @@ void lspg_sample_detector_cb( char *event) {
   lspg_query_push( NULL, "SELECT px.logmagnetstate(%s)", present ? "TRUE" : "FALSE");
 }
 
+/** Prepare to exit the program in a couple of seconds
+ */
+void lspg_quitting_cb( char *event) {
+  lspg_query_push( NULL, "SELECT px.dropairrights()");
+}
+
 /** Initiallize the lspg module
  */
 void lspg_init() {
@@ -1972,11 +2012,16 @@ void lspg_init() {
  */
 void lspg_run() {
   pthread_create( &lspg_thread, NULL, lspg_worker, NULL);
-  lsevents_add_listener( "(appy|appz|capy|capz|scint) In Position",        lspg_check_preset_in_position_cb);
-  lsevents_add_listener( "(appy|appz|capy|capz|scint) Moving",             lspg_unset_current_preset_moving_cb);
-  lsevents_add_listener( "Preset Changed (.+)",     lspg_preset_changed_cb);
-  lsevents_add_listener( "Sample(Detected|Absent)", lspg_sample_detector_cb);
-  lsevents_add_listener( "Timer Update KVs",        lspg_update_kvs_cb);
-  lsevents_add_listener( "cam.zoom In Position",    lspg_set_scale_cb);
+  lsevents_add_listener( "^(appy|appz|capy|capz|scint) In Position$", lspg_check_preset_in_position_cb);
+  lsevents_add_listener( "^(appy|appz|capy|capz|scint) Moving$",      lspg_unset_current_preset_moving_cb);
+  lsevents_add_listener( "^Preset Changed (.+)",                      lspg_preset_changed_cb);
+  lsevents_add_listener( "^Sample(Detected|Absent)$",                 lspg_sample_detector_cb);
+  lsevents_add_listener( "^Timer Update KVs$",                        lspg_update_kvs_cb);
+  lsevents_add_listener( "^cam.zoom In Position$",                    lspg_set_scale_cb);
   lstimer_set_timer(     "Timer Update KVs", -1, 0, 500000000);
+
+  //
+  // Make sure we own the airrights
+  //
+  lspg_demandairrights_all();
 }
