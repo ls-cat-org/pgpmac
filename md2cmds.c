@@ -69,6 +69,18 @@ static md2cmds_cmd_kv_t md2cmds_cmd_kvs[] = {
   { "transfer",         md2cmds_transfer}
 };
 
+void md2cmds_push_queue( char *action) {
+
+  if( pthread_mutex_trylock( &md2cmds_mutex) == 0) {
+    strncpy( md2cmds_cmd, action, MD2CMDS_CMD_LENGTH-1);
+    md2cmds_cmd[MD2CMDS_CMD_LENGTH-1] = 0;
+    pthread_cond_signal( &md2cmds_cond);
+    pthread_mutex_unlock( &md2cmds_mutex);
+  } else {
+    lslogging_log_message( "md2cmds_push_queue: MD2 command '%s' ignored.  Already running '%s'", action, md2cmds_cmd);
+  }
+}
+
 void md2cmds_home_prep() {
   pthread_mutex_lock( &md2cmds_homing_mutex);
   md2cmds_homing_count = -1;
@@ -587,8 +599,7 @@ int md2cmds_moveRel(
   }
 
   if( mp != NULL && mp->moveAbs != NULL) {
-    wprintw( term_output, "Moving %s by %f\n", mtr, fpos);
-    wnoutrefresh( term_output);
+    lslogging_log_message( "Moving %s by %f\n", mtr, fpos);
     err = mp->moveAbs( mp, lspmac_getPosition(mp) + fpos);
   }
 
