@@ -573,3 +573,6 @@ extern int lsredis_find_preset_index_by_position( lspmac_motor_t *mp);
 void lspmac_SockSendDPControlChar( char *event, char c);
 extern int lspmac_set_motion_flags( int *mmaskp, lspmac_motor_t *mp_1, ...);
 extern void lsredis_load_presets( char *motor_name);
+extern void pgpmac_request_stay_of_execution( int secs);
+extern void md2cmds_push_queue( char *action);
+extern pmac_cmd_queue_t *lspmac_SockSendControlCharPrint( char *event, char c);
