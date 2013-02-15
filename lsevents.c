@@ -121,7 +121,7 @@ void lsevents_add_listener( char *raw_regexp, void (*cb)(char *)) {
       exit( -1);
     }
     regerror( err, &new->re, errbuf, nerrbuf);
-    lslogging_log_message( "lsevents_add_listener: %s", errbuf);
+    //    lslogging_log_message( "lsevents_add_listener: %s", errbuf);
     free( errbuf);
     free( new);
     return;
@@ -146,7 +146,7 @@ void lsevents_add_listener( char *raw_regexp, void (*cb)(char *)) {
 
   pthread_mutex_unlock( &lsevents_listener_mutex);
 
-  lslogging_log_message( "lsevents_add_listener: added listener for event '%s'", raw_regexp);
+  //  lslogging_log_message( "lsevents_add_listener: added listener for event '%s'", raw_regexp);
 
 }
 
@@ -252,7 +252,7 @@ lsevents_callbacks_t *lsevents_register_event( char *event) {
     return NULL;
   }
 
-  lslogging_log_message( "lsevents_register_event: adding event '%s'", event);
+  //  lslogging_log_message( "lsevents_register_event: adding event '%s'", event);
   //
   // Not Found
   //
@@ -305,7 +305,7 @@ lsevents_callbacks_t *lsevents_register_event( char *event) {
       hsearch_r( entry_in, ENTER, &entry_outp, &lsevents_event_name_ht);
     }
   }
-  lslogging_log_message( "lsevents_register_event: added event '%s'", event);
+  //  lslogging_log_message( "lsevents_register_event: added event '%s'", event);
   pthread_mutex_unlock( &lsevents_listener_mutex);
   return new_event_name->cbl;
 }  
