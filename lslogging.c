@@ -74,7 +74,7 @@ void lslogging_log_message( char *fmt, ...) {
 /** Log most events
  */
 void lslogging_event_cb( char *event) {
-  if( strcmp( event, "Timer Update KVs") != 0) {
+  if( strcmp( event, "Timer Update KVs") != 0 && strstr( event, "accepted")==NULL && strstr( event, "queued")==NULL) {
     lslogging_log_message( "EVENT: %s", event);
   }
 }
