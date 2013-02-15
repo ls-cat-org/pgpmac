@@ -1326,14 +1326,8 @@ void lspg_nextaction_cb(
   if( strcmp( action, "noAction") == 0)
     return;
   
-  if( pthread_mutex_trylock( &md2cmds_mutex) == 0) {
-    strncpy( md2cmds_cmd, action, MD2CMDS_CMD_LENGTH-1);
-    md2cmds_cmd[MD2CMDS_CMD_LENGTH-1] = 0;
-    pthread_cond_signal( &md2cmds_cond);
-    pthread_mutex_unlock( &md2cmds_mutex);
-  } else {
-    lslogging_log_message( "MD2 command '%s' ignored.  Already running '%s'", action, md2cmds_cmd);
-  }
+  md2cmds_push_queue( action);
+
 }
 
 void lspg_nexterrors_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
