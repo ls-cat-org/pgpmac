@@ -240,7 +240,8 @@ WINDOW *term_status;			//!< shutter, lamp, air, etc status
 WINDOW *term_status2;			//!< shutter, lamp, air, etc status
 
 pthread_mutex_t ncurses_mutex;		//!< allow more than one thread access to the screen
-
+int doomsday_count = 1;			//!< Countdown to quitting time: cleanout routines can request a few more heartbeats
+pthread_mutex_t doomsday_mutex;		//!< avoid thread collision while resetting the doomsday clock
 
 //
 // globals
@@ -255,10 +256,10 @@ void stdinService(
 		  struct pollfd *evt		/**< [in] The pollfd object that caused this call	*/
 		  ) {
   static char cmds[1024];
-  static char cntrlcmd[2];
   static unsigned int cmds_on = 0;
+  static int cmd_mode = 0;
+  static char cevt[32];
   int ch;
-
 
   for( ch=wgetch(term_input); ch != ERR && running; ch=wgetch(term_input)) {
 
@@ -266,9 +267,9 @@ void stdinService(
     case KEY_F(1):
     case KEY_F(2):
     case KEY_F(3):
-      lspmac_abort();
-      lsevents_send_event( "Quitting Program");
-      lstimer_set_timer( "Quit Program", 1, 10, 0);
+      lspmac_abort();					// send abort now (as opposed to an event listener) in case a cleanup routine wants to move something (we don't want to abort it).
+      lsevents_send_event( "Quitting Program");		// let everyone know the end is nigh
+      lstimer_set_timer( "Quit Program", -1, 1, 0);	// Doomsday, repeat as needed
       break;
 
     case 0x0001:	// Control-A
@@ -280,26 +281,36 @@ void stdinService(
     case 0x0007:	// Control-G
     case 0x000b:	// Control-K
     case 0x000f:	// Control-O
-    case 0x0010:	// Control-P
+      //    case 0x0010:	// Control-P	// causes hang of PMAC communication as though ^P is not supposed to generate a response
     case 0x0011:	// Control-Q
     case 0x0012:	// Control-R
     case 0x0013:	// Control-Q
     case 0x0016:	// Control-V
-      cntrlcmd[0] = ch;
-      cntrlcmd[1] = 0;
-      lspmac_SockSendline( NULL, cntrlcmd);
-      //      PmacSockSendControlCharPrint( ch);
+      sprintf( cevt, "Control-%c", '@' + ch);
+      lspmac_SockSendDPControlChar( cevt, ch);
       break;
 
     case KEY_BACKSPACE:
-      cmds[cmds_on] = 0;
       cmds_on == 0 ? 0 : cmds_on--;
+      cmds[cmds_on] = 0;
       break;
       
     case KEY_ENTER:
     case 0x000a:
       if( cmds_on > 0 && strlen( cmds) > 0) {
-	lspmac_SockSendline( NULL, "%s", cmds);
+	switch( cmd_mode) {
+	case 0:
+	  if( strcmp( cmds, "$$$") == 0) {
+	    lsevents_send_event( "Full Card Reset Requested");
+	    lslogging_log_message( "Performing Full Card Reset, resuming in 20 seconds");
+	    lstimer_set_timer( "Full Card Reset", 1, 20, 0);
+	  }
+	  lspmac_SockSendline( NULL, "%s", cmds);
+	  break;
+	case 1:
+	  md2cmds_push_queue( cmds);
+	  break;
+	}
       }
       memset( cmds, 0, sizeof(cmds));
       cmds_on = 0;
@@ -315,9 +326,33 @@ void stdinService(
       break;
     }
     
+    if(strcasecmp(cmds, "pmac") == 0) {
+      cmds[0]  = 0;
+      cmd_mode = 0;
+      cmds_on  = 0;
+    }
+
+    if(strcasecmp(cmds, "md2cmds") == 0) {
+      cmds[0]  = 0;
+      cmd_mode = 1;
+      cmds_on  = 0;
+    }
+
+    if( strcasecmp( cmds, "quit") == 0) {
+      lspmac_abort();					// send abort now (as opposed to an event listener) in case a cleanup routine wants to move something (we don't want to abort it).
+      lsevents_send_event( "Quitting Program");		// let everyone know the end is nigh
+      lstimer_set_timer( "Quit Program", -1, 1, 0);	// Doomsday, repeat as needed
+      cmds[0]  = 0;
+      cmds_on  = 0;
+    }
+
     if( running) {
       pthread_mutex_lock( &ncurses_mutex);
-      mvwprintw( term_input, 1, 1, "PMAC> %s", cmds);
+      if( cmd_mode == 0)
+	mvwprintw( term_input, 1, 1, "PMAC> %s", cmds);
+      else
+	mvwprintw( term_input, 1, 1, "md2cmds> %s", cmds);
+
       wclrtoeol( term_input);
       box( term_input, 0, 0);
       wnoutrefresh( term_input);
@@ -349,11 +384,25 @@ void pgpmac_printf(
 
 }
 
+/** Postpone the day of reckoning
+ *  This assumes the quit_cb routine is called once a second.
+ */
+void pgpmac_request_stay_of_execution( int secs) {
+  pthread_mutex_lock( &doomsday_mutex);
+  if( secs > doomsday_count)
+    doomsday_count = secs;
+  pthread_mutex_unlock( &doomsday_mutex);
+}
+
 
 /** quit the program
  */
 void pgpmac_quit_cb( char *event) {
-  running = 0;
+  pthread_mutex_lock( &doomsday_mutex);
+  doomsday_count--;
+  if( doomsday_count <= 0)
+    running = 0;
+  pthread_mutex_unlock( &doomsday_mutex);
 }
 
 
@@ -409,6 +458,7 @@ int main(
   pthread_mutexattr_settype( &mutex_initializer, PTHREAD_MUTEX_RECURSIVE);
 
   pthread_mutex_init( &ncurses_mutex, &mutex_initializer);	// don't lock this mutex yet because we are not multi-threaded until the "_run" functions
+  pthread_mutex_init( &doomsday_mutex, &mutex_initializer);
 
   //
   // Since the modules reference objects in other modules it is important
@@ -420,6 +470,8 @@ int main(
   lsevents_run();
 
   lsevents_add_listener( "^Quit Program$", pgpmac_quit_cb);
+  lsevents_preregister_event( "Quit Program");
+  lsevents_preregister_event( "Quitting Program");
 
   lstimer_init();
   lstimer_run();
