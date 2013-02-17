@@ -464,27 +464,46 @@ int main(
   // Since the modules reference objects in other modules it is important
   // that everyone is initiallized before anyone runs
   //
+  // Everyone needs to be able to log messages
   lslogging_init();
   lslogging_run();
+
+  // Everyone needs to send and listen for events
+  //
   lsevents_init();
   lsevents_run();
 
+  //
+  // Add a couple of our own
+  //
   lsevents_add_listener( "^Quit Program$", pgpmac_quit_cb);
   lsevents_preregister_event( "Quit Program");
   lsevents_preregister_event( "Quitting Program");
 
+  //
+  // Timers are needed by all too
+  //
   lstimer_init();
   lstimer_run();
-  lsredis_init( "MD2-21-ID-E", "redis\\.kvseq|stns\\.2\\.(.+)", "stns.2");
-  lsredis_run();
 
+  //
+  // Redis is where we get our configuration
+  // as well as one of communicating with the outside world
+  //
+  lsredis_init();
+  lsredis_run();
+  lsredis_config();
+
+  //
+  // These need to be all initialized before any are run
+  //
   lspmac_init( ivars, mvars);
   lspg_init();
   md2cmds_init();
 
-
-
-
+  //
+  // set up our screen
+  //
   pthread_mutex_lock( &ncurses_mutex);
   term_status = newwin( LS_DISPLAY_WINDOW_HEIGHT, LS_DISPLAY_WINDOW_WIDTH, 3*LS_DISPLAY_WINDOW_HEIGHT, 0*LS_DISPLAY_WINDOW_WIDTH);
   box( term_status, 0, 0);
@@ -508,6 +527,9 @@ int main(
   doupdate();					      
   pthread_mutex_unlock( &ncurses_mutex);
 
+  //
+  // Now run the world
+  //
   lspmac_run();
   lspg_run();
   md2cmds_run();
