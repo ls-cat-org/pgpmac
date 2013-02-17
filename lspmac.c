@@ -3517,8 +3517,8 @@ void _lspmac_motor_init( lspmac_motor_t *d, char *name) {
   d->axis		 = lsredis_get_obj( "%s.axis",	            d->name);
   d->coord_num		 = lsredis_get_obj( "%s.coord_num",         d->name);
   d->home		 = lsredis_get_obj( "%s.home",	            d->name);
-  d->inactive_init	 = lsredis_get_obj( "%s.inactive_init",	    d->name);
   d->in_position_band    = lsredis_get_obj( "%s.in_position_band",  d->name);
+  d->inactive_init	 = lsredis_get_obj( "%s.inactive_init",	    d->name);
   d->redis_fmt		 = lsredis_get_obj( "%s.format",            d->name);
   d->max_accel		 = lsredis_get_obj( "%s.max_accel",         d->name);
   d->max_speed		 = lsredis_get_obj( "%s.max_speed",         d->name);
