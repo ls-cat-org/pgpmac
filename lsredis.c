@@ -86,6 +86,8 @@ static redisAsyncContext *wrac;
 static char *lsredis_publisher = NULL;
 static regex_t lsredis_key_select_regex;
 static char *lsredis_head = NULL;
+static pthread_mutex_t lsredis_config_mutex;
+static pthread_cond_t  lsredis_config_cond;
 
 static struct pollfd subfd;
 static struct pollfd rofd;
@@ -1004,15 +1006,104 @@ int lsredis_find_preset_index_by_position( lspmac_motor_t *mp) {
 
 
 
+void lsredis_configCB( redisAsyncContext *ac, void *reply, void *privdata) {
+  redisReply *r, *r2, *r3;
+  int i;
+  char *errmsg;
+  int err, nerrmsg;
+
+  r = reply;
+
+  if( r == NULL) {
+    lslogging_log_message( "lsredis_configCB: null reply, cannot configure, bad things will happen");
+    return;
+  }
+
+  if( r->type != REDIS_REPLY_ARRAY || (r->elements % 2) != 0) {
+    lslogging_log_message( "lsredis_configCB: could not understand config reply.  Bad things will happen.");
+    return;
+  }
+
+  pthread_mutex_lock( &lsredis_config_mutex);
+
+  for( i=0; i<r->elements; i += 2) {
+    r2 = r->element[i];
+    r3 = r->element[i+1];
+    if( r2->type != REDIS_REPLY_STRING || r2->type != REDIS_REPLY_STRING)
+      continue;
+    if( strcmp( r2->str, "HEAD")==0) {
+      lsredis_head = strdup( r3->str);
+    }
+    if( strcmp( r2->str, "PUB")==0) {
+      lsredis_publisher = strdup( r3->str);
+    }
+    if( strcmp( r2->str, "RE")==0) {
+      err = regcomp( &lsredis_key_select_regex, r3->str, REG_EXTENDED);
+      if( err != 0) {
+	nerrmsg = regerror( err, &lsredis_key_select_regex, NULL, 0);
+	if( nerrmsg > 0) {
+	  errmsg = calloc( nerrmsg, sizeof( char));
+	  nerrmsg = regerror( err, &lsredis_key_select_regex, errmsg, nerrmsg);
+	  lslogging_log_message( "lsredis_configCB: %s", errmsg);
+	  free( errmsg);
+	}
+	exit( 1);
+      }
+    }
+  }
+
+  /*
+    2013-02-16 12:03:20.669342  ARRAY of 6 elements
+    2013-02-16 12:03:20.669351      STRING: HEAD
+    2013-02-16 12:03:20.669354      STRING: stns.2
+    2013-02-16 12:03:20.669355      STRING: RE
+    2013-02-16 12:03:20.669361      STRING: redis\.kvseq|stns\.2\.(.+)
+    2013-02-16 12:03:20.669362      STRING: PUB
+    2013-02-16 12:03:20.669364      STRING: MD2-21-ID-E
+  */
+
+
+  if( redisAsyncCommand( subac, lsredis_subCB, NULL, "PSUBSCRIBE REDIS_KV_CONNECTOR mk_pgpmac_redis UI* MD2-*") == REDIS_ERR) {
+    lslogging_log_message( "Error sending PSUBSCRIBE command");
+  }
+  redisAsyncCommand( roac, lsredis_keysCB, NULL, "KEYS *");
+
+  pthread_cond_signal( &lsredis_config_cond);
+  pthread_mutex_unlock( &lsredis_config_mutex);
+}
+
+
+void lsredis_config() {
+  char hostname[128], lhostname[128];
+  int i;
+
+  if( gethostname( hostname, sizeof(hostname)-1)) {
+    lslogging_log_message( "lsredis_init: cannot get our own host name.  Cannot configure redis variables.");
+  } else {
+    for( i=0; i<strlen(hostname); i++) {
+      lhostname[i] = tolower( hostname[i]);
+    }
+    lhostname[i] = 0;
+
+    lslogging_log_message( "lsredis_init: our host name is '%s'", lhostname);
+    redisAsyncCommand( roac, lsredis_configCB, NULL, "hgetall config.%s", lhostname);
+  }
+  
+  pthread_mutex_lock( &lsredis_config_mutex);
+  while( lsredis_head == NULL)
+    pthread_cond_wait( &lsredis_config_cond, &lsredis_config_mutex);
+  pthread_mutex_unlock( &lsredis_config_mutex);
+
+}
+
+
 /** Initialize this module, that is, set up the connections
  *  \param pub  Publish under this (unique) name
  *  \param re   Regular expression to select keys we want to mirror
  *  \param head Prepend this (+ a dot) to the beginning of requested objects
  */
-void lsredis_init( char *pub, char *re, char *head) {
+void lsredis_init() {
   int err;
-  int nerrmsg;
-  char *errmsg;
 
   //
   // set up hash map to store redis objects
@@ -1022,10 +1113,6 @@ void lsredis_init( char *pub, char *re, char *head) {
     lslogging_log_message( "lsredis_init: Cannot create hash table.  Really bad things are going to happen.  hcreate_r returned %d", err);
   }
 
-  lsredis_head      = strdup( head);
-  lsredis_publisher = strdup( pub);
-
-  
   pthread_cond_init( &lsredis_cond, NULL);
 
   subac = redisAsyncConnect("127.0.0.1", 6379);
@@ -1056,7 +1143,6 @@ void lsredis_init( char *pub, char *re, char *head) {
   roac->ev.delWrite = lsredis_delWrite;
   roac->ev.cleanup  = lsredis_cleanup;
 
-  //wrac = redisAsyncConnect("10.1.0.3", 6379);
   wrac = redisAsyncConnect("127.0.0.1", 6379);
   if( wrac->err) {
     lslogging_log_message( "Error: %s", wrac->errstr);
@@ -1071,19 +1157,14 @@ void lsredis_init( char *pub, char *re, char *head) {
   wrac->ev.delWrite = lsredis_delWrite;
   wrac->ev.cleanup  = lsredis_cleanup;
 
-  err = regcomp( &lsredis_key_select_regex, re, REG_EXTENDED);
-  if( err != 0) {
-    nerrmsg = regerror( err, &lsredis_key_select_regex, NULL, 0);
-    if( nerrmsg > 0) {
-      errmsg = calloc( nerrmsg, sizeof( char));
-      nerrmsg = regerror( err, &lsredis_key_select_regex, errmsg, nerrmsg);
-      lslogging_log_message( "lsredis_select: %s", errmsg);
-      free( errmsg);
-    }
-  }
 
+  // separate hash table for the presets
+  //
   hcreate_r( lsredis_preset_max_n * 2, &lsredis_preset_ht);
+
   pthread_mutex_init( &lsredis_preset_list_mutex, NULL);
+  pthread_mutex_init( &lsredis_config_mutex, NULL);
+  pthread_cond_init(  &lsredis_config_cond,  NULL);
 }
 
 
@@ -1165,11 +1246,6 @@ void *lsredis_worker(  void *dummy) {
 
   lsredis_running = 1;
 
-  if( redisAsyncCommand( subac, lsredis_subCB, NULL, "PSUBSCRIBE REDIS_KV_CONNECTOR mk_pgpmac_redis UI* MD2-*") == REDIS_ERR) {
-    lslogging_log_message( "Error sending PSUBSCRIBE command");
-  }
-
-  redisAsyncCommand( roac, lsredis_keysCB, NULL, "KEYS *");
   pthread_cond_signal( &lsredis_cond);
   pthread_mutex_unlock( &lsredis_mutex);
 
