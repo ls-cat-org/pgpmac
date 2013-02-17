@@ -23,9 +23,44 @@ else:
     hard_ini = None
 
 
+configs = {
+    "orange-2"            : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E"},
+    "orange-2.ls-cat.org" : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E"},
+    "venison.ls-cat.org"  : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E"}
+}
+
 #
-# Bug/Feature: only fields listed in motor_dict will be search for in the ini file.
+# Bug/Feature: only fields listed in motor_dict will be searched for in the ini file.
 #
+# Also see the comments for the motor_field_lists list below
+#
+#   motor_dict keys
+#         motor_num:    The pmac motor number between 1 and 32 inclusive.  Leave undefined or set to -1 for motor for DAC and Binary Output motor like objects
+#         coord_num:    The coordinate system the said motor finds itself in between 1 and 16 inclusive.  Leave undefined or 0 for DAC and Binary Output motor like objects.
+#         max_accel:    counts/msec/msec
+#         max_speed:    counts/msec
+#               u2c:    The conversion between counts and user units: Multiply user units by u2c to get counts.  Should never be zero.
+#            active:    1 if the motor should be set up and used, 0 otherwise
+#          hard_ini:    The section name for this motor in the microdiff_hard.ini file
+#          moveMode:    freeRotation, rotation, or translation (default) used for the LS-CAT GUI
+#         reference:    (omega only) The angle for which centering.y is up and centering.x is positive downstream
+#              axis:    The axis letter for the PMAC in the specified coordinate system (X, Y, Z, etc)
+#   neutralPosition:    The offset in user units between the home position and what we want to call zero
+#            printf:    The printf format string for the position in the ncurses interface (uses a field width specifier *)
+#            format:    The printf format string to update the redis value
+#       maxPosition:    The software upper limit in user units relative to the home position
+#       minPosition:    The software lower limit in user units relative to the home position
+#         smallStep:    Recommened small step value for a user interface
+#         largeStep:    Recommened large step value for a user interface
+# update_resolution:    Don't update redis until the position has changed by this amount in user units
+#
+#     NOTE: active_init, home, and inactive_init should only be specified if the default string will not serve the purposes such as
+#     for omega and the polarizer
+#
+#   active_init:        A comma separated list of strings (double quoted if spaces present) enclosed in braces to send to the PMAC when the motor is active.
+#          home:`       A comma separated list of strings (double quoted if spaces present) enclosed in braces to send to the PMAC to home the motor
+# inactive_init:        A comma separated list of strings (double quoted if spaces present) enclosed in braces to send to the PMAC when the motor is inactive.
+
 motor_dict = {
     "omega" : { "motor_num" : "1", "max_accel" : "2", "max_speed" : "1664", "coord_num" : "1", "u2c" : "12800",
                 "home" : '{"M401=1 M1115=1 #1$",&1E,#1&1B1R}',"active_init" : '{M31=1,&1#1->X,"M700=(M700 | $000001) ^ $000001", M1115=1}',
@@ -34,98 +69,85 @@ motor_dict = {
                 "hard_ini"  : "PHIRotationAxis.PHIMotor", "neutralPosition" : "0", "active" : "1"
                 },
     "align.x" : { "motor_num" : "2", "max_accel" : "2", "max_speed" : "121", "coord_num" : "3", "u2c" : "60620.8",
-                  "home" : '{#2$,M402=1,&3E,#2&3B2R}', "active_init" : '{M32=1,&3#2->X,"M700=(M700 | $000002) ^ $000002"}',
-                  "inactive_init" : '{M32=0,&3#2->0,"M700=M700 | $000002"}',"smallStep" :  "0.001",
+                  "smallStep" :  "0.001",
                   "axis" :  "X", "format" :  "%.3f",
                   "minPosition" :  "0.1", "maxPosition" :  "4.0",
                   "hard_ini"  : "PHIAxisXYZTable.PHIXMotor", "neutralPosition" : "0", "active" : "1"
                   },
     "align.y" : { "motor_num" : "3", "max_accel" : "0.5", "max_speed" : "121", "coord_num" : "3", "u2c" : "60620.8",
-                  "home" : '{#3$,M403=1,&3E,#3&3B3R}', "active_init" : '{M33=1,&3#3->Y,"M700=(M700 | $000004) ^ $000004"}',
-                  "inactive_init" : '{M33=0,&3#3->0,"M700=M700 | $000004"}',"smallStep" :  "0.001",
+                  "smallStep" :  "0.001",
                   "axis" :  "Y", "format" :  "%.3f",
                   "minPosition" :  "0.16", "maxPosition" :  "16.15",
                   "hard_ini"  : "PHIAxisXYZTable.PHIYMotor", "neutralPosition" : "0", "active" : "1"
                   },
     "align.z" : { "motor_num" : "4", "max_accel" : "0.5", "max_speed" : "121", "coord_num" : "3", "u2c" : "60620.8",
-                  "home" : '{#4$,M404=1,&3E,#4&3B4R}',"active_init" : '{M34=1,&3#4->Z,"M700=(M700 | $000008) ^ $000008"}',
-                  "inactive_init" : '{M34=0,&3#4->0,"M700=M700 | $000008"}',"smallStep" :  "0.001",
+                  "smallStep" :  "0.001",
                   "axis" :  "Z", "format" :  "%.3f",
                   "minPosition" :  "0.45", "maxPosition" :  "5.85",
                   "hard_ini"  : "PHIAxisXYZTable.PHIZMotor", "neutralPosition" : "0", "active" : "1"
                   },
-    "lightPolar" : { "motor_num" : "5", "max_accel" : "0.2", "max_speed" : "3", "u2c" : "142",
-                     "home" : '{#5$,#5HMZ}',
+    "lightPolar" : { "motor_num" : "5", "max_accel" : "0.2", "max_speed" : "3", "u2c" : "142", "coord_num" : "0",
+                     "home" : '{#5$,#5HMZ}', "active_init" : '{}', "inactive_init" : '{}',
                      "largeStep" :  "45", "smallStep" :  "10", "format" : "%.1f",
                      "printf" :  "%*.1f°", "update_resolution" :  "1",
                      "hard_ini" : "Analyser.AnalyserMotor", "neutralPosition" : "0", "active" : "1"
                      },
     "cam.zoom" : { "motor_num" : "6","max_accel" : "0.2", "max_speed" : "10", "coord_num" : "4", "u2c" : "1.0",
-                   "home" : '{#6$,M406=1,&4E,#6&4B6R}', "active_init" : '{M36=1,&4#6->Z,"M700=(M700 | $000020) ^ $000020"}',
-                   "inactive_init" : '{M36=0,&4#6->0,"M700=M700 | $000020"}',"smallStep" :  "1",
+                   "smallStep" :  "1",
                    "axis" :  "Z","format" :  "%.0f",
                    "minPosition" :  "1","update_resolution" :  "1",
                    "hard_ini" : "CoaxZoom.ZoomMotor", "neutralPosition" : "0", "in_position_band" : "1600", "active" : "1"
                    },
     "appy" : { "motor_num" : "7","max_accel" : "1", "max_speed" : "201", "coord_num" : "5", "u2c" : "121241.6",
-               "home" : '{#7$,M407=1,&5E,#7&5B7R}', "active_init" : '{M37=1,&5#7->Y,"M700=(M700 | $000040) ^ $000040"}',
-               "inactive_init" : '{M37=0,&5#7->0,"M700=M700 | $000040"}',"smallStep" :  "0.002",
+               "smallStep" :  "0.002",
                "axis" :  "Y","format" :  "%.3f",
                "minPosition" :  "0.2","maxPosition" :  "3.25",
                "hard_ini" : "ApertureYZTable.ApertureYMotor", "neutralPosition" : "0", "active" : "1"
                },
     "appz" : { "motor_num" : "8","max_accel" : "1", "max_speed" : "201", "coord_num" : "5", "u2c" : "60620.8",
-               "home" : '{#8$,M408=1,&5E,#8&5B8R}', "active_init" : '{M38=1,&5#8->Z,"M700=(M700 | $000080) ^ $000080"}',
-               "inactive_init" : '{M38=0,&5#8->0,"M700=M700 | $000080"}',"smallStep" :  "0.002",
+               "smallStep" :  "0.002",
                "axis" :  "Z","format" :  "%.3f",
                "minPosition" :  "0.3","maxPosition" :  "82.5",
                "hard_ini" : "ApertureYZTable.ApertureZMotor", "neutralPosition" : "0", "active" : "1"
                },
     "capy" : { "motor_num" : "9","max_accel" : "1", "max_speed" : "201", "coord_num" : "5", "u2c" : "121241.6",
-               "home" : '{#9$,M409=1,&5E,#9&5B9R}', "active_init" : '{M39=1,&5#9->U,"M700=(M700 | $000100) ^ $000100"}',
-               "inactive_init" : '{M39=0,&5#9->0,"M700=M700 | $000100"}',"smallStep" :  "0.002",
+               "smallStep" :  "0.002",
                "axis" :  "U","format" :  "%.3f",
                "minPosition" :  "0.05","maxPosition" :  "3.19",
                "hard_ini" : "CapillaryBSYZtable.CapillaryBSYMotor", "neutralPosition" : "0", "active" : "1"
               },
     "capz" : { "motor_num" : "10","max_accel" : "0.5", "max_speed" : "201", "coord_num" : "5", "u2c" : "19865.6",
-               "home" : '{#10$,M410=1,&5E,#10&5B10R}', "active_init" : '{M40=1,&5#10->V,"M700=(M700 | $000200) ^ $000200"}',
-               "inactive_init" : '{M40=0,&5#10->0,"M700=M700 | $000200"}', "smallStep" :  "0.002",
+               "smallStep" :  "0.002",
                "axis" :  "V","format" :  "%.3f",
                "minPosition" :  "0.57","maxPosition" :  "81.49",
                "hard_ini" : "CapillaryBSYZtable.CapillaryBSZMotor", "neutralPosition" : "0", "active" : "1"
               },
     "scint" : { "motor_num" : "11","max_accel" : "0.5", "max_speed" : "151", "coord_num" : "5", "u2c" : "19865.6",
-                "home" : '{#11$,M411=1,&5E,#11&5B11R}', "active_init" : '{M41=1,&5#11->W,"M700=(M700 | $000400) ^ $000400"}',
-                "inactive_init" : '{M41=0,&5#11->0,"M700=M700 | $000400"}',"smallStep" :  "0.002",
+                "smallStep" :  "0.002",
                 "axis" :  "W","format" :  "%.3f",
                 "minPosition" :  "0.2","maxPosition" :  "86.1",
                 "hard_ini" : "ScintillatorPhotodiode.Zmotor", "neutralPosition" : "0", "active" : "1"
                 },
     "centering.x" : { "motor_num" : "17","max_accel" : "0.5",  "max_speed" : "150", "coord_num" : "2", "u2c" : "182400",
-                      "home" : '{#17$,M417=1,&2E,#17&2B17R}', "active_init" : '{M47=1,&2#17->X,"M700=(M700 | $010000) ^ $010000"}',
-                      "inactive_init" : '{M47=0,&2#17->0,"M700=M700 | $010000"}',"smallStep" :  "0.001",
+                      "smallStep" :  "0.001",
                       "axis" :  "X","format" :  "%.3f",
                       "minPosition" :  "-2.56","maxPosition" :  "2.496",
                       "hard_ini" : "CentringXYTable.XCentringMotor", "neutralPosition" : "0", "active" : "1"
                      },
     "centering.y" : {"motor_num" : "18","max_accel" : "0.5",  "max_speed" : "150", "coord_num" : "2", "u2c" : "182400",
-                     "home" : '{#18$,M418=1,&2E,#18&2B18R}', "active_init" : '{M48=1,&2#18->Y,"M700=(M700 | $020000) ^ $020000"}',
-                     "inactive_init" : '{M48=0,&2#18->0,"M700=M700 | $020000"}',"smallStep" :  "0.001",
+                     "smallStep" :  "0.001",
                      "axis" :  "Y","format" :  "%.3f",
                      "minPosition" :  "-2.58","maxPosition" :  "2.4",
                       "hard_ini" : "CentringXYTable.YCentringMotor", "neutralPosition" : "0", "active" : "1"
                      },
     "kappa" : { "motor_num" : "19","max_accel" : "0.2",  "max_speed" : "50", "coord_num" : "7", "u2c" : "2844.444",
-                "home" : '{#19$,M419=1,&7E,#19&7B119R}', "active_init" : '{M49=1,&7#19->X,"M700=(M700 | $040000) ^ $040000"}',
-                "inactive_init" : '{M49=0,&7#19->0,"M700=M700 | $040000"}',"moveMode" :  "rotation",
+                "moveMode" :  "rotation",
                 "axis" :  "X","format" :  "%.2f",
                 "minPosition" :  "-5","update_resolution" :  "1.0",
                 "hard_ini" : "MiniKappa.Kappa1", "neutralPosition" : "0", "active" : "1"
                 },
     "phi" : { "motor_num" : "20","max_accel" : "0.2",  "max_speed" : "50", "coord_num" : "7", "u2c" : "711.111",
-              "home" : '{#20$,M420=1,&7E,#20&7B20R}',  "active_init" : '{M50=1,&7#20->Y,"M700=(M700 | $080000) ^ $080000"}',
-              "inactive_init" : '{M50=0,&7#20->0,"M700=M700 | $080000"}',"moveMode" :  "freeRotation",
+              "moveMode" :  "freeRotation",
               "axis" :  "Y","format" :  "%.2f",
               "update_resolution" :  "1.0",
               "hard_ini" : "MiniKappa.Kappa2", "neutralPosition" : "0", "active" : "1"
@@ -168,6 +190,43 @@ motor_dict = {
                         }
     }
 
+
+def mk_home( mname, d):
+    if not d.has_key("motor_num") or not d.has_key("coord_num"):
+        return ""
+    motor_num = int(d["motor_num"])
+    coord_num = int(d["coord_num"])
+    if motor_num < 1 or motor_num > 32:
+        return ""
+    
+    if mname == "kappa":
+        prog_num = 119
+    else:
+        prog_num = motor_num
+
+    return '{#%d$,M%d=1,&%dE,#%d&%dB%dR}' % (motor_num, motor_num+400, coord_num, motor_num, coord_num, prog_num)
+
+def mk_active_init( d):
+    if not d.has_key("motor_num") or not d.has_key("coord_num") or not d.has_key( "axis"):
+        return ""
+    motor_num = int(d["motor_num"])
+    coord_num = int(d["coord_num"])
+    axis      = str(d["axis"])
+    mask      = 1 << (motor_num - 1)
+    if motor_num < 1 or motor_num > 32:
+        return ""
+    return '{M%d=1,&%d#%d->%s,"M700=(M700 | $%0x) ^ $%0x"}' % (motor_num + 30, coord_num, motor_num, axis, mask, mask)
+
+def mk_inactive_init( d):
+    if not d.has_key("motor_num") or not d.has_key("coord_num") or not d.has_key( "axis"):
+        return ""
+    motor_num = int(d["motor_num"])
+    coord_num = int(d["coord_num"])
+    axis      = str(d["axis"])
+    mask      = 1 << (motor_num - 1)
+    if motor_num < 1 or motor_num > 32:
+        return ""
+    return '{M%d=0,&%d#%d->0,"M700=M700 | $%0x"}' % (motor_num + 30, coord_num, motor_num, mask)
 
 def active_simulation( sim):
     if str(sim) != "0":
@@ -324,12 +383,10 @@ zoom_settings = [
     ]
 
 
-# pmac initializer
-#
-# (moved to hard code in lspmac.c)
-#
-# print "HSETNX %s.md2_pmac.init VALUE '%s'" % (head, '{\"ENABLE PLCC 0\",\"DISABLE PLCC 1\",\"ENABLE PLCC 2\",I5=3}')
-# print "HSETNX %s.md2_status_code VALUE 7" % (head)
+# config 
+for c in configs.keys():
+    print "HMSET config.%s HEAD '%s' PUB '%s' RE '%s'" % (c.lower(), configs[c]["head"], configs[c]["pub"], configs[c]["re"])
+
 
 # motor stuff
 if hard_ini:
@@ -343,6 +400,20 @@ for m in motor_dict.keys():
     print "HSETNX %s.%s.position VALUE ''" % (head, m)          #
     print "PUBLISH mk_pgpmac_redis %s.%s.position" % (head, m)  #
     print "HSETNX %s.%s.position DBRTYPE 6" % (head, m)         #
+
+
+    if hard_ini != None and motor_dict[m].has_key("hard_ini"):
+        motor_dict[m]["motor_num"] = hi.get(motor_dict[m]["hard_ini"], "motornumber")
+        motor_dict[m]["coord_num"] = hi.get(motor_dict[m]["hard_ini"], "coordinatesystem")
+
+    # set home, active_init, and inactive_init based on current motor and coordinate numbers
+    #
+    if not motor_dict[m].has_key( "home"):
+        motor_dict[m]["home"] = mk_home( m, motor_dict[m])
+    if not motor_dict[m].has_key( "active_init"):
+        motor_dict[m]["active_init"] = mk_active_init( motor_dict[m])
+    if not motor_dict[m].has_key( "inactive_init"):
+        motor_dict[m]["inactive_init"] = mk_inactive_init( motor_dict[m])
 
 
     for k in motor_dict[m]:
