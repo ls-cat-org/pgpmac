@@ -30,7 +30,7 @@
 #include <hiredis/hiredis.h>
 #include <hiredis/async.h>
 #include <search.h>
-
+#include <ctype.h>
 
 /** Redis Object
  *  Basic object whose value is sychronized with our redis db
@@ -547,7 +547,7 @@ extern int  lsredis_cmpstr( lsredis_obj_t *p, char *s);
 extern int  lsredis_find_preset( char *base, char *preset_name, double *dval);
 extern int  lsredis_getb( lsredis_obj_t *p);
 extern double lsredis_getd( lsredis_obj_t *p);
-extern void lsredis_init( char *pub, char *re, char *head);
+extern void lsredis_init();
 extern int  lsredis_regexec( const regex_t *preg, lsredis_obj_t *p, size_t nmatch, regmatch_t *pmatch, int eflags);
 extern void lsredis_run();
 extern void lsredis_setstr( lsredis_obj_t *p, char *fmt, ...);
@@ -576,3 +576,4 @@ extern void lsredis_load_presets( char *motor_name);
 extern void pgpmac_request_stay_of_execution( int secs);
 extern void md2cmds_push_queue( char *action);
 extern pmac_cmd_queue_t *lspmac_SockSendControlCharPrint( char *event, char c);
+extern void lsredis_config();
