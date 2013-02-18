@@ -1,4 +1,4 @@
-.TH "pgpmac.c" 3 "Thu Feb 14 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "pgpmac.c" 3 "Sun Feb 17 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -12,17 +12,31 @@ Main for the pgpmac project\&.
 \fC#include 'pgpmac\&.h'\fP
 .br
 
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fBPGPMAC_COMMAND_LINE_LENGTH\fP   128"
+.br
+.RI "\fIHandle keyboard input\&. \fP"
+.ti -1c
+.RI "#define \fBPGPMAC_N_COMMAND_LINES\fP   128"
+.br
+.in -1c
 .SS "Functions"
 
 .in +1c
 .ti -1c
 .RI "void \fBstdinService\fP (struct pollfd *evt)"
 .br
-.RI "\fIHandle keyboard input\&. \fP"
 .ti -1c
 .RI "void \fBpgpmac_printf\fP (char *fmt,\&.\&.\&.)"
 .br
 .RI "\fITerminal output routine ala printf\&. \fP"
+.ti -1c
+.RI "void \fBpgpmac_request_stay_of_execution\fP (int secs)"
+.br
+.RI "\fIPostpone the day of reckoning This assumes the quit_cb routine is called once a second\&. \fP"
 .ti -1c
 .RI "void \fBpgpmac_quit_cb\fP (char *event)"
 .br
@@ -56,6 +70,14 @@ Main for the pgpmac project\&.
 .br
 .RI "\fIallow more than one thread access to the screen \fP"
 .ti -1c
+.RI "int \fBdoomsday_count\fP = 1"
+.br
+.RI "\fICountdown to quitting time: cleanout routines can request a few more heartbeats\&. \fP"
+.ti -1c
+.RI "pthread_mutex_t \fBdoomsday_mutex\fP"
+.br
+.RI "\fIavoid thread collision while resetting the doomsday clock \fP"
+.ti -1c
 .RI "static struct pollfd \fBstdinfda\fP"
 .br
 .RI "\fIHandle input from the keyboard\&. \fP"
@@ -85,6 +107,18 @@ All Rights Reserved
 
 .PP
 Definition in file \fBpgpmac\&.c\fP\&.
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define PGPMAC_COMMAND_LINE_LENGTH   128"
+
+.PP
+Handle keyboard input\&. 
+.PP
+Definition at line 255 of file pgpmac\&.c\&.
+.SS "#define PGPMAC_N_COMMAND_LINES   128"
+
+.PP
+Definition at line 256 of file pgpmac\&.c\&.
 .SH "Function Documentation"
 .PP 
 .SS "int main (intargc, char **argv)"
@@ -99,7 +133,7 @@ Our main routine\&. < argument flags \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 362 of file pgpmac\&.c\&.
+Definition at line 477 of file pgpmac\&.c\&.
 .PP
 .nf
            {
@@ -118,6 +152,15 @@ Definition at line 362 of file pgpmac\&.c\&.
   ivars    = 0;
   int i;                        // standard loop counter
   pthread_mutexattr_t mutex_initializer;
+  static sigset_t our_sigset;
+
+  //
+  // We use SIGUSR1 but sometimes it's called before a handler is in place so we'll just block it
+  // here and now\&.
+  //
+  sigemptyset( &our_sigset);
+  sigaddset( &our_sigset, SIGUSR1);
+  pthread_sigmask(SIG_BLOCK, &our_sigset, NULL);
 
   while( 1) {
     c=getopt_long( argc, argv, 'im', long_options, NULL);
@@ -149,30 +192,52 @@ Definition at line 362 of file pgpmac\&.c\&.
   pthread_mutexattr_settype( &mutex_initializer, PTHREAD_MUTEX_RECURSIVE);
 
   pthread_mutex_init( &ncurses_mutex, &mutex_initializer);      // don't lock this mutex yet because we are not multi-threaded until the '_run' functions
+  pthread_mutex_init( &doomsday_mutex, &mutex_initializer);
 
   //
   // Since the modules reference objects in other modules it is important
   // that everyone is initiallized before anyone runs
   //
+  // Everyone needs to be able to log messages
   lslogging_init();
   lslogging_run();
+
+  // Everyone needs to send and listen for events
+  //
   lsevents_init();
   lsevents_run();
 
+  //
+  // Add a couple of our own
+  //
   lsevents_add_listener( '^Quit Program$', pgpmac_quit_cb);
+  lsevents_preregister_event( 'Quit Program');
+  lsevents_preregister_event( 'Quitting Program');
 
+  //
+  // Timers are needed by all too
+  //
   lstimer_init();
   lstimer_run();
-  lsredis_init( 'MD2-21-ID-E', 'redis\\\&.kvseq|stns\\\&.2\\\&.(\&.+)', 'stns\&.2');
-  lsredis_run();
 
+  //
+  // Redis is where we get our configuration
+  // as well as one of communicating with the outside world
+  //
+  lsredis_init();
+  lsredis_run();
+  lsredis_config();
+
+  //
+  // These need to be all initialized before any are run
+  //
   lspmac_init( ivars, mvars);
   lspg_init();
   md2cmds_init();
 
-
-
-
+  //
+  // set up our screen
+  //
   pthread_mutex_lock( &ncurses_mutex);
   term_status = newwin( LS_DISPLAY_WINDOW_HEIGHT, LS_DISPLAY_WINDOW_WIDTH, 3*LS_DISPLAY_WINDOW_HEIGHT, 0*LS_DISPLAY_WINDOW_WIDTH);
   box( term_status, 0, 0);
@@ -196,6 +261,9 @@ Definition at line 362 of file pgpmac\&.c\&.
   doupdate();                                         
   pthread_mutex_unlock( &ncurses_mutex);
 
+  //
+  // Now run the world
+  //
   lspmac_run();
   lspg_run();
   md2cmds_run();
@@ -250,7 +318,7 @@ Terminal output routine ala printf\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 332 of file pgpmac\&.c\&.
+Definition at line 433 of file pgpmac\&.c\&.
 .PP
 .nf
                      {
@@ -275,32 +343,58 @@ Definition at line 332 of file pgpmac\&.c\&.
 .PP
 quit the program 
 .PP
-Definition at line 355 of file pgpmac\&.c\&.
+Definition at line 466 of file pgpmac\&.c\&.
 .PP
 .nf
                                   {
-  running = 0;
+  pthread_mutex_lock( &doomsday_mutex);
+  doomsday_count--;
+  if( doomsday_count <= 0)
+    running = 0;
+  pthread_mutex_unlock( &doomsday_mutex);
+}
+.fi
+.SS "void pgpmac_request_stay_of_execution (intsecs)"
+
+.PP
+Postpone the day of reckoning This assumes the quit_cb routine is called once a second\&. 
+.PP
+Definition at line 456 of file pgpmac\&.c\&.
+.PP
+.nf
+                                                 {
+  pthread_mutex_lock( &doomsday_mutex);
+  if( secs > doomsday_count)
+    doomsday_count = secs;
+  pthread_mutex_unlock( &doomsday_mutex);
 }
 .fi
 .SS "void stdinService (struct pollfd *evt)"
-
-.PP
-Handle keyboard input\&. \fBParameters:\fP
+\fBParameters:\fP
 .RS 4
 \fIevt\fP The pollfd object that caused this call 
 .RE
 .PP
 
 .PP
-Definition at line 254 of file pgpmac\&.c\&.
+Definition at line 257 of file pgpmac\&.c\&.
 .PP
 .nf
                     {
-  static char cmds[1024];
-  static char cntrlcmd[2];
-  static unsigned int cmds_on = 0;
+  static char cmd_lines[PGPMAC_N_COMMAND_LINES][PGPMAC_COMMAND_LINE_LENGTH];
+  static int current_line = 0;
+  static int previous_line = 0;
+  static char *cmdsp;
+  static char *prompt = 'PMAC>';;
+  static int cmds_on = 0;
+  static int cmd_mode = 0;
+  static char cevt[32];
   int ch;
+  int i;
+  char tmp;
 
+
+  cmdsp  = cmd_lines[current_line];
 
   for( ch=wgetch(term_input); ch != ERR && running; ch=wgetch(term_input)) {
 
@@ -308,9 +402,9 @@ Definition at line 254 of file pgpmac\&.c\&.
     case KEY_F(1):
     case KEY_F(2):
     case KEY_F(3):
-      lspmac_abort();
-      lsevents_send_event( 'Quitting Program');
-      lstimer_set_timer( 'Quit Program', 1, 10, 0);
+      lspmac_abort();                                   // send abort now (as opposed to an event listener) in case a cleanup routine wants to move something (we don't want to abort it)\&.
+      lsevents_send_event( 'Quitting Program');         // let everyone know the end is nigh
+      lstimer_set_timer( 'Quit Program', -1, 1, 0);     // Doomsday, repeat as needed
       break;
 
     case 0x0001:        // Control-A
@@ -322,45 +416,134 @@ Definition at line 254 of file pgpmac\&.c\&.
     case 0x0007:        // Control-G
     case 0x000b:        // Control-K
     case 0x000f:        // Control-O
-    case 0x0010:        // Control-P
+      //    case 0x0010:        // Control-P    // causes hang of PMAC communication as though ^P is not supposed to generate a response
     case 0x0011:        // Control-Q
     case 0x0012:        // Control-R
     case 0x0013:        // Control-Q
     case 0x0016:        // Control-V
-      cntrlcmd[0] = ch;
-      cntrlcmd[1] = 0;
-      lspmac_SockSendline( NULL, cntrlcmd);
-      //      PmacSockSendControlCharPrint( ch);
+      sprintf( cevt, 'Control-%c', '@' + ch);
+      lspmac_SockSendDPControlChar( cevt, ch);
+      break;
+
+    case 0x000c:        // Control-L
+      pthread_mutex_lock( &ncurses_mutex);
+      redrawwin( term_status);
+      redrawwin( term_status2);
+      redrawwin( term_output);
+      redrawwin( term_input);
+      for( i=0; i<lspmac_nmotors; i++) {
+        if( lspmac_motors[i]\&.win != NULL)
+          redrawwin( lspmac_motors[i]\&.win);
+      }
+      pthread_mutex_unlock( &ncurses_mutex);
+      break;
+
+    case KEY_UP:
+      previous_line = (previous_line - 1 + PGPMAC_N_COMMAND_LINES) % PGPMAC_N_COMMAND_LINES;
+      if( previous_line == current_line || cmd_lines[previous_line][0] == 0) {
+        //
+        // We seem to have gone through all the lines, but NO MORE\&.
+        //
+        previous_line = (previous_line + 1) % PGPMAC_N_COMMAND_LINES;
+      }
+
+      memset( cmdsp, 0, PGPMAC_COMMAND_LINE_LENGTH);
+      strcpy( cmdsp, cmd_lines[previous_line]);
+      cmds_on = strlen(cmdsp);
+      break;
+
+    case KEY_DOWN:
+      if( previous_line != current_line)
+        previous_line = (previous_line + 1) % PGPMAC_N_COMMAND_LINES;
+
+      memset( cmdsp, 0, PGPMAC_COMMAND_LINE_LENGTH);
+      strcpy( cmdsp, cmd_lines[previous_line]);
+      cmds_on = strlen(cmdsp);
+      break;
+
+    case KEY_LEFT:
+      cmds_on = cmds_on == 0 ? 0 : cmds_on - 1;
+      break;
+
+    case KEY_RIGHT:
+      cmds_on = cmds_on >= strlen(cmdsp) ? strlen(cmdsp) : cmds_on + 1;
       break;
 
     case KEY_BACKSPACE:
-      cmds[cmds_on] = 0;
       cmds_on == 0 ? 0 : cmds_on--;
+      for( i=0; *(cmdsp + cmds_on + i) != 0; i++) {
+        *(cmdsp + cmds_on + i) = *(cmdsp + cmds_on + i + 1);
+      }
       break;
       
     case KEY_ENTER:
     case 0x000a:
-      if( cmds_on > 0 && strlen( cmds) > 0) {
-        lspmac_SockSendline( NULL, '%s', cmds);
+      if( cmds_on > 0 && strlen( cmdsp) > 0) {
+        switch( cmd_mode) {
+        case 0:
+          if( strcmp( cmdsp, '$$$') == 0) {
+            lsevents_send_event( 'Full Card Reset Requested');
+            lslogging_log_message( 'Performing Full Card Reset, resuming in 10 seconds');
+            lstimer_set_timer( 'Full Card Reset', 1, 10, 0);
+          }
+          lspmac_SockSendline( NULL, '%s', cmdsp);
+          break;
+        case 1:
+          md2cmds_push_queue( cmdsp);
+          break;
+        }
       }
-      memset( cmds, 0, sizeof(cmds));
+      current_line = (current_line + 1) % PGPMAC_N_COMMAND_LINES;
+      previous_line = current_line;
+      cmdsp = cmd_lines[current_line];
+      memset( cmdsp, 0, PGPMAC_COMMAND_LINE_LENGTH);
       cmds_on = 0;
       break;
       
     default:
       if( ch >= 0x20 && ch <= 0x7e) {
-        if( cmds_on < sizeof( cmds)-1) {
-          cmds[cmds_on++] = ch;
-          cmds[cmds_on] = 0;
+        if( cmds_on < PGPMAC_COMMAND_LINE_LENGTH - 1) {
+          for( i=cmds_on; ch != 0 && i < PGPMAC_COMMAND_LINE_LENGTH; i++) {
+            tmp = *(cmdsp + i);
+            *(cmdsp + i) = ch;
+            ch = tmp;
+          }
+          cmds_on = (cmds_on + 1) % PGPMAC_COMMAND_LINE_LENGTH;
         }
       }
       break;
     }
     
+    if(strcasecmp( 'pmac', cmdsp) == 0) {
+      *cmdsp   = 0;
+      cmd_mode = 0;
+      cmds_on  = 0;
+      memset( cmdsp, 0, PGPMAC_COMMAND_LINE_LENGTH);
+      prompt = 'PMAC>';
+    }
+
+    if(strcasecmp( 'md2cmds', cmdsp) == 0) {
+      *cmdsp   = 0;
+      cmd_mode = 1;
+      cmds_on  = 0;
+      memset( cmdsp, 0, PGPMAC_COMMAND_LINE_LENGTH);
+      prompt = 'md2cmds>';
+    }
+
+    if( strcasecmp( 'quit', cmdsp) == 0) {
+      lspmac_abort();                                   // send abort now (as opposed to an event listener) in case a cleanup routine wants to move something (we don't want to abort it)\&.
+      lsevents_send_event( 'Quitting Program');         // let everyone know the end is nigh
+      lstimer_set_timer( 'Quit Program', -1, 1, 0);     // Doomsday, repeat as needed
+      *cmdsp   = 0;
+      cmds_on  = 0;
+      memset( cmdsp, 0, PGPMAC_COMMAND_LINE_LENGTH);
+    }
+
     if( running) {
       pthread_mutex_lock( &ncurses_mutex);
-      mvwprintw( term_input, 1, 1, 'PMAC> %s', cmds);
+      mvwprintw( term_input, 1, 1, '%s %s', prompt, cmdsp);
       wclrtoeol( term_input);
+      wmove( term_input, 1, cmds_on + strlen(prompt) + 2);
       box( term_input, 0, 0);
       wnoutrefresh( term_input);
       doupdate();
@@ -371,6 +554,18 @@ Definition at line 254 of file pgpmac\&.c\&.
 .fi
 .SH "Variable Documentation"
 .PP 
+.SS "int doomsday_count = 1"
+
+.PP
+Countdown to quitting time: cleanout routines can request a few more heartbeats\&. 
+.PP
+Definition at line 243 of file pgpmac\&.c\&.
+.SS "pthread_mutex_t doomsday_mutex"
+
+.PP
+avoid thread collision while resetting the doomsday clock 
+.PP
+Definition at line 244 of file pgpmac\&.c\&.
 .SS "pthread_mutex_t ncurses_mutex"
 
 .PP
@@ -380,13 +575,13 @@ Definition at line 242 of file pgpmac\&.c\&.
 .SS "int running = 1\fC [static]\fP"
 
 .PP
-Definition at line 249 of file pgpmac\&.c\&.
+Definition at line 250 of file pgpmac\&.c\&.
 .SS "struct pollfd stdinfda\fC [static]\fP"
 
 .PP
 Handle input from the keyboard\&. 
 .PP
-Definition at line 248 of file pgpmac\&.c\&.
+Definition at line 249 of file pgpmac\&.c\&.
 .SS "WINDOW* term_input"
 
 .PP

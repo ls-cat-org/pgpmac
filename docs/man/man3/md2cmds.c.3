@@ -1,4 +1,4 @@
-.TH "md2cmds.c" 3 "Thu Feb 14 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "md2cmds.c" 3 "Sun Feb 17 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -76,6 +76,9 @@ Implements commands to run the md2 diffractometer attached to a PMAC controled b
 .RI "int \fBmd2cmds_transfer\fP (const char *dummy)"
 .br
 .RI "\fITransfer a sample\&. \fP"
+.ti -1c
+.RI "void \fBmd2cmds_push_queue\fP (char *action)"
+.br
 .ti -1c
 .RI "void \fBmd2cmds_home_prep\fP ()"
 .br
@@ -290,7 +293,7 @@ Definition in file \fBmd2cmds\&.c\fP\&.
 .PP
 abort the current motion and put the system into a known state /param dummy Unused here 
 .PP
-Definition at line 1576 of file md2cmds\&.c\&.
+Definition at line 1587 of file md2cmds\&.c\&.
 .PP
 .nf
                                       {
@@ -324,7 +327,7 @@ Definition at line 1576 of file md2cmds\&.c\&.
 .SS "int md2cmds_action_queue (doubletimeout, char *action)"
 
 .PP
-Definition at line 1538 of file md2cmds\&.c\&.
+Definition at line 1549 of file md2cmds\&.c\&.
 .PP
 .nf
                                                         {
@@ -367,7 +370,7 @@ Definition at line 1538 of file md2cmds\&.c\&.
 .PP
 pause until md2cmds_worker has finished running the command 
 .PP
-Definition at line 1606 of file md2cmds\&.c\&.
+Definition at line 1617 of file md2cmds\&.c\&.
 .PP
 .nf
                            {
@@ -380,7 +383,7 @@ Definition at line 1606 of file md2cmds\&.c\&.
 .PP
 Move centering and alignment tables as requested TODO: Implement\&. 
 .PP
-Definition at line 1501 of file md2cmds\&.c\&.
+Definition at line 1512 of file md2cmds\&.c\&.
 .PP
 .nf
                                        {
@@ -421,7 +424,7 @@ Collect some data\&. \fBParameters:\fP
 .PP
 < setup timeouts for shutter 
 .PP
-Definition at line 1021 of file md2cmds\&.c\&.
+Definition at line 1032 of file md2cmds\&.c\&.
 .PP
 .nf
                                         {
@@ -698,7 +701,7 @@ Definition at line 1021 of file md2cmds\&.c\&.
 .SS "void md2cmds_coordsys_1_stopped_cb (char *event)"
 
 .PP
-Definition at line 1843 of file md2cmds\&.c\&.
+Definition at line 1854 of file md2cmds\&.c\&.
 .PP
 .nf
                                                  {
@@ -707,7 +710,7 @@ Definition at line 1843 of file md2cmds\&.c\&.
 .SS "void md2cmds_coordsys_2_stopped_cb (char *event)"
 
 .PP
-Definition at line 1845 of file md2cmds\&.c\&.
+Definition at line 1856 of file md2cmds\&.c\&.
 .PP
 .nf
                                                  {
@@ -716,7 +719,7 @@ Definition at line 1845 of file md2cmds\&.c\&.
 .SS "void md2cmds_coordsys_3_stopped_cb (char *event)"
 
 .PP
-Definition at line 1847 of file md2cmds\&.c\&.
+Definition at line 1858 of file md2cmds\&.c\&.
 .PP
 .nf
                                                  {
@@ -725,7 +728,7 @@ Definition at line 1847 of file md2cmds\&.c\&.
 .SS "void md2cmds_coordsys_4_stopped_cb (char *event)"
 
 .PP
-Definition at line 1849 of file md2cmds\&.c\&.
+Definition at line 1860 of file md2cmds\&.c\&.
 .PP
 .nf
                                                  {
@@ -734,7 +737,7 @@ Definition at line 1849 of file md2cmds\&.c\&.
 .SS "void md2cmds_coordsys_5_stopped_cb (char *event)"
 
 .PP
-Definition at line 1851 of file md2cmds\&.c\&.
+Definition at line 1862 of file md2cmds\&.c\&.
 .PP
 .nf
                                                  {
@@ -743,7 +746,7 @@ Definition at line 1851 of file md2cmds\&.c\&.
 .SS "void md2cmds_coordsys_7_stopped_cb (char *event)"
 
 .PP
-Definition at line 1853 of file md2cmds\&.c\&.
+Definition at line 1864 of file md2cmds\&.c\&.
 .PP
 .nf
                                                  {
@@ -752,7 +755,7 @@ Definition at line 1853 of file md2cmds\&.c\&.
 .SS "void md2cmds_home_prep ()"
 
 .PP
-Definition at line 72 of file md2cmds\&.c\&.
+Definition at line 84 of file md2cmds\&.c\&.
 .PP
 .nf
                          {
@@ -764,7 +767,7 @@ Definition at line 72 of file md2cmds\&.c\&.
 .SS "int md2cmds_home_wait (doubletimeout_secs)"
 
 .PP
-Definition at line 79 of file md2cmds\&.c\&.
+Definition at line 91 of file md2cmds\&.c\&.
 .PP
 .nf
                                             {
@@ -814,7 +817,7 @@ Definition at line 79 of file md2cmds\&.c\&.
 .PP
 Initialize the md2cmds module\&. 
 .PP
-Definition at line 1859 of file md2cmds\&.c\&.
+Definition at line 1870 of file md2cmds\&.c\&.
 .PP
 .nf
                     {
@@ -870,7 +873,7 @@ Definition at line 1859 of file md2cmds\&.c\&.
 .PP
 returns non-zero if we think a motor is moving, 0 otherwise 
 .PP
-Definition at line 178 of file md2cmds\&.c\&.
+Definition at line 190 of file md2cmds\&.c\&.
 .PP
 .nf
                         {
@@ -886,7 +889,7 @@ Definition at line 178 of file md2cmds\&.c\&.
 .SS "void md2cmds_kappaphi_move (doublekappa_deg, doublephi_deg)"
 
 .PP
-Definition at line 999 of file md2cmds\&.c\&.
+Definition at line 1010 of file md2cmds\&.c\&.
 .PP
 .nf
                                                               {
@@ -911,7 +914,7 @@ Definition at line 999 of file md2cmds\&.c\&.
 .PP
 Track motors homing\&. 
 .PP
-Definition at line 975 of file md2cmds\&.c\&.
+Definition at line 986 of file md2cmds\&.c\&.
 .PP
 .nf
                                                 {
@@ -941,7 +944,7 @@ Definition at line 975 of file md2cmds\&.c\&.
 .PP
 Track how many motors are moving\&. 
 .PP
-Definition at line 946 of file md2cmds\&.c\&.
+Definition at line 957 of file md2cmds\&.c\&.
 .PP
 .nf
                                                 {
@@ -975,7 +978,7 @@ Definition at line 946 of file md2cmds\&.c\&.
 .PP
 Now that we are done with the 360 rotation lets rehome right quick\&. 
 .PP
-Definition at line 1462 of file md2cmds\&.c\&.
+Definition at line 1473 of file md2cmds\&.c\&.
 .PP
 .nf
                                                 {
@@ -990,7 +993,7 @@ Definition at line 1462 of file md2cmds\&.c\&.
 .PP
 prepare for new movements 
 .PP
-Definition at line 124 of file md2cmds\&.c\&.
+Definition at line 136 of file md2cmds\&.c\&.
 .PP
 .nf
                          {
@@ -1011,7 +1014,7 @@ There are two waits involved: First to wait for the first 'Moving' to be seen an
 .PP
 returns 0 on success and 1 if we timedout\&. 
 .PP
-Definition at line 141 of file md2cmds\&.c\&.
+Definition at line 153 of file md2cmds\&.c\&.
 .PP
 .nf
                                             {
@@ -1059,7 +1062,7 @@ Move a motor to the position requested Returns non zero on error\&. \fBParameter
 .PP
 
 .PP
-Definition at line 445 of file md2cmds\&.c\&.
+Definition at line 457 of file md2cmds\&.c\&.
 .PP
 .nf
                        {
@@ -1146,7 +1149,7 @@ Move a motor to the position requested Returns non zero on error\&. \fBParameter
 .PP
 
 .PP
-Definition at line 524 of file md2cmds\&.c\&.
+Definition at line 536 of file md2cmds\&.c\&.
 .PP
 .nf
                        {
@@ -1213,8 +1216,7 @@ Definition at line 524 of file md2cmds\&.c\&.
   }
 
   if( mp != NULL && mp->moveAbs != NULL) {
-    wprintw( term_output, 'Moving %s by %f\n', mtr, fpos);
-    wnoutrefresh( term_output);
+    lslogging_log_message( 'Moving %s by %f\n', mtr, fpos);
     err = mp->moveAbs( mp, lspmac_getPosition(mp) + fpos);
   }
 
@@ -1240,7 +1242,7 @@ Move the centering and alignment tables\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 919 of file md2cmds\&.c\&.
+Definition at line 930 of file md2cmds\&.c\&.
 .PP
 .nf
                              {
@@ -1265,7 +1267,7 @@ Definition at line 919 of file md2cmds\&.c\&.
 .SS "void md2cmds_organs_move_presets (char *pay, char *paz, char *pcy, char *pcz, char *psz)"
 
 .PP
-Definition at line 211 of file md2cmds\&.c\&.
+Definition at line 223 of file md2cmds\&.c\&.
 .PP
 .nf
                                                                                          {
@@ -1327,7 +1329,7 @@ Definition at line 211 of file md2cmds\&.c\&.
 .PP
 Go to beam location phase\&. 
 .PP
-Definition at line 778 of file md2cmds\&.c\&.
+Definition at line 789 of file md2cmds\&.c\&.
 .PP
 .nf
                                  {
@@ -1371,7 +1373,7 @@ Definition at line 778 of file md2cmds\&.c\&.
 .PP
 Go to center phase\&. 
 .PP
-Definition at line 703 of file md2cmds\&.c\&.
+Definition at line 714 of file md2cmds\&.c\&.
 .PP
 .nf
                            {
@@ -1425,7 +1427,7 @@ EMBL calls these states 'phases' and this language is partially retained here * 
 .PP
 
 .PP
-Definition at line 859 of file md2cmds\&.c\&.
+Definition at line 870 of file md2cmds\&.c\&.
 .PP
 .nf
                                             {
@@ -1489,7 +1491,7 @@ Definition at line 859 of file md2cmds\&.c\&.
 .PP
 Go to data collection phase\&. 
 .PP
-Definition at line 742 of file md2cmds\&.c\&.
+Definition at line 753 of file md2cmds\&.c\&.
 .PP
 .nf
                                    {
@@ -1530,7 +1532,7 @@ Definition at line 742 of file md2cmds\&.c\&.
 .PP
 Go to the manual mount phase\&. 
 .PP
-Definition at line 605 of file md2cmds\&.c\&.
+Definition at line 616 of file md2cmds\&.c\&.
 .PP
 .nf
                                 {
@@ -1580,7 +1582,7 @@ Definition at line 605 of file md2cmds\&.c\&.
 .PP
 Go to robot mount phase\&. 
 .PP
-Definition at line 649 of file md2cmds\&.c\&.
+Definition at line 660 of file md2cmds\&.c\&.
 .PP
 .nf
                                {
@@ -1640,7 +1642,7 @@ Definition at line 649 of file md2cmds\&.c\&.
 .PP
 Go to safe phase\&. 
 .PP
-Definition at line 817 of file md2cmds\&.c\&.
+Definition at line 828 of file md2cmds\&.c\&.
 .PP
 .nf
                          {
@@ -1685,7 +1687,7 @@ Definition at line 817 of file md2cmds\&.c\&.
 .SS "double md2cmds_prep_axis (\fBlspmac_motor_t\fP *mp, doublepos)"
 
 .PP
-Definition at line 189 of file md2cmds\&.c\&.
+Definition at line 201 of file md2cmds\&.c\&.
 .PP
 .nf
                                                           {
@@ -1708,6 +1710,24 @@ Definition at line 189 of file md2cmds\&.c\&.
   return rtn;
 }
 .fi
+.SS "void md2cmds_push_queue (char *action)"
+
+.PP
+Definition at line 72 of file md2cmds\&.c\&.
+.PP
+.nf
+                                       {
+
+  if( pthread_mutex_trylock( &md2cmds_mutex) == 0) {
+    strncpy( md2cmds_cmd, action, MD2CMDS_CMD_LENGTH-1);
+    md2cmds_cmd[MD2CMDS_CMD_LENGTH-1] = 0;
+    pthread_cond_signal( &md2cmds_cond);
+    pthread_mutex_unlock( &md2cmds_mutex);
+  } else {
+    lslogging_log_message( 'md2cmds_push_queue: MD2 command '%s' ignored\&.  Already running '%s'', action, md2cmds_cmd);
+  }
+}
+.fi
 .SS "int md2cmds_rotate (const char *dummy)"
 
 .PP
@@ -1718,7 +1738,7 @@ Spin 360 and make a video (recenter first, maybe) \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1297 of file md2cmds\&.c\&.
+Definition at line 1308 of file md2cmds\&.c\&.
 .PP
 .nf
                                        {
@@ -1873,7 +1893,7 @@ Definition at line 1297 of file md2cmds\&.c\&.
 .PP
 Tell the database about the time we went through omega=zero\&. This should trigger the video feed server to starting making a movie\&. 
 .PP
-Definition at line 1447 of file md2cmds\&.c\&.
+Definition at line 1458 of file md2cmds\&.c\&.
 .PP
 .nf
                                      {
@@ -1894,7 +1914,7 @@ Definition at line 1447 of file md2cmds\&.c\&.
 .PP
 Start up the thread\&. 
 .PP
-Definition at line 1909 of file md2cmds\&.c\&.
+Definition at line 1920 of file md2cmds\&.c\&.
 .PP
 .nf
                    {
@@ -1916,7 +1936,7 @@ Definition at line 1909 of file md2cmds\&.c\&.
 .SS "int md2cmds_run_cmd (const char *cmd)"
 
 .PP
-Definition at line 1620 of file md2cmds\&.c\&.
+Definition at line 1631 of file md2cmds\&.c\&.
 .PP
 .nf
                                       {
@@ -1971,7 +1991,7 @@ Definition at line 1620 of file md2cmds\&.c\&.
 .SS "int md2cmds_set (const char *cmd)"
 
 .PP
-Definition at line 1721 of file md2cmds\&.c\&.
+Definition at line 1732 of file md2cmds\&.c\&.
 .PP
 .nf
                                   {
@@ -2041,7 +2061,7 @@ Definition at line 1721 of file md2cmds\&.c\&.
 .PP
 Fix up xscale and yscale when zoom changes xscale and yscale have units of microns per pixel\&. 
 .PP
-Definition at line 1474 of file md2cmds\&.c\&.
+Definition at line 1485 of file md2cmds\&.c\&.
 .PP
 .nf
                                         {
@@ -2071,7 +2091,7 @@ Definition at line 1474 of file md2cmds\&.c\&.
 .SS "int md2cmds_settransferpoint (const char *cmd)"
 
 .PP
-Definition at line 1669 of file md2cmds\&.c\&.
+Definition at line 1680 of file md2cmds\&.c\&.
 .PP
 .nf
                                                {
@@ -2135,7 +2155,7 @@ Run the test routine(s) \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1614 of file md2cmds\&.c\&.
+Definition at line 1625 of file md2cmds\&.c\&.
 .PP
 .nf
                                      {
@@ -2148,7 +2168,7 @@ Definition at line 1614 of file md2cmds\&.c\&.
 .PP
 Time the capillary motion for the transfer routine\&. < track the time spent moving capz 
 .PP
-Definition at line 1508 of file md2cmds\&.c\&.
+Definition at line 1519 of file md2cmds\&.c\&.
 .PP
 .nf
                                         {
@@ -2182,7 +2202,7 @@ Transfer a sample\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 269 of file md2cmds\&.c\&.
+Definition at line 281 of file md2cmds\&.c\&.
 .PP
 .nf
                                          {
@@ -2372,7 +2392,7 @@ Our worker thread\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1786 of file md2cmds\&.c\&.
+Definition at line 1797 of file md2cmds\&.c\&.
 .PP
 .nf
                        {

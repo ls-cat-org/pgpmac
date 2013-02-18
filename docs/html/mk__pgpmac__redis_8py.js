@@ -2,8 +2,12 @@ var mk__pgpmac__redis_8py =
 [
     [ "active_simulation", "mk__pgpmac__redis_8py.html#a2572732af48007dc8f70e12ed2a738fe", null ],
     [ "asis", "mk__pgpmac__redis_8py.html#afe77e7198e6992a85f09dc3667d931d7", null ],
+    [ "mk_active_init", "mk__pgpmac__redis_8py.html#a3d3677b3f12b868f4d4a0c0f122e7179", null ],
+    [ "mk_home", "mk__pgpmac__redis_8py.html#ae9b221a54b2fec9e5e3ed2e3c608b39f", null ],
+    [ "mk_inactive_init", "mk__pgpmac__redis_8py.html#ac69e5c50c2f30dc7956173aa0e40ae74", null ],
     [ "b", "mk__pgpmac__redis_8py.html#a90faa2042277e396b48b19374c9db4ab", null ],
     [ "bi_list", "mk__pgpmac__redis_8py.html#a961bfabfbdcbf5b749f6e6ecdc733619", null ],
+    [ "configs", "mk__pgpmac__redis_8py.html#a9dc9b1bd47efd207604312cd60637526", null ],
     [ "f", "mk__pgpmac__redis_8py.html#a057fe7457503e0de97edcf855591ed58", null ],
     [ "fnc", "mk__pgpmac__redis_8py.html#a654b54ba0758b8b84516938260851129", null ],
     [ "hard_ini", "mk__pgpmac__redis_8py.html#a5864d9c27cbe61534756880cbfebe4f1", null ],

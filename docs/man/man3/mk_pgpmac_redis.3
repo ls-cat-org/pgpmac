@@ -1,4 +1,4 @@
-.TH "mk_pgpmac_redis" 3 "Thu Feb 14 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "mk_pgpmac_redis" 3 "Sun Feb 17 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -9,6 +9,15 @@ mk_pgpmac_redis \-
 .SS "Functions"
 
 .in +1c
+.ti -1c
+.RI "def \fBmk_home\fP"
+.br
+.ti -1c
+.RI "def \fBmk_active_init\fP"
+.br
+.ti -1c
+.RI "def \fBmk_inactive_init\fP"
+.br
 .ti -1c
 .RI "def \fBactive_simulation\fP"
 .br
@@ -27,6 +36,9 @@ mk_pgpmac_redis \-
 .br
 .ti -1c
 .RI "list \fBhard_ini\fP sys\&.argv[3]"
+.br
+.ti -1c
+.RI "dictionary \fBconfigs\fP"
 .br
 .ti -1c
 .RI "dictionary \fBmotor_dict\fP"
@@ -88,27 +100,88 @@ mk_pgpmac_redis \-
 .SS "def mk_pgpmac_redis\&.active_simulation (sim)"
 
 .PP
-Definition at line 172 of file mk_pgpmac_redis\&.py\&.
+Definition at line 231 of file mk_pgpmac_redis\&.py\&.
 .PP
 .nf
-172 
-173 def active_simulation( sim):
-174     if str(sim) != '0':
-175         rtn = '0'
-176     else:
-177         rtn = '1'
-178     return rtn
+231 
+232 def active_simulation( sim):
+233     if str(sim) != '0':
+234         rtn = '0'
+235     else:
+236         rtn = '1'
+237     return rtn
 
 .fi
 .SS "def mk_pgpmac_redis\&.asis (arg)"
 
 .PP
-Definition at line 179 of file mk_pgpmac_redis\&.py\&.
+Definition at line 238 of file mk_pgpmac_redis\&.py\&.
 .PP
 .nf
-179 
-180 def asis( arg):
-181     return arg
+238 
+239 def asis( arg):
+240     return arg
+
+.fi
+.SS "def mk_pgpmac_redis\&.mk_active_init (d)"
+
+.PP
+Definition at line 209 of file mk_pgpmac_redis\&.py\&.
+.PP
+.nf
+209 
+210 def mk_active_init( d):
+211     if not d\&.has_key('motor_num') or not d\&.has_key('coord_num') or not d\&.has_key( 'axis'):
+212         return ''
+213     motor_num = int(d['motor_num'])
+214     coord_num = int(d['coord_num'])
+215     axis      = str(d['axis'])
+216     mask      = 1 << (motor_num - 1)
+217     if motor_num < 1 or motor_num > 32:
+218         return ''
+219     return '{M%d=1,&%d#%d->%s,'M700=(M700 | $%0x) ^ $%0x'}' % (motor_num + 30, coord_num, motor_num, axis, mask, mask)
+
+.fi
+.SS "def mk_pgpmac_redis\&.mk_home (mname, d)"
+
+.PP
+Definition at line 194 of file mk_pgpmac_redis\&.py\&.
+.PP
+.nf
+194 
+195 def mk_home( mname, d):
+196     if not d\&.has_key('motor_num') or not d\&.has_key('coord_num'):
+197         return ''
+198     motor_num = int(d['motor_num'])
+199     coord_num = int(d['coord_num'])
+200     if motor_num < 1 or motor_num > 32:
+201         return ''
+202     
+203     if mname == 'kappa':
+204         prog_num = 119
+205     else:
+206         prog_num = motor_num
+207 
+208     return '{#%d$,M%d=1,&%dE,#%d&%dB%dR}' % (motor_num, motor_num+400, coord_num, motor_num, coord_num, prog_num)
+
+.fi
+.SS "def mk_pgpmac_redis\&.mk_inactive_init (d)"
+
+.PP
+Definition at line 220 of file mk_pgpmac_redis\&.py\&.
+.PP
+.nf
+220 
+221 def mk_inactive_init( d):
+222     if not d\&.has_key('motor_num') or not d\&.has_key('coord_num') or not d\&.has_key( 'axis'):
+223         return ''
+224     motor_num = int(d['motor_num'])
+225     coord_num = int(d['coord_num'])
+226     axis      = str(d['axis'])
+227     mask      = 1 << (motor_num - 1)
+228     if motor_num < 1 or motor_num > 32:
+229         return ''
+230     return '{M%d=0,&%d#%d->0,'M700=M700 | $%0x'}' % (motor_num + 30, coord_num, motor_num, mask)
 
 .fi
 .SH "Variable Documentation"
@@ -116,19 +189,31 @@ Definition at line 179 of file mk_pgpmac_redis\&.py\&.
 .SS "tuple mk_pgpmac_redis\&.b pi\&.get( section, 'LightIntensity')"
 
 .PP
-Definition at line 425 of file mk_pgpmac_redis\&.py\&.
+Definition at line 496 of file mk_pgpmac_redis\&.py\&.
 .SS "list mk_pgpmac_redis\&.bi_list ['CryoSwitch']"
 
 .PP
-Definition at line 243 of file mk_pgpmac_redis\&.py\&.
+Definition at line 302 of file mk_pgpmac_redis\&.py\&.
+.SS "dictionary mk_pgpmac_redis\&.configs"
+\fBInitial value:\fP
+.PP
+.nf
+1 {
+2     'orange-2'            : { 're' : 'redis\\&.kvseq|stns\\&.2\\&.(\&.+)', 'head' : 'stns\&.2', 'pub' : 'MD2-21-ID-E'},
+3     'orange-2\&.ls-cat\&.org' : { 're' : 'redis\\&.kvseq|stns\\&.2\\&.(\&.+)', 'head' : 'stns\&.2', 'pub' : 'MD2-21-ID-E'},
+4     'venison\&.ls-cat\&.org'  : { 're' : 'redis\\&.kvseq|stns\\&.2\\&.(\&.+)', 'head' : 'stns\&.2', 'pub' : 'MD2-21-ID-E'}
+5 }
+.fi
+.PP
+Definition at line 26 of file mk_pgpmac_redis\&.py\&.
 .SS "tuple mk_pgpmac_redis\&.f 'HSETNX'"
 
 .PP
-Definition at line 366 of file mk_pgpmac_redis\&.py\&.
+Definition at line 437 of file mk_pgpmac_redis\&.py\&.
 .SS "string mk_pgpmac_redis\&.fnc 'HSETNX'"
 
 .PP
-Definition at line 416 of file mk_pgpmac_redis\&.py\&.
+Definition at line 487 of file mk_pgpmac_redis\&.py\&.
 .SS "mk_pgpmac_redis\&.hard_ini sys\&.argv[3]"
 
 .PP
@@ -151,7 +236,7 @@ Definition at line 21 of file mk_pgpmac_redis\&.py\&.
 12     }
 .fi
 .PP
-Definition at line 182 of file mk_pgpmac_redis\&.py\&.
+Definition at line 241 of file mk_pgpmac_redis\&.py\&.
 .SS "list mk_pgpmac_redis\&.head sys\&.argv[1]"
 
 .PP
@@ -159,35 +244,35 @@ Definition at line 13 of file mk_pgpmac_redis\&.py\&.
 .SS "tuple mk_pgpmac_redis\&.hi \fBiniParser\&.iniParser\fP( \fBhard_ini\fP)"
 
 .PP
-Definition at line 336 of file mk_pgpmac_redis\&.py\&.
+Definition at line 393 of file mk_pgpmac_redis\&.py\&.
 .SS "int mk_pgpmac_redis\&.i 0"
 
 .PP
-Definition at line 390 of file mk_pgpmac_redis\&.py\&.
+Definition at line 461 of file mk_pgpmac_redis\&.py\&.
 .SS "dictionary mk_pgpmac_redis\&.motor_dict"
 
 .PP
-Definition at line 29 of file mk_pgpmac_redis\&.py\&.
+Definition at line 64 of file mk_pgpmac_redis\&.py\&.
 .SS "list mk_pgpmac_redis\&.motor_field_lists"
 
 .PP
-Definition at line 204 of file mk_pgpmac_redis\&.py\&.
+Definition at line 263 of file mk_pgpmac_redis\&.py\&.
 .SS "dictionary mk_pgpmac_redis\&.motor_presets"
 
 .PP
-Definition at line 245 of file mk_pgpmac_redis\&.py\&.
+Definition at line 304 of file mk_pgpmac_redis\&.py\&.
 .SS "tuple mk_pgpmac_redis\&.p pi\&.get( section, 'MotorPosition')"
 
 .PP
-Definition at line 432 of file mk_pgpmac_redis\&.py\&.
+Definition at line 503 of file mk_pgpmac_redis\&.py\&.
 .SS "tuple mk_pgpmac_redis\&.pi \fBiniParser\&.iniParser\fP( \fBpref_ini\fP)"
 
 .PP
-Definition at line 387 of file mk_pgpmac_redis\&.py\&.
+Definition at line 458 of file mk_pgpmac_redis\&.py\&.
 .SS "tuple mk_pgpmac_redis\&.ppos pi\&.get( section, option)"
 
 .PP
-Definition at line 398 of file mk_pgpmac_redis\&.py\&.
+Definition at line 469 of file mk_pgpmac_redis\&.py\&.
 .SS "mk_pgpmac_redis\&.pref_ini sys\&.argv[2]"
 
 .PP
@@ -195,19 +280,19 @@ Definition at line 16 of file mk_pgpmac_redis\&.py\&.
 .SS "tuple mk_pgpmac_redis\&.v \fBmotor_dict\fP[m]"
 
 .PP
-Definition at line 365 of file mk_pgpmac_redis\&.py\&.
+Definition at line 436 of file mk_pgpmac_redis\&.py\&.
 .SS "tuple mk_pgpmac_redis\&.x pi\&.get( section, 'ScaleX')"
 
 .PP
-Definition at line 439 of file mk_pgpmac_redis\&.py\&.
+Definition at line 510 of file mk_pgpmac_redis\&.py\&.
 .SS "list mk_pgpmac_redis\&.xlate \fBhard_ini_fields\fP[k]"
 
 .PP
-Definition at line 370 of file mk_pgpmac_redis\&.py\&.
+Definition at line 441 of file mk_pgpmac_redis\&.py\&.
 .SS "tuple mk_pgpmac_redis\&.y pi\&.get( section, 'ScaleY')"
 
 .PP
-Definition at line 446 of file mk_pgpmac_redis\&.py\&.
+Definition at line 517 of file mk_pgpmac_redis\&.py\&.
 .SS "list mk_pgpmac_redis\&.zoom_settings"
 \fBInitial value:\fP
 .PP
@@ -227,7 +312,7 @@ Definition at line 446 of file mk_pgpmac_redis\&.py\&.
 13     ]
 .fi
 .PP
-Definition at line 312 of file mk_pgpmac_redis\&.py\&.
+Definition at line 371 of file mk_pgpmac_redis\&.py\&.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for LS-CAT PGPMAC from the source code\&.

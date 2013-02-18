@@ -1,4 +1,4 @@
-.TH "lspg.c" 3 "Thu Feb 14 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lspg.c" 3 "Sun Feb 17 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -800,7 +800,7 @@ Definition at line 160 of file lspg\&.c\&.
 .SS "void lspg_check_preset_in_position_cb (char *event)"
 
 .PP
-Definition at line 1905 of file lspg\&.c\&.
+Definition at line 1899 of file lspg\&.c\&.
 .PP
 .nf
                                                     {
@@ -836,7 +836,7 @@ Send strings directly to PMAC queue\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1373 of file lspg\&.c\&.
+Definition at line 1367 of file lspg\&.c\&.
 .PP
 .nf
                    {
@@ -942,7 +942,7 @@ Definition at line 651 of file lspg\&.c\&.
 .PP
 Flush psql output buffer (ie, send the query) 
 .PP
-Definition at line 1403 of file lspg\&.c\&.
+Definition at line 1397 of file lspg\&.c\&.
 .PP
 .nf
                   {
@@ -1201,7 +1201,7 @@ Definition at line 496 of file lspg\&.c\&.
 .PP
 Initiallize the lspg module\&. 
 .PP
-Definition at line 1994 of file lspg\&.c\&.
+Definition at line 1988 of file lspg\&.c\&.
 .PP
 .nf
                  {
@@ -1396,7 +1396,7 @@ Definition at line 1055 of file lspg\&.c\&.
 .PP
 Implements our state machine Does not strictly only set the next state as it also calls some functions that, perhaps, alters the state mid-function\&. 
 .PP
-Definition at line 1762 of file lspg\&.c\&.
+Definition at line 1756 of file lspg\&.c\&.
 .PP
 .nf
                        {
@@ -1475,20 +1475,14 @@ Definition at line 1314 of file lspg\&.c\&.
   if( strcmp( action, 'noAction') == 0)
     return;
   
-  if( pthread_mutex_trylock( &md2cmds_mutex) == 0) {
-    strncpy( md2cmds_cmd, action, MD2CMDS_CMD_LENGTH-1);
-    md2cmds_cmd[MD2CMDS_CMD_LENGTH-1] = 0;
-    pthread_cond_signal( &md2cmds_cond);
-    pthread_mutex_unlock( &md2cmds_mutex);
-  } else {
-    lslogging_log_message( 'MD2 command '%s' ignored\&.  Already running '%s'', action, md2cmds_cmd);
-  }
+  md2cmds_push_queue( action);
+
 }
 .fi
 .SS "void lspg_nexterrors_cb (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
 
 .PP
-Definition at line 1339 of file lspg\&.c\&.
+Definition at line 1333 of file lspg\&.c\&.
 .PP
 .nf
                                                                  {
@@ -1965,7 +1959,7 @@ Definition at line 938 of file lspg\&.c\&.
 .SS "PQnoticeProcessor lspg_notice_processor (void *arg, const char *msg)"
 
 .PP
-Definition at line 1666 of file lspg\&.c\&.
+Definition at line 1660 of file lspg\&.c\&.
 .PP
 .nf
                                                                      {
@@ -1978,7 +1972,7 @@ Definition at line 1666 of file lspg\&.c\&.
 .PP
 Connect to the pg server\&. 
 .PP
-Definition at line 1673 of file lspg\&.c\&.
+Definition at line 1667 of file lspg\&.c\&.
 .PP
 .nf
                        {
@@ -2074,7 +2068,7 @@ I/O control to/from the postgresql server\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1563 of file lspg\&.c\&.
+Definition at line 1557 of file lspg\&.c\&.
 .PP
 .nf
                        {
@@ -2181,7 +2175,7 @@ Definition at line 1563 of file lspg\&.c\&.
 .SS "void lspg_preset_changed_cb (char *event)"
 
 .PP
-Definition at line 1883 of file lspg\&.c\&.
+Definition at line 1877 of file lspg\&.c\&.
 .PP
 .nf
                                           {
@@ -2318,7 +2312,7 @@ Definition at line 111 of file lspg\&.c\&.
 .PP
 Prepare to exit the program in a couple of seconds\&. 
 .PP
-Definition at line 1988 of file lspg\&.c\&.
+Definition at line 1982 of file lspg\&.c\&.
 .PP
 .nf
                                     {
@@ -2330,7 +2324,7 @@ Definition at line 1988 of file lspg\&.c\&.
 .PP
 Receive a result of a query\&. 
 .PP
-Definition at line 1480 of file lspg\&.c\&.
+Definition at line 1474 of file lspg\&.c\&.
 .PP
 .nf
                     {
@@ -2395,7 +2389,7 @@ Definition at line 1480 of file lspg\&.c\&.
 .PP
 Start 'er runnin'\&. 
 .PP
-Definition at line 2013 of file lspg\&.c\&.
+Definition at line 2007 of file lspg\&.c\&.
 .PP
 .nf
                 {
@@ -2419,7 +2413,7 @@ Definition at line 2013 of file lspg\&.c\&.
 .PP
 log magnet state 
 .PP
-Definition at line 1976 of file lspg\&.c\&.
+Definition at line 1970 of file lspg\&.c\&.
 .PP
 .nf
                                            {
@@ -2437,7 +2431,7 @@ Definition at line 1976 of file lspg\&.c\&.
 .PP
 send the next queued query to the DB server 
 .PP
-Definition at line 1433 of file lspg\&.c\&.
+Definition at line 1427 of file lspg\&.c\&.
 .PP
 .nf
                             {
@@ -2621,7 +2615,7 @@ Definition at line 1185 of file lspg\&.c\&.
 .PP
 Fix up xscale and yscale when zoom changes\&. 
 .PP
-Definition at line 1949 of file lspg\&.c\&.
+Definition at line 1943 of file lspg\&.c\&.
 .PP
 .nf
                                      {
@@ -2657,7 +2651,7 @@ Service a signal Signals here are treated as file descriptors and fits into our 
 .PP
 
 .PP
-Definition at line 1541 of file lspg\&.c\&.
+Definition at line 1535 of file lspg\&.c\&.
 .PP
 .nf
                         {
@@ -2784,7 +2778,7 @@ Definition at line 411 of file lspg\&.c\&.
 .SS "void lspg_unset_current_preset_moving_cb (char *event)"
 
 .PP
-Definition at line 1926 of file lspg\&.c\&.
+Definition at line 1920 of file lspg\&.c\&.
 .PP
 .nf
                                                        {
@@ -3010,7 +3004,7 @@ The main loop for the lspg thread\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1813 of file lspg\&.c\&.
+Definition at line 1807 of file lspg\&.c\&.
 .PP
 .nf
                     {

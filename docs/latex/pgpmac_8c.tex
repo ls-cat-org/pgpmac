@@ -7,13 +7,22 @@ Main for the pgpmac project.
 
 
 {\ttfamily \#include \char`\"{}pgpmac.\-h\char`\"{}}\\*
+\subsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \hyperlink{pgpmac_8c_a25440def206356d9f19afbf9510d74dd}{P\-G\-P\-M\-A\-C\-\_\-\-C\-O\-M\-M\-A\-N\-D\-\_\-\-L\-I\-N\-E\-\_\-\-L\-E\-N\-G\-T\-H}~128
+\begin{DoxyCompactList}\small\item\em Handle keyboard input. \end{DoxyCompactList}\item 
+\#define \hyperlink{pgpmac_8c_aa9fdd33a8f92d95b42db6f32fc5f0b20}{P\-G\-P\-M\-A\-C\-\_\-\-N\-\_\-\-C\-O\-M\-M\-A\-N\-D\-\_\-\-L\-I\-N\-E\-S}~128
+\end{DoxyCompactItemize}
 \subsection*{Functions}
 \begin{DoxyCompactItemize}
 \item 
 void \hyperlink{pgpmac_8c_a9127a8f722451b5996ffbc6966f4aa95}{stdin\-Service} (struct pollfd $\ast$evt)
-\begin{DoxyCompactList}\small\item\em Handle keyboard input. \end{DoxyCompactList}\item 
+\item 
 void \hyperlink{pgpmac_8c_a7762ca7b97b44b979e23ce88ca3b4249}{pgpmac\-\_\-printf} (char $\ast$fmt,...)
 \begin{DoxyCompactList}\small\item\em Terminal output routine ala printf. \end{DoxyCompactList}\item 
+void \hyperlink{pgpmac_8c_a6168e3ced6ec5fc80862d27002e4cd5b}{pgpmac\-\_\-request\-\_\-stay\-\_\-of\-\_\-execution} (int secs)
+\begin{DoxyCompactList}\small\item\em Postpone the day of reckoning This assumes the quit\-\_\-cb routine is called once a second. \end{DoxyCompactList}\item 
 void \hyperlink{pgpmac_8c_ac5c3f94664514a4b101ad5d3d32581fe}{pgpmac\-\_\-quit\-\_\-cb} (char $\ast$event)
 \begin{DoxyCompactList}\small\item\em quit the program \end{DoxyCompactList}\item 
 int \hyperlink{pgpmac_8c_a3c04138a5bfe5d72780bb7e82a18e627}{main} (int argc, char $\ast$$\ast$argv)
@@ -31,6 +40,10 @@ W\-I\-N\-D\-O\-W $\ast$ \hyperlink{pgpmac_8c_ae2d7da3afeb756716e6e4ee9cab78f8a}{
 \begin{DoxyCompactList}\small\item\em shutter, lamp, air, etc status \end{DoxyCompactList}\item 
 pthread\-\_\-mutex\-\_\-t \hyperlink{pgpmac_8c_ad128c64890c7c0d4f836d9ec6e99216a}{ncurses\-\_\-mutex}
 \begin{DoxyCompactList}\small\item\em allow more than one thread access to the screen \end{DoxyCompactList}\item 
+int \hyperlink{pgpmac_8c_aa687f0df65c1d87ffd5635742c1eab94}{doomsday\-\_\-count} = 1
+\begin{DoxyCompactList}\small\item\em Countdown to quitting time\-: cleanout routines can request a few more heartbeats. \end{DoxyCompactList}\item 
+pthread\-\_\-mutex\-\_\-t \hyperlink{pgpmac_8c_a75c9d50c347e9021784ee2529a0a1a70}{doomsday\-\_\-mutex}
+\begin{DoxyCompactList}\small\item\em avoid thread collision while resetting the doomsday clock \end{DoxyCompactList}\item 
 static struct pollfd \hyperlink{pgpmac_8c_a6dc08e82e698d914ccb09077dd33668a}{stdinfda}
 \begin{DoxyCompactList}\small\item\em Handle input from the keyboard. \end{DoxyCompactList}\item 
 static int \hyperlink{pgpmac_8c_a2f45113638a0b749a8a205d2cd7fb42b}{running} = 1
@@ -50,6 +63,27 @@ All Rights Reserved
 
 
 Definition in file \hyperlink{pgpmac_8c_source}{pgpmac.\-c}.
+
+
+
+\subsection{Macro Definition Documentation}
+\hypertarget{pgpmac_8c_a25440def206356d9f19afbf9510d74dd}{\index{pgpmac.\-c@{pgpmac.\-c}!P\-G\-P\-M\-A\-C\-\_\-\-C\-O\-M\-M\-A\-N\-D\-\_\-\-L\-I\-N\-E\-\_\-\-L\-E\-N\-G\-T\-H@{P\-G\-P\-M\-A\-C\-\_\-\-C\-O\-M\-M\-A\-N\-D\-\_\-\-L\-I\-N\-E\-\_\-\-L\-E\-N\-G\-T\-H}}
+\index{P\-G\-P\-M\-A\-C\-\_\-\-C\-O\-M\-M\-A\-N\-D\-\_\-\-L\-I\-N\-E\-\_\-\-L\-E\-N\-G\-T\-H@{P\-G\-P\-M\-A\-C\-\_\-\-C\-O\-M\-M\-A\-N\-D\-\_\-\-L\-I\-N\-E\-\_\-\-L\-E\-N\-G\-T\-H}!pgpmac.c@{pgpmac.\-c}}
+\subsubsection[{P\-G\-P\-M\-A\-C\-\_\-\-C\-O\-M\-M\-A\-N\-D\-\_\-\-L\-I\-N\-E\-\_\-\-L\-E\-N\-G\-T\-H}]{\setlength{\rightskip}{0pt plus 5cm}\#define P\-G\-P\-M\-A\-C\-\_\-\-C\-O\-M\-M\-A\-N\-D\-\_\-\-L\-I\-N\-E\-\_\-\-L\-E\-N\-G\-T\-H~128}}\label{pgpmac_8c_a25440def206356d9f19afbf9510d74dd}
+
+
+Handle keyboard input. 
+
+
+
+Definition at line 255 of file pgpmac.\-c.
+
+\hypertarget{pgpmac_8c_aa9fdd33a8f92d95b42db6f32fc5f0b20}{\index{pgpmac.\-c@{pgpmac.\-c}!P\-G\-P\-M\-A\-C\-\_\-\-N\-\_\-\-C\-O\-M\-M\-A\-N\-D\-\_\-\-L\-I\-N\-E\-S@{P\-G\-P\-M\-A\-C\-\_\-\-N\-\_\-\-C\-O\-M\-M\-A\-N\-D\-\_\-\-L\-I\-N\-E\-S}}
+\index{P\-G\-P\-M\-A\-C\-\_\-\-N\-\_\-\-C\-O\-M\-M\-A\-N\-D\-\_\-\-L\-I\-N\-E\-S@{P\-G\-P\-M\-A\-C\-\_\-\-N\-\_\-\-C\-O\-M\-M\-A\-N\-D\-\_\-\-L\-I\-N\-E\-S}!pgpmac.c@{pgpmac.\-c}}
+\subsubsection[{P\-G\-P\-M\-A\-C\-\_\-\-N\-\_\-\-C\-O\-M\-M\-A\-N\-D\-\_\-\-L\-I\-N\-E\-S}]{\setlength{\rightskip}{0pt plus 5cm}\#define P\-G\-P\-M\-A\-C\-\_\-\-N\-\_\-\-C\-O\-M\-M\-A\-N\-D\-\_\-\-L\-I\-N\-E\-S~128}}\label{pgpmac_8c_aa9fdd33a8f92d95b42db6f32fc5f0b20}
+
+
+Definition at line 256 of file pgpmac.\-c.
 
 
 
@@ -75,7 +109,7 @@ $<$ argument flags
 \end{DoxyParams}
 
 
-Definition at line 362 of file pgpmac.\-c.
+Definition at line 477 of file pgpmac.\-c.
 
 
 \begin{DoxyCode}
@@ -96,6 +130,16 @@ Definition at line 362 of file pgpmac.\-c.
   ivars    = 0;
   \textcolor{keywordtype}{int} \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i};                       \textcolor{comment}{// standard loop counter}
   pthread\_mutexattr\_t mutex\_initializer;
+  \textcolor{keyword}{static} sigset\_t our\_sigset;
+
+  \textcolor{comment}{//}
+  \textcolor{comment}{// We use SIGUSR1 but sometimes it's called before a handler is in place so
+       we'll just block it}
+  \textcolor{comment}{// here and now.}
+  \textcolor{comment}{//}
+  sigemptyset( &our\_sigset);
+  sigaddset( &our\_sigset, SIGUSR1);
+  pthread\_sigmask(SIG\_BLOCK, &our\_sigset, NULL);
 
   \textcolor{keywordflow}{while}( 1) \{
     c=getopt\_long( argc, argv, \textcolor{stringliteral}{"im"}, long\_options, NULL);
@@ -130,32 +174,53 @@ Definition at line 362 of file pgpmac.\-c.
   pthread\_mutex\_init( &\hyperlink{pgpmac_8c_ad128c64890c7c0d4f836d9ec6e99216a}{ncurses\_mutex}, &mutex\_initializer); \textcolor{comment}{//
        don't lock this mutex yet because we are not multi-threaded until the "\_run"
        functions}
+  pthread\_mutex\_init( &\hyperlink{pgpmac_8c_a75c9d50c347e9021784ee2529a0a1a70}{doomsday\_mutex}, &mutex\_initializer);
 
   \textcolor{comment}{//}
   \textcolor{comment}{// Since the modules reference objects in other modules it is important}
   \textcolor{comment}{// that everyone is initiallized before anyone runs}
   \textcolor{comment}{//}
+  \textcolor{comment}{// Everyone needs to be able to log messages}
   \hyperlink{lslogging_8c_a3418b9ab57811d28632794236e056408}{lslogging\_init}();
   \hyperlink{lslogging_8c_ad9f65252584e65957f461b809d59e3a2}{lslogging\_run}();
+
+  \textcolor{comment}{// Everyone needs to send and listen for events}
+  \textcolor{comment}{//}
   \hyperlink{lsevents_8c_af19a77187e7406fc87d36bd26e672e6d}{lsevents\_init}();
   \hyperlink{lsevents_8c_a4ddde538b603e3d4580ae9356bf9b89d}{lsevents\_run}();
 
+  \textcolor{comment}{//}
+  \textcolor{comment}{// Add a couple of our own}
+  \textcolor{comment}{//}
   \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"^Quit Program$"}, \hyperlink{pgpmac_8c_ac5c3f94664514a4b101ad5d3d32581fe}{pgpmac\_quit\_cb}
       );
+  \hyperlink{lsevents_8c_ae09cfa92dba806d8f8808e5822ea713c}{lsevents\_preregister\_event}( \textcolor{stringliteral}{"Quit Program"});
+  \hyperlink{lsevents_8c_ae09cfa92dba806d8f8808e5822ea713c}{lsevents\_preregister\_event}( \textcolor{stringliteral}{"Quitting Program"});
 
+  \textcolor{comment}{//}
+  \textcolor{comment}{// Timers are needed by all too}
+  \textcolor{comment}{//}
   \hyperlink{lstimer_8c_a8cd37a8fb0f061456456a5d79bdd5189}{lstimer\_init}();
   \hyperlink{lstimer_8c_a0b918acc1a4bf737cb62b5a70f8b553a}{lstimer\_run}();
-  \hyperlink{lsredis_8c_aef0f12fda57e476a50b14acdc9f30b58}{lsredis\_init}( \textcolor{stringliteral}{"MD2-21-ID-E"}, \textcolor{stringliteral}{"redis\(\backslash\)\(\backslash\).kvseq|stns\(\backslash\)\(\backslash\).2\(\backslash\)\(\backslash\).(.+)"}, \textcolor{stringliteral}{"
-      stns.2"});
-  \hyperlink{lsredis_8c_ad438e4368d86bbe15a93dcf86deaded5}{lsredis\_run}();
 
+  \textcolor{comment}{//}
+  \textcolor{comment}{// Redis is where we get our configuration}
+  \textcolor{comment}{// as well as one of communicating with the outside world}
+  \textcolor{comment}{//}
+  \hyperlink{lsredis_8c_a4a7466a8c5b90df6dfc78aef625220f4}{lsredis\_init}();
+  \hyperlink{lsredis_8c_ad438e4368d86bbe15a93dcf86deaded5}{lsredis\_run}();
+  \hyperlink{lsredis_8c_aaabcee808dcf48a60898798a45516b68}{lsredis\_config}();
+
+  \textcolor{comment}{//}
+  \textcolor{comment}{// These need to be all initialized before any are run}
+  \textcolor{comment}{//}
   \hyperlink{lspmac_8c_a236945579e57dbb30c0b64f5b9184e9d}{lspmac\_init}( ivars, mvars);
   \hyperlink{lspg_8c_a8a77972df14166e05c94ed0792baa09b}{lspg\_init}();
   \hyperlink{md2cmds_8c_a0851b1baecda6a67993efde41d77b1c1}{md2cmds\_init}();
 
-
-
-
+  \textcolor{comment}{//}
+  \textcolor{comment}{// set up our screen}
+  \textcolor{comment}{//}
   pthread\_mutex\_lock( &\hyperlink{pgpmac_8c_ad128c64890c7c0d4f836d9ec6e99216a}{ncurses\_mutex});
   \hyperlink{pgpmac_8c_ae746a6903fb8a4ea216def88eccedc3c}{term\_status} = newwin( \hyperlink{pgpmac_8h_a3bae94e8e4e4347dd5f87b6bda058de6}{LS\_DISPLAY\_WINDOW\_HEIGHT}
       , \hyperlink{pgpmac_8h_a1f96754f00a1f82414cebc66f75ded78}{LS\_DISPLAY\_WINDOW\_WIDTH}, 3*\hyperlink{pgpmac_8h_a3bae94e8e4e4347dd5f87b6bda058de6}{LS\_DISPLAY\_WINDOW\_HEIGHT}
@@ -185,6 +250,9 @@ Definition at line 362 of file pgpmac.\-c.
   doupdate();                                         
   pthread\_mutex\_unlock( &\hyperlink{pgpmac_8c_ad128c64890c7c0d4f836d9ec6e99216a}{ncurses\_mutex});
 
+  \textcolor{comment}{//}
+  \textcolor{comment}{// Now run the world}
+  \textcolor{comment}{//}
   \hyperlink{lspmac_8c_a3a7fb93fb3fb9c4454613f30bfb0b1ee}{lspmac\_run}();
   \hyperlink{lspg_8c_a1adfdb5ca9fdb5060849d726bf540117}{lspg\_run}();
   \hyperlink{md2cmds_8c_aa62da7d423952334d41c7d282f45233d}{md2cmds\_run}();
@@ -248,7 +316,7 @@ Terminal output routine ala printf.
 \end{DoxyParams}
 
 
-Definition at line 332 of file pgpmac.\-c.
+Definition at line 433 of file pgpmac.\-c.
 
 
 \begin{DoxyCode}
@@ -282,12 +350,40 @@ quit the program
 
 
 
-Definition at line 355 of file pgpmac.\-c.
+Definition at line 466 of file pgpmac.\-c.
 
 
 \begin{DoxyCode}
                                   \{
-  \hyperlink{pgpmac_8c_a2f45113638a0b749a8a205d2cd7fb42b}{running} = 0;
+  pthread\_mutex\_lock( &\hyperlink{pgpmac_8c_a75c9d50c347e9021784ee2529a0a1a70}{doomsday\_mutex});
+  \hyperlink{pgpmac_8c_aa687f0df65c1d87ffd5635742c1eab94}{doomsday\_count}--;
+  \textcolor{keywordflow}{if}( \hyperlink{pgpmac_8c_aa687f0df65c1d87ffd5635742c1eab94}{doomsday\_count} <= 0)
+    \hyperlink{pgpmac_8c_a2f45113638a0b749a8a205d2cd7fb42b}{running} = 0;
+  pthread\_mutex\_unlock( &\hyperlink{pgpmac_8c_a75c9d50c347e9021784ee2529a0a1a70}{doomsday\_mutex});
+\}
+\end{DoxyCode}
+\hypertarget{pgpmac_8c_a6168e3ced6ec5fc80862d27002e4cd5b}{\index{pgpmac.\-c@{pgpmac.\-c}!pgpmac\-\_\-request\-\_\-stay\-\_\-of\-\_\-execution@{pgpmac\-\_\-request\-\_\-stay\-\_\-of\-\_\-execution}}
+\index{pgpmac\-\_\-request\-\_\-stay\-\_\-of\-\_\-execution@{pgpmac\-\_\-request\-\_\-stay\-\_\-of\-\_\-execution}!pgpmac.c@{pgpmac.\-c}}
+\subsubsection[{pgpmac\-\_\-request\-\_\-stay\-\_\-of\-\_\-execution}]{\setlength{\rightskip}{0pt plus 5cm}void pgpmac\-\_\-request\-\_\-stay\-\_\-of\-\_\-execution (
+\begin{DoxyParamCaption}
+\item[{int}]{secs}
+\end{DoxyParamCaption}
+)}}\label{pgpmac_8c_a6168e3ced6ec5fc80862d27002e4cd5b}
+
+
+Postpone the day of reckoning This assumes the quit\-\_\-cb routine is called once a second. 
+
+
+
+Definition at line 456 of file pgpmac.\-c.
+
+
+\begin{DoxyCode}
+                                                 \{
+  pthread\_mutex\_lock( &\hyperlink{pgpmac_8c_a75c9d50c347e9021784ee2529a0a1a70}{doomsday\_mutex});
+  \textcolor{keywordflow}{if}( secs > \hyperlink{pgpmac_8c_aa687f0df65c1d87ffd5635742c1eab94}{doomsday\_count})
+    \hyperlink{pgpmac_8c_aa687f0df65c1d87ffd5635742c1eab94}{doomsday\_count} = secs;
+  pthread\_mutex\_unlock( &\hyperlink{pgpmac_8c_a75c9d50c347e9021784ee2529a0a1a70}{doomsday\_mutex});
 \}
 \end{DoxyCode}
 \hypertarget{pgpmac_8c_a9127a8f722451b5996ffbc6966f4aa95}{\index{pgpmac.\-c@{pgpmac.\-c}!stdin\-Service@{stdin\-Service}}
@@ -298,26 +394,32 @@ Definition at line 355 of file pgpmac.\-c.
 \end{DoxyParamCaption}
 )}}\label{pgpmac_8c_a9127a8f722451b5996ffbc6966f4aa95}
 
-
-Handle keyboard input. 
-
-
 \begin{DoxyParams}[1]{Parameters}
 \mbox{\tt in}  & {\em evt} & The pollfd object that caused this call \\
 \hline
 \end{DoxyParams}
 
 
-Definition at line 254 of file pgpmac.\-c.
+Definition at line 257 of file pgpmac.\-c.
 
 
 \begin{DoxyCode}
                     \{
-  \textcolor{keyword}{static} \textcolor{keywordtype}{char} cmds[1024];
-  \textcolor{keyword}{static} \textcolor{keywordtype}{char} cntrlcmd[2];
-  \textcolor{keyword}{static} \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int} cmds\_on = 0;
+  \textcolor{keyword}{static} \textcolor{keywordtype}{char} cmd\_lines[\hyperlink{pgpmac_8c_aa9fdd33a8f92d95b42db6f32fc5f0b20}{PGPMAC\_N\_COMMAND\_LINES}][
+      \hyperlink{pgpmac_8c_a25440def206356d9f19afbf9510d74dd}{PGPMAC\_COMMAND\_LINE\_LENGTH}];
+  \textcolor{keyword}{static} \textcolor{keywordtype}{int} current\_line = 0;
+  \textcolor{keyword}{static} \textcolor{keywordtype}{int} previous\_line = 0;
+  \textcolor{keyword}{static} \textcolor{keywordtype}{char} *cmdsp;
+  \textcolor{keyword}{static} \textcolor{keywordtype}{char} *prompt = \textcolor{stringliteral}{"PMAC>"};;
+  \textcolor{keyword}{static} \textcolor{keywordtype}{int} cmds\_on = 0;
+  \textcolor{keyword}{static} \textcolor{keywordtype}{int} cmd\_mode = 0;
+  \textcolor{keyword}{static} \textcolor{keywordtype}{char} cevt[32];
   \textcolor{keywordtype}{int} ch;
+  \textcolor{keywordtype}{int} \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i};
+  \textcolor{keywordtype}{char} tmp;
 
+
+  cmdsp  = cmd\_lines[current\_line];
 
   \textcolor{keywordflow}{for}( ch=wgetch(\hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input}); ch != ERR && \hyperlink{pgpmac_8c_a2f45113638a0b749a8a205d2cd7fb42b}{running}; ch=wgetch(
       \hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input})) \{
@@ -326,9 +428,13 @@ Definition at line 254 of file pgpmac.\-c.
     \textcolor{keywordflow}{case} KEY\_F(1):
     case KEY\_F(2):
     case KEY\_F(3):
-      \hyperlink{lspmac_8c_a85f7a5e4d853b7a86ddde1006dd4dc1f}{lspmac\_abort}();
-      \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Quitting Program"});
-      \hyperlink{lstimer_8c_a7b3e725fbe1bb3cc9f8465941cf1e381}{lstimer\_set\_timer}( \textcolor{stringliteral}{"Quit Program"}, 1, 10, 0);
+      \hyperlink{lspmac_8c_a85f7a5e4d853b7a86ddde1006dd4dc1f}{lspmac\_abort}();                                       \textcolor{comment}{// send
+       abort now (as opposed to an event listener) in case a cleanup routine wants to
+       move something (we don't want to abort it).}
+      \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Quitting Program"});              \textcolor{comment}{
+      // let everyone know the end is nigh}
+      \hyperlink{lstimer_8c_a7b3e725fbe1bb3cc9f8465941cf1e381}{lstimer\_set\_timer}( \textcolor{stringliteral}{"Quit Program"}, -1, 1, 0);    \textcolor{comment}{//
+       Doomsday, repeat as needed}
       \textcolor{keywordflow}{break};
 
     \textcolor{keywordflow}{case} 0x0001:        \textcolor{comment}{// Control-A}
@@ -340,45 +446,147 @@ Definition at line 254 of file pgpmac.\-c.
     \textcolor{keywordflow}{case} 0x0007:        \textcolor{comment}{// Control-G}
     \textcolor{keywordflow}{case} 0x000b:        \textcolor{comment}{// Control-K}
     \textcolor{keywordflow}{case} 0x000f:        \textcolor{comment}{// Control-O}
-    \textcolor{keywordflow}{case} 0x0010:        \textcolor{comment}{// Control-P}
+      \textcolor{comment}{//    case 0x0010:        // Control-P    // causes hang of PMAC
+       communication as though ^P is not supposed to generate a response}
     \textcolor{keywordflow}{case} 0x0011:        \textcolor{comment}{// Control-Q}
     \textcolor{keywordflow}{case} 0x0012:        \textcolor{comment}{// Control-R}
     \textcolor{keywordflow}{case} 0x0013:        \textcolor{comment}{// Control-Q}
     \textcolor{keywordflow}{case} 0x0016:        \textcolor{comment}{// Control-V}
-      cntrlcmd[0] = ch;
-      cntrlcmd[1] = 0;
-      \hyperlink{lspmac_8c_adebcd9b5045d49112b704a7656a981c9}{lspmac\_SockSendline}( NULL, cntrlcmd);
-      \textcolor{comment}{//      PmacSockSendControlCharPrint( ch);}
+      sprintf( cevt, \textcolor{stringliteral}{"Control-%c"}, \textcolor{charliteral}{'@'} + ch);
+      \hyperlink{lspmac_8c_a0575fc751cecf35ffe8b290ab483ac21}{lspmac\_SockSendDPControlChar}( cevt, ch);
+      \textcolor{keywordflow}{break};
+
+    \textcolor{keywordflow}{case} 0x000c:        \textcolor{comment}{// Control-L}
+      pthread\_mutex\_lock( &\hyperlink{pgpmac_8c_ad128c64890c7c0d4f836d9ec6e99216a}{ncurses\_mutex});
+      redrawwin( \hyperlink{pgpmac_8c_ae746a6903fb8a4ea216def88eccedc3c}{term\_status});
+      redrawwin( \hyperlink{pgpmac_8c_ae2d7da3afeb756716e6e4ee9cab78f8a}{term\_status2});
+      redrawwin( \hyperlink{pgpmac_8c_a65daf0f4a5bc6def23a9df98ff5ca57e}{term\_output});
+      redrawwin( \hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input});
+      \textcolor{keywordflow}{for}( i=0; i<\hyperlink{lspmac_8c_a56260f012c50a591ee7f97e500f16994}{lspmac\_nmotors}; i++) \{
+        \textcolor{keywordflow}{if}( \hyperlink{lspmac_8c_afbfbc3160d5ed6afefdb07f6a25924f7}{lspmac\_motors}[i].win != NULL)
+          redrawwin( \hyperlink{lspmac_8c_afbfbc3160d5ed6afefdb07f6a25924f7}{lspmac\_motors}[i].win);
+      \}
+      pthread\_mutex\_unlock( &\hyperlink{pgpmac_8c_ad128c64890c7c0d4f836d9ec6e99216a}{ncurses\_mutex});
+      \textcolor{keywordflow}{break};
+
+    \textcolor{keywordflow}{case} KEY\_UP:
+      previous\_line = (previous\_line - 1 + \hyperlink{pgpmac_8c_aa9fdd33a8f92d95b42db6f32fc5f0b20}{PGPMAC\_N\_COMMAND\_LINES}
+      ) % \hyperlink{pgpmac_8c_aa9fdd33a8f92d95b42db6f32fc5f0b20}{PGPMAC\_N\_COMMAND\_LINES};
+      \textcolor{keywordflow}{if}( previous\_line == current\_line || cmd\_lines[previous\_line][0] == 0) \{
+        \textcolor{comment}{//}
+        \textcolor{comment}{// We seem to have gone through all the lines, but NO MORE.}
+        \textcolor{comment}{//}
+        previous\_line = (previous\_line + 1) % \hyperlink{pgpmac_8c_aa9fdd33a8f92d95b42db6f32fc5f0b20}{PGPMAC\_N\_COMMAND\_LINES}
+      ;
+      \}
+
+      memset( cmdsp, 0, \hyperlink{pgpmac_8c_a25440def206356d9f19afbf9510d74dd}{PGPMAC\_COMMAND\_LINE\_LENGTH});
+      strcpy( cmdsp, cmd\_lines[previous\_line]);
+      cmds\_on = strlen(cmdsp);
+      \textcolor{keywordflow}{break};
+
+    \textcolor{keywordflow}{case} KEY\_DOWN:
+      \textcolor{keywordflow}{if}( previous\_line != current\_line)
+        previous\_line = (previous\_line + 1) % \hyperlink{pgpmac_8c_aa9fdd33a8f92d95b42db6f32fc5f0b20}{PGPMAC\_N\_COMMAND\_LINES}
+      ;
+
+      memset( cmdsp, 0, \hyperlink{pgpmac_8c_a25440def206356d9f19afbf9510d74dd}{PGPMAC\_COMMAND\_LINE\_LENGTH});
+      strcpy( cmdsp, cmd\_lines[previous\_line]);
+      cmds\_on = strlen(cmdsp);
+      \textcolor{keywordflow}{break};
+
+    \textcolor{keywordflow}{case} KEY\_LEFT:
+      cmds\_on = cmds\_on == 0 ? 0 : cmds\_on - 1;
+      \textcolor{keywordflow}{break};
+
+    \textcolor{keywordflow}{case} KEY\_RIGHT:
+      cmds\_on = cmds\_on >= strlen(cmdsp) ? strlen(cmdsp) : cmds\_on + 1;
       \textcolor{keywordflow}{break};
 
     \textcolor{keywordflow}{case} KEY\_BACKSPACE:
-      cmds[cmds\_on] = 0;
       cmds\_on == 0 ? 0 : cmds\_on--;
+      \textcolor{keywordflow}{for}( i=0; *(cmdsp + cmds\_on + \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i}) != 0; i++) \{
+        *(cmdsp + cmds\_on + \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i}) = *(cmdsp + cmds\_on + i + 1);
+      \}
       \textcolor{keywordflow}{break};
       
     \textcolor{keywordflow}{case} KEY\_ENTER:
     \textcolor{keywordflow}{case} 0x000a:
-      \textcolor{keywordflow}{if}( cmds\_on > 0 && strlen( cmds) > 0) \{
-        \hyperlink{lspmac_8c_adebcd9b5045d49112b704a7656a981c9}{lspmac\_SockSendline}( NULL, \textcolor{stringliteral}{"%s"}, cmds);
+      \textcolor{keywordflow}{if}( cmds\_on > 0 && strlen( cmdsp) > 0) \{
+        \textcolor{keywordflow}{switch}( cmd\_mode) \{
+        \textcolor{keywordflow}{case} 0:
+          \textcolor{keywordflow}{if}( strcmp( cmdsp, \textcolor{stringliteral}{"$$$"}) == 0) \{
+            \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Full Card Reset Requested"}
+      );
+            \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"Performing Full Card
+       Reset, resuming in 10 seconds"});
+            \hyperlink{lstimer_8c_a7b3e725fbe1bb3cc9f8465941cf1e381}{lstimer\_set\_timer}( \textcolor{stringliteral}{"Full Card Reset"}, 1, 10, 0);
+          \}
+          \hyperlink{lspmac_8c_adebcd9b5045d49112b704a7656a981c9}{lspmac\_SockSendline}( NULL, \textcolor{stringliteral}{"%s"}, cmdsp);
+          \textcolor{keywordflow}{break};
+        \textcolor{keywordflow}{case} 1:
+          \hyperlink{md2cmds_8c_ae2ecf1ddb756452728eba479f36b486b}{md2cmds\_push\_queue}( cmdsp);
+          \textcolor{keywordflow}{break};
+        \}
       \}
-      memset( cmds, 0, \textcolor{keyword}{sizeof}(cmds));
+      current\_line = (current\_line + 1) % \hyperlink{pgpmac_8c_aa9fdd33a8f92d95b42db6f32fc5f0b20}{PGPMAC\_N\_COMMAND\_LINES}
+      ;
+      previous\_line = current\_line;
+      cmdsp = cmd\_lines[current\_line];
+      memset( cmdsp, 0, \hyperlink{pgpmac_8c_a25440def206356d9f19afbf9510d74dd}{PGPMAC\_COMMAND\_LINE\_LENGTH});
       cmds\_on = 0;
       \textcolor{keywordflow}{break};
       
     \textcolor{keywordflow}{default}:
       \textcolor{keywordflow}{if}( ch >= 0x20 && ch <= 0x7e) \{
-        \textcolor{keywordflow}{if}( cmds\_on < \textcolor{keyword}{sizeof}( cmds)-1) \{
-          cmds[cmds\_on++] = ch;
-          cmds[cmds\_on] = 0;
+        \textcolor{keywordflow}{if}( cmds\_on < \hyperlink{pgpmac_8c_a25440def206356d9f19afbf9510d74dd}{PGPMAC\_COMMAND\_LINE\_LENGTH} - 1)
+       \{
+          \textcolor{keywordflow}{for}( i=cmds\_on; ch != 0 && i < \hyperlink{pgpmac_8c_a25440def206356d9f19afbf9510d74dd}{PGPMAC\_COMMAND\_LINE\_LENGTH}
+      ; i++) \{
+            tmp = *(cmdsp + \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i});
+            *(cmdsp + \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i}) = ch;
+            ch = tmp;
+          \}
+          cmds\_on = (cmds\_on + 1) % PGPMAC\_COMMAND\_LINE\_LENGTH;
         \}
       \}
       \textcolor{keywordflow}{break};
     \}
     
+    \textcolor{keywordflow}{if}(strcasecmp( \textcolor{stringliteral}{"pmac"}, cmdsp) == 0) \{
+      *cmdsp   = 0;
+      cmd\_mode = 0;
+      cmds\_on  = 0;
+      memset( cmdsp, 0, \hyperlink{pgpmac_8c_a25440def206356d9f19afbf9510d74dd}{PGPMAC\_COMMAND\_LINE\_LENGTH});
+      prompt = \textcolor{stringliteral}{"PMAC>"};
+    \}
+
+    \textcolor{keywordflow}{if}(strcasecmp( \textcolor{stringliteral}{"md2cmds"}, cmdsp) == 0) \{
+      *cmdsp   = 0;
+      cmd\_mode = 1;
+      cmds\_on  = 0;
+      memset( cmdsp, 0, \hyperlink{pgpmac_8c_a25440def206356d9f19afbf9510d74dd}{PGPMAC\_COMMAND\_LINE\_LENGTH});
+      prompt = \textcolor{stringliteral}{"md2cmds>"};
+    \}
+
+    \textcolor{keywordflow}{if}( strcasecmp( \textcolor{stringliteral}{"quit"}, cmdsp) == 0) \{
+      \hyperlink{lspmac_8c_a85f7a5e4d853b7a86ddde1006dd4dc1f}{lspmac\_abort}();                                       \textcolor{comment}{// send
+       abort now (as opposed to an event listener) in case a cleanup routine wants to
+       move something (we don't want to abort it).}
+      \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Quitting Program"});              \textcolor{comment}{
+      // let everyone know the end is nigh}
+      \hyperlink{lstimer_8c_a7b3e725fbe1bb3cc9f8465941cf1e381}{lstimer\_set\_timer}( \textcolor{stringliteral}{"Quit Program"}, -1, 1, 0);    \textcolor{comment}{//
+       Doomsday, repeat as needed}
+      *cmdsp   = 0;
+      cmds\_on  = 0;
+      memset( cmdsp, 0, \hyperlink{pgpmac_8c_a25440def206356d9f19afbf9510d74dd}{PGPMAC\_COMMAND\_LINE\_LENGTH});
+    \}
+
     \textcolor{keywordflow}{if}( running) \{
       pthread\_mutex\_lock( &\hyperlink{pgpmac_8c_ad128c64890c7c0d4f836d9ec6e99216a}{ncurses\_mutex});
-      mvwprintw( \hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input}, 1, 1, \textcolor{stringliteral}{"PMAC> %s"}, cmds);
+      mvwprintw( \hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input}, 1, 1, \textcolor{stringliteral}{"%s %s"}, prompt, cmdsp);
       wclrtoeol( \hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input});
+      wmove( \hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input}, 1, cmds\_on + strlen(prompt) + 2);
       box( \hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input}, 0, 0);
       wnoutrefresh( \hyperlink{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{term\_input});
       doupdate();
@@ -390,6 +598,28 @@ Definition at line 254 of file pgpmac.\-c.
 
 
 \subsection{Variable Documentation}
+\hypertarget{pgpmac_8c_aa687f0df65c1d87ffd5635742c1eab94}{\index{pgpmac.\-c@{pgpmac.\-c}!doomsday\-\_\-count@{doomsday\-\_\-count}}
+\index{doomsday\-\_\-count@{doomsday\-\_\-count}!pgpmac.c@{pgpmac.\-c}}
+\subsubsection[{doomsday\-\_\-count}]{\setlength{\rightskip}{0pt plus 5cm}int doomsday\-\_\-count = 1}}\label{pgpmac_8c_aa687f0df65c1d87ffd5635742c1eab94}
+
+
+Countdown to quitting time\-: cleanout routines can request a few more heartbeats. 
+
+
+
+Definition at line 243 of file pgpmac.\-c.
+
+\hypertarget{pgpmac_8c_a75c9d50c347e9021784ee2529a0a1a70}{\index{pgpmac.\-c@{pgpmac.\-c}!doomsday\-\_\-mutex@{doomsday\-\_\-mutex}}
+\index{doomsday\-\_\-mutex@{doomsday\-\_\-mutex}!pgpmac.c@{pgpmac.\-c}}
+\subsubsection[{doomsday\-\_\-mutex}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-mutex\-\_\-t doomsday\-\_\-mutex}}\label{pgpmac_8c_a75c9d50c347e9021784ee2529a0a1a70}
+
+
+avoid thread collision while resetting the doomsday clock 
+
+
+
+Definition at line 244 of file pgpmac.\-c.
+
 \hypertarget{pgpmac_8c_ad128c64890c7c0d4f836d9ec6e99216a}{\index{pgpmac.\-c@{pgpmac.\-c}!ncurses\-\_\-mutex@{ncurses\-\_\-mutex}}
 \index{ncurses\-\_\-mutex@{ncurses\-\_\-mutex}!pgpmac.c@{pgpmac.\-c}}
 \subsubsection[{ncurses\-\_\-mutex}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-mutex\-\_\-t ncurses\-\_\-mutex}}\label{pgpmac_8c_ad128c64890c7c0d4f836d9ec6e99216a}
@@ -406,7 +636,7 @@ Definition at line 242 of file pgpmac.\-c.
 \subsubsection[{running}]{\setlength{\rightskip}{0pt plus 5cm}int running = 1\hspace{0.3cm}{\ttfamily [static]}}}\label{pgpmac_8c_a2f45113638a0b749a8a205d2cd7fb42b}
 
 
-Definition at line 249 of file pgpmac.\-c.
+Definition at line 250 of file pgpmac.\-c.
 
 \hypertarget{pgpmac_8c_a6dc08e82e698d914ccb09077dd33668a}{\index{pgpmac.\-c@{pgpmac.\-c}!stdinfda@{stdinfda}}
 \index{stdinfda@{stdinfda}!pgpmac.c@{pgpmac.\-c}}
@@ -417,7 +647,7 @@ Handle input from the keyboard.
 
 
 
-Definition at line 248 of file pgpmac.\-c.
+Definition at line 249 of file pgpmac.\-c.
 
 \hypertarget{pgpmac_8c_ab0487111dbe3c05d0bd835eb2fb9a3f7}{\index{pgpmac.\-c@{pgpmac.\-c}!term\-\_\-input@{term\-\_\-input}}
 \index{term\-\_\-input@{term\-\_\-input}!pgpmac.c@{pgpmac.\-c}}

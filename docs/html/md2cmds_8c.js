@@ -35,6 +35,7 @@ var md2cmds_8c =
     [ "md2cmds_phase_robotMount", "md2cmds_8c.html#aac780d49120cea87b4bb7690c544e665", null ],
     [ "md2cmds_phase_safe", "md2cmds_8c.html#a38e97b92a6ed2e81b74f2ee9411271d0", null ],
     [ "md2cmds_prep_axis", "md2cmds_8c.html#ab1cc77bc7476714a419c7db69c7c4be4", null ],
+    [ "md2cmds_push_queue", "md2cmds_8c.html#ae2ecf1ddb756452728eba479f36b486b", null ],
     [ "md2cmds_rotate", "md2cmds_8c.html#ab562f807493aaaaf5a6a377ac6d5a45e", null ],
     [ "md2cmds_rotate_cb", "md2cmds_8c.html#aa43887b7c9799bc88d51df13745d0e5c", null ],
     [ "md2cmds_run", "md2cmds_8c.html#aa62da7d423952334d41c7d282f45233d", null ],

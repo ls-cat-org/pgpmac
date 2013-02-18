@@ -1,4 +1,4 @@
-.TH "pgpmac.h" 3 "Thu Feb 14 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "pgpmac.h" 3 "Sun Feb 17 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -56,6 +56,8 @@ Headers for the entire pgpmac project\&.
 \fC#include <hiredis/async\&.h>\fP
 .br
 \fC#include <search\&.h>\fP
+.br
+\fC#include <ctype\&.h>\fP
 .br
 
 .SS "Data Structures"
@@ -419,7 +421,7 @@ Headers for the entire pgpmac project\&.
 .RI "double \fBlsredis_getd\fP (\fBlsredis_obj_t\fP *p)"
 .br
 .ti -1c
-.RI "void \fBlsredis_init\fP (char *pub, char *re, char *head)"
+.RI "void \fBlsredis_init\fP ()"
 .br
 .RI "\fIInitialize this module, that is, set up the connections\&. \fP"
 .ti -1c
@@ -504,6 +506,20 @@ Headers for the entire pgpmac project\&.
 .RI "void \fBlsredis_load_presets\fP (char *motor_name)"
 .br
 .RI "\fIupdate the presets hash table for the named motor \fP"
+.ti -1c
+.RI "void \fBpgpmac_request_stay_of_execution\fP (int secs)"
+.br
+.RI "\fIPostpone the day of reckoning This assumes the quit_cb routine is called once a second\&. \fP"
+.ti -1c
+.RI "void \fBmd2cmds_push_queue\fP (char *action)"
+.br
+.ti -1c
+.RI "\fBpmac_cmd_queue_t\fP * \fBlspmac_SockSendControlCharPrint\fP (char *event, char c)"
+.br
+.RI "\fISend a control character\&. \fP"
+.ti -1c
+.RI "void \fBlsredis_config\fP ()"
+.br
 .in -1c
 .SS "Variables"
 
@@ -930,7 +946,7 @@ PMAC ethernet packet definition\&. Taken directly from the Delta Tau documentati
 .PP
 Maybe add a new object Used internally for this module Must be called with lsredis_mutex locked\&. 
 .PP
-Definition at line 505 of file lsredis\&.c\&.
+Definition at line 507 of file lsredis\&.c\&.
 .PP
 .nf
                                             {
@@ -1058,7 +1074,7 @@ Definition at line 99 of file lsevents\&.c\&.
       exit( -1);
     }
     regerror( err, &new->re, errbuf, nerrbuf);
-    lslogging_log_message( 'lsevents_add_listener: %s', errbuf);
+    //    lslogging_log_message( 'lsevents_add_listener: %s', errbuf);
     free( errbuf);
     free( new);
     return;
@@ -1083,7 +1099,7 @@ Definition at line 99 of file lsevents\&.c\&.
 
   pthread_mutex_unlock( &lsevents_listener_mutex);
 
-  lslogging_log_message( 'lsevents_add_listener: added listener for event '%s'', raw_regexp);
+  //  lslogging_log_message( 'lsevents_add_listener: added listener for event '%s'', raw_regexp);
 
 }
 .fi
@@ -1519,7 +1535,7 @@ Definition at line 496 of file lspg\&.c\&.
 .PP
 Initiallize the lspg module\&. 
 .PP
-Definition at line 1994 of file lspg\&.c\&.
+Definition at line 1988 of file lspg\&.c\&.
 .PP
 .nf
                  {
@@ -1657,7 +1673,7 @@ Definition at line 127 of file lspg\&.c\&.
 .PP
 Start 'er runnin'\&. 
 .PP
-Definition at line 2013 of file lspg\&.c\&.
+Definition at line 2007 of file lspg\&.c\&.
 .PP
 .nf
                 {
@@ -1786,7 +1802,7 @@ Definition at line 600 of file lspg\&.c\&.
 .PP
 abort motion and try to recover 
 .PP
-Definition at line 2026 of file lspmac\&.c\&.
+Definition at line 2038 of file lspmac\&.c\&.
 .PP
 .nf
                     {
@@ -1836,7 +1852,7 @@ Move the motors and estimate the time it'll take to finish the job\&. Returns th
 .PP
 < coordinate system motion flags 
 .PP
-Definition at line 2744 of file lspmac\&.c\&.
+Definition at line 2757 of file lspmac\&.c\&.
 .PP
 .nf
                                                                                                                                    {
@@ -2199,7 +2215,7 @@ wait for motion to stop returns non-zero if the wait timed out \fBParameters:\fP
 .PP
 Both values are returned from lspmac_est_move_time 
 .PP
-Definition at line 3099 of file lspmac\&.c\&.
+Definition at line 3112 of file lspmac\&.c\&.
 .PP
 .nf
                                                                                        {
@@ -2249,7 +2265,7 @@ Definition at line 3099 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* lspmac_find_motor_by_name (char *name)"
 
 .PP
-Definition at line 4186 of file lspmac\&.c\&.
+Definition at line 4239 of file lspmac\&.c\&.
 .PP
 .nf
                                                        {
@@ -2274,7 +2290,7 @@ Definition at line 4186 of file lspmac\&.c\&.
 .PP
 get binary input value 
 .PP
-Definition at line 1593 of file lspmac\&.c\&.
+Definition at line 1584 of file lspmac\&.c\&.
 .PP
 .nf
                                             {
@@ -2295,7 +2311,7 @@ get the motor position (with locking) \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1346 of file lspmac\&.c\&.
+Definition at line 1337 of file lspmac\&.c\&.
 .PP
 .nf
                                                {
@@ -2316,7 +2332,7 @@ Home the motor\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1216 of file lspmac\&.c\&.
+Definition at line 1207 of file lspmac\&.c\&.
 .PP
 .nf
                           {
@@ -2412,7 +2428,7 @@ Second stage of homing\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1304 of file lspmac\&.c\&.
+Definition at line 1295 of file lspmac\&.c\&.
 .PP
 .nf
                           {
@@ -2457,151 +2473,167 @@ Definition at line 1304 of file lspmac\&.c\&.
 .PP
 Initialize this module\&. 
 .PP
-Definition at line 3692 of file lspmac\&.c\&.
+Definition at line 3727 of file lspmac\&.c\&.
 .PP
 .nf
                    {
+  static int first_time = 1;
   int i;
   int err;
   ENTRY entry_in, *entry_outp;
   md2_status_t *p;
   pthread_mutexattr_t mutex_initializer;
 
-  // Set our global harvest flags
-  getivars = ivarsflag;
-  getmvars = mvarsflag;
+  if( first_time) {
+    // Set our global harvest flags
+    getivars = ivarsflag;
+    getmvars = mvarsflag;
 
-  // Use recursive mutexs
-  //
-  pthread_mutexattr_init( &mutex_initializer);
-  pthread_mutexattr_settype( &mutex_initializer, PTHREAD_MUTEX_RECURSIVE);
+    // Use recursive mutexs
+    //
+    pthread_mutexattr_init( &mutex_initializer);
+    pthread_mutexattr_settype( &mutex_initializer, PTHREAD_MUTEX_RECURSIVE);
 
-  // All important status mutex
-  pthread_mutex_init( &md2_status_mutex, &mutex_initializer);
+    // All important status mutex
+    pthread_mutex_init( &md2_status_mutex, &mutex_initializer);
 
-  //
-  // Get the MD2 initialization strings
-  //
-  //  lspmac_md2_init = lsredis_get_obj( 'md2_pmac\&.init');  // hard coded now\&.
+    //
+    // Get the MD2 initialization strings
+    //
+    //  lspmac_md2_init = lsredis_get_obj( 'md2_pmac\&.init');  // hard coded now\&.
 
-  //
-  // Initialize the motor objects
-  //
+    //
+    // Initialize the motor objects
+    //
 
-  p = &md2_status;
+    p = &md2_status;
 
-  omega  = lspmac_motor_init( &(lspmac_motors[ 0]), 0, 0, &p->omega_act_pos,     &p->omega_status_1,     &p->omega_status_2,     'Omega   #1 &1 X', 'omega',       lspmac_moveabs_queue, lspmac_jogabs_queue);
-  alignx = lspmac_motor_init( &(lspmac_motors[ 1]), 0, 1, &p->alignx_act_pos,    &p->alignx_status_1,    &p->alignx_status_2,    'Align X #2 &3 X', 'align\&.x',     lspmac_moveabs_queue, lspmac_jogabs_queue);
-  aligny = lspmac_motor_init( &(lspmac_motors[ 2]), 0, 2, &p->aligny_act_pos,    &p->aligny_status_1,    &p->aligny_status_2,    'Align Y #3 &3 Y', 'align\&.y',     lspmac_moveabs_queue, lspmac_jogabs_queue);
-  alignz = lspmac_motor_init( &(lspmac_motors[ 3]), 0, 3, &p->alignz_act_pos,    &p->alignz_status_1,    &p->alignz_status_2,    'Align Z #4 &3 Z', 'align\&.z',     lspmac_moveabs_queue, lspmac_jogabs_queue);
-  anal   = lspmac_motor_init( &(lspmac_motors[ 4]), 0, 4, &p->analyzer_act_pos,  &p->analyzer_status_1,  &p->analyzer_status_2,  'Anal    #5',      'lightPolar',  lspmac_moveabs_queue, lspmac_jogabs_queue);
-  zoom   = lspmac_motor_init( &(lspmac_motors[ 5]), 1, 0, &p->zoom_act_pos,      &p->zoom_status_1,      &p->zoom_status_2,      'Zoom    #6 &4 Z', 'cam\&.zoom',    lspmac_movezoom_queue, lspmac_movezoom_queue);
-  apery  = lspmac_motor_init( &(lspmac_motors[ 6]), 1, 1, &p->aperturey_act_pos, &p->aperturey_status_1, &p->aperturey_status_2, 'Aper Y  #7 &5 Y', 'appy',        lspmac_moveabs_queue, lspmac_jogabs_queue);
-  aperz  = lspmac_motor_init( &(lspmac_motors[ 7]), 1, 2, &p->aperturez_act_pos, &p->aperturez_status_1, &p->aperturez_status_2, 'Aper Z  #8 &5 Z', 'appz',        lspmac_moveabs_queue, lspmac_jogabs_queue);
-  capy   = lspmac_motor_init( &(lspmac_motors[ 8]), 1, 3, &p->capy_act_pos,      &p->capy_status_1,      &p->capy_status_2,      'Cap Y   #9 &5 U', 'capy',        lspmac_moveabs_queue, lspmac_jogabs_queue);
-  capz   = lspmac_motor_init( &(lspmac_motors[ 9]), 1, 4, &p->capz_act_pos,      &p->capz_status_1,      &p->capz_status_2,      'Cap Z  #10 &5 V', 'capz',        lspmac_moveabs_queue, lspmac_jogabs_queue);
-  scint  = lspmac_motor_init( &(lspmac_motors[10]), 2, 0, &p->scint_act_pos,     &p->scint_status_1,     &p->scint_status_2,     'Scin Z #11 &5 W', 'scint',       lspmac_moveabs_queue, lspmac_jogabs_queue);
-  cenx   = lspmac_motor_init( &(lspmac_motors[11]), 2, 1, &p->centerx_act_pos,   &p->centerx_status_1,   &p->centerx_status_2,   'Cen X  #17 &2 X', 'centering\&.x', lspmac_moveabs_queue, lspmac_jogabs_queue);
-  ceny   = lspmac_motor_init( &(lspmac_motors[12]), 2, 2, &p->centery_act_pos,   &p->centery_status_1,   &p->centery_status_2,   'Cen Y  #18 &2 Y', 'centering\&.y', lspmac_moveabs_queue, lspmac_jogabs_queue);
-  kappa  = lspmac_motor_init( &(lspmac_motors[13]), 2, 3, &p->kappa_act_pos,     &p->kappa_status_1,     &p->kappa_status_2,     'Kappa  #19 &7 X', 'kappa',       lspmac_moveabs_queue, lspmac_jogabs_queue);
-  phi    = lspmac_motor_init( &(lspmac_motors[14]), 2, 4, &p->phi_act_pos,       &p->phi_status_1,       &p->phi_status_2,       'Phi    #20 &7 Y', 'phi',         lspmac_moveabs_queue, lspmac_jogabs_queue);
+    omega  = lspmac_motor_init( &(lspmac_motors[ 0]), 0, 0, &p->omega_act_pos,     &p->omega_status_1,     &p->omega_status_2,     'Omega   #1 &1 X', 'omega',       lspmac_moveabs_queue, lspmac_jogabs_queue);
+    alignx = lspmac_motor_init( &(lspmac_motors[ 1]), 0, 1, &p->alignx_act_pos,    &p->alignx_status_1,    &p->alignx_status_2,    'Align X #2 &3 X', 'align\&.x',     lspmac_moveabs_queue, lspmac_jogabs_queue);
+    aligny = lspmac_motor_init( &(lspmac_motors[ 2]), 0, 2, &p->aligny_act_pos,    &p->aligny_status_1,    &p->aligny_status_2,    'Align Y #3 &3 Y', 'align\&.y',     lspmac_moveabs_queue, lspmac_jogabs_queue);
+    alignz = lspmac_motor_init( &(lspmac_motors[ 3]), 0, 3, &p->alignz_act_pos,    &p->alignz_status_1,    &p->alignz_status_2,    'Align Z #4 &3 Z', 'align\&.z',     lspmac_moveabs_queue, lspmac_jogabs_queue);
+    anal   = lspmac_motor_init( &(lspmac_motors[ 4]), 0, 4, &p->analyzer_act_pos,  &p->analyzer_status_1,  &p->analyzer_status_2,  'Anal    #5',      'lightPolar',  lspmac_moveabs_queue, lspmac_jogabs_queue);
+    zoom   = lspmac_motor_init( &(lspmac_motors[ 5]), 1, 0, &p->zoom_act_pos,      &p->zoom_status_1,      &p->zoom_status_2,      'Zoom    #6 &4 Z', 'cam\&.zoom',    lspmac_movezoom_queue, lspmac_movezoom_queue);
+    apery  = lspmac_motor_init( &(lspmac_motors[ 6]), 1, 1, &p->aperturey_act_pos, &p->aperturey_status_1, &p->aperturey_status_2, 'Aper Y  #7 &5 Y', 'appy',        lspmac_moveabs_queue, lspmac_jogabs_queue);
+    aperz  = lspmac_motor_init( &(lspmac_motors[ 7]), 1, 2, &p->aperturez_act_pos, &p->aperturez_status_1, &p->aperturez_status_2, 'Aper Z  #8 &5 Z', 'appz',        lspmac_moveabs_queue, lspmac_jogabs_queue);
+    capy   = lspmac_motor_init( &(lspmac_motors[ 8]), 1, 3, &p->capy_act_pos,      &p->capy_status_1,      &p->capy_status_2,      'Cap Y   #9 &5 U', 'capy',        lspmac_moveabs_queue, lspmac_jogabs_queue);
+    capz   = lspmac_motor_init( &(lspmac_motors[ 9]), 1, 4, &p->capz_act_pos,      &p->capz_status_1,      &p->capz_status_2,      'Cap Z  #10 &5 V', 'capz',        lspmac_moveabs_queue, lspmac_jogabs_queue);
+    scint  = lspmac_motor_init( &(lspmac_motors[10]), 2, 0, &p->scint_act_pos,     &p->scint_status_1,     &p->scint_status_2,     'Scin Z #11 &5 W', 'scint',       lspmac_moveabs_queue, lspmac_jogabs_queue);
+    cenx   = lspmac_motor_init( &(lspmac_motors[11]), 2, 1, &p->centerx_act_pos,   &p->centerx_status_1,   &p->centerx_status_2,   'Cen X  #17 &2 X', 'centering\&.x', lspmac_moveabs_queue, lspmac_jogabs_queue);
+    ceny   = lspmac_motor_init( &(lspmac_motors[12]), 2, 2, &p->centery_act_pos,   &p->centery_status_1,   &p->centery_status_2,   'Cen Y  #18 &2 Y', 'centering\&.y', lspmac_moveabs_queue, lspmac_jogabs_queue);
+    kappa  = lspmac_motor_init( &(lspmac_motors[13]), 2, 3, &p->kappa_act_pos,     &p->kappa_status_1,     &p->kappa_status_2,     'Kappa  #19 &7 X', 'kappa',       lspmac_moveabs_queue, lspmac_jogabs_queue);
+    phi    = lspmac_motor_init( &(lspmac_motors[14]), 2, 4, &p->phi_act_pos,       &p->phi_status_1,       &p->phi_status_2,       'Phi    #20 &7 Y', 'phi',         lspmac_moveabs_queue, lspmac_jogabs_queue);
 
-  fshut  = lspmac_fshut_init( &(lspmac_motors[15]));
-  flight = lspmac_dac_init( &(lspmac_motors[16]), &p->front_dac,   'M1200', 'frontLight\&.intensity', lspmac_movedac_queue);
-  blight = lspmac_dac_init( &(lspmac_motors[17]), &p->back_dac,    'M1201', 'backLight\&.intensity',  lspmac_movedac_queue);
-  fscint = lspmac_dac_init( &(lspmac_motors[18]), &p->scint_piezo, 'M1203', 'scint\&.focus',          lspmac_movedac_queue);
+    fshut  = lspmac_fshut_init( &(lspmac_motors[15]));
+    flight = lspmac_dac_init( &(lspmac_motors[16]), &p->front_dac,   'M1200', 'frontLight\&.intensity', lspmac_movedac_queue);
+    blight = lspmac_dac_init( &(lspmac_motors[17]), &p->back_dac,    'M1201', 'backLight\&.intensity',  lspmac_movedac_queue);
+    fscint = lspmac_dac_init( &(lspmac_motors[18]), &p->scint_piezo, 'M1203', 'scint\&.focus',          lspmac_movedac_queue);
 
-  smart_mag_oo  = lspmac_bo_init( &(lspmac_motors[19]), 'smartMagnet','M1100=%d', &(md2_status\&.acc11c_5), 0x01);
-  blight_ud     = lspmac_bo_init( &(lspmac_motors[20]), 'backLight',  'M1101=%d', &(md2_status\&.acc11c_5), 0x02);
-  cryo          = lspmac_bo_init( &(lspmac_motors[21]), 'cryo',       'M1102=%d', &(md2_status\&.acc11c_5), 0x04);
-  dryer         = lspmac_bo_init( &(lspmac_motors[22]), 'dryer',      'M1103=%d', &(md2_status\&.acc11c_5), 0x08);
-  fluo          = lspmac_bo_init( &(lspmac_motors[23]), 'fluo',       'M1104=%d', &(md2_status\&.acc11c_5), 0x10);
-  flight_oo     = lspmac_soft_motor_init( &(lspmac_motors[24]), 'frontLight',        lspmac_moveabs_frontlight_oo_queue);
-  blight_f      = lspmac_soft_motor_init( &(lspmac_motors[25]), 'backLight\&.factor',  lspmac_moveabs_blight_factor_queue);
-  flight_f      = lspmac_soft_motor_init( &(lspmac_motors[26]), 'frontLight\&.factor', lspmac_moveabs_flight_factor_queue);
+    smart_mag_oo  = lspmac_bo_init( &(lspmac_motors[19]), 'smartMagnet','M1100=%d', &(md2_status\&.acc11c_5), 0x01);
+    blight_ud     = lspmac_bo_init( &(lspmac_motors[20]), 'backLight',  'M1101=%d', &(md2_status\&.acc11c_5), 0x02);
+    cryo          = lspmac_bo_init( &(lspmac_motors[21]), 'cryo',       'M1102=%d', &(md2_status\&.acc11c_5), 0x04);
+    dryer         = lspmac_bo_init( &(lspmac_motors[22]), 'dryer',      'M1103=%d', &(md2_status\&.acc11c_5), 0x08);
+    fluo          = lspmac_bo_init( &(lspmac_motors[23]), 'fluo',       'M1104=%d', &(md2_status\&.acc11c_5), 0x10);
+    flight_oo     = lspmac_soft_motor_init( &(lspmac_motors[24]), 'frontLight',        lspmac_moveabs_frontlight_oo_queue);
+    blight_f      = lspmac_soft_motor_init( &(lspmac_motors[25]), 'backLight\&.factor',  lspmac_moveabs_blight_factor_queue);
+    flight_f      = lspmac_soft_motor_init( &(lspmac_motors[26]), 'frontLight\&.factor', lspmac_moveabs_flight_factor_queue);
 
-  lp_air          = lspmac_bi_init( &(lspmac_bis[ 0]), &(md2_status\&.acc11c_1),  0x01, 'Low Pressure Air OK',  'Low Pressure Air Failed');
-  hp_air          = lspmac_bi_init( &(lspmac_bis[ 1]), &(md2_status\&.acc11c_1),  0x02, 'High Pressure Air OK', 'High Pressure Air Failed');
-  cryo_switch     = lspmac_bi_init( &(lspmac_bis[ 2]), &(md2_status\&.acc11c_1),  0x04, 'CryoSwitchChanged',    'CryoSwitchChanged');
-  blight_down     = lspmac_bi_init( &(lspmac_bis[ 3]), &(md2_status\&.acc11c_1),  0x08, 'Backlight Down',       'Backlight Not Down');
-  blight_up       = lspmac_bi_init( &(lspmac_bis[ 4]), &(md2_status\&.acc11c_1),  0x10, 'Backlight Up',         'Backlight Not Up');
-  cryo_back       = lspmac_bi_init( &(lspmac_bis[ 5]), &(md2_status\&.acc11c_1),  0x40, 'Cryo Back',            'Cryo Not Back');
-  fluor_back      = lspmac_bi_init( &(lspmac_bis[ 6]), &(md2_status\&.acc11c_2),  0x01, 'Fluor\&. Det\&. Parked',   'Fluor\&. Det\&. Not Parked');
-  sample_detected = lspmac_bi_init( &(lspmac_bis[ 7]), &(md2_status\&.acc11c_2),  0x02, 'SamplePresent',        'SampleAbsent');
-  etel_ready      = lspmac_bi_init( &(lspmac_bis[ 8]), &(md2_status\&.acc11c_2),  0x20, 'ETEL Ready',           'ETEL Not Ready');
-  etel_on         = lspmac_bi_init( &(lspmac_bis[ 9]), &(md2_status\&.acc11c_2),  0x40, 'ETEL On',              'ETEL Off');
-  etel_init_ok    = lspmac_bi_init( &(lspmac_bis[10]), &(md2_status\&.acc11c_2),  0x80, 'ETEL Init OK',         'ETEL Init Not OK');
-  minikappa_ok    = lspmac_bi_init( &(lspmac_bis[11]), &(md2_status\&.acc11c_3),  0x01, 'Minikappa OK',         'Minikappa Not OK');
-  smart_mag_on    = lspmac_bi_init( &(lspmac_bis[12]), &(md2_status\&.acc11c_3),  0x04, 'Smart Magnet On',      'Smart Magnet Not On');
-  arm_parked      = lspmac_bi_init( &(lspmac_bis[13]), &(md2_status\&.acc11c_3),  0x08, 'Arm Parked',           'Arm Not Parked');
-  smart_mag_err   = lspmac_bi_init( &(lspmac_bis[14]), &(md2_status\&.acc11c_3),  0x10, 'Smart Magnet Error',   'Smart Magnet OK');
-  shutter_open    = lspmac_bi_init( &(lspmac_bis[15]), &(md2_status\&.acc11c_3), 0x100, 'Shutter Open',         'Shutter Not Open');
-  smart_mag_off   = lspmac_bi_init( &(lspmac_bis[16]), &(md2_status\&.acc11c_5),  0x01, 'Smart Magnet Off',     'Smart Magnet Not Off');
+    lp_air          = lspmac_bi_init( &(lspmac_bis[ 0]), &(md2_status\&.acc11c_1),  0x01, 'Low Pressure Air OK',  'Low Pressure Air Failed');
+    hp_air          = lspmac_bi_init( &(lspmac_bis[ 1]), &(md2_status\&.acc11c_1),  0x02, 'High Pressure Air OK', 'High Pressure Air Failed');
+    cryo_switch     = lspmac_bi_init( &(lspmac_bis[ 2]), &(md2_status\&.acc11c_1),  0x04, 'CryoSwitchChanged',    'CryoSwitchChanged');
+    blight_down     = lspmac_bi_init( &(lspmac_bis[ 3]), &(md2_status\&.acc11c_1),  0x08, 'Backlight Down',       'Backlight Not Down');
+    blight_up       = lspmac_bi_init( &(lspmac_bis[ 4]), &(md2_status\&.acc11c_1),  0x10, 'Backlight Up',         'Backlight Not Up');
+    cryo_back       = lspmac_bi_init( &(lspmac_bis[ 5]), &(md2_status\&.acc11c_1),  0x40, 'Cryo Back',            'Cryo Not Back');
+    fluor_back    = lspmac_bi_init( &(lspmac_bis[ 6]), &(md2_status\&.acc11c_2),  0x01, 'Fluor\&. Det\&. Parked',   'Fluor\&. Det\&. Not Parked');
+    sample_detected = lspmac_bi_init( &(lspmac_bis[ 7]), &(md2_status\&.acc11c_2),  0x02, 'SamplePresent',        'SampleAbsent');
+    etel_ready      = lspmac_bi_init( &(lspmac_bis[ 8]), &(md2_status\&.acc11c_2),  0x20, 'ETEL Ready',           'ETEL Not Ready');
+    etel_on         = lspmac_bi_init( &(lspmac_bis[ 9]), &(md2_status\&.acc11c_2),  0x40, 'ETEL On',              'ETEL Off');
+    etel_init_ok    = lspmac_bi_init( &(lspmac_bis[10]), &(md2_status\&.acc11c_2),  0x80, 'ETEL Init OK',         'ETEL Init Not OK');
+    minikappa_ok    = lspmac_bi_init( &(lspmac_bis[11]), &(md2_status\&.acc11c_3),  0x01, 'Minikappa OK',         'Minikappa Not OK');
+    smart_mag_on    = lspmac_bi_init( &(lspmac_bis[12]), &(md2_status\&.acc11c_3),  0x04, 'Smart Magnet On',      'Smart Magnet Not On');
+    arm_parked      = lspmac_bi_init( &(lspmac_bis[13]), &(md2_status\&.acc11c_3),  0x08, 'Arm Parked',           'Arm Not Parked');
+    smart_mag_err   = lspmac_bi_init( &(lspmac_bis[14]), &(md2_status\&.acc11c_3),  0x10, 'Smart Magnet Error',   'Smart Magnet OK');
+    shutter_open    = lspmac_bi_init( &(lspmac_bis[15]), &(md2_status\&.acc11c_3), 0x100, 'Shutter Open',         'Shutter Not Open');
+    smart_mag_off   = lspmac_bi_init( &(lspmac_bis[16]), &(md2_status\&.acc11c_5),  0x01, 'Smart Magnet Off',     'Smart Magnet Not Off');
   
 
 
-  // Set up hash table
-  //
-  err = hcreate_r( LSPMAC_MAX_MOTORS * 2, &motors_ht);
-  if( err == 0) {
-    lslogging_log_message( 'lspmac_init: hcreate_r failed: '%s'', strerror( errno));
-    exit( -1);
-  }
-  for( i=0; i<lspmac_nmotors; i++) {
-    entry_in\&.key   = lspmac_motors[i]\&.name;
-    entry_in\&.data  = &(lspmac_motors[i]);
-    err = hsearch_r( entry_in, ENTER, &entry_outp, &motors_ht);
+    // Set up hash table
+    //
+    err = hcreate_r( LSPMAC_MAX_MOTORS * 2, &motors_ht);
     if( err == 0) {
-      lslogging_log_message( 'lspmac_init: hsearch_r failed for motor %s: '%s'', lspmac_motors[i]\&.name, strerror( errno));
+      lslogging_log_message( 'lspmac_init: hcreate_r failed: '%s'', strerror( errno));
       exit( -1);
     }
+    for( i=0; i<lspmac_nmotors; i++) {
+      entry_in\&.key   = lspmac_motors[i]\&.name;
+      entry_in\&.data  = &(lspmac_motors[i]);
+      err = hsearch_r( entry_in, ENTER, &entry_outp, &motors_ht);
+      if( err == 0) {
+        lslogging_log_message( 'lspmac_init: hsearch_r failed for motor %s: '%s'', lspmac_motors[i]\&.name, strerror( errno));
+        exit( -1);
+      }
+    }
+
+
+
+    //
+    // Initialize several commands that get called, perhaps, alot
+    //
+    rr_cmd\&.RequestType = VR_UPLOAD;
+    rr_cmd\&.Request     = VR_PMAC_READREADY;
+    rr_cmd\&.wValue      = 0;
+    rr_cmd\&.wIndex      = 0;
+    rr_cmd\&.wLength     = htons(2);
+    memset( rr_cmd\&.bData, 0, sizeof(rr_cmd\&.bData));
+
+    gb_cmd\&.RequestType = VR_UPLOAD;
+    gb_cmd\&.Request     = VR_PMAC_GETBUFFER;
+    gb_cmd\&.wValue      = 0;
+    gb_cmd\&.wIndex      = 0;
+    gb_cmd\&.wLength     = htons(1400);
+    memset( gb_cmd\&.bData, 0, sizeof(gb_cmd\&.bData));
+
+    cr_cmd\&.RequestType = VR_UPLOAD;
+    cr_cmd\&.Request     = VR_CTRL_RESPONSE;
+    cr_cmd\&.wValue      = 0;
+    cr_cmd\&.wIndex      = 0;
+    cr_cmd\&.wLength     = htons(1400);
+    memset( cr_cmd\&.bData, 0, sizeof(cr_cmd\&.bData));
+
+    //
+    // Initialize some mutexs and conditions
+    //
+
+    pthread_mutex_init( &pmac_queue_mutex, &mutex_initializer);
+    pthread_cond_init(  &pmac_queue_cond, NULL);
+
+    lspmac_shutter_state = 0;                           // assume the shutter is now closed: not a big deal if we are wrong
+    pthread_mutex_init( &lspmac_shutter_mutex, &mutex_initializer);
+    pthread_cond_init(  &lspmac_shutter_cond, NULL);
+    pmacfd\&.fd = -1;
+
+    pthread_mutex_init( &lspmac_moving_mutex, &mutex_initializer);
+    pthread_cond_init(  &lspmac_moving_cond, NULL);
+
+    pthread_mutex_init( &lspmac_ascii_mutex, &mutex_initializer);
+
+    pthread_mutex_init( &lspmac_ascii_buffers_mutex, &mutex_initializer);
+
+    lsevents_preregister_event( 'omega crossed zero');
+    lsevents_preregister_event( 'Move Aborted');
+    lsevents_preregister_event( 'Combined Move Aborted');
+    lsevents_preregister_event( 'Abort Request queued');
+    lsevents_preregister_event( 'Abort Request accepted');
+    lsevents_preregister_event( 'Reset queued');
+    lsevents_preregister_event( 'Reset command accepted');
+  
+
+    for( i=1; i<=16; i++) {
+      lsevents_preregister_event( 'Coordsys %d Stopped', i);
+    }
+    first_time = 0;
   }
-
-
-
-  //
-  // Initialize several commands that get called, perhaps, alot
-  //
-  rr_cmd\&.RequestType = VR_UPLOAD;
-  rr_cmd\&.Request     = VR_PMAC_READREADY;
-  rr_cmd\&.wValue      = 0;
-  rr_cmd\&.wIndex      = 0;
-  rr_cmd\&.wLength     = htons(2);
-  memset( rr_cmd\&.bData, 0, sizeof(rr_cmd\&.bData));
-
-  gb_cmd\&.RequestType = VR_UPLOAD;
-  gb_cmd\&.Request     = VR_PMAC_GETBUFFER;
-  gb_cmd\&.wValue      = 0;
-  gb_cmd\&.wIndex      = 0;
-  gb_cmd\&.wLength     = htons(1400);
-  memset( gb_cmd\&.bData, 0, sizeof(gb_cmd\&.bData));
-
-  cr_cmd\&.RequestType = VR_UPLOAD;
-  cr_cmd\&.Request     = VR_CTRL_RESPONSE;
-  cr_cmd\&.wValue      = 0;
-  cr_cmd\&.wIndex      = 0;
-  cr_cmd\&.wLength     = htons(1400);
-  memset( cr_cmd\&.bData, 0, sizeof(cr_cmd\&.bData));
-
-  //
-  // Initialize some mutexs and conditions
-  //
-
-  pthread_mutex_init( &pmac_queue_mutex, &mutex_initializer);
-  pthread_cond_init(  &pmac_queue_cond, NULL);
-
-  lspmac_shutter_state = 0;                             // assume the shutter is now closed: not a big deal if we are wrong
-  pthread_mutex_init( &lspmac_shutter_mutex, &mutex_initializer);
-  pthread_cond_init(  &lspmac_shutter_cond, NULL);
-  pmacfd\&.fd = -1;
-
-  pthread_mutex_init( &lspmac_moving_mutex, &mutex_initializer);
-  pthread_cond_init(  &lspmac_moving_cond, NULL);
-
-  pthread_mutex_init( &lspmac_ascii_mutex, &mutex_initializer);
-
-  pthread_mutex_init( &lspmac_ascii_buffers_mutex, &mutex_initializer);
-
   //
   // clear the ascii communications buffers
   //
@@ -2620,20 +2652,6 @@ Definition at line 3692 of file lspmac\&.c\&.
   lspmac_SockSendDPline( NULL, 'I5=3');
 
 
-  lsevents_preregister_event( 'omega crossed zero');
-  lsevents_preregister_event( 'Move Aborted');
-  lsevents_preregister_event( 'Combined Move Aborted');
-  lsevents_preregister_event( 'Abort Request queued');
-  lsevents_preregister_event( 'Abort Request accepted');
-  lsevents_preregister_event( 'Quit Program');
-  lsevents_preregister_event( 'Quitting Program');
-  lsevents_preregister_event( 'Reset queued');
-  lsevents_preregister_event( 'Reset command accepted');
-  
-
-  for( i=1; i<=16; i++) {
-    lsevents_preregister_event( 'Coordsys %d Stopped', i);
-  }
 }
 .fi
 .SS "int lspmac_jogabs_queue (\fBlspmac_motor_t\fP *, double)"
@@ -2641,7 +2659,7 @@ Definition at line 3692 of file lspmac\&.c\&.
 .PP
 Use jog to move motor to requested position\&. 
 .PP
-Definition at line 3398 of file lspmac\&.c\&.
+Definition at line 3411 of file lspmac\&.c\&.
 .PP
 .nf
                             {
@@ -2671,7 +2689,7 @@ Move method for normal stepper and servo motor objects Returns non-zero on abort
 .PP
 
 .PP
-Definition at line 3150 of file lspmac\&.c\&.
+Definition at line 3163 of file lspmac\&.c\&.
 .PP
 .nf
                                    {
@@ -2881,7 +2899,7 @@ Definition at line 3150 of file lspmac\&.c\&.
 .PP
 move using a preset value returns 0 on success, non-zero on error 
 .PP
-Definition at line 3359 of file lspmac\&.c\&.
+Definition at line 3372 of file lspmac\&.c\&.
 .PP
 .nf
                                        {
@@ -2921,7 +2939,7 @@ Move a given motor to one of its preset positions\&. No movement if the preset i
 .PP
 
 .PP
-Definition at line 2391 of file lspmac\&.c\&.
+Definition at line 2404 of file lspmac\&.c\&.
 .PP
 .nf
                                                                      {
@@ -2948,7 +2966,7 @@ Definition at line 2391 of file lspmac\&.c\&.
 .PP
 Use coordinate system motion program, if available, to move motor to requested position\&. 
 .PP
-Definition at line 3387 of file lspmac\&.c\&.
+Definition at line 3400 of file lspmac\&.c\&.
 .PP
 .nf
                             {
@@ -2970,7 +2988,7 @@ Wait for motor to finish moving\&. Assume motion already queued, now just wait
 .PP
 
 .PP
-Definition at line 3413 of file lspmac\&.c\&.
+Definition at line 3426 of file lspmac\&.c\&.
 .PP
 .nf
                                                                   {
@@ -3051,10 +3069,11 @@ Definition at line 3413 of file lspmac\&.c\&.
 .PP
 Start up the lspmac thread\&. 
 .PP
-Definition at line 4234 of file lspmac\&.c\&.
+Definition at line 4287 of file lspmac\&.c\&.
 .PP
 .nf
                   {
+  static int first_time = 1;
   char **inits;
   lspmac_motor_t *mp;
   char evts[64];
@@ -3064,29 +3083,34 @@ Definition at line 4234 of file lspmac\&.c\&.
 
   pthread_create( &pmac_thread, NULL, lspmac_worker, NULL);
 
-  lsevents_add_listener( '^CryoSwitchChanged$',    lspmac_cryoSwitchChanged_cb);
-  lsevents_add_listener( '^scint In Position$',    lspmac_scint_maybe_turn_on_dryer_cb);
-  lsevents_add_listener( '^scint Moving$',         lspmac_scint_maybe_turn_off_dryer_cb);
-  lsevents_add_listener( '^scint In Position$',    lspmac_scint_maybe_return_sample_cb);
-  lsevents_add_listener( '^scint Moving$',         lspmac_scint_maybe_move_sample_cb);
-  lsevents_add_listener( '^scintDried$',           lspmac_scint_dried_cb);
-  lsevents_add_listener( '^backLight 1$',          lspmac_backLight_up_cb);
-  lsevents_add_listener( '^backLight 0$',          lspmac_backLight_down_cb);
-  lsevents_add_listener( '^cam\&.zoom Moving$',      lspmac_light_zoom_cb);
-  lsevents_add_listener( '^Quitting$',             lspmac_quitting_cb);
+  if( first_time) {
+    first_time = 0;
+    lsevents_add_listener( '^CryoSwitchChanged$',        lspmac_cryoSwitchChanged_cb);
+    lsevents_add_listener( '^scint In Position$',        lspmac_scint_maybe_turn_on_dryer_cb);
+    lsevents_add_listener( '^scint Moving$',             lspmac_scint_maybe_turn_off_dryer_cb);
+    lsevents_add_listener( '^scint In Position$',        lspmac_scint_maybe_return_sample_cb);
+    lsevents_add_listener( '^scint Moving$',             lspmac_scint_maybe_move_sample_cb);
+    lsevents_add_listener( '^scintDried$',               lspmac_scint_dried_cb);
+    lsevents_add_listener( '^backLight 1$' ,           lspmac_backLight_up_cb);
+    lsevents_add_listener( '^backLight 0$' ,           lspmac_backLight_down_cb);
+    lsevents_add_listener( '^cam\&.zoom Moving$',          lspmac_light_zoom_cb);
+    lsevents_add_listener( '^Quitting Program$',         lspmac_quitting_cb);
+    lsevents_add_listener( '^Control-[BCFGV] accepted$', lspmac_request_control_response_cb);
+    lsevents_add_listener( '^Full Card Reset$',          lspmac_full_card_reset_cb);
 
-  for( i=0; i<lspmac_nmotors; i++) {
-    snprintf( evts, sizeof( evts)-1, '^%s command accepted$', lspmac_motors[i]\&.name);
-    evts[sizeof(evts)-1] = 0;
-    lsevents_add_listener( evts, lspmac_command_done_cb);
+    for( i=0; i<lspmac_nmotors; i++) {
+      snprintf( evts, sizeof( evts)-1, '^%s command accepted$', lspmac_motors[i]\&.name);
+      evts[sizeof(evts)-1] = 0;
+      lsevents_add_listener( evts, lspmac_command_done_cb);
+    }
+
+
+
+    lspmac_zoom_lut_setup();
+    lspmac_flight_lut_setup();
+    lspmac_blight_lut_setup();
+    lspmac_fscint_lut_setup();
   }
-
-
-
-  lspmac_zoom_lut_setup();
-  lspmac_flight_lut_setup();
-  lspmac_blight_lut_setup();
-  lspmac_fscint_lut_setup();
 
   //
   // Clear the command interfaces
@@ -3166,7 +3190,7 @@ Set the coordinate system motion flags (m5075) for the null terminated list of m
 .PP
 
 .PP
-Definition at line 2658 of file lspmac\&.c\&.
+Definition at line 2671 of file lspmac\&.c\&.
 .PP
 .nf
                                                                      {
@@ -3243,12 +3267,31 @@ Definition at line 2658 of file lspmac\&.c\&.
   return 0;
 }
 .fi
+.SS "\fBpmac_cmd_queue_t\fP* lspmac_SockSendControlCharPrint (char *event, charc)"
+
+.PP
+Send a control character\&. \fBParameters:\fP
+.RS 4
+\fIevent\fP base name for events 
+.br
+\fIc\fP The control character to send 
+.RE
+.PP
+
+.PP
+Definition at line 1099 of file lspmac\&.c\&.
+.PP
+.nf
+                                                    {
+  return lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDCTRLCHAR, c, 0, 0, NULL, lspmac_SendControlReplyPrintCB, 0, event);
+}
+.fi
 .SS "void lspmac_SockSendDPControlChar (char *event, charc)"
 
 .PP
 use dpram ascii interface to send a control character 
 .PP
-Definition at line 1990 of file lspmac\&.c\&.
+Definition at line 2001 of file lspmac\&.c\&.
 .PP
 .nf
                                                         {
@@ -3256,7 +3299,8 @@ Definition at line 1990 of file lspmac\&.c\&.
 
   buff = 0x07 & c;
   lspmac_send_command( VR_UPLOAD, VR_PMAC_SETMEM, 0x0e9e, 0, 2, (char *)&buff, lspmac_SockSendDPControlCharCB, 1, event);
-  lsevents_send_event( '%s queued', event);
+  if( event != NULL)
+    lsevents_send_event( '%s queued', event);
 }
 .fi
 .SS "void lspmac_SockSendDPline (char *, char *fmt, \&.\&.\&.)"
@@ -3264,7 +3308,7 @@ Definition at line 1990 of file lspmac\&.c\&.
 .PP
 prepare (queue up) a line to send the dpram ascii command interface 
 .PP
-Definition at line 1963 of file lspmac\&.c\&.
+Definition at line 1959 of file lspmac\&.c\&.
 .PP
 .nf
                                                          {
@@ -3299,7 +3343,7 @@ Send a one line command\&. Uses printf style arguments\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1065 of file lspmac\&.c\&.
+Definition at line 1056 of file lspmac\&.c\&.
 .PP
 .nf
                                          {
@@ -3321,7 +3365,7 @@ Definition at line 1065 of file lspmac\&.c\&.
 .PP
 Special motion program to collect centering video\&. 
 .PP
-Definition at line 2620 of file lspmac\&.c\&.
+Definition at line 2633 of file lspmac\&.c\&.
 .PP
 .nf
                                        {
@@ -3355,7 +3399,7 @@ Definition at line 2620 of file lspmac\&.c\&.
 .SS "int lsredis_cmpnstr (\fBlsredis_obj_t\fP *p, char *s, intn)"
 
 .PP
-Definition at line 253 of file lsredis\&.c\&.
+Definition at line 255 of file lsredis\&.c\&.
 .PP
 .nf
                                                        {
@@ -3372,7 +3416,7 @@ Definition at line 253 of file lsredis\&.c\&.
 .SS "int lsredis_cmpstr (\fBlsredis_obj_t\fP *p, char *s)"
 
 .PP
-Definition at line 242 of file lsredis\&.c\&.
+Definition at line 244 of file lsredis\&.c\&.
 .PP
 .nf
                                                {
@@ -3386,12 +3430,41 @@ Definition at line 242 of file lsredis\&.c\&.
   return rtn;
 }
 .fi
+.SS "void lsredis_config ()"
+
+.PP
+Definition at line 1076 of file lsredis\&.c\&.
+.PP
+.nf
+                      {
+  char hostname[128], lhostname[128];
+  int i;
+
+  if( gethostname( hostname, sizeof(hostname)-1)) {
+    lslogging_log_message( 'lsredis_init: cannot get our own host name\&.  Cannot configure redis variables\&.');
+  } else {
+    for( i=0; i<strlen(hostname); i++) {
+      lhostname[i] = tolower( hostname[i]);
+    }
+    lhostname[i] = 0;
+
+    lslogging_log_message( 'lsredis_init: our host name is '%s'', lhostname);
+    redisAsyncCommand( roac, lsredis_configCB, NULL, 'hgetall config\&.%s', lhostname);
+  }
+  
+  pthread_mutex_lock( &lsredis_config_mutex);
+  while( lsredis_head == NULL)
+    pthread_cond_wait( &lsredis_config_cond, &lsredis_config_mutex);
+  pthread_mutex_unlock( &lsredis_config_mutex);
+
+}
+.fi
 .SS "int lsredis_find_preset (char *base, char *preset_name, double *dval)"
 
 .PP
 Get the value of the given preset and return it in dval Returns 0 on error, non-zero on success;\&. 
 .PP
-Definition at line 898 of file lsredis\&.c\&.
+Definition at line 900 of file lsredis\&.c\&.
 .PP
 .nf
                                                                             {
@@ -3432,7 +3505,7 @@ Definition at line 898 of file lsredis\&.c\&.
 .PP
 For the given motor object return the index of the current preset or -1 if we are not at a preset position\&. 
 .PP
-Definition at line 980 of file lsredis\&.c\&.
+Definition at line 982 of file lsredis\&.c\&.
 .PP
 .nf
                                                                {
@@ -3463,7 +3536,7 @@ Definition at line 980 of file lsredis\&.c\&.
 .SS "\fBlsredis_obj_t\fP* lsredis_get_obj (char *, \&.\&.\&.)"
 
 .PP
-Definition at line 591 of file lsredis\&.c\&.
+Definition at line 593 of file lsredis\&.c\&.
 .PP
 .nf
                                                 {
@@ -3502,7 +3575,7 @@ Definition at line 591 of file lsredis\&.c\&.
 .SS "char** lsredis_get_string_array (\fBlsredis_obj_t\fP *p)"
 
 .PP
-Definition at line 432 of file lsredis\&.c\&.
+Definition at line 434 of file lsredis\&.c\&.
 .PP
 .nf
                                                    {
@@ -3521,7 +3594,7 @@ Definition at line 432 of file lsredis\&.c\&.
 .SS "int lsredis_getb (\fBlsredis_obj_t\fP *p)"
 
 .PP
-Definition at line 445 of file lsredis\&.c\&.
+Definition at line 447 of file lsredis\&.c\&.
 .PP
 .nf
                                     {
@@ -3540,7 +3613,7 @@ Definition at line 445 of file lsredis\&.c\&.
 .SS "char lsredis_getc (\fBlsredis_obj_t\fP *p)"
 
 .PP
-Definition at line 458 of file lsredis\&.c\&.
+Definition at line 460 of file lsredis\&.c\&.
 .PP
 .nf
                                      {
@@ -3559,7 +3632,7 @@ Definition at line 458 of file lsredis\&.c\&.
 .SS "double lsredis_getd (\fBlsredis_obj_t\fP *p)"
 
 .PP
-Definition at line 381 of file lsredis\&.c\&.
+Definition at line 383 of file lsredis\&.c\&.
 .PP
 .nf
                                        {
@@ -3578,7 +3651,7 @@ Definition at line 381 of file lsredis\&.c\&.
 .SS "long int lsredis_getl (\fBlsredis_obj_t\fP *p)"
 
 .PP
-Definition at line 394 of file lsredis\&.c\&.
+Definition at line 396 of file lsredis\&.c\&.
 .PP
 .nf
                                          {
@@ -3599,7 +3672,7 @@ Definition at line 394 of file lsredis\&.c\&.
 .PP
 return a copy of the key's string value be sure to free the result 
 .PP
-Definition at line 281 of file lsredis\&.c\&.
+Definition at line 283 of file lsredis\&.c\&.
 .PP
 .nf
                                         {
@@ -3617,7 +3690,7 @@ Definition at line 281 of file lsredis\&.c\&.
   return rtn;
 }
 .fi
-.SS "void lsredis_init (char *pub, char *re, char *head)"
+.SS "void lsredis_init ()"
 
 .PP
 Initialize this module, that is, set up the connections\&. \fBParameters:\fP
@@ -3631,13 +3704,11 @@ Initialize this module, that is, set up the connections\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1012 of file lsredis\&.c\&.
+Definition at line 1105 of file lsredis\&.c\&.
 .PP
 .nf
-                                                    {
+                    {
   int err;
-  int nerrmsg;
-  char *errmsg;
 
   //
   // set up hash map to store redis objects
@@ -3647,10 +3718,6 @@ Definition at line 1012 of file lsredis\&.c\&.
     lslogging_log_message( 'lsredis_init: Cannot create hash table\&.  Really bad things are going to happen\&.  hcreate_r returned %d', err);
   }
 
-  lsredis_head      = strdup( head);
-  lsredis_publisher = strdup( pub);
-
-  
   pthread_cond_init( &lsredis_cond, NULL);
 
   subac = redisAsyncConnect('127\&.0\&.0\&.1', 6379);
@@ -3681,7 +3748,6 @@ Definition at line 1012 of file lsredis\&.c\&.
   roac->ev\&.delWrite = lsredis_delWrite;
   roac->ev\&.cleanup  = lsredis_cleanup;
 
-  //wrac = redisAsyncConnect('10\&.1\&.0\&.3', 6379);
   wrac = redisAsyncConnect('127\&.0\&.0\&.1', 6379);
   if( wrac->err) {
     lslogging_log_message( 'Error: %s', wrac->errstr);
@@ -3696,19 +3762,14 @@ Definition at line 1012 of file lsredis\&.c\&.
   wrac->ev\&.delWrite = lsredis_delWrite;
   wrac->ev\&.cleanup  = lsredis_cleanup;
 
-  err = regcomp( &lsredis_key_select_regex, re, REG_EXTENDED);
-  if( err != 0) {
-    nerrmsg = regerror( err, &lsredis_key_select_regex, NULL, 0);
-    if( nerrmsg > 0) {
-      errmsg = calloc( nerrmsg, sizeof( char));
-      nerrmsg = regerror( err, &lsredis_key_select_regex, errmsg, nerrmsg);
-      lslogging_log_message( 'lsredis_select: %s', errmsg);
-      free( errmsg);
-    }
-  }
 
+  // separate hash table for the presets
+  //
   hcreate_r( lsredis_preset_max_n * 2, &lsredis_preset_ht);
+
   pthread_mutex_init( &lsredis_preset_list_mutex, NULL);
+  pthread_mutex_init( &lsredis_config_mutex, NULL);
+  pthread_cond_init(  &lsredis_config_cond,  NULL);
 }
 .fi
 .SS "void lsredis_load_presets (char *motor_name)"
@@ -3716,7 +3777,7 @@ Definition at line 1012 of file lsredis\&.c\&.
 .PP
 update the presets hash table for the named motor 
 .PP
-Definition at line 825 of file lsredis\&.c\&.
+Definition at line 827 of file lsredis\&.c\&.
 .PP
 .nf
                                              {
@@ -3792,7 +3853,7 @@ Definition at line 825 of file lsredis\&.c\&.
 .SS "int lsredis_regexec (const regex_t *preg, \fBlsredis_obj_t\fP *p, size_tnmatch, regmatch_t *pmatch, inteflags)"
 
 .PP
-Definition at line 264 of file lsredis\&.c\&.
+Definition at line 266 of file lsredis\&.c\&.
 .PP
 .nf
                                                                                                            {
@@ -3812,7 +3873,7 @@ Definition at line 264 of file lsredis\&.c\&.
 .SS "void lsredis_run ()"
 
 .PP
-Definition at line 1219 of file lsredis\&.c\&.
+Definition at line 1295 of file lsredis\&.c\&.
 .PP
 .nf
                    {
@@ -3824,7 +3885,7 @@ Definition at line 1219 of file lsredis\&.c\&.
 .PP
 set the given preset to the given value create a new preset if we can't find it 
 .PP
-Definition at line 935 of file lsredis\&.c\&.
+Definition at line 937 of file lsredis\&.c\&.
 .PP
 .nf
                                                                            {
@@ -3881,7 +3942,7 @@ redisAsyncCommandArgv used instead of redisAsyncCommand 'cause it's easier (and 
 .PP
 < redisAsyncCommandArgv shouldn't need to access this after it's made up it's packet (before it returns) so we should be OK with this location disappearing soon\&. 
 .PP
-Definition at line 306 of file lsredis\&.c\&.
+Definition at line 308 of file lsredis\&.c\&.
 .PP
 .nf
                                                        {
@@ -4074,7 +4135,7 @@ Definition at line 46 of file lstimer\&.c\&.
 .PP
 Initialize the md2cmds module\&. 
 .PP
-Definition at line 1859 of file md2cmds\&.c\&.
+Definition at line 1870 of file md2cmds\&.c\&.
 .PP
 .nf
                     {
@@ -4125,12 +4186,30 @@ Definition at line 1859 of file md2cmds\&.c\&.
 
 }
 .fi
+.SS "void md2cmds_push_queue (char *action)"
+
+.PP
+Definition at line 72 of file md2cmds\&.c\&.
+.PP
+.nf
+                                       {
+
+  if( pthread_mutex_trylock( &md2cmds_mutex) == 0) {
+    strncpy( md2cmds_cmd, action, MD2CMDS_CMD_LENGTH-1);
+    md2cmds_cmd[MD2CMDS_CMD_LENGTH-1] = 0;
+    pthread_cond_signal( &md2cmds_cond);
+    pthread_mutex_unlock( &md2cmds_mutex);
+  } else {
+    lslogging_log_message( 'md2cmds_push_queue: MD2 command '%s' ignored\&.  Already running '%s'', action, md2cmds_cmd);
+  }
+}
+.fi
 .SS "void md2cmds_run ()"
 
 .PP
 Start up the thread\&. 
 .PP
-Definition at line 1909 of file md2cmds\&.c\&.
+Definition at line 1920 of file md2cmds\&.c\&.
 .PP
 .nf
                    {
@@ -4159,7 +4238,7 @@ Terminal output routine ala printf\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 332 of file pgpmac\&.c\&.
+Definition at line 433 of file pgpmac\&.c\&.
 .PP
 .nf
                      {
@@ -4179,6 +4258,21 @@ Definition at line 332 of file pgpmac\&.c\&.
 
 }
 .fi
+.SS "void pgpmac_request_stay_of_execution (intsecs)"
+
+.PP
+Postpone the day of reckoning This assumes the quit_cb routine is called once a second\&. 
+.PP
+Definition at line 456 of file pgpmac\&.c\&.
+.PP
+.nf
+                                                 {
+  pthread_mutex_lock( &doomsday_mutex);
+  if( secs > doomsday_count)
+    doomsday_count = secs;
+  pthread_mutex_unlock( &doomsday_mutex);
+}
+.fi
 .SS "void PmacSockSendline (char *s)"
 
 .SH "Variable Documentation"
@@ -4188,199 +4282,199 @@ Definition at line 332 of file pgpmac\&.c\&.
 .PP
 Alignment stage X\&. 
 .PP
-Definition at line 100 of file lspmac\&.c\&.
+Definition at line 101 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* aligny"
 
 .PP
 Alignment stage Y\&. 
 .PP
-Definition at line 101 of file lspmac\&.c\&.
+Definition at line 102 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* alignz"
 
 .PP
 Alignment stage X\&. 
 .PP
-Definition at line 102 of file lspmac\&.c\&.
+Definition at line 103 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* anal"
 
 .PP
 Polaroid analyzer motor\&. 
 .PP
-Definition at line 103 of file lspmac\&.c\&.
+Definition at line 104 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* apery"
 
 .PP
 Aperture Y\&. 
 .PP
-Definition at line 105 of file lspmac\&.c\&.
+Definition at line 106 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* aperz"
 
 .PP
 Aperture Z\&. 
 .PP
-Definition at line 106 of file lspmac\&.c\&.
+Definition at line 107 of file lspmac\&.c\&.
 .SS "\fBlspmac_bi_t\fP* arm_parked"
 
 .PP
 (whose arm? parked where?) 
 .PP
-Definition at line 143 of file lspmac\&.c\&.
+Definition at line 144 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* blight"
 
 .PP
 Back Light DAC\&. 
 .PP
-Definition at line 117 of file lspmac\&.c\&.
+Definition at line 118 of file lspmac\&.c\&.
 .SS "\fBlspmac_bi_t\fP* blight_down"
 
 .PP
 Backlight is down\&. 
 .PP
-Definition at line 133 of file lspmac\&.c\&.
+Definition at line 134 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* blight_f"
 
 .PP
 Back light scale factor\&. 
 .PP
-Definition at line 126 of file lspmac\&.c\&.
+Definition at line 127 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* blight_ud"
 
 .PP
 Back light Up/Down actuator\&. 
 .PP
-Definition at line 121 of file lspmac\&.c\&.
+Definition at line 122 of file lspmac\&.c\&.
 .SS "\fBlspmac_bi_t\fP* blight_up"
 
 .PP
 Backlight is up\&. 
 .PP
-Definition at line 134 of file lspmac\&.c\&.
+Definition at line 135 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* capy"
 
 .PP
 Capillary Y\&. 
 .PP
-Definition at line 107 of file lspmac\&.c\&.
+Definition at line 108 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* capz"
 
 .PP
 Capillary Z\&. 
 .PP
-Definition at line 108 of file lspmac\&.c\&.
+Definition at line 109 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* cenx"
 
 .PP
 Centering Table X\&. 
 .PP
-Definition at line 110 of file lspmac\&.c\&.
+Definition at line 111 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* ceny"
 
 .PP
 Centering Table Y\&. 
 .PP
-Definition at line 111 of file lspmac\&.c\&.
+Definition at line 112 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* cryo"
 
 .PP
 Move the cryostream towards or away from the crystal\&. 
 .PP
-Definition at line 122 of file lspmac\&.c\&.
+Definition at line 123 of file lspmac\&.c\&.
 .SS "\fBlspmac_bi_t\fP* cryo_back"
 
 .PP
 cryo is in the back position 
 .PP
-Definition at line 135 of file lspmac\&.c\&.
+Definition at line 136 of file lspmac\&.c\&.
 .SS "\fBlspmac_bi_t\fP* cryo_switch"
 
 .PP
 that little toggle switch for the cryo 
 .PP
-Definition at line 132 of file lspmac\&.c\&.
+Definition at line 133 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* dryer"
 
 .PP
 blow air on the scintilator to dry it off 
 .PP
-Definition at line 123 of file lspmac\&.c\&.
+Definition at line 124 of file lspmac\&.c\&.
 .SS "\fBlspmac_bi_t\fP* etel_init_ok"
 
 .PP
 ETEL initialized OK\&. 
 .PP
-Definition at line 140 of file lspmac\&.c\&.
+Definition at line 141 of file lspmac\&.c\&.
 .SS "\fBlspmac_bi_t\fP* etel_on"
 
 .PP
 ETEL is on\&. 
 .PP
-Definition at line 139 of file lspmac\&.c\&.
+Definition at line 140 of file lspmac\&.c\&.
 .SS "\fBlspmac_bi_t\fP* etel_ready"
 
 .PP
 ETEL is ready\&. 
 .PP
-Definition at line 138 of file lspmac\&.c\&.
+Definition at line 139 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* flight"
 
 .PP
 Front Light DAC\&. 
 .PP
-Definition at line 116 of file lspmac\&.c\&.
+Definition at line 117 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* flight_f"
 
 .PP
 Front light scale factor\&. 
 .PP
-Definition at line 127 of file lspmac\&.c\&.
+Definition at line 128 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* flight_oo"
 
 .PP
 Turn front light on/off\&. 
 .PP
-Definition at line 125 of file lspmac\&.c\&.
+Definition at line 126 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* fluo"
 
 .PP
 Move the fluorescence detector in/out\&. 
 .PP
-Definition at line 124 of file lspmac\&.c\&.
+Definition at line 125 of file lspmac\&.c\&.
 .SS "\fBlspmac_bi_t\fP* fluor_back"
 
 .PP
 fluor is in the back position 
 .PP
-Definition at line 136 of file lspmac\&.c\&.
+Definition at line 137 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* fscint"
 
 .PP
 Scintillator Piezo DAC\&. 
 .PP
-Definition at line 118 of file lspmac\&.c\&.
+Definition at line 119 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* fshut"
 
 .PP
 Fast shutter\&. 
 .PP
-Definition at line 115 of file lspmac\&.c\&.
+Definition at line 116 of file lspmac\&.c\&.
 .SS "\fBlspmac_bi_t\fP* hp_air"
 
 .PP
 High pressure air OK\&. 
 .PP
-Definition at line 131 of file lspmac\&.c\&.
+Definition at line 132 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* kappa"
 
 .PP
 Kappa\&. 
 .PP
-Definition at line 112 of file lspmac\&.c\&.
+Definition at line 113 of file lspmac\&.c\&.
 .SS "\fBlspmac_bi_t\fP* lp_air"
 
 .PP
 Low pressure air OK\&. 
 .PP
-Definition at line 130 of file lspmac\&.c\&.
+Definition at line 131 of file lspmac\&.c\&.
 .SS "\fBlspg_demandairrights_t\fP lspg_demandairrights"
 
 .PP
@@ -4428,55 +4522,55 @@ Definition at line 68 of file lspg\&.c\&.
 .PP
 All our motors\&. 
 .PP
-Definition at line 95 of file lspmac\&.c\&.
+Definition at line 96 of file lspmac\&.c\&.
 .SS "pthread_cond_t lspmac_moving_cond"
 
 .PP
 Wait for motor(s) to finish moving condition\&. 
 .PP
-Definition at line 71 of file lspmac\&.c\&.
+Definition at line 72 of file lspmac\&.c\&.
 .SS "int lspmac_moving_flags"
 
 .PP
 Flag used to implement motor moving condition\&. 
 .PP
-Definition at line 72 of file lspmac\&.c\&.
+Definition at line 73 of file lspmac\&.c\&.
 .SS "pthread_mutex_t lspmac_moving_mutex"
 
 .PP
 Coordinate moving motors between threads\&. 
 .PP
-Definition at line 70 of file lspmac\&.c\&.
+Definition at line 71 of file lspmac\&.c\&.
 .SS "int lspmac_nmotors"
 
 .PP
 The number of motors we manage\&. 
 .PP
-Definition at line 96 of file lspmac\&.c\&.
+Definition at line 97 of file lspmac\&.c\&.
 .SS "pthread_cond_t lspmac_shutter_cond"
 
 .PP
 Allows waiting for the shutter status to change\&. 
 .PP
-Definition at line 69 of file lspmac\&.c\&.
+Definition at line 70 of file lspmac\&.c\&.
 .SS "int lspmac_shutter_has_opened"
 
 .PP
 Indicates that the shutter had opened, perhaps briefly even if the state did not change\&. 
 .PP
-Definition at line 67 of file lspmac\&.c\&.
+Definition at line 68 of file lspmac\&.c\&.
 .SS "pthread_mutex_t lspmac_shutter_mutex"
 
 .PP
 Coordinates threads reading shutter status\&. 
 .PP
-Definition at line 68 of file lspmac\&.c\&.
+Definition at line 69 of file lspmac\&.c\&.
 .SS "int lspmac_shutter_state"
 
 .PP
 State of the shutter, used to detect changes\&. 
 .PP
-Definition at line 66 of file lspmac\&.c\&.
+Definition at line 67 of file lspmac\&.c\&.
 .SS "pthread_cond_t lsredis_cond"
 
 .PP
@@ -4494,7 +4588,7 @@ Definition at line 76 of file lsredis\&.c\&.
 .PP
 Synchronize reading/writting status buffer\&. 
 .PP
-Definition at line 351 of file lspmac\&.c\&.
+Definition at line 352 of file lspmac\&.c\&.
 .SS "char md2cmds_cmd[]"
 
 .PP
@@ -4526,7 +4620,7 @@ Definition at line 11 of file md2cmds\&.c\&.
 .PP
 Minikappa is OK (whatever that means) 
 .PP
-Definition at line 141 of file lspmac\&.c\&.
+Definition at line 142 of file lspmac\&.c\&.
 .SS "pthread_mutex_t ncurses_mutex"
 
 .PP
@@ -4538,73 +4632,73 @@ Definition at line 242 of file pgpmac\&.c\&.
 .PP
 MD2 omega axis (the air bearing) 
 .PP
-Definition at line 99 of file lspmac\&.c\&.
+Definition at line 100 of file lspmac\&.c\&.
 .SS "struct timespec omega_zero_time"
 
 .PP
 Time we believe that omega crossed zero\&. 
 .PP
-Definition at line 79 of file lspmac\&.c\&.
+Definition at line 80 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* phi"
 
 .PP
 Phi (not data collection axis) 
 .PP
-Definition at line 113 of file lspmac\&.c\&.
+Definition at line 114 of file lspmac\&.c\&.
 .SS "pthread_cond_t pmac_queue_cond"
 
 .PP
 wait for a command to be sent to PMAC before continuing 
 .PP
-Definition at line 85 of file lspmac\&.c\&.
+Definition at line 86 of file lspmac\&.c\&.
 .SS "pthread_mutex_t pmac_queue_mutex"
 
 .PP
 manage access to the pmac command queue 
 .PP
-Definition at line 84 of file lspmac\&.c\&.
+Definition at line 85 of file lspmac\&.c\&.
 .SS "\fBlspmac_bi_t\fP* sample_detected"
 
 .PP
 smart magnet detected sample 
 .PP
-Definition at line 137 of file lspmac\&.c\&.
+Definition at line 138 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* scint"
 
 .PP
 Scintillator Z\&. 
 .PP
-Definition at line 109 of file lspmac\&.c\&.
+Definition at line 110 of file lspmac\&.c\&.
 .SS "\fBlspmac_bi_t\fP* shutter_open"
 
 .PP
 shutter is open (note in pmc says this is a slow input) 
 .PP
-Definition at line 144 of file lspmac\&.c\&.
+Definition at line 145 of file lspmac\&.c\&.
 .SS "\fBlspmac_bi_t\fP* smart_mag_err"
 
 .PP
 smart magnet error (coil broken perhaps) 
 .PP
-Definition at line 145 of file lspmac\&.c\&.
+Definition at line 146 of file lspmac\&.c\&.
 .SS "\fBlspmac_bi_t\fP* smart_mag_off"
 
 .PP
 smart magnet is off 
 .PP
-Definition at line 146 of file lspmac\&.c\&.
+Definition at line 147 of file lspmac\&.c\&.
 .SS "\fBlspmac_bi_t\fP* smart_mag_on"
 
 .PP
 smart magnet is on 
 .PP
-Definition at line 142 of file lspmac\&.c\&.
+Definition at line 143 of file lspmac\&.c\&.
 .SS "\fBlspmac_motor_t\fP* smart_mag_oo"
 
 .PP
 Smart Magnet on/off\&. 
 .PP
-Definition at line 120 of file lspmac\&.c\&.
+Definition at line 121 of file lspmac\&.c\&.
 .SS "WINDOW* term_input"
 
 .PP
@@ -4634,7 +4728,7 @@ Definition at line 240 of file pgpmac\&.c\&.
 .PP
 Optical zoom\&. 
 .PP
-Definition at line 104 of file lspmac\&.c\&.
+Definition at line 105 of file lspmac\&.c\&.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for LS-CAT PGPMAC from the source code\&.
