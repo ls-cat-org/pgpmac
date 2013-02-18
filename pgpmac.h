@@ -404,6 +404,9 @@ typedef struct lspg_nextshot_struct {
 } lspg_nextshot_t;		//!< definition of the next image to be taken (and the one after that, too!)
 
 
+extern int pgpmac_use_pg;
+extern int pgpmac_use_autoscint;
+
 extern lspg_nextshot_t lspg_nextshot;
 
 extern lspmac_motor_t lspmac_motors[];

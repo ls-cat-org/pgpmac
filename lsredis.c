@@ -1031,12 +1031,30 @@ void lsredis_configCB( redisAsyncContext *ac, void *reply, void *privdata) {
     r3 = r->element[i+1];
     if( r2->type != REDIS_REPLY_STRING || r2->type != REDIS_REPLY_STRING)
       continue;
+    //
+    // the LHS of the redis keys for this station
+    //
     if( strcmp( r2->str, "HEAD")==0) {
       lsredis_head = strdup( r3->str);
     }
+    //
+    // Publish changes to keys with this name as the publisher
+    //
     if( strcmp( r2->str, "PUB")==0) {
       lsredis_publisher = strdup( r3->str);
     }
+
+    if( strcmp( r2->str, "PG")==0) {
+      pgpmac_use_pg = r3->str[0] == '0' ? 0 : 1;
+    }
+
+    if( strcmp( r2->str, "AUTOSCINT")==0) {
+      pgpmac_use_autoscint = r3->str[0] == '0' ? 0 : 1;
+    }
+
+    //
+    // reg expression to select keys we will be keeping a local copy of
+    //
     if( strcmp( r2->str, "RE")==0) {
       err = regcomp( &lsredis_key_select_regex, r3->str, REG_EXTENDED);
       if( err != 0) {

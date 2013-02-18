@@ -243,6 +243,9 @@ pthread_mutex_t ncurses_mutex;		//!< allow more than one thread access to the sc
 int doomsday_count = 1;			//!< Countdown to quitting time: cleanout routines can request a few more heartbeats
 pthread_mutex_t doomsday_mutex;		//!< avoid thread collision while resetting the doomsday clock
 
+int pgpmac_use_pg = 0;			//!< non-zero to start up lspg thread, 0 to not (reids hash PG in config.HOSTNAME sets this)
+int pgpmac_use_autoscint = 0;		//!< non-zero to automatically move the alignment stage when the scintillator moves (redis hash AUTOSCINT in config.HOSTNAME sets this)
+
 //
 // globals
 //
@@ -573,7 +576,10 @@ int main(
   // These need to be all initialized before any are run
   //
   lspmac_init( ivars, mvars);
-  lspg_init();
+
+  if( pgpmac_use_pg)
+    lspg_init();
+
   md2cmds_init();
 
   //
@@ -606,7 +612,10 @@ int main(
   // Now run the world
   //
   lspmac_run();
-  lspg_run();
+
+  if( pgpmac_use_pg)
+    lspg_run();
+
   md2cmds_run();
 
   while( running) {

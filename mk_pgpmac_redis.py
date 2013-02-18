@@ -24,9 +24,9 @@ else:
 
 
 configs = {
-    "orange-2"            : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E"},
-    "orange-2.ls-cat.org" : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E"},
-    "venison.ls-cat.org"  : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E"}
+    "orange-2"            : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E", "pg" : "1", "autoscint" : "1"},
+    "orange-2.ls-cat.org" : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E", "pg" : "1", "autoscint" : "1"},
+    "venison.ls-cat.org"  : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E", "pg" : "1", "autoscint" : "1"},
 }
 
 #
@@ -385,7 +385,8 @@ zoom_settings = [
 
 # config 
 for c in configs.keys():
-    print "HMSET config.%s HEAD '%s' PUB '%s' RE '%s'" % (c.lower(), configs[c]["head"], configs[c]["pub"], configs[c]["re"])
+    print "HMSET config.%s HEAD '%s' PUB '%s' RE '%s' PG '%s' AUTOSCINT '%s'" % \
+        (c.lower(), configs[c]["head"], configs[c]["pub"], configs[c]["re"], configs[c]["pg"], configs[c]["autoscint"])
 
 
 # motor stuff

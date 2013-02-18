@@ -42,7 +42,6 @@ typedef struct md2cmds_cmd_kv_struct {
 } md2cmds_cmd_kv_t;
 
 int md2cmds_abort(            const char *);
-int md2cmds_center(           const char *);
 int md2cmds_collect(          const char *);
 int md2cmds_moveAbs(          const char *);
 int md2cmds_moveRel(          const char *);
@@ -54,17 +53,25 @@ int md2cmds_settransferpoint( const char *);
 int md2cmds_test(             const char *);
 int md2cmds_transfer(         const char *);
 
+//
+// Commands that do not rely on lspg calls
+//
 static md2cmds_cmd_kv_t md2cmds_cmd_kvs[] = {
   { "abort",            md2cmds_abort},
-  { "center",           md2cmds_center},
   { "changeMode",       md2cmds_phase_change},
-  { "collect",          md2cmds_collect},
   { "moveAbs",          md2cmds_moveAbs},
   { "moveRel",          md2cmds_moveRel},
-  { "rotate",           md2cmds_rotate},
   { "run",              md2cmds_run_cmd},
   { "test",             md2cmds_test},
   { "set",              md2cmds_set},
+};
+
+//
+// Commands to do rely on lspg calls
+//
+static md2cmds_cmd_kv_t md2cmds_cmd_pg_kvs[] = {
+  { "collect",          md2cmds_collect},
+  { "rotate",           md2cmds_rotate},
   { "settransferpoint", md2cmds_settransferpoint},
   { "transfer",         md2cmds_transfer}
 };
@@ -1506,14 +1513,6 @@ void md2cmds_set_scale_cb( char *event) {
   free( vp);
 }
 
-/** Move centering and alignment tables as requested
- *  TODO: Implement
- */
-int md2cmds_center( const char *dummy) {
-  return 0;
-}
-
-
 /** Time the capillary motion for the transfer routine
  */
 void md2cmds_time_capz_cb( char *event) {
@@ -1870,6 +1869,7 @@ void md2cmds_coordsys_7_stopped_cb( char *event) {
 void md2cmds_init() {
   ENTRY hloader, *hrtnval;
   int i, err;
+  int ncmds;
 
   pthread_mutexattr_t mutex_initializer;
 
@@ -1903,7 +1903,13 @@ void md2cmds_init() {
   md2cmds_md_status_code = lsredis_get_obj( "md2_status_code");
   lsredis_setstr( md2cmds_md_status_code, "7");
 
-  hcreate_r( 2 * sizeof(md2cmds_cmd_kvs)/sizeof(md2cmds_cmd_kvs[0]), &md2cmds_hmap);
+  ncmds = sizeof(md2cmds_cmd_kvs)/sizeof(md2cmds_cmd_kvs[0]);
+  if( pgpmac_use_pg) {
+    ncmds += sizeof(md2cmds_cmd_pg_kvs)/sizeof(md2cmds_cmd_pg_kvs[0]);
+  }
+
+  hcreate_r( 2 * ncmds, &md2cmds_hmap);
+
   for( i=0; i<sizeof(md2cmds_cmd_kvs)/sizeof(md2cmds_cmd_kvs[0]); i++) {
     hloader.key  = md2cmds_cmd_kvs[i].k;
     hloader.data = md2cmds_cmd_kvs[i].v;
@@ -1913,6 +1919,16 @@ void md2cmds_init() {
     }
   }
 
+  if( pgpmac_use_pg) {
+    for( i=0; i<sizeof(md2cmds_cmd_pg_kvs)/sizeof(md2cmds_cmd_pg_kvs[0]); i++) {
+      hloader.key  = md2cmds_cmd_pg_kvs[i].k;
+      hloader.data = md2cmds_cmd_pg_kvs[i].v;
+      err = hsearch_r( hloader, ENTER, &hrtnval, &md2cmds_hmap);
+      if( err == 0) {
+	lslogging_log_message( "md2cmds_init: hsearch_r returned an error for item %d: %s", i, strerror( errno));
+      }
+    }
+  }
 }
 
 /** Start up the thread

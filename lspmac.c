@@ -4300,8 +4300,6 @@ void lspmac_run() {
     lsevents_add_listener( "^CryoSwitchChanged$",        lspmac_cryoSwitchChanged_cb);
     lsevents_add_listener( "^scint In Position$",        lspmac_scint_maybe_turn_on_dryer_cb);
     lsevents_add_listener( "^scint Moving$",             lspmac_scint_maybe_turn_off_dryer_cb);
-    lsevents_add_listener( "^scint In Position$",        lspmac_scint_maybe_return_sample_cb);
-    lsevents_add_listener( "^scint Moving$",             lspmac_scint_maybe_move_sample_cb);
     lsevents_add_listener( "^scintDried$",               lspmac_scint_dried_cb);
     lsevents_add_listener( "^backLight 1$" ,	       lspmac_backLight_up_cb);
     lsevents_add_listener( "^backLight 0$" ,	       lspmac_backLight_down_cb);
@@ -4309,6 +4307,12 @@ void lspmac_run() {
     lsevents_add_listener( "^Quitting Program$",         lspmac_quitting_cb);
     lsevents_add_listener( "^Control-[BCFGV] accepted$", lspmac_request_control_response_cb);
     lsevents_add_listener( "^Full Card Reset$",          lspmac_full_card_reset_cb);
+
+    if( pgpmac_use_autoscint) {
+      lsevents_add_listener( "^scint In Position$",        lspmac_scint_maybe_return_sample_cb);
+      lsevents_add_listener( "^scint Moving$",             lspmac_scint_maybe_move_sample_cb);
+    }
+
 
     for( i=0; i<lspmac_nmotors; i++) {
       snprintf( evts, sizeof( evts)-1, "^%s command accepted$", lspmac_motors[i].name);
