@@ -252,14 +252,25 @@ static int running = 1;
 
 /** Handle keyboard input
  */
+#define PGPMAC_COMMAND_LINE_LENGTH 128
+#define PGPMAC_N_COMMAND_LINES     128
 void stdinService(
 		  struct pollfd *evt		/**< [in] The pollfd object that caused this call	*/
 		  ) {
-  static char cmds[1024];
-  static unsigned int cmds_on = 0;
+  static char cmd_lines[PGPMAC_N_COMMAND_LINES][PGPMAC_COMMAND_LINE_LENGTH];
+  static int current_line = 0;
+  static int previous_line = 0;
+  static char *cmdsp;
+  static char *prompt = "PMAC>";;
+  static int cmds_on = 0;
   static int cmd_mode = 0;
   static char cevt[32];
   int ch;
+  int i;
+  char tmp;
+
+
+  cmdsp  = cmd_lines[current_line];
 
   for( ch=wgetch(term_input); ch != ERR && running; ch=wgetch(term_input)) {
 
@@ -290,70 +301,125 @@ void stdinService(
       lspmac_SockSendDPControlChar( cevt, ch);
       break;
 
+    case 0x000c:	// Control-L
+      pthread_mutex_lock( &ncurses_mutex);
+      redrawwin( term_status);
+      redrawwin( term_status2);
+      redrawwin( term_output);
+      redrawwin( term_input);
+      for( i=0; i<lspmac_nmotors; i++) {
+	if( lspmac_motors[i].win != NULL)
+	  redrawwin( lspmac_motors[i].win);
+      }
+      pthread_mutex_unlock( &ncurses_mutex);
+      break;
+
+    case KEY_UP:
+      previous_line = (previous_line - 1 + PGPMAC_N_COMMAND_LINES) % PGPMAC_N_COMMAND_LINES;
+      if( previous_line == current_line || cmd_lines[previous_line][0] == 0) {
+	//
+	// We seem to have gone through all the lines, but NO MORE.
+	//
+	previous_line = (previous_line + 1) % PGPMAC_N_COMMAND_LINES;
+      }
+
+      memset( cmdsp, 0, PGPMAC_COMMAND_LINE_LENGTH);
+      strcpy( cmdsp, cmd_lines[previous_line]);
+      cmds_on = strlen(cmdsp);
+      break;
+
+    case KEY_DOWN:
+      if( previous_line != current_line)
+	previous_line = (previous_line + 1) % PGPMAC_N_COMMAND_LINES;
+
+      memset( cmdsp, 0, PGPMAC_COMMAND_LINE_LENGTH);
+      strcpy( cmdsp, cmd_lines[previous_line]);
+      cmds_on = strlen(cmdsp);
+      break;
+
+    case KEY_LEFT:
+      cmds_on = cmds_on == 0 ? 0 : cmds_on - 1;
+      break;
+
+    case KEY_RIGHT:
+      cmds_on = cmds_on >= strlen(cmdsp) ? strlen(cmdsp) : cmds_on + 1;
+      break;
+
     case KEY_BACKSPACE:
       cmds_on == 0 ? 0 : cmds_on--;
-      cmds[cmds_on] = 0;
+      for( i=0; *(cmdsp + cmds_on + i) != 0; i++) {
+	*(cmdsp + cmds_on + i) = *(cmdsp + cmds_on + i + 1);
+      }
       break;
       
     case KEY_ENTER:
     case 0x000a:
-      if( cmds_on > 0 && strlen( cmds) > 0) {
+      if( cmds_on > 0 && strlen( cmdsp) > 0) {
 	switch( cmd_mode) {
 	case 0:
-	  if( strcmp( cmds, "$$$") == 0) {
+	  if( strcmp( cmdsp, "$$$") == 0) {
 	    lsevents_send_event( "Full Card Reset Requested");
-	    lslogging_log_message( "Performing Full Card Reset, resuming in 20 seconds");
-	    lstimer_set_timer( "Full Card Reset", 1, 20, 0);
+	    lslogging_log_message( "Performing Full Card Reset, resuming in 10 seconds");
+	    lstimer_set_timer( "Full Card Reset", 1, 10, 0);
 	  }
-	  lspmac_SockSendline( NULL, "%s", cmds);
+	  lspmac_SockSendline( NULL, "%s", cmdsp);
 	  break;
 	case 1:
-	  md2cmds_push_queue( cmds);
+	  md2cmds_push_queue( cmdsp);
 	  break;
 	}
       }
-      memset( cmds, 0, sizeof(cmds));
+      current_line = (current_line + 1) % PGPMAC_N_COMMAND_LINES;
+      previous_line = current_line;
+      cmdsp = cmd_lines[current_line];
+      memset( cmdsp, 0, PGPMAC_COMMAND_LINE_LENGTH);
       cmds_on = 0;
       break;
       
     default:
       if( ch >= 0x20 && ch <= 0x7e) {
-	if( cmds_on < sizeof( cmds)-1) {
-	  cmds[cmds_on++] = ch;
-	  cmds[cmds_on] = 0;
+	if( cmds_on < PGPMAC_COMMAND_LINE_LENGTH - 1) {
+	  for( i=cmds_on; ch != 0 && i < PGPMAC_COMMAND_LINE_LENGTH; i++) {
+	    tmp = *(cmdsp + i);
+	    *(cmdsp + i) = ch;
+	    ch = tmp;
+	  }
+	  cmds_on = (cmds_on + 1) % PGPMAC_COMMAND_LINE_LENGTH;
 	}
       }
       break;
     }
     
-    if(strcasecmp(cmds, "pmac") == 0) {
-      cmds[0]  = 0;
+    if(strcasecmp( "pmac", cmdsp) == 0) {
+      *cmdsp   = 0;
       cmd_mode = 0;
       cmds_on  = 0;
+      memset( cmdsp, 0, PGPMAC_COMMAND_LINE_LENGTH);
+      prompt = "PMAC>";
     }
 
-    if(strcasecmp(cmds, "md2cmds") == 0) {
-      cmds[0]  = 0;
+    if(strcasecmp( "md2cmds", cmdsp) == 0) {
+      *cmdsp   = 0;
       cmd_mode = 1;
       cmds_on  = 0;
+      memset( cmdsp, 0, PGPMAC_COMMAND_LINE_LENGTH);
+      prompt = "md2cmds>";
     }
 
-    if( strcasecmp( cmds, "quit") == 0) {
+    if( strcasecmp( "quit", cmdsp) == 0) {
       lspmac_abort();					// send abort now (as opposed to an event listener) in case a cleanup routine wants to move something (we don't want to abort it).
       lsevents_send_event( "Quitting Program");		// let everyone know the end is nigh
       lstimer_set_timer( "Quit Program", -1, 1, 0);	// Doomsday, repeat as needed
-      cmds[0]  = 0;
+      *cmdsp   = 0;
       cmds_on  = 0;
+      memset( cmdsp, 0, PGPMAC_COMMAND_LINE_LENGTH);
     }
 
     if( running) {
       pthread_mutex_lock( &ncurses_mutex);
-      if( cmd_mode == 0)
-	mvwprintw( term_input, 1, 1, "PMAC> %s", cmds);
-      else
-	mvwprintw( term_input, 1, 1, "md2cmds> %s", cmds);
-
+      mvwprintw( term_input, 1, 1, "%s %s", prompt, cmdsp);
       wclrtoeol( term_input);
+      wmove( term_input, 1, cmds_on + strlen(prompt) + 2);
       box( term_input, 0, 0);
       wnoutrefresh( term_input);
       doupdate();
@@ -427,6 +493,15 @@ int main(
   ivars    = 0;
   int i;			// standard loop counter
   pthread_mutexattr_t mutex_initializer;
+  static sigset_t our_sigset;
+
+  //
+  // We use SIGUSR1 but sometimes it's called before a handler is in place so we'll just block it
+  // here and now.
+  //
+  sigemptyset( &our_sigset);
+  sigaddset( &our_sigset, SIGUSR1);
+  pthread_sigmask(SIG_BLOCK, &our_sigset, NULL);
 
   while( 1) {
     c=getopt_long( argc, argv, "im", long_options, NULL);
