@@ -72,6 +72,8 @@ pthread_mutex_t lspmac_moving_mutex;		//!< Coordinate moving motors between thre
 pthread_cond_t  lspmac_moving_cond;		//!< Wait for motor(s) to finish moving condition
 int lspmac_moving_flags;			//!< Flag used to implement motor moving condition
 
+static uint16_t lspmac_control_char = 0;	//!< The control character we've sent
+
 static pthread_mutex_t lspmac_ascii_mutex;	//!< Keep too many processes from sending commands at once
 static int lspmac_ascii_busy = 0;		//!< flag for condition to wait for
 
@@ -551,7 +553,7 @@ void hex_dump(
  * Needed to turn PMAC messages into something printable.
  */
 
-void cleanstr(
+char *cleanstr(
 	      char *s	/**< [in] String to print to terminal.	*/
 	      ) {
   char t[256];
@@ -565,7 +567,7 @@ void cleanstr(
       t[i] = s[i];
   }
   t[i] = 0;
-  lslogging_log_message( "%s", s);
+  return strdup( s);
 }
 
 /** Connect to the PMAC socket.
@@ -854,6 +856,8 @@ void lspmac_Service(
 
       if( cmd->pcmd.Request == VR_PMAC_SENDCTRLCHAR)
 	ls_pmac_state = LS_PMAC_STATE_WACK_CC;
+      else if( cmd->pcmd.Request == VR_CTRL_RESPONSE)
+	ls_pmac_state = LS_PMAC_STATE_IDLE;
       else if( cmd->pcmd.Request == VR_PMAC_GETMEM)
 	ls_pmac_state = LS_PMAC_STATE_GMR;
       else if( cmd->no_reply == 0)
@@ -863,9 +867,24 @@ void lspmac_Service(
       break;
 
     case LS_PMAC_STATE_CR:
-      nsent = send( evt->fd, &cr_cmd, pmac_cmd_size, 0);
-      gettimeofday( &pmac_time_sent, NULL);
-      ls_pmac_state = LS_PMAC_STATE_WCR;
+      /*
+      switch( lspmac_control_char) {
+      case 0x0002:	// Control-B    Report status word for 8 motors
+      case 0x0003:	// Control-C    Report all coordinate system status words
+      case 0x0006:	// Control-F    Report following errors for 8 motors
+      case 0x0010:	// Control-P    Report positions for 8 motors
+      case 0x0016:	// Control-V    Report velocity on 8 motors
+      default:
+	cr_cmd.wValue = htons(lspmac_control_char);
+	cr_cmd.wLength = htons( 1400);
+	nsent = send( evt->fd, &cr_cmd, pmac_cmd_size, 0);
+	gettimeofday( &pmac_time_sent, NULL);
+	ls_pmac_state = LS_PMAC_STATE_WCR;
+	break;
+      default:
+	ls_pmac_state = LS_PMAC_STATE_IDLE;
+      }
+	*/
       break;
 
     case LS_PMAC_STATE_RR:
@@ -995,6 +1014,7 @@ void lspmac_GetShortReplyCB(
 			    ) {
 
   char *sp;	// pointer to the command this is a reply to
+  char *tmp;
 
   if( nreceived < 1400)
     buff[nreceived]=0;
@@ -1004,8 +1024,9 @@ void lspmac_GetShortReplyCB(
   if( *buff == 0) {
     lslogging_log_message( "%s", sp);
   } else {
-    lslogging_log_message( "%s: ", sp);
-    cleanstr( buff);
+    tmp = cleanstr( buff);
+    lslogging_log_message( "%s: %s", sp, tmp);
+    free( tmp);
   }
 
   memset( cmd->pcmd.bData, 0, sizeof( cmd->pcmd.bData));
@@ -1020,8 +1041,23 @@ void lspmac_SendControlReplyPrintCB(
 				    int nreceived,		/**< [in] Number of bytes received		*/
 				    char *buff			/**< [in] Buffer of bytes received		*/
 				    ) {
-  lslogging_log_message( "control-%c: ", '@'+ ntohs(cmd->pcmd.wValue));
-  hex_dump( nreceived, (unsigned char *)buff);
+  
+  char *sp;
+  int i;
+
+  sp = calloc( nreceived+1, 1);
+  for( i=0; i<nreceived; i++) {
+    if( buff[i] == 0)
+      break;
+    if( isascii(buff[i]) && !iscntrl(buff[i]))
+      sp[i] = buff[i];
+    else
+      sp[i] = ' ';
+  }
+  sp[i] = 0;
+
+  lslogging_log_message( "control-%c: %s", '@'+ ntohs(cmd->pcmd.wValue), sp);
+  free( sp);
 }
 
 
@@ -1066,7 +1102,7 @@ pmac_cmd_queue_t *lspmac_SockSendline(
   payload[ sizeof(payload)-1] = 0;
   va_end( arg_ptr);
 
-  lslogging_log_message( payload);
+  lslogging_log_message( "%s", payload);
 
   return lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( payload), payload, lspmac_GetShortReplyCB, 0, event);
 }
@@ -1100,7 +1136,9 @@ pmac_cmd_queue_t *lspmac_SockSendControlCharPrint(
 						  char *event,	/**< [in] base name for events				*/
 						  char c	/**< The control character to send			*/
 						  ) {
-  return lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDCTRLCHAR, c, 0, 0, NULL, lspmac_SendControlReplyPrintCB, 0, event);
+  lspmac_control_char = c;
+  //  return lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDCTRLCHAR, c, 0, 1400, NULL, lspmac_SendControlReplyPrintCB, 0, event);
+  return lspmac_send_command( VR_UPLOAD, VR_CTRL_RESPONSE, c, 0, 1400, NULL, lspmac_SendControlReplyPrintCB, 0, event);
 }
 
 /** Request a block of double buffer memory.
@@ -1988,6 +2026,7 @@ void lspmac_request_control_response_cb( char *event) {
   }
   s[i] = 0;
   lspmac_get_ascii( s);
+
 }
 
 
@@ -4331,7 +4370,6 @@ void lspmac_run() {
   //
   // Clear the command interfaces
   //
-  lspmac_SockSendControlCharPrint( NULL, '\x18');
   {
     uint32_t cc;
     cc = 0;
@@ -4340,6 +4378,7 @@ void lspmac_run() {
     cc = 0x18;
     lspmac_send_command( VR_UPLOAD, VR_PMAC_SETMEM, 0x0e9e, 0, 4, (char *)&cc, NULL, 1, NULL);
   }
+  // lspmac_SockSendControlCharPrint( "Control-X", '\x18'); // why does this kill the initialzation?
 
   //
   // Initialize the MD2 pmac (ie, turn on the right plcc's etc)
