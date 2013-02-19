@@ -142,6 +142,7 @@ int md2cmds_home_wait( double timeout_secs) {
  */
 void md2cmds_move_prep() {
   pthread_mutex_lock( &md2cmds_moving_mutex);
+  lsredis_setstr( md2cmds_md_status_code, "%s", "4");
   md2cmds_moving_count = -1;
   pthread_mutex_unlock( &md2cmds_moving_mutex);
 }
@@ -528,8 +529,7 @@ int md2cmds_moveAbs(
   }
 
   if( mp != NULL && mp->moveAbs != NULL) {
-    wprintw( term_output, "Moving %s to %f\n", mtr, fpos);
-    wnoutrefresh( term_output);
+    pgpmac_printf( "Moving %s to %f\n", mtr, fpos);
     err = mp->moveAbs( mp, fpos);
   }
 
