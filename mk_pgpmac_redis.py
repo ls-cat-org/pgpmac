@@ -3,7 +3,7 @@
 
 import sys
 import iniParser
-
+import datetime
 
 if len(sys.argv) <= 1:
     print >> sys.stderr, "Usage: %s headOfRedisVariableNames [prefIniFileName [hardIniFileName]]"
@@ -28,6 +28,196 @@ configs = {
     "orange-2.ls-cat.org" : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E", "pg" : "1", "autoscint" : "1"},
     "venison.ls-cat.org"  : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E", "pg" : "1", "autoscint" : "1"},
 }
+
+plcc2_dict = {
+    "omega"       : { "status1" : "M5001", "status2" : "M5021", "position" : "M5041"},
+    "align.x"     : { "status1" : "M5002", "status2" : "M5022", "position" : "M5042"},
+    "align.y"     : { "status1" : "M5003", "status2" : "M5023", "position" : "M5043"},
+    "align.z"     : { "status1" : "M5004", "status2" : "M5024", "position" : "M5044"},
+    "lightPolar"  : { "status1" : "M5005", "status2" : "M5025", "position" : "M5045"},
+    "cam.zoom"    : { "status1" : "M5006", "status2" : "M5026", "position" : "M5046"},
+    "appy"        : { "status1" : "M5007", "status2" : "M5027", "position" : "M5047"},
+    "appz"        : { "status1" : "M5008", "status2" : "M5028", "position" : "M5048"},
+    "capy"        : { "status1" : "M5009", "status2" : "M5029", "position" : "M5049"},
+    "capz"        : { "status1" : "M5010", "status2" : "M5030", "position" : "M5050"},
+    "scint"       : { "status1" : "M5011", "status2" : "M5031", "position" : "M5051"},
+    "centering.x" : { "status1" : "M5012", "status2" : "M5032", "position" : "M5052"},
+    "centering.y" : { "status1" : "M5013", "status2" : "M5033", "position" : "M5053"},
+    "kappa"       : { "status1" : "M5014", "status2" : "M5034", "position" : "M5054"},
+    "phi"         : { "status1" : "M5015", "status2" : "M5035", "position" : "M5055"}
+}
+
+
+
+# M5001=M1	; Omega
+# M5002=M2	; Alignment Table X
+# M5003=M3	; Alignment Table Y
+# M5004=M4	; Alignment Table Z
+# M5005=M5	; Analyser
+# M5006=M6	; Zoom
+# M5007=M7	; Aperture Y
+# M5008=M8	; Aperture Z
+# M5009=M9	; Capillary Y
+# M5010=M10	; Capillary Z
+# M5011=M11	; Scintillator Z
+# M5012=M17	; Center X
+# M5013=M18	; Center Y
+# M5014=M19	; Kappa
+# M5015=M20	; Phi
+# 
+# M5021=M91	; Omega
+# M5022=M92	; Alignment Table X
+# M5023=M93	; Alignment Table Y
+# M5024=M94	; Alignment Table Z
+# M5025=M95	; Analyser
+# M5026=M96	; Zoom
+# M5027=M97	; Aperture Y
+# M5028=M98	; Aperture Z
+# M5029=M99	; Capillary Y
+# M5030=M100	; Capillary Z
+# M5031=M101	; Scintillator Z
+# M5032=M107	; Center X
+# M5033=M108	; Center Y
+# M5034=M109	; Kappa
+# M5035=M110	; Phi
+# 
+# 
+# ; Motor actual position
+# M5041=(M181/(I108*32))		; Phi
+# M5042=(M182/(I208*32))		; Table XYZ : X
+# M5043=(M183/(I308*32))		; Table XYZ : Y
+# M5044=(M184/(I408*32))		; Table XYZ : Z
+# M5045=(M185/(I508*32))		; Analyser
+# M5046=(M186/(I608*32))		; Zoom camera
+# M5047=(M187/(I708*32))		; Aperture Y
+# M5048=(M188/(I808*32))		; Aperture Z
+# M5049=(M189/(I908*32))		; Capillary Y
+# M5050=(M190/(I1008*32))		; Capillary Z
+# M5051=(M191/(I1108*32))		; Scintillator Z
+# M5052=(M197/(I1708*32))		; Centring #17
+# M5053=(M198/(I1808*32))		; Centring #18
+# M5054=(M199/(I1908*32))		; Mini Kappa 1
+# M5055=(M200/(I2008*32))	        ; Mini Kappa 2
+# 
+# M5060=M6000			; 11C byte 1
+# M5061=M6001			; 11C byte 2
+# M5062=M6002			; 11C byte 3
+# M5063=M6003			; 11C byte 5
+# M5064=M6004			; 11C byte 6
+# M5065=M1200			; Front Light DAC
+# M5066=M1201			; Back Light DAC
+# M5067=M1203			; Scintillator Piezo
+
+
+# ;***************** Motor Status 1,Limits,Open loop *****************************
+# ;PMAC side
+# M1->X:$0B0,24   	; Phi
+# M2->X:$130,24   	; Table XYZ : X
+# M3->X:$1B0,24   	; Table XYZ : Y
+# M4->X:$230,24   	; Table XYZ : Z
+# M5->X:$2B0,24   	; Analyser
+# M6->X:$330,24   	; Zoom DC Camera
+# M7->X:$3B0,24   	; Aperture Y
+# M8->X:$430,24   	; Aperture Z
+# M9->X:$4B0,24   	; Capillary Y
+# M10->X:$530,24  	; Capillary Z
+# M11->X:$5B0,24  	; Scintillator Z
+# M12->X:$630,24	; Unused
+# M13->X:$6B0,24	; Unused
+# M14->X:$730,24	; Unused
+# M15->X:$7B0,24	; Unused
+# M16->X:$830,24	; Unused
+# M17->X:$8B0,24  	; Centring Table Motor #17
+# M18->X:$930,24  	; Centring Table Motor #18
+# M19->X:$9B0,24  	; Mini Kappa 1
+# M20->X:$A30,24		; Mini Kappa 2
+# M21->X:$AB0,24  	; Unused
+# M22->X:$B30,24  	; Unused
+# M23->X:$BB0,24  	; Unused
+# M24->X:$C30,24   	; Unused
+# 
+# ;open loop status
+# M61->x:$0B0,18,1 	; Phi
+# M62->x:$130,18,1 	; Table XYZ : X
+# M63->x:$1B0,18,1 	; Table XYZ : Y
+# M64->x:$230,18,1 	; Table XYZ : Z
+# M65->x:$2B0,18,1 	; Analyser
+# M66->x:$330,18,1 	; Zoom DC Camera
+# M67->x:$3B0,18,1 	; Aperture Y
+# M68->x:$430,18,1 	; Aperture Z
+# M69->x:$4B0,18,1 	; Capillary Y
+# M70->x:$530,18,1 	; Capillary Z
+# M71->x:$5B0,18,1 	; Scintillator Z
+# M72->x:$630,18,1	; Unused
+# M73->x:$6B0,18,1	; Unused
+# M74->x:$730,18,1	; Unused
+# M75->x:$7B0,18,1	; Unused
+# M76->x:$830,18,1	; Unused
+# M77->x:$8B0,18,1 	; Centring Table Motor X #17
+# M78->x:$930,18,1 	; Centring Table Motor Y #18
+# M79->x:$9B0,18,1 	; Mini Kappa 1
+# M80->x:$A30,18,1	; Mini Kappa 2
+# ; M81->x:$AB0,18,1 	; Unused
+# ; M82->x:$B30,18,1 	; Unused
+# ; M83->X:$BB0,18,1 	; Unused
+# ; M84->X:$C30,18,1	; Unused
+# 
+# ;*************** Motor Status 2,I2T,Fatal following error **********************
+# ;PMAC side
+# M91->Y:$0C0,24  	; Phi
+# M92->Y:$140,24  	; Table XYZ : X
+# M93->Y:$1C0,24  	; Table XYZ : Y
+# M94->Y:$240,24  	; Table XYZ : Z
+# M95->Y:$2C0,24  	; Analyser
+# M96->Y:$340,24  	; Zoom DC Camera
+# M97->Y:$3C0,24  	; Aperture Y
+# M98->Y:$440,24  	; Aperture Z
+# M99->Y:$4C0,24  	; Capillary Y
+# M100->Y:$540,24 	; Capillary Z
+# M101->Y:$5C0,24 	; Scintillator Z
+# M102->Y:$640,24	; Unused
+# M103->Y:$6C0,24	; Unused
+# M104->Y:$740,24	; Unused
+# M105->Y:$7C0,24	; Unused
+# M106->Y:$840,24	; Unused
+# M107->Y:$8C0,24 	; Centring Table Motor #17
+# M108->Y:$940,24 	; Centring Table Motor #18
+# M109->Y:$9C0,24 	; Mini Kappa 1
+# M110->Y:$A40,24		; Mini Kappa 2
+# M111->Y:$AC0,24 	; Unused
+# M112->Y:$B40,24 	; Unused
+# M113->Y:$BC0,24	; Unused
+# M114->Y:$C40,24	; Unused
+# 
+# ;**************************** In position status *******************************
+# M121->Y:$0C0,0,1 	; Phi
+# M122->Y:$140,0,1 	; Table XYZ : X
+# M123->Y:$1C0,0,1 	; Table XYZ : Y
+# M124->Y:$240,0,1 	; Table XYZ : Z
+# M125->Y:$2C0,0,1 	; Analyser
+# ;			;M125=1 Patch when Analyser goes really wrong !
+# M126->Y:$340,0,1 	; Zoom DC Camera
+# M127->Y:$3C0,0,1 	; Aperture Y
+# M128->Y:$440,0,1 	; Aperture Z
+# M129->Y:$4C0,0,1 	; Capillary Y
+# M130->Y:$540,0,1 	; Capillary Z
+# M131->Y:$5C0,0,1 	; Scintillator Z
+# M132->Y:$640,0,1	; Unused
+# M133->Y:$6C0,0,1	; Unused
+# M134->Y:$740,0,1	; Unused
+# M135->Y:$7C0,0,1	; Unused
+# M136->Y:$840,0,1	; Unused
+# M137->Y:$8C0,0,1 	; Centring Table Motor #17
+# M138->Y:$940,0,1 	; Centring Table Motor #18
+# M139->Y:$9C0,0,1 	; Mini Kappa 1
+# M140->Y:$A40,0,1	; Mini Kappa 2
+# M141->Y:$AC0,0,1 	; Unused
+# M142->Y:$B40,0,1 	; Unused
+# M143->Y:$BC0,0,1	; Unused
+# M144->Y:$C40,0,1 	; Unused
+
+
+
 
 #
 # Bug/Feature: only fields listed in motor_dict will be searched for in the ini file.
@@ -519,3 +709,32 @@ for lev, f, b, p, x, y, section in zoom_settings:
         fnc = "HSET"
     print "%s %s.cam.zoom.%d.ScaleY VALUE %s"              % (fnc, head, lev, y)
     print "PUBLISH mk_pgpmac_redis %s.cam.zoom.%d.ScaleY"              % (head, lev)
+
+
+plcc2_file = open( "%s-plcc2.pmc" % (head), "w")
+plcc2_file.write( "OPEN PLCC2 CLEAR\n")
+plcc2_file.write( ";\n")
+plcc2_file.write( "; Auto generated by mk_pgpmac_redis.py on %s\n" % datetime.datetime.isoformat(datetime.datetime.now()))
+plcc2_file.write( "; Insert into your .pmc file (replacing plcc 2 completely) and reload with the pmac executive program.\n")
+plcc2_file.write( ";\n")
+plcc2_file.write( "M522=M520;  Used for A&B registers set up.\n")
+plcc2_file.write( "\n");
+
+for m in plcc2_dict.keys():
+    if not motor_dict.has_key( m) or not motor_dict[m].has_key( "motor_num"):
+        continue
+    motor_num = int( motor_dict[m]["motor_num"])
+    if motor_num < 1 or motor_num > 32:
+        continue
+    plcc2_file.write( "%s=M%d               ; %s Status 1\n" % (plcc2_dict[m]["status1"], motor_num, m))
+    plcc2_file.write( "%s=M%d              ; %s Status 2\n" % (plcc2_dict[m]["status2"], motor_num + 90, m))
+    plcc2_file.write( "%s=(M%d/(I%d*32)) ; %s Position\n" % (plcc2_dict[m]["position"], motor_num+180, motor_num*100 + 8, m))
+
+plcc2_file.write( "M5070=M1048	       ; FShutterIsOpen\n")
+plcc2_file.write( "M5071=P3002	       ; PhiScan\n")
+plcc2_file.write( "M5072=P3001	       ; FastShutterHasOpened\n")
+plcc2_file.write( "M5073=P3005	       ; FastShutterHasGloballyOpened\n")
+plcc2_file.write( "M5074=P177	       ; Number of passes (FShutterIsOpen false and FastShutterHasOpened true and npasses=1 means we can read the detector)\n")
+plcc2_file.write( "CLOSE\n")
+
+plcc2_file.close();
