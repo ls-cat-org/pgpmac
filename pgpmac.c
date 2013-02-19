@@ -286,22 +286,28 @@ void stdinService(
       lstimer_set_timer( "Quit Program", -1, 1, 0);	// Doomsday, repeat as needed
       break;
 
-    case 0x0001:	// Control-A
-    case 0x0002:	// Control-B
-    case 0x0003:	// Control-C
-    case 0x0004:	// Control-D
-    case 0x0005:	// Control-E
-    case 0x0006:	// Control-F
-    case 0x0007:	// Control-G
-    case 0x000b:	// Control-K
-    case 0x000f:	// Control-O
-      //    case 0x0010:	// Control-P	// causes hang of PMAC communication as though ^P is not supposed to generate a response
-    case 0x0011:	// Control-Q
-    case 0x0012:	// Control-R
-    case 0x0013:	// Control-Q
-    case 0x0016:	// Control-V
+    case 0x0002:	// Control-B    Report status word for 8 motors
+    case 0x0003:	// Control-C    Report all coordinate system status words
+    case 0x0006:	// Control-F    Report following errors for 8 motors
+    case 0x0010:	// Control-P    Report positions for 8 motors
+    case 0x0016:	// Control-V    Report velocity on 8 motors
       sprintf( cevt, "Control-%c", '@' + ch);
-      lspmac_SockSendDPControlChar( cevt, ch);
+      lspmac_SockSendControlCharPrint( cevt, ch);
+      break;
+
+    case 0x0001:	// Control-A	Abort all programs and moves
+    case 0x0004:	// Control-D    Disable all PLC programs
+    case 0x0005:	// Control-E    Enable disabled motors
+    case 0x0007:	// Control-G    Report global status word
+    case 0x000b:	// Control-K    Kill all motors
+    case 0x000f:	// Control-O    Feed hold on all coordinate systems
+    case 0x0011:	// Control-Q	Quit all executing motion programs
+    case 0x0012:	// Control-R	Run motion programs in all coordinate systems
+    case 0x0013:	// Control-S    Step through working motion programs in all coordinate systems
+    case 0x0018:	// Control-X    Cancel in-process communications
+      sprintf( cevt, "Control-%c", '@' + ch);
+      lspmac_SockSendControlCharPrint( cevt, ch);
+      //      lspmac_SockSendDPControlChar( cevt, ch);
       break;
 
     case 0x000c:	// Control-L
@@ -424,6 +430,7 @@ void stdinService(
       wclrtoeol( term_input);
       wmove( term_input, 1, cmds_on + strlen(prompt) + 2);
       box( term_input, 0, 0);
+      wnoutrefresh( term_output);
       wnoutrefresh( term_input);
       doupdate();
       pthread_mutex_unlock( &ncurses_mutex);
@@ -446,9 +453,7 @@ void pgpmac_printf(
   va_end( arg_ptr);
 
   wnoutrefresh( term_output);
-  wnoutrefresh( term_input);
   doupdate();
-
   pthread_mutex_unlock( &ncurses_mutex);
 
 }
