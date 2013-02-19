@@ -100,6 +100,7 @@ void *lslogging_worker(
     }
     
     off = (lslogging_off++) % LSLOGGING_QUEUE_LENGTH;
+
     localtime_r( &(lslogging_queue[off].ltime.tv_sec), &coarsetime);
     strftime( tstr, sizeof(tstr)-1, "%Y-%m-%d %H:%M:%S", &coarsetime);
     tstr[sizeof(tstr)-1] = 0;
@@ -107,7 +108,11 @@ void *lslogging_worker(
     fprintf( lslogging_file, "%s.%.06u  %s\n", tstr, msecs, lslogging_queue[off].lmsg);
     fflush( lslogging_file);
 
-    pgpmac_printf( "%s\n", lslogging_queue[off].lmsg);
+    //
+    // If the newline comes after the string then only a blank line comes out
+    // in the ncurses terminal.  Don't know why.
+    //
+    pgpmac_printf( "\n%s", lslogging_queue[off].lmsg);
   }
 }
 
