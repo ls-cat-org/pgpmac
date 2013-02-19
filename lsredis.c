@@ -74,6 +74,7 @@ static pthread_t lsredis_thread;
 pthread_mutex_t lsredis_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 pthread_cond_t  lsredis_cond;
 int lsredis_running = 0;
+static pthread_mutexattr_t mutex_initializer;
 
 
 static lsredis_obj_t *lsredis_objs = NULL;
@@ -371,11 +372,12 @@ double lsredis_get_or_set_d( lsredis_obj_t *p, double val, int prec) {
 
   if( err == ETIMEDOUT) {
     rtn = val;
+    pthread_mutex_unlock( &p->mutex);
     lsredis_setstr( p, "%.*f", prec, val);
   } else {
     rtn = p->lvalue;
+    pthread_mutex_unlock( &p->mutex);
   }
-  pthread_mutex_unlock( &p->mutex);
   
   return rtn;
 }  
@@ -422,11 +424,12 @@ long int lsredis_get_or_set_l( lsredis_obj_t *p, long int val) {
   if( err == ETIMEDOUT) {
     lslogging_log_message( "lsredis_get_or_set_l: using default value of %ld for redis variable %s", val, p->key);
     rtn = val;
+    pthread_mutex_unlock( &p->mutex);
     lsredis_setstr( p, "%ld", val);
   } else {
     rtn = p->lvalue;
+    pthread_mutex_unlock( &p->mutex);
   }
-  pthread_mutex_unlock( &p->mutex);
   
   return rtn;
 }  
@@ -556,7 +559,7 @@ lsredis_obj_t *_lsredis_get_obj( char *key) {
       exit( -1);
     }
 
-    pthread_mutex_init( &p->mutex, NULL);
+    pthread_mutex_init( &p->mutex, &mutex_initializer);
     pthread_cond_init(  &p->cond, NULL);
     p->value = NULL;
     p->valid = 0;
@@ -1095,6 +1098,9 @@ void lsredis_config() {
   char hostname[128], lhostname[128];
   int i;
 
+  pthread_mutexattr_init( &mutex_initializer);
+  pthread_mutexattr_settype( &mutex_initializer, PTHREAD_MUTEX_RECURSIVE);
+
   if( gethostname( hostname, sizeof(hostname)-1)) {
     lslogging_log_message( "lsredis_init: cannot get our own host name.  Cannot configure redis variables.");
   } else {
@@ -1180,8 +1186,8 @@ void lsredis_init() {
   //
   hcreate_r( lsredis_preset_max_n * 2, &lsredis_preset_ht);
 
-  pthread_mutex_init( &lsredis_preset_list_mutex, NULL);
-  pthread_mutex_init( &lsredis_config_mutex, NULL);
+  pthread_mutex_init( &lsredis_preset_list_mutex, &mutex_initializer);
+  pthread_mutex_init( &lsredis_config_mutex, &mutex_initializer);
   pthread_cond_init(  &lsredis_config_cond,  NULL);
 }
 
