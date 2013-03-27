@@ -103,8 +103,4 @@ class iniParser:
 if __name__ == "__main__":
     ip = iniParser( "21-ID-E/microdiff_hard.ini")
     ip.read()
-    for s in ip.sections():
-        print s
-        print ip.options(s)
-        if ip.has_option(s,"neutralposition"):
-            print "NeutralPosition:", ip.get(s,"neutralposition")
+    print ip.get( "ligthing", "lightintensitydac")
