@@ -27,6 +27,9 @@ configs = {
     "orange-2"            : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E", "pg" : "1", "autoscint" : "1"},
     "orange-2.ls-cat.org" : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E", "pg" : "1", "autoscint" : "1"},
     "venison.ls-cat.org"  : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E", "pg" : "1", "autoscint" : "1"},
+    "mung-2"              : { "re" : "redis\.kvseq|stns\.1\.(.+)", "head" : "stns.1", "pub" : "MD2-21-ID-D", "pg" : "1", "autoscint" : "1"},
+    "mung-2.ls-cat.org"   : { "re" : "redis\.kvseq|stns\.1\.(.+)", "head" : "stns.1", "pub" : "MD2-21-ID-D", "pg" : "1", "autoscint" : "1"},
+    "vidalia.ls-cat.org"  : { "re" : "redis\.kvseq|stns\.1\.(.+)", "head" : "stns.1", "pub" : "MD2-21-ID-D", "pg" : "1", "autoscint" : "1"},
 }
 
 plcc2_dict = {
@@ -255,7 +258,7 @@ motor_dict = {
     "omega" : { "motor_num" : "1", "max_accel" : "2", "max_speed" : "1664", "coord_num" : "1", "u2c" : "12800",
                 "home" : '{"M401=1 M1115=1 #1$",&1E,#1&1B1R}',"active_init" : '{M31=1,&1#1->X,"M700=(M700 | $000001) ^ $000001", M1115=1}',
                 "inactive_init" : '{M31=0,&1#1->0,"M700=M700 | $000001",M1115=0}',"moveMode" :  "freeRotation",
-                "reference" :  "228.5", "format" :  "%.3f", "printf" : "%*.4f°", "axis" : "X",
+                "reference" :  "228.5", "format" :  "%.3f", "printf" : "%*.4f deg", "axis" : "X",
                 "hard_ini"  : "PHIRotationAxis.PHIMotor", "neutralPosition" : "0", "active" : "1"
                 },
     "align.x" : { "motor_num" : "2", "max_accel" : "2", "max_speed" : "121", "coord_num" : "3", "u2c" : "60620.8",
@@ -279,7 +282,7 @@ motor_dict = {
     "lightPolar" : { "motor_num" : "5", "max_accel" : "0.2", "max_speed" : "3", "u2c" : "142", "coord_num" : "0",
                      "home" : '{#5$,#5HMZ}', "active_init" : '{}', "inactive_init" : '{}',
                      "largeStep" :  "45", "smallStep" :  "10", "format" : "%.1f",
-                     "printf" :  "%*.1f°", "update_resolution" :  "1",
+                     "printf" :  "%*.1f deg", "update_resolution" :  "1",
                      "hard_ini" : "Analyser.AnalyserMotor", "neutralPosition" : "0", "active" : "1"
                      },
     "cam.zoom" : { "motor_num" : "6","max_accel" : "0.2", "max_speed" : "10", "coord_num" : "4", "u2c" : "1.0",
