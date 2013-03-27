@@ -143,7 +143,8 @@ int md2cmds_home_wait( double timeout_secs) {
 void md2cmds_move_prep() {
   pthread_mutex_lock( &md2cmds_moving_mutex);
   lsredis_setstr( md2cmds_md_status_code, "%s", "4");
-  md2cmds_moving_count = -1;
+  lslogging_log_message( "md2cmds_move_prep: status code %ld", lsredis_getl( md2cmds_md_status_code));
+  md2cmds_moving_count = md2cmds_moving_count ? md2cmds_moving_count : -1;
   pthread_mutex_unlock( &md2cmds_moving_mutex);
 }
 
@@ -516,6 +517,7 @@ int md2cmds_moveAbs(
     free( cmd);
     return 1;
   }
+
 
   fpos = strtod( pos, &endptr);
   if( pos == endptr) {
@@ -980,6 +982,7 @@ void md2cmds_maybe_done_moving_cb( char *event) {
   }
 
   lsredis_setstr( md2cmds_md_status_code, "%s", md2cmds_moving_count ? "4" : "3");
+  lslogging_log_message( "md2cmds_maybe_done_moving_cb: status code %ld", lsredis_getl( md2cmds_md_status_code));
   
   if( md2cmds_moving_count == 0)
     pthread_cond_signal( &md2cmds_moving_cond);
@@ -1241,7 +1244,8 @@ int md2cmds_collect( const char *dummy) {
     // wait for the shutter to close
     //
     clock_gettime( CLOCK_REALTIME, &now);
-    timeout.tv_sec  = now.tv_sec + 4 + exp_time;	// hopefully 4 seconds is long enough to never catch a legitimate shutter close and short enough to bail when something is really wrong
+    lslogging_log_message( "md2cmds_collect: waitting %f seconds for the shutter to close", 4 + exp_time);
+    timeout.tv_sec  = now.tv_sec + 4 + ceil(exp_time);	// hopefully 4 seconds is long enough to never catch a legitimate shutter close and short enough to bail when something is really wrong
     timeout.tv_nsec = now.tv_nsec;
 
     err = 0;
