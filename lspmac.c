@@ -1169,7 +1169,9 @@ void lspmac_bo_read(
     mp->not_done     = 0;
     mp->command_sent = 1;
     pthread_cond_signal( &(mp->cond));
+    lsevents_send_event( "%s Moving", mp->name);
     lsevents_send_event( "%s %d", mp->name, pos);
+    lsevents_send_event( "%s In Position", mp->name);
   }
   pthread_mutex_unlock( &(mp->mutex));
 }
@@ -2413,6 +2415,7 @@ int lspmac_movezoom_queue(
       mp->motion_seen  = 0;
       mp->command_sent = 1;
       pthread_mutex_unlock( &(mp->mutex));
+      lsevents_send_event( "%s Moving", mp->name);
 
       //
       // Perhaps give someone else a chance to process the move
@@ -2422,11 +2425,13 @@ int lspmac_movezoom_queue(
       mp->motion_seen  = 1;
       mp->command_sent = 1;
       pthread_mutex_unlock( &(mp->mutex));
+      lsevents_send_event( "%s In Position", mp->name);
       return 0;
     }
 
-    mp->not_done    = 1;
-    mp->motion_seen = 0;
+    mp->not_done     = 1;
+    mp->motion_seen  = 0;
+    mp->command_sent = 0;
     
     lspmac_SockSendDPline( mp->name, "#%d j=%d", motor_num, mp->requested_pos_cnts);
   }
@@ -2531,6 +2536,9 @@ int lspmac_moveabs_bo_queue(
     mp->not_done     = 0;
     mp->motion_seen  = 1;
     mp->command_sent = 1;
+    lsevents_send_event( "%s Moving", mp->name);
+    lsevents_send_event( "%s In Position", mp->name);
+
   } else {
     //
     // Go ahead and send the request
@@ -4343,7 +4351,7 @@ void lspmac_run() {
     lsevents_add_listener( "^backLight 1$" ,	       lspmac_backLight_up_cb);
     lsevents_add_listener( "^backLight 0$" ,	       lspmac_backLight_down_cb);
     lsevents_add_listener( "^cam.zoom Moving$",          lspmac_light_zoom_cb);
-    lsevents_add_listener( "^Quitting Program$",         lspmac_quitting_cb);
+    //    lsevents_add_listener( "^Quitting Program$",         lspmac_quitting_cb);
     lsevents_add_listener( "^Control-[BCFGV] accepted$", lspmac_request_control_response_cb);
     lsevents_add_listener( "^Full Card Reset$",          lspmac_full_card_reset_cb);
 
@@ -4370,6 +4378,8 @@ void lspmac_run() {
   //
   // Clear the command interfaces
   //
+  // lspmac_SockSendControlCharPrint( "Control-X", '\x18'); // why does this kill the initialzation?
+
   {
     uint32_t cc;
     cc = 0;
@@ -4378,8 +4388,6 @@ void lspmac_run() {
     cc = 0x18;
     lspmac_send_command( VR_UPLOAD, VR_PMAC_SETMEM, 0x0e9e, 0, 4, (char *)&cc, NULL, 1, NULL);
   }
-  // lspmac_SockSendControlCharPrint( "Control-X", '\x18'); // why does this kill the initialzation?
-
   //
   // Initialize the MD2 pmac (ie, turn on the right plcc's etc)
   //
