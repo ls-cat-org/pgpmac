@@ -101,6 +101,6 @@ class iniParser:
 
 
 if __name__ == "__main__":
-    ip = iniParser( "21-ID-E/microdiff_hard.ini")
+    ip = iniParser( "21-ID-D/microdiff_pref.ini")
     ip.read()
-    print ip.get( "ligthing", "lightintensitydac")
+    print ip.get( "CentringXYTable", "PhiReference")
