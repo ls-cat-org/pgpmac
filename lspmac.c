@@ -1156,6 +1156,7 @@ void lspmac_bo_read(
 		    lspmac_motor_t *mp		/**< [in] The motor			*/
 		    ) {
   int pos, changed;
+  char *fmt;
 
   pthread_mutex_lock( &(mp->mutex));
 
@@ -1173,6 +1174,14 @@ void lspmac_bo_read(
     lsevents_send_event( "%s %d", mp->name, pos);
     lsevents_send_event( "%s In Position", mp->name);
   }
+
+  if( mp->reported_position != mp->position) {
+    fmt = lsredis_getstr(mp->redis_fmt);
+    lsredis_setstr( mp->redis_position, fmt, mp->position);
+    free(fmt);
+    mp->reported_position = mp->position;
+  }
+
   pthread_mutex_unlock( &(mp->mutex));
 }
 
@@ -1182,6 +1191,7 @@ void lspmac_dac_read(
 		     lspmac_motor_t *mp		/**< [in] The motor			*/
 		     ) {
   double u2c;
+  char *fmt;
 
   pthread_mutex_lock( &(mp->mutex));
   mp->actual_pos_cnts = *mp->actual_pos_cnts_p;
@@ -1199,6 +1209,13 @@ void lspmac_dac_read(
     }
   }
 
+  if( fabs(mp->reported_position - mp->position) >= lsredis_getd(mp->update_resolution)) {
+    fmt = lsredis_getstr(mp->redis_fmt);
+    lsredis_setstr( mp->redis_position, fmt, mp->position);
+    free(fmt);
+    mp->reported_position = mp->position;
+  }
+
   pthread_mutex_unlock( &(mp->mutex));
 }
 
@@ -1211,6 +1228,7 @@ void lspmac_dac_read(
 void lspmac_shutter_read(
 			 lspmac_motor_t *mp	/**< [in] The motor object associated with the fast shutter	*/
 			 ) {
+  char *fmt;
   //
   // track the shutter state and signal if it has changed
   //
@@ -1238,6 +1256,13 @@ void lspmac_shutter_read(
     mp->position = 0;
   }
   pthread_mutex_unlock( &ncurses_mutex);
+
+  if( fshut->reported_position != fshut->position) {
+    fmt = lsredis_getstr( fshut->redis_fmt);
+    lsredis_setstr( fshut->redis_position, fmt, fshut->position);
+    free(fmt);
+    fshut->reported_position = fshut->position;
+  }
 
   pthread_mutex_unlock( &lspmac_shutter_mutex);
 }
