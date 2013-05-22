@@ -1057,6 +1057,9 @@ int md2cmds_collect( const char *dummy) {
   double move_time;
   int mmask;
 
+
+  lsevents_send_event( "Data Collection Starting");
+
   u2c         = lsredis_getd( omega->u2c);
   neutral_pos = lsredis_getd( omega->neutral_pos);
   max_accel   = lsredis_getd( omega->max_accel);
@@ -1126,6 +1129,7 @@ int md2cmds_collect( const char *dummy) {
 	err = lspmac_est_move_time_wait( move_time, mmask, NULL);
 	if( err) {
 	  lsevents_send_event( "Data Colection Aborted");
+	  lspg_query_push( NULL, "SELECT px.unlock_diffractometer()");
 	  return 1;
 	}
       }
@@ -1145,14 +1149,16 @@ int md2cmds_collect( const char *dummy) {
 				  phi,   0, NULL, phi_pos,
 				  NULL);
       if( err) {
-	  lsevents_send_event( "Data Colection Aborted");
-	  return 1;
+	lspg_query_push( NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
+	lsevents_send_event( "Data Colection Aborted");
+	return 1;
       }	
 
       err = lspmac_est_move_time_wait( move_time + 2, mmask, NULL);
       if( err) {
-	  lsevents_send_event( "Data Colection Aborted");
-	  return 1;
+	lspg_query_push( NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
+	lsevents_send_event( "Data Colection Aborted");
+	return 1;
       }	
     }
 
@@ -1198,13 +1204,15 @@ int md2cmds_collect( const char *dummy) {
 
     err = 0;
     pthread_mutex_lock( &lspmac_shutter_mutex);
-    while( err == 0 && lspmac_shutter_has_opened == 1)
+    while( err == 0 && lspmac_shutter_has_opened != 0)
       err = pthread_cond_timedwait( &lspmac_shutter_cond, &lspmac_shutter_mutex, &timeout);
     pthread_mutex_unlock( &lspmac_shutter_mutex);
 
     if( err == ETIMEDOUT) {
       pthread_mutex_unlock( &lspmac_shutter_mutex);
-      lslogging_log_message( "md2cmds_collect: Timed out waiting for shutter to open.  Data collection aborted.");
+      lslogging_log_message( "md2cmds_collect: Timed out waiting for shutter to be confirmed closed.  Data collection aborted.");
+      lspg_query_push( NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
+      lspg_query_push( NULL, "SELECT px.unlock_diffractometer()");
       lsevents_send_event( "Data Collection Aborted");
       return 1;
     }
@@ -1235,6 +1243,8 @@ int md2cmds_collect( const char *dummy) {
     if( err == ETIMEDOUT) {
       pthread_mutex_unlock( &lspmac_shutter_mutex);
       lslogging_log_message( "md2cmds_collect: Timed out waiting for shutter to open.  Data collection aborted.");
+      lspg_query_push( NULL, "SELECT px.unlock_diffractometer()");
+      lspg_query_push( NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
       lsevents_send_event( "Data Collection Aborted");
       return 1;
     }
@@ -1256,6 +1266,8 @@ int md2cmds_collect( const char *dummy) {
 
     if( err == ETIMEDOUT) {
       pthread_mutex_unlock( &lspmac_shutter_mutex);
+      lspg_query_push( NULL, "SELECT px.unlock_diffractometer()");
+      lspg_query_push( NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
       lslogging_log_message( "md2cmds_collect: Timed out waiting for shutter to close.  Data collection aborted.");
       lsevents_send_event( "Data Collection Aborted");
       return 1;
