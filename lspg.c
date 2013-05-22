@@ -277,36 +277,23 @@ char **lspg_array2ptrs( char *a) {
  * \param pgr  The resonse from postgresql
  */ 
 void lspg_allkvs_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
-  int kvname_col, kvvalue_col, kvseq_col, kvdbrtype_col;
   int i;
   lsredis_obj_t *robj;
   
-  kvname_col    = PQfnumber( pgr, "rname");
-  kvvalue_col   = PQfnumber( pgr, "rvalue");
-  kvseq_col     = PQfnumber( pgr, "rseq");
-  kvdbrtype_col = PQfnumber( pgr, "rdbrtype");
-  
-  if( kvname_col == -1 || kvvalue_col == -1 || kvseq_col == -1 || kvdbrtype_col == -1) {
-    fprintf( stderr, "lspg_allkvs_cb: bad column number(s)\n");
-    return;
-  }
-
-  
-  for( i=0; i<PQntuples( pgr); i++) {
+  for( i=0; i<PQntuples( pgr); i += 2) {
     pthread_mutex_lock( &lsredis_mutex);
     while( lsredis_running == 0)
       pthread_cond_wait( &lsredis_cond, &lsredis_mutex);
-
-    robj = _lsredis_get_obj( PQgetvalue( pgr, i, kvname_col));
     pthread_mutex_unlock( &lsredis_mutex);
 
+    robj = _lsredis_get_obj( PQgetvalue( pgr, i, 0));
 
     if( robj == NULL) {
-      lslogging_log_message( "lspg_allkvs_cb: could not find redis object named '%s'", PQgetvalue( pgr, i, kvname_col));
+      lslogging_log_message( "lspg_allkvs_cb: could not find redis object named '%s'", PQgetvalue( pgr, i, 0));
       continue;
     }
 
-    lsredis_setstr( robj, "%s", PQgetvalue( pgr, i, kvvalue_col));
+    lsredis_setstr( robj, "%s", PQgetvalue( pgr, i+1, 0));
   }
 
 }
@@ -1893,6 +1880,10 @@ void lspg_preset_changed_cb( char *event) {
     return;
   }
   v = lsredis_getstr( p);
+  if( v == NULL || v[0] == 0) {
+    lslogging_log_message( "lspg_preset_chanted_cb: Value for preset %s is %s", pn, v==NULL ? "NULL" : "Empty");
+    return;
+  }
   lspg_query_push( NULL, "EXECUTE kvupdate('{%s,%s}'::text[])", pn, v);
 }
 
