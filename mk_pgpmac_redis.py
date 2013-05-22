@@ -547,6 +547,8 @@ motor_presets = {
         [ "manualMount", "180.0", None,  "MiniKappa",              "Kappa1MountPosition"],
         [ "reference",   "228.5", None,  "CentringXYTable",        "PhiReference"]
         ],
+
+
     "omega" : [
         [ "manualMount", "180.0", None,  "PHIRotationAxis",        "KappaMountPosition"]
         ],
@@ -674,6 +676,16 @@ for m in motor_dict.keys():
         print "PUBLISH mk_pgpmac_redis %s.%s.presets.length" % (head, m)
 
         
+    # omega reference angle is unique
+    if m=="omega":
+        if pref_ini and pi.has_section( "CentringXYTable") and pi.has_option( "CentringXYTable", "PhiReference"):
+            ppos = pi.get( "CentringXYTable", "PhiReference")
+        
+            print "HSET %s.omega.reference VALUE %s"     % (head, ppos)
+            print "PUBLISH mk_pgpmac_redis %s.omega.reference" % (head)
+
+
+
 # light and zoom settings
 
 for lev, f, b, p, x, y, section in zoom_settings:
