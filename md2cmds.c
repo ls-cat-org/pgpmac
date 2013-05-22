@@ -1244,7 +1244,7 @@ int md2cmds_collect( const char *dummy) {
     // wait for the shutter to close
     //
     clock_gettime( CLOCK_REALTIME, &now);
-    lslogging_log_message( "md2cmds_collect: waitting %f seconds for the shutter to close", 4 + exp_time);
+    lslogging_log_message( "md2cmds_collect: waiting %f seconds for the shutter to close", 4 + exp_time);
     timeout.tv_sec  = now.tv_sec + 4 + ceil(exp_time);	// hopefully 4 seconds is long enough to never catch a legitimate shutter close and short enough to bail when something is really wrong
     timeout.tv_nsec = now.tv_nsec;
 
