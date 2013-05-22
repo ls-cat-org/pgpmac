@@ -20,7 +20,7 @@ var searchData=
   ['ceny',['ceny',['../lspmac_8c.html#aaed18e738ba7bfb6c771a44f5d7ea827',1,'ceny():&#160;lspmac.c'],['../pgpmac_8h.html#aaed18e738ba7bfb6c771a44f5d7ea827',1,'ceny():&#160;lspmac.c']]],
   ['changeeventoff',['changeEventOff',['../structlspmac__bi__struct.html#ae0859842f637694ace0e6d54c0e2af6a',1,'lspmac_bi_struct']]],
   ['changeeventon',['changeEventOn',['../structlspmac__bi__struct.html#ae7178007dfdf21be0e5b1fbaa36732af',1,'lspmac_bi_struct']]],
-  ['cleanstr',['cleanstr',['../lspmac_8c.html#a8f9f1ad624350095075aa6b51423b02d',1,'lspmac.c']]],
+  ['cleanstr',['cleanstr',['../lspmac_8c.html#ae2bd3b445340bd4e49ec1c3bf01951ab',1,'lspmac.c']]],
   ['command_5fbuf',['command_buf',['../structlspmac__ascii__buffers__struct.html#ad92fe7e16e5e67ec4c115a6b86890faa',1,'lspmac_ascii_buffers_struct']]],
   ['command_5fbuf_5fcc',['command_buf_cc',['../structlspmac__ascii__buffers__struct.html#a4d11efeb1eef407d811d3f9b774adc54',1,'lspmac_ascii_buffers_struct']]],
   ['command_5fsent',['command_sent',['../structlspmac__motor__struct.html#a59a7f007476b2428fd3c5bd7f24440e8',1,'lspmac_motor_struct']]],

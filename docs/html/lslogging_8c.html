@@ -383,7 +383,7 @@ Variables</h2></td></tr>
 
 <p>Start up the worker thread. </p>
 
-<p>Definition at line <a class="el" href="lslogging_8c_source.html#l00116">116</a> of file <a class="el" href="lslogging_8c_source.html">lslogging.c</a>.</p>
+<p>Definition at line <a class="el" href="lslogging_8c_source.html#l00121">121</a> of file <a class="el" href="lslogging_8c_source.html">lslogging.c</a>.</p>
 <div class="fragment"><div class="line">                     {</div>
 <div class="line">  pthread_create( &amp;<a class="code" href="lslogging_8c.html#ad7629be92d1bec1c621b5cc0800f497f" title="our thread">lslogging_thread</a>, NULL, &amp;<a class="code" href="lslogging_8c.html#a33ec49aea69b5e4b1b551a34e7bacfca" title="Service the queue, write to the file.">lslogging_worker</a>, NULL);</div>
 <div class="line">  <a class="code" href="lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b" title="The routine everyone will be talking about.">lslogging_log_message</a>( <span class="stringliteral">&quot;Start up&quot;</span>);</div>
@@ -431,6 +431,7 @@ Variables</h2></td></tr>
 <div class="line">    }</div>
 <div class="line">    </div>
 <div class="line">    off = (<a class="code" href="lslogging_8c.html#a6c571e94580b7fc9ab72e01fbc5d23c7" title="next location to remove from the queue">lslogging_off</a>++) % <a class="code" href="lslogging_8c.html#a5b1cb610bee26b000a2d64caa7d77a8d" title="Modest length queue.">LSLOGGING_QUEUE_LENGTH</a>;</div>
+<div class="line"></div>
 <div class="line">    localtime_r( &amp;(<a class="code" href="lslogging_8c.html#af98f94aec3e4501328da1b71f706c652" title="Our entire queue. Right here. Every message we&#39;ll ever write.">lslogging_queue</a>[off].ltime.tv_sec), &amp;coarsetime);</div>
 <div class="line">    strftime( tstr, <span class="keyword">sizeof</span>(tstr)-1, <span class="stringliteral">&quot;%Y-%m-%d %H:%M:%S&quot;</span>, &amp;coarsetime);</div>
 <div class="line">    tstr[<span class="keyword">sizeof</span>(tstr)-1] = 0;</div>
@@ -438,7 +439,11 @@ Variables</h2></td></tr>
 <div class="line">    fprintf( <a class="code" href="lslogging_8c.html#a5709d6eb68a8eebf78ba58bb78da0649" title="our log file object">lslogging_file</a>, <span class="stringliteral">&quot;%s.%.06u  %s\n&quot;</span>, tstr, msecs, <a class="code" href="lslogging_8c.html#af98f94aec3e4501328da1b71f706c652" title="Our entire queue. Right here. Every message we&#39;ll ever write.">lslogging_queue</a>[off].lmsg);</div>
 <div class="line">    fflush( <a class="code" href="lslogging_8c.html#a5709d6eb68a8eebf78ba58bb78da0649" title="our log file object">lslogging_file</a>);</div>
 <div class="line"></div>
-<div class="line">    <a class="code" href="pgpmac_8c.html#a7762ca7b97b44b979e23ce88ca3b4249" title="Terminal output routine ala printf.">pgpmac_printf</a>( <span class="stringliteral">&quot;%s\n&quot;</span>, <a class="code" href="lslogging_8c.html#af98f94aec3e4501328da1b71f706c652" title="Our entire queue. Right here. Every message we&#39;ll ever write.">lslogging_queue</a>[off].lmsg);</div>
+<div class="line">    <span class="comment">//</span></div>
+<div class="line">    <span class="comment">// If the newline comes after the string then only a blank line comes out</span></div>
+<div class="line">    <span class="comment">// in the ncurses terminal.  Don&#39;t know why.</span></div>
+<div class="line">    <span class="comment">//</span></div>
+<div class="line">    <a class="code" href="pgpmac_8c.html#a7762ca7b97b44b979e23ce88ca3b4249" title="Terminal output routine ala printf.">pgpmac_printf</a>( <span class="stringliteral">&quot;\n%s&quot;</span>, <a class="code" href="lslogging_8c.html#af98f94aec3e4501328da1b71f706c652" title="Our entire queue. Right here. Every message we&#39;ll ever write.">lslogging_queue</a>[off].lmsg);</div>
 <div class="line">  }</div>
 <div class="line">}</div>
 </div><!-- fragment -->
@@ -619,7 +624,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="lslogging_8c.html">lslogging.c</a></li>
-    <li class="footer">Generated on Sun Feb 17 2013 21:43:39 for LS-CAT PGPMAC by
+    <li class="footer">Generated on Wed May 22 2013 15:30:28 for LS-CAT PGPMAC by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.2 </li>
   </ul>

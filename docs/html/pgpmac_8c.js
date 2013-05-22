@@ -10,6 +10,8 @@ var pgpmac_8c =
     [ "doomsday_count", "pgpmac_8c.html#aa687f0df65c1d87ffd5635742c1eab94", null ],
     [ "doomsday_mutex", "pgpmac_8c.html#a75c9d50c347e9021784ee2529a0a1a70", null ],
     [ "ncurses_mutex", "pgpmac_8c.html#ad128c64890c7c0d4f836d9ec6e99216a", null ],
+    [ "pgpmac_use_autoscint", "pgpmac_8c.html#ad163e2bc6ebe322058c113dee76c11ff", null ],
+    [ "pgpmac_use_pg", "pgpmac_8c.html#ae002f31c03cce9bf96cf0e0c2907cb2b", null ],
     [ "running", "pgpmac_8c.html#a2f45113638a0b749a8a205d2cd7fb42b", null ],
     [ "stdinfda", "pgpmac_8c.html#a6dc08e82e698d914ccb09077dd33668a", null ],
     [ "term_input", "pgpmac_8c.html#ab0487111dbe3c05d0bd835eb2fb9a3f7", null ],

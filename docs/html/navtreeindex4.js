@@ -1,5 +1,14 @@
 var NAVTREEINDEX4 =
 {
+"structlspg__nextshot__struct.html#a2d1f51cb1bb575a214344773136be878":[2,0,13,60],
+"structlspg__nextshot__struct.html#a3644e5c3f12af18a3b426d4d4d7e16a5":[2,0,13,22],
+"structlspg__nextshot__struct.html#a371e574055fec7660b8f2e637eaf9f25":[2,0,13,41],
+"structlspg__nextshot__struct.html#a3895d645420848aed05b95694ec8c6c7":[2,0,13,24],
+"structlspg__nextshot__struct.html#a38b657155fbee9b73278f76912cf2333":[2,0,13,63],
+"structlspg__nextshot__struct.html#a3ad947f4efe2cb5c338244b019334749":[2,0,13,19],
+"structlspg__nextshot__struct.html#a4487e718c2b55a8ab9ebb18329574ae1":[2,0,13,61],
+"structlspg__nextshot__struct.html#a45091283dc073e5b7da2cfbe5a75fade":[2,0,13,33],
+"structlspg__nextshot__struct.html#a4be525bb32fb0232c21a91529f1e8c73":[2,0,13,45],
 "structlspg__nextshot__struct.html#a4d8c34309572875352ddabe9cc9001ee":[2,0,13,32],
 "structlspg__nextshot__struct.html#a516827749068577217b27860a01e6041":[2,0,13,28],
 "structlspg__nextshot__struct.html#a51a26391afcacfb4c946fb9e8e9ab6b0":[2,0,13,52],
@@ -240,14 +249,5 @@ var NAVTREEINDEX4 =
 "structmd2StatusStruct.html#a91f38d814222edeffa67a6a3ab61f5d6":[2,0,29,42],
 "structmd2StatusStruct.html#a920b80e9f5f08aedac3ad541d5ffc8ae":[2,0,29,67],
 "structmd2StatusStruct.html#a9653a75bc0b66c5f86d8b0206dc39b4f":[2,0,29,5],
-"structmd2StatusStruct.html#a9fc7dc802d00c22463dd7ddd531e06d7":[2,0,29,45],
-"structmd2StatusStruct.html#aa242098c185cce8f852cd6e081ef0b1d":[2,0,29,35],
-"structmd2StatusStruct.html#aa5aadda5a5cb98c6028f8b45e16cd084":[2,0,29,44],
-"structmd2StatusStruct.html#aa619cdbd7a563408c6b825ddc4f74ebb":[2,0,29,31],
-"structmd2StatusStruct.html#aab597be69a8dcc140778d9aeb8a50eee":[2,0,29,46],
-"structmd2StatusStruct.html#aac82f8e97fa39ea9be7823dd1d308986":[2,0,29,54],
-"structmd2StatusStruct.html#aadbfac5709de57e449a37e2937d6ade7":[2,0,29,12],
-"structmd2StatusStruct.html#ab09c1342dc12052b8f5b35f78ef95000":[2,0,29,3],
-"structmd2StatusStruct.html#ab152694bc32d37c1d180f55e8d282020":[2,0,29,52],
-"structmd2StatusStruct.html#ab3da523bad7b82c1d27780caa24a8b92":[2,0,29,55]
+"structmd2StatusStruct.html#a9fc7dc802d00c22463dd7ddd531e06d7":[2,0,29,45]
 };

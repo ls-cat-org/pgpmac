@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['cleanstr',['cleanstr',['../lspmac_8c.html#a8f9f1ad624350095075aa6b51423b02d',1,'lspmac.c']]]
+  ['cleanstr',['cleanstr',['../lspmac_8c.html#ae2bd3b445340bd4e49ec1c3bf01951ab',1,'lspmac.c']]]
 ];

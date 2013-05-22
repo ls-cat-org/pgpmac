@@ -1,4 +1,4 @@
-.TH "pgpmac.c" 3 "Sun Feb 17 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "pgpmac.c" 3 "Wed May 22 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -78,6 +78,14 @@ Main for the pgpmac project\&.
 .br
 .RI "\fIavoid thread collision while resetting the doomsday clock \fP"
 .ti -1c
+.RI "int \fBpgpmac_use_pg\fP = 0"
+.br
+.RI "\fInon-zero to start up lspg thread, 0 to not (reids hash PG in config\&.HOSTNAME sets this) \fP"
+.ti -1c
+.RI "int \fBpgpmac_use_autoscint\fP = 0"
+.br
+.RI "\fInon-zero to automatically move the alignment stage when the scintillator moves (redis hash AUTOSCINT in config\&.HOSTNAME sets this) \fP"
+.ti -1c
 .RI "static struct pollfd \fBstdinfda\fP"
 .br
 .RI "\fIHandle input from the keyboard\&. \fP"
@@ -114,11 +122,11 @@ Definition in file \fBpgpmac\&.c\fP\&.
 .PP
 Handle keyboard input\&. 
 .PP
-Definition at line 255 of file pgpmac\&.c\&.
+Definition at line 258 of file pgpmac\&.c\&.
 .SS "#define PGPMAC_N_COMMAND_LINES   128"
 
 .PP
-Definition at line 256 of file pgpmac\&.c\&.
+Definition at line 259 of file pgpmac\&.c\&.
 .SH "Function Documentation"
 .PP 
 .SS "int main (intargc, char **argv)"
@@ -133,7 +141,7 @@ Our main routine\&. < argument flags \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 477 of file pgpmac\&.c\&.
+Definition at line 485 of file pgpmac\&.c\&.
 .PP
 .nf
            {
@@ -232,7 +240,10 @@ Definition at line 477 of file pgpmac\&.c\&.
   // These need to be all initialized before any are run
   //
   lspmac_init( ivars, mvars);
-  lspg_init();
+
+  if( pgpmac_use_pg)
+    lspg_init();
+
   md2cmds_init();
 
   //
@@ -265,7 +276,10 @@ Definition at line 477 of file pgpmac\&.c\&.
   // Now run the world
   //
   lspmac_run();
-  lspg_run();
+
+  if( pgpmac_use_pg)
+    lspg_run();
+
   md2cmds_run();
 
   while( running) {
@@ -318,7 +332,7 @@ Terminal output routine ala printf\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 433 of file pgpmac\&.c\&.
+Definition at line 443 of file pgpmac\&.c\&.
 .PP
 .nf
                      {
@@ -331,9 +345,7 @@ Definition at line 433 of file pgpmac\&.c\&.
   va_end( arg_ptr);
 
   wnoutrefresh( term_output);
-  wnoutrefresh( term_input);
   doupdate();
-
   pthread_mutex_unlock( &ncurses_mutex);
 
 }
@@ -343,7 +355,7 @@ Definition at line 433 of file pgpmac\&.c\&.
 .PP
 quit the program 
 .PP
-Definition at line 466 of file pgpmac\&.c\&.
+Definition at line 474 of file pgpmac\&.c\&.
 .PP
 .nf
                                   {
@@ -359,7 +371,7 @@ Definition at line 466 of file pgpmac\&.c\&.
 .PP
 Postpone the day of reckoning This assumes the quit_cb routine is called once a second\&. 
 .PP
-Definition at line 456 of file pgpmac\&.c\&.
+Definition at line 464 of file pgpmac\&.c\&.
 .PP
 .nf
                                                  {
@@ -377,7 +389,7 @@ Definition at line 456 of file pgpmac\&.c\&.
 .PP
 
 .PP
-Definition at line 257 of file pgpmac\&.c\&.
+Definition at line 260 of file pgpmac\&.c\&.
 .PP
 .nf
                     {
@@ -407,22 +419,28 @@ Definition at line 257 of file pgpmac\&.c\&.
       lstimer_set_timer( 'Quit Program', -1, 1, 0);     // Doomsday, repeat as needed
       break;
 
-    case 0x0001:        // Control-A
-    case 0x0002:        // Control-B
-    case 0x0003:        // Control-C
-    case 0x0004:        // Control-D
-    case 0x0005:        // Control-E
-    case 0x0006:        // Control-F
-    case 0x0007:        // Control-G
-    case 0x000b:        // Control-K
-    case 0x000f:        // Control-O
-      //    case 0x0010:        // Control-P    // causes hang of PMAC communication as though ^P is not supposed to generate a response
-    case 0x0011:        // Control-Q
-    case 0x0012:        // Control-R
-    case 0x0013:        // Control-Q
-    case 0x0016:        // Control-V
+    case 0x0002:        // Control-B    Report status word for 8 motors
+    case 0x0003:        // Control-C    Report all coordinate system status words
+    case 0x0006:        // Control-F    Report following errors for 8 motors
+    case 0x0010:        // Control-P    Report positions for 8 motors
+    case 0x0016:        // Control-V    Report velocity on 8 motors
       sprintf( cevt, 'Control-%c', '@' + ch);
-      lspmac_SockSendDPControlChar( cevt, ch);
+      lspmac_SockSendControlCharPrint( cevt, ch);
+      break;
+
+    case 0x0001:        // Control-A    Abort all programs and moves
+    case 0x0004:        // Control-D    Disable all PLC programs
+    case 0x0005:        // Control-E    Enable disabled motors
+    case 0x0007:        // Control-G    Report global status word
+    case 0x000b:        // Control-K    Kill all motors
+    case 0x000f:        // Control-O    Feed hold on all coordinate systems
+    case 0x0011:        // Control-Q    Quit all executing motion programs
+    case 0x0012:        // Control-R    Run motion programs in all coordinate systems
+    case 0x0013:        // Control-S    Step through working motion programs in all coordinate systems
+    case 0x0018:        // Control-X    Cancel in-process communications
+      sprintf( cevt, 'Control-%c', '@' + ch);
+      lspmac_SockSendControlCharPrint( cevt, ch);
+      //      lspmac_SockSendDPControlChar( cevt, ch);
       break;
 
     case 0x000c:        // Control-L
@@ -545,6 +563,7 @@ Definition at line 257 of file pgpmac\&.c\&.
       wclrtoeol( term_input);
       wmove( term_input, 1, cmds_on + strlen(prompt) + 2);
       box( term_input, 0, 0);
+      wnoutrefresh( term_output);
       wnoutrefresh( term_input);
       doupdate();
       pthread_mutex_unlock( &ncurses_mutex);
@@ -572,16 +591,28 @@ Definition at line 244 of file pgpmac\&.c\&.
 allow more than one thread access to the screen 
 .PP
 Definition at line 242 of file pgpmac\&.c\&.
+.SS "int pgpmac_use_autoscint = 0"
+
+.PP
+non-zero to automatically move the alignment stage when the scintillator moves (redis hash AUTOSCINT in config\&.HOSTNAME sets this) 
+.PP
+Definition at line 247 of file pgpmac\&.c\&.
+.SS "int pgpmac_use_pg = 0"
+
+.PP
+non-zero to start up lspg thread, 0 to not (reids hash PG in config\&.HOSTNAME sets this) 
+.PP
+Definition at line 246 of file pgpmac\&.c\&.
 .SS "int running = 1\fC [static]\fP"
 
 .PP
-Definition at line 250 of file pgpmac\&.c\&.
+Definition at line 253 of file pgpmac\&.c\&.
 .SS "struct pollfd stdinfda\fC [static]\fP"
 
 .PP
 Handle input from the keyboard\&. 
 .PP
-Definition at line 249 of file pgpmac\&.c\&.
+Definition at line 252 of file pgpmac\&.c\&.
 .SS "WINDOW* term_input"
 
 .PP

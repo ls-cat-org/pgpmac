@@ -23,8 +23,6 @@ typedef struct \\*
 \item 
 int \hyperlink{md2cmds_8c_ac196e3bcdae79c1ba70cf0bf40a9e299}{md2cmds\-\_\-abort} (const char $\ast$dummy)
 \begin{DoxyCompactList}\small\item\em abort the current motion and put the system into a known state /param dummy Unused here \end{DoxyCompactList}\item 
-int \hyperlink{md2cmds_8c_aa85ebd51f9c8268f4044be52201d3f1c}{md2cmds\-\_\-center} (const char $\ast$dummy)
-\begin{DoxyCompactList}\small\item\em Move centering and alignment tables as requested T\-O\-D\-O\-: Implement. \end{DoxyCompactList}\item 
 int \hyperlink{md2cmds_8c_ad8f399e3ea3c2c77c23989c0fa0ccd86}{md2cmds\-\_\-collect} (const char $\ast$dummy)
 \begin{DoxyCompactList}\small\item\em Collect some data. \end{DoxyCompactList}\item 
 int \hyperlink{md2cmds_8c_ae1122d11f5198c7e8ee22125da65407c}{md2cmds\-\_\-move\-Abs} (const char $\ast$ccmd)
@@ -147,6 +145,8 @@ static struct hsearch\-\_\-data \hyperlink{md2cmds_8c_a625a7f2c3447a5ed7b6a1f9b0
 static regex\-\_\-t \hyperlink{md2cmds_8c_ad07af354194cb9a8eac1f200257dcacd}{md2cmds\-\_\-cmd\-\_\-regex}
 \item 
 static \hyperlink{md2cmds_8c_a5d5f3ca11eadb9719ccffec6753e1385}{md2cmds\-\_\-cmd\-\_\-kv\-\_\-t} \hyperlink{md2cmds_8c_a2bb0a14593ac87833ec2151282098d64}{md2cmds\-\_\-cmd\-\_\-kvs} \mbox{[}$\,$\mbox{]}
+\item 
+static \hyperlink{md2cmds_8c_a5d5f3ca11eadb9719ccffec6753e1385}{md2cmds\-\_\-cmd\-\_\-kv\-\_\-t} \hyperlink{md2cmds_8c_a536297b42e6510e136b202957da7244f}{md2cmds\-\_\-cmd\-\_\-pg\-\_\-kvs} \mbox{[}$\,$\mbox{]}
 \end{DoxyCompactItemize}
 
 
@@ -186,7 +186,7 @@ abort the current motion and put the system into a known state /param dummy Unus
 
 
 
-Definition at line 1587 of file md2cmds.\-c.
+Definition at line 1602 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -231,7 +231,7 @@ Definition at line 1587 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_aea8abad4c01250c1c88d6eff766bb83e}
 
 
-Definition at line 1549 of file md2cmds.\-c.
+Definition at line 1564 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -286,34 +286,13 @@ pause until md2cmds\-\_\-worker has finished running the command
 
 
 
-Definition at line 1617 of file md2cmds.\-c.
+Definition at line 1632 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
                            \{
   pthread\_mutex\_lock( &\hyperlink{md2cmds_8c_ad67304bb851dc6268b0cda2f40fc5aa8}{md2cmds\_mutex});
   pthread\_mutex\_unlock( &\hyperlink{md2cmds_8c_ad67304bb851dc6268b0cda2f40fc5aa8}{md2cmds\_mutex});
-\}
-\end{DoxyCode}
-\hypertarget{md2cmds_8c_aa85ebd51f9c8268f4044be52201d3f1c}{\index{md2cmds.\-c@{md2cmds.\-c}!md2cmds\-\_\-center@{md2cmds\-\_\-center}}
-\index{md2cmds\-\_\-center@{md2cmds\-\_\-center}!md2cmds.c@{md2cmds.\-c}}
-\subsubsection[{md2cmds\-\_\-center}]{\setlength{\rightskip}{0pt plus 5cm}int md2cmds\-\_\-center (
-\begin{DoxyParamCaption}
-\item[{const char $\ast$}]{dummy}
-\end{DoxyParamCaption}
-)}}\label{md2cmds_8c_aa85ebd51f9c8268f4044be52201d3f1c}
-
-
-Move centering and alignment tables as requested T\-O\-D\-O\-: Implement. 
-
-
-
-Definition at line 1512 of file md2cmds.\-c.
-
-
-\begin{DoxyCode}
-                                       \{
-  \textcolor{keywordflow}{return} 0;
 \}
 \end{DoxyCode}
 \hypertarget{md2cmds_8c_ad8f399e3ea3c2c77c23989c0fa0ccd86}{\index{md2cmds.\-c@{md2cmds.\-c}!md2cmds\-\_\-collect@{md2cmds\-\_\-collect}}
@@ -358,7 +337,7 @@ $<$ current phi position in case we need to move kappa only
 
 $<$ setup timeouts for shutter 
 
-Definition at line 1032 of file md2cmds.\-c.
+Definition at line 1042 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -379,6 +358,9 @@ Definition at line 1032 of file md2cmds.\-c.
   \textcolor{keywordtype}{int} err;
   \textcolor{keywordtype}{double} move\_time;
   \textcolor{keywordtype}{int} mmask;
+
+
+  \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Data Collection Starting"});
 
   u2c         = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( \hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega}->\hyperlink{structlspmac__motor__struct_a8838915ebb6f9989944117c8197d5e86}{u2c});
   neutral\_pos = \hyperlink{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}{lsredis\_getd}( \hyperlink{lspmac_8c_a8237e646ce032a840637a4ef7bff49b9}{omega}->\hyperlink{structlspmac__motor__struct_ae931e9bc9fc2fa82ca649334fc052fbe}{neutral\_pos});
@@ -469,6 +451,8 @@ Definition at line 1032 of file md2cmds.\-c.
       mmask, NULL);
         \textcolor{keywordflow}{if}( err) \{
           \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Data Colection Aborted"});
+          \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"SELECT
+       px.unlock\_diffractometer()"});
           \textcolor{keywordflow}{return} 1;
         \}
       \}
@@ -494,15 +478,19 @@ Definition at line 1032 of file md2cmds.\-c.
                                   \hyperlink{lspmac_8c_ac8070dc568ad974a3db42b51eca828cc}{phi},   0, NULL, phi\_pos,
                                   NULL);
       \textcolor{keywordflow}{if}( err) \{
-          \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Data Colection Aborted"});
-          \textcolor{keywordflow}{return} 1;
+        \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"SELECT px.shots\_set\_state(%lld,
+       'Error')"}, skey);
+        \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Data Colection Aborted"});
+        \textcolor{keywordflow}{return} 1;
       \} 
 
       err = \hyperlink{lspmac_8c_a570b4a359adc4da4ab80d53506d06963}{lspmac\_est\_move\_time\_wait}( move\_time + 2, 
       mmask, NULL);
       \textcolor{keywordflow}{if}( err) \{
-          \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Data Colection Aborted"});
-          \textcolor{keywordflow}{return} 1;
+        \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"SELECT px.shots\_set\_state(%lld,
+       'Error')"}, skey);
+        \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Data Colection Aborted"});
+        \textcolor{keywordflow}{return} 1;
       \} 
     \}
 
@@ -549,7 +537,7 @@ Definition at line 1032 of file md2cmds.\-c.
 
     err = 0;
     pthread\_mutex\_lock( &\hyperlink{lspmac_8c_a1b78a13c654409333569815e1c109d38}{lspmac\_shutter\_mutex});
-    \textcolor{keywordflow}{while}( err == 0 && \hyperlink{lspmac_8c_a396fbf06208de3ecbe1b0df549f1cd46}{lspmac\_shutter\_has\_opened} == 1)
+    \textcolor{keywordflow}{while}( err == 0 && \hyperlink{lspmac_8c_a396fbf06208de3ecbe1b0df549f1cd46}{lspmac\_shutter\_has\_opened} != 0)
       err = pthread\_cond\_timedwait( &\hyperlink{lspmac_8c_afbd51c2cefcee87afe994c9e9f372241}{lspmac\_shutter\_cond}, &
       \hyperlink{lspmac_8c_a1b78a13c654409333569815e1c109d38}{lspmac\_shutter\_mutex}, &timeout);
     pthread\_mutex\_unlock( &\hyperlink{lspmac_8c_a1b78a13c654409333569815e1c109d38}{lspmac\_shutter\_mutex});
@@ -557,7 +545,11 @@ Definition at line 1032 of file md2cmds.\-c.
     \textcolor{keywordflow}{if}( err == ETIMEDOUT) \{
       pthread\_mutex\_unlock( &\hyperlink{lspmac_8c_a1b78a13c654409333569815e1c109d38}{lspmac\_shutter\_mutex});
       \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_collect: Timed out
-       waiting for shutter to open.  Data collection aborted."});
+       waiting for shutter to be confirmed closed.  Data collection aborted."});
+      \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"SELECT px.shots\_set\_state(%lld,
+       'Error')"}, skey);
+      \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"SELECT px.unlock\_diffractometer()"}
+      );
       \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Data Collection Aborted"});
       \textcolor{keywordflow}{return} 1;
     \}
@@ -592,6 +584,10 @@ Definition at line 1032 of file md2cmds.\-c.
       pthread\_mutex\_unlock( &\hyperlink{lspmac_8c_a1b78a13c654409333569815e1c109d38}{lspmac\_shutter\_mutex});
       \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_collect: Timed out
        waiting for shutter to open.  Data collection aborted."});
+      \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"SELECT px.unlock\_diffractometer()"}
+      );
+      \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"SELECT px.shots\_set\_state(%lld,
+       'Error')"}, skey);
       \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Data Collection Aborted"});
       \textcolor{keywordflow}{return} 1;
     \}
@@ -601,9 +597,11 @@ Definition at line 1032 of file md2cmds.\-c.
     \textcolor{comment}{// wait for the shutter to close}
     \textcolor{comment}{//}
     clock\_gettime( CLOCK\_REALTIME, &\hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now});
-    timeout.tv\_sec  = \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_sec + 4 + exp\_time;     \textcolor{comment}{// hopefully 4 seconds
-       is long enough to never catch a legitimate shutter close and short enough to
-       bail when something is really wrong}
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_collect: waiting %f
+       seconds for the shutter to close"}, 4 + exp\_time);
+    timeout.tv\_sec  = \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_sec + 4 + ceil(exp\_time);       \textcolor{comment}{// hopefully 4
+       seconds is long enough to never catch a legitimate shutter close and short
+       enough to bail when something is really wrong}
     timeout.tv\_nsec = \hyperlink{lspg_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_nsec;
 
     err = 0;
@@ -615,6 +613,10 @@ Definition at line 1032 of file md2cmds.\-c.
 
     \textcolor{keywordflow}{if}( err == ETIMEDOUT) \{
       pthread\_mutex\_unlock( &\hyperlink{lspmac_8c_a1b78a13c654409333569815e1c109d38}{lspmac\_shutter\_mutex});
+      \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"SELECT px.unlock\_diffractometer()"}
+      );
+      \hyperlink{lspg_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, \textcolor{stringliteral}{"SELECT px.shots\_set\_state(%lld,
+       'Error')"}, skey);
       \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_collect: Timed out
        waiting for shutter to close.  Data collection aborted."});
       \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"Data Collection Aborted"});
@@ -692,7 +694,7 @@ Definition at line 1032 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_a4cf5215fdb88407144f582d829c03c7b}
 
 
-Definition at line 1854 of file md2cmds.\-c.
+Definition at line 1869 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -708,7 +710,7 @@ Definition at line 1854 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_a1ab8f6d08c82ee2130202d65d44ef3fe}
 
 
-Definition at line 1856 of file md2cmds.\-c.
+Definition at line 1871 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -724,7 +726,7 @@ Definition at line 1856 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_a3640785c2fc9cd2f27ce0bafd7959179}
 
 
-Definition at line 1858 of file md2cmds.\-c.
+Definition at line 1873 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -740,7 +742,7 @@ Definition at line 1858 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_a6069cb2f6e9f662edd54e1aeb6e78370}
 
 
-Definition at line 1860 of file md2cmds.\-c.
+Definition at line 1875 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -756,7 +758,7 @@ Definition at line 1860 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_a846ed10de4e5ad48cfa429a93c853308}
 
 
-Definition at line 1862 of file md2cmds.\-c.
+Definition at line 1877 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -772,7 +774,7 @@ Definition at line 1862 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_ab172a83eaf3e74799159e6720e4f5268}
 
 
-Definition at line 1864 of file md2cmds.\-c.
+Definition at line 1879 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -788,7 +790,7 @@ Definition at line 1864 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_a408a01640e74152304b10ae05f5d09e1}
 
 
-Definition at line 84 of file md2cmds.\-c.
+Definition at line 91 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -807,7 +809,7 @@ Definition at line 84 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_aaf5225dbdfe8b04318070c1167ff6a22}
 
 
-Definition at line 91 of file md2cmds.\-c.
+Definition at line 98 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -871,15 +873,16 @@ Initialize the md2cmds module.
 
 
 
-Definition at line 1870 of file md2cmds.\-c.
+Definition at line 1885 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
                     \{
   ENTRY hloader, *hrtnval;
   \textcolor{keywordtype}{int} \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i}, err;
+  \textcolor{keywordtype}{int} ncmds;
 
-  pthread\_mutexattr\_t mutex\_initializer;
+  pthread\_mutexattr\_t \hyperlink{lsredis_8c_a71c9f418904364d65c22d786f4dc5d39}{mutex\_initializer};
 
   pthread\_mutexattr\_init( &mutex\_initializer);
   pthread\_mutexattr\_settype( &mutex\_initializer, PTHREAD\_MUTEX\_RECURSIVE);
@@ -917,8 +920,15 @@ Definition at line 1870 of file md2cmds.\-c.
   \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( \hyperlink{md2cmds_8c_a6a34fb6876abbd580629d3708c805e7f}{md2cmds\_md\_status\_code}, \textcolor{stringliteral}{"
       7"});
 
-  hcreate\_r( 2 * \textcolor{keyword}{sizeof}(\hyperlink{md2cmds_8c_a2bb0a14593ac87833ec2151282098d64}{md2cmds\_cmd\_kvs})/\textcolor{keyword}{sizeof}(\hyperlink{md2cmds_8c_a2bb0a14593ac87833ec2151282098d64}{md2cmds\_cmd\_kvs}
-      [0]), &\hyperlink{md2cmds_8c_a625a7f2c3447a5ed7b6a1f9b0827d0c1}{md2cmds\_hmap});
+  ncmds = \textcolor{keyword}{sizeof}(\hyperlink{md2cmds_8c_a2bb0a14593ac87833ec2151282098d64}{md2cmds\_cmd\_kvs})/\textcolor{keyword}{sizeof}(\hyperlink{md2cmds_8c_a2bb0a14593ac87833ec2151282098d64}{md2cmds\_cmd\_kvs}
+      [0]);
+  \textcolor{keywordflow}{if}( \hyperlink{pgpmac_8c_ae002f31c03cce9bf96cf0e0c2907cb2b}{pgpmac\_use\_pg}) \{
+    ncmds += \textcolor{keyword}{sizeof}(\hyperlink{md2cmds_8c_a536297b42e6510e136b202957da7244f}{md2cmds\_cmd\_pg\_kvs})/\textcolor{keyword}{sizeof}(
+      \hyperlink{md2cmds_8c_a536297b42e6510e136b202957da7244f}{md2cmds\_cmd\_pg\_kvs}[0]);
+  \}
+
+  hcreate\_r( 2 * ncmds, &\hyperlink{md2cmds_8c_a625a7f2c3447a5ed7b6a1f9b0827d0c1}{md2cmds\_hmap});
+
   \textcolor{keywordflow}{for}( i=0; i<\textcolor{keyword}{sizeof}(\hyperlink{md2cmds_8c_a2bb0a14593ac87833ec2151282098d64}{md2cmds\_cmd\_kvs})/\textcolor{keyword}{sizeof}(\hyperlink{md2cmds_8c_a2bb0a14593ac87833ec2151282098d64}{md2cmds\_cmd\_kvs}
       [0]); i++) \{
     hloader.key  = \hyperlink{md2cmds_8c_a2bb0a14593ac87833ec2151282098d64}{md2cmds\_cmd\_kvs}[\hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i}].\hyperlink{structmd2cmds__cmd__kv__struct_a4cd5cce8339ed8cc9f0a5835a9bc5c69}{k};
@@ -930,6 +940,18 @@ Definition at line 1870 of file md2cmds.\-c.
     \}
   \}
 
+  \textcolor{keywordflow}{if}( \hyperlink{pgpmac_8c_ae002f31c03cce9bf96cf0e0c2907cb2b}{pgpmac\_use\_pg}) \{
+    \textcolor{keywordflow}{for}( i=0; i<\textcolor{keyword}{sizeof}(\hyperlink{md2cmds_8c_a536297b42e6510e136b202957da7244f}{md2cmds\_cmd\_pg\_kvs})/\textcolor{keyword}{sizeof}(
+      \hyperlink{md2cmds_8c_a536297b42e6510e136b202957da7244f}{md2cmds\_cmd\_pg\_kvs}[0]); i++) \{
+      hloader.key  = \hyperlink{md2cmds_8c_a536297b42e6510e136b202957da7244f}{md2cmds\_cmd\_pg\_kvs}[\hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i}].\hyperlink{structmd2cmds__cmd__kv__struct_a4cd5cce8339ed8cc9f0a5835a9bc5c69}{k};
+      hloader.data = \hyperlink{md2cmds_8c_a536297b42e6510e136b202957da7244f}{md2cmds\_cmd\_pg\_kvs}[\hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i}].\hyperlink{structmd2cmds__cmd__kv__struct_ab12171e8ea4148dedcb13673e05ca92c}{v};
+      err = hsearch\_r( hloader, ENTER, &hrtnval, &\hyperlink{md2cmds_8c_a625a7f2c3447a5ed7b6a1f9b0827d0c1}{md2cmds\_hmap});
+      \textcolor{keywordflow}{if}( err == 0) \{
+        \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_init: hsearch\_r
+       returned an error for item %d: %s"}, i, strerror( errno));
+      \}
+    \}
+  \}
 \}
 \end{DoxyCode}
 \hypertarget{md2cmds_8c_ac7a133655e9bb91bbbd6cd316e4191fb}{\index{md2cmds.\-c@{md2cmds.\-c}!md2cmds\-\_\-is\-\_\-moving@{md2cmds\-\_\-is\-\_\-moving}}
@@ -945,7 +967,7 @@ returns non-\/zero if we think a motor is moving, 0 otherwise
 
 
 
-Definition at line 190 of file md2cmds.\-c.
+Definition at line 199 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -969,7 +991,7 @@ Definition at line 190 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_ab0ee93046bd7bc476c9f8ec50342e89e}
 
 
-Definition at line 1010 of file md2cmds.\-c.
+Definition at line 1020 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1004,7 +1026,7 @@ Track motors homing.
 
 
 
-Definition at line 986 of file md2cmds.\-c.
+Definition at line 996 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1044,7 +1066,7 @@ Track how many motors are moving.
 
 
 
-Definition at line 957 of file md2cmds.\-c.
+Definition at line 966 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1068,6 +1090,9 @@ Definition at line 957 of file md2cmds.\-c.
 
   \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( \hyperlink{md2cmds_8c_a6a34fb6876abbd580629d3708c805e7f}{md2cmds\_md\_status\_code}, \textcolor{stringliteral}{"
       %s"}, \hyperlink{md2cmds_8c_a5ce190461376c4f9c7d74842d8ebc5d5}{md2cmds\_moving\_count} ? \textcolor{stringliteral}{"4"} : \textcolor{stringliteral}{"3"});
+  \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_maybe\_done\_moving\_cb:
+       status code %ld"}, \hyperlink{lsredis_8c_a1923f998441f4f451204dfd214d52218}{lsredis\_getl}( \hyperlink{md2cmds_8c_a6a34fb6876abbd580629d3708c805e7f}{md2cmds\_md\_status\_code}
+      ));
   
   \textcolor{keywordflow}{if}( \hyperlink{md2cmds_8c_a5ce190461376c4f9c7d74842d8ebc5d5}{md2cmds\_moving\_count} == 0)
     pthread\_cond\_signal( &\hyperlink{md2cmds_8c_adeebdb8f552bff14bd666c187505ee9e}{md2cmds\_moving\_cond});
@@ -1088,7 +1113,7 @@ Now that we are done with the 360 rotation lets rehome right quick.
 
 
 
-Definition at line 1473 of file md2cmds.\-c.
+Definition at line 1496 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1112,13 +1137,18 @@ prepare for new movements
 
 
 
-Definition at line 136 of file md2cmds.\-c.
+Definition at line 143 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
                          \{
   pthread\_mutex\_lock( &\hyperlink{md2cmds_8c_a4ea6e6bf63aefcd49f87c3921029451d}{md2cmds\_moving\_mutex});
-  \hyperlink{md2cmds_8c_a5ce190461376c4f9c7d74842d8ebc5d5}{md2cmds\_moving\_count} = -1;
+  \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( \hyperlink{md2cmds_8c_a6a34fb6876abbd580629d3708c805e7f}{md2cmds\_md\_status\_code}, \textcolor{stringliteral}{"
+      %s"}, \textcolor{stringliteral}{"4"});
+  \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"md2cmds\_move\_prep: status code
+       %ld"}, \hyperlink{lsredis_8c_a1923f998441f4f451204dfd214d52218}{lsredis\_getl}( \hyperlink{md2cmds_8c_a6a34fb6876abbd580629d3708c805e7f}{md2cmds\_md\_status\_code}));
+  \hyperlink{md2cmds_8c_a5ce190461376c4f9c7d74842d8ebc5d5}{md2cmds\_moving\_count} = \hyperlink{md2cmds_8c_a5ce190461376c4f9c7d74842d8ebc5d5}{md2cmds\_moving\_count}
+       ? \hyperlink{md2cmds_8c_a5ce190461376c4f9c7d74842d8ebc5d5}{md2cmds\_moving\_count} : -1;
   pthread\_mutex\_unlock( &\hyperlink{md2cmds_8c_a4ea6e6bf63aefcd49f87c3921029451d}{md2cmds\_moving\_mutex});
 \}
 \end{DoxyCode}
@@ -1142,7 +1172,7 @@ There are two waits involved\-: First to wait for the first \char`\"{}\-Moving\c
 
 returns 0 on success and 1 if we timedout. 
 
-Definition at line 153 of file md2cmds.\-c.
+Definition at line 162 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1201,7 +1231,7 @@ Move a motor to the position requested Returns non zero on error.
 \end{DoxyParams}
 
 
-Definition at line 457 of file md2cmds.\-c.
+Definition at line 466 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1262,6 +1292,7 @@ Definition at line 457 of file md2cmds.\-c.
     \textcolor{keywordflow}{return} 1;
   \}
 
+
   fpos = strtod( pos, &endptr);
   \textcolor{keywordflow}{if}( pos == endptr) \{
     \textcolor{comment}{//}
@@ -1274,8 +1305,7 @@ Definition at line 457 of file md2cmds.\-c.
   \}
 
   \textcolor{keywordflow}{if}( mp != NULL && mp->\hyperlink{structlspmac__motor__struct_a38b6eee046c3ceff84f908af3335ebcf}{moveAbs} != NULL) \{
-    wprintw( \hyperlink{pgpmac_8c_a65daf0f4a5bc6def23a9df98ff5ca57e}{term\_output}, \textcolor{stringliteral}{"Moving %s to %f\(\backslash\)n"}, mtr, fpos);
-    wnoutrefresh( \hyperlink{pgpmac_8c_a65daf0f4a5bc6def23a9df98ff5ca57e}{term\_output});
+    \hyperlink{pgpmac_8c_a7762ca7b97b44b979e23ce88ca3b4249}{pgpmac\_printf}( \textcolor{stringliteral}{"Moving %s to %f\(\backslash\)n"}, mtr, fpos);
     err = mp->\hyperlink{structlspmac__motor__struct_a38b6eee046c3ceff84f908af3335ebcf}{moveAbs}( mp, fpos);
   \}
 
@@ -1301,7 +1331,7 @@ Move a motor to the position requested Returns non zero on error.
 \end{DoxyParams}
 
 
-Definition at line 536 of file md2cmds.\-c.
+Definition at line 545 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1414,7 +1444,7 @@ Move the centering and alignment tables.
 \end{DoxyParams}
 
 
-Definition at line 930 of file md2cmds.\-c.
+Definition at line 939 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1452,7 +1482,7 @@ Definition at line 930 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_a09a28007e7d8df7b8f97207474e5e516}
 
 
-Definition at line 223 of file md2cmds.\-c.
+Definition at line 232 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1533,7 +1563,7 @@ Go to beam location phase.
 
 
 
-Definition at line 789 of file md2cmds.\-c.
+Definition at line 798 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1591,7 +1621,7 @@ Go to center phase.
 
 
 
-Definition at line 714 of file md2cmds.\-c.
+Definition at line 723 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1663,7 +1693,7 @@ Move md2 devices to a preconfigured state.
 
 \end{DoxyItemize}
 
-Definition at line 870 of file md2cmds.\-c.
+Definition at line 879 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1766,7 +1796,7 @@ Go to data collection phase.
 
 
 
-Definition at line 753 of file md2cmds.\-c.
+Definition at line 762 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1818,7 +1848,7 @@ Go to the manual mount phase.
 
 
 
-Definition at line 616 of file md2cmds.\-c.
+Definition at line 625 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1887,7 +1917,7 @@ Go to robot mount phase.
 
 
 
-Definition at line 660 of file md2cmds.\-c.
+Definition at line 669 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -1970,7 +2000,7 @@ Go to safe phase.
 
 
 
-Definition at line 828 of file md2cmds.\-c.
+Definition at line 837 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -2028,7 +2058,7 @@ Definition at line 828 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_ab1cc77bc7476714a419c7db69c7c4be4}
 
 
-Definition at line 201 of file md2cmds.\-c.
+Definition at line 210 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -2061,7 +2091,7 @@ Definition at line 201 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_ae2ecf1ddb756452728eba479f36b486b}
 
 
-Definition at line 72 of file md2cmds.\-c.
+Definition at line 79 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -2097,7 +2127,7 @@ Spin 360 and make a video (recenter first, maybe)
 \end{DoxyParams}
 
 
-Definition at line 1308 of file md2cmds.\-c.
+Definition at line 1331 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -2278,7 +2308,7 @@ Tell the database about the time we went through omega=zero.
 
 This should trigger the video feed server to starting making a movie. 
 
-Definition at line 1458 of file md2cmds.\-c.
+Definition at line 1481 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -2310,7 +2340,7 @@ Start up the thread.
 
 
 
-Definition at line 1920 of file md2cmds.\-c.
+Definition at line 1952 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -2352,7 +2382,7 @@ Definition at line 1920 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_a577b62b66ed5589a171550e26478633f}
 
 
-Definition at line 1631 of file md2cmds.\-c.
+Definition at line 1646 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -2423,7 +2453,7 @@ Definition at line 1631 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_aee4a35d084bc0fdd4598576469deeed0}
 
 
-Definition at line 1732 of file md2cmds.\-c.
+Definition at line 1747 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -2511,7 +2541,7 @@ Fix up xscale and yscale when zoom changes xscale and yscale have units of micro
 
 
 
-Definition at line 1485 of file md2cmds.\-c.
+Definition at line 1508 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -2548,7 +2578,7 @@ Definition at line 1485 of file md2cmds.\-c.
 )}}\label{md2cmds_8c_a3403a357a4b3ffd715a2f3d1dac3da5b}
 
 
-Definition at line 1680 of file md2cmds.\-c.
+Definition at line 1695 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -2624,7 +2654,7 @@ Run the test routine(s)
 \end{DoxyParams}
 
 
-Definition at line 1625 of file md2cmds.\-c.
+Definition at line 1640 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -2646,7 +2676,7 @@ Time the capillary motion for the transfer routine.
 
 $<$ track the time spent moving capz 
 
-Definition at line 1519 of file md2cmds.\-c.
+Definition at line 1534 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -2690,7 +2720,7 @@ Transfer a sample.
 \end{DoxyParams}
 
 
-Definition at line 281 of file md2cmds.\-c.
+Definition at line 290 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -2905,7 +2935,7 @@ Our worker thread.
 \end{DoxyParams}
 
 
-Definition at line 1797 of file md2cmds.\-c.
+Definition at line 1812 of file md2cmds.\-c.
 
 
 \begin{DoxyCode}
@@ -2997,22 +3027,33 @@ Definition at line 24 of file md2cmds.\-c.
 \begin{DoxyCode}
 = \{
   \{ \textcolor{stringliteral}{"abort"},            \hyperlink{md2cmds_8c_ac196e3bcdae79c1ba70cf0bf40a9e299}{md2cmds\_abort}\},
-  \{ \textcolor{stringliteral}{"center"},           \hyperlink{md2cmds_8c_aa85ebd51f9c8268f4044be52201d3f1c}{md2cmds\_center}\},
   \{ \textcolor{stringliteral}{"changeMode"},       \hyperlink{md2cmds_8c_a4569e8e2b269463b2a60b8407d9ce4d9}{md2cmds\_phase\_change}\},
-  \{ \textcolor{stringliteral}{"collect"},          \hyperlink{md2cmds_8c_ad8f399e3ea3c2c77c23989c0fa0ccd86}{md2cmds\_collect}\},
   \{ \textcolor{stringliteral}{"moveAbs"},          \hyperlink{md2cmds_8c_ae1122d11f5198c7e8ee22125da65407c}{md2cmds\_moveAbs}\},
   \{ \textcolor{stringliteral}{"moveRel"},          \hyperlink{md2cmds_8c_a8e8eba6f3c5855910ba3cde22dd3a4b2}{md2cmds\_moveRel}\},
-  \{ \textcolor{stringliteral}{"rotate"},           \hyperlink{md2cmds_8c_ab562f807493aaaaf5a6a377ac6d5a45e}{md2cmds\_rotate}\},
   \{ \textcolor{stringliteral}{"run"},              \hyperlink{md2cmds_8c_a577b62b66ed5589a171550e26478633f}{md2cmds\_run\_cmd}\},
   \{ \textcolor{stringliteral}{"test"},             \hyperlink{md2cmds_8c_a4a321d5e1621948eecb33a51a58041f6}{md2cmds\_test}\},
   \{ \textcolor{stringliteral}{"set"},              \hyperlink{md2cmds_8c_aee4a35d084bc0fdd4598576469deeed0}{md2cmds\_set}\},
+\}
+\end{DoxyCode}
+
+
+Definition at line 59 of file md2cmds.\-c.
+
+\hypertarget{md2cmds_8c_a536297b42e6510e136b202957da7244f}{\index{md2cmds.\-c@{md2cmds.\-c}!md2cmds\-\_\-cmd\-\_\-pg\-\_\-kvs@{md2cmds\-\_\-cmd\-\_\-pg\-\_\-kvs}}
+\index{md2cmds\-\_\-cmd\-\_\-pg\-\_\-kvs@{md2cmds\-\_\-cmd\-\_\-pg\-\_\-kvs}!md2cmds.c@{md2cmds.\-c}}
+\subsubsection[{md2cmds\-\_\-cmd\-\_\-pg\-\_\-kvs}]{\setlength{\rightskip}{0pt plus 5cm}{\bf md2cmds\-\_\-cmd\-\_\-kv\-\_\-t} md2cmds\-\_\-cmd\-\_\-pg\-\_\-kvs\mbox{[}$\,$\mbox{]}\hspace{0.3cm}{\ttfamily [static]}}}\label{md2cmds_8c_a536297b42e6510e136b202957da7244f}
+{\bfseries Initial value\-:}
+\begin{DoxyCode}
+= \{
+  \{ \textcolor{stringliteral}{"collect"},          \hyperlink{md2cmds_8c_ad8f399e3ea3c2c77c23989c0fa0ccd86}{md2cmds\_collect}\},
+  \{ \textcolor{stringliteral}{"rotate"},           \hyperlink{md2cmds_8c_ab562f807493aaaaf5a6a377ac6d5a45e}{md2cmds\_rotate}\},
   \{ \textcolor{stringliteral}{"settransferpoint"}, \hyperlink{md2cmds_8c_a3403a357a4b3ffd715a2f3d1dac3da5b}{md2cmds\_settransferpoint}\},
   \{ \textcolor{stringliteral}{"transfer"},         \hyperlink{md2cmds_8c_a87efed33b7a49cdfeaf5d64df4ca09aa}{md2cmds\_transfer}\}
 \}
 \end{DoxyCode}
 
 
-Definition at line 57 of file md2cmds.\-c.
+Definition at line 72 of file md2cmds.\-c.
 
 \hypertarget{md2cmds_8c_ad07af354194cb9a8eac1f200257dcacd}{\index{md2cmds.\-c@{md2cmds.\-c}!md2cmds\-\_\-cmd\-\_\-regex@{md2cmds\-\_\-cmd\-\_\-regex}}
 \index{md2cmds\-\_\-cmd\-\_\-regex@{md2cmds\-\_\-cmd\-\_\-regex}!md2cmds.c@{md2cmds.\-c}}

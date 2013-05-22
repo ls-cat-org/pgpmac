@@ -56,6 +56,7 @@ var lsredis_8c =
     [ "lsredis_publisher", "lsredis_8c.html#a0c81dce2e75584eeb14ab7d9dd86c72e", null ],
     [ "lsredis_running", "lsredis_8c.html#a7461eb2b5974a2ffac2189007d39193c", null ],
     [ "lsredis_thread", "lsredis_8c.html#a79c33eb11ad6819247930ade3a25671f", null ],
+    [ "mutex_initializer", "lsredis_8c.html#a71c9f418904364d65c22d786f4dc5d39", null ],
     [ "roac", "lsredis_8c.html#afc92245910ec04f9a341c092def45564", null ],
     [ "rofd", "lsredis_8c.html#add819e43a356d0575ec64c346c6fed57", null ],
     [ "subac", "lsredis_8c.html#a4d65536cb1094fb5deda0a852b181232", null ],

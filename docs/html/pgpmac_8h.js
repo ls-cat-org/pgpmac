@@ -180,6 +180,8 @@ var pgpmac_8h =
     [ "ncurses_mutex", "pgpmac_8h.html#ad128c64890c7c0d4f836d9ec6e99216a", null ],
     [ "omega", "pgpmac_8h.html#a8237e646ce032a840637a4ef7bff49b9", null ],
     [ "omega_zero_time", "pgpmac_8h.html#ae6631a094accc469661805bdf80fc6d8", null ],
+    [ "pgpmac_use_autoscint", "pgpmac_8h.html#ad163e2bc6ebe322058c113dee76c11ff", null ],
+    [ "pgpmac_use_pg", "pgpmac_8h.html#ae002f31c03cce9bf96cf0e0c2907cb2b", null ],
     [ "phi", "pgpmac_8h.html#ac8070dc568ad974a3db42b51eca828cc", null ],
     [ "pmac_queue_cond", "pgpmac_8h.html#a8a25bd9c593c6985107f90f999ce0b08", null ],
     [ "pmac_queue_mutex", "pgpmac_8h.html#acc1bb77b9bcbc4d970f841a41fd274b3", null ],

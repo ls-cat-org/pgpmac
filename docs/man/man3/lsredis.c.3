@@ -1,4 +1,4 @@
-.TH "lsredis.c" 3 "Sun Feb 17 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lsredis.c" 3 "Wed May 22 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -183,6 +183,9 @@ Support redis hash synchronization\&.
 .RI "int \fBlsredis_running\fP = 0"
 .br
 .ti -1c
+.RI "static pthread_mutexattr_t \fBmutex_initializer\fP"
+.br
+.ti -1c
 .RI "static \fBlsredis_obj_t\fP * \fBlsredis_objs\fP = NULL"
 .br
 .ti -1c
@@ -362,7 +365,7 @@ Definition in file \fBlsredis\&.c\fP\&.
 .PP
 Maybe add a new object Used internally for this module Must be called with lsredis_mutex locked\&. 
 .PP
-Definition at line 507 of file lsredis\&.c\&.
+Definition at line 510 of file lsredis\&.c\&.
 .PP
 .nf
                                             {
@@ -417,7 +420,7 @@ Definition at line 507 of file lsredis\&.c\&.
       exit( -1);
     }
 
-    pthread_mutex_init( &p->mutex, NULL);
+    pthread_mutex_init( &p->mutex, &mutex_initializer);
     pthread_cond_init(  &p->cond, NULL);
     p->value = NULL;
     p->valid = 0;
@@ -455,7 +458,7 @@ Definition at line 507 of file lsredis\&.c\&.
 .PP
 set_value and setstr helper funciton p->mutex must be locked before calling 
 .PP
-Definition at line 165 of file lsredis\&.c\&.
+Definition at line 166 of file lsredis\&.c\&.
 .PP
 .nf
                                                     {
@@ -519,7 +522,7 @@ Definition at line 165 of file lsredis\&.c\&.
 .PP
 hook to mange read events 
 .PP
-Definition at line 637 of file lsredis\&.c\&.
+Definition at line 640 of file lsredis\&.c\&.
 .PP
 .nf
                                   {
@@ -537,7 +540,7 @@ Definition at line 637 of file lsredis\&.c\&.
 .PP
 hook to manage write events 
 .PP
-Definition at line 661 of file lsredis\&.c\&.
+Definition at line 664 of file lsredis\&.c\&.
 .PP
 .nf
                                    {
@@ -555,7 +558,7 @@ Definition at line 661 of file lsredis\&.c\&.
 .PP
 hook to clean up TODO: figure out what we are supposed to do here and do it 
 .PP
-Definition at line 686 of file lsredis\&.c\&.
+Definition at line 689 of file lsredis\&.c\&.
 .PP
 .nf
                                   {
@@ -573,7 +576,7 @@ Definition at line 686 of file lsredis\&.c\&.
 .SS "int lsredis_cmpnstr (\fBlsredis_obj_t\fP *p, char *s, intn)"
 
 .PP
-Definition at line 255 of file lsredis\&.c\&.
+Definition at line 256 of file lsredis\&.c\&.
 .PP
 .nf
                                                        {
@@ -590,7 +593,7 @@ Definition at line 255 of file lsredis\&.c\&.
 .SS "int lsredis_cmpstr (\fBlsredis_obj_t\fP *p, char *s)"
 
 .PP
-Definition at line 244 of file lsredis\&.c\&.
+Definition at line 245 of file lsredis\&.c\&.
 .PP
 .nf
                                                {
@@ -607,12 +610,15 @@ Definition at line 244 of file lsredis\&.c\&.
 .SS "void lsredis_config ()"
 
 .PP
-Definition at line 1076 of file lsredis\&.c\&.
+Definition at line 1097 of file lsredis\&.c\&.
 .PP
 .nf
                       {
   char hostname[128], lhostname[128];
   int i;
+
+  pthread_mutexattr_init( &mutex_initializer);
+  pthread_mutexattr_settype( &mutex_initializer, PTHREAD_MUTEX_RECURSIVE);
 
   if( gethostname( hostname, sizeof(hostname)-1)) {
     lslogging_log_message( 'lsredis_init: cannot get our own host name\&.  Cannot configure redis variables\&.');
@@ -636,7 +642,7 @@ Definition at line 1076 of file lsredis\&.c\&.
 .SS "void lsredis_configCB (redisAsyncContext *ac, void *reply, void *privdata)"
 
 .PP
-Definition at line 1009 of file lsredis\&.c\&.
+Definition at line 1012 of file lsredis\&.c\&.
 .PP
 .nf
                                                                            {
@@ -664,12 +670,30 @@ Definition at line 1009 of file lsredis\&.c\&.
     r3 = r->element[i+1];
     if( r2->type != REDIS_REPLY_STRING || r2->type != REDIS_REPLY_STRING)
       continue;
+    //
+    // the LHS of the redis keys for this station
+    //
     if( strcmp( r2->str, 'HEAD')==0) {
       lsredis_head = strdup( r3->str);
     }
+    //
+    // Publish changes to keys with this name as the publisher
+    //
     if( strcmp( r2->str, 'PUB')==0) {
       lsredis_publisher = strdup( r3->str);
     }
+
+    if( strcmp( r2->str, 'PG')==0) {
+      pgpmac_use_pg = r3->str[0] == '0' ? 0 : 1;
+    }
+
+    if( strcmp( r2->str, 'AUTOSCINT')==0) {
+      pgpmac_use_autoscint = r3->str[0] == '0' ? 0 : 1;
+    }
+
+    //
+    // reg expression to select keys we will be keeping a local copy of
+    //
     if( strcmp( r2->str, 'RE')==0) {
       err = regcomp( &lsredis_key_select_regex, r3->str, REG_EXTENDED);
       if( err != 0) {
@@ -710,7 +734,7 @@ Definition at line 1009 of file lsredis\&.c\&.
 .PP
 Log the reply\&. 
 .PP
-Definition at line 115 of file lsredis\&.c\&.
+Definition at line 116 of file lsredis\&.c\&.
 .PP
 .nf
                                                                           {
@@ -765,7 +789,7 @@ Definition at line 115 of file lsredis\&.c\&.
 .PP
 hook to manage 'don't need to read' events 
 .PP
-Definition at line 649 of file lsredis\&.c\&.
+Definition at line 652 of file lsredis\&.c\&.
 .PP
 .nf
                                   {
@@ -783,7 +807,7 @@ Definition at line 649 of file lsredis\&.c\&.
 .PP
 hook to manage 'don't need to write anymore' events 
 .PP
-Definition at line 673 of file lsredis\&.c\&.
+Definition at line 676 of file lsredis\&.c\&.
 .PP
 .nf
                                    {
@@ -801,7 +825,7 @@ Definition at line 673 of file lsredis\&.c\&.
 .PP
 service the socket requests 
 .PP
-Definition at line 1175 of file lsredis\&.c\&.
+Definition at line 1199 of file lsredis\&.c\&.
 .PP
 .nf
                                              {
@@ -832,7 +856,7 @@ Definition at line 1175 of file lsredis\&.c\&.
 .PP
 Get the value of the given preset and return it in dval Returns 0 on error, non-zero on success;\&. 
 .PP
-Definition at line 900 of file lsredis\&.c\&.
+Definition at line 903 of file lsredis\&.c\&.
 .PP
 .nf
                                                                             {
@@ -873,7 +897,7 @@ Definition at line 900 of file lsredis\&.c\&.
 .PP
 For the given motor object return the index of the current preset or -1 if we are not at a preset position\&. 
 .PP
-Definition at line 982 of file lsredis\&.c\&.
+Definition at line 985 of file lsredis\&.c\&.
 .PP
 .nf
                                                                {
@@ -904,7 +928,7 @@ Definition at line 982 of file lsredis\&.c\&.
 .SS "\fBlsredis_obj_t\fP* lsredis_get_obj (char *fmt, \&.\&.\&.)"
 
 .PP
-Definition at line 593 of file lsredis\&.c\&.
+Definition at line 596 of file lsredis\&.c\&.
 .PP
 .nf
                                                 {
@@ -943,7 +967,7 @@ Definition at line 593 of file lsredis\&.c\&.
 .SS "double lsredis_get_or_set_d (\fBlsredis_obj_t\fP *p, doubleval, intprec)"
 
 .PP
-Definition at line 359 of file lsredis\&.c\&.
+Definition at line 360 of file lsredis\&.c\&.
 .PP
 .nf
                                                                      {
@@ -961,11 +985,12 @@ Definition at line 359 of file lsredis\&.c\&.
 
   if( err == ETIMEDOUT) {
     rtn = val;
+    pthread_mutex_unlock( &p->mutex);
     lsredis_setstr( p, '%\&.*f', prec, val);
   } else {
     rtn = p->lvalue;
+    pthread_mutex_unlock( &p->mutex);
   }
-  pthread_mutex_unlock( &p->mutex);
   
   return rtn;
 }  
@@ -973,7 +998,7 @@ Definition at line 359 of file lsredis\&.c\&.
 .SS "long int lsredis_get_or_set_l (\fBlsredis_obj_t\fP *p, long intval)"
 
 .PP
-Definition at line 409 of file lsredis\&.c\&.
+Definition at line 411 of file lsredis\&.c\&.
 .PP
 .nf
                                                                {
@@ -992,11 +1017,12 @@ Definition at line 409 of file lsredis\&.c\&.
   if( err == ETIMEDOUT) {
     lslogging_log_message( 'lsredis_get_or_set_l: using default value of %ld for redis variable %s', val, p->key);
     rtn = val;
+    pthread_mutex_unlock( &p->mutex);
     lsredis_setstr( p, '%ld', val);
   } else {
     rtn = p->lvalue;
+    pthread_mutex_unlock( &p->mutex);
   }
-  pthread_mutex_unlock( &p->mutex);
   
   return rtn;
 }  
@@ -1004,7 +1030,7 @@ Definition at line 409 of file lsredis\&.c\&.
 .SS "char** lsredis_get_string_array (\fBlsredis_obj_t\fP *p)"
 
 .PP
-Definition at line 434 of file lsredis\&.c\&.
+Definition at line 437 of file lsredis\&.c\&.
 .PP
 .nf
                                                    {
@@ -1023,7 +1049,7 @@ Definition at line 434 of file lsredis\&.c\&.
 .SS "int lsredis_getb (\fBlsredis_obj_t\fP *p)"
 
 .PP
-Definition at line 447 of file lsredis\&.c\&.
+Definition at line 450 of file lsredis\&.c\&.
 .PP
 .nf
                                     {
@@ -1042,7 +1068,7 @@ Definition at line 447 of file lsredis\&.c\&.
 .SS "char lsredis_getc (\fBlsredis_obj_t\fP *p)"
 
 .PP
-Definition at line 460 of file lsredis\&.c\&.
+Definition at line 463 of file lsredis\&.c\&.
 .PP
 .nf
                                      {
@@ -1061,7 +1087,7 @@ Definition at line 460 of file lsredis\&.c\&.
 .SS "double lsredis_getd (\fBlsredis_obj_t\fP *p)"
 
 .PP
-Definition at line 383 of file lsredis\&.c\&.
+Definition at line 385 of file lsredis\&.c\&.
 .PP
 .nf
                                        {
@@ -1080,7 +1106,7 @@ Definition at line 383 of file lsredis\&.c\&.
 .SS "long int lsredis_getl (\fBlsredis_obj_t\fP *p)"
 
 .PP
-Definition at line 396 of file lsredis\&.c\&.
+Definition at line 398 of file lsredis\&.c\&.
 .PP
 .nf
                                          {
@@ -1101,7 +1127,7 @@ Definition at line 396 of file lsredis\&.c\&.
 .PP
 return a copy of the key's string value be sure to free the result 
 .PP
-Definition at line 283 of file lsredis\&.c\&.
+Definition at line 284 of file lsredis\&.c\&.
 .PP
 .nf
                                         {
@@ -1122,7 +1148,7 @@ Definition at line 283 of file lsredis\&.c\&.
 .SS "void lsredis_hgetCB (redisAsyncContext *ac, void *reply, void *privdata)"
 
 .PP
-Definition at line 473 of file lsredis\&.c\&.
+Definition at line 476 of file lsredis\&.c\&.
 .PP
 .nf
                                                                          {
@@ -1168,7 +1194,7 @@ Initialize this module, that is, set up the connections\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1105 of file lsredis\&.c\&.
+Definition at line 1129 of file lsredis\&.c\&.
 .PP
 .nf
                     {
@@ -1231,8 +1257,8 @@ Definition at line 1105 of file lsredis\&.c\&.
   //
   hcreate_r( lsredis_preset_max_n * 2, &lsredis_preset_ht);
 
-  pthread_mutex_init( &lsredis_preset_list_mutex, NULL);
-  pthread_mutex_init( &lsredis_config_mutex, NULL);
+  pthread_mutex_init( &lsredis_preset_list_mutex, &mutex_initializer);
+  pthread_mutex_init( &lsredis_config_mutex, &mutex_initializer);
   pthread_cond_init(  &lsredis_config_cond,  NULL);
 }
 .fi
@@ -1241,7 +1267,7 @@ Definition at line 1105 of file lsredis\&.c\&.
 .PP
 Sift through the keys to find ones we like\&. Add them to our list of followed objects 
 .PP
-Definition at line 804 of file lsredis\&.c\&.
+Definition at line 807 of file lsredis\&.c\&.
 .PP
 .nf
                                                                          {
@@ -1270,7 +1296,7 @@ Definition at line 804 of file lsredis\&.c\&.
 .PP
 update the presets hash table for the named motor 
 .PP
-Definition at line 827 of file lsredis\&.c\&.
+Definition at line 830 of file lsredis\&.c\&.
 .PP
 .nf
                                              {
@@ -1346,7 +1372,7 @@ Definition at line 827 of file lsredis\&.c\&.
 .SS "void lsredis_maybe_add_key (char *k)"
 
 .PP
-Definition at line 796 of file lsredis\&.c\&.
+Definition at line 799 of file lsredis\&.c\&.
 .PP
 .nf
                                      {
@@ -1358,7 +1384,7 @@ Definition at line 796 of file lsredis\&.c\&.
 .SS "int lsredis_regexec (const regex_t *preg, \fBlsredis_obj_t\fP *p, size_tnmatch, regmatch_t *pmatch, inteflags)"
 
 .PP
-Definition at line 266 of file lsredis\&.c\&.
+Definition at line 267 of file lsredis\&.c\&.
 .PP
 .nf
                                                                                                            {
@@ -1378,7 +1404,7 @@ Definition at line 266 of file lsredis\&.c\&.
 .SS "void lsredis_run ()"
 
 .PP
-Definition at line 1295 of file lsredis\&.c\&.
+Definition at line 1319 of file lsredis\&.c\&.
 .PP
 .nf
                    {
@@ -1390,7 +1416,7 @@ Definition at line 1295 of file lsredis\&.c\&.
 .PP
 set the given preset to the given value create a new preset if we can't find it 
 .PP
-Definition at line 937 of file lsredis\&.c\&.
+Definition at line 940 of file lsredis\&.c\&.
 .PP
 .nf
                                                                            {
@@ -1441,7 +1467,7 @@ Definition at line 937 of file lsredis\&.c\&.
 .PP
 Set the value of a redis object and make it valid\&. Called by mgetCB to set the value as it is in redis Maybe TODO: we've arbitrarily set the maximum size of a value here\&. Although I cannot imagine needed bigger values it would not be a big deal to enable it\&. 
 .PP
-Definition at line 226 of file lsredis\&.c\&.
+Definition at line 227 of file lsredis\&.c\&.
 .PP
 .nf
                                                           {
@@ -1473,7 +1499,7 @@ redisAsyncCommandArgv used instead of redisAsyncCommand 'cause it's easier (and 
 .PP
 < redisAsyncCommandArgv shouldn't need to access this after it's made up it's packet (before it returns) so we should be OK with this location disappearing soon\&. 
 .PP
-Definition at line 308 of file lsredis\&.c\&.
+Definition at line 309 of file lsredis\&.c\&.
 .PP
 .nf
                                                        {
@@ -1534,7 +1560,7 @@ Definition at line 308 of file lsredis\&.c\&.
 .PP
 
 .PP
-Definition at line 1199 of file lsredis\&.c\&.
+Definition at line 1223 of file lsredis\&.c\&.
 .PP
 .nf
                         {
@@ -1557,7 +1583,7 @@ Definition at line 1199 of file lsredis\&.c\&.
 .PP
 Use the publication to request the new value\&. 
 .PP
-Definition at line 704 of file lsredis\&.c\&.
+Definition at line 707 of file lsredis\&.c\&.
 .PP
 .nf
                                                                         {
@@ -1660,7 +1686,7 @@ subscribe to changes and service sockets < poll timeout, in millisecs (of course
 .PP
 < number of active elements in fda 
 .PP
-Definition at line 1218 of file lsredis\&.c\&.
+Definition at line 1242 of file lsredis\&.c\&.
 .PP
 .nf
                                     {
@@ -1744,7 +1770,7 @@ Definition at line 1218 of file lsredis\&.c\&.
 .PP
 call back in case a redis server becomes disconnected TODO: reconnect 
 .PP
-Definition at line 629 of file lsredis\&.c\&.
+Definition at line 632 of file lsredis\&.c\&.
 .PP
 .nf
                                                                 {
@@ -1762,23 +1788,23 @@ Definition at line 75 of file lsredis\&.c\&.
 .SS "pthread_cond_t lsredis_config_cond\fC [static]\fP"
 
 .PP
-Definition at line 90 of file lsredis\&.c\&.
+Definition at line 91 of file lsredis\&.c\&.
 .SS "pthread_mutex_t lsredis_config_mutex\fC [static]\fP"
 
 .PP
-Definition at line 89 of file lsredis\&.c\&.
+Definition at line 90 of file lsredis\&.c\&.
 .SS "char* lsredis_head = NULL\fC [static]\fP"
 
 .PP
-Definition at line 88 of file lsredis\&.c\&.
+Definition at line 89 of file lsredis\&.c\&.
 .SS "struct hsearch_data lsredis_htab\fC [static]\fP"
 
 .PP
-Definition at line 80 of file lsredis\&.c\&.
+Definition at line 81 of file lsredis\&.c\&.
 .SS "regex_t lsredis_key_select_regex\fC [static]\fP"
 
 .PP
-Definition at line 87 of file lsredis\&.c\&.
+Definition at line 88 of file lsredis\&.c\&.
 .SS "pthread_mutex_t lsredis_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP"
 
 .PP
@@ -1786,31 +1812,31 @@ Definition at line 74 of file lsredis\&.c\&.
 .SS "\fBlsredis_obj_t\fP* lsredis_objs = NULL\fC [static]\fP"
 
 .PP
-Definition at line 79 of file lsredis\&.c\&.
+Definition at line 80 of file lsredis\&.c\&.
 .SS "struct hsearch_data lsredis_preset_ht\fC [static]\fP"
 
 .PP
-Definition at line 105 of file lsredis\&.c\&.
+Definition at line 106 of file lsredis\&.c\&.
 .SS "\fBlsredis_preset_list_t\fP* lsredis_preset_list = NULL\fC [static]\fP"
 
 .PP
-Definition at line 104 of file lsredis\&.c\&.
+Definition at line 105 of file lsredis\&.c\&.
 .SS "pthread_mutex_t lsredis_preset_list_mutex\fC [static]\fP"
 
 .PP
-Definition at line 108 of file lsredis\&.c\&.
+Definition at line 109 of file lsredis\&.c\&.
 .SS "int lsredis_preset_max_n = 1024\fC [static]\fP"
 
 .PP
-Definition at line 107 of file lsredis\&.c\&.
+Definition at line 108 of file lsredis\&.c\&.
 .SS "int lsredis_preset_n = 0\fC [static]\fP"
 
 .PP
-Definition at line 106 of file lsredis\&.c\&.
+Definition at line 107 of file lsredis\&.c\&.
 .SS "char* lsredis_publisher = NULL\fC [static]\fP"
 
 .PP
-Definition at line 86 of file lsredis\&.c\&.
+Definition at line 87 of file lsredis\&.c\&.
 .SS "int lsredis_running = 0"
 
 .PP
@@ -1819,30 +1845,34 @@ Definition at line 76 of file lsredis\&.c\&.
 
 .PP
 Definition at line 72 of file lsredis\&.c\&.
+.SS "pthread_mutexattr_t mutex_initializer\fC [static]\fP"
+
+.PP
+Definition at line 77 of file lsredis\&.c\&.
 .SS "redisAsyncContext* roac\fC [static]\fP"
 
 .PP
-Definition at line 83 of file lsredis\&.c\&.
+Definition at line 84 of file lsredis\&.c\&.
 .SS "struct pollfd rofd\fC [static]\fP"
 
 .PP
-Definition at line 93 of file lsredis\&.c\&.
+Definition at line 94 of file lsredis\&.c\&.
 .SS "redisAsyncContext* subac\fC [static]\fP"
 
 .PP
-Definition at line 82 of file lsredis\&.c\&.
+Definition at line 83 of file lsredis\&.c\&.
 .SS "struct pollfd subfd\fC [static]\fP"
 
 .PP
-Definition at line 92 of file lsredis\&.c\&.
+Definition at line 93 of file lsredis\&.c\&.
 .SS "redisAsyncContext* wrac\fC [static]\fP"
 
 .PP
-Definition at line 84 of file lsredis\&.c\&.
+Definition at line 85 of file lsredis\&.c\&.
 .SS "struct pollfd wrfd\fC [static]\fP"
 
 .PP
-Definition at line 94 of file lsredis\&.c\&.
+Definition at line 95 of file lsredis\&.c\&.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for LS-CAT PGPMAC from the source code\&.

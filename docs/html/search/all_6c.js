@@ -238,6 +238,7 @@ var searchData=
   ['lspmac_5fcombined_5fmove_5fstruct',['lspmac_combined_move_struct',['../structlspmac__combined__move__struct.html',1,'']]],
   ['lspmac_5fcombined_5fmove_5ft',['lspmac_combined_move_t',['../lspmac_8c.html#a233ec5219ff308aa243628e465f99d66',1,'lspmac.c']]],
   ['lspmac_5fcommand_5fdone_5fcb',['lspmac_command_done_cb',['../lspmac_8c.html#a611168a1076b2de45c596ed95c68445a',1,'lspmac.c']]],
+  ['lspmac_5fcontrol_5fchar',['lspmac_control_char',['../lspmac_8c.html#a9fbc6333cfd364eff48202376e0f9862',1,'lspmac.c']]],
   ['lspmac_5fcryoswitchchanged_5fcb',['lspmac_cryoSwitchChanged_cb',['../lspmac_8c.html#afc00ddac633f8c8a3a699e3d22de2770',1,'lspmac.c']]],
   ['lspmac_5fdac_5finit',['lspmac_dac_init',['../lspmac_8c.html#acea9dfc6367bbcf16f49e664e0fc3774',1,'lspmac.c']]],
   ['lspmac_5fdac_5fread',['lspmac_dac_read',['../lspmac_8c.html#a200bc9306d54fca566eb5e29d8e82308',1,'lspmac.c']]],

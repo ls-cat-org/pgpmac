@@ -1,4 +1,4 @@
-.TH "lspg.c" 3 "Sun Feb 17 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lspg.c" 3 "Wed May 22 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -641,36 +641,23 @@ Definition at line 279 of file lspg\&.c\&.
 .PP
 .nf
                                                              {
-  int kvname_col, kvvalue_col, kvseq_col, kvdbrtype_col;
   int i;
   lsredis_obj_t *robj;
   
-  kvname_col    = PQfnumber( pgr, 'rname');
-  kvvalue_col   = PQfnumber( pgr, 'rvalue');
-  kvseq_col     = PQfnumber( pgr, 'rseq');
-  kvdbrtype_col = PQfnumber( pgr, 'rdbrtype');
-  
-  if( kvname_col == -1 || kvvalue_col == -1 || kvseq_col == -1 || kvdbrtype_col == -1) {
-    fprintf( stderr, 'lspg_allkvs_cb: bad column number(s)\n');
-    return;
-  }
-
-  
-  for( i=0; i<PQntuples( pgr); i++) {
+  for( i=0; i<PQntuples( pgr); i += 2) {
     pthread_mutex_lock( &lsredis_mutex);
     while( lsredis_running == 0)
       pthread_cond_wait( &lsredis_cond, &lsredis_mutex);
-
-    robj = _lsredis_get_obj( PQgetvalue( pgr, i, kvname_col));
     pthread_mutex_unlock( &lsredis_mutex);
 
+    robj = _lsredis_get_obj( PQgetvalue( pgr, i, 0));
 
     if( robj == NULL) {
-      lslogging_log_message( 'lspg_allkvs_cb: could not find redis object named '%s'', PQgetvalue( pgr, i, kvname_col));
+      lslogging_log_message( 'lspg_allkvs_cb: could not find redis object named '%s'', PQgetvalue( pgr, i, 0));
       continue;
     }
 
-    lsredis_setstr( robj, '%s', PQgetvalue( pgr, i, kvvalue_col));
+    lsredis_setstr( robj, '%s', PQgetvalue( pgr, i+1, 0));
   }
 
 }
@@ -800,7 +787,7 @@ Definition at line 160 of file lspg\&.c\&.
 .SS "void lspg_check_preset_in_position_cb (char *event)"
 
 .PP
-Definition at line 1899 of file lspg\&.c\&.
+Definition at line 1890 of file lspg\&.c\&.
 .PP
 .nf
                                                     {
@@ -836,7 +823,7 @@ Send strings directly to PMAC queue\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1367 of file lspg\&.c\&.
+Definition at line 1354 of file lspg\&.c\&.
 .PP
 .nf
                    {
@@ -868,7 +855,7 @@ Definition at line 1367 of file lspg\&.c\&.
 .PP
 do nothing until we get airrights 
 .PP
-Definition at line 660 of file lspg\&.c\&.
+Definition at line 647 of file lspg\&.c\&.
 .PP
 .nf
                                 {
@@ -882,7 +869,7 @@ Definition at line 660 of file lspg\&.c\&.
 .PP
 call for airrights 
 .PP
-Definition at line 642 of file lspg\&.c\&.
+Definition at line 629 of file lspg\&.c\&.
 .PP
 .nf
                                  {
@@ -897,7 +884,7 @@ Definition at line 642 of file lspg\&.c\&.
 .PP
 handle the airrights response 
 .PP
-Definition at line 632 of file lspg\&.c\&.
+Definition at line 619 of file lspg\&.c\&.
 .PP
 .nf
                                                                       {
@@ -913,7 +900,7 @@ Definition at line 632 of file lspg\&.c\&.
 .PP
 initialize the demandairrights structure 
 .PP
-Definition at line 624 of file lspg\&.c\&.
+Definition at line 611 of file lspg\&.c\&.
 .PP
 .nf
                                  {
@@ -927,7 +914,7 @@ Definition at line 624 of file lspg\&.c\&.
 .PP
 wait for the air rights request to return 
 .PP
-Definition at line 651 of file lspg\&.c\&.
+Definition at line 638 of file lspg\&.c\&.
 .PP
 .nf
                                  {
@@ -942,7 +929,7 @@ Definition at line 651 of file lspg\&.c\&.
 .PP
 Flush psql output buffer (ie, send the query) 
 .PP
-Definition at line 1397 of file lspg\&.c\&.
+Definition at line 1384 of file lspg\&.c\&.
 .PP
 .nf
                   {
@@ -978,7 +965,7 @@ Definition at line 1397 of file lspg\&.c\&.
 .PP
 Convenience function to complete synchronous getcenter query\&. 
 .PP
-Definition at line 1305 of file lspg\&.c\&.
+Definition at line 1292 of file lspg\&.c\&.
 .PP
 .nf
                           {
@@ -992,7 +979,7 @@ Definition at line 1305 of file lspg\&.c\&.
 .PP
 Request a getcenter query\&. 
 .PP
-Definition at line 1281 of file lspg\&.c\&.
+Definition at line 1268 of file lspg\&.c\&.
 .PP
 .nf
                            {
@@ -1008,7 +995,7 @@ Definition at line 1281 of file lspg\&.c\&.
 .PP
 Retrieve the data to center the crystal\&. 
 .PP
-Definition at line 1216 of file lspg\&.c\&.
+Definition at line 1203 of file lspg\&.c\&.
 .PP
 .nf
                                                                 {
@@ -1071,7 +1058,7 @@ Definition at line 1216 of file lspg\&.c\&.
 .PP
 Done with getcenter query\&. 
 .PP
-Definition at line 1299 of file lspg\&.c\&.
+Definition at line 1286 of file lspg\&.c\&.
 .PP
 .nf
                            {
@@ -1083,7 +1070,7 @@ Definition at line 1299 of file lspg\&.c\&.
 .PP
 Initialize getcenter object\&. 
 .PP
-Definition at line 1273 of file lspg\&.c\&.
+Definition at line 1260 of file lspg\&.c\&.
 .PP
 .nf
                            {
@@ -1097,7 +1084,7 @@ Definition at line 1273 of file lspg\&.c\&.
 .PP
 Wait for a getcenter query to return\&. 
 .PP
-Definition at line 1291 of file lspg\&.c\&.
+Definition at line 1278 of file lspg\&.c\&.
 .PP
 .nf
                            {
@@ -1109,7 +1096,7 @@ Definition at line 1291 of file lspg\&.c\&.
 .SS "void lspg_getcurrentsampleid_call ()"
 
 .PP
-Definition at line 470 of file lspg\&.c\&.
+Definition at line 457 of file lspg\&.c\&.
 .PP
 .nf
                                     {
@@ -1125,7 +1112,7 @@ Definition at line 470 of file lspg\&.c\&.
 .PP
 get currentsampleid 
 .PP
-Definition at line 446 of file lspg\&.c\&.
+Definition at line 433 of file lspg\&.c\&.
 .PP
 .nf
                                                                          {
@@ -1153,7 +1140,7 @@ Definition at line 446 of file lspg\&.c\&.
 .SS "void lspg_getcurrentsampleid_init ()"
 
 .PP
-Definition at line 438 of file lspg\&.c\&.
+Definition at line 425 of file lspg\&.c\&.
 .PP
 .nf
                                     {
@@ -1165,7 +1152,7 @@ Definition at line 438 of file lspg\&.c\&.
 .SS "unsigned int lspg_getcurrentsampleid_read ()"
 
 .PP
-Definition at line 480 of file lspg\&.c\&.
+Definition at line 467 of file lspg\&.c\&.
 .PP
 .nf
                                             {
@@ -1185,7 +1172,7 @@ Definition at line 480 of file lspg\&.c\&.
 .SS "void lspg_getcurrentsampleid_wait_for_id (unsigned inttest)"
 
 .PP
-Definition at line 496 of file lspg\&.c\&.
+Definition at line 483 of file lspg\&.c\&.
 .PP
 .nf
                                                              {
@@ -1201,7 +1188,7 @@ Definition at line 496 of file lspg\&.c\&.
 .PP
 Initiallize the lspg module\&. 
 .PP
-Definition at line 1988 of file lspg\&.c\&.
+Definition at line 1979 of file lspg\&.c\&.
 .PP
 .nf
                  {
@@ -1226,7 +1213,7 @@ Definition at line 1988 of file lspg\&.c\&.
 .PP
 Detector lock convinence function\&. 
 .PP
-Definition at line 1128 of file lspg\&.c\&.
+Definition at line 1115 of file lspg\&.c\&.
 .PP
 .nf
                               {
@@ -1240,7 +1227,7 @@ Definition at line 1128 of file lspg\&.c\&.
 .PP
 Request (demand) a detector lock\&. 
 .PP
-Definition at line 1104 of file lspg\&.c\&.
+Definition at line 1091 of file lspg\&.c\&.
 .PP
 .nf
                                {
@@ -1256,7 +1243,7 @@ Definition at line 1104 of file lspg\&.c\&.
 .PP
 Callback for when the detector lock has be grabbed\&. 
 .PP
-Definition at line 1095 of file lspg\&.c\&.
+Definition at line 1082 of file lspg\&.c\&.
 .PP
 .nf
                                                                     {
@@ -1271,7 +1258,7 @@ Definition at line 1095 of file lspg\&.c\&.
 .PP
 Finish waiting\&. 
 .PP
-Definition at line 1122 of file lspg\&.c\&.
+Definition at line 1109 of file lspg\&.c\&.
 .PP
 .nf
                                {
@@ -1283,7 +1270,7 @@ Definition at line 1122 of file lspg\&.c\&.
 .PP
 Initialize detector lock object\&. 
 .PP
-Definition at line 1087 of file lspg\&.c\&.
+Definition at line 1074 of file lspg\&.c\&.
 .PP
 .nf
                                {
@@ -1297,7 +1284,7 @@ Definition at line 1087 of file lspg\&.c\&.
 .PP
 Wait for the detector lock\&. 
 .PP
-Definition at line 1114 of file lspg\&.c\&.
+Definition at line 1101 of file lspg\&.c\&.
 .PP
 .nf
                                {
@@ -1311,7 +1298,7 @@ Definition at line 1114 of file lspg\&.c\&.
 .PP
 Convience function that combines lock diffractometer calls\&. 
 .PP
-Definition at line 1069 of file lspg\&.c\&.
+Definition at line 1056 of file lspg\&.c\&.
 .PP
 .nf
                                     {
@@ -1325,7 +1312,7 @@ Definition at line 1069 of file lspg\&.c\&.
 .PP
 Request that the database grab the diffractometer lock\&. 
 .PP
-Definition at line 1045 of file lspg\&.c\&.
+Definition at line 1032 of file lspg\&.c\&.
 .PP
 .nf
                                      {
@@ -1341,7 +1328,7 @@ Definition at line 1045 of file lspg\&.c\&.
 .PP
 Callback routine for a lock diffractometer query\&. 
 .PP
-Definition at line 1036 of file lspg\&.c\&.
+Definition at line 1023 of file lspg\&.c\&.
 .PP
 .nf
                                                                           {
@@ -1356,7 +1343,7 @@ Definition at line 1036 of file lspg\&.c\&.
 .PP
 Finish up the lock diffractometer call\&. 
 .PP
-Definition at line 1063 of file lspg\&.c\&.
+Definition at line 1050 of file lspg\&.c\&.
 .PP
 .nf
                                      {
@@ -1368,7 +1355,7 @@ Definition at line 1063 of file lspg\&.c\&.
 .PP
 initialize the diffractometer locking object 
 .PP
-Definition at line 1028 of file lspg\&.c\&.
+Definition at line 1015 of file lspg\&.c\&.
 .PP
 .nf
                                      {
@@ -1382,7 +1369,7 @@ Definition at line 1028 of file lspg\&.c\&.
 .PP
 Wait for the diffractometer lock\&. 
 .PP
-Definition at line 1055 of file lspg\&.c\&.
+Definition at line 1042 of file lspg\&.c\&.
 .PP
 .nf
                                      {
@@ -1396,7 +1383,7 @@ Definition at line 1055 of file lspg\&.c\&.
 .PP
 Implements our state machine Does not strictly only set the next state as it also calls some functions that, perhaps, alters the state mid-function\&. 
 .PP
-Definition at line 1756 of file lspg\&.c\&.
+Definition at line 1743 of file lspg\&.c\&.
 .PP
 .nf
                        {
@@ -1460,7 +1447,7 @@ Queue the next MD2 instruction\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1314 of file lspg\&.c\&.
+Definition at line 1301 of file lspg\&.c\&.
 .PP
 .nf
                           {
@@ -1482,7 +1469,7 @@ Definition at line 1314 of file lspg\&.c\&.
 .SS "void lspg_nexterrors_cb (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
 
 .PP
-Definition at line 1333 of file lspg\&.c\&.
+Definition at line 1320 of file lspg\&.c\&.
 .PP
 .nf
                                                                  {
@@ -1518,7 +1505,7 @@ Definition at line 1333 of file lspg\&.c\&.
 .SS "unsigned int lspg_nextsample_all (int *err)"
 
 .PP
-Definition at line 571 of file lspg\&.c\&.
+Definition at line 558 of file lspg\&.c\&.
 .PP
 .nf
                                             {
@@ -1549,7 +1536,7 @@ Definition at line 571 of file lspg\&.c\&.
 .PP
 Queue up a nextsample query\&. 
 .PP
-Definition at line 548 of file lspg\&.c\&.
+Definition at line 535 of file lspg\&.c\&.
 .PP
 .nf
                             {
@@ -1572,7 +1559,7 @@ Next Sample\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 507 of file lspg\&.c\&.
+Definition at line 494 of file lspg\&.c\&.
 .PP
 .nf
                         {
@@ -1608,7 +1595,7 @@ Definition at line 507 of file lspg\&.c\&.
 .PP
 Called when the next shot query has been processed\&. 
 .PP
-Definition at line 566 of file lspg\&.c\&.
+Definition at line 553 of file lspg\&.c\&.
 .PP
 .nf
                             {
@@ -1620,7 +1607,7 @@ Definition at line 566 of file lspg\&.c\&.
 .PP
 Initialize the nextsample variable, mutex, and condition\&. 
 .PP
-Definition at line 540 of file lspg\&.c\&.
+Definition at line 527 of file lspg\&.c\&.
 .PP
 .nf
                             {
@@ -1634,7 +1621,7 @@ Definition at line 540 of file lspg\&.c\&.
 .PP
 Wait for the nextsample query to get processed\&. 
 .PP
-Definition at line 558 of file lspg\&.c\&.
+Definition at line 545 of file lspg\&.c\&.
 .PP
 .nf
                             {
@@ -1648,7 +1635,7 @@ Definition at line 558 of file lspg\&.c\&.
 .PP
 Queue up a nextshot query\&. 
 .PP
-Definition at line 928 of file lspg\&.c\&.
+Definition at line 915 of file lspg\&.c\&.
 .PP
 .nf
                           {
@@ -1671,7 +1658,7 @@ Next Shot Callback\&. This is a long and tedious routine as there are a large nu
 .PP
 
 .PP
-Definition at line 673 of file lspg\&.c\&.
+Definition at line 660 of file lspg\&.c\&.
 .PP
 .nf
                         {
@@ -1921,7 +1908,7 @@ Definition at line 673 of file lspg\&.c\&.
 .PP
 Called when the next shot query has been processed\&. 
 .PP
-Definition at line 946 of file lspg\&.c\&.
+Definition at line 933 of file lspg\&.c\&.
 .PP
 .nf
                           {
@@ -1933,7 +1920,7 @@ Definition at line 946 of file lspg\&.c\&.
 .PP
 Initialize the nextshot variable, mutex, and condition\&. 
 .PP
-Definition at line 920 of file lspg\&.c\&.
+Definition at line 907 of file lspg\&.c\&.
 .PP
 .nf
                           {
@@ -1947,7 +1934,7 @@ Definition at line 920 of file lspg\&.c\&.
 .PP
 Wait for the next shot query to get processed\&. 
 .PP
-Definition at line 938 of file lspg\&.c\&.
+Definition at line 925 of file lspg\&.c\&.
 .PP
 .nf
                           {
@@ -1959,7 +1946,7 @@ Definition at line 938 of file lspg\&.c\&.
 .SS "PQnoticeProcessor lspg_notice_processor (void *arg, const char *msg)"
 
 .PP
-Definition at line 1660 of file lspg\&.c\&.
+Definition at line 1647 of file lspg\&.c\&.
 .PP
 .nf
                                                                      {
@@ -1972,7 +1959,7 @@ Definition at line 1660 of file lspg\&.c\&.
 .PP
 Connect to the pg server\&. 
 .PP
-Definition at line 1667 of file lspg\&.c\&.
+Definition at line 1654 of file lspg\&.c\&.
 .PP
 .nf
                        {
@@ -2068,7 +2055,7 @@ I/O control to/from the postgresql server\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1557 of file lspg\&.c\&.
+Definition at line 1544 of file lspg\&.c\&.
 .PP
 .nf
                        {
@@ -2175,7 +2162,7 @@ Definition at line 1557 of file lspg\&.c\&.
 .SS "void lspg_preset_changed_cb (char *event)"
 
 .PP
-Definition at line 1877 of file lspg\&.c\&.
+Definition at line 1864 of file lspg\&.c\&.
 .PP
 .nf
                                           {
@@ -2197,6 +2184,10 @@ Definition at line 1877 of file lspg\&.c\&.
     return;
   }
   v = lsredis_getstr( p);
+  if( v == NULL || v[0] == 0) {
+    lslogging_log_message( 'lspg_preset_chanted_cb: Value for preset %s is %s', pn, v==NULL ? 'NULL' : 'Empty');
+    return;
+  }
   lspg_query_push( NULL, 'EXECUTE kvupdate('{%s,%s}'::text[])', pn, v);
 }
 .fi
@@ -2312,7 +2303,7 @@ Definition at line 111 of file lspg\&.c\&.
 .PP
 Prepare to exit the program in a couple of seconds\&. 
 .PP
-Definition at line 1982 of file lspg\&.c\&.
+Definition at line 1973 of file lspg\&.c\&.
 .PP
 .nf
                                     {
@@ -2324,7 +2315,7 @@ Definition at line 1982 of file lspg\&.c\&.
 .PP
 Receive a result of a query\&. 
 .PP
-Definition at line 1474 of file lspg\&.c\&.
+Definition at line 1461 of file lspg\&.c\&.
 .PP
 .nf
                     {
@@ -2389,7 +2380,7 @@ Definition at line 1474 of file lspg\&.c\&.
 .PP
 Start 'er runnin'\&. 
 .PP
-Definition at line 2007 of file lspg\&.c\&.
+Definition at line 1998 of file lspg\&.c\&.
 .PP
 .nf
                 {
@@ -2413,7 +2404,7 @@ Definition at line 2007 of file lspg\&.c\&.
 .PP
 log magnet state 
 .PP
-Definition at line 1970 of file lspg\&.c\&.
+Definition at line 1961 of file lspg\&.c\&.
 .PP
 .nf
                                            {
@@ -2431,7 +2422,7 @@ Definition at line 1970 of file lspg\&.c\&.
 .PP
 send the next queued query to the DB server 
 .PP
-Definition at line 1427 of file lspg\&.c\&.
+Definition at line 1414 of file lspg\&.c\&.
 .PP
 .nf
                             {
@@ -2503,7 +2494,7 @@ Convinence function to call seq run prep\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1199 of file lspg\&.c\&.
+Definition at line 1186 of file lspg\&.c\&.
 .PP
 .nf
                              {
@@ -2536,7 +2527,7 @@ queue up the seq_run_prep query \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1165 of file lspg\&.c\&.
+Definition at line 1152 of file lspg\&.c\&.
 .PP
 .nf
                               {
@@ -2560,7 +2551,7 @@ Callback for the seq_run_prep query\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1153 of file lspg\&.c\&.
+Definition at line 1140 of file lspg\&.c\&.
 .PP
 .nf
                             {
@@ -2575,7 +2566,7 @@ Definition at line 1153 of file lspg\&.c\&.
 .PP
 Indicate we are done waiting\&. 
 .PP
-Definition at line 1193 of file lspg\&.c\&.
+Definition at line 1180 of file lspg\&.c\&.
 .PP
 .nf
                               {
@@ -2587,7 +2578,7 @@ Definition at line 1193 of file lspg\&.c\&.
 .PP
 Initialize the data collection object\&. 
 .PP
-Definition at line 1145 of file lspg\&.c\&.
+Definition at line 1132 of file lspg\&.c\&.
 .PP
 .nf
                               {
@@ -2601,7 +2592,7 @@ Definition at line 1145 of file lspg\&.c\&.
 .PP
 Wait for seq run prep query to return\&. 
 .PP
-Definition at line 1185 of file lspg\&.c\&.
+Definition at line 1172 of file lspg\&.c\&.
 .PP
 .nf
                               {
@@ -2615,7 +2606,7 @@ Definition at line 1185 of file lspg\&.c\&.
 .PP
 Fix up xscale and yscale when zoom changes\&. 
 .PP
-Definition at line 1943 of file lspg\&.c\&.
+Definition at line 1934 of file lspg\&.c\&.
 .PP
 .nf
                                      {
@@ -2651,7 +2642,7 @@ Service a signal Signals here are treated as file descriptors and fits into our 
 .PP
 
 .PP
-Definition at line 1535 of file lspg\&.c\&.
+Definition at line 1522 of file lspg\&.c\&.
 .PP
 .nf
                         {
@@ -2675,7 +2666,7 @@ Definition at line 1535 of file lspg\&.c\&.
 .SS "int lspg_starttransfer_all (int *err, unsigned intnextsample, intsampledetected, doubleax, doubleay, doubleaz, doublehorz, doublevert, doubleesttime)"
 
 .PP
-Definition at line 422 of file lspg\&.c\&.
+Definition at line 409 of file lspg\&.c\&.
 .PP
 .nf
                                                                                                                                                               {
@@ -2697,7 +2688,7 @@ Definition at line 422 of file lspg\&.c\&.
 .SS "void lspg_starttransfer_call (unsigned intnextsample, intsample_detected, doubleax, doubleay, doubleaz, doublehorz, doublevert, doubleesttime)"
 
 .PP
-Definition at line 402 of file lspg\&.c\&.
+Definition at line 389 of file lspg\&.c\&.
 .PP
 .nf
                                                                                                                                                        {
@@ -2719,7 +2710,7 @@ Definition at line 402 of file lspg\&.c\&.
 .PP
 
 .PP
-Definition at line 380 of file lspg\&.c\&.
+Definition at line 367 of file lspg\&.c\&.
 .PP
 .nf
                         {
@@ -2744,7 +2735,7 @@ Definition at line 380 of file lspg\&.c\&.
 .SS "void lspg_starttransfer_done ()"
 
 .PP
-Definition at line 417 of file lspg\&.c\&.
+Definition at line 404 of file lspg\&.c\&.
 .PP
 .nf
                                {
@@ -2754,7 +2745,7 @@ Definition at line 417 of file lspg\&.c\&.
 .SS "void lspg_starttransfer_init ()"
 
 .PP
-Definition at line 374 of file lspg\&.c\&.
+Definition at line 361 of file lspg\&.c\&.
 .PP
 .nf
                                {
@@ -2766,7 +2757,7 @@ Definition at line 374 of file lspg\&.c\&.
 .SS "void lspg_starttransfer_wait ()"
 
 .PP
-Definition at line 411 of file lspg\&.c\&.
+Definition at line 398 of file lspg\&.c\&.
 .PP
 .nf
                                {
@@ -2778,7 +2769,7 @@ Definition at line 411 of file lspg\&.c\&.
 .SS "void lspg_unset_current_preset_moving_cb (char *event)"
 
 .PP
-Definition at line 1920 of file lspg\&.c\&.
+Definition at line 1911 of file lspg\&.c\&.
 .PP
 .nf
                                                        {
@@ -2806,7 +2797,7 @@ Definition at line 1920 of file lspg\&.c\&.
 .PP
 Perhaps update the px\&.kvs table in postgresql Should be triggered by a timer event\&. 
 .PP
-Definition at line 317 of file lspg\&.c\&.
+Definition at line 304 of file lspg\&.c\&.
 .PP
 .nf
                                       {
@@ -2869,7 +2860,7 @@ Definition at line 317 of file lspg\&.c\&.
 .PP
 Combined call to wait for the detector\&. 
 .PP
-Definition at line 1009 of file lspg\&.c\&.
+Definition at line 996 of file lspg\&.c\&.
 .PP
 .nf
                                   {
@@ -2883,7 +2874,7 @@ Definition at line 1009 of file lspg\&.c\&.
 .PP
 initiate the wait for detector query 
 .PP
-Definition at line 983 of file lspg\&.c\&.
+Definition at line 970 of file lspg\&.c\&.
 .PP
 .nf
                                    {
@@ -2899,7 +2890,7 @@ Definition at line 983 of file lspg\&.c\&.
 .PP
 Callback for the wait for detector query\&. 
 .PP
-Definition at line 974 of file lspg\&.c\&.
+Definition at line 961 of file lspg\&.c\&.
 .PP
 .nf
                                                                         {
@@ -2914,7 +2905,7 @@ Definition at line 974 of file lspg\&.c\&.
 .PP
 Done waiting for the detector\&. 
 .PP
-Definition at line 1002 of file lspg\&.c\&.
+Definition at line 989 of file lspg\&.c\&.
 .PP
 .nf
                                    {
@@ -2926,7 +2917,7 @@ Definition at line 1002 of file lspg\&.c\&.
 .PP
 initialize the detector timing object 
 .PP
-Definition at line 966 of file lspg\&.c\&.
+Definition at line 953 of file lspg\&.c\&.
 .PP
 .nf
                                    {
@@ -2940,7 +2931,7 @@ Definition at line 966 of file lspg\&.c\&.
 .PP
 Pause the calling thread until the detector is ready Called by the MD2 thread\&. 
 .PP
-Definition at line 994 of file lspg\&.c\&.
+Definition at line 981 of file lspg\&.c\&.
 .PP
 .nf
                                    {
@@ -2954,7 +2945,7 @@ Definition at line 994 of file lspg\&.c\&.
 .PP
 no need to get fancy with the wait cryo command It should not return until the robot is almost ready for air rights 
 .PP
-Definition at line 610 of file lspg\&.c\&.
+Definition at line 597 of file lspg\&.c\&.
 .PP
 .nf
                          {
@@ -2972,7 +2963,7 @@ Definition at line 610 of file lspg\&.c\&.
 .SS "void lspg_waitcryo_cb (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
 
 .PP
-Definition at line 600 of file lspg\&.c\&.
+Definition at line 587 of file lspg\&.c\&.
 .PP
 .nf
                                                                {
@@ -2985,7 +2976,7 @@ Definition at line 600 of file lspg\&.c\&.
 .SS "void lspg_waitcryo_init ()"
 
 .PP
-Definition at line 594 of file lspg\&.c\&.
+Definition at line 581 of file lspg\&.c\&.
 .PP
 .nf
                           {
@@ -3004,7 +2995,7 @@ The main loop for the lspg thread\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1807 of file lspg\&.c\&.
+Definition at line 1794 of file lspg\&.c\&.
 .PP
 .nf
                     {
@@ -3110,11 +3101,11 @@ Definition at line 66 of file lspg\&.c\&.
 .SS "\fBlspg_lock_detector_t\fP lspg_lock_detector\fC [static]\fP"
 
 .PP
-Definition at line 1083 of file lspg\&.c\&.
+Definition at line 1070 of file lspg\&.c\&.
 .SS "\fBlspg_lock_diffractometer_t\fP lspg_lock_diffractometer\fC [static]\fP"
 
 .PP
-Definition at line 1024 of file lspg\&.c\&.
+Definition at line 1011 of file lspg\&.c\&.
 .SS "\fBlspg_nextsample_t\fP lspg_nextsample"
 
 .PP
@@ -3172,7 +3163,7 @@ Definition at line 60 of file lspg\&.c\&.
 .SS "\fBlspg_seq_run_prep_t\fP lspg_seq_run_prep\fC [static]\fP"
 
 .PP
-Definition at line 1141 of file lspg\&.c\&.
+Definition at line 1128 of file lspg\&.c\&.
 .SS "\fBlspg_starttransfer_t\fP lspg_starttransfer"
 
 .PP
@@ -3190,7 +3181,7 @@ Definition at line 41 of file lspg\&.c\&.
 .PP
 Instance of the detector timing object\&. 
 .PP
-Definition at line 962 of file lspg\&.c\&.
+Definition at line 949 of file lspg\&.c\&.
 .SS "\fBlspg_waitcryo_t\fP lspg_waitcryo"
 
 .PP

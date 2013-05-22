@@ -162,6 +162,12 @@ Variables</h2></td></tr>
 <tr class="memitem:a75c9d50c347e9021784ee2529a0a1a70"><td class="memItemLeft" align="right" valign="top">pthread_mutex_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pgpmac_8c.html#a75c9d50c347e9021784ee2529a0a1a70">doomsday_mutex</a></td></tr>
 <tr class="memdesc:a75c9d50c347e9021784ee2529a0a1a70"><td class="mdescLeft">&#160;</td><td class="mdescRight">avoid thread collision while resetting the doomsday clock  <a href="#a75c9d50c347e9021784ee2529a0a1a70"></a><br/></td></tr>
 <tr class="separator:a75c9d50c347e9021784ee2529a0a1a70"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae002f31c03cce9bf96cf0e0c2907cb2b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pgpmac_8c.html#ae002f31c03cce9bf96cf0e0c2907cb2b">pgpmac_use_pg</a> = 0</td></tr>
+<tr class="memdesc:ae002f31c03cce9bf96cf0e0c2907cb2b"><td class="mdescLeft">&#160;</td><td class="mdescRight">non-zero to start up lspg thread, 0 to not (reids hash PG in config.HOSTNAME sets this)  <a href="#ae002f31c03cce9bf96cf0e0c2907cb2b"></a><br/></td></tr>
+<tr class="separator:ae002f31c03cce9bf96cf0e0c2907cb2b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad163e2bc6ebe322058c113dee76c11ff"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pgpmac_8c.html#ad163e2bc6ebe322058c113dee76c11ff">pgpmac_use_autoscint</a> = 0</td></tr>
+<tr class="memdesc:ad163e2bc6ebe322058c113dee76c11ff"><td class="mdescLeft">&#160;</td><td class="mdescRight">non-zero to automatically move the alignment stage when the scintillator moves (redis hash AUTOSCINT in config.HOSTNAME sets this)  <a href="#ad163e2bc6ebe322058c113dee76c11ff"></a><br/></td></tr>
+<tr class="separator:ad163e2bc6ebe322058c113dee76c11ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6dc08e82e698d914ccb09077dd33668a"><td class="memItemLeft" align="right" valign="top">static struct pollfd&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="pgpmac_8c.html#a6dc08e82e698d914ccb09077dd33668a">stdinfda</a></td></tr>
 <tr class="memdesc:a6dc08e82e698d914ccb09077dd33668a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Handle input from the keyboard.  <a href="#a6dc08e82e698d914ccb09077dd33668a"></a><br/></td></tr>
 <tr class="separator:a6dc08e82e698d914ccb09077dd33668a"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -188,7 +194,7 @@ Variables</h2></td></tr>
 
 <p>Handle keyboard input. </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8c_source.html#l00255">255</a> of file <a class="el" href="pgpmac_8c_source.html">pgpmac.c</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8c_source.html#l00258">258</a> of file <a class="el" href="pgpmac_8c_source.html">pgpmac.c</a>.</p>
 
 </div>
 </div>
@@ -202,7 +208,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="pgpmac_8c_source.html#l00256">256</a> of file <a class="el" href="pgpmac_8c_source.html">pgpmac.c</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8c_source.html#l00259">259</a> of file <a class="el" href="pgpmac_8c_source.html">pgpmac.c</a>.</p>
 
 </div>
 </div>
@@ -241,7 +247,7 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="pgpmac_8c_source.html#l00477">477</a> of file <a class="el" href="pgpmac_8c_source.html">pgpmac.c</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8c_source.html#l00485">485</a> of file <a class="el" href="pgpmac_8c_source.html">pgpmac.c</a>.</p>
 <div class="fragment"><div class="line">           {</div>
 <div class="line"></div>
 <div class="line">  <span class="keyword">static</span> <span class="keyword">struct </span>pollfd fda[3];          <span class="comment">// input for poll: room for postgres, pmac, and stdin</span></div>
@@ -257,7 +263,7 @@ Variables</h2></td></tr>
 <div class="line">  mvars    = 0;</div>
 <div class="line">  ivars    = 0;</div>
 <div class="line">  <span class="keywordtype">int</span> <a class="code" href="namespacemk__pgpmac__redis.html#afa643a23a5984fe44c2182ada3dfa401">i</a>;                        <span class="comment">// standard loop counter</span></div>
-<div class="line">  pthread_mutexattr_t mutex_initializer;</div>
+<div class="line">  pthread_mutexattr_t <a class="code" href="lsredis_8c.html#a71c9f418904364d65c22d786f4dc5d39">mutex_initializer</a>;</div>
 <div class="line">  <span class="keyword">static</span> sigset_t our_sigset;</div>
 <div class="line"></div>
 <div class="line">  <span class="comment">//</span></div>
@@ -338,7 +344,10 @@ Variables</h2></td></tr>
 <div class="line">  <span class="comment">// These need to be all initialized before any are run</span></div>
 <div class="line">  <span class="comment">//</span></div>
 <div class="line">  <a class="code" href="lspmac_8c.html#a236945579e57dbb30c0b64f5b9184e9d" title="Initialize this module.">lspmac_init</a>( ivars, mvars);</div>
-<div class="line">  <a class="code" href="lspg_8c.html#a8a77972df14166e05c94ed0792baa09b" title="Initiallize the lspg module.">lspg_init</a>();</div>
+<div class="line"></div>
+<div class="line">  <span class="keywordflow">if</span>( <a class="code" href="pgpmac_8c.html#ae002f31c03cce9bf96cf0e0c2907cb2b" title="non-zero to start up lspg thread, 0 to not (reids hash PG in config.HOSTNAME sets this)...">pgpmac_use_pg</a>)</div>
+<div class="line">    <a class="code" href="lspg_8c.html#a8a77972df14166e05c94ed0792baa09b" title="Initiallize the lspg module.">lspg_init</a>();</div>
+<div class="line"></div>
 <div class="line">  <a class="code" href="md2cmds_8c.html#a0851b1baecda6a67993efde41d77b1c1" title="Initialize the md2cmds module.">md2cmds_init</a>();</div>
 <div class="line"></div>
 <div class="line">  <span class="comment">//</span></div>
@@ -371,7 +380,10 @@ Variables</h2></td></tr>
 <div class="line">  <span class="comment">// Now run the world</span></div>
 <div class="line">  <span class="comment">//</span></div>
 <div class="line">  <a class="code" href="lspmac_8c.html#a3a7fb93fb3fb9c4454613f30bfb0b1ee" title="Start up the lspmac thread.">lspmac_run</a>();</div>
-<div class="line">  <a class="code" href="lspg_8c.html#a1adfdb5ca9fdb5060849d726bf540117" title="Start &#39;er runnin&#39;.">lspg_run</a>();</div>
+<div class="line"></div>
+<div class="line">  <span class="keywordflow">if</span>( <a class="code" href="pgpmac_8c.html#ae002f31c03cce9bf96cf0e0c2907cb2b" title="non-zero to start up lspg thread, 0 to not (reids hash PG in config.HOSTNAME sets this)...">pgpmac_use_pg</a>)</div>
+<div class="line">    <a class="code" href="lspg_8c.html#a1adfdb5ca9fdb5060849d726bf540117" title="Start &#39;er runnin&#39;.">lspg_run</a>();</div>
+<div class="line"></div>
 <div class="line">  <a class="code" href="md2cmds_8c.html#aa62da7d423952334d41c7d282f45233d" title="Start up the thread.">md2cmds_run</a>();</div>
 <div class="line"></div>
 <div class="line">  <span class="keywordflow">while</span>( <a class="code" href="pgpmac_8c.html#a2f45113638a0b749a8a205d2cd7fb42b">running</a>) {</div>
@@ -448,7 +460,7 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="pgpmac_8c_source.html#l00433">433</a> of file <a class="el" href="pgpmac_8c_source.html">pgpmac.c</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8c_source.html#l00443">443</a> of file <a class="el" href="pgpmac_8c_source.html">pgpmac.c</a>.</p>
 <div class="fragment"><div class="line">                     {</div>
 <div class="line">  va_list arg_ptr;</div>
 <div class="line"></div>
@@ -459,9 +471,7 @@ Variables</h2></td></tr>
 <div class="line">  va_end( arg_ptr);</div>
 <div class="line"></div>
 <div class="line">  wnoutrefresh( <a class="code" href="pgpmac_8c.html#a65daf0f4a5bc6def23a9df98ff5ca57e" title="place to print stuff out">term_output</a>);</div>
-<div class="line">  wnoutrefresh( <a class="code" href="pgpmac_8c.html#ab0487111dbe3c05d0bd835eb2fb9a3f7" title="place to put the cursor">term_input</a>);</div>
 <div class="line">  doupdate();</div>
-<div class="line"></div>
 <div class="line">  pthread_mutex_unlock( &amp;<a class="code" href="pgpmac_8c.html#ad128c64890c7c0d4f836d9ec6e99216a" title="allow more than one thread access to the screen">ncurses_mutex</a>);</div>
 <div class="line"></div>
 <div class="line">}</div>
@@ -484,7 +494,7 @@ Variables</h2></td></tr>
 
 <p>quit the program </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8c_source.html#l00466">466</a> of file <a class="el" href="pgpmac_8c_source.html">pgpmac.c</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8c_source.html#l00474">474</a> of file <a class="el" href="pgpmac_8c_source.html">pgpmac.c</a>.</p>
 <div class="fragment"><div class="line">                                  {</div>
 <div class="line">  pthread_mutex_lock( &amp;<a class="code" href="pgpmac_8c.html#a75c9d50c347e9021784ee2529a0a1a70" title="avoid thread collision while resetting the doomsday clock">doomsday_mutex</a>);</div>
 <div class="line">  <a class="code" href="pgpmac_8c.html#aa687f0df65c1d87ffd5635742c1eab94" title="Countdown to quitting time: cleanout routines can request a few more heartbeats.">doomsday_count</a>--;</div>
@@ -511,7 +521,7 @@ Variables</h2></td></tr>
 
 <p>Postpone the day of reckoning This assumes the quit_cb routine is called once a second. </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8c_source.html#l00456">456</a> of file <a class="el" href="pgpmac_8c_source.html">pgpmac.c</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8c_source.html#l00464">464</a> of file <a class="el" href="pgpmac_8c_source.html">pgpmac.c</a>.</p>
 <div class="fragment"><div class="line">                                                 {</div>
 <div class="line">  pthread_mutex_lock( &amp;<a class="code" href="pgpmac_8c.html#a75c9d50c347e9021784ee2529a0a1a70" title="avoid thread collision while resetting the doomsday clock">doomsday_mutex</a>);</div>
 <div class="line">  <span class="keywordflow">if</span>( secs &gt; <a class="code" href="pgpmac_8c.html#aa687f0df65c1d87ffd5635742c1eab94" title="Countdown to quitting time: cleanout routines can request a few more heartbeats.">doomsday_count</a>)</div>
@@ -541,7 +551,7 @@ Variables</h2></td></tr>
   </dd>
 </dl>
 
-<p>Definition at line <a class="el" href="pgpmac_8c_source.html#l00257">257</a> of file <a class="el" href="pgpmac_8c_source.html">pgpmac.c</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8c_source.html#l00260">260</a> of file <a class="el" href="pgpmac_8c_source.html">pgpmac.c</a>.</p>
 <div class="fragment"><div class="line">                    {</div>
 <div class="line">  <span class="keyword">static</span> <span class="keywordtype">char</span> cmd_lines[<a class="code" href="pgpmac_8c.html#aa9fdd33a8f92d95b42db6f32fc5f0b20">PGPMAC_N_COMMAND_LINES</a>][<a class="code" href="pgpmac_8c.html#a25440def206356d9f19afbf9510d74dd" title="Handle keyboard input.">PGPMAC_COMMAND_LINE_LENGTH</a>];</div>
 <div class="line">  <span class="keyword">static</span> <span class="keywordtype">int</span> current_line = 0;</div>
@@ -569,22 +579,28 @@ Variables</h2></td></tr>
 <div class="line">      <a class="code" href="lstimer_8c.html#a7b3e725fbe1bb3cc9f8465941cf1e381" title="Create a timer.">lstimer_set_timer</a>( <span class="stringliteral">&quot;Quit Program&quot;</span>, -1, 1, 0);     <span class="comment">// Doomsday, repeat as needed</span></div>
 <div class="line">      <span class="keywordflow">break</span>;</div>
 <div class="line"></div>
-<div class="line">    <span class="keywordflow">case</span> 0x0001:        <span class="comment">// Control-A</span></div>
-<div class="line">    <span class="keywordflow">case</span> 0x0002:        <span class="comment">// Control-B</span></div>
-<div class="line">    <span class="keywordflow">case</span> 0x0003:        <span class="comment">// Control-C</span></div>
-<div class="line">    <span class="keywordflow">case</span> 0x0004:        <span class="comment">// Control-D</span></div>
-<div class="line">    <span class="keywordflow">case</span> 0x0005:        <span class="comment">// Control-E</span></div>
-<div class="line">    <span class="keywordflow">case</span> 0x0006:        <span class="comment">// Control-F</span></div>
-<div class="line">    <span class="keywordflow">case</span> 0x0007:        <span class="comment">// Control-G</span></div>
-<div class="line">    <span class="keywordflow">case</span> 0x000b:        <span class="comment">// Control-K</span></div>
-<div class="line">    <span class="keywordflow">case</span> 0x000f:        <span class="comment">// Control-O</span></div>
-<div class="line">      <span class="comment">//    case 0x0010:        // Control-P    // causes hang of PMAC communication as though ^P is not supposed to generate a response</span></div>
-<div class="line">    <span class="keywordflow">case</span> 0x0011:        <span class="comment">// Control-Q</span></div>
-<div class="line">    <span class="keywordflow">case</span> 0x0012:        <span class="comment">// Control-R</span></div>
-<div class="line">    <span class="keywordflow">case</span> 0x0013:        <span class="comment">// Control-Q</span></div>
-<div class="line">    <span class="keywordflow">case</span> 0x0016:        <span class="comment">// Control-V</span></div>
+<div class="line">    <span class="keywordflow">case</span> 0x0002:        <span class="comment">// Control-B    Report status word for 8 motors</span></div>
+<div class="line">    <span class="keywordflow">case</span> 0x0003:        <span class="comment">// Control-C    Report all coordinate system status words</span></div>
+<div class="line">    <span class="keywordflow">case</span> 0x0006:        <span class="comment">// Control-F    Report following errors for 8 motors</span></div>
+<div class="line">    <span class="keywordflow">case</span> 0x0010:        <span class="comment">// Control-P    Report positions for 8 motors</span></div>
+<div class="line">    <span class="keywordflow">case</span> 0x0016:        <span class="comment">// Control-V    Report velocity on 8 motors</span></div>
 <div class="line">      sprintf( cevt, <span class="stringliteral">&quot;Control-%c&quot;</span>, <span class="charliteral">&#39;@&#39;</span> + ch);</div>
-<div class="line">      <a class="code" href="lspmac_8c.html#a0575fc751cecf35ffe8b290ab483ac21" title="use dpram ascii interface to send a control character">lspmac_SockSendDPControlChar</a>( cevt, ch);</div>
+<div class="line">      <a class="code" href="lspmac_8c.html#a8707477f9799b4cc8c6f465ecfeee24b" title="Send a control character.">lspmac_SockSendControlCharPrint</a>( cevt, ch);</div>
+<div class="line">      <span class="keywordflow">break</span>;</div>
+<div class="line"></div>
+<div class="line">    <span class="keywordflow">case</span> 0x0001:        <span class="comment">// Control-A    Abort all programs and moves</span></div>
+<div class="line">    <span class="keywordflow">case</span> 0x0004:        <span class="comment">// Control-D    Disable all PLC programs</span></div>
+<div class="line">    <span class="keywordflow">case</span> 0x0005:        <span class="comment">// Control-E    Enable disabled motors</span></div>
+<div class="line">    <span class="keywordflow">case</span> 0x0007:        <span class="comment">// Control-G    Report global status word</span></div>
+<div class="line">    <span class="keywordflow">case</span> 0x000b:        <span class="comment">// Control-K    Kill all motors</span></div>
+<div class="line">    <span class="keywordflow">case</span> 0x000f:        <span class="comment">// Control-O    Feed hold on all coordinate systems</span></div>
+<div class="line">    <span class="keywordflow">case</span> 0x0011:        <span class="comment">// Control-Q    Quit all executing motion programs</span></div>
+<div class="line">    <span class="keywordflow">case</span> 0x0012:        <span class="comment">// Control-R    Run motion programs in all coordinate systems</span></div>
+<div class="line">    <span class="keywordflow">case</span> 0x0013:        <span class="comment">// Control-S    Step through working motion programs in all coordinate systems</span></div>
+<div class="line">    <span class="keywordflow">case</span> 0x0018:        <span class="comment">// Control-X    Cancel in-process communications</span></div>
+<div class="line">      sprintf( cevt, <span class="stringliteral">&quot;Control-%c&quot;</span>, <span class="charliteral">&#39;@&#39;</span> + ch);</div>
+<div class="line">      <a class="code" href="lspmac_8c.html#a8707477f9799b4cc8c6f465ecfeee24b" title="Send a control character.">lspmac_SockSendControlCharPrint</a>( cevt, ch);</div>
+<div class="line">      <span class="comment">//      lspmac_SockSendDPControlChar( cevt, ch);</span></div>
 <div class="line">      <span class="keywordflow">break</span>;</div>
 <div class="line"></div>
 <div class="line">    <span class="keywordflow">case</span> 0x000c:        <span class="comment">// Control-L</span></div>
@@ -707,6 +723,7 @@ Variables</h2></td></tr>
 <div class="line">      wclrtoeol( <a class="code" href="pgpmac_8c.html#ab0487111dbe3c05d0bd835eb2fb9a3f7" title="place to put the cursor">term_input</a>);</div>
 <div class="line">      wmove( <a class="code" href="pgpmac_8c.html#ab0487111dbe3c05d0bd835eb2fb9a3f7" title="place to put the cursor">term_input</a>, 1, cmds_on + strlen(prompt) + 2);</div>
 <div class="line">      box( <a class="code" href="pgpmac_8c.html#ab0487111dbe3c05d0bd835eb2fb9a3f7" title="place to put the cursor">term_input</a>, 0, 0);</div>
+<div class="line">      wnoutrefresh( <a class="code" href="pgpmac_8c.html#a65daf0f4a5bc6def23a9df98ff5ca57e" title="place to print stuff out">term_output</a>);</div>
 <div class="line">      wnoutrefresh( <a class="code" href="pgpmac_8c.html#ab0487111dbe3c05d0bd835eb2fb9a3f7" title="place to put the cursor">term_input</a>);</div>
 <div class="line">      doupdate();</div>
 <div class="line">      pthread_mutex_unlock( &amp;<a class="code" href="pgpmac_8c.html#ad128c64890c7c0d4f836d9ec6e99216a" title="allow more than one thread access to the screen">ncurses_mutex</a>);</div>
@@ -765,6 +782,38 @@ Variables</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ad163e2bc6ebe322058c113dee76c11ff"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int pgpmac_use_autoscint = 0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>non-zero to automatically move the alignment stage when the scintillator moves (redis hash AUTOSCINT in config.HOSTNAME sets this) </p>
+
+<p>Definition at line <a class="el" href="pgpmac_8c_source.html#l00247">247</a> of file <a class="el" href="pgpmac_8c_source.html">pgpmac.c</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="ae002f31c03cce9bf96cf0e0c2907cb2b"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int pgpmac_use_pg = 0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>non-zero to start up lspg thread, 0 to not (reids hash PG in config.HOSTNAME sets this) </p>
+
+<p>Definition at line <a class="el" href="pgpmac_8c_source.html#l00246">246</a> of file <a class="el" href="pgpmac_8c_source.html">pgpmac.c</a>.</p>
+
+</div>
+</div>
 <a class="anchor" id="a2f45113638a0b749a8a205d2cd7fb42b"></a>
 <div class="memitem">
 <div class="memproto">
@@ -783,7 +832,7 @@ Variables</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="pgpmac_8c_source.html#l00250">250</a> of file <a class="el" href="pgpmac_8c_source.html">pgpmac.c</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8c_source.html#l00253">253</a> of file <a class="el" href="pgpmac_8c_source.html">pgpmac.c</a>.</p>
 
 </div>
 </div>
@@ -807,7 +856,7 @@ Variables</h2></td></tr>
 
 <p>Handle input from the keyboard. </p>
 
-<p>Definition at line <a class="el" href="pgpmac_8c_source.html#l00249">249</a> of file <a class="el" href="pgpmac_8c_source.html">pgpmac.c</a>.</p>
+<p>Definition at line <a class="el" href="pgpmac_8c_source.html#l00252">252</a> of file <a class="el" href="pgpmac_8c_source.html">pgpmac.c</a>.</p>
 
 </div>
 </div>
@@ -881,7 +930,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="pgpmac_8c.html">pgpmac.c</a></li>
-    <li class="footer">Generated on Sun Feb 17 2013 21:43:40 for LS-CAT PGPMAC by
+    <li class="footer">Generated on Wed May 22 2013 15:30:29 for LS-CAT PGPMAC by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.2 </li>
   </ul>
