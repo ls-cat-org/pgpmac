@@ -481,10 +481,16 @@ unsigned int lspg_getcurrentsampleid_read() {
 /**
  */
 void lspg_getcurrentsampleid_wait_for_id( unsigned int test) {
+
+
+  lslogging_log_message( "lspg_getcurrentsampleid_wait_for_id:  waiting for id %u", test);
+
   pthread_mutex_lock( &lspg_getcurrentsampleid.mutex);
   while( lspg_getcurrentsampleid.getcurrentsampleid != test)
     pthread_cond_wait( &lspg_getcurrentsampleid.cond, &lspg_getcurrentsampleid.mutex);
     
+  lslogging_log_message( "lspg_getcurrentsampleid_wait_for_id: finished waiting for id %u", test);
+
   pthread_mutex_unlock( &lspg_getcurrentsampleid.mutex);
 }
 
