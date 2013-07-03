@@ -311,6 +311,7 @@ int md2cmds_transfer( const char *dummy) {
     lslogging_log_message( "md2cmds_transfer: Waiting for previous motion to finish");
     if( md2cmds_move_wait( 30.0)) {
       lslogging_log_message( "md2cmds_transfer: Timed out waiting for previous motion to finish.  Aborting transfer");
+      return 1;
     }
   }
 
