@@ -241,7 +241,7 @@ static void *lstimer_worker(
     // ignore signals so we don't service the signal while we are already in the
     // service routine
     //
-    sigprocmask( SIG_SETMASK, &mask, NULL);
+    pthread_sigmask( SIG_SETMASK, &mask, NULL);
     
 
     //
@@ -260,7 +260,7 @@ static void *lstimer_worker(
 
     // Let the signals rain down
     //
-    sigprocmask( SIG_UNBLOCK, &mask, NULL);
+    pthread_sigmask( SIG_UNBLOCK, &mask, NULL);
   }
 }
 

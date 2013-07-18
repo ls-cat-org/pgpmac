@@ -251,12 +251,41 @@ int pgpmac_use_autoscint = 0;		//!< non-zero to automatically move the alignment
 //
 static struct pollfd stdinfda;			//!< Handle input from the keyboard
 static int running = 1;
+static sigset_t our_sigset;
 
 
 /** Handle keyboard input
  */
 #define PGPMAC_COMMAND_LINE_LENGTH 128
 #define PGPMAC_N_COMMAND_LINES     128
+
+/** Sigterm is simple
+ */
+void *sigtermWorker ( void *arg) {
+  int rc;
+  int sig_caught;
+  sigset_t the_sigset;
+
+  sigemptyset( &the_sigset);
+  sigaddset( &the_sigset, SIGTERM);
+  sigaddset( &the_sigset, SIGQUIT);
+  sigaddset( &the_sigset, SIGINT);
+  pthread_sigmask(SIG_UNBLOCK, &our_sigset, NULL);
+
+  rc = sigwait( &the_sigset, &sig_caught);
+  if( rc) {
+    lslogging_log_message( "sigtermThread: sigwait failed");
+    return NULL;
+  }
+  
+  lsevents_send_event( "Quitting Program");
+  lstimer_set_timer( "Quit Program", -1, 1, 0);
+
+  return NULL;
+}
+
+/** Handle stdin
+ */
 void stdinService(
 		  struct pollfd *evt		/**< [in] The pollfd object that caused this call	*/
 		  ) {
@@ -487,7 +516,7 @@ int main(
 	 char **argv		/**< [in] Vector of argument strings		*/
 	 ) {
 
-  static struct pollfd fda[3];		// input for poll: room for postgres, pmac, and stdin
+  static struct pollfd fda[4];		// input for poll: room for postgres, pmac, stdin, and SIGTERM handler
   static int nfd = 0;			// number of items in fda
   static int pollrtn = 0;
   static struct option long_options[] = {
@@ -501,35 +530,56 @@ int main(
   ivars    = 0;
   int i;			// standard loop counter
   pthread_mutexattr_t mutex_initializer;
-  static sigset_t our_sigset;
+  pthread_t sigterm_thread;
+  int err;
 
   //
   // We use SIGUSR1 but sometimes it's called before a handler is in place so we'll just block it
   // here and now.
   //
+  // SIGTERM will be captured through the fd mechanism to run a quit routine
+  //
   sigemptyset( &our_sigset);
   sigaddset( &our_sigset, SIGUSR1);
-  pthread_sigmask(SIG_BLOCK, &our_sigset, NULL);
+  sigaddset( &our_sigset, SIGTERM);
+  sigaddset( &our_sigset, SIGQUIT);
+  sigaddset( &our_sigset, SIGINT);
+  sigaddset( &our_sigset, SIGRTMIN);
+  err = pthread_sigmask(SIG_BLOCK, &our_sigset, NULL);
+  if( err) {
+    lslogging_log_message( "main: pthread_sigmask returned error");
+  }
+  
 
+  //
+  // Get options
+  //
   while( 1) {
     c=getopt_long( argc, argv, "im", long_options, NULL);
     if( c == -1)
       break;
 
     switch( c) {
-    case 'i':
+    case 'i':		// store i variables in pg
       ivars=1;
       break;
 
     case 'm':
-      mvars=1;
+      mvars=1;		// store m variables in pg
       break;
     }
   }
 
+  //
+  // Prepare stdin for poll statement
+  //
   stdinfda.fd = 0;
   stdinfda.events = POLLIN;
 
+  //
+  // TODO: fork and run ncurses through a pipe
+  // ncurses is, perhaps, screwing up our signal handling
+  //
   initscr();				// Start ncurses
   raw();				// Line buffering disabled, control chars trapped
   keypad( stdscr, TRUE);		// Why is F1 nifty?
@@ -623,37 +673,21 @@ int main(
 
   md2cmds_run();
 
+  pthread_create( &sigterm_thread, NULL, sigtermWorker, NULL);
+
   while( running) {
     //
-    // Big loop
+    // Prepare fda
     //
-
     nfd = 0;
+    memcpy( &(fda[nfd++]), &stdinfda,   sizeof( struct pollfd));
 
-    //
-    // keyboard
-    //
-    memcpy( &(fda[nfd++]), &stdinfda, sizeof( struct pollfd));
-    
-
-    if( nfd == 0) {
-      //
-      // No connectons yet.  Wait a bit and try again.
-      //
-      sleep( 10);
-      //
-      // go try to connect again
-      //
-      continue;
-    }
-
-
-    pollrtn = poll( fda, nfd, 10);
+    pollrtn = poll( fda, nfd, -1);
 
     for( i=0; pollrtn>0 && i<nfd; i++) {
       if( fda[i].revents) {
 	pollrtn--;
-	if( fda[i].fd == 0) {
+	if( fda[i].fd == stdinfda.fd) {
 	  stdinService( &fda[i]);
 	}
       }
