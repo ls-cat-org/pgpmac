@@ -1950,7 +1950,7 @@ void md2cmds_init() {
 
 /** Start up the thread
  */
-void md2cmds_run() {
+pthread_t *md2cmds_run() {
   pthread_create( &md2cmds_thread, NULL,                md2cmds_worker, NULL);
   lsevents_add_listener( "^omega crossed zero$",        md2cmds_rotate_cb);
   lsevents_add_listener( "^omega In Position$",         md2cmds_maybe_rotate_done_cb);
@@ -1964,4 +1964,6 @@ void md2cmds_run() {
   lsevents_add_listener( "^Coordsys 5 Stopped$",        md2cmds_coordsys_5_stopped_cb);
   lsevents_add_listener( "^Coordsys 7 Stopped$",        md2cmds_coordsys_7_stopped_cb);
   lsevents_add_listener( "^cam.zoom Moving$",	        md2cmds_set_scale_cb);
+
+  return &md2cmds_thread;
 }
