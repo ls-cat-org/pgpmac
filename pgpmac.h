@@ -160,12 +160,16 @@ typedef struct lspmac_motor_struct {
 typedef struct lspmac_bi_struct {
   int *ptr;			//!< points to the location in the status buffer
   pthread_mutex_t mutex;	//!< so we don't get confused
+  char *name;			//!< what we'd like to be called
   int mask;			//!< mask for the bit in the status register
   int position;			//!< the current value.
   int previous;			//!< the previous value
   int first_time;		//!< flag indicating we've not read the input even once
   char *changeEventOn;		//!< Event to send when the value changes to 1
   char *changeEventOff;		//!< Event to send when the value changes to 0
+  char *onStatus;		//!< set status to this when on
+  char *offStatus;		//!< set status to this when off
+  lsredis_obj_t *status_str;    //!< Our status string
 } lspmac_bi_t;
 
 
@@ -506,12 +510,13 @@ extern long int lsredis_getl( lsredis_obj_t *p);
 extern void lsevents_add_listener( char *, void (*cb)(char *));
 extern void lsevents_init();
 extern void lsevents_remove_listener( char *, void (*cb)(char *));
-extern void lsevents_run();
+extern pthread_t *lsevents_run();
 extern void lsevents_send_event( char *, ...);
 extern void lsevents_preregister_event( char *fmt, ...);
 extern void lslogging_init();
 extern void lslogging_log_message( char *fmt, ...);
-extern void lslogging_run();
+extern void lsredis_log( char *fmt, ...);
+extern pthread_t *lslogging_run();
 extern void lspg_demandairrights_all();
 extern void lspg_getcenter_call();
 extern void lspg_getcenter_done();
@@ -522,7 +527,7 @@ extern void lspg_nextshot_call();
 extern void lspg_nextshot_done();
 extern void lspg_nextshot_wait();
 extern void lspg_query_push(void (*cb)( lspg_query_queue_t *, PGresult *), char *fmt, ...);
-extern void lspg_run();
+extern pthread_t *lspg_run();
 extern void lspg_seq_run_prep_all( long long skey, double kappa, double phi, double cx, double cy, double ax, double ay, double az);
 extern void lspg_starttransfer_call( unsigned int nextsample, int sample_detected, double ax, double ay, double az, double horz, double vert, double esttime);
 extern void lspg_starttransfer_done();
@@ -543,7 +548,7 @@ extern int lspmac_move_preset_queue( lspmac_motor_t *mp, char *preset_name);
 extern int lspmac_moveabs_queue( lspmac_motor_t *, double);
 extern int lspmac_jogabs_queue( lspmac_motor_t *, double);
 extern int lspmac_moveabs_wait(lspmac_motor_t *mp, double timeout);
-extern void lspmac_run();
+extern pthread_t *lspmac_run();
 extern void lspmac_video_rotate( double secs);
 extern int  lsredis_cmpnstr( lsredis_obj_t *p, char *s, int n);
 extern int  lsredis_cmpstr( lsredis_obj_t *p, char *s);
@@ -552,16 +557,16 @@ extern int  lsredis_getb( lsredis_obj_t *p);
 extern double lsredis_getd( lsredis_obj_t *p);
 extern void lsredis_init();
 extern int  lsredis_regexec( const regex_t *preg, lsredis_obj_t *p, size_t nmatch, regmatch_t *pmatch, int eflags);
-extern void lsredis_run();
+extern pthread_t *lsredis_run();
 extern void lsredis_setstr( lsredis_obj_t *p, char *fmt, ...);
 extern void lstimer_set_timer( char *, int, unsigned long int, unsigned long int);
 extern void lstimer_unset_timer( char *event);
 extern void lstimer_init();
-extern void lstimer_run();
+extern pthread_t *lstimer_run();
 extern void lsupdate_init();
-extern void lsupdate_run();
+extern pthread_t *lsupdate_run();
 extern void md2cmds_init();
-extern void md2cmds_run();
+extern pthread_t *md2cmds_run();
 extern void pgpmac_printf( char *fmt, ...);
 extern void lstest_main();
 extern int lspmac_est_move_time( double *est_time, int *mmask, lspmac_motor_t *mp_1, int jog_1, char *preset_1, double end_point_1, ...);
