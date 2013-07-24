@@ -68,7 +68,7 @@ void lslogging_log_message( char *fmt, ...) {
 
   pthread_cond_signal(  &lslogging_cond);
   pthread_mutex_unlock( &lslogging_mutex);
-  
+
 }
 
 /** Log most events
@@ -108,6 +108,8 @@ void *lslogging_worker(
     fprintf( lslogging_file, "%s.%.06u  %s\n", tstr, msecs, lslogging_queue[off].lmsg);
     fflush( lslogging_file);
 
+    lsredis_log( "%s.%.06u  %s\n", tstr, msecs, lslogging_queue[off].lmsg);
+
     //
     // If the newline comes after the string then only a blank line comes out
     // in the ncurses terminal.  Don't know why.
@@ -118,8 +120,9 @@ void *lslogging_worker(
 
 /** Start up the worker thread.
  */
-void lslogging_run() {
+pthread_t *lslogging_run() {
   pthread_create( &lslogging_thread, NULL, &lslogging_worker, NULL);
   lslogging_log_message( "Start up");
   lsevents_add_listener( ".+", lslogging_event_cb);
+  return &lslogging_thread;
 }
