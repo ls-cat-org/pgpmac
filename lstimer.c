@@ -281,6 +281,7 @@ void lstimer_init() {
 
 /** Start up our thread.
  */
-void lstimer_run() {
+pthread_t *lstimer_run() {
   pthread_create( &lstimer_thread, NULL, lstimer_worker, NULL);
+  return &lstimer_thread;
 }
