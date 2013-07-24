@@ -255,7 +255,7 @@ plcc2_dict = {
 # inactive_init:        A comma separated list of strings (double quoted if spaces present) enclosed in braces to send to the PMAC when the motor is inactive.
 
 motor_dict = {
-    "omega" : { "motor_num" : "1", "max_accel" : "2", "max_speed" : "1664", "coord_num" : "1", "u2c" : "12800",
+    "omega" : { "motor_num" : "1", "max_accel" : "2", "max_speed" : "1664", "coord_num" : "1", "u2c" : "12800", "unit" : "deg",
                 "home" : '{"M401=1 M1115=1 #1$",&1E,#1&1B1R}',"active_init" : '{M31=1,&1#1->X,"M700=(M700 | $000001) ^ $000001", M1115=1}',
                 "inactive_init" : '{M31=0,&1#1->0,"M700=M700 | $000001",M1115=0}',"moveMode" :  "freeRotation",
                 "reference" :  "228.5", "format" :  "%.3f", "printf" : "%*.4f deg", "axis" : "X",
@@ -279,13 +279,13 @@ motor_dict = {
                   "minPosition" :  "0.45", "maxPosition" :  "5.85",
                   "hard_ini"  : "PHIAxisXYZTable.PHIZMotor", "neutralPosition" : "0", "active" : "1"
                   },
-    "lightPolar" : { "motor_num" : "5", "max_accel" : "0.2", "max_speed" : "3", "u2c" : "142", "coord_num" : "0",
+    "lightPolar" : { "motor_num" : "5", "max_accel" : "0.2", "max_speed" : "3", "u2c" : "142", "coord_num" : "0", "unit" : "deg",
                      "home" : '{#5$,#5HMZ}', "active_init" : '{}', "inactive_init" : '{}',
                      "largeStep" :  "45", "smallStep" :  "10", "format" : "%.1f",
                      "printf" :  "%*.1f deg", "update_resolution" :  "1",
                      "hard_ini" : "Analyser.AnalyserMotor", "neutralPosition" : "0", "active" : "1"
                      },
-    "cam.zoom" : { "motor_num" : "6","max_accel" : "0.2", "max_speed" : "10", "coord_num" : "4", "u2c" : "1.0",
+    "cam.zoom" : { "motor_num" : "6","max_accel" : "0.2", "max_speed" : "10", "coord_num" : "4", "u2c" : "1.0", "unit" : "mag",
                    "smallStep" :  "1",
                    "axis" :  "Z","format" :  "%.0f",
                    "minPosition" :  "1","update_resolution" :  "1",
@@ -333,13 +333,13 @@ motor_dict = {
                      "minPosition" :  "-2.58","maxPosition" :  "2.4",
                       "hard_ini" : "CentringXYTable.YCentringMotor", "neutralPosition" : "0", "active" : "1"
                      },
-    "kappa" : { "motor_num" : "19","max_accel" : "0.2",  "max_speed" : "50", "coord_num" : "7", "u2c" : "2844.444",
+    "kappa" : { "motor_num" : "19","max_accel" : "0.2",  "max_speed" : "50", "coord_num" : "7", "u2c" : "2844.444", "unit" : "deg",
                 "moveMode" :  "rotation",
                 "axis" :  "X","format" :  "%.2f",
                 "minPosition" :  "-5","update_resolution" :  "1.0",
                 "hard_ini" : "MiniKappa.Kappa1", "neutralPosition" : "0", "active" : "1"
                 },
-    "phi" : { "motor_num" : "20","max_accel" : "0.2",  "max_speed" : "50", "coord_num" : "7", "u2c" : "711.111",
+    "phi" : { "motor_num" : "20","max_accel" : "0.2",  "max_speed" : "50", "coord_num" : "7", "u2c" : "711.111", "unit" : "deg",
               "moveMode" :  "freeRotation",
               "axis" :  "Y","format" :  "%.2f",
               "update_resolution" :  "1.0",
@@ -348,13 +348,13 @@ motor_dict = {
     "fastShutter" : { "canHome" :  "false","type" :  "BO",
                       "update_resolution" :  "0.5","canStop" :  "false", "active" : "1", "in_position_band" : "0"
                       },
-    "frontLight.intensity" : { "canHome" :  "false","type" :  "DAC",
+    "frontLight.intensity" : { "canHome" :  "false","type" :  "DAC", "format" : "%.0f",
                                "update_resolution" :  "0.5","canStop" :  "false", "active" : "1", "in_position_band" : "0"
                               },
-    "backLight.intensity" : { "canHome" :  "false","type" :  "DAC",
+    "backLight.intensity" : { "canHome" :  "false","type" :  "DAC", "format" : "%.0f",
                               "update_resolution" :  "0.5","canStop" :  "false", "active" : "1", "in_position_band" : "0"
                              },
-    "scint.focus" : { "canHome" :  "false","type" :  "DAC",
+    "scint.focus" : { "canHome" :  "false","type" :  "DAC", "format" : "%.0f",
                       "update_resolution" :  "0.5","canStop" :  "false", "active" : "1", "in_position_band" : "0"
                       },
     "backLight" : { "canHome" :  "false","type" :  "BO",
@@ -492,6 +492,7 @@ motor_field_lists = [
     ["unit",              "mm",         0],     # user units
     ["update_resolution", "0.001",      4]      # update redis when motor is moving only when a change of this magnetude is seen
     ]
+
 bi_list = ["CryoSwitch"]
 
 motor_presets = {
