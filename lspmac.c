@@ -1178,6 +1178,7 @@ void lspmac_bo_read(
   if( mp->reported_position != mp->position) {
     fmt = lsredis_getstr(mp->redis_fmt);
     lsredis_setstr( mp->redis_position, fmt, mp->position);
+    lsredis_setstr( mp->status_str, "%s", mp->position ? "On" : "Off");
     free(fmt);
     mp->reported_position = mp->position;
   }
@@ -1260,6 +1261,7 @@ void lspmac_shutter_read(
   if( fshut->reported_position != fshut->position) {
     fmt = lsredis_getstr( fshut->redis_fmt);
     lsredis_setstr( fshut->redis_position, fmt, fshut->position);
+    lsredis_setstr( fshut->status_str, "%s", fshut->reported_position == 0 ? "Open" : "Closed");
     free(fmt);
     fshut->reported_position = fshut->position;
   }
@@ -1730,16 +1732,24 @@ void lspmac_get_status_cb(
 
     if( bp->first_time) {
       bp->first_time = 0;
-      if( bp->position==1 && bp->changeEventOn != NULL && bp->changeEventOn[0] != 0)
+      if( bp->position==1 && bp->changeEventOn != NULL && bp->changeEventOn[0] != 0) {
 	lsevents_send_event( lspmac_bis[i].changeEventOn);
-      if( bp->position==0 && bp->changeEventOff != NULL && bp->changeEventOff[0] != 0)
+	lsredis_setstr( bp->status_str, bp->onStatus);
+      }
+      if( bp->position==0 && bp->changeEventOff != NULL && bp->changeEventOff[0] != 0) {
 	lsevents_send_event( lspmac_bis[i].changeEventOff);
+	lsredis_setstr( bp->status_str, bp->offStatus);
+      }
     } else {
       if( bp->position != bp->previous) {
-	if( bp->position==1 && bp->changeEventOn != NULL && bp->changeEventOn[0] != 0)
+	if( bp->position==1 && bp->changeEventOn != NULL && bp->changeEventOn[0] != 0) {
 	  lsevents_send_event( lspmac_bis[i].changeEventOn);
-	if(bp->position==0 && bp->changeEventOff != NULL && bp->changeEventOff[0] != 0)
+	  lsredis_setstr( bp->status_str, bp->onStatus);
+	}
+	if(bp->position==0 && bp->changeEventOff != NULL && bp->changeEventOff[0] != 0) {
 	  lsevents_send_event( lspmac_bis[i].changeEventOff);
+	  lsredis_setstr( bp->status_str, bp->offStatus);
+	}
       }
     }
     bp->previous = bp->position;
@@ -1770,20 +1780,22 @@ void lspmac_get_status_cb(
   // 0x40  6	M1014	Etel On
   // 0x80  7	M1015	Etel Init OK
 
-  if( md2_status.acc11c_2 & 0x01)
+  if( md2_status.acc11c_2 & 0x01) {
     mvwprintw( term_status2, 3, 10, "%*s", -8, "Fluor Out");
-  else
+  } else {
     mvwprintw( term_status2, 3, 10, "%*s", -8, "Fluor In");
+  }
 
-  if( md2_status.acc11c_5 & 0x08)
+  if( md2_status.acc11c_5 & 0x08) {
     mvwprintw( term_status2, 4, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Dryer On");
-  else
+  } else {
     mvwprintw( term_status2, 4, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Dryer Off");
-
-  if( md2_status.acc11c_2 & 0x02)
+  }
+  if( md2_status.acc11c_2 & 0x02) {
     mvwprintw( term_status2, 2, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Cap Dectected");
-  else
+  } else {
     mvwprintw( term_status2, 2, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Cap Not Dectected");
+  }
   wnoutrefresh( term_status2);
 
 
@@ -1844,10 +1856,11 @@ void lspmac_get_status_cb(
   // 0x8000  15 M1131   ADC2 gain bit 1
   //
 
-  if( md2_status.acc11c_5 & 0x02)
+  if( md2_status.acc11c_5 & 0x02) {
     mvwprintw( term_status,  3, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Backlight Up");
-  else
+  } else {
     mvwprintw( term_status,  3, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Backlight Down");
+  }
   mvwprintw( term_status, 4, 1, "Front: %*u", LS_DISPLAY_WINDOW_WIDTH-2-8, (int)flight->position);
   mvwprintw( term_status, 5, 1, "Back: %*u", LS_DISPLAY_WINDOW_WIDTH-2-7,  (int)blight->position);
   mvwprintw( term_status, 6, 1, "Piezo: %*u", LS_DISPLAY_WINDOW_WIDTH-2-8, (int)fscint->position);
@@ -3758,14 +3771,18 @@ lspmac_motor_t *lspmac_soft_motor_init( lspmac_motor_t *d, char *name, int (*mov
 
 /** Initialize binary input
  */
-lspmac_bi_t *lspmac_bi_init( lspmac_bi_t *d, int *ptr, int mask, char *onEvent, char *offEvent) {
+lspmac_bi_t *lspmac_bi_init( lspmac_bi_t *d, char *name, int *ptr, int mask, char *onEvent, char *offEvent, char *onStatus, char *offStatus) {
   lspmac_nbis++;
   pthread_mutex_init( &(d->mutex), NULL);
+  d->name           = strdup( name);
   d->ptr            = ptr;
   d->mask           = mask;
   d->changeEventOn  = strdup( onEvent);
   d->changeEventOff = strdup( offEvent);
+  d->onStatus       = strdup( onStatus);
+  d->offStatus      = strdup( offStatus);
   d->first_time     = 1;
+  d->status_str     = lsredis_get_obj( "%s.status_str", d->name);
 
   lsevents_preregister_event( "%s", d->changeEventOn);
   lsevents_preregister_event( "%s", d->changeEventOff);
@@ -3861,23 +3878,23 @@ void lspmac_init(
     blight_f      = lspmac_soft_motor_init( &(lspmac_motors[25]), "backLight.factor",  lspmac_moveabs_blight_factor_queue);
     flight_f      = lspmac_soft_motor_init( &(lspmac_motors[26]), "frontLight.factor", lspmac_moveabs_flight_factor_queue);
 
-    lp_air          = lspmac_bi_init( &(lspmac_bis[ 0]), &(md2_status.acc11c_1),  0x01, "Low Pressure Air OK",  "Low Pressure Air Failed");
-    hp_air          = lspmac_bi_init( &(lspmac_bis[ 1]), &(md2_status.acc11c_1),  0x02, "High Pressure Air OK", "High Pressure Air Failed");
-    cryo_switch     = lspmac_bi_init( &(lspmac_bis[ 2]), &(md2_status.acc11c_1),  0x04, "CryoSwitchChanged",    "CryoSwitchChanged");
-    blight_down     = lspmac_bi_init( &(lspmac_bis[ 3]), &(md2_status.acc11c_1),  0x08, "Backlight Down",       "Backlight Not Down");
-    blight_up       = lspmac_bi_init( &(lspmac_bis[ 4]), &(md2_status.acc11c_1),  0x10, "Backlight Up",         "Backlight Not Up");
-    cryo_back       = lspmac_bi_init( &(lspmac_bis[ 5]), &(md2_status.acc11c_1),  0x40, "Cryo Back",            "Cryo Not Back");
-    fluor_back	  = lspmac_bi_init( &(lspmac_bis[ 6]), &(md2_status.acc11c_2),  0x01, "Fluor. Det. Parked",   "Fluor. Det. Not Parked");
-    sample_detected = lspmac_bi_init( &(lspmac_bis[ 7]), &(md2_status.acc11c_2),  0x02, "SamplePresent",        "SampleAbsent");
-    etel_ready      = lspmac_bi_init( &(lspmac_bis[ 8]), &(md2_status.acc11c_2),  0x20, "ETEL Ready",           "ETEL Not Ready");
-    etel_on         = lspmac_bi_init( &(lspmac_bis[ 9]), &(md2_status.acc11c_2),  0x40, "ETEL On",              "ETEL Off");
-    etel_init_ok    = lspmac_bi_init( &(lspmac_bis[10]), &(md2_status.acc11c_2),  0x80, "ETEL Init OK",         "ETEL Init Not OK");
-    minikappa_ok    = lspmac_bi_init( &(lspmac_bis[11]), &(md2_status.acc11c_3),  0x01, "Minikappa OK",         "Minikappa Not OK");
-    smart_mag_on    = lspmac_bi_init( &(lspmac_bis[12]), &(md2_status.acc11c_3),  0x04, "Smart Magnet On",      "Smart Magnet Not On");
-    arm_parked      = lspmac_bi_init( &(lspmac_bis[13]), &(md2_status.acc11c_3),  0x08, "Arm Parked",           "Arm Not Parked");
-    smart_mag_err   = lspmac_bi_init( &(lspmac_bis[14]), &(md2_status.acc11c_3),  0x10, "Smart Magnet Error",   "Smart Magnet OK");
-    shutter_open    = lspmac_bi_init( &(lspmac_bis[15]), &(md2_status.acc11c_3), 0x100, "Shutter Open",         "Shutter Not Open");
-    smart_mag_off   = lspmac_bi_init( &(lspmac_bis[16]), &(md2_status.acc11c_5),  0x01, "Smart Magnet Off",     "Smart Magnet Not Off");
+    lp_air          = lspmac_bi_init( &(lspmac_bis[ 0]), "lowpressureair",   &(md2_status.acc11c_1),  0x01, "Low Pressure Air OK",  "Low Pressure Air Failed",  "OK",      "Failed");
+    hp_air          = lspmac_bi_init( &(lspmac_bis[ 1]), "highpressureair",  &(md2_status.acc11c_1),  0x02, "High Pressure Air OK", "High Pressure Air Failed", "OK",      "Failed");
+    cryo_switch     = lspmac_bi_init( &(lspmac_bis[ 2]), "cryoswitch",       &(md2_status.acc11c_1),  0x04, "CryoSwitchChanged",    "CryoSwitchChanged",        "On",      "Off");
+    blight_down     = lspmac_bi_init( &(lspmac_bis[ 3]), "backLightDown",    &(md2_status.acc11c_1),  0x08, "Backlight Down",       "Backlight Not Down",       "Down",    "Not Down");
+    blight_up       = lspmac_bi_init( &(lspmac_bis[ 4]), "backLightUp",      &(md2_status.acc11c_1),  0x10, "Backlight Up",         "Backlight Not Up",         "Up",      "Not Up");
+    cryo_back       = lspmac_bi_init( &(lspmac_bis[ 5]), "cryoBack",         &(md2_status.acc11c_1),  0x40, "Cryo Back",            "Cryo Not Back",            "Back",    "Not Back");
+    fluor_back	    = lspmac_bi_init( &(lspmac_bis[ 6]), "detectorParked",   &(md2_status.acc11c_2),  0x01, "Fluor. Det. Parked",   "Fluor. Det. Not Parked",   "Parked",  "Not Parked");
+    sample_detected = lspmac_bi_init( &(lspmac_bis[ 7]), "sampleDetector",   &(md2_status.acc11c_2),  0x02, "SamplePresent",        "SampleAbsent",             "Present", "Absent" );
+    etel_ready      = lspmac_bi_init( &(lspmac_bis[ 8]), "etelReady",        &(md2_status.acc11c_2),  0x20, "ETEL Ready",           "ETEL Not Ready",           "Ready",   "Not Ready");
+    etel_on         = lspmac_bi_init( &(lspmac_bis[ 9]), "etelOn",           &(md2_status.acc11c_2),  0x40, "ETEL On",              "ETEL Off",                 "On",      "Off");
+    etel_init_ok    = lspmac_bi_init( &(lspmac_bis[10]), "etelOk",           &(md2_status.acc11c_2),  0x80, "ETEL Init OK",         "ETEL Init Not OK",         "OK",      "Not OK");
+    minikappa_ok    = lspmac_bi_init( &(lspmac_bis[11]), "miniKappaOk",      &(md2_status.acc11c_3),  0x01, "Minikappa OK",         "Minikappa Not OK",         "OK",      "Not OK");
+    smart_mag_on    = lspmac_bi_init( &(lspmac_bis[12]), "smartMagnetOn",    &(md2_status.acc11c_3),  0x04, "Smart Magnet On",      "Smart Magnet Not On",      "On",      "Not On");
+    arm_parked      = lspmac_bi_init( &(lspmac_bis[13]), "armParked",        &(md2_status.acc11c_3),  0x08, "Arm Parked",           "Arm Not Parked",           "Parked",  "Not Parked");
+    smart_mag_err   = lspmac_bi_init( &(lspmac_bis[14]), "smartMagnetError", &(md2_status.acc11c_3),  0x10, "Smart Magnet Error",   "Smart Magnet OK",          "Error",   "OK");
+    shutter_open    = lspmac_bi_init( &(lspmac_bis[15]), "shutterOpen",      &(md2_status.acc11c_3), 0x100, "Shutter Open",         "Shutter Not Open",         "Open",    "Not Open");
+    smart_mag_off   = lspmac_bi_init( &(lspmac_bis[16]), "smartMagnetOff",   &(md2_status.acc11c_5),  0x01, "Smart Magnet Off",     "Smart Magnet Not Off",     "Off",     "Not Off");
   
 
 
@@ -4356,7 +4373,7 @@ void lspmac_command_done_cb( char *event) {
 
 /** Start up the lspmac thread
  */
-void lspmac_run() {
+pthread_t *lspmac_run() {
   static int first_time = 1;
   char **inits;
   lspmac_motor_t *mp;
@@ -4462,4 +4479,5 @@ void lspmac_run() {
       }
     }
   }
+  return &pmac_thread;
 }
