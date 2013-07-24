@@ -2001,7 +2001,8 @@ void lspg_init() {
 
 /** Start 'er runnin'
  */
-void lspg_run() {
+pthread_t *lspg_run() {
+
   pthread_create( &lspg_thread, NULL, lspg_worker, NULL);
   lsevents_add_listener( "^(appy|appz|capy|capz|scint) In Position$", lspg_check_preset_in_position_cb);
   lsevents_add_listener( "^(appy|appz|capy|capz|scint) Moving$",      lspg_unset_current_preset_moving_cb);
@@ -2015,4 +2016,6 @@ void lspg_run() {
   // Make sure we own the airrights
   //
   lspg_demandairrights_all();
+
+  return( &lspg_thread);
 }
