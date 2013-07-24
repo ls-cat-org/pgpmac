@@ -252,6 +252,8 @@ int pgpmac_use_autoscint = 0;		//!< non-zero to automatically move the alignment
 static struct pollfd stdinfda;			//!< Handle input from the keyboard
 static int running = 1;
 static sigset_t our_sigset;
+static pthread_t *ourThreads[32];	//!< a list of our threads.  
+static int nOurThreads = 0;
 
 
 /** Handle keyboard input
@@ -309,11 +311,14 @@ void stdinService(
     switch( ch) {
     case KEY_F(1):
     case KEY_F(2):
-    case KEY_F(3):
       lspmac_abort();					// send abort now (as opposed to an event listener) in case a cleanup routine wants to move something (we don't want to abort it).
       lsevents_send_event( "Quitting Program");		// let everyone know the end is nigh
       lstimer_set_timer( "Quit Program", -1, 1, 0);	// Doomsday, repeat as needed
       break;
+
+    case KEY_F(3):
+      endwin();
+      exit(0);
 
     case 0x0002:	// Control-B    Report status word for 8 motors
     case 0x0003:	// Control-C    Report all coordinate system status words
@@ -505,6 +510,36 @@ void pgpmac_quit_cb( char *event) {
   doomsday_count--;
   if( doomsday_count <= 0)
     running = 0;
+  lslogging_log_message( "pgpmac_quit_cb: doomsday_count=%d, running=%d", doomsday_count, running);
+
+  if( doomsday_count == -2) {
+    int i;
+    int err;
+
+    // Be nice
+    //
+    for( i=nOurThreads-1; i>=0; i--) {
+      err = pthread_kill( *ourThreads[i], 0);
+      if( err == 0) {
+	pthread_kill( *ourThreads[i], 3);
+      }
+    }
+
+    if( doomsday_count < -2) {
+      int i;
+      int err;
+
+      // Be mean
+      //
+      for( i=nOurThreads-1; i>=0; i--) {
+	err = pthread_kill( *ourThreads[i], 0);
+	if( err == 0) {
+	  pthread_kill( *ourThreads[i], 9);
+	}
+      }
+    }
+  }
+
   pthread_mutex_unlock( &doomsday_mutex);
 }
 
@@ -599,12 +634,12 @@ int main(
   //
   // Everyone needs to be able to log messages
   lslogging_init();
-  lslogging_run();
+  ourThreads[nOurThreads++] = lslogging_run();
 
   // Everyone needs to send and listen for events
   //
   lsevents_init();
-  lsevents_run();
+  ourThreads[nOurThreads++] = lsevents_run();
 
   //
   // Add a couple of our own
@@ -617,14 +652,14 @@ int main(
   // Timers are needed by all too
   //
   lstimer_init();
-  lstimer_run();
+  ourThreads[nOurThreads++] = lstimer_run();
 
   //
   // Redis is where we get our configuration
   // as well as one of communicating with the outside world
   //
   lsredis_init();
-  lsredis_run();
+  ourThreads[nOurThreads++] = lsredis_run();
   lsredis_config();
 
   //
@@ -666,14 +701,15 @@ int main(
   //
   // Now run the world
   //
-  lspmac_run();
+  ourThreads[nOurThreads++] = lspmac_run();
 
   if( pgpmac_use_pg)
-    lspg_run();
+    ourThreads[nOurThreads++] = lspg_run();
 
-  md2cmds_run();
+  ourThreads[nOurThreads++] = md2cmds_run();
 
   pthread_create( &sigterm_thread, NULL, sigtermWorker, NULL);
+  ourThreads[nOurThreads++] = &sigterm_thread;
 
   while( running) {
     //
@@ -693,6 +729,7 @@ int main(
       }
     }
   }
+
   endwin();
   return 0;
 }
