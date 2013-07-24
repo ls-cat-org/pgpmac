@@ -387,6 +387,7 @@ void lsevents_init() {
 
 /** Start up the thread and get out of the way.
  */
-void lsevents_run() {
+pthread_t *lsevents_run() {
   pthread_create( &lsevents_thread, NULL, lsevents_worker, NULL);
+  return &lsevents_thread;
 }
