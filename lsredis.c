@@ -29,7 +29,7 @@
    or    mk_pgpmac_redis
 </pre>
  * (this last value is used to support the now depreciated px.kvs table in the LS-CAT postgresql server).
- * We assume that all publisher that we are listening to ONLY publish key names that have changed.
+ * We assume that all publishers that we are listening to ONLY publish key names that have changed.
  *
  * When someone else changes a value we invalidate our internal copy and issue a "HGET key VALUE" command.  Other threads
  * that request the value of our lsredis_obj_t will pause until the new value has been received and processed.
@@ -817,7 +817,7 @@ void lsredis_keysCB( redisAsyncContext *ac, void *reply, void *privdata) {
   
   for( i=0; i< (int)r->elements; i++) {
     if( r->element[i]->type != REDIS_REPLY_STRING) {
-      lslogging_log_message( "lsredis_keysCB: exected string...");
+      lslogging_log_message( "lsredis_keysCB: exepected string...");
       lsredis_debugCB( ac, r->element[i], privdata);
     } else {
       lsredis_maybe_add_key( r->element[i]->str);
@@ -1007,6 +1007,42 @@ int lsredis_find_preset_index_by_position( lspmac_motor_t *mp) {
   return -1;
 }
 
+
+
+/** send log message to our redis log key
+ */
+void lsredis_log( char *fmt, ...) {
+  static lsredis_obj_t *loghash = NULL;		// our redis object
+  static int try = 0;				// only try once to get redis object else infinte loop might occur and logging of any kind will faile
+  char msg[2048+64];
+  va_list arg_ptr;
+
+
+
+  if( pthread_mutex_trylock( &lsredis_mutex) == 0) {
+
+    va_start( arg_ptr, fmt);
+    vsnprintf( msg, sizeof(msg)-1, fmt, arg_ptr);
+    va_end( arg_ptr);
+    msg[sizeof(msg)-1]=0;
+
+  
+    if( lsredis_head == NULL) {			// Ignore messages that come before redis is initiallized
+      pthread_mutex_unlock( &lsredis_mutex);
+      return;
+    }
+    
+    if( try == 0 && loghash == NULL) {
+      try++;
+      loghash = lsredis_get_obj( "log.message");
+    }
+    
+    if( loghash != NULL) {
+      lsredis_setstr( loghash, "%s", msg);
+    }
+    pthread_mutex_unlock( &lsredis_mutex);
+  }
+}
 
 
 void lsredis_configCB( redisAsyncContext *ac, void *reply, void *privdata) {
@@ -1316,6 +1352,7 @@ void *lsredis_worker(  void *dummy) {
 }
 
 
-void lsredis_run() {
+pthread_t *lsredis_run() {
   pthread_create( &lsredis_thread, NULL, lsredis_worker, NULL);
+  return &lsredis_thread;
 }
