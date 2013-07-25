@@ -1012,35 +1012,40 @@ int lsredis_find_preset_index_by_position( lspmac_motor_t *mp) {
 /** send log message to our redis log key
  */
 void lsredis_log( char *fmt, ...) {
-  static lsredis_obj_t *loghash = NULL;		// our redis object
-  static int try = 0;				// only try once to get redis object else infinte loop might occur and logging of any kind will faile
+  static lsredis_obj_t *loghashs[32];
+  static int firstTime = 1;
+  static int lhi = 0;
   char msg[2048+64];
   va_list arg_ptr;
-
-
-
-  if( pthread_mutex_trylock( &lsredis_mutex) == 0) {
-
-    va_start( arg_ptr, fmt);
-    vsnprintf( msg, sizeof(msg)-1, fmt, arg_ptr);
-    va_end( arg_ptr);
-    msg[sizeof(msg)-1]=0;
-
   
+  
+  
+  if( pthread_mutex_trylock( &lsredis_mutex) == 0) {
+    
+    
     if( lsredis_head == NULL) {			// Ignore messages that come before redis is initiallized
       pthread_mutex_unlock( &lsredis_mutex);
       return;
     }
     
-    if( try == 0 && loghash == NULL) {
-      try++;
-      loghash = lsredis_get_obj( "log.message");
+    if( firstTime) {
+      int i;
+      for( i=0; i<sizeof(loghashs)/sizeof(loghashs[0]); i++) {
+	loghashs[i] = lsredis_get_obj( "log.message.%d", i);
+      }
+      lhi = 0;
+      firstTime=0;
     }
     
-    if( loghash != NULL) {
-      lsredis_setstr( loghash, "%s", msg);
-    }
+    va_start( arg_ptr, fmt);
+    vsnprintf( msg, sizeof(msg)-1, fmt, arg_ptr);
+    va_end( arg_ptr);
+    msg[sizeof(msg)-1]=0;
+    
+    lsredis_setstr( loghashs[lhi], "%s", msg);
+    lhi = (lhi+1) % (sizeof(loghashs)/sizeof(loghashs[0]));
     pthread_mutex_unlock( &lsredis_mutex);
+    
   }
 }
 
@@ -1273,6 +1278,30 @@ void lsredis_sig_service(
 
 }
 
+void lsredis_heartbeat_cb( char *event) {
+  static lsredis_obj_t *hb_time = NULL;
+  struct timespec now;
+  struct tm lnow;
+  char snow[64];
+  unsigned int msecs;
+
+  if( hb_time == NULL) {
+    hb_time = lsredis_get_obj( "time");
+  }
+
+  if( hb_time == NULL) {
+    lslogging_log_message( "lsredis_heartbeat_cb: null redis object.  Why?");
+    return;
+  }
+
+  clock_gettime( CLOCK_REALTIME, &now);
+  localtime_r( &now.tv_sec, &lnow);
+  msecs = now.tv_nsec / 1000;
+  strftime( snow, sizeof(snow)-1, "%Y-%m-%d %H:%M:%S", &lnow);
+  lsredis_setstr( hb_time, "%s.%.06u", snow, msecs);
+}
+
+
 /** subscribe to changes and service sockets
  */
 void *lsredis_worker(  void *dummy) {
@@ -1308,6 +1337,9 @@ void *lsredis_worker(  void *dummy) {
 
   pthread_cond_signal( &lsredis_cond);
   pthread_mutex_unlock( &lsredis_mutex);
+
+  lsevents_add_listener( "^Heartbeat$", lsredis_heartbeat_cb);
+  lstimer_set_timer( "Heartbeat", -1, 1, 0);
 
 
   while(1) {
