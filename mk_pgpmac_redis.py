@@ -50,6 +50,26 @@ plcc2_dict = {
     "phi"         : { "status1" : "M5015", "status2" : "M5035", "position" : "M5055"}
 }
 
+#
+# Extra stuff not found from the ini file and, therefore, will likely need editing
+#
+extras = [
+    {"k" : "overlay.centers.0.type",   "v" : "circle"},
+    {"k" : "overlay.centers.0.diam",   "v" : "5"},
+    {"k" : "overlay.centers.1.type",   "v" : "circle"},
+    {"k" : "overlay.centers.1.diam",   "v" : "10"},
+    {"k" : "overlay.centers.2.type",   "v" : "circle"},
+    {"k" : "overlay.centers.2.diam",   "v" : "20"},
+    {"k" : "overlay.centers.3.type",   "v" : "circle"},
+    {"k" : "overlay.centers.3.diam",   "v" : "50"},
+    {"k" : "overlay.centers.4.type",   "v" : "circle"},
+    {"k" : "overlay.centers.4.diam",   "v" : "1000"},
+    {"k" : "overlay.centers.5.type",   "v" : "rect"},
+    {"k" : "overlay.centers.5.width",  "v" : "1000"},
+    {"k" : "overlay.centers.5.height", "v" : "70"},
+    {"k" : "overlay.centers.length",   "v" : "6"},
+    {"k" : "overlay.curentCenter",     "v" : "3"}
+    ]
 
 
 # M5001=M1	; Omega
@@ -725,6 +745,12 @@ for lev, f, b, p, x, y, section in zoom_settings:
         fnc = "HSET"
     print "%s %s.cam.zoom.%d.ScaleY VALUE %s"              % (fnc, head, lev, y)
     print "PUBLISH mk_pgpmac_redis %s.cam.zoom.%d.ScaleY"              % (head, lev)
+
+
+for e in extras:
+    print "HSETNX %s.%s VALUE %s" % ( head, e["k"], e["v"])
+    print "publish mk_pgpmac_redis %s.%s" % ( head, e["k"])
+
 
 
 plcc2_file = open( "%s-plcc2.pmc" % (head), "w")
