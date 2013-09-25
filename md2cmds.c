@@ -1434,8 +1434,8 @@ int md2cmds_rotate( const char *dummy) {
 
 
   if( lspmac_est_move_time( &move_time, &mmask,
-			    scint,  1,  "Cover", 0.0,
-			    capz,   1,  "Cover", 0.0,
+			    scint,  0,  "Cover", 0.0,
+			    capz,   0,  "Cover", 0.0,
 			    cenx,   0,  NULL,    cx,
 			    ceny,   0,  NULL,    cy,
 			    alignx, 0,  NULL,    ax,
@@ -1448,7 +1448,7 @@ int md2cmds_rotate( const char *dummy) {
     return 1;
   }
 
-  if( lspmac_est_move_time_wait( move_time + 2.0, mmask, scint, capz, zoom, NULL)) {
+  if( lspmac_est_move_time_wait( move_time + 2.0, mmask, zoom, NULL)) {
     lslogging_log_message( "md2cmds_rotate: organ motion timed out %f seconds", move_time + 2.0);
     lsevents_send_event( "Rotate Aborted");
     return 1;
@@ -1480,6 +1480,7 @@ int md2cmds_rotate( const char *dummy) {
  *  This should trigger the video feed server to starting making a movie.
  */
 void md2cmds_rotate_cb( char *event) {
+  static lsredis_obj_t *ozt  = NULL;
   struct tm t;
   int usecs;
 
@@ -1490,6 +1491,13 @@ void md2cmds_rotate_cb( char *event) {
 		   t.tm_year+1900, t.tm_mon+1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec, usecs,
 		   (int)(lspmac_getPosition( zoom)));
 
+  if( ozt == NULL)
+    ozt = lsredis_get_obj( "omega.rotate.time");
+
+  lsredis_setstr( ozt, "%d-%d-%d %d:%d:%d.%06d, %d, 0.0, 90.0",
+		  t.tm_year+1900, t.tm_mon+1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec, usecs,
+		  (int)(lspmac_getPosition( zoom)));
+  
 }
 
 /** Now that we are done with the 360 rotation lets rehome right quick
