@@ -1125,7 +1125,7 @@ void lsredis_configCB( redisAsyncContext *ac, void *reply, void *privdata) {
   */
 
 
-  if( redisAsyncCommand( subac, lsredis_subCB, NULL, "PSUBSCRIBE REDIS_KV_CONNECTOR mk_pgpmac_redis UI* MD2-*") == REDIS_ERR) {
+  if( redisAsyncCommand( subac, lsredis_subCB, NULL, "PSUBSCRIBE REDIS_NODE_CONNECTOR mk_pgpmac_redis UI* MD2-*") == REDIS_ERR) {
     lslogging_log_message( "Error sending PSUBSCRIBE command");
   }
   redisAsyncCommand( roac, lsredis_keysCB, NULL, "KEYS *");
