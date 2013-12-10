@@ -433,7 +433,7 @@ void lspg_getcurrentsampleid_init() {
 void lspg_getcurrentsampleid_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   pthread_mutex_lock( &lspg_getcurrentsampleid.mutex);
 
-  lspg_nextsample.new_value_ready = 1;
+  lspg_getcurrentsampleid.new_value_ready = 1;
   lspg_getcurrentsampleid.no_rows_returned = PQntuples( pgr) <= 0;
   if( lspg_getcurrentsampleid.no_rows_returned) {
     pthread_cond_signal( &lspg_getcurrentsampleid.cond);
@@ -474,8 +474,16 @@ unsigned int lspg_getcurrentsampleid_read() {
     rtn = -1;
   else
     rtn = lspg_getcurrentsampleid.getcurrentsampleid;
+
   pthread_mutex_unlock( &lspg_getcurrentsampleid.mutex);
   return rtn;
+}
+
+/** return the current sampleid
+ */
+unsigned int lspg_getcurrentsampleid_all() {
+  lspg_getcurrentsampleid_call();
+  return lspg_getcurrentsampleid_read();
 }
 
 /**
@@ -1615,6 +1623,8 @@ void lspg_pg_service(
 	  lspg_query_push( lspg_allkvs_cb, "EXECUTE getkvs");
 	} else if( strstr( pgn->relname, "_mess") != NULL) {
 	  lspg_query_push( lspg_nexterrors_cb, "EXECUTE nexterrors");
+	} else if( strstr( pgn->relname, "_pause") != NULL) {
+	  
 	}
 	PQfreemem( pgn);
       }
