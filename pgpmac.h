@@ -521,6 +521,7 @@ extern void lspg_demandairrights_all();
 extern void lspg_getcenter_call();
 extern void lspg_getcenter_done();
 extern void lspg_getcenter_wait();
+extern unsigned int  lspg_getcurrentsampleid_all();
 extern void lspg_getcurrentsampleid_wait_for_id( unsigned int test);
 extern void lspg_init();
 extern void lspg_nextshot_call();
