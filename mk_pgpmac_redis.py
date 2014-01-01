@@ -24,12 +24,14 @@ else:
 
 
 configs = {
-    "orange-2"            : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E", "pg" : "1", "autoscint" : "1"},
-    "orange-2.ls-cat.org" : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E", "pg" : "1", "autoscint" : "1"},
-    "venison.ls-cat.org"  : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E", "pg" : "1", "autoscint" : "1"},
-    "mung-2"              : { "re" : "redis\.kvseq|stns\.1\.(.+)", "head" : "stns.1", "pub" : "MD2-21-ID-D", "pg" : "1", "autoscint" : "1"},
-    "mung-2.ls-cat.org"   : { "re" : "redis\.kvseq|stns\.1\.(.+)", "head" : "stns.1", "pub" : "MD2-21-ID-D", "pg" : "1", "autoscint" : "1"},
-    "vidalia.ls-cat.org"  : { "re" : "redis\.kvseq|stns\.1\.(.+)", "head" : "stns.1", "pub" : "MD2-21-ID-D", "pg" : "1", "autoscint" : "1"},
+    "orange-2"            : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E", "pg" : "1", "autoscint" : "1", "robopub" : "ROBOT-21-ID-E"},
+    "orange-2.ls-cat.org" : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E", "pg" : "1", "autoscint" : "1", "robopub" : "ROBOT-21-ID-E"},
+    "venison.ls-cat.org"  : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E", "pg" : "1", "autoscint" : "1", "robopub" : "ROBOT-21-ID-E"},
+    "mung-2"              : { "re" : "redis\.kvseq|stns\.1\.(.+)", "head" : "stns.1", "pub" : "MD2-21-ID-D", "pg" : "1", "autoscint" : "1", "robopub" : "ROBOT-21-ID-D"},
+    "mung-2.ls-cat.org"   : { "re" : "redis\.kvseq|stns\.1\.(.+)", "head" : "stns.1", "pub" : "MD2-21-ID-D", "pg" : "1", "autoscint" : "1", "robopub" : "ROBOT-21-ID-D"},
+    "vidalia.ls-cat.org"  : { "re" : "redis\.kvseq|stns\.1\.(.+)", "head" : "stns.1", "pub" : "MD2-21-ID-D", "pg" : "1", "autoscint" : "1", "robopub" : "ROBOT-21-ID-D"},
+    "vanilla.ls-cat.org"  : { "re" : "redis\.kvseq|stns\.3\.(.+)", "head" : "stns.3", "pub" : "MD2-21-ID-F", "pg" : "1", "autoscint" : "1", "robopub" : "ROBOT-21-ID-F"},
+    "vinegar.ls-cat.org"  : { "re" : "redis\.kvseq|stns\.4\.(.+)", "head" : "stns.4", "pub" : "MD2-21-ID-G", "pg" : "1", "autoscint" : "1", "robopub" : "ROBOT-21-ID-G"}
 }
 
 plcc2_dict = {
@@ -601,8 +603,8 @@ zoom_settings = [
 
 # config 
 for c in configs.keys():
-    print "HMSET config.%s HEAD '%s' PUB '%s' RE '%s' PG '%s' AUTOSCINT '%s'" % \
-        (c.lower(), configs[c]["head"], configs[c]["pub"], configs[c]["re"], configs[c]["pg"], configs[c]["autoscint"])
+    print "HMSET config.%s HEAD '%s' PUB '%s' RE '%s' PG '%s' AUTOSCINT '%s' ROBOPUB '%s'" % \
+        (c.lower(), configs[c]["head"], configs[c]["pub"], configs[c]["re"], configs[c]["pg"], configs[c]["autoscint"], configs[c]["robopub"])
 
 
 # motor stuff
