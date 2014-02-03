@@ -1484,7 +1484,7 @@ void md2cmds_rotate_cb( char *event) {
   struct tm t;
   int usecs;
 
-  localtime_r( &(omega_zero_time.tv_sec), &t);
+  gmtime_r( &(omega_zero_time.tv_sec), &t);
   
   usecs = omega_zero_time.tv_nsec / 1000;
   lspg_query_push( NULL, "SELECT px.trigcam('%d-%d-%d %d:%d:%d.%06d', %d, 0.0, 90.0)",
@@ -1494,7 +1494,7 @@ void md2cmds_rotate_cb( char *event) {
   if( ozt == NULL)
     ozt = lsredis_get_obj( "omega.rotate.time");
 
-  lsredis_setstr( ozt, "%d-%d-%d %d:%d:%d.%06d, %d, 0.0, 90.0",
+  lsredis_setstr( ozt, "{\"timestamp\": \"%04d-%02d-%02dT%02d:%02d:%02d.%06dZ\", \"zoom\": %d, \"angle\": 0.0, \"velocity\": 90.0}",
 		  t.tm_year+1900, t.tm_mon+1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec, usecs,
 		  (int)(lspmac_getPosition( zoom)));
   
