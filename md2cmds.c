@@ -1359,6 +1359,7 @@ int md2cmds_rotate( const char *dummy) {
   // make sure omega is homed
   //
   lspmac_home1_queue( omega);
+
   //
   // Grab the current positions
   //
@@ -1460,6 +1461,7 @@ int md2cmds_rotate( const char *dummy) {
     return 1;
   }
 
+
   // Report new center positions
   cx = lspmac_getPosition( cenx);
   cy = lspmac_getPosition( ceny);
@@ -1494,9 +1496,9 @@ void md2cmds_rotate_cb( char *event) {
   if( ozt == NULL)
     ozt = lsredis_get_obj( "omega.rotate.time");
 
-  lsredis_setstr( ozt, "{\"timestamp\": \"%04d-%02d-%02dT%02d:%02d:%02d.%06dZ\", \"zoom\": %d, \"angle\": 0.0, \"velocity\": 90.0}",
+  lsredis_setstr( ozt, "{\"timestamp\": \"%04d-%02d-%02dT%02d:%02d:%02d.%06dZ\", \"zoom\": %d, \"angle\": 0.0, \"velocity\": 90.0, \"hash\": \"%s\"}",
 		  t.tm_year+1900, t.tm_mon+1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec, usecs,
-		  (int)(lspmac_getPosition( zoom)));
+		  (int)(lspmac_getPosition( zoom)), (lspg_getcenter.hash == NULL ? "unknown" : lspg_getcenter.hash));
   
 }
 
@@ -1652,6 +1654,7 @@ int md2cmds_test( const char *dummy) {
 }
 
 
+
 int md2cmds_run_cmd( const char *cmd) {
   int err, i;
   lspmac_motor_t *mp;
@@ -1692,12 +1695,13 @@ int md2cmds_run_cmd( const char *cmd) {
       lslogging_log_message( "md2cmds_run_cmd: homing motor '%s'", cp);
       lspmac_home1_queue( mp);
     } else if( strncmp( cmd+pmatch[5].rm_so, "stop", pmatch[5].rm_eo-pmatch[5].rm_so)==0) {
-      lslogging_log_message( "md2cmds_run_cmd: stoping motor '%s'", cp);
+      lslogging_log_message( "md2cmds_run_cmd: stopping motor '%s'", cp);
       lspmac_abort();
+    } else if( strncmp( cmd+pmatch[5].rm_so, "spin", pmatch[5].rm_eo-pmatch[5].rm_so)==0) {
+      lslogging_log_message( "md2cmds_run_cmd: spinning motor '%s'", cp);
+      lspmac_spin( mp);
     }
   }
-
-
   return 0;
 }
 
