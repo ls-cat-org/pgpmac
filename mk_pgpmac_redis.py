@@ -65,11 +65,17 @@ extras = [
     {"k" : "overlay.centers.3.type",   "v" : "circle"},
     {"k" : "overlay.centers.3.diam",   "v" : "50"},
     {"k" : "overlay.centers.4.type",   "v" : "circle"},
-    {"k" : "overlay.centers.4.diam",   "v" : "1000"},
-    {"k" : "overlay.centers.5.type",   "v" : "rect"},
-    {"k" : "overlay.centers.5.width",  "v" : "1000"},
-    {"k" : "overlay.centers.5.height", "v" : "70"},
-    {"k" : "overlay.centers.length",   "v" : "6"},
+    {"k" : "overlay.centers.4.diam",   "v" : "127"},
+    {"k" : "overlay.centers.5.type",   "v" : "circle"},
+    {"k" : "overlay.centers.5.diam",   "v" : "160"},
+    {"k" : "overlay.centers.6.type",   "v" : "circle"},
+    {"k" : "overlay.centers.6.diam",   "v" : "500"},
+    {"k" : "overlay.centers.7.type",   "v" : "circle"},
+    {"k" : "overlay.centers.7.diam",   "v" : "1000"},
+    {"k" : "overlay.centers.8.type",   "v" : "rect"},
+    {"k" : "overlay.centers.8.width",  "v" : "1000"},
+    {"k" : "overlay.centers.8.height", "v" : "100"},
+    {"k" : "overlay.centers.length",   "v" : "9"},
     {"k" : "overlay.curentCenter",     "v" : "3"}
     ]
 
@@ -567,13 +573,13 @@ motor_presets = {
         [ "Close",  "0",          None,  None,                     None]
         ],
     "kappa" : [
-        [ "manualMount", "180.0", None,  "MiniKappa",              "Kappa1MountPosition"],
-        [ "reference",   "228.5", None,  "CentringXYTable",        "PhiReference"]
+        [ "manualMount", "180.0", None,  "MiniKappa",              "Kappa1MountPosition"]
         ],
 
 
     "omega" : [
-        [ "manualMount", "180.0", None,  "PHIRotationAxis",        "KappaMountPosition"]
+        [ "manualMount", "180.0", None,  "PHIRotationAxis",        "KappaMountPosition"],
+        [ "reference",   "0.0",   None,  "CentringXYTable",        "PhiReference"]
         ],
     "scint.focus" : [
         [ "tuner",       "53",    "1",   "ScintillatorPhotodiode", "OnFocusPiezoPosition"]
