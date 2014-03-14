@@ -1216,7 +1216,7 @@ void lspg_seq_run_prep_all(
  */
 void lspg_getcenter_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   static int
-    zoom_c, dcx_c, dcy_c, dax_c, day_c, daz_c;
+    zoom_c, dcx_c, dcy_c, dax_c, day_c, daz_c, hash_c;
 
   pthread_mutex_lock( &(lspg_getcenter.mutex));
   
@@ -1238,6 +1238,7 @@ void lspg_getcenter_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   dax_c  = PQfnumber( pgr, "dax");
   day_c  = PQfnumber( pgr, "day");
   daz_c  = PQfnumber( pgr, "daz");
+  hash_c = PQfnumber( pgr, "hash");
 
   lspg_getcenter.zoom_isnull = PQgetisnull( pgr, 0, zoom_c);
   if( lspg_getcenter.zoom_isnull == 0)
@@ -1262,6 +1263,11 @@ void lspg_getcenter_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   lspg_getcenter.daz_isnull = PQgetisnull( pgr, 0, daz_c);
   if( lspg_getcenter.daz_isnull == 0)
     lspg_getcenter.daz = atof( PQgetvalue( pgr, 0, daz_c));
+
+  lspg_getcenter.hash_isnull = PQgetisnull( pgr, 0, hash_c);
+  if( lspg_getcenter.hash != NULL)
+    free( lspg_getcenter.hash);
+  lspg_getcenter.hash = strdup( PQgetvalue( pgr, 0, hash_c));
 
   lspg_getcenter.new_value_ready = 1;
 
@@ -1957,7 +1963,7 @@ void lspg_set_scale_cb( char *event) {
   // we just need to set the KV's
   //
 
-  mag = lspmac_getPosition( zoom);
+  mag = floor(( lspmac_getPosition( zoom) + 0.5));
   
   px  = lsredis_get_obj( "cam.zoom.%d.ScaleX", mag);
   sx = lsredis_getstr( px);
