@@ -238,7 +238,10 @@ typedef struct lspg_getcenter_struct {
 
   double daz;			//!< alignment z change
   int daz_isnull;
-  
+
+  char *hash;			//!< identifies this centering attempt
+  int hash_isnull;
+
 } lspg_getcenter_t;
 
 extern lspg_getcenter_t lspg_getcenter;
