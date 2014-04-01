@@ -89,6 +89,7 @@ typedef struct lspmac_cmd_queue_struct {
   struct timespec time_sent;			//!< time this item was dequeued and sent to the pmac
   char *event;					//!< event name to send
   void (*onResponse)(struct lspmac_cmd_queue_struct *,int, char *);	//!< function to call when response is received.  args are (int fd, nreturned, buffer)
+  void (*onError)();				//!< function to call when a query error occurs
 } pmac_cmd_queue_t;
 
 
@@ -179,12 +180,14 @@ typedef struct lspmac_bi_struct {
 typedef struct lspgQueryQueueStruct {
   char qs[LS_PG_QUERY_STRING_LENGTH];						//!< our queries should all be pretty short as we'll just be calling functions: fixed length here simplifies memory management
   void (*onResponse)( struct lspgQueryQueueStruct *qq, PGresult *pgr);		//!< Callback function for when a query returns a result
+  void (*onError)();								//!< Perhaps the caller wants to clean up or recover
 } lspg_query_queue_t;
 
 typedef struct lspg_waitcryo_struct {
   pthread_mutex_t mutex;	//!< practice safe threading
   pthread_cond_t cond;		//!< for signaling
   int new_value_ready;		//!< OK, there is never a value, we need a variable for the conditional wait and this is what we call it everywhere else
+  int query_error;		//!< 0 is OK, 1 is postgres complained.  Note current implemention automatically logs the error
 } lspg_waitcryo_t;
 
 extern lspg_waitcryo_t lspg_waitcryo;
@@ -194,6 +197,7 @@ typedef struct lspg_getcurrentsampleid_struct {
   pthread_cond_t cond;			//!< for signaling
   int no_rows_returned;			//!< flag for an empty return
   int new_value_ready;			//!< OK, there is never a value, we need a variable for the conditional wait and this is what we call it everywhere else
+  int query_error;		//!< 0 is OK, 1 is postgres complained.  Note current implemention automatically logs the error
   unsigned int getcurrentsampleid;	//!< the sample we think is mounted on the diffractometer
   int getcurrentsampleid_isnull  ;	//!< the sample we think is mounted on the diffractometer
 } lspg_getcurrentsampleid_t;
@@ -205,6 +209,7 @@ typedef struct lspg_demandairrights_struct {
   pthread_mutex_t mutex;
   pthread_cond_t cond;
   int new_value_ready;
+  int query_error;		//!< 0 is OK, 1 is postgres complained.  Note current implemention automatically logs the error
 } lspg_demandairrights_t;
 
 extern lspg_demandairrights_t lspg_demandairrights;
@@ -219,6 +224,7 @@ typedef struct lspg_getcenter_struct {
   pthread_mutex_t mutex;	//!< don't let the threads collide!
   pthread_cond_t  cond;		//!< provides signaling for when the query is done
   int new_value_ready;		//!< used with condition
+  int query_error;		//!< 0 is OK, 1 is postgres complained.  Note current implemention automatically logs the error
   int no_rows_returned;		//!< flag in case no centering information was forthcoming
 
   int zoom;			//!< the next zoom level to go to before taking the next movie
@@ -255,6 +261,7 @@ typedef struct lspg_starttransfer_struct {
   pthread_mutex_t mutex;	//!< Our mutex
   pthread_cond_t cond;		//!< Our condition
   int new_value_ready;		//!< flag for our condition
+  int query_error;              //!< 1 if the query failed for any reason
   int no_rows_returned;		//!< just in case, though this query should always return an integer, perhaps 0
 
   unsigned int starttransfer;	//!< sample number (4 8-bit segments: station, dewar (lid), puck, and position in the puck)
@@ -269,6 +276,7 @@ typedef struct lspg_nextsample_struct {
   pthread_mutex_t mutex;	//!< Our mutex
   pthread_cond_t cond;		//!< Our condition
   int new_value_ready;		//!< flag for our condition
+  int query_error;		//!< 0 is OK, 1 is postgres complained.  Note current implemention automatically logs the error
   int no_rows_returned;		//!< just in case, though this query should always return an integer, perhaps 0
 
   unsigned int nextsample;	//!< sample number (4 8-bit segments: station, dewar (lid), puck, and position in the puck)
@@ -289,6 +297,7 @@ typedef struct lspg_nextshot_struct {
   pthread_mutex_t mutex;	//!< Our mutex for sanity in the multi-threaded program.
   pthread_cond_t  cond;		//!< Condition to wait for a response from our postgresql server.
   int new_value_ready;		//!< Our flag for the condition to wait for.
+  int query_error;		//!< 0 is OK, 1 is postgres complained.  Note current implemention automatically logs the error
   int no_rows_returned;		//!< flag indicating that no rows were returned.
 
   char *dsdir;			//!< Directory for data relative to the ESAF home directory
@@ -520,29 +529,30 @@ extern void lslogging_init();
 extern void lslogging_log_message( char *fmt, ...);
 extern void lsredis_log( char *fmt, ...);
 extern pthread_t *lslogging_run();
-extern void lspg_demandairrights_all();
+extern int lspg_demandairrights_all();
 extern void lspg_getcenter_call();
 extern void lspg_getcenter_done();
 extern void lspg_getcenter_wait();
 extern unsigned int  lspg_getcurrentsampleid_all();
-extern void lspg_getcurrentsampleid_wait_for_id( unsigned int test);
+extern int lspg_getcurrentsampleid_wait_for_id( unsigned int test);
 extern void lspg_init();
 extern void lspg_nextshot_call();
 extern void lspg_nextshot_done();
 extern void lspg_nextshot_wait();
-extern void lspg_query_push(void (*cb)( lspg_query_queue_t *, PGresult *), char *fmt, ...);
+extern void lspg_query_push(void (*cb)( lspg_query_queue_t *, PGresult *), void (*ecb)(), char *fmt, ...);
 extern pthread_t *lspg_run();
-extern void lspg_seq_run_prep_all( long long skey, double kappa, double phi, double cx, double cy, double ax, double ay, double az);
+extern int lspg_seq_run_prep_all( long long skey, double kappa, double phi, double cx, double cy, double ax, double ay, double az);
 extern void lspg_starttransfer_call( unsigned int nextsample, int sample_detected, double ax, double ay, double az, double horz, double vert, double esttime);
 extern void lspg_starttransfer_done();
 extern void lspg_starttransfer_wait();
-extern void lspg_waitcryo_all();
+extern int lspg_waitcryo_all();
 extern void lspg_waitcryo_cb( lspg_query_queue_t *qqp, PGresult *pgr);
 extern void lspg_zoom_lut_call();
 extern int  lspmac_getBIPosition( lspmac_bi_t *);
 extern void lspmac_home1_queue(	lspmac_motor_t *mp);
 extern void lspmac_home2_queue(	lspmac_motor_t *mp);
 extern void lspmac_abort();
+extern void lspmac_spin( lspmac_motor_t *);
 extern void lspmac_init( int, int);
 extern int lspmac_jogabs_queue( lspmac_motor_t *, double);
 extern int lspmac_move_or_jog_abs_queue( lspmac_motor_t *mp, double requested_position,int use_jo);
