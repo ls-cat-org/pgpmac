@@ -296,7 +296,7 @@ int md2cmds_transfer( const char *dummy) {
 
   nextsample = lspg_nextsample_all( &err);
   if( err) {
-    lslogging_log_message( "md2cmds_transfer: no sample requested to be transfered, false alarm");
+    lslogging_log_message( "md2cmds_transfer: %s", err == 2 ? "query error looking for next sample" : "no sample requested to be transfered, false alarm");
     return 1;
   }
   
@@ -372,6 +372,13 @@ int md2cmds_transfer( const char *dummy) {
   // Now let's get back to postresql (remember our query so long ago?)
   //
   lspg_starttransfer_wait();
+  if( lspg_starttransfer.query_error) {
+    lslogging_log_message( "md2cmds_transfer: query error starting transfer");
+    lsevents_send_event( "Transfer Aborted");
+    lspg_starttransfer_done();
+    return 1;
+  }
+
 
   //
   // It's possible that the sample that's mounted is unknown to the robot.
@@ -431,7 +438,13 @@ int md2cmds_transfer( const char *dummy) {
   // Wait for the robot to unlock the cryo which signals us that we need to
   // move the cryo back and drop air rights
   //
-  lspg_waitcryo_all();
+  if( lspg_waitcryo_all()) {
+    lslogging_log_message( "md2cmds_transfer: query error waiting for the cryo lock, aborting");
+    lsevents_send_event( "Transfer Aborted");
+    return 1;
+  }
+
+  
 
   // Move the cryo back
   //
@@ -439,16 +452,24 @@ int md2cmds_transfer( const char *dummy) {
   lspmac_moveabs_wait( cryo, 10.0);
 
   // simplest query yet!
-  lspg_query_push( NULL, "SELECT px.dropairrights()");
+  lspg_query_push( NULL, NULL, "SELECT px.dropairrights()");
 
   // wait for the result
   // TODO: find an easy way out of this in case of error
   //
-  lspg_getcurrentsampleid_wait_for_id( nextsample);
+  if( lspg_getcurrentsampleid_wait_for_id( nextsample)) {
+    lslogging_log_message( "md2cmds_transfer: query error waiting for the sample transfer");
+    lsevents_send_event( "Transfer Aborted");
+    return 1;
+  }
 
   // grab the airrights again
   //
-  lspg_demandairrights_all();
+  if( lspg_demandairrights_all() ) {
+    lslogging_log_message( "md2cmds_transfer: query error while demanding air rights, aborting");
+    lsevents_send_event( "Transfer Aborted");
+    return 1;
+  }
 
   // Return the cryo
   //
@@ -1091,6 +1112,13 @@ int md2cmds_collect( const char *dummy) {
     lspg_nextshot_call();
     lspg_nextshot_wait();
 
+    if( lspg_nextshot.query_error) {
+      lslogging_log_message( "md2cmds_collect: query error retrieving next shot info.  aborting");
+      lsevents_send_event( "Data Collection Aborted");
+      lspg_nextshot_done();
+      return 1;
+    }
+
     exp_time = lspg_nextshot.dsexp;
 
     if( lspg_nextshot.no_rows_returned) {
@@ -1099,7 +1127,8 @@ int md2cmds_collect( const char *dummy) {
     }
 
     skey = lspg_nextshot.skey;
-    lspg_query_push( NULL, "SELECT px.shots_set_state(%lld, 'Preparing')", skey);
+    lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Preparing')", skey);
+    lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Preparing\"}");
 
     if( lspg_nextshot.active) {
       if(
@@ -1123,14 +1152,16 @@ int md2cmds_collect( const char *dummy) {
 				    alignz, 0, NULL, lspg_nextshot.az,
 				    NULL);
 	if( err) {
-	  lsevents_send_event( "Data Colection Aborted");
+	  lsevents_send_event( "Data Collection Aborted");
+	  lspg_nextshot_done();
 	  return 1;
 	}
 
-	err = lspmac_est_move_time_wait( move_time, mmask, NULL);
+	err = lspmac_est_move_time_wait( move_time+10, mmask, NULL);
 	if( err) {
-	  lsevents_send_event( "Data Colection Aborted");
-	  lspg_query_push( NULL, "SELECT px.unlock_diffractometer()");
+	  lsevents_send_event( "Data Collection Aborted");
+	  //	  lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");   // Should we even have the diffractometer lock at this point?
+	  lspg_nextshot_done();
 	  return 1;
 	}
       }
@@ -1150,15 +1181,17 @@ int md2cmds_collect( const char *dummy) {
 				  phi,   0, NULL, phi_pos,
 				  NULL);
       if( err) {
-	lspg_query_push( NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
-	lsevents_send_event( "Data Colection Aborted");
+	lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
+	lsevents_send_event( "Data Collection Aborted");
+	lspg_nextshot_done();
 	return 1;
       }	
 
       err = lspmac_est_move_time_wait( move_time + 2, mmask, NULL);
       if( err) {
-	lspg_query_push( NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
-	lsevents_send_event( "Data Colection Aborted");
+	lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
+	lsevents_send_event( "Data Collection Aborted");
+	lspg_nextshot_done();
 	return 1;
       }	
     }
@@ -1184,16 +1217,19 @@ int md2cmds_collect( const char *dummy) {
     // On exit we own the diffractometer lock and
     // have checked that all is OK with the detector
     //
-    lspg_seq_run_prep_all( skey,
-			   kappa->position,
-			   phi->position,
-			   cenx->position,
-			   ceny->position,
-			   alignx->position,
-			   aligny->position,
-			   alignz->position
-			   );
-
+    if( lspg_seq_run_prep_all( skey,
+			       kappa->position,
+			       phi->position,
+			       cenx->position,
+			       ceny->position,
+			       alignx->position,
+			       aligny->position,
+			       alignz->position
+			       )) {
+      lslogging_log_message( "md2cmds_collect: seq run prep query error, aborting");
+      lsevents_send_event( "Data Collection Aborted");
+      return 1;
+    }
     
     //
     // make sure our opened flag is down
@@ -1212,8 +1248,8 @@ int md2cmds_collect( const char *dummy) {
     if( err == ETIMEDOUT) {
       pthread_mutex_unlock( &lspmac_shutter_mutex);
       lslogging_log_message( "md2cmds_collect: Timed out waiting for shutter to be confirmed closed.  Data collection aborted.");
-      lspg_query_push( NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
-      lspg_query_push( NULL, "SELECT px.unlock_diffractometer()");
+      lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
+      lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
       lsevents_send_event( "Data Collection Aborted");
       return 1;
     }
@@ -1244,8 +1280,8 @@ int md2cmds_collect( const char *dummy) {
     if( err == ETIMEDOUT) {
       pthread_mutex_unlock( &lspmac_shutter_mutex);
       lslogging_log_message( "md2cmds_collect: Timed out waiting for shutter to open.  Data collection aborted.");
-      lspg_query_push( NULL, "SELECT px.unlock_diffractometer()");
-      lspg_query_push( NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
+      lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
+      lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
       lsevents_send_event( "Data Collection Aborted");
       return 1;
     }
@@ -1267,8 +1303,8 @@ int md2cmds_collect( const char *dummy) {
 
     if( err == ETIMEDOUT) {
       pthread_mutex_unlock( &lspmac_shutter_mutex);
-      lspg_query_push( NULL, "SELECT px.unlock_diffractometer()");
-      lspg_query_push( NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
+      lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
+      lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
       lslogging_log_message( "md2cmds_collect: Timed out waiting for shutter to close.  Data collection aborted.");
       lsevents_send_event( "Data Collection Aborted");
       return 1;
@@ -1278,12 +1314,12 @@ int md2cmds_collect( const char *dummy) {
     //
     // Signal the detector to start reading out
     //
-    lspg_query_push( NULL, "SELECT px.unlock_diffractometer()");
+    lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
 
     //
     // Update the shot status
     //
-    lspg_query_push( NULL, "SELECT px.shots_set_state(%lld, 'Writing')", skey);
+    lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Writing')", skey);
 
     //
     // reset shutter has opened flag
@@ -1295,7 +1331,7 @@ int md2cmds_collect( const char *dummy) {
     //
     if( md2cmds_move_wait( 10.0)) {
       lslogging_log_message( "md2cmds_collect: Giving up waiting for omega to stop moving. Data collection aborted.");
-      lsevents_send_event( "Data Colection Aborted");
+      lsevents_send_event( "Data Collection Aborted");
       return 1;
     }
 
@@ -1346,6 +1382,13 @@ int md2cmds_rotate( const char *dummy) {
   //
   lspg_getcenter_call();
   lspg_getcenter_wait();
+
+  if( lspg_getcenter.query_error) {
+    lslogging_log_message( "md2cmds_rotate: get center query error, aborting");
+    lsevents_send_event( "Rotate Aborted");
+    lspg_getcenter_done();
+    return 1;
+  }
 
 
   // put up the back light
@@ -1468,7 +1511,7 @@ int md2cmds_rotate( const char *dummy) {
   ax = lspmac_getPosition( alignx);
   ay = lspmac_getPosition( aligny);
   az = lspmac_getPosition( alignz);
-  lspg_query_push( NULL, "SELECT px.applycenter( %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f)", cx, cy, ax, ay, az, lspmac_getPosition(kappa), lspmac_getPosition( phi));
+  lspg_query_push( NULL, NULL, "SELECT px.applycenter( %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f)", cx, cy, ax, ay, az, lspmac_getPosition(kappa), lspmac_getPosition( phi));
 
   lslogging_log_message( "md2cmds_rotate: done with applycenter");
   lspmac_video_rotate( 4.0);
@@ -1489,7 +1532,7 @@ void md2cmds_rotate_cb( char *event) {
   gmtime_r( &(omega_zero_time.tv_sec), &t);
   
   usecs = omega_zero_time.tv_nsec / 1000;
-  lspg_query_push( NULL, "SELECT px.trigcam('%d-%d-%d %d:%d:%d.%06d', %d, 0.0, 90.0)",
+  lspg_query_push( NULL, NULL, "SELECT px.trigcam('%d-%d-%d %d:%d:%d.%06d', %d, 0.0, 90.0)",
 		   t.tm_year+1900, t.tm_mon+1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec, usecs,
 		   (int)(lspmac_getPosition( zoom)));
 
@@ -1750,7 +1793,7 @@ int md2cmds_settransferpoint( const char *cmd) {
   cx = lspmac_getPosition(cenx);
   cy = lspmac_getPosition(ceny);
 
-  lspg_query_push( NULL, "SELECT px.settransferpoint( %0.3f, %0.3f, %0.3f, %0.3f, %0.3f)", ax, ay, az, cx, cy);
+  lspg_query_push( NULL, NULL, "SELECT px.settransferpoint( %0.3f, %0.3f, %0.3f, %0.3f, %0.3f)", ax, ay, az, cx, cy);
 
   lsevents_send_event( "Settransferpoint Done");
   return 0;
