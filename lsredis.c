@@ -215,7 +215,7 @@ void _lsredis_set_value( lsredis_obj_t *p, char *v) {
 
   if( !(p->valid)) {
     p->valid = 1;
-    lsevents_send_event( "%s Valid", p->events_name);
+    //lsevents_send_event( "%s Valid", p->events_name);
   }
 }
 
@@ -563,7 +563,7 @@ lsredis_obj_t *_lsredis_get_obj( char *key) {
     pthread_cond_init(  &p->cond, NULL);
     p->value = NULL;
     p->valid = 0;
-    lsevents_send_event( "%s Invalid", p->events_name);
+    // lsevents_send_event( "%s Invalid", p->events_name);
     p->wait_for_me = 0;
     p->key = strdup( key);
     p->hits = 0;
@@ -783,7 +783,7 @@ void lsredis_subCB( redisAsyncContext *ac, void *reply, void *privdata) {
       // Here we know our value is out of date
       //
       p->valid = 0;
-      lsevents_send_event( "%s Invalid", p->events_name);
+      //lsevents_send_event( "%s Invalid", p->events_name);
       pthread_mutex_unlock( &p->mutex);
 
       //
