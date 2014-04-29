@@ -59,8 +59,6 @@ static int ls_pmac_state = LS_PMAC_STATE_DETACHED;	//!< Current state of the PMA
 
 //#define SHOW_RATE
 
-//static lsredis_obj_t *lspmac_md2_init;
-
 void lspmac_get_ascii( char *);			//!< Forward declarateion
 
 static int lspmac_running = 1;			//!< exit worker thread when zero
@@ -1438,7 +1436,7 @@ void lspmac_pmacmotor_read(
   //
   if( mp->status2 & 1 && mp->status2 == *mp->status2_p && abs( mp->actual_pos_cnts - *mp->actual_pos_cnts_p) > 256) {
     //    lslogging_log_message( "Instantaneous change: %s old status1: %0x, new status1: %0x, old status2: %0x, new status2: %0x, old cnts: %0x, new cnts: %0x",
-    //			   mp->name, mp->status1, *mp->status1_p, mp->status2, *mp->status2_p, mp->actual_pos_cnts, *mp->actual_pos_cnts_p);
+    //    			   mp->name, mp->status1, *mp->status1_p, mp->status2, *mp->status2_p, mp->actual_pos_cnts, *mp->actual_pos_cnts_p);
 
     //
     // At this point we'll just log the event and return
@@ -2143,7 +2141,7 @@ void lspmac_GetAllIVarsCB(
   for( i=0, sp=strtok(buff, "\r"); sp != NULL; sp=strtok( NULL, "\r"), i++) {
     snprintf( qs, sizeof( qs)-1, "SELECT pmac.md2_ivar_set( %d, '%s')", i, sp);
     qs[sizeof( qs)-1]=0;
-    lspg_query_push( NULL, qs);
+    lspg_query_push( NULL, NULL, qs);
   }
 }
 
@@ -2168,7 +2166,7 @@ void lspmac_GetAllMVarsCB(
   for( i=0, sp=strtok(buff, "\r"); sp != NULL; sp=strtok( NULL, "\r"), i++) {
     snprintf( qs, sizeof( qs)-1, "SELECT pmac.md2_mvar_set( %d, '%s')", i, sp);
     qs[sizeof( qs)-1]=0;
-    lspg_query_push( NULL, qs);
+    lspg_query_push( NULL, NULL, qs);
   }
 }
 
@@ -2354,7 +2352,7 @@ void *lspmac_worker(
     lspmac_next_state();
 
     if( ls_pmac_state != old_state) {
-      //      lslogging_log_message( "lspmac_worker: state = %d", ls_pmac_state);
+      //lslogging_log_message( "lspmac_worker: state = %d", ls_pmac_state);
       old_state = ls_pmac_state;
     }
 
@@ -2433,7 +2431,7 @@ int lspmac_movezoom_queue(
   int motor_num;
   int in_position_band;
 
-  lslogging_log_message( "lspmac_movezoom_queue: Here I am");
+  //lslogging_log_message( "lspmac_movezoom_queue: Here I am");
   pthread_mutex_lock( &(mp->mutex));
 
   motor_num        = lsredis_getl( mp->motor_num);
@@ -2474,7 +2472,7 @@ int lspmac_movezoom_queue(
     lspmac_SockSendDPline( mp->name, "#%d j=%d", motor_num, mp->requested_pos_cnts);
   }
   pthread_mutex_unlock( &(mp->mutex));
-  lslogging_log_message( "lspmac_movezoom_queue: There you were");
+  //lslogging_log_message( "lspmac_movezoom_queue: There you were");
   return 0;
 }
 
@@ -2487,7 +2485,7 @@ int lspmac_move_preset_queue( lspmac_motor_t *mp, char *preset_name) {
   double pos;
   int err;
 
-  lslogging_log_message( "lspmac_move_preset_queue: Called with motor %s and preset named '%s'", mp->name, preset_name);
+  //lslogging_log_message( "lspmac_move_preset_queue: Called with motor %s and preset named '%s'", mp->name, preset_name);
 
   err = lsredis_find_preset( mp->name, preset_name, &pos);
   if( err == 0)
@@ -2969,8 +2967,8 @@ int lspmac_est_move_time( double *est_time, int *mmaskp, lspmac_motor_t *mp_1, i
     }
 
 
-    lslogging_log_message( "lspmac_est_move_time: find motor %s, jog %d, preset %s, endpoint %f",
-			   mp->name, jog, ps == NULL ? "NULL" : ps, ep);
+    //lslogging_log_message( "lspmac_est_move_time: find motor %s, jog %d, preset %s, endpoint %f",
+    //mp->name, jog, ps == NULL ? "NULL" : ps, ep);
 
     Tt = 0.0;
     if( mp != NULL && mp->max_speed != NULL && mp->max_accel != NULL && mp->u2c != NULL) {
@@ -3254,6 +3252,7 @@ int lspmac_move_or_jog_abs_queue(
   int q100;			//!< coordinate system bit
   int requested_pos_cnts;	//!< the requested position in units of "counts"
   int coord_num, motor_num;	//!< motor and coordinate system;
+  int active;			//!< 0= don't use this motor, 1= do use it
   char *axis;			//!< our axis
   double u2c;
   double neutral_pos;
@@ -3264,6 +3263,7 @@ int lspmac_move_or_jog_abs_queue(
 
   pthread_mutex_lock( &(mp->mutex));
 
+  active	   = lsredis_getb(   mp->active);
   u2c              = lsredis_getd(   mp->u2c);
   motor_num        = lsredis_getl(   mp->motor_num);
   coord_num        = lsredis_getl(   mp->coord_num);
@@ -3285,6 +3285,42 @@ int lspmac_move_or_jog_abs_queue(
     return 1;
   }
 
+  if( active != 1) {
+    //
+    // Don't really move this motor
+    // although it's not an error to try
+    // This is here since we want to check the soft limits (above) but ignore the hard limits (below)
+    // We'll fake the move.
+    //
+    mp->requested_position = requested_position;
+    if( mp->nlut > 0 && mp->lut != NULL) {
+      mp->requested_pos_cnts = lspmac_lut( mp->nlut, mp->lut, requested_position);
+    } else {
+      mp->requested_pos_cnts = u2c * (requested_position + neutral_pos);
+    }
+    requested_pos_cnts = mp->requested_pos_cnts;
+
+    mp->not_done     = 1;
+    mp->motion_seen  = 0;
+    mp->command_sent = 0;
+
+    lsevents_send_event( "%s Moving", mp->name);
+
+    mp->not_done     = 0;
+    mp->motion_seen  = 1;
+    mp->command_sent = 1;
+
+    mp->position = requested_position;
+    mp->actual_pos_cnts = requested_pos_cnts;
+
+    pthread_mutex_unlock( &(mp->mutex));
+
+    lsevents_send_event( "%s In Position", mp->name);
+    return 0;
+
+  }
+
+
   if( (neg_limit_hit && (requested_position < mp->position)) || (pos_limit_hit && (requested_position > mp->position))) {
     pthread_mutex_unlock( &(mp->mutex));
     lslogging_log_message( "lspmac_move_or_jog_abs_queue: %s Moving wrong way on limit: requested position=%f  current position=%f  low limit=%d high limit=%d",
@@ -3305,7 +3341,7 @@ int lspmac_move_or_jog_abs_queue(
   //
   // Bluff if we are already there
   //
-  if( (abs( requested_pos_cnts - mp->actual_pos_cnts) * 16 < in_position_band) || (lsredis_getb( mp->active) != 1)) {
+  if( (abs( requested_pos_cnts - mp->actual_pos_cnts) * 16 < in_position_band)) {
     //
     // Lie and say we moved even though we didn't.  Who will know? We are within the deadband or not active.
     //
@@ -3319,15 +3355,6 @@ int lspmac_move_or_jog_abs_queue(
     mp->motion_seen  = 1;
     mp->command_sent = 1;
     
-
-
-    if( lsredis_getb( mp->active) != 1) {
-      //
-      // fake the motion for simulated motors
-      //
-      mp->position = requested_position;
-      mp->actual_pos_cnts = requested_pos_cnts;
-    }
     pthread_mutex_unlock( &(mp->mutex));
 
     lsevents_send_event( "%s In Position", mp->name);
@@ -3838,11 +3865,6 @@ void lspmac_init(
     pthread_mutex_init( &md2_status_mutex, &mutex_initializer);
 
     //
-    // Get the MD2 initialization strings
-    //
-    //  lspmac_md2_init = lsredis_get_obj( "md2_pmac.init");  // hard coded now.
-
-    //
     // Initialize the motor objects
     //
 
@@ -3986,10 +4008,12 @@ void lspmac_init(
     lspmac_send_command( VR_UPLOAD, VR_PMAC_SETMEM, 0x0e9e, 0, 4, (char *)&cc, NULL, 1, NULL);
   }
 
-  lspmac_SockSendDPline( NULL, "I5=0");
-  lspmac_SockSendDPline( NULL, "ENABLE PLCC 0,2");
-  lspmac_SockSendDPline( NULL, "DISABLE PLCC 1");
-  lspmac_SockSendDPline( NULL, "I5=3");
+  lspmac_SockSendDPline( NULL, "I5=0");			// disable plcc's
+  lspmac_SockSendDPline( NULL, "P2100=0");		// Don't let plcc0 control the shutter
+  lspmac_SockSendDPline( NULL, "I36=1");                // Don't let ^A put a disabled motor into closed loop mode
+  lspmac_SockSendDPline( NULL, "ENABLE PLCC 0,2");	// use plcc0 (Probably not needed but allows easy reset with M2000=0) plcc2 is ours used to fill db memory with status
+  lspmac_SockSendDPline( NULL, "DISABLE PLCC 1");	// Don't use plcc 1, it's embl's status routine for old md2 code
+  lspmac_SockSendDPline( NULL, "I5=3");			// allow the enabled plcc's to run
 
 
 }
@@ -4225,7 +4249,7 @@ void lspmac_zoom_lut_setup() {
       return;
     }
     zoom->lut[2*i]   = i+1;
-    zoom->lut[2*i+1] = lsredis_getd( p) + neutral_pos;
+    zoom->lut[2*i+1] = lsredis_getd( p);// + neutral_pos;
   }
   pthread_mutex_unlock( &zoom->mutex);
 }
@@ -4292,7 +4316,8 @@ void lspmac_blight_lut_setup() {
       return;
     }
     blight->lut[2*i]   = i;
-    blight->lut[2*i+1] = 20000.0 * lsredis_getd( p) / 100.0;
+    blight->lut[2*i+1] = 18500.0 * lsredis_getd( p) / 100.0;
+
   }
   for( i=0; i<blight->nlut; i++) {
     lslogging_log_message( "lspmac_blight_lut_setup:  i: %d  x: %f  y: %f  y(lut): %f  x(rlut): %f",
@@ -4371,6 +4396,16 @@ void lspmac_command_done_cb( char *event) {
 }
 
 
+void lspmac_spin( lspmac_motor_t *mp) {
+  if( strcmp( mp->name, "omega")==0) {
+    lspmac_SockSendDPline( NULL, "&%d", lsredis_getl( mp->coord_num));
+    lspmac_SockSendDPline( NULL, "#%d", lsredis_getl( mp->motor_num));
+    lspmac_SockSendDPline( NULL, "j+");
+  }
+  return;
+}
+
+
 /** Start up the lspmac thread
  */
 pthread_t *lspmac_run() {
@@ -4430,14 +4465,6 @@ pthread_t *lspmac_run() {
     cc = 0x18;
     lspmac_send_command( VR_UPLOAD, VR_PMAC_SETMEM, 0x0e9e, 0, 4, (char *)&cc, NULL, 1, NULL);
   }
-  //
-  // Initialize the MD2 pmac (ie, turn on the right plcc's etc)
-  //
-  /*
-  for( inits = lsredis_get_string_array(lspmac_md2_init); *inits != NULL; inits++) {
-    lspmac_SockSendDPline( NULL, *inits);
-  }
-  */
 
   //
   // Initialize the pmac's support for each motor

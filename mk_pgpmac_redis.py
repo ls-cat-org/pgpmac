@@ -389,6 +389,7 @@ motor_dict = {
                     "update_resolution" :  "0.5","canStop" :  "false", "active" : "1", "in_position_band" : "0"
                     },
     "cryo" : { "canHome" :  "false","type" :  "BO",
+               "active_init" : "p2100=0", # keeps plcc0 in pmac from operating the switch
                "update_resolution" :  "0.5","canStop" :  "false", "active" : "1", "in_position_band" : "0"
                },
     "dryer" : { "canHome" :  "false","type" :  "BO",
@@ -447,7 +448,7 @@ def mk_inactive_init( d):
     mask      = 1 << (motor_num - 1)
     if motor_num < 1 or motor_num > 32:
         return ""
-    return '{M%d=0,&%d#%d->0,"M700=M700 | $%0x"}' % (motor_num + 30, coord_num, motor_num, mask)
+    return '{M%d=0,&%d#%d->0,"M700=M700 | $%0x",#%d K}' % (motor_num + 30, coord_num, motor_num, mask, motor_num)
 
 def active_simulation( sim):
     if str(sim) != "0":
