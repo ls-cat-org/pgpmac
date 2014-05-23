@@ -11,9 +11,12 @@ var structlspg__getcenter__struct =
     [ "dcx_isnull", "structlspg__getcenter__struct.html#aa404da85af654998f039c81a77626748", null ],
     [ "dcy", "structlspg__getcenter__struct.html#a55b1a488b714e6a40d8e06a6e182bd0a", null ],
     [ "dcy_isnull", "structlspg__getcenter__struct.html#a352c48c8d443c52f18ebd13019d01684", null ],
+    [ "hash", "structlspg__getcenter__struct.html#a25ec9de09c01ce75f020605fe2bc38d9", null ],
+    [ "hash_isnull", "structlspg__getcenter__struct.html#a5c4814bcb0a2d68a1d79dfd5790c66f8", null ],
     [ "mutex", "structlspg__getcenter__struct.html#a214bb7e88b137162f13f41f2c43002a9", null ],
     [ "new_value_ready", "structlspg__getcenter__struct.html#a4b350f11f1e375b9e9e839caaffbcb6b", null ],
     [ "no_rows_returned", "structlspg__getcenter__struct.html#aaeb0ccf4289b4fb306c2bc04ae85b237", null ],
+    [ "query_error", "structlspg__getcenter__struct.html#a0d1be4b8199bc5ec781c3df2211335aa", null ],
     [ "zoom", "structlspg__getcenter__struct.html#a63e640a925611d2404a1529aea30a853", null ],
     [ "zoom_isnull", "structlspg__getcenter__struct.html#a6ca85a8de29039188357b2814acd7803", null ]
 ];

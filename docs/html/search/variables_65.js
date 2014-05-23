@@ -9,5 +9,6 @@ var searchData=
   ['ethcmdreply',['ethCmdReply',['../lspmac_8c.html#a7a78524ada402bb74759a3dfc5f8a571',1,'lspmac.c']]],
   ['event',['event',['../structlsevents__event__names__struct.html#a07e5a0f2b74c08f388626f18b37cd1b0',1,'lsevents_event_names_struct::event()'],['../structlspmac__dpascii__queue__struct.html#a8775c09713a917f4ddd80a3a5a8a4668',1,'lspmac_dpascii_queue_struct::event()'],['../structlstimer__list__struct.html#a54d564e392315b2730278bb925803184',1,'lstimer_list_struct::event()'],['../structlspmac__cmd__queue__struct.html#ace4d453ad6d6225e910dffb33cde866a',1,'lspmac_cmd_queue_struct::event()']]],
   ['events_5fname',['events_name',['../structlsredis__obj__struct.html#ad0a987a011b580eab739cda831f78fbb',1,'lsredis_obj_struct']]],
-  ['evp',['evp',['../structlsevents__queue__struct.html#a3ac2148f21e4a23ce6df588374749bda',1,'lsevents_queue_struct']]]
+  ['evp',['evp',['../structlsevents__queue__struct.html#a3ac2148f21e4a23ce6df588374749bda',1,'lsevents_queue_struct']]],
+  ['extras',['extras',['../namespacemk__pgpmac__redis.html#a3c74008dcad02dee86570e9a0c498a14',1,'mk_pgpmac_redis']]]
 ];

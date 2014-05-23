@@ -3,6 +3,7 @@ var structlsredis__obj__struct =
     [ "avalue", "structlsredis__obj__struct.html#ac065eeede0e08f25bcfedd45022fe593", null ],
     [ "bvalue", "structlsredis__obj__struct.html#ac3df3eaa275c1e8e333024c1fa8353af", null ],
     [ "cond", "structlsredis__obj__struct.html#a356f6a228bb19ac7d66fdb1c875d68be", null ],
+    [ "creating", "structlsredis__obj__struct.html#ae0aa00ad745ee5bbc598c23ab794ed8a", null ],
     [ "cvalue", "structlsredis__obj__struct.html#a4a5933dbd44d33d9f594f6020a443b69", null ],
     [ "dvalue", "structlsredis__obj__struct.html#ab60d0a71cabad6b921b6edb5a8f68996", null ],
     [ "events_name", "structlsredis__obj__struct.html#ad0a987a011b580eab739cda831f78fbb", null ],

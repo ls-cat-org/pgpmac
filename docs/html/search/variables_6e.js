@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['name',['name',['../structlsredis__preset__list__struct.html#a285a79dd419ae70c5b75ef57914d3331',1,'lsredis_preset_list_struct::name()'],['../structlspmac__motor__struct.html#aa90af2f6f1489f1befe1d0891e51575a',1,'lspmac_motor_struct::name()']]],
+  ['name',['name',['../structlsredis__preset__list__struct.html#a285a79dd419ae70c5b75ef57914d3331',1,'lsredis_preset_list_struct::name()'],['../structlspmac__motor__struct.html#aa90af2f6f1489f1befe1d0891e51575a',1,'lspmac_motor_struct::name()'],['../structlspmac__bi__struct.html#a4e614425eaa9d1ff8ba225d264f6dcf6',1,'lspmac_bi_struct::name()']]],
   ['ncalls',['ncalls',['../structlstimer__list__struct.html#aa56c5b8ce7fa0ae93132cb9908195836',1,'lstimer_list_struct']]],
   ['ncurses_5fmutex',['ncurses_mutex',['../pgpmac_8c.html#ad128c64890c7c0d4f836d9ec6e99216a',1,'ncurses_mutex():&#160;pgpmac.c'],['../pgpmac_8h.html#ad128c64890c7c0d4f836d9ec6e99216a',1,'ncurses_mutex():&#160;pgpmac.c']]],
   ['neg_5flimit_5fhit',['neg_limit_hit',['../structlspmac__motor__struct.html#afe13c86941928d20357f4f3e2a4d915a',1,'lspmac_motor_struct']]],
@@ -16,6 +16,7 @@ var searchData=
   ['no_5freply',['no_reply',['../structlspmac__cmd__queue__struct.html#a33f70b45f8b7c27935cd3efe28748479',1,'lspmac_cmd_queue_struct']]],
   ['no_5frows_5freturned',['no_rows_returned',['../structlspg__getcurrentsampleid__struct.html#a06758730db55730eb10d2d63e2520d71',1,'lspg_getcurrentsampleid_struct::no_rows_returned()'],['../structlspg__getcenter__struct.html#aaeb0ccf4289b4fb306c2bc04ae85b237',1,'lspg_getcenter_struct::no_rows_returned()'],['../structlspg__starttransfer__struct.html#aa384ccd326d9247317f77072b93f94ca',1,'lspg_starttransfer_struct::no_rows_returned()'],['../structlspg__nextsample__struct.html#aeee8110133db9f1895237ed9b54dd873',1,'lspg_nextsample_struct::no_rows_returned()'],['../structlspg__nextshot__struct.html#abc9242805729f70b83df79706c394c71',1,'lspg_nextshot_struct::no_rows_returned()']]],
   ['not_5fdone',['not_done',['../structlspmac__motor__struct.html#ab7bd8bff48953ce05c758598d75877ac',1,'lspmac_motor_struct']]],
-  ['now',['now',['../lspg_8c.html#ad40ac52086f6b774928af45b09d54c6e',1,'now():&#160;lspg.c'],['../lspmac_8c.html#a4bed9053319d1d2cad5cc03d0549e17f',1,'now():&#160;lspmac.c']]],
+  ['nourthreads',['nOurThreads',['../pgpmac_8c.html#ade7ec9db5c94d6e95673eda216e13f71',1,'pgpmac.c']]],
+  ['now',['now',['../kvredis_8c.html#ad40ac52086f6b774928af45b09d54c6e',1,'now():&#160;kvredis.c'],['../lspg_8c.html#ad40ac52086f6b774928af45b09d54c6e',1,'now():&#160;lspg.c'],['../lspmac_8c.html#a4bed9053319d1d2cad5cc03d0549e17f',1,'now():&#160;lspmac.c']]],
   ['number_5fpasses',['number_passes',['../structmd2StatusStruct.html#ab3da523bad7b82c1d27780caa24a8b92',1,'md2StatusStruct']]]
 ];

@@ -1,4 +1,4 @@
-.TH "lspg.c" 3 "Wed May 22 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lspg.c" 3 "Fri May 23 2014" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -60,6 +60,9 @@ Postgresql support for the LS-CAT pgpmac project\&.
 .RI "#define \fBLS_PG_STATE_RECV\fP   4"
 .br
 .ti -1c
+.RI "#define \fBLS_PG_STATE_QUITTING\fP   5"
+.br
+.ti -1c
 .RI "#define \fBLS_PG_QUERY_QUEUE_LENGTH\fP   16384"
 .br
 .RI "\fIQueue length should be long enough that we do not ordinarly bump into the end We should be safe as long as the thread the adds stuff to the queue is not the one that removes it\&. \fP"
@@ -108,7 +111,7 @@ Postgresql support for the LS-CAT pgpmac project\&.
 .br
 .RI "\fIReturn the next item in the reply queue but don't pop it since we may need it more than once\&. \fP"
 .ti -1c
-.RI "void \fBlspg_query_push\fP (void(*cb)(\fBlspg_query_queue_t\fP *, PGresult *), char *fmt,\&.\&.\&.)"
+.RI "void \fBlspg_query_push\fP (void(*cb)(\fBlspg_query_queue_t\fP *, PGresult *), void(*er)(), char *fmt,\&.\&.\&.)"
 .br
 .RI "\fIPlace a query on the queue\&. \fP"
 .ti -1c
@@ -120,6 +123,9 @@ Postgresql support for the LS-CAT pgpmac project\&.
 .br
 .RI "\fIset a redis variable based on an updated kv pair \fP"
 .ti -1c
+.RI "void \fBlspg_allkvs_error_cb\fP ()"
+.br
+.ti -1c
 .RI "void \fBlspg_update_kvs_cb\fP (char *event)"
 .br
 .RI "\fIPerhaps update the px\&.kvs table in postgresql Should be triggered by a timer event\&. \fP"
@@ -128,6 +134,9 @@ Postgresql support for the LS-CAT pgpmac project\&.
 .br
 .ti -1c
 .RI "void \fBlspg_starttransfer_cb\fP (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
+.br
+.ti -1c
+.RI "void \fBlspg_starttransfer_error_cb\fP ()"
 .br
 .ti -1c
 .RI "void \fBlspg_starttransfer_call\fP (unsigned int nextsample, int \fBsample_detected\fP, double ax, double ay, double az, double horz, double vert, double esttime)"
@@ -149,18 +158,30 @@ Postgresql support for the LS-CAT pgpmac project\&.
 .br
 .RI "\fIget currentsampleid \fP"
 .ti -1c
+.RI "void \fBlspg_getcurrentsampleid_error_cb\fP ()"
+.br
+.RI "\fIget currentsampleid error callback \fP"
+.ti -1c
 .RI "void \fBlspg_getcurrentsampleid_call\fP ()"
 .br
 .ti -1c
 .RI "unsigned int \fBlspg_getcurrentsampleid_read\fP ()"
 .br
 .ti -1c
-.RI "void \fBlspg_getcurrentsampleid_wait_for_id\fP (unsigned int test)"
+.RI "unsigned int \fBlspg_getcurrentsampleid_all\fP ()"
+.br
+.RI "\fIreturn the current sampleid \fP"
+.ti -1c
+.RI "int \fBlspg_getcurrentsampleid_wait_for_id\fP (unsigned int test)"
 .br
 .ti -1c
 .RI "void \fBlspg_nextsample_cb\fP (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
 .br
 .RI "\fINext Sample\&. \fP"
+.ti -1c
+.RI "void \fBlspg_nextsample_error_cb\fP ()"
+.br
+.RI "\fINext Sample Query Error Callback\&. \fP"
 .ti -1c
 .RI "void \fBlspg_nextsample_init\fP ()"
 .br
@@ -187,7 +208,10 @@ Postgresql support for the LS-CAT pgpmac project\&.
 .RI "void \fBlspg_waitcryo_cb\fP (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
 .br
 .ti -1c
-.RI "void \fBlspg_waitcryo_all\fP ()"
+.RI "void \fBlspg_waitcryo_error_cb\fP ()"
+.br
+.ti -1c
+.RI "int \fBlspg_waitcryo_all\fP ()"
 .br
 .RI "\fIno need to get fancy with the wait cryo command It should not return until the robot is almost ready for air rights \fP"
 .ti -1c
@@ -199,21 +223,29 @@ Postgresql support for the LS-CAT pgpmac project\&.
 .br
 .RI "\fIhandle the airrights response \fP"
 .ti -1c
+.RI "void \fBlspg_demandairrights_error_cb\fP ()"
+.br
+.RI "\fIhandle airrights query error \fP"
+.ti -1c
 .RI "void \fBlspg_demandairrights_call\fP ()"
 .br
 .RI "\fIcall for airrights \fP"
 .ti -1c
-.RI "void \fBlspg_demandairrights_wait\fP ()"
+.RI "int \fBlspg_demandairrights_wait\fP ()"
 .br
 .RI "\fIwait for the air rights request to return \fP"
 .ti -1c
-.RI "void \fBlspg_demandairrights_all\fP ()"
+.RI "int \fBlspg_demandairrights_all\fP ()"
 .br
 .RI "\fIdo nothing until we get airrights \fP"
 .ti -1c
 .RI "void \fBlspg_nextshot_cb\fP (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
 .br
 .RI "\fINext Shot Callback\&. \fP"
+.ti -1c
+.RI "void \fBlspg_nextshot_error_cb\fP ()"
+.br
+.RI "\fInext shot query error callback \fP"
 .ti -1c
 .RI "void \fBlspg_nextshot_init\fP ()"
 .br
@@ -239,6 +271,10 @@ Postgresql support for the LS-CAT pgpmac project\&.
 .br
 .RI "\fICallback for the wait for detector query\&. \fP"
 .ti -1c
+.RI "void \fBlspg_wait_for_detector_error_cb\fP ()"
+.br
+.RI "\fIwait for detector query error callback \fP"
+.ti -1c
 .RI "void \fBlspg_wait_for_detector_call\fP ()"
 .br
 .RI "\fIinitiate the wait for detector query \fP"
@@ -262,6 +298,10 @@ Postgresql support for the LS-CAT pgpmac project\&.
 .RI "void \fBlspg_lock_diffractometer_cb\fP (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
 .br
 .RI "\fICallback routine for a lock diffractometer query\&. \fP"
+.ti -1c
+.RI "void \fBlspg_lock_diffractometer_error_cb\fP ()"
+.br
+.RI "\fIlock diffractometer query error callback \fP"
 .ti -1c
 .RI "void \fBlspg_lock_diffractometer_call\fP ()"
 .br
@@ -287,6 +327,10 @@ Postgresql support for the LS-CAT pgpmac project\&.
 .br
 .RI "\fICallback for when the detector lock has be grabbed\&. \fP"
 .ti -1c
+.RI "void \fBlspg_lock_detector_error_cb\fP ()"
+.br
+.RI "\fIlock detector query error callback \fP"
+.ti -1c
 .RI "void \fBlspg_lock_detector_call\fP ()"
 .br
 .RI "\fIRequest (demand) a detector lock\&. \fP"
@@ -311,6 +355,10 @@ Postgresql support for the LS-CAT pgpmac project\&.
 .br
 .RI "\fICallback for the seq_run_prep query\&. \fP"
 .ti -1c
+.RI "void \fBlspg_seq_run_prep_error_cb\fP ()"
+.br
+.RI "\fICallback for seq_run error\&. \fP"
+.ti -1c
 .RI "void \fBlspg_seq_run_prep_call\fP (long long skey, double \fBkappa\fP, double \fBphi\fP, double cx, double cy, double ax, double ay, double az)"
 .br
 .RI "\fIqueue up the seq_run_prep query \fP"
@@ -323,13 +371,17 @@ Postgresql support for the LS-CAT pgpmac project\&.
 .br
 .RI "\fIIndicate we are done waiting\&. \fP"
 .ti -1c
-.RI "void \fBlspg_seq_run_prep_all\fP (long long skey, double \fBkappa\fP, double \fBphi\fP, double cx, double cy, double ax, double ay, double az)"
+.RI "int \fBlspg_seq_run_prep_all\fP (long long skey, double \fBkappa\fP, double \fBphi\fP, double cx, double cy, double ax, double ay, double az)"
 .br
 .RI "\fIConvinence function to call seq run prep\&. \fP"
 .ti -1c
 .RI "void \fBlspg_getcenter_cb\fP (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
 .br
 .RI "\fIRetrieve the data to center the crystal\&. \fP"
+.ti -1c
+.RI "void \fBlspg_getcenter_error_cb\fP ()"
+.br
+.RI "\fIgetcenter query error callback \fP"
 .ti -1c
 .RI "void \fBlspg_getcenter_init\fP ()"
 .br
@@ -355,7 +407,16 @@ Postgresql support for the LS-CAT pgpmac project\&.
 .br
 .RI "\fIQueue the next MD2 instruction\&. \fP"
 .ti -1c
+.RI "void \fBlspg_nextaction_error_cb\fP ()"
+.br
+.ti -1c
 .RI "void \fBlspg_nexterrors_cb\fP (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
+.br
+.ti -1c
+.RI "void \fBlspg_nexterrors_error_cb\fP ()"
+.br
+.ti -1c
+.RI "void \fBlspg_cmd_error_cb\fP ()"
 .br
 .ti -1c
 .RI "void \fBlspg_cmd_cb\fP (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
@@ -414,6 +475,10 @@ Postgresql support for the LS-CAT pgpmac project\&.
 .br
 .RI "\fIlog magnet state \fP"
 .ti -1c
+.RI "void \fBlspg_quit_query_cb\fP (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
+.br
+.RI "\fIcall back to handle signing out of the database \fP"
+.ti -1c
 .RI "void \fBlspg_quitting_cb\fP (char *event)"
 .br
 .RI "\fIPrepare to exit the program in a couple of seconds\&. \fP"
@@ -422,7 +487,7 @@ Postgresql support for the LS-CAT pgpmac project\&.
 .br
 .RI "\fIInitiallize the lspg module\&. \fP"
 .ti -1c
-.RI "void \fBlspg_run\fP ()"
+.RI "pthread_t * \fBlspg_run\fP ()"
 .br
 .RI "\fIStart 'er runnin'\&. \fP"
 .in -1c
@@ -475,6 +540,10 @@ lspg_time_sent \fBnow\fP"
 .RI "static PGconn * \fBq\fP = NULL"
 .br
 .RI "\fIDatabase connector\&. \fP"
+.ti -1c
+.RI "static int \fBlspg_running\fP = 1"
+.br
+.RI "\fIflag to tell worker it's time to go home \fP"
 .ti -1c
 .RI "static PostgresPollingStatusType \fBlspg_connectPoll_response\fP"
 .br
@@ -560,6 +629,7 @@ State           Description
   2             Send a query to the server
   3             Continue flushing a command to the server
   4             Waiting for a reply
+  5             Quitting: ignore new queries
 .fi
 .PP
  
@@ -572,39 +642,43 @@ Definition in file \fBlspg\&.c\fP\&.
 .PP
 Queue length should be long enough that we do not ordinarly bump into the end We should be safe as long as the thread the adds stuff to the queue is not the one that removes it\&. (And we can tolerate the adding thread being paused\&.) 
 .PP
-Definition at line 50 of file lspg\&.c\&.
+Definition at line 52 of file lspg\&.c\&.
 .SS "#define LS_PG_STATE_IDLE   1"
 
 .PP
-Definition at line 33 of file lspg\&.c\&.
+Definition at line 34 of file lspg\&.c\&.
 .SS "#define LS_PG_STATE_INIT   -4"
 
 .PP
-Definition at line 29 of file lspg\&.c\&.
+Definition at line 30 of file lspg\&.c\&.
 .SS "#define LS_PG_STATE_INIT_POLL   -3"
 
 .PP
-Definition at line 30 of file lspg\&.c\&.
+Definition at line 31 of file lspg\&.c\&.
+.SS "#define LS_PG_STATE_QUITTING   5"
+
+.PP
+Definition at line 38 of file lspg\&.c\&.
 .SS "#define LS_PG_STATE_RECV   4"
 
 .PP
-Definition at line 36 of file lspg\&.c\&.
+Definition at line 37 of file lspg\&.c\&.
 .SS "#define LS_PG_STATE_RESET   -2"
 
 .PP
-Definition at line 31 of file lspg\&.c\&.
+Definition at line 32 of file lspg\&.c\&.
 .SS "#define LS_PG_STATE_RESET_POLL   -1"
 
 .PP
-Definition at line 32 of file lspg\&.c\&.
+Definition at line 33 of file lspg\&.c\&.
 .SS "#define LS_PG_STATE_SEND   2"
 
 .PP
-Definition at line 34 of file lspg\&.c\&.
+Definition at line 35 of file lspg\&.c\&.
 .SS "#define LS_PG_STATE_SEND_FLUSH   3"
 
 .PP
-Definition at line 35 of file lspg\&.c\&.
+Definition at line 36 of file lspg\&.c\&.
 .SH "Typedef Documentation"
 .PP 
 .SS "typedef struct \fBlspg_lock_detector_struct\fP  \fBlspg_lock_detector_t\fP"
@@ -637,7 +711,7 @@ set a redis variable based on an updated kv pair \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 279 of file lspg\&.c\&.
+Definition at line 284 of file lspg\&.c\&.
 .PP
 .nf
                                                              {
@@ -659,7 +733,16 @@ Definition at line 279 of file lspg\&.c\&.
 
     lsredis_setstr( robj, '%s', PQgetvalue( pgr, i+1, 0));
   }
+}
+.fi
+.SS "void lspg_allkvs_error_cb ()"
 
+.PP
+Definition at line 305 of file lspg\&.c\&.
+.PP
+.nf
+                            {
+  lslogging_log_message( 'query error getting kvs');
 }
 .fi
 .SS "char** lspg_array2ptrs (char *a)"
@@ -667,7 +750,7 @@ Definition at line 279 of file lspg\&.c\&.
 .PP
 returns a null terminated list of strings parsed from postgresql array 
 .PP
-Definition at line 160 of file lspg\&.c\&.
+Definition at line 165 of file lspg\&.c\&.
 .PP
 .nf
                                  {
@@ -787,7 +870,7 @@ Definition at line 160 of file lspg\&.c\&.
 .SS "void lspg_check_preset_in_position_cb (char *event)"
 
 .PP
-Definition at line 1890 of file lspg\&.c\&.
+Definition at line 2063 of file lspg\&.c\&.
 .PP
 .nf
                                                     {
@@ -807,7 +890,7 @@ Definition at line 1890 of file lspg\&.c\&.
     return;
   }
   i = lsredis_find_preset_index_by_position( mp);
-  lspg_query_push( NULL, 'EXECUTE kvupdate( '{%s\&.currentPreset,%d}')', cp, i);
+  lspg_query_push( NULL, NULL, 'EXECUTE kvupdate( '{%s\&.currentPreset,%d}')', cp, i);
 
 }
 .fi
@@ -823,7 +906,7 @@ Send strings directly to PMAC queue\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1354 of file lspg\&.c\&.
+Definition at line 1522 of file lspg\&.c\&.
 .PP
 .nf
                    {
@@ -845,22 +928,32 @@ Definition at line 1354 of file lspg\&.c\&.
       // This should solve a potential problem where
       // more than one command is put on the queue for a given notify\&.
       //
-      lspg_query_push( lspg_cmd_cb, 'select pmac\&.md2_queue_next()');
+      lspg_query_push( lspg_cmd_cb, lspg_cmd_error_cb, 'select pmac\&.md2_queue_next()');
     }
   }
 }
 .fi
-.SS "void lspg_demandairrights_all ()"
+.SS "void lspg_cmd_error_cb ()"
+
+.PP
+Definition at line 1516 of file lspg\&.c\&.
+.PP
+.nf
+                         {
+  lslogging_log_message( 'query error getting next md2 command');
+}
+.fi
+.SS "int lspg_demandairrights_all ()"
 
 .PP
 do nothing until we get airrights 
 .PP
-Definition at line 647 of file lspg\&.c\&.
+Definition at line 724 of file lspg\&.c\&.
 .PP
 .nf
-                                {
+                               {
   lspg_demandairrights_call();
-  lspg_demandairrights_wait();
+  return lspg_demandairrights_wait();
   // there is no 'done' version
 }
 .fi
@@ -869,14 +962,15 @@ Definition at line 647 of file lspg\&.c\&.
 .PP
 call for airrights 
 .PP
-Definition at line 629 of file lspg\&.c\&.
+Definition at line 701 of file lspg\&.c\&.
 .PP
 .nf
                                  {
   pthread_mutex_lock( &lspg_demandairrights\&.mutex);
   lspg_demandairrights\&.new_value_ready = 0;
+  lspg_demandairrights\&.query_error     = 0;
   pthread_mutex_unlock( &lspg_demandairrights\&.mutex);
-  lspg_query_push( lspg_demandairrights_cb, 'SELECT px\&.demandairrights()');
+  lspg_query_push( lspg_demandairrights_cb, lspg_demandairrights_error_cb, 'SELECT px\&.demandairrights()');
 }
 .fi
 .SS "void lspg_demandairrights_cb (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
@@ -884,7 +978,7 @@ Definition at line 629 of file lspg\&.c\&.
 .PP
 handle the airrights response 
 .PP
-Definition at line 619 of file lspg\&.c\&.
+Definition at line 683 of file lspg\&.c\&.
 .PP
 .nf
                                                                       {
@@ -892,7 +986,21 @@ Definition at line 619 of file lspg\&.c\&.
   lspg_demandairrights\&.new_value_ready = 1;
   pthread_cond_signal( &lspg_demandairrights\&.cond);
   pthread_mutex_unlock( &lspg_demandairrights\&.mutex);
-  lslogging_log_message( 'lspg_demandairrights_cb: Here I am');
+}
+.fi
+.SS "void lspg_demandairrights_error_cb ()"
+
+.PP
+handle airrights query error 
+.PP
+Definition at line 692 of file lspg\&.c\&.
+.PP
+.nf
+                                     {
+  pthread_mutex_lock( &lspg_demandairrights\&.mutex);
+  lspg_demandairrights\&.query_error = 1;
+  pthread_cond_signal( &lspg_demandairrights\&.cond);
+  pthread_mutex_unlock( &lspg_demandairrights\&.mutex);
 }
 .fi
 .SS "void lspg_demandairrights_init ()"
@@ -900,28 +1008,33 @@ Definition at line 619 of file lspg\&.c\&.
 .PP
 initialize the demandairrights structure 
 .PP
-Definition at line 611 of file lspg\&.c\&.
+Definition at line 674 of file lspg\&.c\&.
 .PP
 .nf
                                  {
   lspg_demandairrights\&.new_value_ready = 0;
+  lspg_demandairrights\&.query_error     = 0;
   pthread_mutex_init( &lspg_demandairrights\&.mutex, NULL);
   pthread_cond_init( &lspg_demandairrights\&.cond, NULL);
 }
 .fi
-.SS "void lspg_demandairrights_wait ()"
+.SS "int lspg_demandairrights_wait ()"
 
 .PP
 wait for the air rights request to return 
 .PP
-Definition at line 638 of file lspg\&.c\&.
+Definition at line 711 of file lspg\&.c\&.
 .PP
 .nf
-                                 {
+                                {
+  int rtn;
   pthread_mutex_lock( &lspg_demandairrights\&.mutex);
-  while( lspg_demandairrights\&.new_value_ready == 0)
+  while( lspg_demandairrights\&.new_value_ready == 0 && lspg_demandairrights\&.query_error == 0)
     pthread_cond_wait( &lspg_demandairrights\&.cond, &lspg_demandairrights\&.mutex);
+  rtn = lspg_demandairrights\&.query_error;
   pthread_mutex_unlock( &lspg_demandairrights\&.mutex);
+
+  return rtn;
 }
 .fi
 .SS "void lspg_flush ()"
@@ -929,7 +1042,7 @@ Definition at line 638 of file lspg\&.c\&.
 .PP
 Flush psql output buffer (ie, send the query) 
 .PP
-Definition at line 1384 of file lspg\&.c\&.
+Definition at line 1552 of file lspg\&.c\&.
 .PP
 .nf
                   {
@@ -965,7 +1078,7 @@ Definition at line 1384 of file lspg\&.c\&.
 .PP
 Convenience function to complete synchronous getcenter query\&. 
 .PP
-Definition at line 1292 of file lspg\&.c\&.
+Definition at line 1449 of file lspg\&.c\&.
 .PP
 .nf
                           {
@@ -979,15 +1092,16 @@ Definition at line 1292 of file lspg\&.c\&.
 .PP
 Request a getcenter query\&. 
 .PP
-Definition at line 1268 of file lspg\&.c\&.
+Definition at line 1424 of file lspg\&.c\&.
 .PP
 .nf
                            {
   pthread_mutex_lock( &lspg_getcenter\&.mutex);
   lspg_getcenter\&.new_value_ready = 0;
+  lspg_getcenter\&.query_error     = 0;
   pthread_mutex_unlock( &lspg_getcenter\&.mutex);
 
-  lspg_query_push( lspg_getcenter_cb, 'SELECT * FROM px\&.getcenter2()');
+  lspg_query_push( lspg_getcenter_cb, lspg_getcenter_error_cb, 'SELECT * FROM px\&.getcenter2()');
 }
 .fi
 .SS "void lspg_getcenter_cb (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
@@ -995,12 +1109,12 @@ Definition at line 1268 of file lspg\&.c\&.
 .PP
 Retrieve the data to center the crystal\&. 
 .PP
-Definition at line 1203 of file lspg\&.c\&.
+Definition at line 1344 of file lspg\&.c\&.
 .PP
 .nf
                                                                 {
   static int
-    zoom_c, dcx_c, dcy_c, dax_c, day_c, daz_c;
+    zoom_c, dcx_c, dcy_c, dax_c, day_c, daz_c, hash_c;
 
   pthread_mutex_lock( &(lspg_getcenter\&.mutex));
   
@@ -1022,6 +1136,7 @@ Definition at line 1203 of file lspg\&.c\&.
   dax_c  = PQfnumber( pgr, 'dax');
   day_c  = PQfnumber( pgr, 'day');
   daz_c  = PQfnumber( pgr, 'daz');
+  hash_c = PQfnumber( pgr, 'hash');
 
   lspg_getcenter\&.zoom_isnull = PQgetisnull( pgr, 0, zoom_c);
   if( lspg_getcenter\&.zoom_isnull == 0)
@@ -1047,6 +1162,11 @@ Definition at line 1203 of file lspg\&.c\&.
   if( lspg_getcenter\&.daz_isnull == 0)
     lspg_getcenter\&.daz = atof( PQgetvalue( pgr, 0, daz_c));
 
+  lspg_getcenter\&.hash_isnull = PQgetisnull( pgr, 0, hash_c);
+  if( lspg_getcenter\&.hash != NULL)
+    free( lspg_getcenter\&.hash);
+  lspg_getcenter\&.hash = strdup( PQgetvalue( pgr, 0, hash_c));
+
   lspg_getcenter\&.new_value_ready = 1;
 
   pthread_cond_signal( &(lspg_getcenter\&.cond));
@@ -1058,11 +1178,26 @@ Definition at line 1203 of file lspg\&.c\&.
 .PP
 Done with getcenter query\&. 
 .PP
-Definition at line 1286 of file lspg\&.c\&.
+Definition at line 1443 of file lspg\&.c\&.
 .PP
 .nf
                            {
   pthread_mutex_unlock( &(lspg_getcenter\&.mutex));
+}
+.fi
+.SS "void lspg_getcenter_error_cb ()"
+
+.PP
+getcenter query error callback 
+.PP
+Definition at line 1407 of file lspg\&.c\&.
+.PP
+.nf
+                               {
+  pthread_mutex_lock( &lspg_getcenter\&.mutex);
+  lspg_getcenter\&.query_error = 1;
+  pthread_cond_signal( &lspg_getcenter\&.cond);
+  pthread_mutex_unlock( &lspg_getcenter\&.mutex);
 }
 .fi
 .SS "void lspg_getcenter_init ()"
@@ -1070,7 +1205,7 @@ Definition at line 1286 of file lspg\&.c\&.
 .PP
 Initialize getcenter object\&. 
 .PP
-Definition at line 1260 of file lspg\&.c\&.
+Definition at line 1416 of file lspg\&.c\&.
 .PP
 .nf
                            {
@@ -1084,27 +1219,41 @@ Definition at line 1260 of file lspg\&.c\&.
 .PP
 Wait for a getcenter query to return\&. 
 .PP
-Definition at line 1278 of file lspg\&.c\&.
+Definition at line 1435 of file lspg\&.c\&.
 .PP
 .nf
                            {
   pthread_mutex_lock( &(lspg_getcenter\&.mutex));
-  while( lspg_getcenter\&.new_value_ready == 0)
+  while( lspg_getcenter\&.new_value_ready == 0 && lspg_getcenter\&.query_error == 0)
     pthread_cond_wait( &(lspg_getcenter\&.cond), &(lspg_getcenter\&.mutex));
+}
+.fi
+.SS "unsigned int lspg_getcurrentsampleid_all ()"
+
+.PP
+return the current sampleid 
+.PP
+Definition at line 510 of file lspg\&.c\&.
+.PP
+.nf
+                                           {
+  lspg_getcurrentsampleid_call();
+  return lspg_getcurrentsampleid_read();
 }
 .fi
 .SS "void lspg_getcurrentsampleid_call ()"
 
 .PP
-Definition at line 457 of file lspg\&.c\&.
+Definition at line 482 of file lspg\&.c\&.
 .PP
 .nf
                                     {
   pthread_mutex_lock( &lspg_getcurrentsampleid\&.mutex);
   lspg_getcurrentsampleid\&.new_value_ready = 0;
+  lspg_getcurrentsampleid\&.query_error     = 0;
   pthread_mutex_unlock( &lspg_getcurrentsampleid\&.mutex);
 
-  lspg_query_push( lspg_getcurrentsampleid_cb, 'SELECT px\&.getcurrentsampleid()');
+  lspg_query_push( lspg_getcurrentsampleid_cb, lspg_getcurrentsampleid_error_cb, 'SELECT px\&.getcurrentsampleid()');
 }
 .fi
 .SS "void lspg_getcurrentsampleid_cb (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
@@ -1112,13 +1261,13 @@ Definition at line 457 of file lspg\&.c\&.
 .PP
 get currentsampleid 
 .PP
-Definition at line 433 of file lspg\&.c\&.
+Definition at line 452 of file lspg\&.c\&.
 .PP
 .nf
                                                                          {
   pthread_mutex_lock( &lspg_getcurrentsampleid\&.mutex);
 
-  lspg_nextsample\&.new_value_ready = 1;
+  lspg_getcurrentsampleid\&.new_value_ready = 1;
   lspg_getcurrentsampleid\&.no_rows_returned = PQntuples( pgr) <= 0;
   if( lspg_getcurrentsampleid\&.no_rows_returned) {
     pthread_cond_signal( &lspg_getcurrentsampleid\&.cond);
@@ -1130,9 +1279,21 @@ Definition at line 433 of file lspg\&.c\&.
   if( lspg_getcurrentsampleid\&.getcurrentsampleid_isnull == 0)
     lspg_getcurrentsampleid\&.getcurrentsampleid = strtol( PQgetvalue( pgr, 0, 0), NULL, 0);
 
-  lslogging_log_message( 'lspg_getcurrentsampleid_cb: current sample id: %d',
-                         lspg_getcurrentsampleid\&.getcurrentsampleid);
+  pthread_cond_signal( &lspg_getcurrentsampleid\&.cond);
+  pthread_mutex_unlock( &lspg_getcurrentsampleid\&.mutex);
+}
+.fi
+.SS "void lspg_getcurrentsampleid_error_cb ()"
 
+.PP
+get currentsampleid error callback 
+.PP
+Definition at line 473 of file lspg\&.c\&.
+.PP
+.nf
+                                        {
+  pthread_mutex_lock( &lspg_getcurrentsampleid\&.mutex);
+  lspg_getcurrentsampleid\&.query_error = 1;
   pthread_cond_signal( &lspg_getcurrentsampleid\&.cond);
   pthread_mutex_unlock( &lspg_getcurrentsampleid\&.mutex);
 }
@@ -1140,11 +1301,12 @@ Definition at line 433 of file lspg\&.c\&.
 .SS "void lspg_getcurrentsampleid_init ()"
 
 .PP
-Definition at line 425 of file lspg\&.c\&.
+Definition at line 443 of file lspg\&.c\&.
 .PP
 .nf
                                     {
   lspg_getcurrentsampleid\&.new_value_ready = 0;
+  lspg_getcurrentsampleid\&.query_error     = 0;
   pthread_mutex_init( &lspg_getcurrentsampleid\&.mutex, NULL);
   pthread_cond_init( &lspg_getcurrentsampleid\&.cond, NULL);
 }
@@ -1152,35 +1314,41 @@ Definition at line 425 of file lspg\&.c\&.
 .SS "unsigned int lspg_getcurrentsampleid_read ()"
 
 .PP
-Definition at line 467 of file lspg\&.c\&.
+Definition at line 493 of file lspg\&.c\&.
 .PP
 .nf
                                             {
   unsigned int rtn;
   pthread_mutex_lock( &lspg_getcurrentsampleid\&.mutex);
-  while( lspg_getcurrentsampleid\&.new_value_ready == 0)
+  while( lspg_getcurrentsampleid\&.new_value_ready == 0 && lspg_getcurrentsampleid\&.query_error == 0)
     pthread_cond_wait( &lspg_getcurrentsampleid\&.cond, &lspg_getcurrentsampleid\&.mutex);
   
-  if( lspg_getcurrentsampleid\&.getcurrentsampleid_isnull)
+  if( lspg_getcurrentsampleid\&.getcurrentsampleid_isnull || lspg_getcurrentsampleid\&.query_error != 0)
     rtn = -1;
   else
     rtn = lspg_getcurrentsampleid\&.getcurrentsampleid;
+
   pthread_mutex_unlock( &lspg_getcurrentsampleid\&.mutex);
   return rtn;
 }
 .fi
-.SS "void lspg_getcurrentsampleid_wait_for_id (unsigned inttest)"
+.SS "int lspg_getcurrentsampleid_wait_for_id (unsigned inttest)"
 
 .PP
-Definition at line 483 of file lspg\&.c\&.
+Definition at line 517 of file lspg\&.c\&.
 .PP
 .nf
-                                                             {
+                                                            {
+  int rtn;
+
   pthread_mutex_lock( &lspg_getcurrentsampleid\&.mutex);
-  while( lspg_getcurrentsampleid\&.getcurrentsampleid != test)
+  while( lspg_getcurrentsampleid\&.getcurrentsampleid != test && lspg_getcurrentsampleid\&.query_error == 0)
     pthread_cond_wait( &lspg_getcurrentsampleid\&.cond, &lspg_getcurrentsampleid\&.mutex);
-    
+  
+  rtn = lspg_getcurrentsampleid\&.query_error;
   pthread_mutex_unlock( &lspg_getcurrentsampleid\&.mutex);
+
+  return rtn;
 }
 .fi
 .SS "void lspg_init ()"
@@ -1188,7 +1356,7 @@ Definition at line 483 of file lspg\&.c\&.
 .PP
 Initiallize the lspg module\&. 
 .PP
-Definition at line 1979 of file lspg\&.c\&.
+Definition at line 2161 of file lspg\&.c\&.
 .PP
 .nf
                  {
@@ -1213,7 +1381,7 @@ Definition at line 1979 of file lspg\&.c\&.
 .PP
 Detector lock convinence function\&. 
 .PP
-Definition at line 1115 of file lspg\&.c\&.
+Definition at line 1238 of file lspg\&.c\&.
 .PP
 .nf
                               {
@@ -1227,15 +1395,16 @@ Definition at line 1115 of file lspg\&.c\&.
 .PP
 Request (demand) a detector lock\&. 
 .PP
-Definition at line 1091 of file lspg\&.c\&.
+Definition at line 1213 of file lspg\&.c\&.
 .PP
 .nf
                                {
   pthread_mutex_lock( &(lspg_lock_detector\&.mutex));
   lspg_lock_detector\&.new_value_ready = 0;
+  lspg_lock_detector\&.query_error     = 0;
   pthread_mutex_unlock( &(lspg_lock_detector\&.mutex));
 
-  lspg_query_push( lspg_lock_detector_cb, 'SELECT px\&.lock_detector()');
+  lspg_query_push( lspg_lock_detector_cb, lspg_lock_detector_error_cb, 'SELECT px\&.lock_detector()');
 }
 .fi
 .SS "void lspg_lock_detector_cb (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
@@ -1243,7 +1412,7 @@ Definition at line 1091 of file lspg\&.c\&.
 .PP
 Callback for when the detector lock has be grabbed\&. 
 .PP
-Definition at line 1082 of file lspg\&.c\&.
+Definition at line 1195 of file lspg\&.c\&.
 .PP
 .nf
                                                                     {
@@ -1258,11 +1427,26 @@ Definition at line 1082 of file lspg\&.c\&.
 .PP
 Finish waiting\&. 
 .PP
-Definition at line 1109 of file lspg\&.c\&.
+Definition at line 1232 of file lspg\&.c\&.
 .PP
 .nf
                                {
   pthread_mutex_unlock( &(lspg_lock_detector\&.mutex));
+}
+.fi
+.SS "void lspg_lock_detector_error_cb ()"
+
+.PP
+lock detector query error callback 
+.PP
+Definition at line 1204 of file lspg\&.c\&.
+.PP
+.nf
+                                   {
+  pthread_mutex_lock( &lspg_lock_detector\&.mutex);
+  lspg_lock_detector\&.query_error = 1;
+  pthread_cond_signal( &lspg_lock_detector\&.cond);
+  pthread_mutex_unlock( &lspg_lock_detector\&.mutex);
 }
 .fi
 .SS "void lspg_lock_detector_init ()"
@@ -1270,11 +1454,12 @@ Definition at line 1109 of file lspg\&.c\&.
 .PP
 Initialize detector lock object\&. 
 .PP
-Definition at line 1074 of file lspg\&.c\&.
+Definition at line 1186 of file lspg\&.c\&.
 .PP
 .nf
                                {
   lspg_lock_detector\&.new_value_ready = 0;
+  lspg_lock_detector\&.query_error     = 0;
   pthread_mutex_init( &(lspg_lock_detector\&.mutex), NULL);
   pthread_cond_init(  &(lspg_lock_detector\&.cond),  NULL);
 }
@@ -1284,12 +1469,12 @@ Definition at line 1074 of file lspg\&.c\&.
 .PP
 Wait for the detector lock\&. 
 .PP
-Definition at line 1101 of file lspg\&.c\&.
+Definition at line 1224 of file lspg\&.c\&.
 .PP
 .nf
                                {
   pthread_mutex_lock( &(lspg_lock_detector\&.mutex));
-  while( lspg_lock_detector\&.new_value_ready == 0)
+  while( lspg_lock_detector\&.new_value_ready == 0 && lspg_lock_detector\&.query_error == 0)
     pthread_cond_wait( &(lspg_lock_detector\&.cond), &(lspg_lock_detector\&.mutex));
 }
 .fi
@@ -1298,7 +1483,7 @@ Definition at line 1101 of file lspg\&.c\&.
 .PP
 Convience function that combines lock diffractometer calls\&. 
 .PP
-Definition at line 1056 of file lspg\&.c\&.
+Definition at line 1167 of file lspg\&.c\&.
 .PP
 .nf
                                     {
@@ -1312,15 +1497,16 @@ Definition at line 1056 of file lspg\&.c\&.
 .PP
 Request that the database grab the diffractometer lock\&. 
 .PP
-Definition at line 1032 of file lspg\&.c\&.
+Definition at line 1142 of file lspg\&.c\&.
 .PP
 .nf
                                      {
   pthread_mutex_lock( &(lspg_lock_diffractometer\&.mutex));
   lspg_lock_diffractometer\&.new_value_ready = 0;
+  lspg_lock_diffractometer\&.query_error     = 0;
   pthread_mutex_unlock( &(lspg_lock_diffractometer\&.mutex));
 
-  lspg_query_push( lspg_lock_diffractometer_cb, 'SELECT px\&.lock_diffractomter()');
+  lspg_query_push( lspg_lock_diffractometer_cb, lspg_lock_diffractometer_error_cb, 'SELECT px\&.lock_diffractomter()');
 }
 .fi
 .SS "void lspg_lock_diffractometer_cb (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
@@ -1328,7 +1514,7 @@ Definition at line 1032 of file lspg\&.c\&.
 .PP
 Callback routine for a lock diffractometer query\&. 
 .PP
-Definition at line 1023 of file lspg\&.c\&.
+Definition at line 1124 of file lspg\&.c\&.
 .PP
 .nf
                                                                           {
@@ -1343,11 +1529,26 @@ Definition at line 1023 of file lspg\&.c\&.
 .PP
 Finish up the lock diffractometer call\&. 
 .PP
-Definition at line 1050 of file lspg\&.c\&.
+Definition at line 1161 of file lspg\&.c\&.
 .PP
 .nf
                                      {
   pthread_mutex_unlock( &(lspg_lock_diffractometer\&.mutex));
+}
+.fi
+.SS "void lspg_lock_diffractometer_error_cb ()"
+
+.PP
+lock diffractometer query error callback 
+.PP
+Definition at line 1133 of file lspg\&.c\&.
+.PP
+.nf
+                                         {
+  pthread_mutex_lock( &lspg_lock_diffractometer\&.mutex);
+  lspg_lock_diffractometer\&.query_error = 1;
+  pthread_cond_signal( &lspg_lock_diffractometer\&.cond);
+  pthread_mutex_unlock( &lspg_lock_diffractometer\&.mutex);
 }
 .fi
 .SS "void lspg_lock_diffractometer_init ()"
@@ -1355,11 +1556,12 @@ Definition at line 1050 of file lspg\&.c\&.
 .PP
 initialize the diffractometer locking object 
 .PP
-Definition at line 1015 of file lspg\&.c\&.
+Definition at line 1115 of file lspg\&.c\&.
 .PP
 .nf
                                      {
   lspg_lock_diffractometer\&.new_value_ready = 0;
+  lspg_lock_diffractometer\&.query_error     = 0;
   pthread_mutex_init( &(lspg_lock_diffractometer\&.mutex), NULL);
   pthread_cond_init(  &(lspg_lock_diffractometer\&.cond), NULL);
 }
@@ -1369,12 +1571,12 @@ Definition at line 1015 of file lspg\&.c\&.
 .PP
 Wait for the diffractometer lock\&. 
 .PP
-Definition at line 1042 of file lspg\&.c\&.
+Definition at line 1153 of file lspg\&.c\&.
 .PP
 .nf
                                      {
   pthread_mutex_lock( &(lspg_lock_diffractometer\&.mutex));
-  while( lspg_lock_diffractometer\&.new_value_ready == 0)
+  while( lspg_lock_diffractometer\&.new_value_ready == 0 && lspg_lock_diffractometer\&.query_error == 0)
     pthread_cond_wait( &(lspg_lock_diffractometer\&.cond), &(lspg_lock_diffractometer\&.mutex));
 }
 .fi
@@ -1383,7 +1585,7 @@ Definition at line 1042 of file lspg\&.c\&.
 .PP
 Implements our state machine Does not strictly only set the next state as it also calls some functions that, perhaps, alters the state mid-function\&. 
 .PP
-Definition at line 1743 of file lspg\&.c\&.
+Definition at line 1915 of file lspg\&.c\&.
 .PP
 .nf
                        {
@@ -1447,7 +1649,7 @@ Queue the next MD2 instruction\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1301 of file lspg\&.c\&.
+Definition at line 1458 of file lspg\&.c\&.
 .PP
 .nf
                           {
@@ -1466,10 +1668,20 @@ Definition at line 1301 of file lspg\&.c\&.
 
 }
 .fi
+.SS "void lspg_nextaction_error_cb ()"
+
+.PP
+Definition at line 1477 of file lspg\&.c\&.
+.PP
+.nf
+                                {
+  lslogging_log_message( 'query error getting next md2 action');
+}
+.fi
 .SS "void lspg_nexterrors_cb (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
 
 .PP
-Definition at line 1320 of file lspg\&.c\&.
+Definition at line 1481 of file lspg\&.c\&.
 .PP
 .nf
                                                                  {
@@ -1494,7 +1706,7 @@ Definition at line 1320 of file lspg\&.c\&.
     details  = PQgetvalue( pgr, i, etdetails_col);
     severity = PQgetvalue( pgr, i, etseverity_col);
     
-    lspg_query_push( NULL, 'EXECUTE acknowledgeerror(%s)', id);
+    lspg_query_push( NULL, NULL, 'EXECUTE acknowledgeerror(%s)', id);
 
     lslogging_log_message( 'lspg_nexterrors_cb: %s %s\n', severity, strlen(verbose)>0 ? verbose : terse);
     if( strlen( details) > 0)
@@ -1502,10 +1714,20 @@ Definition at line 1320 of file lspg\&.c\&.
   }
 }
 .fi
+.SS "void lspg_nexterrors_error_cb ()"
+
+.PP
+Definition at line 1511 of file lspg\&.c\&.
+.PP
+.nf
+                                {
+  lslogging_log_message( 'query error retrieving next error message');
+}
+.fi
 .SS "unsigned int lspg_nextsample_all (int *err)"
 
 .PP
-Definition at line 558 of file lspg\&.c\&.
+Definition at line 608 of file lspg\&.c\&.
 .PP
 .nf
                                             {
@@ -1514,9 +1736,9 @@ Definition at line 558 of file lspg\&.c\&.
   lspg_nextsample_call();
   lspg_nextsample_wait();
 
-  if( lspg_nextsample\&.no_rows_returned) {
+  if( lspg_nextsample\&.no_rows_returned || lspg_nextsample\&.query_error) {
     rtn = 0;
-    *err = 1;
+    *err = lspg_nextsample\&.query_error ? 2 : 1;
   } else {
     if( lspg_nextsample\&.nextsample_isnull) {
       rtn = 0;
@@ -1536,15 +1758,16 @@ Definition at line 558 of file lspg\&.c\&.
 .PP
 Queue up a nextsample query\&. 
 .PP
-Definition at line 535 of file lspg\&.c\&.
+Definition at line 584 of file lspg\&.c\&.
 .PP
 .nf
                             {
   pthread_mutex_lock( &(lspg_nextsample\&.mutex));
   lspg_nextsample\&.new_value_ready = 0;
+  lspg_nextsample\&.query_error     = 0;
   pthread_mutex_unlock( &(lspg_nextsample\&.mutex));
   
-  lspg_query_push( lspg_nextsample_cb, 'SELECT nextsample FROM px\&.nextsample()');
+  lspg_query_push( lspg_nextsample_cb, lspg_nextsample_error_cb, 'SELECT nextsample FROM px\&.nextsample()');
 }
 .fi
 .SS "void lspg_nextsample_cb (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
@@ -1559,7 +1782,7 @@ Next Sample\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 494 of file lspg\&.c\&.
+Definition at line 533 of file lspg\&.c\&.
 .PP
 .nf
                         {
@@ -1595,10 +1818,25 @@ Definition at line 494 of file lspg\&.c\&.
 .PP
 Called when the next shot query has been processed\&. 
 .PP
-Definition at line 553 of file lspg\&.c\&.
+Definition at line 603 of file lspg\&.c\&.
 .PP
 .nf
                             {
+  pthread_mutex_unlock( &(lspg_nextsample\&.mutex));
+}
+.fi
+.SS "void lspg_nextsample_error_cb ()"
+
+.PP
+Next Sample Query Error Callback\&. 
+.PP
+Definition at line 566 of file lspg\&.c\&.
+.PP
+.nf
+                                {
+  pthread_mutex_lock( &(lspg_nextsample\&.mutex));
+  lspg_nextsample\&.query_error = 1;
+  pthread_cond_signal( &(lspg_nextsample\&.cond));
   pthread_mutex_unlock( &(lspg_nextsample\&.mutex));
 }
 .fi
@@ -1607,7 +1845,7 @@ Definition at line 553 of file lspg\&.c\&.
 .PP
 Initialize the nextsample variable, mutex, and condition\&. 
 .PP
-Definition at line 527 of file lspg\&.c\&.
+Definition at line 576 of file lspg\&.c\&.
 .PP
 .nf
                             {
@@ -1621,12 +1859,12 @@ Definition at line 527 of file lspg\&.c\&.
 .PP
 Wait for the nextsample query to get processed\&. 
 .PP
-Definition at line 545 of file lspg\&.c\&.
+Definition at line 595 of file lspg\&.c\&.
 .PP
 .nf
                             {
   pthread_mutex_lock( &(lspg_nextsample\&.mutex));
-  while( lspg_nextsample\&.new_value_ready == 0)
+  while( lspg_nextsample\&.new_value_ready == 0 && lspg_nextsample\&.query_error == 0)
     pthread_cond_wait( &(lspg_nextsample\&.cond), &(lspg_nextsample\&.mutex));
 }
 .fi
@@ -1635,15 +1873,16 @@ Definition at line 545 of file lspg\&.c\&.
 .PP
 Queue up a nextshot query\&. 
 .PP
-Definition at line 915 of file lspg\&.c\&.
+Definition at line 1001 of file lspg\&.c\&.
 .PP
 .nf
                           {
   pthread_mutex_lock( &(lspg_nextshot\&.mutex));
   lspg_nextshot\&.new_value_ready = 0;
+  lspg_nextshot\&.query_error     = 0;
   pthread_mutex_unlock( &(lspg_nextshot\&.mutex));
   
-  lspg_query_push( lspg_nextshot_cb, 'SELECT * FROM px\&.nextshot2()');
+  lspg_query_push( lspg_nextshot_cb, lspg_nextshot_error_cb, 'SELECT * FROM px\&.nextshot2()');
 }
 .fi
 .SS "void lspg_nextshot_cb (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
@@ -1658,7 +1897,7 @@ Next Shot Callback\&. This is a long and tedious routine as there are a large nu
 .PP
 
 .PP
-Definition at line 660 of file lspg\&.c\&.
+Definition at line 737 of file lspg\&.c\&.
 .PP
 .nf
                         {
@@ -1908,11 +2147,26 @@ Definition at line 660 of file lspg\&.c\&.
 .PP
 Called when the next shot query has been processed\&. 
 .PP
-Definition at line 933 of file lspg\&.c\&.
+Definition at line 1020 of file lspg\&.c\&.
 .PP
 .nf
                           {
   pthread_mutex_unlock( &(lspg_nextshot\&.mutex));
+}
+.fi
+.SS "void lspg_nextshot_error_cb ()"
+
+.PP
+next shot query error callback 
+.PP
+Definition at line 984 of file lspg\&.c\&.
+.PP
+.nf
+                              {
+  pthread_mutex_lock( &lspg_nextshot\&.mutex);
+  lspg_nextshot\&.query_error = 1;
+  pthread_cond_signal( &lspg_nextshot\&.cond);
+  pthread_mutex_unlock( &lspg_nextshot\&.mutex);
 }
 .fi
 .SS "void lspg_nextshot_init ()"
@@ -1920,7 +2174,7 @@ Definition at line 933 of file lspg\&.c\&.
 .PP
 Initialize the nextshot variable, mutex, and condition\&. 
 .PP
-Definition at line 907 of file lspg\&.c\&.
+Definition at line 993 of file lspg\&.c\&.
 .PP
 .nf
                           {
@@ -1934,19 +2188,19 @@ Definition at line 907 of file lspg\&.c\&.
 .PP
 Wait for the next shot query to get processed\&. 
 .PP
-Definition at line 925 of file lspg\&.c\&.
+Definition at line 1012 of file lspg\&.c\&.
 .PP
 .nf
                           {
   pthread_mutex_lock( &(lspg_nextshot\&.mutex));
-  while( lspg_nextshot\&.new_value_ready == 0)
+  while( lspg_nextshot\&.new_value_ready == 0 && lspg_nextshot\&.query_error == 0)
     pthread_cond_wait( &(lspg_nextshot\&.cond), &(lspg_nextshot\&.mutex));
 }
 .fi
 .SS "PQnoticeProcessor lspg_notice_processor (void *arg, const char *msg)"
 
 .PP
-Definition at line 1647 of file lspg\&.c\&.
+Definition at line 1819 of file lspg\&.c\&.
 .PP
 .nf
                                                                      {
@@ -1959,7 +2213,7 @@ Definition at line 1647 of file lspg\&.c\&.
 .PP
 Connect to the pg server\&. 
 .PP
-Definition at line 1654 of file lspg\&.c\&.
+Definition at line 1826 of file lspg\&.c\&.
 .PP
 .nf
                        {
@@ -2015,7 +2269,7 @@ Definition at line 1654 of file lspg\&.c\&.
       ls_pg_state = LS_PG_STATE_INIT;
     } else if( lspg_connectPoll_response == PGRES_POLLING_OK) {
       PQsetNoticeProcessor( q, (PQnoticeProcessor)lspg_notice_processor, NULL);
-      lspg_query_push( NULL, 'select pmac\&.md2_init()');
+      lspg_query_push( NULL, NULL, 'select pmac\&.md2_init()');
       ls_pg_state = LS_PG_STATE_IDLE;
     }
     break;
@@ -2038,7 +2292,7 @@ Definition at line 1654 of file lspg\&.c\&.
       q = NULL;
       ls_pg_state = LS_PG_STATE_INIT;
     } else if( lspg_resetPoll_response == PGRES_POLLING_OK) {
-      lspg_query_push( NULL, 'select pmac\&.md2_init()');
+      lspg_query_push( NULL, NULL, 'select pmac\&.md2_init()');
       ls_pg_state = LS_PG_STATE_IDLE;
     }
     break;
@@ -2055,7 +2309,7 @@ I/O control to/from the postgresql server\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1544 of file lspg\&.c\&.
+Definition at line 1714 of file lspg\&.c\&.
 .PP
 .nf
                        {
@@ -2115,15 +2369,17 @@ Definition at line 1544 of file lspg\&.c\&.
         lslogging_log_message( 'lspg_pg_service: notify recieved %s', pgn->relname);
         
         if( strstr( pgn->relname, '_pmac') != NULL) {
-          lspg_query_push( lspg_cmd_cb, 'EXECUTE md2_queue_next');
+          lspg_query_push( lspg_cmd_cb, lspg_cmd_error_cb, 'EXECUTE md2_queue_next');
         } else if( strstr( pgn->relname, '_diff') != NULL || strstr( pgn->relname, '_run') != NULL) {
-          lspg_query_push( lspg_nextaction_cb, 'EXECUTE nextaction');
+          lspg_query_push( lspg_nextaction_cb, lspg_nextaction_error_cb, 'EXECUTE nextaction');
         } else if( strstr( pgn->relname, '_sample') != NULL) {
           lspg_getcurrentsampleid_call();
         } else if( strstr( pgn->relname, '_kvs') != NULL) {
-          lspg_query_push( lspg_allkvs_cb, 'EXECUTE getkvs');
+          lspg_query_push( lspg_allkvs_cb, lspg_allkvs_error_cb, 'EXECUTE getkvs');
         } else if( strstr( pgn->relname, '_mess') != NULL) {
-          lspg_query_push( lspg_nexterrors_cb, 'EXECUTE nexterrors');
+          lspg_query_push( lspg_nexterrors_cb, lspg_nexterrors_error_cb, 'EXECUTE nexterrors');
+        } else if( strstr( pgn->relname, '_pause') != NULL) {
+          
         }
         PQfreemem( pgn);
       }
@@ -2162,7 +2418,7 @@ Definition at line 1544 of file lspg\&.c\&.
 .SS "void lspg_preset_changed_cb (char *event)"
 
 .PP
-Definition at line 1864 of file lspg\&.c\&.
+Definition at line 2037 of file lspg\&.c\&.
 .PP
 .nf
                                           {
@@ -2188,7 +2444,7 @@ Definition at line 1864 of file lspg\&.c\&.
     lslogging_log_message( 'lspg_preset_chanted_cb: Value for preset %s is %s', pn, v==NULL ? 'NULL' : 'Empty');
     return;
   }
-  lspg_query_push( NULL, 'EXECUTE kvupdate('{%s,%s}'::text[])', pn, v);
+  lspg_query_push( NULL, NULL, 'EXECUTE kvupdate('{%s,%s}'::text[])', pn, v);
 }
 .fi
 .SS "\fBlspg_query_queue_t\fP* lspg_query_next ()"
@@ -2196,7 +2452,7 @@ Definition at line 1864 of file lspg\&.c\&.
 .PP
 Return the next item in the postgresql queue\&. If there is an item left in the queue then it is returned\&. Otherwise, NULL is returned\&. 
 .PP
-Definition at line 74 of file lspg\&.c\&.
+Definition at line 77 of file lspg\&.c\&.
 .PP
 .nf
                                       {
@@ -2216,19 +2472,21 @@ Definition at line 74 of file lspg\&.c\&.
   return rtn;
 }
 .fi
-.SS "void lspg_query_push (void(*)(\fBlspg_query_queue_t\fP *, PGresult *)cb, char *fmt, \&.\&.\&.)"
+.SS "void lspg_query_push (void(*)(\fBlspg_query_queue_t\fP *, PGresult *)cb, void(*)()er, char *fmt, \&.\&.\&.)"
 
 .PP
 Place a query on the queue\&. \fBParameters:\fP
 .RS 4
 \fIcb\fP Our callback function that deals with the response 
 .br
+\fIer\fP error response 
+.br
 \fIfmt\fP Printf style function to generate the query 
 .RE
 .PP
 
 .PP
-Definition at line 127 of file lspg\&.c\&.
+Definition at line 130 of file lspg\&.c\&.
 .PP
 .nf
                        {
@@ -2252,6 +2510,7 @@ Definition at line 127 of file lspg\&.c\&.
 
   lspg_query_queue[idx]\&.qs[LS_PG_QUERY_STRING_LENGTH - 1] = 0;
   lspg_query_queue[idx]\&.onResponse = cb;
+  lspg_query_queue[idx]\&.onError    = er;
   lspg_query_queue_on++;
 
   pthread_kill( lspg_thread, SIGUSR1);
@@ -2263,7 +2522,7 @@ Definition at line 127 of file lspg\&.c\&.
 .PP
 Remove the oldest item in the queue\&. this is called only when there is nothing else to service the reply: this pop does not return anything\&. We use the \&.\&.\&.reply_peek function to return the next item in the reply queue 
 .PP
-Definition at line 98 of file lspg\&.c\&.
+Definition at line 101 of file lspg\&.c\&.
 .PP
 .nf
                              {
@@ -2281,7 +2540,7 @@ Definition at line 98 of file lspg\&.c\&.
 .PP
 Return the next item in the reply queue but don't pop it since we may need it more than once\&. Call \fBlspg_query_reply_next()\fP when done\&. 
 .PP
-Definition at line 111 of file lspg\&.c\&.
+Definition at line 114 of file lspg\&.c\&.
 .PP
 .nf
                                             {
@@ -2298,16 +2557,31 @@ Definition at line 111 of file lspg\&.c\&.
   return rtn;
 }
 .fi
+.SS "void lspg_quit_query_cb (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
+
+.PP
+call back to handle signing out of the database 
+.PP
+Definition at line 2146 of file lspg\&.c\&.
+.PP
+.nf
+                                                                 {
+  ls_pg_state = LS_PG_STATE_QUITTING;
+  PQfinish( q);
+  lspg_running = 0;
+}
+.fi
 .SS "void lspg_quitting_cb (char *event)"
 
 .PP
 Prepare to exit the program in a couple of seconds\&. 
 .PP
-Definition at line 1973 of file lspg\&.c\&.
+Definition at line 2154 of file lspg\&.c\&.
 .PP
 .nf
                                     {
-  lspg_query_push( NULL, 'SELECT px\&.dropairrights()');
+  lspg_query_push( lspg_quit_query_cb, lspg_quit_query_cb, 'SELECT px\&.dropairrights()');
+
 }
 .fi
 .SS "void lspg_receive ()"
@@ -2315,7 +2589,7 @@ Definition at line 1973 of file lspg\&.c\&.
 .PP
 Receive a result of a query\&. 
 .PP
-Definition at line 1461 of file lspg\&.c\&.
+Definition at line 1629 of file lspg\&.c\&.
 .PP
 .nf
                     {
@@ -2359,6 +2633,8 @@ Definition at line 1461 of file lspg\&.c\&.
         if( emess != NULL && emess[0] != 0) {
           lslogging_log_message( 'Error from query '%s':\n%s', qqp->qs, emess);
         }
+        if( qqp != NULL && qqp->onError != NULL)
+          qqp->onError();
       } else {
         //
         // Deal with the response
@@ -2375,15 +2651,16 @@ Definition at line 1461 of file lspg\&.c\&.
   }
 }
 .fi
-.SS "void lspg_run ()"
+.SS "pthread_t* lspg_run ()"
 
 .PP
 Start 'er runnin'\&. 
 .PP
-Definition at line 1998 of file lspg\&.c\&.
+Definition at line 2180 of file lspg\&.c\&.
 .PP
 .nf
-                {
+                      {
+
   pthread_create( &lspg_thread, NULL, lspg_worker, NULL);
   lsevents_add_listener( '^(appy|appz|capy|capz|scint) In Position$', lspg_check_preset_in_position_cb);
   lsevents_add_listener( '^(appy|appz|capy|capz|scint) Moving$',      lspg_unset_current_preset_moving_cb);
@@ -2391,12 +2668,15 @@ Definition at line 1998 of file lspg\&.c\&.
   lsevents_add_listener( '^Sample(Detected|Absent)$',                 lspg_sample_detector_cb);
   lsevents_add_listener( '^Timer Update KVs$',                        lspg_update_kvs_cb);
   lsevents_add_listener( '^cam\&.zoom In Position$',                    lspg_set_scale_cb);
+  lsevents_add_listener( '^Quitting Program$',                        lspg_quitting_cb);
   lstimer_set_timer(     'Timer Update KVs', -1, 0, 500000000);
 
   //
   // Make sure we own the airrights
   //
   lspg_demandairrights_all();
+
+  return( &lspg_thread);
 }
 .fi
 .SS "void lspg_sample_detector_cb (char *event)"
@@ -2404,7 +2684,7 @@ Definition at line 1998 of file lspg\&.c\&.
 .PP
 log magnet state 
 .PP
-Definition at line 1961 of file lspg\&.c\&.
+Definition at line 2134 of file lspg\&.c\&.
 .PP
 .nf
                                            {
@@ -2414,7 +2694,7 @@ Definition at line 1961 of file lspg\&.c\&.
   else
     present = 0;
 
-  lspg_query_push( NULL, 'SELECT px\&.logmagnetstate(%s)', present ? 'TRUE' : 'FALSE');
+  lspg_query_push( NULL, NULL, 'SELECT px\&.logmagnetstate(%s)', present ? 'TRUE' : 'FALSE');
 }
 .fi
 .SS "void lspg_send_next_query ()"
@@ -2422,7 +2702,7 @@ Definition at line 1961 of file lspg\&.c\&.
 .PP
 send the next queued query to the DB server 
 .PP
-Definition at line 1414 of file lspg\&.c\&.
+Definition at line 1582 of file lspg\&.c\&.
 .PP
 .nf
                             {
@@ -2470,7 +2750,7 @@ Definition at line 1414 of file lspg\&.c\&.
   }
 }
 .fi
-.SS "void lspg_seq_run_prep_all (long longskey, doublekappa, doublephi, doublecx, doublecy, doubleax, doubleay, doubleaz)"
+.SS "int lspg_seq_run_prep_all (long longskey, doublekappa, doublephi, doublecx, doublecy, doubleax, doubleay, doubleaz)"
 
 .PP
 Convinence function to call seq run prep\&. \fBParameters:\fP
@@ -2494,13 +2774,16 @@ Convinence function to call seq run prep\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1186 of file lspg\&.c\&.
+Definition at line 1324 of file lspg\&.c\&.
 .PP
 .nf
                              {
+  int rtn;
   lspg_seq_run_prep_call( skey, kappa, phi, cx, cy, ax, ay, az);
   lspg_seq_run_prep_wait();
+  rtn = lspg_seq_run_prep\&.query_error;
   lspg_seq_run_prep_done();
+  return rtn;
 }
 .fi
 .SS "void lspg_seq_run_prep_call (long longskey, doublekappa, doublephi, doublecx, doublecy, doubleax, doubleay, doubleaz)"
@@ -2527,15 +2810,17 @@ queue up the seq_run_prep query \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1152 of file lspg\&.c\&.
+Definition at line 1288 of file lspg\&.c\&.
 .PP
 .nf
                               {
   pthread_mutex_lock( &(lspg_seq_run_prep\&.mutex));
   lspg_seq_run_prep\&.new_value_ready = 0;
+  lspg_seq_run_prep\&.query_error     = 0;
   pthread_mutex_unlock( &(lspg_seq_run_prep\&.mutex));
 
-  lspg_query_push( lspg_seq_run_prep_cb, 'SELECT px\&.seq_run_prep( %lld, %\&.3f, %\&.3f, %\&.3f, %\&.3f, %\&.3f, %\&.3f, %\&.3f)',
+  lspg_query_push( lspg_seq_run_prep_cb, lspg_seq_run_prep_error_cb, 
+                   'SELECT px\&.seq_run_prep( %lld, %\&.3f, %\&.3f, %\&.3f, %\&.3f, %\&.3f, %\&.3f, %\&.3f)',
                    skey, kappa, phi, cx, cy, ax, ay, az);
 }
 .fi
@@ -2551,7 +2836,7 @@ Callback for the seq_run_prep query\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1140 of file lspg\&.c\&.
+Definition at line 1265 of file lspg\&.c\&.
 .PP
 .nf
                             {
@@ -2566,10 +2851,25 @@ Definition at line 1140 of file lspg\&.c\&.
 .PP
 Indicate we are done waiting\&. 
 .PP
-Definition at line 1180 of file lspg\&.c\&.
+Definition at line 1318 of file lspg\&.c\&.
 .PP
 .nf
                               {
+  pthread_mutex_unlock( &(lspg_seq_run_prep\&.mutex));
+}
+.fi
+.SS "void lspg_seq_run_prep_error_cb ()"
+
+.PP
+Callback for seq_run error\&. 
+.PP
+Definition at line 1278 of file lspg\&.c\&.
+.PP
+.nf
+                                  {
+  pthread_mutex_lock( & (lspg_seq_run_prep\&.mutex));
+  lspg_seq_run_prep\&.query_error = 1;
+  pthread_cond_signal( &(lspg_seq_run_prep\&.cond));
   pthread_mutex_unlock( &(lspg_seq_run_prep\&.mutex));
 }
 .fi
@@ -2578,11 +2878,12 @@ Definition at line 1180 of file lspg\&.c\&.
 .PP
 Initialize the data collection object\&. 
 .PP
-Definition at line 1132 of file lspg\&.c\&.
+Definition at line 1256 of file lspg\&.c\&.
 .PP
 .nf
                               {
   lspg_seq_run_prep\&.new_value_ready = 0;
+  lspg_seq_run_prep\&.query_error     = 0;
   pthread_mutex_init( &(lspg_seq_run_prep\&.mutex), NULL);
   pthread_cond_init(  &(lspg_seq_run_prep\&.cond),  NULL);
 }
@@ -2592,12 +2893,12 @@ Definition at line 1132 of file lspg\&.c\&.
 .PP
 Wait for seq run prep query to return\&. 
 .PP
-Definition at line 1172 of file lspg\&.c\&.
+Definition at line 1310 of file lspg\&.c\&.
 .PP
 .nf
                               {
   pthread_mutex_lock( &(lspg_seq_run_prep\&.mutex));
-  while( lspg_seq_run_prep\&.new_value_ready == 0)
+  while( lspg_seq_run_prep\&.new_value_ready == 0 && lspg_seq_run_prep\&.query_error == 0)
     pthread_cond_wait( &(lspg_seq_run_prep\&.cond), &(lspg_seq_run_prep\&.mutex));
 }
 .fi
@@ -2606,7 +2907,7 @@ Definition at line 1172 of file lspg\&.c\&.
 .PP
 Fix up xscale and yscale when zoom changes\&. 
 .PP
-Definition at line 1934 of file lspg\&.c\&.
+Definition at line 2107 of file lspg\&.c\&.
 .PP
 .nf
                                      {
@@ -2619,7 +2920,7 @@ Definition at line 1934 of file lspg\&.c\&.
   // we just need to set the KV's
   //
 
-  mag = lspmac_getPosition( zoom);
+  mag = floor(( lspmac_getPosition( zoom) + 0\&.5));
   
   px  = lsredis_get_obj( 'cam\&.zoom\&.%d\&.ScaleX', mag);
   sx = lsredis_getstr( px);
@@ -2627,7 +2928,7 @@ Definition at line 1934 of file lspg\&.c\&.
   py  = lsredis_get_obj( 'cam\&.zoom\&.%d\&.ScaleY', mag);
   sy = lsredis_getstr( py);
 
-  lspg_query_push( NULL, 'EXECUTE kvupdate( '{cam\&.xScale,%s,cam\&.yScale,%s}')', sx, sy);
+  lspg_query_push( NULL, NULL, 'EXECUTE kvupdate( '{cam\&.xScale,%s,cam\&.yScale,%s}')', sx, sy);
   free( sx);
   free( sy);
 }
@@ -2642,7 +2943,7 @@ Service a signal Signals here are treated as file descriptors and fits into our 
 .PP
 
 .PP
-Definition at line 1522 of file lspg\&.c\&.
+Definition at line 1692 of file lspg\&.c\&.
 .PP
 .nf
                         {
@@ -2666,7 +2967,7 @@ Definition at line 1522 of file lspg\&.c\&.
 .SS "int lspg_starttransfer_all (int *err, unsigned intnextsample, intsampledetected, doubleax, doubleay, doubleaz, doublehorz, doublevert, doubleesttime)"
 
 .PP
-Definition at line 409 of file lspg\&.c\&.
+Definition at line 427 of file lspg\&.c\&.
 .PP
 .nf
                                                                                                                                                               {
@@ -2688,15 +2989,17 @@ Definition at line 409 of file lspg\&.c\&.
 .SS "void lspg_starttransfer_call (unsigned intnextsample, intsample_detected, doubleax, doubleay, doubleaz, doublehorz, doublevert, doubleesttime)"
 
 .PP
-Definition at line 389 of file lspg\&.c\&.
+Definition at line 405 of file lspg\&.c\&.
 .PP
 .nf
                                                                                                                                                        {
   pthread_mutex_lock( &(lspg_starttransfer\&.mutex));
   lspg_starttransfer\&.new_value_ready = 0;
+  lspg_starttransfer\&.query_error     = 0;
   pthread_mutex_unlock( &(lspg_starttransfer\&.mutex));
 
-  lspg_query_push( lspg_starttransfer_cb, 'SELECT px\&.starttransfer( %d, %s, %\&.3f, %\&.3f, %\&.3f, %\&.3f, %\&.3f, %\&.3f)',
+  lspg_query_push( lspg_starttransfer_cb, lspg_starttransfer_error_cb,
+                   'SELECT px\&.starttransfer( %d, %s, %\&.3f, %\&.3f, %\&.3f, %\&.3f, %\&.3f, %\&.3f)',
                    nextsample, sample_detected ? 'True' : 'False', ax, ay, az, horz, vert, esttime);
 }
 .fi
@@ -2710,7 +3013,7 @@ Definition at line 389 of file lspg\&.c\&.
 .PP
 
 .PP
-Definition at line 367 of file lspg\&.c\&.
+Definition at line 377 of file lspg\&.c\&.
 .PP
 .nf
                         {
@@ -2722,7 +3025,6 @@ Definition at line 367 of file lspg\&.c\&.
     lspg_starttransfer\&.starttransfer = 0;
   } else {
     lspg_starttransfer\&.no_rows_returned = 0;
-    lslogging_log_message( 'lspg_starttransfer_cb: received '%s' from strattransfer query', PQgetvalue( pgr,0,0));
     if( PQgetisnull( pgr, 0, 0) || strcmp( PQgetvalue( pgr,0,0), '1') != 0)
       lspg_starttransfer\&.starttransfer = 0;
     else
@@ -2735,21 +3037,35 @@ Definition at line 367 of file lspg\&.c\&.
 .SS "void lspg_starttransfer_done ()"
 
 .PP
-Definition at line 404 of file lspg\&.c\&.
+Definition at line 422 of file lspg\&.c\&.
 .PP
 .nf
                                {
   pthread_mutex_unlock( &(lspg_starttransfer\&.mutex));
 }
 .fi
+.SS "void lspg_starttransfer_error_cb ()"
+
+.PP
+Definition at line 398 of file lspg\&.c\&.
+.PP
+.nf
+                                    {
+  pthread_mutex_lock( &(lspg_starttransfer\&.mutex));
+  lspg_starttransfer\&.query_error = 1;
+  pthread_cond_signal( &(lspg_starttransfer\&.cond));
+  pthread_mutex_unlock( &(lspg_starttransfer\&.mutex));
+}
+.fi
 .SS "void lspg_starttransfer_init ()"
 
 .PP
-Definition at line 361 of file lspg\&.c\&.
+Definition at line 370 of file lspg\&.c\&.
 .PP
 .nf
                                {
   lspg_starttransfer\&.new_value_ready = 0;
+  lspg_starttransfer\&.query_error     = 0;
   pthread_mutex_init( &lspg_starttransfer\&.mutex, NULL);
   pthread_cond_init( &lspg_starttransfer\&.cond, NULL);
 }
@@ -2757,19 +3073,19 @@ Definition at line 361 of file lspg\&.c\&.
 .SS "void lspg_starttransfer_wait ()"
 
 .PP
-Definition at line 398 of file lspg\&.c\&.
+Definition at line 416 of file lspg\&.c\&.
 .PP
 .nf
                                {
   pthread_mutex_lock( &(lspg_starttransfer\&.mutex));
-  while( lspg_starttransfer\&.new_value_ready == 0)
+  while( lspg_starttransfer\&.new_value_ready == 0 && lspg_starttransfer\&.query_error == 0)
     pthread_cond_wait( &(lspg_starttransfer\&.cond), &(lspg_starttransfer\&.mutex));
 }
 .fi
 .SS "void lspg_unset_current_preset_moving_cb (char *event)"
 
 .PP
-Definition at line 1911 of file lspg\&.c\&.
+Definition at line 2084 of file lspg\&.c\&.
 .PP
 .nf
                                                        {
@@ -2789,7 +3105,7 @@ Definition at line 1911 of file lspg\&.c\&.
     lslogging_log_message( 'lspg_unset_current_reset_moving_cb: Could not find motor '%s'', cp);
     return;
   }
-  lspg_query_push( NULL, 'EXECUTE kvupdate( '{%s\&.currentPreset,-1}')', cp);
+  lspg_query_push( NULL, NULL, 'EXECUTE kvupdate( '{%s\&.currentPreset,-1}')', cp);
 }
 .fi
 .SS "void lspg_update_kvs_cb (char *event)"
@@ -2797,7 +3113,7 @@ Definition at line 1911 of file lspg\&.c\&.
 .PP
 Perhaps update the px\&.kvs table in postgresql Should be triggered by a timer event\&. 
 .PP
-Definition at line 304 of file lspg\&.c\&.
+Definition at line 313 of file lspg\&.c\&.
 .PP
 .nf
                                       {
@@ -2844,14 +3160,14 @@ Definition at line 304 of file lspg\&.c\&.
 
     n = strlen( s);
     if( n >= sizeof(s) - 64) {
-      lspg_query_push( NULL, 'EXECUTE kvupdate('{%s}')', s);
+      lspg_query_push( NULL, NULL, 'EXECUTE kvupdate('{%s}')', s);
       s[0] = 0;
       need_comma = 0;
     }
   }
 
   if( strlen(s)) {
-    lspg_query_push( NULL, 'EXECUTE kvupdate('{%s}')', s);
+    lspg_query_push( NULL, NULL, 'EXECUTE kvupdate('{%s}')', s);
   }
 }
 .fi
@@ -2860,7 +3176,7 @@ Definition at line 304 of file lspg\&.c\&.
 .PP
 Combined call to wait for the detector\&. 
 .PP
-Definition at line 996 of file lspg\&.c\&.
+Definition at line 1095 of file lspg\&.c\&.
 .PP
 .nf
                                   {
@@ -2874,15 +3190,16 @@ Definition at line 996 of file lspg\&.c\&.
 .PP
 initiate the wait for detector query 
 .PP
-Definition at line 970 of file lspg\&.c\&.
+Definition at line 1068 of file lspg\&.c\&.
 .PP
 .nf
                                    {
   pthread_mutex_lock( &(lspg_wait_for_detector\&.mutex));
   lspg_wait_for_detector\&.new_value_ready = 0;
+  lspg_wait_for_detector\&.query_error     = 0;
   pthread_mutex_unlock( &(lspg_wait_for_detector\&.mutex));
   
-  lspg_query_push( lspg_wait_for_detector_cb, 'SELECT px\&.lock_detector_test_block()');
+  lspg_query_push( lspg_wait_for_detector_cb, lspg_wait_for_detector_error_cb, 'SELECT px\&.lock_detector_test_block()');
 }
 .fi
 .SS "void lspg_wait_for_detector_cb (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
@@ -2890,7 +3207,7 @@ Definition at line 970 of file lspg\&.c\&.
 .PP
 Callback for the wait for detector query\&. 
 .PP
-Definition at line 961 of file lspg\&.c\&.
+Definition at line 1050 of file lspg\&.c\&.
 .PP
 .nf
                                                                         {
@@ -2905,11 +3222,26 @@ Definition at line 961 of file lspg\&.c\&.
 .PP
 Done waiting for the detector\&. 
 .PP
-Definition at line 989 of file lspg\&.c\&.
+Definition at line 1088 of file lspg\&.c\&.
 .PP
 .nf
                                    {
   pthread_mutex_unlock( &(lspg_wait_for_detector\&.mutex));
+}
+.fi
+.SS "void lspg_wait_for_detector_error_cb ()"
+
+.PP
+wait for detector query error callback 
+.PP
+Definition at line 1059 of file lspg\&.c\&.
+.PP
+.nf
+                                       {
+  pthread_mutex_lock( &lspg_wait_for_detector\&.mutex);
+  lspg_wait_for_detector\&.query_error = 1;
+  pthread_cond_signal( &lspg_wait_for_detector\&.cond);
+  pthread_mutex_unlock( &lspg_wait_for_detector\&.mutex);
 }
 .fi
 .SS "void lspg_wait_for_detector_init ()"
@@ -2917,11 +3249,12 @@ Definition at line 989 of file lspg\&.c\&.
 .PP
 initialize the detector timing object 
 .PP
-Definition at line 953 of file lspg\&.c\&.
+Definition at line 1041 of file lspg\&.c\&.
 .PP
 .nf
                                    {
   lspg_wait_for_detector\&.new_value_ready = 0;
+  lspg_wait_for_detector\&.query_error     = 0;
   pthread_mutex_init( &(lspg_wait_for_detector\&.mutex), NULL);
   pthread_cond_init(  &(lspg_wait_for_detector\&.cond), NULL);
 }
@@ -2931,39 +3264,44 @@ Definition at line 953 of file lspg\&.c\&.
 .PP
 Pause the calling thread until the detector is ready Called by the MD2 thread\&. 
 .PP
-Definition at line 981 of file lspg\&.c\&.
+Definition at line 1080 of file lspg\&.c\&.
 .PP
 .nf
                                    {
   pthread_mutex_lock( &(lspg_wait_for_detector\&.mutex));
-  while( lspg_wait_for_detector\&.new_value_ready == 0)
+  while( lspg_wait_for_detector\&.new_value_ready == 0 && lspg_wait_for_detector\&.query_error == 0)
     pthread_cond_wait( &(lspg_wait_for_detector\&.cond), &(lspg_wait_for_detector\&.mutex));
 }
 .fi
-.SS "void lspg_waitcryo_all ()"
+.SS "int lspg_waitcryo_all ()"
 
 .PP
 no need to get fancy with the wait cryo command It should not return until the robot is almost ready for air rights 
 .PP
-Definition at line 597 of file lspg\&.c\&.
+Definition at line 655 of file lspg\&.c\&.
 .PP
 .nf
-                         {
+                        {
+  int rtn;
   pthread_mutex_lock( &lspg_waitcryo\&.mutex);
   lspg_waitcryo\&.new_value_ready = 0;
+  lspg_waitcryo\&.query_error     = 0;
 
-  lspg_query_push( lspg_waitcryo_cb, 'SELECT px\&.waitcryo()');
+  lspg_query_push( lspg_waitcryo_cb, lspg_waitcryo_error_cb, 'SELECT px\&.waitcryo()');
 
-  while( lspg_waitcryo\&.new_value_ready == 0)
+  while( lspg_waitcryo\&.new_value_ready == 0 && lspg_waitcryo\&.query_error == 0)
     pthread_cond_wait( &lspg_waitcryo\&.cond, &lspg_waitcryo\&.mutex);
 
+  rtn = lspg_waitcryo\&.query_error;
   pthread_mutex_unlock( &lspg_waitcryo\&.mutex);
+
+  return rtn;
 }
 .fi
 .SS "void lspg_waitcryo_cb (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
 
 .PP
-Definition at line 587 of file lspg\&.c\&.
+Definition at line 638 of file lspg\&.c\&.
 .PP
 .nf
                                                                {
@@ -2973,14 +3311,28 @@ Definition at line 587 of file lspg\&.c\&.
   pthread_mutex_unlock( &lspg_waitcryo\&.mutex);
 }
 .fi
+.SS "void lspg_waitcryo_error_cb ()"
+
+.PP
+Definition at line 645 of file lspg\&.c\&.
+.PP
+.nf
+                              {
+  pthread_mutex_lock( &lspg_waitcryo\&.mutex);
+  lspg_waitcryo\&.query_error = 1;
+  pthread_cond_signal( &lspg_waitcryo\&.cond);
+  pthread_mutex_unlock( &lspg_waitcryo\&.mutex);
+}
+.fi
 .SS "void lspg_waitcryo_init ()"
 
 .PP
-Definition at line 581 of file lspg\&.c\&.
+Definition at line 631 of file lspg\&.c\&.
 .PP
 .nf
                           {
   lspg_waitcryo\&.new_value_ready = 0;
+  lspg_waitcryo\&.query_error     = 0;
   pthread_mutex_init( &lspg_waitcryo\&.mutex, NULL);
   pthread_cond_init( &lspg_waitcryo\&.cond, NULL);
 }
@@ -2995,7 +3347,7 @@ The main loop for the lspg thread\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1794 of file lspg\&.c\&.
+Definition at line 1966 of file lspg\&.c\&.
 .PP
 .nf
                     {
@@ -3026,7 +3378,7 @@ Definition at line 1794 of file lspg\&.c\&.
   lspgfd\&.fd   = -1;
 
 
-  while( 1) {
+  while( lspg_running) {
     int pollrtn;
     int poll_timeout_ms;
 
@@ -3064,6 +3416,7 @@ Definition at line 1794 of file lspg\&.c\&.
       pollrtn--;
     } 
   }
+  return NULL;
 }
 .fi
 .SH "Variable Documentation"
@@ -3073,139 +3426,145 @@ Definition at line 1794 of file lspg\&.c\&.
 .PP
 State of the lspg state machine\&. 
 .PP
-Definition at line 38 of file lspg\&.c\&.
+Definition at line 40 of file lspg\&.c\&.
 .SS "PostgresPollingStatusType lspg_connectPoll_response\fC [static]\fP"
 
 .PP
 Used to determine state while connecting\&. 
 .PP
-Definition at line 59 of file lspg\&.c\&.
+Definition at line 62 of file lspg\&.c\&.
 .SS "\fBlspg_demandairrights_t\fP lspg_demandairrights"
 
 .PP
 our demandairrights object 
 .PP
-Definition at line 65 of file lspg\&.c\&.
+Definition at line 68 of file lspg\&.c\&.
 .SS "\fBlspg_getcenter_t\fP lspg_getcenter"
 
 .PP
 the getcenter object 
 .PP
-Definition at line 64 of file lspg\&.c\&.
+Definition at line 67 of file lspg\&.c\&.
 .SS "\fBlspg_getcurrentsampleid_t\fP lspg_getcurrentsampleid"
 
 .PP
 our currentsample id 
 .PP
-Definition at line 66 of file lspg\&.c\&.
+Definition at line 69 of file lspg\&.c\&.
 .SS "\fBlspg_lock_detector_t\fP lspg_lock_detector\fC [static]\fP"
 
 .PP
-Definition at line 1070 of file lspg\&.c\&.
+Definition at line 1182 of file lspg\&.c\&.
 .SS "\fBlspg_lock_diffractometer_t\fP lspg_lock_diffractometer\fC [static]\fP"
 
 .PP
-Definition at line 1011 of file lspg\&.c\&.
+Definition at line 1111 of file lspg\&.c\&.
 .SS "\fBlspg_nextsample_t\fP lspg_nextsample"
 
 .PP
 the very next sample 
 .PP
-Definition at line 62 of file lspg\&.c\&.
+Definition at line 65 of file lspg\&.c\&.
 .SS "\fBlspg_nextshot_t\fP lspg_nextshot"
 
 .PP
 the nextshot object 
 .PP
-Definition at line 63 of file lspg\&.c\&.
+Definition at line 66 of file lspg\&.c\&.
 .SS "\fBlspg_query_queue_t\fP lspg_query_queue[\fBLS_PG_QUERY_QUEUE_LENGTH\fP]\fC [static]\fP"
 
 .PP
 Our query queue\&. 
 .PP
-Definition at line 51 of file lspg\&.c\&.
+Definition at line 53 of file lspg\&.c\&.
 .SS "unsigned int lspg_query_queue_off = 0\fC [static]\fP"
 
 .PP
 The last item still being used (on == off means nothing in queue) 
 .PP
-Definition at line 53 of file lspg\&.c\&.
+Definition at line 55 of file lspg\&.c\&.
 .SS "unsigned int lspg_query_queue_on = 0\fC [static]\fP"
 
 .PP
 Next position to add something to the queue\&. 
 .PP
-Definition at line 52 of file lspg\&.c\&.
+Definition at line 54 of file lspg\&.c\&.
 .SS "unsigned int lspg_query_queue_reply = 0\fC [static]\fP"
 
 .PP
 The current item being digested\&. Normally off <= reply <= on\&. Corner case of queue wrap arround works because we only increment and compare for equality\&. 
 .PP
-Definition at line 54 of file lspg\&.c\&.
+Definition at line 56 of file lspg\&.c\&.
 .SS "pthread_cond_t lspg_queue_cond\fC [static]\fP"
 
 .PP
 keeps the queue from overflowing 
 .PP
-Definition at line 43 of file lspg\&.c\&.
+Definition at line 45 of file lspg\&.c\&.
 .SS "pthread_mutex_t lspg_queue_mutex\fC [static]\fP"
 
 .PP
 keep the queue from getting tangled 
 .PP
-Definition at line 42 of file lspg\&.c\&.
+Definition at line 44 of file lspg\&.c\&.
 .SS "PostgresPollingStatusType lspg_resetPoll_response\fC [static]\fP"
 
 .PP
 Used to determine state while reconnecting\&. 
 .PP
-Definition at line 60 of file lspg\&.c\&.
+Definition at line 63 of file lspg\&.c\&.
+.SS "int lspg_running = 1\fC [static]\fP"
+
+.PP
+flag to tell worker it's time to go home 
+.PP
+Definition at line 61 of file lspg\&.c\&.
 .SS "\fBlspg_seq_run_prep_t\fP lspg_seq_run_prep\fC [static]\fP"
 
 .PP
-Definition at line 1128 of file lspg\&.c\&.
+Definition at line 1252 of file lspg\&.c\&.
 .SS "\fBlspg_starttransfer_t\fP lspg_starttransfer"
 
 .PP
 start a sample transfer 
 .PP
-Definition at line 67 of file lspg\&.c\&.
+Definition at line 70 of file lspg\&.c\&.
 .SS "pthread_t lspg_thread\fC [static]\fP"
 
 .PP
 our worker thread 
 .PP
-Definition at line 41 of file lspg\&.c\&.
+Definition at line 43 of file lspg\&.c\&.
 .SS "\fBlspg_wait_for_detector_t\fP lspg_wait_for_detector\fC [static]\fP"
 
 .PP
 Instance of the detector timing object\&. 
 .PP
-Definition at line 949 of file lspg\&.c\&.
+Definition at line 1037 of file lspg\&.c\&.
 .SS "\fBlspg_waitcryo_t\fP lspg_waitcryo"
 
 .PP
 signal the robot 
 .PP
-Definition at line 68 of file lspg\&.c\&.
+Definition at line 71 of file lspg\&.c\&.
 .SS "struct pollfd lspgfd\fC [static]\fP"
 
 .PP
 our poll info 
 .PP
-Definition at line 44 of file lspg\&.c\&.
+Definition at line 46 of file lspg\&.c\&.
 .SS "struct timeval lspg_time_sent now\fC [static]\fP"
 
 .PP
 used to ensure we do not inundate the db server with connection requests 
 .PP
-Definition at line 39 of file lspg\&.c\&.
+Definition at line 41 of file lspg\&.c\&.
 .SS "PGconn* q = NULL\fC [static]\fP"
 
 .PP
 Database connector\&. 
 .PP
-Definition at line 58 of file lspg\&.c\&.
+Definition at line 60 of file lspg\&.c\&.
 .SH "Author"
 .PP 
 Generated automatically by Doxygen for LS-CAT PGPMAC from the source code\&.

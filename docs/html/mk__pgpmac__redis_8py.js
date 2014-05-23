@@ -8,6 +8,7 @@ var mk__pgpmac__redis_8py =
     [ "b", "mk__pgpmac__redis_8py.html#a90faa2042277e396b48b19374c9db4ab", null ],
     [ "bi_list", "mk__pgpmac__redis_8py.html#a961bfabfbdcbf5b749f6e6ecdc733619", null ],
     [ "configs", "mk__pgpmac__redis_8py.html#a9dc9b1bd47efd207604312cd60637526", null ],
+    [ "extras", "mk__pgpmac__redis_8py.html#a3c74008dcad02dee86570e9a0c498a14", null ],
     [ "f", "mk__pgpmac__redis_8py.html#a057fe7457503e0de97edcf855591ed58", null ],
     [ "fnc", "mk__pgpmac__redis_8py.html#a654b54ba0758b8b84516938260851129", null ],
     [ "hard_ini", "mk__pgpmac__redis_8py.html#a5864d9c27cbe61534756880cbfebe4f1", null ],

@@ -55,7 +55,7 @@ void $\ast$ \hyperlink{lsevents_8c_a48e8f9dee00710bbe293b4bbded37a39}{lsevents\-
 \begin{DoxyCompactList}\small\item\em Our worker. \end{DoxyCompactList}\item 
 void \hyperlink{lsevents_8c_af19a77187e7406fc87d36bd26e672e6d}{lsevents\-\_\-init} ()
 \begin{DoxyCompactList}\small\item\em Initialize this module. \end{DoxyCompactList}\item 
-void \hyperlink{lsevents_8c_a4ddde538b603e3d4580ae9356bf9b89d}{lsevents\-\_\-run} ()
+pthread\-\_\-t $\ast$ \hyperlink{lsevents_8c_a7f2ed970b1c3b340b79311e73c5f1e11}{lsevents\-\_\-run} ()
 \begin{DoxyCompactList}\small\item\em Start up the thread and get out of the way. \end{DoxyCompactList}\end{DoxyCompactItemize}
 \subsection*{Variables}
 \begin{DoxyCompactItemize}
@@ -196,7 +196,6 @@ Definition at line 99 of file lsevents.\-c.
       exit( -1);
     \}
     regerror( err, &new->re, errbuf, nerrbuf);
-    \textcolor{comment}{//    lslogging\_log\_message( "lsevents\_add\_listener: %s", errbuf);}
     free( errbuf);
     free( \textcolor{keyword}{new});
     \textcolor{keywordflow}{return};
@@ -223,9 +222,6 @@ Definition at line 99 of file lsevents.\-c.
 
   pthread\_mutex\_unlock( &\hyperlink{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{lsevents\_listener\_mutex});
 
-  \textcolor{comment}{//  lslogging\_log\_message( "lsevents\_add\_listener: added listener for event
-       '%s'", raw\_regexp);}
-
 \}
 \end{DoxyCode}
 \hypertarget{lsevents_8c_af19a77187e7406fc87d36bd26e672e6d}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-init@{lsevents\-\_\-init}}
@@ -241,7 +237,7 @@ Initialize this module.
 
 
 
-Definition at line 373 of file lsevents.\-c.
+Definition at line 367 of file lsevents.\-c.
 
 
 \begin{DoxyCode}
@@ -273,7 +269,7 @@ Definition at line 373 of file lsevents.\-c.
 )}}\label{lsevents_8c_ae09cfa92dba806d8f8808e5822ea713c}
 
 
-Definition at line 314 of file lsevents.\-c.
+Definition at line 308 of file lsevents.\-c.
 
 
 \begin{DoxyCode}
@@ -302,7 +298,7 @@ Add a new event name and find matching callbacks as a returned linked list.
 
 
 
-Definition at line 221 of file lsevents.\-c.
+Definition at line 218 of file lsevents.\-c.
 
 
 \begin{DoxyCode}
@@ -342,8 +338,6 @@ Definition at line 221 of file lsevents.\-c.
     \textcolor{keywordflow}{return} NULL;
   \}
 
-  \textcolor{comment}{//  lslogging\_log\_message( "lsevents\_register\_event: adding event '%s'",
-       event);}
   \textcolor{comment}{//}
   \textcolor{comment}{// Not Found}
   \textcolor{comment}{//}
@@ -393,9 +387,6 @@ Definition at line 221 of file lsevents.\-c.
   \textcolor{keywordflow}{if}( ++\hyperlink{lsevents_8c_adcd8ba85365a869892608bb663790204}{lsevents\_n\_events}  >= \hyperlink{lsevents_8c_ad09b507c9a79282374a0474470454bb8}{lsevents\_max\_events}
       ) \{
     hdestroy\_r( &\hyperlink{lsevents_8c_a274c60d870a1b91ab606dcf024be1bf7}{lsevents\_event\_name\_ht});
-    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lsevents\_register\_event:
-       Increasing event name hash table to %d. lsevents\_n\_events=%d"}, 2 * \hyperlink{lsevents_8c_ad09b507c9a79282374a0474470454bb8}{
-      lsevents\_max\_events}, \hyperlink{lsevents_8c_adcd8ba85365a869892608bb663790204}{lsevents\_n\_events});
     \hyperlink{lsevents_8c_ad09b507c9a79282374a0474470454bb8}{lsevents\_max\_events} *= 2;
     hcreate\_r( \hyperlink{lsevents_8c_ad09b507c9a79282374a0474470454bb8}{lsevents\_max\_events} * 2, &
       \hyperlink{lsevents_8c_a274c60d870a1b91ab606dcf024be1bf7}{lsevents\_event\_name\_ht});
@@ -407,8 +398,6 @@ Definition at line 221 of file lsevents.\-c.
       );
     \}
   \}
-  \textcolor{comment}{//  lslogging\_log\_message( "lsevents\_register\_event: added event '%s'",
-       event);}
   pthread\_mutex\_unlock( &\hyperlink{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{lsevents\_listener\_mutex});
   \textcolor{keywordflow}{return} new\_event\_name->\hyperlink{structlsevents__event__names__struct_afdd17d4d473fcf095a279953ea5e0f1c}{cbl};
 \}  
@@ -434,7 +423,7 @@ Remove a listener previously added with lsevents\-\_\-add\-\_\-listener.
 \end{DoxyParams}
 
 
-Definition at line 157 of file lsevents.\-c.
+Definition at line 154 of file lsevents.\-c.
 
 
 \begin{DoxyCode}
@@ -502,26 +491,27 @@ Definition at line 157 of file lsevents.\-c.
 
 \}
 \end{DoxyCode}
-\hypertarget{lsevents_8c_a4ddde538b603e3d4580ae9356bf9b89d}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-run@{lsevents\-\_\-run}}
+\hypertarget{lsevents_8c_a7f2ed970b1c3b340b79311e73c5f1e11}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-run@{lsevents\-\_\-run}}
 \index{lsevents\-\_\-run@{lsevents\-\_\-run}!lsevents.c@{lsevents.\-c}}
-\subsubsection[{lsevents\-\_\-run}]{\setlength{\rightskip}{0pt plus 5cm}void lsevents\-\_\-run (
+\subsubsection[{lsevents\-\_\-run}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-t$\ast$ lsevents\-\_\-run (
 \begin{DoxyParamCaption}
 {}
 \end{DoxyParamCaption}
-)}}\label{lsevents_8c_a4ddde538b603e3d4580ae9356bf9b89d}
+)}}\label{lsevents_8c_a7f2ed970b1c3b340b79311e73c5f1e11}
 
 
 Start up the thread and get out of the way. 
 
 
 
-Definition at line 390 of file lsevents.\-c.
+Definition at line 384 of file lsevents.\-c.
 
 
 \begin{DoxyCode}
-                    \{
+                          \{
   pthread\_create( &\hyperlink{lsevents_8c_a314640d7c3cb4fa90823ab2418fbac9b}{lsevents\_thread}, NULL, \hyperlink{lsevents_8c_a48e8f9dee00710bbe293b4bbded37a39}{lsevents\_worker}
       , NULL);
+  \textcolor{keywordflow}{return} &\hyperlink{lsevents_8c_a314640d7c3cb4fa90823ab2418fbac9b}{lsevents\_thread};
 \}
 \end{DoxyCode}
 \hypertarget{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-send\-\_\-event@{lsevents\-\_\-send\-\_\-event}}
@@ -592,7 +582,7 @@ Our worker.
 \end{DoxyParams}
 
 
-Definition at line 331 of file lsevents.\-c.
+Definition at line 325 of file lsevents.\-c.
 
 
 \begin{DoxyCode}

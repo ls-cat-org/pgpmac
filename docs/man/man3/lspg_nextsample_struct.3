@@ -1,4 +1,4 @@
-.TH "lspg_nextsample_struct" 3 "Wed May 22 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lspg_nextsample_struct" 3 "Fri May 23 2014" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -27,6 +27,10 @@ Returns the next sample number Just a 32 bit int (Ha!, take that, nextshot!)
 .br
 .RI "\fIflag for our condition \fP"
 .ti -1c
+.RI "int \fBquery_error\fP"
+.br
+.RI "\fI0 is OK, 1 is postgres complained\&. Note current implemention automatically logs the error \fP"
+.ti -1c
 .RI "int \fBno_rows_returned\fP"
 .br
 .RI "\fIjust in case, though this query should always return an integer, perhaps 0 \fP"
@@ -43,7 +47,7 @@ Returns the next sample number Just a 32 bit int (Ha!, take that, nextshot!)
 .PP 
 Returns the next sample number Just a 32 bit int (Ha!, take that, nextshot!) 
 .PP
-Definition at line 261 of file pgpmac\&.h\&.
+Definition at line 276 of file pgpmac\&.h\&.
 .SH "Field Documentation"
 .PP 
 .SS "pthread_cond_t lspg_nextsample_struct::cond"
@@ -51,37 +55,43 @@ Definition at line 261 of file pgpmac\&.h\&.
 .PP
 Our condition\&. 
 .PP
-Definition at line 263 of file pgpmac\&.h\&.
+Definition at line 278 of file pgpmac\&.h\&.
 .SS "pthread_mutex_t lspg_nextsample_struct::mutex"
 
 .PP
 Our mutex\&. 
 .PP
-Definition at line 262 of file pgpmac\&.h\&.
+Definition at line 277 of file pgpmac\&.h\&.
 .SS "int lspg_nextsample_struct::new_value_ready"
 
 .PP
 flag for our condition 
 .PP
-Definition at line 264 of file pgpmac\&.h\&.
+Definition at line 279 of file pgpmac\&.h\&.
 .SS "unsigned int lspg_nextsample_struct::nextsample"
 
 .PP
 sample number (4 8-bit segments: station, dewar (lid), puck, and position in the puck) 
 .PP
-Definition at line 267 of file pgpmac\&.h\&.
+Definition at line 283 of file pgpmac\&.h\&.
 .SS "int lspg_nextsample_struct::nextsample_isnull"
 
 .PP
 shouldn't ever be set, but if we change the logic of this call in PG then we are ready for it here\&. 
 .PP
-Definition at line 268 of file pgpmac\&.h\&.
+Definition at line 284 of file pgpmac\&.h\&.
 .SS "int lspg_nextsample_struct::no_rows_returned"
 
 .PP
 just in case, though this query should always return an integer, perhaps 0 
 .PP
-Definition at line 265 of file pgpmac\&.h\&.
+Definition at line 281 of file pgpmac\&.h\&.
+.SS "int lspg_nextsample_struct::query_error"
+
+.PP
+0 is OK, 1 is postgres complained\&. Note current implemention automatically logs the error 
+.PP
+Definition at line 280 of file pgpmac\&.h\&.
 
 .SH "Author"
 .PP 

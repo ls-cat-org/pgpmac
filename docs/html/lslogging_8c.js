@@ -8,7 +8,7 @@ var lslogging_8c =
     [ "lslogging_event_cb", "lslogging_8c.html#a775318b2753a8b5be9f235589a78797b", null ],
     [ "lslogging_init", "lslogging_8c.html#a3418b9ab57811d28632794236e056408", null ],
     [ "lslogging_log_message", "lslogging_8c.html#a0e756b36671055ef02a8f04d2ba8a93b", null ],
-    [ "lslogging_run", "lslogging_8c.html#ad9f65252584e65957f461b809d59e3a2", null ],
+    [ "lslogging_run", "lslogging_8c.html#ab5d6951193d8b2df1e4dd61c53de76cc", null ],
     [ "lslogging_worker", "lslogging_8c.html#a33ec49aea69b5e4b1b551a34e7bacfca", null ],
     [ "lslogging_cond", "lslogging_8c.html#afa5f05c4337683edc3c88ab56aa5ea6f", null ],
     [ "lslogging_file", "lslogging_8c.html#a5709d6eb68a8eebf78ba58bb78da0649", null ],

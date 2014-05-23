@@ -7,7 +7,7 @@ var searchData=
   ['read_5fptr',['read_ptr',['../structlspmac__motor__struct.html#a844b28ccabab5048ca216db074fb9704',1,'lspmac_motor_struct']]],
   ['redis_5ffmt',['redis_fmt',['../structlspmac__motor__struct.html#a91c38b2072d878b71f4e77de2f1375a4',1,'lspmac_motor_struct']]],
   ['redis_5fposition',['redis_position',['../structlspmac__motor__struct.html#af94a0b2611136058ead4948fd7c858e3',1,'lspmac_motor_struct']]],
-  ['redisdisconnectcb',['redisDisconnectCB',['../lsredis_8c.html#aa1941e6515a254f76cfd1f18d3c8fac3',1,'lsredis.c']]],
+  ['redisdisconnectcb',['redisDisconnectCB',['../kvredis_8c.html#aa1941e6515a254f76cfd1f18d3c8fac3',1,'redisDisconnectCB(const redisAsyncContext *ac, int status):&#160;kvredis.c'],['../lsredis_8c.html#aa1941e6515a254f76cfd1f18d3c8fac3',1,'redisDisconnectCB(const redisAsyncContext *ac, int status):&#160;lsredis.c']]],
   ['reported_5fpg_5fposition',['reported_pg_position',['../structlspmac__motor__struct.html#a959bd55eb5c88a30cd4873ea567944d8',1,'lspmac_motor_struct']]],
   ['reported_5fposition',['reported_position',['../structlspmac__motor__struct.html#ae5f1f605a0f587500e627332ad4e5e7e',1,'lspmac_motor_struct']]],
   ['request',['Request',['../structtagEthernetCmd.html#a0dc566e7edbb226f1a4ea443d93d56e2',1,'tagEthernetCmd']]],

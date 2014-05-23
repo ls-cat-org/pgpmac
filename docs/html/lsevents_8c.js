@@ -14,7 +14,7 @@ var lsevents_8c =
     [ "lsevents_preregister_event", "lsevents_8c.html#ae09cfa92dba806d8f8808e5822ea713c", null ],
     [ "lsevents_register_event", "lsevents_8c.html#a5e3fd5e3c6d11f8a74d79978e00f8835", null ],
     [ "lsevents_remove_listener", "lsevents_8c.html#ab9c425de8de28f0089ad51676873f7e0", null ],
-    [ "lsevents_run", "lsevents_8c.html#a4ddde538b603e3d4580ae9356bf9b89d", null ],
+    [ "lsevents_run", "lsevents_8c.html#a7f2ed970b1c3b340b79311e73c5f1e11", null ],
     [ "lsevents_send_event", "lsevents_8c.html#a5c6f122382dea3dcc231b772e5e75b46", null ],
     [ "lsevents_worker", "lsevents_8c.html#a48e8f9dee00710bbe293b4bbded37a39", null ],
     [ "lsevents_event_name_ht", "lsevents_8c.html#a274c60d870a1b91ab606dcf024be1bf7", null ],

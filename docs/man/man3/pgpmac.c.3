@@ -1,4 +1,4 @@
-.TH "pgpmac.c" 3 "Wed May 22 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "pgpmac.c" 3 "Fri May 23 2014" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -27,8 +27,13 @@ Main for the pgpmac project\&.
 
 .in +1c
 .ti -1c
+.RI "void * \fBsigtermWorker\fP (void *arg)"
+.br
+.RI "\fISigterm is simple\&. \fP"
+.ti -1c
 .RI "void \fBstdinService\fP (struct pollfd *evt)"
 .br
+.RI "\fIHandle stdin\&. \fP"
 .ti -1c
 .RI "void \fBpgpmac_printf\fP (char *fmt,\&.\&.\&.)"
 .br
@@ -92,6 +97,16 @@ Main for the pgpmac project\&.
 .ti -1c
 .RI "static int \fBrunning\fP = 1"
 .br
+.ti -1c
+.RI "static sigset_t \fBour_sigset\fP"
+.br
+.ti -1c
+.RI "static pthread_t * \fBourThreads\fP [32]"
+.br
+.RI "\fIa list of our threads\&. \fP"
+.ti -1c
+.RI "static int \fBnOurThreads\fP = 0"
+.br
 .in -1c
 .SH "Detailed Description"
 .PP 
@@ -122,11 +137,11 @@ Definition in file \fBpgpmac\&.c\fP\&.
 .PP
 Handle keyboard input\&. 
 .PP
-Definition at line 258 of file pgpmac\&.c\&.
+Definition at line 261 of file pgpmac\&.c\&.
 .SS "#define PGPMAC_N_COMMAND_LINES   128"
 
 .PP
-Definition at line 259 of file pgpmac\&.c\&.
+Definition at line 262 of file pgpmac\&.c\&.
 .SH "Function Documentation"
 .PP 
 .SS "int main (intargc, char **argv)"
@@ -141,12 +156,12 @@ Our main routine\&. < argument flags \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 485 of file pgpmac\&.c\&.
+Definition at line 549 of file pgpmac\&.c\&.
 .PP
 .nf
            {
 
-  static struct pollfd fda[3];          // input for poll: room for postgres, pmac, and stdin
+  static struct pollfd fda[4];          // input for poll: room for postgres, pmac, stdin, and SIGTERM handler
   static int nfd = 0;                   // number of items in fda
   static int pollrtn = 0;
   static struct option long_options[] = {
@@ -160,35 +175,56 @@ Definition at line 485 of file pgpmac\&.c\&.
   ivars    = 0;
   int i;                        // standard loop counter
   pthread_mutexattr_t mutex_initializer;
-  static sigset_t our_sigset;
+  pthread_t sigterm_thread;
+  int err;
 
   //
   // We use SIGUSR1 but sometimes it's called before a handler is in place so we'll just block it
   // here and now\&.
   //
+  // SIGTERM will be captured through the fd mechanism to run a quit routine
+  //
   sigemptyset( &our_sigset);
   sigaddset( &our_sigset, SIGUSR1);
-  pthread_sigmask(SIG_BLOCK, &our_sigset, NULL);
+  sigaddset( &our_sigset, SIGTERM);
+  sigaddset( &our_sigset, SIGQUIT);
+  sigaddset( &our_sigset, SIGINT);
+  sigaddset( &our_sigset, SIGRTMIN);
+  err = pthread_sigmask(SIG_BLOCK, &our_sigset, NULL);
+  if( err) {
+    lslogging_log_message( 'main: pthread_sigmask returned error');
+  }
+  
 
+  //
+  // Get options
+  //
   while( 1) {
     c=getopt_long( argc, argv, 'im', long_options, NULL);
     if( c == -1)
       break;
 
     switch( c) {
-    case 'i':
+    case 'i':           // store i variables in pg
       ivars=1;
       break;
 
     case 'm':
-      mvars=1;
+      mvars=1;          // store m variables in pg
       break;
     }
   }
 
+  //
+  // Prepare stdin for poll statement
+  //
   stdinfda\&.fd = 0;
   stdinfda\&.events = POLLIN;
 
+  //
+  // TODO: fork and run ncurses through a pipe
+  // ncurses is, perhaps, screwing up our signal handling
+  //
   initscr();                            // Start ncurses
   raw();                                // Line buffering disabled, control chars trapped
   keypad( stdscr, TRUE);                // Why is F1 nifty?
@@ -208,12 +244,12 @@ Definition at line 485 of file pgpmac\&.c\&.
   //
   // Everyone needs to be able to log messages
   lslogging_init();
-  lslogging_run();
+  ourThreads[nOurThreads++] = lslogging_run();
 
   // Everyone needs to send and listen for events
   //
   lsevents_init();
-  lsevents_run();
+  ourThreads[nOurThreads++] = lsevents_run();
 
   //
   // Add a couple of our own
@@ -226,14 +262,14 @@ Definition at line 485 of file pgpmac\&.c\&.
   // Timers are needed by all too
   //
   lstimer_init();
-  lstimer_run();
+  ourThreads[nOurThreads++] = lstimer_run();
 
   //
   // Redis is where we get our configuration
   // as well as one of communicating with the outside world
   //
   lsredis_init();
-  lsredis_run();
+  ourThreads[nOurThreads++] = lsredis_run();
   lsredis_config();
 
   //
@@ -275,49 +311,35 @@ Definition at line 485 of file pgpmac\&.c\&.
   //
   // Now run the world
   //
-  lspmac_run();
+  ourThreads[nOurThreads++] = lspmac_run();
 
   if( pgpmac_use_pg)
-    lspg_run();
+    ourThreads[nOurThreads++] = lspg_run();
 
-  md2cmds_run();
+  ourThreads[nOurThreads++] = md2cmds_run();
+
+  pthread_create( &sigterm_thread, NULL, sigtermWorker, NULL);
+  ourThreads[nOurThreads++] = &sigterm_thread;
 
   while( running) {
     //
-    // Big loop
+    // Prepare fda
     //
-
     nfd = 0;
+    memcpy( &(fda[nfd++]), &stdinfda,   sizeof( struct pollfd));
 
-    //
-    // keyboard
-    //
-    memcpy( &(fda[nfd++]), &stdinfda, sizeof( struct pollfd));
-    
-
-    if( nfd == 0) {
-      //
-      // No connectons yet\&.  Wait a bit and try again\&.
-      //
-      sleep( 10);
-      //
-      // go try to connect again
-      //
-      continue;
-    }
-
-
-    pollrtn = poll( fda, nfd, 10);
+    pollrtn = poll( fda, nfd, -1);
 
     for( i=0; pollrtn>0 && i<nfd; i++) {
       if( fda[i]\&.revents) {
         pollrtn--;
-        if( fda[i]\&.fd == 0) {
+        if( fda[i]\&.fd == stdinfda\&.fd) {
           stdinService( &fda[i]);
         }
       }
     }
   }
+
   endwin();
   return 0;
 }
@@ -332,7 +354,7 @@ Terminal output routine ala printf\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 443 of file pgpmac\&.c\&.
+Definition at line 477 of file pgpmac\&.c\&.
 .PP
 .nf
                      {
@@ -355,7 +377,7 @@ Definition at line 443 of file pgpmac\&.c\&.
 .PP
 quit the program 
 .PP
-Definition at line 474 of file pgpmac\&.c\&.
+Definition at line 508 of file pgpmac\&.c\&.
 .PP
 .nf
                                   {
@@ -363,6 +385,36 @@ Definition at line 474 of file pgpmac\&.c\&.
   doomsday_count--;
   if( doomsday_count <= 0)
     running = 0;
+  lslogging_log_message( 'pgpmac_quit_cb: doomsday_count=%d, running=%d', doomsday_count, running);
+
+  if( doomsday_count == -2) {
+    int i;
+    int err;
+
+    // Be nice
+    //
+    for( i=nOurThreads-1; i>=0; i--) {
+      err = pthread_kill( *ourThreads[i], 0);
+      if( err == 0) {
+        pthread_kill( *ourThreads[i], 3);
+      }
+    }
+
+    if( doomsday_count < -2) {
+      int i;
+      int err;
+
+      // Be mean
+      //
+      for( i=nOurThreads-1; i>=0; i--) {
+        err = pthread_kill( *ourThreads[i], 0);
+        if( err == 0) {
+          pthread_kill( *ourThreads[i], 9);
+        }
+      }
+    }
+  }
+
   pthread_mutex_unlock( &doomsday_mutex);
 }
 .fi
@@ -371,7 +423,7 @@ Definition at line 474 of file pgpmac\&.c\&.
 .PP
 Postpone the day of reckoning This assumes the quit_cb routine is called once a second\&. 
 .PP
-Definition at line 464 of file pgpmac\&.c\&.
+Definition at line 498 of file pgpmac\&.c\&.
 .PP
 .nf
                                                  {
@@ -381,15 +433,48 @@ Definition at line 464 of file pgpmac\&.c\&.
   pthread_mutex_unlock( &doomsday_mutex);
 }
 .fi
+.SS "void* sigtermWorker (void *arg)"
+
+.PP
+Sigterm is simple\&. 
+.PP
+Definition at line 266 of file pgpmac\&.c\&.
+.PP
+.nf
+                                 {
+  int rc;
+  int sig_caught;
+  sigset_t the_sigset;
+
+  sigemptyset( &the_sigset);
+  sigaddset( &the_sigset, SIGTERM);
+  sigaddset( &the_sigset, SIGQUIT);
+  sigaddset( &the_sigset, SIGINT);
+  pthread_sigmask(SIG_UNBLOCK, &our_sigset, NULL);
+
+  rc = sigwait( &the_sigset, &sig_caught);
+  if( rc) {
+    lslogging_log_message( 'sigtermThread: sigwait failed');
+    return NULL;
+  }
+  
+  lsevents_send_event( 'Quitting Program');
+  lstimer_set_timer( 'Quit Program', -1, 1, 0);
+
+  return NULL;
+}
+.fi
 .SS "void stdinService (struct pollfd *evt)"
-\fBParameters:\fP
+
+.PP
+Handle stdin\&. \fBParameters:\fP
 .RS 4
 \fIevt\fP The pollfd object that caused this call 
 .RE
 .PP
 
 .PP
-Definition at line 260 of file pgpmac\&.c\&.
+Definition at line 291 of file pgpmac\&.c\&.
 .PP
 .nf
                     {
@@ -413,11 +498,14 @@ Definition at line 260 of file pgpmac\&.c\&.
     switch( ch) {
     case KEY_F(1):
     case KEY_F(2):
-    case KEY_F(3):
       lspmac_abort();                                   // send abort now (as opposed to an event listener) in case a cleanup routine wants to move something (we don't want to abort it)\&.
       lsevents_send_event( 'Quitting Program');         // let everyone know the end is nigh
       lstimer_set_timer( 'Quit Program', -1, 1, 0);     // Doomsday, repeat as needed
       break;
+
+    case KEY_F(3):
+      endwin();
+      exit(0);
 
     case 0x0002:        // Control-B    Report status word for 8 motors
     case 0x0003:        // Control-C    Report all coordinate system status words
@@ -591,6 +679,20 @@ Definition at line 244 of file pgpmac\&.c\&.
 allow more than one thread access to the screen 
 .PP
 Definition at line 242 of file pgpmac\&.c\&.
+.SS "int nOurThreads = 0\fC [static]\fP"
+
+.PP
+Definition at line 256 of file pgpmac\&.c\&.
+.SS "sigset_t our_sigset\fC [static]\fP"
+
+.PP
+Definition at line 254 of file pgpmac\&.c\&.
+.SS "pthread_t* ourThreads[32]\fC [static]\fP"
+
+.PP
+a list of our threads\&. 
+.PP
+Definition at line 255 of file pgpmac\&.c\&.
 .SS "int pgpmac_use_autoscint = 0"
 
 .PP

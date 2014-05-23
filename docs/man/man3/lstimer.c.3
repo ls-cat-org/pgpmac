@@ -1,4 +1,4 @@
-.TH "lstimer.c" 3 "Wed May 22 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lstimer.c" 3 "Fri May 23 2014" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -68,7 +68,7 @@ Support for delayed and periodic events\&.
 .br
 .RI "\fIInitialize the timer list and pthread stuff\&. \fP"
 .ti -1c
-.RI "void \fBlstimer_run\fP ()"
+.RI "pthread_t * \fBlstimer_run\fP ()"
 .br
 .RI "\fIStart up our thread\&. \fP"
 .in -1c
@@ -182,7 +182,7 @@ Definition at line 270 of file lstimer\&.c\&.
   pthread_cond_init(  &lstimer_cond, NULL);
 }
 .fi
-.SS "void lstimer_run ()"
+.SS "pthread_t* lstimer_run ()"
 
 .PP
 Start up our thread\&. 
@@ -190,8 +190,9 @@ Start up our thread\&.
 Definition at line 284 of file lstimer\&.c\&.
 .PP
 .nf
-                   {
+                         {
   pthread_create( &lstimer_thread, NULL, lstimer_worker, NULL);
+  return &lstimer_thread;
 }
 .fi
 .SS "void lstimer_set_timer (char *event, intshots, unsigned long intsecs, unsigned long intnsecs)"
@@ -338,7 +339,7 @@ Definition at line 200 of file lstimer\&.c\&.
     // ignore signals so we don't service the signal while we are already in the
     // service routine
     //
-    sigprocmask( SIG_SETMASK, &mask, NULL);
+    pthread_sigmask( SIG_SETMASK, &mask, NULL);
     
 
     //
@@ -357,7 +358,7 @@ Definition at line 200 of file lstimer\&.c\&.
 
     // Let the signals rain down
     //
-    sigprocmask( SIG_UNBLOCK, &mask, NULL);
+    pthread_sigmask( SIG_UNBLOCK, &mask, NULL);
   }
 }
 .fi

@@ -13,6 +13,8 @@ var searchData=
   ['active_5fsimulation',['active_simulation',['../namespacemk__pgpmac__redis.html#a2572732af48007dc8f70e12ed2a738fe',1,'mk_pgpmac_redis']]],
   ['actual_5fpos_5fcnts',['actual_pos_cnts',['../structlspmac__motor__struct.html#ae5c7aea45b9637a1817be246688fd980',1,'lspmac_motor_struct']]],
   ['actual_5fpos_5fcnts_5fp',['actual_pos_cnts_p',['../structlspmac__motor__struct.html#a312047bb71def5cd2443fecd875eaea5',1,'lspmac_motor_struct']]],
+  ['addread',['addRead',['../kvredis_8c.html#a95668f6d7a4b8882c6a502af3b0a4705',1,'kvredis.c']]],
+  ['addwrite',['addWrite',['../kvredis_8c.html#aacb58922ba249c3e15491826e682023c',1,'kvredis.c']]],
   ['alignx',['alignx',['../lspmac_8c.html#a6cb218bdccfe5a93471c161f15a15cab',1,'alignx():&#160;lspmac.c'],['../pgpmac_8h.html#a6cb218bdccfe5a93471c161f15a15cab',1,'alignx():&#160;lspmac.c']]],
   ['alignx_5fact_5fpos',['alignx_act_pos',['../structmd2StatusStruct.html#a9653a75bc0b66c5f86d8b0206dc39b4f',1,'md2StatusStruct']]],
   ['alignx_5fstatus_5f1',['alignx_status_1',['../structmd2StatusStruct.html#a56accf8cb00c59bff87ed75df7dafbbe',1,'md2StatusStruct']]],

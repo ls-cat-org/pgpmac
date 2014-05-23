@@ -1,4 +1,4 @@
-.TH "lslogging.c" 3 "Wed May 22 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lslogging.c" 3 "Fri May 23 2014" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -66,7 +66,7 @@ Logs messages to a file\&.
 .br
 .RI "\fIService the queue, write to the file\&. \fP"
 .ti -1c
-.RI "void \fBlslogging_run\fP ()"
+.RI "pthread_t * \fBlslogging_run\fP ()"
 .br
 .RI "\fIStart up the worker thread\&. \fP"
 .in -1c
@@ -161,7 +161,7 @@ Definition at line 76 of file lslogging\&.c\&.
 .PP
 .nf
                                       {
-  if( strcmp( event, 'Timer Update KVs') != 0 && strstr( event, 'accepted')==NULL && strstr( event, 'queued')==NULL) {
+  if( strcmp( event, 'Timer Update KVs') != 0 && strstr( event, 'accepted')==NULL && strstr( event, 'queued')==NULL && strstr( event, 'Heartbeat')==NULL) {
     lslogging_log_message( 'EVENT: %s', event);
   }
 }
@@ -219,21 +219,22 @@ Definition at line 48 of file lslogging\&.c\&.
 
   pthread_cond_signal(  &lslogging_cond);
   pthread_mutex_unlock( &lslogging_mutex);
-  
+
 }
 .fi
-.SS "void lslogging_run ()"
+.SS "pthread_t* lslogging_run ()"
 
 .PP
 Start up the worker thread\&. 
 .PP
-Definition at line 121 of file lslogging\&.c\&.
+Definition at line 123 of file lslogging\&.c\&.
 .PP
 .nf
-                     {
+                           {
   pthread_create( &lslogging_thread, NULL, &lslogging_worker, NULL);
   lslogging_log_message( 'Start up');
   lsevents_add_listener( '\&.+', lslogging_event_cb);
+  return &lslogging_thread;
 }
 .fi
 .SS "void* lslogging_worker (void *dummy)"
@@ -272,6 +273,8 @@ Definition at line 85 of file lslogging\&.c\&.
     msecs = lslogging_queue[off]\&.ltime\&.tv_nsec / 1000;
     fprintf( lslogging_file, '%s\&.%\&.06u  %s\n', tstr, msecs, lslogging_queue[off]\&.lmsg);
     fflush( lslogging_file);
+
+    lsredis_log( '%s\&.%\&.06u  %s\n', tstr, msecs, lslogging_queue[off]\&.lmsg);
 
     //
     // If the newline comes after the string then only a blank line comes out

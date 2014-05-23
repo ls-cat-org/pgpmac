@@ -66,6 +66,7 @@ var structlspg__nextshot__struct =
     [ "mutex", "structlspg__nextshot__struct.html#a38b657155fbee9b73278f76912cf2333", null ],
     [ "new_value_ready", "structlspg__nextshot__struct.html#adb8da14444b98f556dba9420dd4666dc", null ],
     [ "no_rows_returned", "structlspg__nextshot__struct.html#abc9242805729f70b83df79706c394c71", null ],
+    [ "query_error", "structlspg__nextshot__struct.html#aa50fbe34bd93ccc3762a804e95f8fd10", null ],
     [ "sfn", "structlspg__nextshot__struct.html#a03252bba597b081edc9d08b20b558cc7", null ],
     [ "sfn_isnull", "structlspg__nextshot__struct.html#a56f32eb413b1fca9f085874eb86294de", null ],
     [ "sindex", "structlspg__nextshot__struct.html#a5d096f2c2bf9be29c44129b54eaf01da", null ],

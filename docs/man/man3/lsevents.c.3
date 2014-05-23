@@ -1,4 +1,4 @@
-.TH "lsevents.c" 3 "Wed May 22 2013" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lsevents.c" 3 "Fri May 23 2014" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -98,7 +98,7 @@ event subsystem for inter-pgpmac communication
 .br
 .RI "\fIInitialize this module\&. \fP"
 .ti -1c
-.RI "void \fBlsevents_run\fP ()"
+.RI "pthread_t * \fBlsevents_run\fP ()"
 .br
 .RI "\fIStart up the thread and get out of the way\&. \fP"
 .in -1c
@@ -238,7 +238,6 @@ Definition at line 99 of file lsevents\&.c\&.
       exit( -1);
     }
     regerror( err, &new->re, errbuf, nerrbuf);
-    //    lslogging_log_message( 'lsevents_add_listener: %s', errbuf);
     free( errbuf);
     free( new);
     return;
@@ -263,8 +262,6 @@ Definition at line 99 of file lsevents\&.c\&.
 
   pthread_mutex_unlock( &lsevents_listener_mutex);
 
-  //  lslogging_log_message( 'lsevents_add_listener: added listener for event '%s'', raw_regexp);
-
 }
 .fi
 .SS "void lsevents_init ()"
@@ -272,7 +269,7 @@ Definition at line 99 of file lsevents\&.c\&.
 .PP
 Initialize this module\&. 
 .PP
-Definition at line 373 of file lsevents\&.c\&.
+Definition at line 367 of file lsevents\&.c\&.
 .PP
 .nf
                      {
@@ -293,7 +290,7 @@ Definition at line 373 of file lsevents\&.c\&.
 .SS "void lsevents_preregister_event (char *fmt, \&.\&.\&.)"
 
 .PP
-Definition at line 314 of file lsevents\&.c\&.
+Definition at line 308 of file lsevents\&.c\&.
 .PP
 .nf
                                                  {
@@ -313,7 +310,7 @@ Definition at line 314 of file lsevents\&.c\&.
 .PP
 Add a new event name and find matching callbacks as a returned linked list\&. 
 .PP
-Definition at line 221 of file lsevents\&.c\&.
+Definition at line 218 of file lsevents\&.c\&.
 .PP
 .nf
                                                             {
@@ -350,7 +347,6 @@ Definition at line 221 of file lsevents\&.c\&.
     return NULL;
   }
 
-  //  lslogging_log_message( 'lsevents_register_event: adding event '%s'', event);
   //
   // Not Found
   //
@@ -394,7 +390,6 @@ Definition at line 221 of file lsevents\&.c\&.
 
   if( ++lsevents_n_events  >= lsevents_max_events) {
     hdestroy_r( &lsevents_event_name_ht);
-    lslogging_log_message( 'lsevents_register_event: Increasing event name hash table to %d\&. lsevents_n_events=%d', 2 * lsevents_max_events, lsevents_n_events);
     lsevents_max_events *= 2;
     hcreate_r( lsevents_max_events * 2, &lsevents_event_name_ht);
     for( enp = lsevents_event_names; enp != NULL; enp = enp->next) {
@@ -403,7 +398,6 @@ Definition at line 221 of file lsevents\&.c\&.
       hsearch_r( entry_in, ENTER, &entry_outp, &lsevents_event_name_ht);
     }
   }
-  //  lslogging_log_message( 'lsevents_register_event: added event '%s'', event);
   pthread_mutex_unlock( &lsevents_listener_mutex);
   return new_event_name->cbl;
 }  
@@ -420,7 +414,7 @@ Remove a listener previously added with lsevents_add_listener\&. \fBParameters:\
 .PP
 
 .PP
-Definition at line 157 of file lsevents\&.c\&.
+Definition at line 154 of file lsevents\&.c\&.
 .PP
 .nf
                                                                 {
@@ -484,16 +478,17 @@ Definition at line 157 of file lsevents\&.c\&.
 
 }
 .fi
-.SS "void lsevents_run ()"
+.SS "pthread_t* lsevents_run ()"
 
 .PP
 Start up the thread and get out of the way\&. 
 .PP
-Definition at line 390 of file lsevents\&.c\&.
+Definition at line 384 of file lsevents\&.c\&.
 .PP
 .nf
-                    {
+                          {
   pthread_create( &lsevents_thread, NULL, lsevents_worker, NULL);
+  return &lsevents_thread;
 }
 .fi
 .SS "void lsevents_send_event (char *fmt, \&.\&.\&.)"
@@ -542,7 +537,7 @@ Our worker\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 331 of file lsevents\&.c\&.
+Definition at line 325 of file lsevents\&.c\&.
 .PP
 .nf
                        {

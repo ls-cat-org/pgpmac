@@ -38,7 +38,7 @@ void \hyperlink{lslogging_8c_a775318b2753a8b5be9f235589a78797b}{lslogging\-\_\-e
 \begin{DoxyCompactList}\small\item\em Log most events. \end{DoxyCompactList}\item 
 void $\ast$ \hyperlink{lslogging_8c_a33ec49aea69b5e4b1b551a34e7bacfca}{lslogging\-\_\-worker} (void $\ast$dummy)
 \begin{DoxyCompactList}\small\item\em Service the queue, write to the file. \end{DoxyCompactList}\item 
-void \hyperlink{lslogging_8c_ad9f65252584e65957f461b809d59e3a2}{lslogging\-\_\-run} ()
+pthread\-\_\-t $\ast$ \hyperlink{lslogging_8c_ab5d6951193d8b2df1e4dd61c53de76cc}{lslogging\-\_\-run} ()
 \begin{DoxyCompactList}\small\item\em Start up the worker thread. \end{DoxyCompactList}\end{DoxyCompactItemize}
 \subsection*{Variables}
 \begin{DoxyCompactItemize}
@@ -141,7 +141,7 @@ Definition at line 76 of file lslogging.\-c.
 \begin{DoxyCode}
                                       \{
   \textcolor{keywordflow}{if}( strcmp( event, \textcolor{stringliteral}{"Timer Update KVs"}) != 0 && strstr( event, \textcolor{stringliteral}{"accepted"})==
-      NULL && strstr( event, \textcolor{stringliteral}{"queued"})==NULL) \{
+      NULL && strstr( event, \textcolor{stringliteral}{"queued"})==NULL && strstr( event, \textcolor{stringliteral}{"Heartbeat"})==NULL) \{
     \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"EVENT: %s"}, event);
   \}
 \}
@@ -223,32 +223,33 @@ Definition at line 48 of file lslogging.\-c.
 
   pthread\_cond\_signal(  &\hyperlink{lslogging_8c_afa5f05c4337683edc3c88ab56aa5ea6f}{lslogging\_cond});
   pthread\_mutex\_unlock( &\hyperlink{lslogging_8c_a4a97ffe8731ae437f014ada051301be3}{lslogging\_mutex});
-  
+
 \}
 \end{DoxyCode}
-\hypertarget{lslogging_8c_ad9f65252584e65957f461b809d59e3a2}{\index{lslogging.\-c@{lslogging.\-c}!lslogging\-\_\-run@{lslogging\-\_\-run}}
+\hypertarget{lslogging_8c_ab5d6951193d8b2df1e4dd61c53de76cc}{\index{lslogging.\-c@{lslogging.\-c}!lslogging\-\_\-run@{lslogging\-\_\-run}}
 \index{lslogging\-\_\-run@{lslogging\-\_\-run}!lslogging.c@{lslogging.\-c}}
-\subsubsection[{lslogging\-\_\-run}]{\setlength{\rightskip}{0pt plus 5cm}void lslogging\-\_\-run (
+\subsubsection[{lslogging\-\_\-run}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-t$\ast$ lslogging\-\_\-run (
 \begin{DoxyParamCaption}
 {}
 \end{DoxyParamCaption}
-)}}\label{lslogging_8c_ad9f65252584e65957f461b809d59e3a2}
+)}}\label{lslogging_8c_ab5d6951193d8b2df1e4dd61c53de76cc}
 
 
 Start up the worker thread. 
 
 
 
-Definition at line 121 of file lslogging.\-c.
+Definition at line 123 of file lslogging.\-c.
 
 
 \begin{DoxyCode}
-                     \{
+                           \{
   pthread\_create( &\hyperlink{lslogging_8c_ad7629be92d1bec1c621b5cc0800f497f}{lslogging\_thread}, NULL, &\hyperlink{lslogging_8c_a33ec49aea69b5e4b1b551a34e7bacfca}{lslogging\_worker}
       , NULL);
   \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"Start up"});
   \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{".+"}, \hyperlink{lslogging_8c_a775318b2753a8b5be9f235589a78797b}{lslogging\_event\_cb}
       );
+  \textcolor{keywordflow}{return} &\hyperlink{lslogging_8c_ad7629be92d1bec1c621b5cc0800f497f}{lslogging\_thread};
 \}
 \end{DoxyCode}
 \hypertarget{lslogging_8c_a33ec49aea69b5e4b1b551a34e7bacfca}{\index{lslogging.\-c@{lslogging.\-c}!lslogging\-\_\-worker@{lslogging\-\_\-worker}}
@@ -300,6 +301,9 @@ Definition at line 85 of file lslogging.\-c.
     fprintf( \hyperlink{lslogging_8c_a5709d6eb68a8eebf78ba58bb78da0649}{lslogging\_file}, \textcolor{stringliteral}{"%s.%.06u  %s\(\backslash\)n"}, tstr, msecs, 
       \hyperlink{lslogging_8c_af98f94aec3e4501328da1b71f706c652}{lslogging\_queue}[off].lmsg);
     fflush( \hyperlink{lslogging_8c_a5709d6eb68a8eebf78ba58bb78da0649}{lslogging\_file});
+
+    \hyperlink{lsredis_8c_a065d09eb6914c057383980d3d786affc}{lsredis\_log}( \textcolor{stringliteral}{"%s.%.06u  %s\(\backslash\)n"}, tstr, msecs, \hyperlink{lslogging_8c_af98f94aec3e4501328da1b71f706c652}{lslogging\_queue}
+      [off].lmsg);
 
     \textcolor{comment}{//}
     \textcolor{comment}{// If the newline comes after the string then only a blank line comes out}

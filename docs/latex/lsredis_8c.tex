@@ -83,6 +83,8 @@ void \hyperlink{lsredis_8c_a2b48f29f489bcbdaf4fb29e7fbf1d4d2}{lsredis\-\_\-set\-
 \begin{DoxyCompactList}\small\item\em set the given preset to the given value create a new preset if we can't find it \end{DoxyCompactList}\item 
 int \hyperlink{lsredis_8c_adfe823e3ccec7e37ac4697179bd65b10}{lsredis\-\_\-find\-\_\-preset\-\_\-index\-\_\-by\-\_\-position} (\hyperlink{pgpmac_8h_aa5067fcbaabc5bbfdc52492495518c96}{lspmac\-\_\-motor\-\_\-t} $\ast$mp)
 \begin{DoxyCompactList}\small\item\em For the given motor object return the index of the current preset or -\/1 if we are not at a preset position. \end{DoxyCompactList}\item 
+void \hyperlink{lsredis_8c_a065d09eb6914c057383980d3d786affc}{lsredis\-\_\-log} (char $\ast$fmt,...)
+\begin{DoxyCompactList}\small\item\em send log message to our redis log key \end{DoxyCompactList}\item 
 void \hyperlink{lsredis_8c_a75e500f4f9df969ca9994d6889944f47}{lsredis\-\_\-config\-C\-B} (redis\-Async\-Context $\ast$ac, void $\ast$reply, void $\ast$privdata)
 \item 
 void \hyperlink{lsredis_8c_aaabcee808dcf48a60898798a45516b68}{lsredis\-\_\-config} ()
@@ -93,9 +95,11 @@ void \hyperlink{lsredis_8c_ae1478efc852fef71550e0f58d602fa2b}{lsredis\-\_\-fd\-\
 \begin{DoxyCompactList}\small\item\em service the socket requests \end{DoxyCompactList}\item 
 void \hyperlink{lsredis_8c_aa060eb807fbecb6e6430d2cbae2c9673}{lsredis\-\_\-sig\-\_\-service} (struct pollfd $\ast$evt)
 \item 
+void \hyperlink{lsredis_8c_acd9cb833103e57da756d152ecdd4f840}{lsredis\-\_\-heartbeat\-\_\-cb} (char $\ast$event)
+\item 
 void $\ast$ \hyperlink{lsredis_8c_ade7b1ddfdc88c6964a4c90513e360f75}{lsredis\-\_\-worker} (void $\ast$dummy)
 \begin{DoxyCompactList}\small\item\em subscribe to changes and service sockets \end{DoxyCompactList}\item 
-void \hyperlink{lsredis_8c_ad438e4368d86bbe15a93dcf86deaded5}{lsredis\-\_\-run} ()
+pthread\-\_\-t $\ast$ \hyperlink{lsredis_8c_ac3db3d5f91bf5723bd94748ce0d88731}{lsredis\-\_\-run} ()
 \end{DoxyCompactItemize}
 \subsection*{Variables}
 \begin{DoxyCompactItemize}
@@ -175,7 +179,7 @@ Where \char`\"{}publisher\char`\"{} is a unique name in the following format\-:
    or    REDIS\_KV\_CONNECTOR
    or    \hyperlink{namespacemk__pgpmac__redis}{mk\_pgpmac\_redis}
 \end{DoxyPre}
- (this last value is used to support the now depreciated px.\-kvs table in the L\-S-\/\-C\-A\-T postgresql server). We assume that all publisher that we are listening to O\-N\-L\-Y publish key names that have changed.
+ (this last value is used to support the now depreciated px.\-kvs table in the L\-S-\/\-C\-A\-T postgresql server). We assume that all publishers that we are listening to O\-N\-L\-Y publish key names that have changed.
 
 When someone else changes a value we invalidate our internal copy and issue a \char`\"{}\-H\-G\-E\-T key V\-A\-L\-U\-E\char`\"{} command. Other threads that request the value of our lsredis\-\_\-obj\-\_\-t will pause until the new value has been received and processed.
 
@@ -252,7 +256,7 @@ Maybe add a new object Used internally for this module Must be called with lsred
 
 
 
-Definition at line 510 of file lsredis.\-c.
+Definition at line 544 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -318,8 +322,7 @@ Definition at line 510 of file lsredis.\-c.
     pthread\_cond\_init(  &p->\hyperlink{structlsredis__obj__struct_a356f6a228bb19ac7d66fdb1c875d68be}{cond}, NULL);
     p->\hyperlink{structlsredis__obj__struct_a0465c65288e8101805a6f91049164517}{value} = NULL;
     p->\hyperlink{structlsredis__obj__struct_a338ffa4123bd06b39c8b58f5e695575e}{valid} = 0;
-    \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"%s Invalid"}, p->\hyperlink{structlsredis__obj__struct_ad0a987a011b580eab739cda831f78fbb}{events\_name}
-      );
+    \textcolor{comment}{// lsevents\_send\_event( "%s Invalid", p->events\_name);}
     p->\hyperlink{structlsredis__obj__struct_a8bc1a536b7155a1e2a749c7c434b898b}{wait\_for\_me} = 0;
     p->\hyperlink{structlsredis__obj__struct_aa8c5a453b9424e5666320b8675a42f5c}{key} = strdup( key);
     p->\hyperlink{structlsredis__obj__struct_a43fcbff584654ab086d973ce34cb6ddc}{hits} = 0;
@@ -365,7 +368,9 @@ Definition at line 510 of file lsredis.\-c.
 
 set\-\_\-value and setstr helper funciton p-\/$>$mutex must be locked before calling 
 
+$<$ We can consider this value valid
 
+$<$ At this point the key is considered created 
 
 Definition at line 166 of file lsredis.\-c.
 
@@ -422,11 +427,8 @@ Definition at line 166 of file lsredis.\-c.
 
   p->\hyperlink{structlsredis__obj__struct_a4a5933dbd44d33d9f594f6020a443b69}{cvalue} = *(p->\hyperlink{structlsredis__obj__struct_a0465c65288e8101805a6f91049164517}{value});
 
-  \textcolor{keywordflow}{if}( !(p->\hyperlink{structlsredis__obj__struct_a338ffa4123bd06b39c8b58f5e695575e}{valid})) \{
-    p->\hyperlink{structlsredis__obj__struct_a338ffa4123bd06b39c8b58f5e695575e}{valid} = 1;
-    \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"%s Valid"}, p->\hyperlink{structlsredis__obj__struct_ad0a987a011b580eab739cda831f78fbb}{events\_name}
-      );
-  \}
+  p->\hyperlink{structlsredis__obj__struct_a338ffa4123bd06b39c8b58f5e695575e}{valid} = 1;                            
+  p->\hyperlink{structlsredis__obj__struct_ae0aa00ad745ee5bbc598c23ab794ed8a}{creating} = 0;                      
 \}
 \end{DoxyCode}
 \hypertarget{lsredis_8c_adee3bccecc86dd531ac5f89491632439}{\index{lsredis.\-c@{lsredis.\-c}!lsredis\-\_\-add\-Read@{lsredis\-\_\-add\-Read}}
@@ -442,7 +444,7 @@ hook to mange read events
 
 
 
-Definition at line 640 of file lsredis.\-c.
+Definition at line 674 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -469,7 +471,7 @@ hook to manage write events
 
 
 
-Definition at line 664 of file lsredis.\-c.
+Definition at line 698 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -496,7 +498,7 @@ hook to clean up T\-O\-D\-O\-: figure out what we are supposed to do here and do
 
 
 
-Definition at line 689 of file lsredis.\-c.
+Definition at line 723 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -523,7 +525,7 @@ Definition at line 689 of file lsredis.\-c.
 )}}\label{lsredis_8c_ac356cd43e46799929242dcf5214df7f6}
 
 
-Definition at line 256 of file lsredis.\-c.
+Definition at line 254 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -548,7 +550,7 @@ Definition at line 256 of file lsredis.\-c.
 )}}\label{lsredis_8c_a9fc8fd0db4c71c5eae68682b43103078}
 
 
-Definition at line 245 of file lsredis.\-c.
+Definition at line 243 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -572,7 +574,7 @@ Definition at line 245 of file lsredis.\-c.
 )}}\label{lsredis_8c_aaabcee808dcf48a60898798a45516b68}
 
 
-Definition at line 1097 of file lsredis.\-c.
+Definition at line 1188 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -618,7 +620,7 @@ Definition at line 1097 of file lsredis.\-c.
 )}}\label{lsredis_8c_a75e500f4f9df969ca9994d6889944f47}
 
 
-Definition at line 1012 of file lsredis.\-c.
+Definition at line 1103 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -704,7 +706,7 @@ Definition at line 1012 of file lsredis.\-c.
 
 
   \textcolor{keywordflow}{if}( redisAsyncCommand( \hyperlink{lsredis_8c_a4d65536cb1094fb5deda0a852b181232}{subac}, \hyperlink{lsredis_8c_a84611531459bf3d92c45b86308b4a300}{lsredis\_subCB}, NULL, \textcolor{stringliteral}{"
-      PSUBSCRIBE REDIS\_KV\_CONNECTOR mk\_pgpmac\_redis UI* MD2-*"}) == REDIS\_ERR) \{
+      PSUBSCRIBE REDIS\_NODE\_CONNECTOR mk\_pgpmac\_redis UI* MD2-*"}) == REDIS\_ERR) \{
     \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"Error sending PSUBSCRIBE
        command"});
   \}
@@ -799,7 +801,7 @@ hook to manage \char`\"{}don't need to read\char`\"{} events
 
 
 
-Definition at line 652 of file lsredis.\-c.
+Definition at line 686 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -826,7 +828,7 @@ hook to manage \char`\"{}don't need to write anymore\char`\"{} events
 
 
 
-Definition at line 676 of file lsredis.\-c.
+Definition at line 710 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -853,7 +855,7 @@ service the socket requests
 
 
 
-Definition at line 1199 of file lsredis.\-c.
+Definition at line 1290 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -895,7 +897,7 @@ Get the value of the given preset and return it in dval Returns 0 on error, non-
 
 
 
-Definition at line 903 of file lsredis.\-c.
+Definition at line 937 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -947,7 +949,7 @@ For the given motor object return the index of the current preset or -\/1 if we 
 
 
 
-Definition at line 985 of file lsredis.\-c.
+Definition at line 1035 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -987,7 +989,7 @@ Definition at line 985 of file lsredis.\-c.
 )}}\label{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}
 
 
-Definition at line 596 of file lsredis.\-c.
+Definition at line 630 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1037,7 +1039,7 @@ Definition at line 596 of file lsredis.\-c.
 )}}\label{lsredis_8c_a51c33bec2c54f2d468bf8d93d981914a}
 
 
-Definition at line 360 of file lsredis.\-c.
+Definition at line 359 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1076,7 +1078,7 @@ Definition at line 360 of file lsredis.\-c.
 )}}\label{lsredis_8c_a71689006ffc015be6a0705a7c0aef1be}
 
 
-Definition at line 411 of file lsredis.\-c.
+Definition at line 422 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1116,7 +1118,7 @@ Definition at line 411 of file lsredis.\-c.
 )}}\label{lsredis_8c_abe31d0e11c41b2235307612c963bb652}
 
 
-Definition at line 437 of file lsredis.\-c.
+Definition at line 448 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1124,6 +1126,12 @@ Definition at line 437 of file lsredis.\-c.
   \textcolor{keywordtype}{char} **rtn;
 
   pthread\_mutex\_lock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
+  \textcolor{keywordflow}{if}( p->\hyperlink{structlsredis__obj__struct_ae0aa00ad745ee5bbc598c23ab794ed8a}{creating} != 0) \{
+    pthread\_mutex\_unlock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
+    \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( p, \textcolor{stringliteral}{""});
+    pthread\_mutex\_lock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
+  \}
+
   \textcolor{keywordflow}{while}( p->\hyperlink{structlsredis__obj__struct_a338ffa4123bd06b39c8b58f5e695575e}{valid} == 0)
     pthread\_cond\_wait( &p->\hyperlink{structlsredis__obj__struct_a356f6a228bb19ac7d66fdb1c875d68be}{cond}, &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
 
@@ -1142,7 +1150,7 @@ Definition at line 437 of file lsredis.\-c.
 )}}\label{lsredis_8c_abbb4e5ece19ebd130e1be18036752a08}
 
 
-Definition at line 450 of file lsredis.\-c.
+Definition at line 467 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1150,6 +1158,11 @@ Definition at line 450 of file lsredis.\-c.
   \textcolor{keywordtype}{int} rtn;
 
   pthread\_mutex\_lock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
+  \textcolor{keywordflow}{if}( p->\hyperlink{structlsredis__obj__struct_ae0aa00ad745ee5bbc598c23ab794ed8a}{creating} != 0) \{
+    pthread\_mutex\_unlock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
+    \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( p, \textcolor{stringliteral}{""});
+    pthread\_mutex\_lock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
+  \}
   \textcolor{keywordflow}{while}( p->\hyperlink{structlsredis__obj__struct_a338ffa4123bd06b39c8b58f5e695575e}{valid} == 0)
     pthread\_cond\_wait( &p->\hyperlink{structlsredis__obj__struct_a356f6a228bb19ac7d66fdb1c875d68be}{cond}, &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
 
@@ -1168,7 +1181,7 @@ Definition at line 450 of file lsredis.\-c.
 )}}\label{lsredis_8c_a0b7600b1c9a4550b32d4be019d25f941}
 
 
-Definition at line 463 of file lsredis.\-c.
+Definition at line 485 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1176,6 +1189,11 @@ Definition at line 463 of file lsredis.\-c.
   \textcolor{keywordtype}{int} rtn;
 
   pthread\_mutex\_lock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
+  \textcolor{keywordflow}{if}( p->\hyperlink{structlsredis__obj__struct_ae0aa00ad745ee5bbc598c23ab794ed8a}{creating} != 0) \{
+    pthread\_mutex\_unlock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
+    \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( p, \textcolor{stringliteral}{""});
+    pthread\_mutex\_lock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
+  \}
   \textcolor{keywordflow}{while}( p->\hyperlink{structlsredis__obj__struct_a338ffa4123bd06b39c8b58f5e695575e}{valid} == 0)
     pthread\_cond\_wait( &p->\hyperlink{structlsredis__obj__struct_a356f6a228bb19ac7d66fdb1c875d68be}{cond}, &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
 
@@ -1194,7 +1212,7 @@ Definition at line 463 of file lsredis.\-c.
 )}}\label{lsredis_8c_aa8daf63b794b6b6341018feec205cb7d}
 
 
-Definition at line 385 of file lsredis.\-c.
+Definition at line 384 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1202,6 +1220,12 @@ Definition at line 385 of file lsredis.\-c.
   \textcolor{keywordtype}{double} rtn;
 
   pthread\_mutex\_lock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
+  \textcolor{keywordflow}{if}( p->\hyperlink{structlsredis__obj__struct_ae0aa00ad745ee5bbc598c23ab794ed8a}{creating} != 0) \{
+    pthread\_mutex\_unlock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
+    \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( p, \textcolor{stringliteral}{""});
+    pthread\_mutex\_lock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
+  \}
+
   \textcolor{keywordflow}{while}( p->\hyperlink{structlsredis__obj__struct_a338ffa4123bd06b39c8b58f5e695575e}{valid} == 0)
     pthread\_cond\_wait( &p->\hyperlink{structlsredis__obj__struct_a356f6a228bb19ac7d66fdb1c875d68be}{cond}, &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
 
@@ -1220,7 +1244,7 @@ Definition at line 385 of file lsredis.\-c.
 )}}\label{lsredis_8c_a1923f998441f4f451204dfd214d52218}
 
 
-Definition at line 398 of file lsredis.\-c.
+Definition at line 403 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1228,6 +1252,12 @@ Definition at line 398 of file lsredis.\-c.
   \textcolor{keywordtype}{long} \textcolor{keywordtype}{int} rtn;
 
   pthread\_mutex\_lock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
+  \textcolor{keywordflow}{if}( p->\hyperlink{structlsredis__obj__struct_ae0aa00ad745ee5bbc598c23ab794ed8a}{creating} != 0) \{
+    pthread\_mutex\_unlock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
+    \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( p, \textcolor{stringliteral}{""});
+    pthread\_mutex\_lock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
+  \}
+
   \textcolor{keywordflow}{while}( p->\hyperlink{structlsredis__obj__struct_a338ffa4123bd06b39c8b58f5e695575e}{valid} == 0)
     pthread\_cond\_wait( &p->\hyperlink{structlsredis__obj__struct_a356f6a228bb19ac7d66fdb1c875d68be}{cond}, &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
 
@@ -1250,7 +1280,7 @@ return a copy of the key's string value be sure to free the result
 
 
 
-Definition at line 284 of file lsredis.\-c.
+Definition at line 282 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1270,6 +1300,43 @@ Definition at line 284 of file lsredis.\-c.
   \textcolor{keywordflow}{return} rtn;
 \}
 \end{DoxyCode}
+\hypertarget{lsredis_8c_acd9cb833103e57da756d152ecdd4f840}{\index{lsredis.\-c@{lsredis.\-c}!lsredis\-\_\-heartbeat\-\_\-cb@{lsredis\-\_\-heartbeat\-\_\-cb}}
+\index{lsredis\-\_\-heartbeat\-\_\-cb@{lsredis\-\_\-heartbeat\-\_\-cb}!lsredis.c@{lsredis.\-c}}
+\subsubsection[{lsredis\-\_\-heartbeat\-\_\-cb}]{\setlength{\rightskip}{0pt plus 5cm}void lsredis\-\_\-heartbeat\-\_\-cb (
+\begin{DoxyParamCaption}
+\item[{char $\ast$}]{event}
+\end{DoxyParamCaption}
+)}}\label{lsredis_8c_acd9cb833103e57da756d152ecdd4f840}
+
+
+Definition at line 1331 of file lsredis.\-c.
+
+
+\begin{DoxyCode}
+                                        \{
+  \textcolor{keyword}{static} \hyperlink{structlsredis__obj__struct}{lsredis\_obj\_t} *hb\_time = NULL;
+  \textcolor{keyword}{struct }timespec \hyperlink{kvredis_8c_ad40ac52086f6b774928af45b09d54c6e}{now};
+  \textcolor{keyword}{struct }tm lnow;
+  \textcolor{keywordtype}{char} snow[64];
+  \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{int} msecs;
+
+  \textcolor{keywordflow}{if}( hb\_time == NULL) \{
+    hb\_time = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"time"});
+  \}
+
+  \textcolor{keywordflow}{if}( hb\_time == NULL) \{
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lsredis\_heartbeat\_cb: null
+       redis object.  Why?"});
+    \textcolor{keywordflow}{return};
+  \}
+
+  clock\_gettime( CLOCK\_REALTIME, &\hyperlink{kvredis_8c_ad40ac52086f6b774928af45b09d54c6e}{now});
+  localtime\_r( &\hyperlink{kvredis_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_sec, &lnow);
+  msecs = \hyperlink{kvredis_8c_ad40ac52086f6b774928af45b09d54c6e}{now}.tv\_nsec / 1000;
+  strftime( snow, \textcolor{keyword}{sizeof}(snow)-1, \textcolor{stringliteral}{"%Y-%m-%d %H:%M:%S"}, &lnow);
+  \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( hb\_time, \textcolor{stringliteral}{"%s.%.06u"}, snow, msecs);
+\}
+\end{DoxyCode}
 \hypertarget{lsredis_8c_a8d9719b362d1b38275d734971b7988af}{\index{lsredis.\-c@{lsredis.\-c}!lsredis\-\_\-hget\-C\-B@{lsredis\-\_\-hget\-C\-B}}
 \index{lsredis\-\_\-hget\-C\-B@{lsredis\-\_\-hget\-C\-B}!lsredis.c@{lsredis.\-c}}
 \subsubsection[{lsredis\-\_\-hget\-C\-B}]{\setlength{\rightskip}{0pt plus 5cm}void lsredis\-\_\-hget\-C\-B (
@@ -1281,7 +1348,7 @@ Definition at line 284 of file lsredis.\-c.
 )}}\label{lsredis_8c_a8d9719b362d1b38275d734971b7988af}
 
 
-Definition at line 476 of file lsredis.\-c.
+Definition at line 503 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1302,7 +1369,16 @@ Definition at line 476 of file lsredis.\-c.
   \textcolor{comment}{// TODO: figure out a better way to deal with missing key/values}
   \textcolor{comment}{//}
   \textcolor{keywordflow}{if}( p != NULL && r->type == REDIS\_REPLY\_NIL) \{
-    \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( p, \textcolor{stringliteral}{""});
+    \textcolor{comment}{//}
+    \textcolor{comment}{// Show that we are creating this new key}
+    \textcolor{comment}{// if the next request is a read we'll create an empty string value and
+       return it}
+    \textcolor{comment}{// if the next request is a write then we'll create that value and return
+       it}
+    \textcolor{comment}{//}
+    pthread\_mutex\_lock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
+    p->\hyperlink{structlsredis__obj__struct_ae0aa00ad745ee5bbc598c23ab794ed8a}{creating} = 1;
+    pthread\_mutex\_unlock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
     \textcolor{keywordflow}{return};
   \}
 
@@ -1338,7 +1414,7 @@ Initialize this module, that is, set up the connections.
 \end{DoxyParams}
 
 
-Definition at line 1129 of file lsredis.\-c.
+Definition at line 1220 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1427,7 +1503,7 @@ Sift through the keys to find ones we like.
 
 Add them to our list of followed objects 
 
-Definition at line 807 of file lsredis.\-c.
+Definition at line 841 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1445,7 +1521,7 @@ Definition at line 807 of file lsredis.\-c.
   
   \textcolor{keywordflow}{for}( i=0; i< (int)r->elements; i++) \{
     \textcolor{keywordflow}{if}( r->element[i]->type != REDIS\_REPLY\_STRING) \{
-      \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lsredis\_keysCB: exected
+      \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lsredis\_keysCB: exepected
        string..."});
       \hyperlink{lsredis_8c_a8268fd06bda0e2c327b057a880b97b59}{lsredis\_debugCB}( ac, r->element[i], privdata);
     \} \textcolor{keywordflow}{else} \{
@@ -1467,7 +1543,7 @@ update the presets hash table for the named motor
 
 
 
-Definition at line 830 of file lsredis.\-c.
+Definition at line 864 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1552,6 +1628,63 @@ Definition at line 830 of file lsredis.\-c.
   pthread\_mutex\_unlock( &\hyperlink{lsredis_8c_a1d0b14b31b12d1b2a79dc50eac09de39}{lsredis\_preset\_list\_mutex});
 \}
 \end{DoxyCode}
+\hypertarget{lsredis_8c_a065d09eb6914c057383980d3d786affc}{\index{lsredis.\-c@{lsredis.\-c}!lsredis\-\_\-log@{lsredis\-\_\-log}}
+\index{lsredis\-\_\-log@{lsredis\-\_\-log}!lsredis.c@{lsredis.\-c}}
+\subsubsection[{lsredis\-\_\-log}]{\setlength{\rightskip}{0pt plus 5cm}void lsredis\-\_\-log (
+\begin{DoxyParamCaption}
+\item[{char $\ast$}]{fmt, }
+\item[{}]{...}
+\end{DoxyParamCaption}
+)}}\label{lsredis_8c_a065d09eb6914c057383980d3d786affc}
+
+
+send log message to our redis log key 
+
+
+
+Definition at line 1064 of file lsredis.\-c.
+
+
+\begin{DoxyCode}
+                                  \{
+  \textcolor{keyword}{static} \hyperlink{structlsredis__obj__struct}{lsredis\_obj\_t} *loghashs[32];
+  \textcolor{keyword}{static} \textcolor{keywordtype}{int} firstTime = 1;
+  \textcolor{keyword}{static} \textcolor{keywordtype}{int} lhi = 0;
+  \textcolor{keywordtype}{char} msg[2048+64];
+  va\_list arg\_ptr;
+  
+  
+  
+  \textcolor{keywordflow}{if}( pthread\_mutex\_trylock( &\hyperlink{lsredis_8c_a390e8acf789b0fa41b43a794dd27e28f}{lsredis\_mutex}) == 0) \{
+    
+    
+    \textcolor{keywordflow}{if}( \hyperlink{lsredis_8c_acdca9095c7a3288d7febe9f4c440a6e9}{lsredis\_head} == NULL) \{                     \textcolor{comment}{// Ignore
+       messages that come before redis is initiallized}
+      pthread\_mutex\_unlock( &\hyperlink{lsredis_8c_a390e8acf789b0fa41b43a794dd27e28f}{lsredis\_mutex});
+      \textcolor{keywordflow}{return};
+    \}
+    
+    \textcolor{keywordflow}{if}( firstTime) \{
+      \textcolor{keywordtype}{int} \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i};
+      \textcolor{keywordflow}{for}( i=0; i<\textcolor{keyword}{sizeof}(loghashs)/\textcolor{keyword}{sizeof}(loghashs[0]); i++) \{
+        loghashs[\hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i}] = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"log.message.%d"}, i);
+      \}
+      lhi = 0;
+      firstTime=0;
+    \}
+    
+    va\_start( arg\_ptr, fmt);
+    vsnprintf( msg, \textcolor{keyword}{sizeof}(msg)-1, fmt, arg\_ptr);
+    va\_end( arg\_ptr);
+    msg[\textcolor{keyword}{sizeof}(msg)-1]=0;
+    
+    \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( loghashs[lhi], \textcolor{stringliteral}{"%s"}, msg);
+    lhi = (lhi+1) % (\textcolor{keyword}{sizeof}(loghashs)/\textcolor{keyword}{sizeof}(loghashs[0]));
+    pthread\_mutex\_unlock( &\hyperlink{lsredis_8c_a390e8acf789b0fa41b43a794dd27e28f}{lsredis\_mutex});
+    
+  \}
+\}
+\end{DoxyCode}
 \hypertarget{lsredis_8c_ad3189a7329ca92efab0054921f608b97}{\index{lsredis.\-c@{lsredis.\-c}!lsredis\-\_\-maybe\-\_\-add\-\_\-key@{lsredis\-\_\-maybe\-\_\-add\-\_\-key}}
 \index{lsredis\-\_\-maybe\-\_\-add\-\_\-key@{lsredis\-\_\-maybe\-\_\-add\-\_\-key}!lsredis.c@{lsredis.\-c}}
 \subsubsection[{lsredis\-\_\-maybe\-\_\-add\-\_\-key}]{\setlength{\rightskip}{0pt plus 5cm}void lsredis\-\_\-maybe\-\_\-add\-\_\-key (
@@ -1561,7 +1694,7 @@ Definition at line 830 of file lsredis.\-c.
 )}}\label{lsredis_8c_ad3189a7329ca92efab0054921f608b97}
 
 
-Definition at line 799 of file lsredis.\-c.
+Definition at line 833 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1585,7 +1718,7 @@ Definition at line 799 of file lsredis.\-c.
 )}}\label{lsredis_8c_ac58fca47533e695c8775e0d2b9128766}
 
 
-Definition at line 267 of file lsredis.\-c.
+Definition at line 265 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1604,22 +1737,23 @@ Definition at line 267 of file lsredis.\-c.
   \textcolor{keywordflow}{return} rtn;
 \}
 \end{DoxyCode}
-\hypertarget{lsredis_8c_ad438e4368d86bbe15a93dcf86deaded5}{\index{lsredis.\-c@{lsredis.\-c}!lsredis\-\_\-run@{lsredis\-\_\-run}}
+\hypertarget{lsredis_8c_ac3db3d5f91bf5723bd94748ce0d88731}{\index{lsredis.\-c@{lsredis.\-c}!lsredis\-\_\-run@{lsredis\-\_\-run}}
 \index{lsredis\-\_\-run@{lsredis\-\_\-run}!lsredis.c@{lsredis.\-c}}
-\subsubsection[{lsredis\-\_\-run}]{\setlength{\rightskip}{0pt plus 5cm}void lsredis\-\_\-run (
+\subsubsection[{lsredis\-\_\-run}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-t$\ast$ lsredis\-\_\-run (
 \begin{DoxyParamCaption}
 {}
 \end{DoxyParamCaption}
-)}}\label{lsredis_8c_ad438e4368d86bbe15a93dcf86deaded5}
+)}}\label{lsredis_8c_ac3db3d5f91bf5723bd94748ce0d88731}
 
 
-Definition at line 1319 of file lsredis.\-c.
+Definition at line 1437 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
-                   \{
+                         \{
   pthread\_create( &\hyperlink{lsredis_8c_a79c33eb11ad6819247930ade3a25671f}{lsredis\_thread}, NULL, \hyperlink{lsredis_8c_ade7b1ddfdc88c6964a4c90513e360f75}{lsredis\_worker}
       , NULL);
+  \textcolor{keywordflow}{return} &\hyperlink{lsredis_8c_a79c33eb11ad6819247930ade3a25671f}{lsredis\_thread};
 \}
 \end{DoxyCode}
 \hypertarget{lsredis_8c_a2b48f29f489bcbdaf4fb29e7fbf1d4d2}{\index{lsredis.\-c@{lsredis.\-c}!lsredis\-\_\-set\-\_\-preset@{lsredis\-\_\-set\-\_\-preset}}
@@ -1637,7 +1771,7 @@ set the given preset to the given value create a new preset if we can't find it
 
 
 
-Definition at line 940 of file lsredis.\-c.
+Definition at line 974 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1646,22 +1780,28 @@ Definition at line 940 of file lsredis.\-c.
   \textcolor{keywordtype}{int} plength;
   \textcolor{keywordtype}{int} err;
   ENTRY entry\_in, *entry\_outp;
-  \hyperlink{structlsredis__obj__struct}{lsredis\_obj\_t} *\hyperlink{namespacemk__pgpmac__redis_a11daf2847f2dc94562b5b61b3f412574}{p}, *presets\_length\_p;
+  \hyperlink{structlsredis__obj__struct}{lsredis\_obj\_t} *p1, *p2, *presets\_length\_p;
   \hyperlink{structlsredis__preset__list__struct}{lsredis\_preset\_list\_t} *pl;
+  \textcolor{keyword}{struct }timespec timeout;
 
   snprintf( s, \textcolor{keyword}{sizeof}( s)-1, \textcolor{stringliteral}{"%s%s"}, motor\_name, preset\_name);
   s[\textcolor{keyword}{sizeof}(s)-1] = 0;
 
   entry\_in.key  = s;
   entry\_in.data = NULL;
+  pthread\_mutex\_lock( &\hyperlink{lsredis_8c_a1d0b14b31b12d1b2a79dc50eac09de39}{lsredis\_preset\_list\_mutex});
   err = hsearch\_r( entry\_in, FIND, &entry\_outp, &\hyperlink{lsredis_8c_ade00a383533fdefb2af9f3f53f37cf97}{lsredis\_preset\_ht}
       );
   \textcolor{keywordflow}{if}( err != 0) \{
     \textcolor{comment}{//}
     \textcolor{comment}{// Found it.  Things are simple.}
     \textcolor{comment}{//}
+    pthread\_mutex\_unlock( &p1->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
+
+
     pl = entry\_outp->data;
     \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( pl->\hyperlink{structlsredis__preset__list__struct_ae365a576448adeccb66fbb85cfcf4b23}{position}, \textcolor{stringliteral}{"%.3f"}, dval);
+    pthread\_mutex\_unlock( &\hyperlink{lsredis_8c_a1d0b14b31b12d1b2a79dc50eac09de39}{lsredis\_preset\_list\_mutex});
     \textcolor{keywordflow}{return};
   \}
   \textcolor{comment}{//}
@@ -1676,16 +1816,27 @@ Definition at line 940 of file lsredis.\-c.
        motor\_name, plength-1);
   s[\textcolor{keyword}{sizeof}(s)-1] = 0;
 
-  p = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s.presets.%d.name"}, motor\_name, plength
-      -1);
-  \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( p, \textcolor{stringliteral}{"%s"}, preset\_name);
-
-  p = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s.presets.%d.position"}, motor\_name, 
+  p1 = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s.presets.%d.name"}, motor\_name, 
       plength-1);
-  \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( p, \textcolor{stringliteral}{"%.3f"}, dval);
+  pthread\_mutex\_lock( &p1->mutex);
+  err = 0;
+  \textcolor{keywordflow}{while}( err == 0 && p1->valid == 0)
+    err = pthread\_cond\_timedwait( &p1->cond, &p1->mutex, &timeout);
+
+  \textcolor{keywordflow}{if}( err == ETIMEDOUT) \{
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lsredis\_set\_preset: timed out
+       waiting for name to become valid"});
+  \}
+  pthread\_mutex\_unlock( &p1->mutex);
+  \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( p1, \textcolor{stringliteral}{"%s"}, preset\_name);
+  
+  p2 = \hyperlink{lsredis_8c_ad3bb3ebbae1ffbd03e062ecdd663cc6a}{lsredis\_get\_obj}( \textcolor{stringliteral}{"%s.presets.%d.position"}, motor\_name, 
+      plength-1);
+  \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( p2, \textcolor{stringliteral}{"%.3f"}, dval);
   
   \hyperlink{lsredis_8c_a9b9c64f883c7ded60badfe89cb15fa78}{lsredis\_setstr}( presets\_length\_p, \textcolor{stringliteral}{"%ld"}, plength);
 
+  pthread\_mutex\_unlock( &\hyperlink{lsredis_8c_a1d0b14b31b12d1b2a79dc50eac09de39}{lsredis\_preset\_list\_mutex});
   \hyperlink{lsredis_8c_af48b297b5679750a131fa1e982a078b7}{lsredis\_load\_presets}( motor\_name);
 \}
 \end{DoxyCode}
@@ -1704,7 +1855,7 @@ Set the value of a redis object and make it valid.
 
 Called by mget\-C\-B to set the value as it is in redis Maybe T\-O\-D\-O\-: we've arbitrarily set the maximum size of a value here. Although I cannot imagine needed bigger values it would not be a big deal to enable it. 
 
-Definition at line 227 of file lsredis.\-c.
+Definition at line 225 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1745,9 +1896,11 @@ redis\-Async\-Command\-Argv used instead of redis\-Async\-Command 'cause it's ea
 
 $<$ Unlock to prevent deadlock in case the service routine needs to set our value
 
-$<$ redis\-Async\-Command\-Argv shouldn't need to access this after it's made up it's packet (before it returns) so we should be O\-K with this location disappearing soon. 
+$<$ redis\-Async\-Command\-Argv shouldn't need to access this after it's made up it's packet (before it returns) so we should be O\-K with this location disappearing soon.
 
-Definition at line 309 of file lsredis.\-c.
+$<$ At this point the key is considered created 
+
+Definition at line 307 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1766,7 +1919,8 @@ Definition at line 309 of file lsredis.\-c.
   \textcolor{comment}{//}
   \textcolor{comment}{// Don't send an update if a good value has not changed}
   \textcolor{comment}{//}
-  \textcolor{keywordflow}{if}( p->\hyperlink{structlsredis__obj__struct_a338ffa4123bd06b39c8b58f5e695575e}{valid} && strcmp( v, p->\hyperlink{structlsredis__obj__struct_a0465c65288e8101805a6f91049164517}{value}) == 0) \{
+  \textcolor{keywordflow}{if}( p->\hyperlink{structlsredis__obj__struct_ae0aa00ad745ee5bbc598c23ab794ed8a}{creating} != 0 && p->\hyperlink{structlsredis__obj__struct_a338ffa4123bd06b39c8b58f5e695575e}{valid} && strcmp( v, p->\hyperlink{structlsredis__obj__struct_a0465c65288e8101805a6f91049164517}{value}) ==
+       0) \{
     \textcolor{comment}{// nothing to do}
     pthread\_mutex\_unlock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
     \textcolor{keywordflow}{return};
@@ -1798,6 +1952,7 @@ Definition at line 309 of file lsredis.\-c.
   \textcolor{comment}{//}
   pthread\_mutex\_lock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
   \hyperlink{lsredis_8c_a05c7ed2bb1b5702a5c83ed3b51abb546}{\_lsredis\_set\_value}( p, v);
+  p->\hyperlink{structlsredis__obj__struct_ae0aa00ad745ee5bbc598c23ab794ed8a}{creating} = 0;                      
   pthread\_cond\_signal( &p->\hyperlink{structlsredis__obj__struct_a356f6a228bb19ac7d66fdb1c875d68be}{cond});
   pthread\_mutex\_unlock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
 \}
@@ -1816,7 +1971,7 @@ Definition at line 309 of file lsredis.\-c.
 \end{DoxyParams}
 
 
-Definition at line 1223 of file lsredis.\-c.
+Definition at line 1314 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1850,7 +2005,7 @@ Use the publication to request the new value.
 
 
 
-Definition at line 707 of file lsredis.\-c.
+Definition at line 741 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1938,8 +2093,7 @@ Definition at line 707 of file lsredis.\-c.
       \textcolor{comment}{// Here we know our value is out of date}
       \textcolor{comment}{//}
       p->\hyperlink{structlsredis__obj__struct_a338ffa4123bd06b39c8b58f5e695575e}{valid} = 0;
-      \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\_send\_event}( \textcolor{stringliteral}{"%s Invalid"}, p->\hyperlink{structlsredis__obj__struct_ad0a987a011b580eab739cda831f78fbb}{events\_name}
-      );
+      \textcolor{comment}{//lsevents\_send\_event( "%s Invalid", p->events\_name);}
       pthread\_mutex\_unlock( &p->\hyperlink{structlsredis__obj__struct_a0da18e7d0f7d52459bbc6fbc696d5252}{mutex});
 
       \textcolor{comment}{//}
@@ -1970,7 +2124,7 @@ $<$ array of pollfd's for the poll function, one entry per connection
 
 $<$ number of active elements in fda 
 
-Definition at line 1242 of file lsredis.\-c.
+Definition at line 1357 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
@@ -1978,7 +2132,7 @@ Definition at line 1242 of file lsredis.\-c.
   \textcolor{keyword}{static} \textcolor{keywordtype}{int} poll\_timeout\_ms = -1;      
   \textcolor{keyword}{static} \textcolor{keyword}{struct }pollfd fda[4];          
   \textcolor{keyword}{static} \textcolor{keywordtype}{int} nfda = 0;                  
-  \textcolor{keyword}{static} sigset\_t our\_sigset;
+  \textcolor{keyword}{static} sigset\_t \hyperlink{pgpmac_8c_a76042459b23ade6d59ce9698d890ea89}{our\_sigset};
   \textcolor{keywordtype}{int} pollrtn;
   \textcolor{keywordtype}{int} \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i};
 
@@ -2008,6 +2162,10 @@ Definition at line 1242 of file lsredis.\-c.
 
   pthread\_cond\_signal( &\hyperlink{lsredis_8c_a2f63408d16b5603541b124a78f36a5a8}{lsredis\_cond});
   pthread\_mutex\_unlock( &\hyperlink{lsredis_8c_a390e8acf789b0fa41b43a794dd27e28f}{lsredis\_mutex});
+
+  \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\_add\_listener}( \textcolor{stringliteral}{"^Heartbeat$"}, 
+      \hyperlink{lsredis_8c_acd9cb833103e57da756d152ecdd4f840}{lsredis\_heartbeat\_cb});
+  \hyperlink{lstimer_8c_a7b3e725fbe1bb3cc9f8465941cf1e381}{lstimer\_set\_timer}( \textcolor{stringliteral}{"Heartbeat"}, -1, 1, 0);
 
 
   \textcolor{keywordflow}{while}(1) \{
@@ -2065,7 +2223,7 @@ call back in case a redis server becomes disconnected T\-O\-D\-O\-: reconnect
 
 
 
-Definition at line 632 of file lsredis.\-c.
+Definition at line 666 of file lsredis.\-c.
 
 
 \begin{DoxyCode}
