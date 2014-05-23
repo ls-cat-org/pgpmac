@@ -1947,6 +1947,37 @@ void md2cmds_coordsys_5_stopped_cb( char *event) {
 void md2cmds_coordsys_7_stopped_cb( char *event) {
 }
 
+/** Save centering and alignment stage positions
+ *  to restore on restart
+ */
+void md2cmds_ca_last_cb( char *event) {
+  char *phase;
+  char motor_name[64];
+  int i;
+  lspmac_motor_t *mp;
+
+  phase = lsredis_getstr( lsredis_get_obj( "phase"));
+  if( strcmp( phase, "center") == 0 || strcmp( phase, "dataCollection") == 0) {
+    motor_name[0] = 0;
+    for( i=0; i<sizeof(motor_name)-1; i++) {
+      if( event[i] == ' ')
+	break;
+      motor_name[i] = event[i];
+      motor_name[i+1] = 0;
+    }
+    if( i < sizeof(motor_name)) {
+      mp = lspmac_find_motor_by_name( motor_name);
+      if( mp != NULL ) {
+	lsredis_set_preset( motor_name, "default", lspmac_getPosition( mp));
+      }
+    }
+  }
+  free( phase);
+}
+
+
+
+
 
 /** Initialize the md2cmds module
  */
@@ -2031,6 +2062,8 @@ pthread_t *md2cmds_run() {
   lsevents_add_listener( "^Coordsys 5 Stopped$",        md2cmds_coordsys_5_stopped_cb);
   lsevents_add_listener( "^Coordsys 7 Stopped$",        md2cmds_coordsys_7_stopped_cb);
   lsevents_add_listener( "^cam.zoom Moving$",	        md2cmds_set_scale_cb);
+  lsevents_add_listener( "^(align\\.(x|y|z)|centering.(x|y)) In Position$", md2cmds_ca_last_cb);
+
 
   return &md2cmds_thread;
 }
