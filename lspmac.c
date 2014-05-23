@@ -4396,6 +4396,7 @@ void lspmac_command_done_cb( char *event) {
 }
 
 
+
 void lspmac_spin( lspmac_motor_t *mp) {
   if( strcmp( mp->name, "omega")==0) {
     lspmac_SockSendDPline( NULL, "&%d", lsredis_getl( mp->coord_num));
@@ -4436,7 +4437,6 @@ pthread_t *lspmac_run() {
       lsevents_add_listener( "^scint In Position$",        lspmac_scint_maybe_return_sample_cb);
       lsevents_add_listener( "^scint Moving$",             lspmac_scint_maybe_move_sample_cb);
     }
-
 
     for( i=0; i<lspmac_nmotors; i++) {
       snprintf( evts, sizeof( evts)-1, "^%s command accepted$", lspmac_motors[i].name);
