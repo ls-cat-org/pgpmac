@@ -19,6 +19,7 @@ State		Description
   2		Send a query to the server
   3		Continue flushing a command to the server
   4		Waiting for a reply
+  5             Quitting: ignore new queries
 </pre>
 */
 
@@ -30,10 +31,11 @@ State		Description
 #define LS_PG_STATE_INIT_POLL	-3
 #define LS_PG_STATE_RESET	-2
 #define LS_PG_STATE_RESET_POLL	-1
-#define LS_PG_STATE_IDLE	1
-#define LS_PG_STATE_SEND	2
-#define LS_PG_STATE_SEND_FLUSH	3
-#define LS_PG_STATE_RECV	4
+#define LS_PG_STATE_IDLE	 1
+#define LS_PG_STATE_SEND	 2
+#define LS_PG_STATE_SEND_FLUSH	 3
+#define LS_PG_STATE_RECV	 4
+#define LS_PG_STATE_QUITTING     5
 
 static int ls_pg_state = LS_PG_STATE_INIT;	//!< State of the lspg state machine
 static struct timeval lspg_time_sent, now;	//!< used to ensure we do not inundate the db server with connection requests
@@ -56,6 +58,7 @@ static unsigned int lspg_query_queue_reply = 0;				/**< The current item being d
 									*/
 
 static PGconn *q = NULL;						//!< Database connector
+static int lspg_running = 1;						//!< flag to tell worker it's time to go home
 static PostgresPollingStatusType lspg_connectPoll_response;		//!< Used to determine state while connecting
 static PostgresPollingStatusType lspg_resetPoll_response;		//!< Used to determine state while reconnecting
 
@@ -1990,7 +1993,7 @@ void *lspg_worker(
   lspgfd.fd   = -1;
 
 
-  while( 1) {
+  while( lspg_running) {
     int pollrtn;
     int poll_timeout_ms;
 
@@ -2028,6 +2031,7 @@ void *lspg_worker(
       pollrtn--;
     } 
   }
+  return NULL;
 }
 
 void lspg_preset_changed_cb( char *event) {
@@ -2137,10 +2141,19 @@ void lspg_sample_detector_cb( char *event) {
   lspg_query_push( NULL, NULL, "SELECT px.logmagnetstate(%s)", present ? "TRUE" : "FALSE");
 }
 
+/** call back to handle signing out of the database
+ */
+void lspg_quit_query_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+  ls_pg_state = LS_PG_STATE_QUITTING;
+  PQfinish( q);
+  lspg_running = 0;
+}
+
 /** Prepare to exit the program in a couple of seconds
  */
 void lspg_quitting_cb( char *event) {
-  lspg_query_push( NULL, NULL, "SELECT px.dropairrights()");
+  lspg_query_push( lspg_quit_query_cb, lspg_quit_query_cb, "SELECT px.dropairrights()");
+
 }
 
 /** Initiallize the lspg module
@@ -2173,6 +2186,7 @@ pthread_t *lspg_run() {
   lsevents_add_listener( "^Sample(Detected|Absent)$",                 lspg_sample_detector_cb);
   lsevents_add_listener( "^Timer Update KVs$",                        lspg_update_kvs_cb);
   lsevents_add_listener( "^cam.zoom In Position$",                    lspg_set_scale_cb);
+  lsevents_add_listener( "^Quitting Program$",                        lspg_quitting_cb);
   lstimer_set_timer(     "Timer Update KVs", -1, 0, 500000000);
 
   //
