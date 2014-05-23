@@ -213,10 +213,8 @@ void _lsredis_set_value( lsredis_obj_t *p, char *v) {
 
   p->cvalue = *(p->value);
 
-  if( !(p->valid)) {
-    p->valid = 1;
-    //lsevents_send_event( "%s Valid", p->events_name);
-  }
+  p->valid = 1;				//!< We can consider this value valid
+  p->creating = 0;			//!< At this point the key is considered created
 }
 
 /** Set the value of a redis object and make it valid.  Called by mgetCB to set the value as it is in redis
@@ -321,7 +319,7 @@ void lsredis_setstr( lsredis_obj_t *p, char *fmt, ...) {
   //
   // Don't send an update if a good value has not changed
   //
-  if( p->valid && strcmp( v, p->value) == 0) {
+  if( p->creating != 0 && p->valid && strcmp( v, p->value) == 0) {
     // nothing to do
     pthread_mutex_unlock( &p->mutex);
     return;
@@ -352,6 +350,7 @@ void lsredis_setstr( lsredis_obj_t *p, char *fmt, ...) {
   //
   pthread_mutex_lock( &p->mutex);
   _lsredis_set_value( p, v);
+  p->creating = 0;			//!< At this point the key is considered created
   pthread_cond_signal( &p->cond);
   pthread_mutex_unlock( &p->mutex);
 }
@@ -386,6 +385,12 @@ double lsredis_getd( lsredis_obj_t *p) {
   double rtn;
 
   pthread_mutex_lock( &p->mutex);
+  if( p->creating != 0) {
+    pthread_mutex_unlock( &p->mutex);
+    lsredis_setstr( p, "");
+    pthread_mutex_lock( &p->mutex);
+  }
+
   while( p->valid == 0)
     pthread_cond_wait( &p->cond, &p->mutex);
 
@@ -399,6 +404,12 @@ long int lsredis_getl( lsredis_obj_t *p) {
   long int rtn;
 
   pthread_mutex_lock( &p->mutex);
+  if( p->creating != 0) {
+    pthread_mutex_unlock( &p->mutex);
+    lsredis_setstr( p, "");
+    pthread_mutex_lock( &p->mutex);
+  }
+
   while( p->valid == 0)
     pthread_cond_wait( &p->cond, &p->mutex);
 
@@ -438,6 +449,12 @@ char **lsredis_get_string_array( lsredis_obj_t *p) {
   char **rtn;
 
   pthread_mutex_lock( &p->mutex);
+  if( p->creating != 0) {
+    pthread_mutex_unlock( &p->mutex);
+    lsredis_setstr( p, "");
+    pthread_mutex_lock( &p->mutex);
+  }
+
   while( p->valid == 0)
     pthread_cond_wait( &p->cond, &p->mutex);
 
@@ -451,6 +468,11 @@ int lsredis_getb( lsredis_obj_t *p) {
   int rtn;
 
   pthread_mutex_lock( &p->mutex);
+  if( p->creating != 0) {
+    pthread_mutex_unlock( &p->mutex);
+    lsredis_setstr( p, "");
+    pthread_mutex_lock( &p->mutex);
+  }
   while( p->valid == 0)
     pthread_cond_wait( &p->cond, &p->mutex);
 
@@ -464,6 +486,11 @@ char lsredis_getc( lsredis_obj_t *p) {
   int rtn;
 
   pthread_mutex_lock( &p->mutex);
+  if( p->creating != 0) {
+    pthread_mutex_unlock( &p->mutex);
+    lsredis_setstr( p, "");
+    pthread_mutex_lock( &p->mutex);
+  }
   while( p->valid == 0)
     pthread_cond_wait( &p->cond, &p->mutex);
 
@@ -488,7 +515,14 @@ void lsredis_hgetCB( redisAsyncContext *ac, void *reply, void *privdata) {
   // TODO: figure out a better way to deal with missing key/values
   //
   if( p != NULL && r->type == REDIS_REPLY_NIL) {
-    lsredis_setstr( p, "");
+    //
+    // Show that we are creating this new key
+    // if the next request is a read we'll create an empty string value and return it
+    // if the next request is a write then we'll create that value and return it
+    //
+    pthread_mutex_lock( &p->mutex);
+    p->creating = 1;
+    pthread_mutex_unlock( &p->mutex);
     return;
   }
 
@@ -942,21 +976,27 @@ void lsredis_set_preset( char *motor_name, char *preset_name, double dval) {
   int plength;
   int err;
   ENTRY entry_in, *entry_outp;
-  lsredis_obj_t *p, *presets_length_p;
+  lsredis_obj_t *p1, *p2, *presets_length_p;
   lsredis_preset_list_t *pl;
+  struct timespec timeout;
 
   snprintf( s, sizeof( s)-1, "%s%s", motor_name, preset_name);
   s[sizeof(s)-1] = 0;
 
   entry_in.key  = s;
   entry_in.data = NULL;
+  pthread_mutex_lock( &lsredis_preset_list_mutex);
   err = hsearch_r( entry_in, FIND, &entry_outp, &lsredis_preset_ht);
   if( err != 0) {
     //
     // Found it.  Things are simple.
     //
+    pthread_mutex_unlock( &p1->mutex);
+
+
     pl = entry_outp->data;
     lsredis_setstr( pl->position, "%.3f", dval);
+    pthread_mutex_unlock( &lsredis_preset_list_mutex);
     return;
   }
   //
@@ -969,14 +1009,24 @@ void lsredis_set_preset( char *motor_name, char *preset_name, double dval) {
   snprintf( s, sizeof( s)-1, "%s.%s.presets.%d.name", lsredis_head, motor_name, plength-1);
   s[sizeof(s)-1] = 0;
 
-  p = lsredis_get_obj( "%s.presets.%d.name", motor_name, plength-1);
-  lsredis_setstr( p, "%s", preset_name);
+  p1 = lsredis_get_obj( "%s.presets.%d.name", motor_name, plength-1);
+  pthread_mutex_lock( &p1->mutex);
+  err = 0;
+  while( err == 0 && p1->valid == 0)
+    err = pthread_cond_timedwait( &p1->cond, &p1->mutex, &timeout);
 
-  p = lsredis_get_obj( "%s.presets.%d.position", motor_name, plength-1);
-  lsredis_setstr( p, "%.3f", dval);
+  if( err == ETIMEDOUT) {
+    lslogging_log_message( "lsredis_set_preset: timed out waiting for name to become valid");
+  }
+  pthread_mutex_unlock( &p1->mutex);
+  lsredis_setstr( p1, "%s", preset_name);
+  
+  p2 = lsredis_get_obj( "%s.presets.%d.position", motor_name, plength-1);
+  lsredis_setstr( p2, "%.3f", dval);
   
   lsredis_setstr( presets_length_p, "%ld", plength);
 
+  pthread_mutex_unlock( &lsredis_preset_list_mutex);
   lsredis_load_presets( motor_name);
 }
 
