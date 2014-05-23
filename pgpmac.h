@@ -39,6 +39,7 @@ typedef struct lsredis_obj_struct {
   pthread_mutex_t mutex;				//!< Don't let anyone use an old value
   pthread_cond_t cond;					//!< wait for a valid value
   struct lsredis_obj_struct *next;			//!< the next in our list (I guess this is going to be a linked list)
+  char creating;					//!< 1 if this key does not exist and we haven't set it yet: read will create and set an empty string value, write will create and set the requested value
   char valid;						//!< 1 if we think the value is good, 0 otherwise
   int wait_for_me;					//!< Number of times we need to see our publication before we start accepting new values
   char *key;						//!< The redis key for this object
