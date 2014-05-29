@@ -1275,13 +1275,16 @@ void lspmac_home1_queue(
   int i;
   int motor_num;
   int coord_num;
+  int home_group;
   char **home;
+  lspmac_motor_t *m2;
 
   pthread_mutex_lock( &(mp->mutex));
 
-  motor_num = lsredis_getl( mp->motor_num);
-  coord_num = lsredis_getl( mp->coord_num);
-  home      = lsredis_get_string_array( mp->home);
+  motor_num  = lsredis_getl( mp->motor_num);
+  coord_num  = lsredis_getl( mp->coord_num);
+  home       = lsredis_get_string_array( mp->home);
+  home_group = lsredis_getl( mp->home_group);
   
   // Each of the motors should have this defined
   // but let's not seg fault if home is missing
@@ -1306,30 +1309,29 @@ void lspmac_home1_queue(
 
 
   //
-  // Don't go on if any other motors in this coordinate system are homing.
+  // Don't go on if any other motors in this coordinate system are homing or if any motors in a lower home_group are not homed
   // It's possible to write the homing program to home all the motors in the coordinate
   // system.  TODO  (hint hint)
   //
-  if( coord_num > 0) {
-    for( i=0; i<lspmac_nmotors; i++) {
-      if( &(lspmac_motors[i]) == mp)
-	continue;
-      if( lsredis_getl(lspmac_motors[i].coord_num) == coord_num) {
-	int nogo;
-	nogo = 0;
-	pthread_mutex_lock( &(lspmac_motors[i].mutex));
-	//
-	//  Don't go on if
-	//
-	//    we are homing         or      ( not in position                while     in open loop)
-	//
-	if( lspmac_motors[i].homing || (((lspmac_motors[i].status2 & 0x01)==0) && ((lspmac_motors[i].status1 & 0x040000) != 0)))
-	  nogo = 1;
-	pthread_mutex_unlock( &(lspmac_motors[i].mutex));
-	if( nogo) {
-	  pthread_mutex_unlock( &(mp->mutex));
-	  return;
-	}
+  for( i=0; i<lspmac_nmotors; i++) {
+    m2 = &(lspmac_motors[i]);
+    if( m2 == mp)
+      continue;
+    if( lsredis_getb(m2->active) && ( lsredis_getl(m2->coord_num) == coord_num || lsredis_getl( m2->home_group) < home_group)) {
+      int nogo;
+      nogo = 0;
+      pthread_mutex_lock( &(m2->mutex));
+      //
+      //  Don't go on if
+      //
+      //    we are homing         or      ( not in position                while     in open loop)
+      //
+      if( m2->homing || (((m2->status2 & 0x01)==0) && ((m2->status1 & 0x040000) != 0)))
+	nogo = 1;
+      pthread_mutex_unlock( &(m2->mutex));
+      if( nogo) {
+	pthread_mutex_unlock( &(mp->mutex));
+	return;
       }
     }
   }
@@ -3629,6 +3631,7 @@ void _lspmac_motor_init( lspmac_motor_t *d, char *name) {
   d->axis		 = lsredis_get_obj( "%s.axis",	            d->name);
   d->coord_num		 = lsredis_get_obj( "%s.coord_num",         d->name);
   d->home		 = lsredis_get_obj( "%s.home",	            d->name);
+  d->home_group          = lsredis_get_obj( "%s.homeGroup",         d->name);
   d->in_position_band    = lsredis_get_obj( "%s.in_position_band",  d->name);
   d->inactive_init	 = lsredis_get_obj( "%s.inactive_init",	    d->name);
   d->redis_fmt		 = lsredis_get_obj( "%s.format",            d->name);
@@ -4419,6 +4422,7 @@ pthread_t *lspmac_run() {
   int motor_num;
 
   pthread_create( &pmac_thread, NULL, lspmac_worker, NULL);
+  lsevents_send_event( "LSPMAC Initializing");
 
   if( first_time) {
     first_time = 0;
@@ -4506,5 +4510,10 @@ pthread_t *lspmac_run() {
       }
     }
   }
+
+  
+
+
+  lsevents_send_event( "LSPMAC Done Initializing");
   return &pmac_thread;
 }
