@@ -7,7 +7,7 @@
  */
 
 
-#define LSEVENTS_QUEUE_LENGTH 512
+#define LSEVENTS_QUEUE_LENGTH 1024
 
 /** Storage definition for the events.
  *  Just a string for now.  Perhaps one day
