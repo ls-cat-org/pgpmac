@@ -76,7 +76,7 @@ extras = [
     {"k" : "overlay.centers.8.width",  "v" : "1000"},
     {"k" : "overlay.centers.8.height", "v" : "100"},
     {"k" : "overlay.centers.length",   "v" : "9"},
-    {"k" : "overlay.curentCenter",     "v" : "3"}
+    {"k" : "overlay.curentCenter",     "v" : "3"},
     ]
 
 
@@ -287,91 +287,91 @@ motor_dict = {
                 "home" : '{"M401=1 M1115=1 #1$",&1E,#1&1B1R}',"active_init" : '{M31=1,&1#1->X,"M700=(M700 | $000001) ^ $000001", M1115=1}',
                 "inactive_init" : '{M31=0,&1#1->0,"M700=M700 | $000001",M1115=0}',"moveMode" :  "freeRotation",
                 "reference" :  "228.5", "format" :  "%.3f", "printf" : "%*.4f deg", "axis" : "X",
-                "hard_ini"  : "PHIRotationAxis.PHIMotor", "neutralPosition" : "0", "active" : "1"
+                "hard_ini"  : "PHIRotationAxis.PHIMotor", "neutralPosition" : "0", "active" : "1", "homeGroup" : "1"
                 },
     "align.x" : { "motor_num" : "2", "max_accel" : "2", "max_speed" : "121", "coord_num" : "3", "u2c" : "60620.8",
                   "smallStep" :  "0.001",
                   "axis" :  "X", "format" :  "%.3f",
                   "minPosition" :  "0.1", "maxPosition" :  "4.0",
-                  "hard_ini"  : "PHIAxisXYZTable.PHIXMotor", "neutralPosition" : "0", "active" : "1"
+                  "hard_ini"  : "PHIAxisXYZTable.PHIXMotor", "neutralPosition" : "0", "active" : "1", "homeGroup" : "2"
                   },
     "align.y" : { "motor_num" : "3", "max_accel" : "0.5", "max_speed" : "121", "coord_num" : "3", "u2c" : "60620.8",
                   "smallStep" :  "0.001",
                   "axis" :  "Y", "format" :  "%.3f",
                   "minPosition" :  "0.16", "maxPosition" :  "16.15",
-                  "hard_ini"  : "PHIAxisXYZTable.PHIYMotor", "neutralPosition" : "0", "active" : "1"
+                  "hard_ini"  : "PHIAxisXYZTable.PHIYMotor", "neutralPosition" : "0", "active" : "1", "homeGroup" : "2"
                   },
     "align.z" : { "motor_num" : "4", "max_accel" : "0.5", "max_speed" : "121", "coord_num" : "3", "u2c" : "60620.8",
                   "smallStep" :  "0.001",
                   "axis" :  "Z", "format" :  "%.3f",
                   "minPosition" :  "0.45", "maxPosition" :  "5.85",
-                  "hard_ini"  : "PHIAxisXYZTable.PHIZMotor", "neutralPosition" : "0", "active" : "1"
+                  "hard_ini"  : "PHIAxisXYZTable.PHIZMotor", "neutralPosition" : "0", "active" : "1", "homeGroup" : "2"
                   },
     "lightPolar" : { "motor_num" : "5", "max_accel" : "0.2", "max_speed" : "3", "u2c" : "142", "coord_num" : "0", "unit" : "deg",
                      "home" : '{#5$,#5HMZ}', "active_init" : '{}', "inactive_init" : '{}',
                      "largeStep" :  "45", "smallStep" :  "10", "format" : "%.1f",
                      "printf" :  "%*.1f deg", "update_resolution" :  "1",
-                     "hard_ini" : "Analyser.AnalyserMotor", "neutralPosition" : "0", "active" : "1"
+                     "hard_ini" : "Analyser.AnalyserMotor", "neutralPosition" : "0", "active" : "1", "homeGroup" : "1"
                      },
     "cam.zoom" : { "motor_num" : "6","max_accel" : "0.2", "max_speed" : "10", "coord_num" : "4", "u2c" : "1.0", "unit" : "mag",
                    "smallStep" :  "1",
                    "axis" :  "Z","format" :  "%.0f",
                    "minPosition" :  "1","update_resolution" :  "1",
-                   "hard_ini" : "CoaxZoom.ZoomMotor", "neutralPosition" : "0", "in_position_band" : "1600", "active" : "1"
+                   "hard_ini" : "CoaxZoom.ZoomMotor", "neutralPosition" : "0", "in_position_band" : "1600", "active" : "1", "homeGroup" : "1"
                    },
     "appy" : { "motor_num" : "7","max_accel" : "1", "max_speed" : "201", "coord_num" : "5", "u2c" : "121241.6",
                "smallStep" :  "0.002",
                "axis" :  "Y","format" :  "%.3f",
                "minPosition" :  "0.2","maxPosition" :  "3.25",
-               "hard_ini" : "ApertureYZTable.ApertureYMotor", "neutralPosition" : "0", "active" : "1"
+               "hard_ini" : "ApertureYZTable.ApertureYMotor", "neutralPosition" : "0", "active" : "1", "homeGroup" : "1"
                },
     "appz" : { "motor_num" : "8","max_accel" : "1", "max_speed" : "201", "coord_num" : "5", "u2c" : "60620.8",
                "smallStep" :  "0.002",
                "axis" :  "Z","format" :  "%.3f",
                "minPosition" :  "0.3","maxPosition" :  "82.5",
-               "hard_ini" : "ApertureYZTable.ApertureZMotor", "neutralPosition" : "0", "active" : "1"
+               "hard_ini" : "ApertureYZTable.ApertureZMotor", "neutralPosition" : "0", "active" : "1", "homeGroup" : "1"
                },
     "capy" : { "motor_num" : "9","max_accel" : "1", "max_speed" : "201", "coord_num" : "5", "u2c" : "121241.6",
                "smallStep" :  "0.002",
                "axis" :  "U","format" :  "%.3f",
                "minPosition" :  "0.05","maxPosition" :  "3.19",
-               "hard_ini" : "CapillaryBSYZtable.CapillaryBSYMotor", "neutralPosition" : "0", "active" : "1"
+               "hard_ini" : "CapillaryBSYZtable.CapillaryBSYMotor", "neutralPosition" : "0", "active" : "1", "homeGroup" : "1"
               },
     "capz" : { "motor_num" : "10","max_accel" : "0.5", "max_speed" : "201", "coord_num" : "5", "u2c" : "19865.6",
                "smallStep" :  "0.002",
                "axis" :  "V","format" :  "%.3f",
                "minPosition" :  "0.57","maxPosition" :  "81.49",
-               "hard_ini" : "CapillaryBSYZtable.CapillaryBSZMotor", "neutralPosition" : "0", "active" : "1"
+               "hard_ini" : "CapillaryBSYZtable.CapillaryBSZMotor", "neutralPosition" : "0", "active" : "1", "homeGroup" : "1"
               },
     "scint" : { "motor_num" : "11","max_accel" : "0.5", "max_speed" : "151", "coord_num" : "5", "u2c" : "19865.6",
                 "smallStep" :  "0.002",
                 "axis" :  "W","format" :  "%.3f",
                 "minPosition" :  "0.2","maxPosition" :  "86.1",
-                "hard_ini" : "ScintillatorPhotodiode.Zmotor", "neutralPosition" : "0", "active" : "1"
+                "hard_ini" : "ScintillatorPhotodiode.Zmotor", "neutralPosition" : "0", "active" : "1", "homeGroup" : "1"
                 },
     "centering.x" : { "motor_num" : "17","max_accel" : "0.5",  "max_speed" : "150", "coord_num" : "2", "u2c" : "182400",
                       "smallStep" :  "0.001",
                       "axis" :  "X","format" :  "%.3f",
                       "minPosition" :  "-2.56","maxPosition" :  "2.496",
-                      "hard_ini" : "CentringXYTable.XCentringMotor", "neutralPosition" : "0", "active" : "1"
+                      "hard_ini" : "CentringXYTable.XCentringMotor", "neutralPosition" : "0", "active" : "1", "homeGroup" : "2"
                      },
     "centering.y" : {"motor_num" : "18","max_accel" : "0.5",  "max_speed" : "150", "coord_num" : "2", "u2c" : "182400",
                      "smallStep" :  "0.001",
                      "axis" :  "Y","format" :  "%.3f",
                      "minPosition" :  "-2.58","maxPosition" :  "2.4",
-                      "hard_ini" : "CentringXYTable.YCentringMotor", "neutralPosition" : "0", "active" : "1"
+                      "hard_ini" : "CentringXYTable.YCentringMotor", "neutralPosition" : "0", "active" : "1", "homeGroup" : "2"
                      },
     "kappa" : { "motor_num" : "19","max_accel" : "0.2",  "max_speed" : "50", "coord_num" : "7", "u2c" : "2844.444", "unit" : "deg",
                 "moveMode" :  "rotation",
                 "axis" :  "X","format" :  "%.2f",
                 "minPosition" :  "-5","update_resolution" :  "1.0",
-                "hard_ini" : "MiniKappa.Kappa1", "neutralPosition" : "0", "active" : "1"
+                "hard_ini" : "MiniKappa.Kappa1", "neutralPosition" : "0", "active" : "1", "homeGroup" : "1"
                 },
     "phi" : { "motor_num" : "20","max_accel" : "0.2",  "max_speed" : "50", "coord_num" : "7", "u2c" : "711.111", "unit" : "deg",
               "moveMode" :  "freeRotation",
               "axis" :  "Y","format" :  "%.2f",
               "update_resolution" :  "1.0",
-              "hard_ini" : "MiniKappa.Kappa2", "neutralPosition" : "0", "active" : "1"
+              "hard_ini" : "MiniKappa.Kappa2", "neutralPosition" : "0", "active" : "1", "homeGroup" : "1"
               },
     "fastShutter" : { "canHome" :  "false","type" :  "BO",
                       "update_resolution" :  "0.5","canStop" :  "false", "active" : "1", "in_position_band" : "0"
@@ -496,6 +496,7 @@ motor_field_lists = [
     ["format",            "%f",         0],     # format string for publish position to redis
     ["hard_ini",          None,         0],     # Name of section in microdiff_hard.ini
     ["home",              "",           0],     # postgresql style string array of strings to send to PMAC to home motor
+    ["homeGroup",         "1",          1],     # motors are homed by group number: all motors in group 1 are homed before any in group 2, etc
     ["inPosition",        "true",       0],     # "true" if the motor is in position, "false" if it is moving
     ["inactive_init",     "",           0],     # postgresql style string array of initialization strings to send to PMAC if the motor is inactive
     ["largeStep",         "1.0",        6],     # increment for large step in a UI
