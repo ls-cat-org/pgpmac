@@ -63,7 +63,7 @@ static md2cmds_cmd_kv_t md2cmds_cmd_kvs[] = {
   { "moveRel",          md2cmds_moveRel},
   { "run",              md2cmds_run_cmd},
   { "test",             md2cmds_test},
-  { "set",              md2cmds_set},
+  { "set",              md2cmds_set}
 };
 
 //
@@ -1976,7 +1976,21 @@ void md2cmds_ca_last_cb( char *event) {
 }
 
 
+/** restore previous md2 phase
+ */
+void md2cmds_lspmac_ready_cb( char *event) {
+  char *phase;
+  char s[32];
 
+  phase = lsredis_getstr( lsredis_get_obj( "phase"));
+  if( phase && phase[0] != 0) {
+    snprintf( s, sizeof(s)-1, "changeMode %s", phase);
+    s[sizeof(s)-1] = 0;
+    md2cmds_phase_change( s);
+  }
+  if( phase)
+    free( phase);
+}
 
 
 /** Initialize the md2cmds module
@@ -2062,8 +2076,8 @@ pthread_t *md2cmds_run() {
   lsevents_add_listener( "^Coordsys 5 Stopped$",        md2cmds_coordsys_5_stopped_cb);
   lsevents_add_listener( "^Coordsys 7 Stopped$",        md2cmds_coordsys_7_stopped_cb);
   lsevents_add_listener( "^cam.zoom Moving$",	        md2cmds_set_scale_cb);
-  lsevents_add_listener( "^(align\\.(x|y|z)|centering.(x|y)) In Position$", md2cmds_ca_last_cb);
-
+  //  lsevents_add_listener( "^(align\\.(x|y|z)|centering.(x|y)) In Position$", md2cmds_ca_last_cb);
+  lsevents_add_listener( "^LSPMAC Done Initializing$",  md2cmds_lspmac_ready_cb);
 
   return &md2cmds_thread;
 }
