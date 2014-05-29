@@ -128,6 +128,7 @@ typedef struct lspmac_motor_struct {
   lsredis_obj_t *axis;				//!< the axis (X, Y, Z, etc) or null if not in a coordinate system
   lsredis_obj_t *coord_num;			//!< coordinate system this motor belongs to (0 if none)
   lsredis_obj_t *home;				//!< pmac commands to home motor
+  lsredis_obj_t *home_group;			//!< all motors in home_group 1 are homed before motors in home_group 2 etc
   lsredis_obj_t *inactive_init;			//!< pmac commands to inactivate the motor
   lsredis_obj_t *in_position_band;		//!< moves within this amount are ignored UNITS ARE 1/16 COUNT
   lsredis_obj_t *max_accel;			//!< our maximum acceleration (cts/msec^2)
