@@ -71,7 +71,7 @@
 
 static pthread_t lsredis_thread;
 
-pthread_mutex_t lsredis_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+pthread_mutex_t lsredis_mutex;
 pthread_cond_t  lsredis_cond;
 int lsredis_running = 0;
 static pthread_mutexattr_t mutex_initializer;
@@ -1185,33 +1185,6 @@ void lsredis_configCB( redisAsyncContext *ac, void *reply, void *privdata) {
 }
 
 
-void lsredis_config() {
-  char hostname[128], lhostname[128];
-  int i;
-
-  pthread_mutexattr_init( &mutex_initializer);
-  pthread_mutexattr_settype( &mutex_initializer, PTHREAD_MUTEX_RECURSIVE);
-
-  if( gethostname( hostname, sizeof(hostname)-1)) {
-    lslogging_log_message( "lsredis_init: cannot get our own host name.  Cannot configure redis variables.");
-  } else {
-    for( i=0; i<strlen(hostname); i++) {
-      lhostname[i] = tolower( hostname[i]);
-    }
-    lhostname[i] = 0;
-
-    lslogging_log_message( "lsredis_init: our host name is '%s'", lhostname);
-    redisAsyncCommand( roac, lsredis_configCB, NULL, "hgetall config.%s", lhostname);
-  }
-  
-  pthread_mutex_lock( &lsredis_config_mutex);
-  while( lsredis_head == NULL)
-    pthread_cond_wait( &lsredis_config_cond, &lsredis_config_mutex);
-  pthread_mutex_unlock( &lsredis_config_mutex);
-
-}
-
-
 /** Initialize this module, that is, set up the connections
  *  \param pub  Publish under this (unique) name
  *  \param re   Regular expression to select keys we want to mirror
@@ -1219,6 +1192,7 @@ void lsredis_config() {
  */
 void lsredis_init() {
   int err;
+
 
   //
   // set up hash map to store redis objects
@@ -1277,10 +1251,39 @@ void lsredis_init() {
   //
   hcreate_r( lsredis_preset_max_n * 2, &lsredis_preset_ht);
 
+  pthread_mutexattr_init( &mutex_initializer);
+  pthread_mutexattr_settype( &mutex_initializer, PTHREAD_MUTEX_RECURSIVE);
+
+  pthread_mutex_init( &lsredis_mutex, &mutex_initializer);
   pthread_mutex_init( &lsredis_preset_list_mutex, &mutex_initializer);
   pthread_mutex_init( &lsredis_config_mutex, &mutex_initializer);
   pthread_cond_init(  &lsredis_config_cond,  NULL);
+
 }
+
+void lsredis_config() {
+  char hostname[128], lhostname[128];
+  int i;
+
+  if( gethostname( hostname, sizeof(hostname)-1)) {
+    lslogging_log_message( "lsredis_init: cannot get our own host name.  Cannot configure redis variables.");
+  } else {
+    for( i=0; i<strlen(hostname); i++) {
+      lhostname[i] = tolower( hostname[i]);
+    }
+    lhostname[i] = 0;
+
+    lslogging_log_message( "lsredis_init: our host name is '%s'", lhostname);
+    redisAsyncCommand( roac, lsredis_configCB, NULL, "hgetall config.%s", lhostname);
+  }
+  
+  pthread_mutex_lock( &lsredis_config_mutex);
+  while( lsredis_head == NULL)
+    pthread_cond_wait( &lsredis_config_cond, &lsredis_config_mutex);
+  pthread_mutex_unlock( &lsredis_config_mutex);
+
+}
+
 
 
 
