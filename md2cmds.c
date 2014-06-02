@@ -676,7 +676,14 @@ int md2cmds_phase_manualMount() {
   //                                                                                                                                                                                                                                                                            
   // Wait for motion programs                                                                                                                                                                                                                                                   
   //                                                                                                                                                                                                                                                                            
-  err = lspmac_est_move_time_wait( move_time+10.0, mmask, aperz, scint, blight_ud, cryo, fluo, NULL);
+  err = lspmac_est_move_time_wait( move_time+10.0, mmask,
+				   aperz,
+				   capz,
+				   scint,
+				   blight_ud,
+				   cryo,
+				   fluo,
+				   NULL);
   if( err) {
     lsevents_send_event( "Mode manualMount Aborted");
     return err;
@@ -713,7 +720,15 @@ int md2cmds_phase_robotMount() {
                               zoom,      0, NULL,    1.0,
                               NULL);
 
-  err = lspmac_est_move_time_wait( move_time + 10.0, mmask, apery, aperz, capz, scint, blight_ud, cryo, fluo, NULL);
+  err = lspmac_est_move_time_wait( move_time + 10.0, mmask,
+				   apery,
+				   aperz,
+				   capz,
+				   scint,
+				   blight_ud,
+				   cryo,
+				   fluo,
+				   NULL);
   if( err) {
     lsevents_send_event( "Mode robotMount Aborted");
     return err;
@@ -768,7 +783,10 @@ int md2cmds_phase_center() {
     return err;
   }
 
-  err = lspmac_est_move_time_wait( move_time + 10.0, mmask, cryo, fluo, NULL);
+  err = lspmac_est_move_time_wait( move_time + 10.0, mmask,
+				   cryo,
+				   fluo,
+				   NULL);
   if( err) {
     lsevents_send_event( "Mode center Aborted");
     return err;
@@ -804,7 +822,16 @@ int md2cmds_phase_dataCollection() {
     return err;
   }
 
-  err = lspmac_est_move_time_wait( move_time + 10.0, mmask, apery, aperz, capy, capz, scint, blight_ud, cryo, fluo, NULL);
+  err = lspmac_est_move_time_wait( move_time + 10.0, mmask,
+				   apery,
+				   aperz,
+				   capy,
+				   capz,
+				   scint,
+				   blight_ud,
+				   cryo,
+				   fluo,
+				   NULL);
   if( err) {
     lsevents_send_event( "Mode dataCollection Aborted");
     return err;
@@ -843,7 +870,11 @@ int md2cmds_phase_beamLocation() {
     return err;
   }
 
-  err = lspmac_est_move_time_wait( move_time + 10.0, mmask, blight_ud, cryo, fluo, NULL);
+  err = lspmac_est_move_time_wait( move_time + 10.0, mmask,
+				   blight_ud,
+				   cryo,
+				   fluo,
+				   NULL);
   if( err) {
     lsevents_send_event( "Mode beamLocation Aborted");
     return err;
@@ -885,7 +916,16 @@ int md2cmds_phase_safe() {
     return err;
   }
 
-  err = lspmac_est_move_time_wait( move_time + 10.0, mmask, apery, aperz, capy, capz, scint, blight_ud, cryo, fluo, NULL);
+  err = lspmac_est_move_time_wait( move_time + 10.0, mmask,
+				   apery,
+				   aperz,
+				   capy,
+				   capz,
+				   scint,
+				   blight_ud,
+				   cryo,
+				   fluo,
+				   NULL);
   if( err) {
     lsevents_send_event( "Mode safe Aborted");
     return err;
@@ -1108,7 +1148,14 @@ int md2cmds_collect( const char *dummy) {
 			      blight_ud, 1, NULL,    0.0,	// put the backlight down
 			      NULL);
 
-  err = lspmac_est_move_time_wait( move_time + 10.0, mmask, NULL);
+  err = lspmac_est_move_time_wait( move_time + 10.0, mmask,
+				   apery,
+				   aperz,
+				   capy,
+				   capz,
+				   scint,
+				   blight_ud,
+				   NULL);
   if( err) {
     lsevents_send_event( "Data Collection Aborted");
     return 1;
@@ -1504,7 +1551,9 @@ int md2cmds_rotate( const char *dummy) {
     return 1;
   }
 
-  if( lspmac_est_move_time_wait( move_time + 10.0, mmask, zoom, NULL)) {
+  if( lspmac_est_move_time_wait( move_time + 10.0, mmask,
+				 zoom,
+				 NULL)) {
     lslogging_log_message( "md2cmds_rotate: organ motion timed out %f seconds", move_time + 10.0);
     lsevents_send_event( "Rotate Aborted");
     return 1;
