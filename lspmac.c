@@ -2829,7 +2829,7 @@ int lspmac_set_motion_flags( int *mmaskp, lspmac_motor_t *mp_1, ...) {
 
 
 /** Move the motors and estimate the time it'll take to finish the job.
- * Returns the estimate time and the coordinate system mask to waite for
+ * Returns the estimate time and the coordinate system mask to wait for
  * \param est_time     Returns number of seconds we estimate the move(s) will take
  * \param mmaskp       Mask of coordinate systems we are trying to move, excluding jogs.  Used to wait for motions to complete
  * \param mp_1         Pointer to first motor
