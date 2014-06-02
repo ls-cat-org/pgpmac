@@ -319,7 +319,7 @@ void lsredis_setstr( lsredis_obj_t *p, char *fmt, ...) {
   //
   // Don't send an update if a good value has not changed
   //
-  if( p->creating != 0 && p->valid && strcmp( v, p->value) == 0) {
+  if( p->creating == 0 && p->valid && strcmp( v, p->value) == 0) {
     // nothing to do
     pthread_mutex_unlock( &p->mutex);
     return;
