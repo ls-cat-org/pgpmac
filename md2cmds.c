@@ -314,7 +314,7 @@ int md2cmds_transfer( const char *dummy) {
 
 
   //
-  // BLUMax sets up an abort dialogbox here.  Probably we should figure out how we are going to handle that.
+  // BLUMax sets up an abort dialogbox here.  TODO: We should figure out how we are going to handle that.
   //
 
   //
@@ -409,7 +409,16 @@ int md2cmds_transfer( const char *dummy) {
   //
   // Wait for all those other motors to stop moving
   //
-  err = lspmac_est_move_time_wait( move_time + 10.0, mmask, apery, aperz, capy, capz, scint, blight_ud, fluo, NULL);
+  err = lspmac_est_move_time_wait( move_time + 10.0,
+				   mmask,
+				   apery,
+				   aperz,
+				   capy,
+				   capz,
+				   scint,
+				   blight_ud,
+				   fluo,
+				   NULL);
   if( err) {
     lsevents_send_event( "Transfer Aborted");
     return 1;
@@ -423,7 +432,7 @@ int md2cmds_transfer( const char *dummy) {
   // see if we have a sample mounted problem (is abort_now misnamed?)
   //
   if( abort_now) {
-    lslogging_log_message( "md2cmds_transfer: Apparently there is a sample mounted already but we don't know where it is supposed to go");
+    lslogging_log_message( "md2cmds_transfer: Apparently there is a sample already mounted but we don't know where it is supposed to go");
     lsevents_send_event( "Transfer Aborted");
     return 1;
   }
@@ -1641,7 +1650,10 @@ void md2cmds_set_scale_cb( char *event) {
   pthread_mutex_lock( &zoom->mutex);
   mag = zoom->requested_position;
   pthread_mutex_unlock( &zoom->mutex);
-  
+  if( mag <=0 || mag >10) {
+    return;
+  }
+
   p1  = lsredis_get_obj( "cam.xScale");
   p2  = lsredis_get_obj( "cam.zoom.%d.ScaleX", mag);
 
