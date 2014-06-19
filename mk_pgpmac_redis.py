@@ -284,7 +284,7 @@ extras = [
 
 motor_dict = {
     "omega" : { "motor_num" : "1", "max_accel" : "2", "max_speed" : "1664", "coord_num" : "1", "u2c" : "12800", "unit" : "deg",
-                "home" : '{"M401=1 M1115=1 #1$",&1E,#1&1B1R}',"active_init" : '{M31=1,&1#1->X,"M700=(M700 | $000001) ^ $000001", M1115=1}',
+                "home" : '{"M401=1 M1115=1 #1$",&1,E,#1&1B1R}',"active_init" : '{M31=1,&1#1->X,"M700=(M700 | $000001) ^ $000001", M1115=1}',
                 "inactive_init" : '{M31=0,&1#1->0,"M700=M700 | $000001",M1115=0}',"moveMode" :  "freeRotation",
                 "reference" :  "228.5", "format" :  "%.3f", "printf" : "%*.4f deg", "axis" : "X",
                 "hard_ini"  : "PHIRotationAxis.PHIMotor", "neutralPosition" : "0", "active" : "1", "homeGroup" : "1"
@@ -426,7 +426,7 @@ def mk_home( mname, d):
     else:
         prog_num = motor_num
 
-    return '{#%d$,M%d=1,&%dE,#%d&%dB%dR}' % (motor_num, motor_num+400, coord_num, motor_num, coord_num, prog_num)
+    return '{#%d$,M%d=1,&%d,E,#%d&%dB%dR}' % (motor_num, motor_num+400, coord_num, motor_num, coord_num, prog_num)
 
 def mk_active_init( d):
     if not d.has_key("motor_num") or not d.has_key("coord_num") or not d.has_key( "axis"):
@@ -613,6 +613,9 @@ zoom_settings = [
 for c in configs.keys():
     print "HMSET config.%s HEAD '%s' PUB '%s' RE '%s' PG '%s' AUTOSCINT '%s' ROBOPUB '%s'" % \
         (c.lower(), configs[c]["head"], configs[c]["pub"], configs[c]["re"], configs[c]["pg"], configs[c]["autoscint"], configs[c]["robopub"])
+
+# station stuff
+print "HSETNX %s.phase VALUE unknown" % (head)
 
 
 # motor stuff
