@@ -10,6 +10,7 @@ var structlspmac__motor__struct =
     [ "coord_num", "structlspmac__motor__struct.html#a5614e003272e8323f8809bf7b6559532", null ],
     [ "dac_mvar", "structlspmac__motor__struct.html#a05dff021221abbc1bf656039fffb3275", null ],
     [ "home", "structlspmac__motor__struct.html#a6dc1ceab86687f741d4c4a574501959c", null ],
+    [ "home_group", "structlspmac__motor__struct.html#a790604ed776779a5736dfee96849b767", null ],
     [ "homing", "structlspmac__motor__struct.html#aa74108855693f94fc2ff76333c9fb6ac", null ],
     [ "in_position_band", "structlspmac__motor__struct.html#a48de72c2442bd5aa9420fcfe6b4f265f", null ],
     [ "inactive_init", "structlspmac__motor__struct.html#ab329ce9b277eca9984c18417dece7bf7", null ],

@@ -1,4 +1,4 @@
-.TH "lsredis.c" 3 "Fri May 23 2014" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lsredis.c" 3 "Thu Jun 19 2014" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -150,12 +150,12 @@ Support redis hash synchronization\&.
 .RI "void \fBlsredis_configCB\fP (redisAsyncContext *ac, void *reply, void *privdata)"
 .br
 .ti -1c
-.RI "void \fBlsredis_config\fP ()"
-.br
-.ti -1c
 .RI "void \fBlsredis_init\fP ()"
 .br
 .RI "\fIInitialize this module, that is, set up the connections\&. \fP"
+.ti -1c
+.RI "void \fBlsredis_config\fP ()"
+.br
 .ti -1c
 .RI "void \fBlsredis_fd_service\fP (struct pollfd *evt)"
 .br
@@ -181,7 +181,7 @@ Support redis hash synchronization\&.
 .RI "static pthread_t \fBlsredis_thread\fP"
 .br
 .ti -1c
-.RI "pthread_mutex_t \fBlsredis_mutex\fP = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP"
+.RI "pthread_mutex_t \fBlsredis_mutex\fP"
 .br
 .ti -1c
 .RI "pthread_cond_t \fBlsredis_cond\fP"
@@ -617,15 +617,12 @@ Definition at line 243 of file lsredis\&.c\&.
 .SS "void lsredis_config ()"
 
 .PP
-Definition at line 1188 of file lsredis\&.c\&.
+Definition at line 1264 of file lsredis\&.c\&.
 .PP
 .nf
                       {
   char hostname[128], lhostname[128];
   int i;
-
-  pthread_mutexattr_init( &mutex_initializer);
-  pthread_mutexattr_settype( &mutex_initializer, PTHREAD_MUTEX_RECURSIVE);
 
   if( gethostname( hostname, sizeof(hostname)-1)) {
     lslogging_log_message( 'lsredis_init: cannot get our own host name\&.  Cannot configure redis variables\&.');
@@ -832,7 +829,7 @@ Definition at line 710 of file lsredis\&.c\&.
 .PP
 service the socket requests 
 .PP
-Definition at line 1290 of file lsredis\&.c\&.
+Definition at line 1293 of file lsredis\&.c\&.
 .PP
 .nf
                                              {
@@ -1183,7 +1180,7 @@ Definition at line 282 of file lsredis\&.c\&.
 .SS "void lsredis_heartbeat_cb (char *event)"
 
 .PP
-Definition at line 1331 of file lsredis\&.c\&.
+Definition at line 1334 of file lsredis\&.c\&.
 .PP
 .nf
                                         {
@@ -1265,11 +1262,12 @@ Initialize this module, that is, set up the connections\&. \fBParameters:\fP
 .PP
 
 .PP
-Definition at line 1220 of file lsredis\&.c\&.
+Definition at line 1193 of file lsredis\&.c\&.
 .PP
 .nf
                     {
   int err;
+
 
   //
   // set up hash map to store redis objects
@@ -1328,9 +1326,14 @@ Definition at line 1220 of file lsredis\&.c\&.
   //
   hcreate_r( lsredis_preset_max_n * 2, &lsredis_preset_ht);
 
+  pthread_mutexattr_init( &mutex_initializer);
+  pthread_mutexattr_settype( &mutex_initializer, PTHREAD_MUTEX_RECURSIVE);
+
+  pthread_mutex_init( &lsredis_mutex, &mutex_initializer);
   pthread_mutex_init( &lsredis_preset_list_mutex, &mutex_initializer);
   pthread_mutex_init( &lsredis_config_mutex, &mutex_initializer);
   pthread_cond_init(  &lsredis_config_cond,  NULL);
+
 }
 .fi
 .SS "void lsredis_keysCB (redisAsyncContext *ac, void *reply, void *privdata)"
@@ -1521,7 +1524,7 @@ Definition at line 265 of file lsredis\&.c\&.
 .SS "pthread_t* lsredis_run ()"
 
 .PP
-Definition at line 1437 of file lsredis\&.c\&.
+Definition at line 1440 of file lsredis\&.c\&.
 .PP
 .nf
                          {
@@ -1653,7 +1656,7 @@ Definition at line 307 of file lsredis\&.c\&.
   //
   // Don't send an update if a good value has not changed
   //
-  if( p->creating != 0 && p->valid && strcmp( v, p->value) == 0) {
+  if( p->creating == 0 && p->valid && strcmp( v, p->value) == 0) {
     // nothing to do
     pthread_mutex_unlock( &p->mutex);
     return;
@@ -1697,7 +1700,7 @@ Definition at line 307 of file lsredis\&.c\&.
 .PP
 
 .PP
-Definition at line 1314 of file lsredis\&.c\&.
+Definition at line 1317 of file lsredis\&.c\&.
 .PP
 .nf
                         {
@@ -1823,7 +1826,7 @@ subscribe to changes and service sockets < poll timeout, in millisecs (of course
 .PP
 < number of active elements in fda 
 .PP
-Definition at line 1357 of file lsredis\&.c\&.
+Definition at line 1360 of file lsredis\&.c\&.
 .PP
 .nf
                                     {
@@ -1945,7 +1948,7 @@ Definition at line 81 of file lsredis\&.c\&.
 
 .PP
 Definition at line 88 of file lsredis\&.c\&.
-.SS "pthread_mutex_t lsredis_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP"
+.SS "pthread_mutex_t lsredis_mutex"
 
 .PP
 Definition at line 74 of file lsredis\&.c\&.

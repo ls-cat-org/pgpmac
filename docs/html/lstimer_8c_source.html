@@ -342,28 +342,32 @@ $(document).ready(function(){initNavTree('lstimer_8c_source.html','');});
 <div class="line"><a name="l00266"></a><span class="lineno">  266</span>&#160;</div>
 <div class="line"><a name="l00267"></a><span class="lineno">  267</span>&#160;</div>
 <div class="line"><a name="l00270"></a><span class="lineno"><a class="code" href="pgpmac_8h.html#a8cd37a8fb0f061456456a5d79bdd5189">  270</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="lstimer_8c.html#a8cd37a8fb0f061456456a5d79bdd5189" title="Initialize the timer list and pthread stuff.">lstimer_init</a>() {</div>
-<div class="line"><a name="l00271"></a><span class="lineno">  271</span>&#160;  <span class="keywordtype">int</span> <a class="code" href="namespacemk__pgpmac__redis.html#afa643a23a5984fe44c2182ada3dfa401">i</a>;</div>
-<div class="line"><a name="l00272"></a><span class="lineno">  272</span>&#160;</div>
-<div class="line"><a name="l00273"></a><span class="lineno">  273</span>&#160;  <span class="keywordflow">for</span>( i=0; i&lt;<a class="code" href="lstimer_8c.html#af020a0f708e86162a32d2ca6373c96bb" title="We&#39;ll allow this many timers. This should be way more than enough.">LSTIMER_LIST_LENGTH</a>; i++) {</div>
-<div class="line"><a name="l00274"></a><span class="lineno">  274</span>&#160;    lstimer_list[<a class="code" href="namespacemk__pgpmac__redis.html#afa643a23a5984fe44c2182ada3dfa401">i</a>].<a class="code" href="structlstimer__list__struct.html#ac7ab4cd1f3065156f95b49e66bf05283" title="run this many times: -1 means reload forever, 0 means we are done with this timer and it may be reuse...">shots</a> = 0;</div>
-<div class="line"><a name="l00275"></a><span class="lineno">  275</span>&#160;  }</div>
-<div class="line"><a name="l00276"></a><span class="lineno">  276</span>&#160;</div>
+<div class="line"><a name="l00271"></a><span class="lineno">  271</span>&#160;  pthread_mutexattr_t <a class="code" href="lsredis_8c.html#a71c9f418904364d65c22d786f4dc5d39">mutex_initializer</a>;</div>
+<div class="line"><a name="l00272"></a><span class="lineno">  272</span>&#160;  <span class="keywordtype">int</span> <a class="code" href="namespacemk__pgpmac__redis.html#afa643a23a5984fe44c2182ada3dfa401">i</a>;</div>
+<div class="line"><a name="l00273"></a><span class="lineno">  273</span>&#160;</div>
+<div class="line"><a name="l00274"></a><span class="lineno">  274</span>&#160;  <span class="keywordflow">for</span>( i=0; i&lt;<a class="code" href="lstimer_8c.html#af020a0f708e86162a32d2ca6373c96bb" title="We&#39;ll allow this many timers. This should be way more than enough.">LSTIMER_LIST_LENGTH</a>; i++) {</div>
+<div class="line"><a name="l00275"></a><span class="lineno">  275</span>&#160;    lstimer_list[<a class="code" href="namespacemk__pgpmac__redis.html#afa643a23a5984fe44c2182ada3dfa401">i</a>].<a class="code" href="structlstimer__list__struct.html#ac7ab4cd1f3065156f95b49e66bf05283" title="run this many times: -1 means reload forever, 0 means we are done with this timer and it may be reuse...">shots</a> = 0;</div>
+<div class="line"><a name="l00276"></a><span class="lineno">  276</span>&#160;  }</div>
 <div class="line"><a name="l00277"></a><span class="lineno">  277</span>&#160;</div>
-<div class="line"><a name="l00278"></a><span class="lineno">  278</span>&#160;  pthread_mutex_init( &amp;<a class="code" href="lstimer_8c.html#a170993cbed9b9ec8bc64b6642a3ed581" title="protect the timer list">lstimer_mutex</a>, NULL);</div>
-<div class="line"><a name="l00279"></a><span class="lineno">  279</span>&#160;  pthread_cond_init(  &amp;<a class="code" href="lstimer_8c.html#a96b7516e4a15c4b879de82a569cd5f0a" title="allows us to be idle when there is nothing to do">lstimer_cond</a>, NULL);</div>
-<div class="line"><a name="l00280"></a><span class="lineno">  280</span>&#160;}</div>
+<div class="line"><a name="l00278"></a><span class="lineno">  278</span>&#160;</div>
+<div class="line"><a name="l00279"></a><span class="lineno">  279</span>&#160;  pthread_mutexattr_init( &amp;mutex_initializer);</div>
+<div class="line"><a name="l00280"></a><span class="lineno">  280</span>&#160;  pthread_mutexattr_settype( &amp;mutex_initializer, PTHREAD_MUTEX_RECURSIVE);</div>
 <div class="line"><a name="l00281"></a><span class="lineno">  281</span>&#160;</div>
-<div class="line"><a name="l00284"></a><span class="lineno"><a class="code" href="pgpmac_8h.html#aa9fdc057e219c162d67c5cb77a2bf7a4">  284</a></span>&#160;pthread_t *<a class="code" href="lstimer_8c.html#aa9fdc057e219c162d67c5cb77a2bf7a4" title="Start up our thread.">lstimer_run</a>() {</div>
-<div class="line"><a name="l00285"></a><span class="lineno">  285</span>&#160;  pthread_create( &amp;<a class="code" href="lstimer_8c.html#a76660e8720b08f4adee2be9f44b5f419" title="the timer thread">lstimer_thread</a>, NULL, <a class="code" href="lstimer_8c.html#ab8b409bb2a7ff78da22d988cfb3b537a" title="Our worker.">lstimer_worker</a>, NULL);</div>
-<div class="line"><a name="l00286"></a><span class="lineno">  286</span>&#160;  <span class="keywordflow">return</span> &amp;<a class="code" href="lstimer_8c.html#a76660e8720b08f4adee2be9f44b5f419" title="the timer thread">lstimer_thread</a>;</div>
-<div class="line"><a name="l00287"></a><span class="lineno">  287</span>&#160;}</div>
+<div class="line"><a name="l00282"></a><span class="lineno">  282</span>&#160;  pthread_mutex_init( &amp;<a class="code" href="lstimer_8c.html#a170993cbed9b9ec8bc64b6642a3ed581" title="protect the timer list">lstimer_mutex</a>, &amp;mutex_initializer);</div>
+<div class="line"><a name="l00283"></a><span class="lineno">  283</span>&#160;  pthread_cond_init(  &amp;<a class="code" href="lstimer_8c.html#a96b7516e4a15c4b879de82a569cd5f0a" title="allows us to be idle when there is nothing to do">lstimer_cond</a>, NULL);</div>
+<div class="line"><a name="l00284"></a><span class="lineno">  284</span>&#160;}</div>
+<div class="line"><a name="l00285"></a><span class="lineno">  285</span>&#160;</div>
+<div class="line"><a name="l00288"></a><span class="lineno"><a class="code" href="pgpmac_8h.html#aa9fdc057e219c162d67c5cb77a2bf7a4">  288</a></span>&#160;pthread_t *<a class="code" href="lstimer_8c.html#aa9fdc057e219c162d67c5cb77a2bf7a4" title="Start up our thread.">lstimer_run</a>() {</div>
+<div class="line"><a name="l00289"></a><span class="lineno">  289</span>&#160;  pthread_create( &amp;<a class="code" href="lstimer_8c.html#a76660e8720b08f4adee2be9f44b5f419" title="the timer thread">lstimer_thread</a>, NULL, <a class="code" href="lstimer_8c.html#ab8b409bb2a7ff78da22d988cfb3b537a" title="Our worker.">lstimer_worker</a>, NULL);</div>
+<div class="line"><a name="l00290"></a><span class="lineno">  290</span>&#160;  <span class="keywordflow">return</span> &amp;<a class="code" href="lstimer_8c.html#a76660e8720b08f4adee2be9f44b5f419" title="the timer thread">lstimer_thread</a>;</div>
+<div class="line"><a name="l00291"></a><span class="lineno">  291</span>&#160;}</div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="lstimer_8c.html">lstimer.c</a></li>
-    <li class="footer">Generated on Fri May 23 2014 09:07:05 for LS-CAT PGPMAC by
+    <li class="footer">Generated on Thu Jun 19 2014 08:03:14 for LS-CAT PGPMAC by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.2 </li>
   </ul>

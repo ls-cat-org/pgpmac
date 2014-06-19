@@ -155,6 +155,7 @@ Definition at line 270 of file lstimer.\-c.
 
 \begin{DoxyCode}
                     \{
+  pthread\_mutexattr\_t \hyperlink{lsredis_8c_a71c9f418904364d65c22d786f4dc5d39}{mutex\_initializer};
   \textcolor{keywordtype}{int} \hyperlink{namespacemk__pgpmac__redis_afa643a23a5984fe44c2182ada3dfa401}{i};
 
   \textcolor{keywordflow}{for}( i=0; i<\hyperlink{lstimer_8c_af020a0f708e86162a32d2ca6373c96bb}{LSTIMER\_LIST\_LENGTH}; i++) \{
@@ -162,7 +163,10 @@ Definition at line 270 of file lstimer.\-c.
   \}
 
 
-  pthread\_mutex\_init( &\hyperlink{lstimer_8c_a170993cbed9b9ec8bc64b6642a3ed581}{lstimer\_mutex}, NULL);
+  pthread\_mutexattr\_init( &mutex\_initializer);
+  pthread\_mutexattr\_settype( &mutex\_initializer, PTHREAD\_MUTEX\_RECURSIVE);
+
+  pthread\_mutex\_init( &\hyperlink{lstimer_8c_a170993cbed9b9ec8bc64b6642a3ed581}{lstimer\_mutex}, &mutex\_initializer);
   pthread\_cond\_init(  &\hyperlink{lstimer_8c_a96b7516e4a15c4b879de82a569cd5f0a}{lstimer\_cond}, NULL);
 \}
 \end{DoxyCode}
@@ -179,7 +183,7 @@ Start up our thread.
 
 
 
-Definition at line 284 of file lstimer.\-c.
+Definition at line 288 of file lstimer.\-c.
 
 
 \begin{DoxyCode}

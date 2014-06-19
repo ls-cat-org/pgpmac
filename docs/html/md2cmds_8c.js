@@ -18,6 +18,7 @@ var md2cmds_8c =
     [ "md2cmds_init", "md2cmds_8c.html#a0851b1baecda6a67993efde41d77b1c1", null ],
     [ "md2cmds_is_moving", "md2cmds_8c.html#ac7a133655e9bb91bbbd6cd316e4191fb", null ],
     [ "md2cmds_kappaphi_move", "md2cmds_8c.html#ab0ee93046bd7bc476c9f8ec50342e89e", null ],
+    [ "md2cmds_lspmac_ready_cb", "md2cmds_8c.html#a399a5830d8b38c828042ad5b0005e896", null ],
     [ "md2cmds_maybe_done_homing_cb", "md2cmds_8c.html#ad0618ee44e2e800c445d7d8726ec8ec2", null ],
     [ "md2cmds_maybe_done_moving_cb", "md2cmds_8c.html#a3970ef1a233dabcc5c1408e9d3865f13", null ],
     [ "md2cmds_maybe_rotate_done_cb", "md2cmds_8c.html#a136f278c9f5a2742b2e9b4987b063faa", null ],

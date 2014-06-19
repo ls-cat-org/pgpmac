@@ -1,4 +1,4 @@
-.TH "lstimer.c" 3 "Fri May 23 2014" "LS-CAT PGPMAC" \" -*- nroff -*-
+.TH "lstimer.c" 3 "Thu Jun 19 2014" "LS-CAT PGPMAC" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -171,6 +171,7 @@ Definition at line 270 of file lstimer\&.c\&.
 .PP
 .nf
                     {
+  pthread_mutexattr_t mutex_initializer;
   int i;
 
   for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
@@ -178,7 +179,10 @@ Definition at line 270 of file lstimer\&.c\&.
   }
 
 
-  pthread_mutex_init( &lstimer_mutex, NULL);
+  pthread_mutexattr_init( &mutex_initializer);
+  pthread_mutexattr_settype( &mutex_initializer, PTHREAD_MUTEX_RECURSIVE);
+
+  pthread_mutex_init( &lstimer_mutex, &mutex_initializer);
   pthread_cond_init(  &lstimer_cond, NULL);
 }
 .fi
@@ -187,7 +191,7 @@ Definition at line 270 of file lstimer\&.c\&.
 .PP
 Start up our thread\&. 
 .PP
-Definition at line 284 of file lstimer\&.c\&.
+Definition at line 288 of file lstimer\&.c\&.
 .PP
 .nf
                          {
