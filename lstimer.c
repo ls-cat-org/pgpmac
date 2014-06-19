@@ -268,6 +268,7 @@ static void *lstimer_worker(
 /** Initialize the timer list and pthread stuff.
  */
 void lstimer_init() {
+  pthread_mutexattr_t mutex_initializer;
   int i;
 
   for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
@@ -275,7 +276,10 @@ void lstimer_init() {
   }
 
 
-  pthread_mutex_init( &lstimer_mutex, NULL);
+  pthread_mutexattr_init( &mutex_initializer);
+  pthread_mutexattr_settype( &mutex_initializer, PTHREAD_MUTEX_RECURSIVE);
+
+  pthread_mutex_init( &lstimer_mutex, &mutex_initializer);
   pthread_cond_init(  &lstimer_cond, NULL);
 }
 
