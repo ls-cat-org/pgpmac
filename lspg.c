@@ -694,11 +694,13 @@ void lspg_demandairrights_error_cb() {
   lspg_demandairrights.query_error = 1;
   pthread_cond_signal( &lspg_demandairrights.cond);
   pthread_mutex_unlock( &lspg_demandairrights.mutex);
+  lslogging_log_message( "Received Air Rights");
 }
 
 /** call for airrights
  */
 void lspg_demandairrights_call() {
+  lslogging_log_message( "Demanding Air Rights");
   pthread_mutex_lock( &lspg_demandairrights.mutex);
   lspg_demandairrights.new_value_ready = 0;
   lspg_demandairrights.query_error     = 0;
