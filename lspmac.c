@@ -1273,6 +1273,7 @@ void lspmac_home1_queue(
 			lspmac_motor_t *mp			/**< [in] motor we are concerned about		*/
 			) {
   int i;
+  int nogo;
   int motor_num;
   int coord_num;
   int home_group;
@@ -1280,6 +1281,15 @@ void lspmac_home1_queue(
   lspmac_motor_t *m2;
 
   pthread_mutex_lock( &(mp->mutex));
+
+  // We've already been called.  Don't home again until
+  // we're finish with the last time.
+  //
+  if( mp->homing) {
+    pthread_mutex_unlock( &(mp->mutex));
+    return;
+  }    
+
 
   motor_num  = lsredis_getl( mp->motor_num);
   coord_num  = lsredis_getl( mp->coord_num);
@@ -1299,43 +1309,41 @@ void lspmac_home1_queue(
     return;
   }
 
-  // We've already been called.  Don't home again until
-  // we're finish with the last time.
-  //
-  if( mp->homing) {
-    pthread_mutex_unlock( &(mp->mutex));
-    return;
-  }    
-
-
   //
   // Don't go on if any other motors in this coordinate system are homing or if any motors in a lower home_group are not homed
   // It's possible to write the homing program to home all the motors in the coordinate
-  // system.  TODO  (hint hint)
+  // system at the pmac level.  TODO  (hint hint)
   //
+  nogo = 0;
   for( i=0; i<lspmac_nmotors; i++) {
     m2 = &(lspmac_motors[i]);
-    if( m2 == mp)
+    if( m2 == mp || !lsredis_getb(m2->active))
       continue;
-    if( lsredis_getb(m2->active) && ( lsredis_getl(m2->coord_num) == coord_num || lsredis_getl( m2->home_group) < home_group)) {
-      int nogo;
-      nogo = 0;
-      pthread_mutex_lock( &(m2->mutex));
+    if( lsredis_getl(m2->coord_num) == coord_num) {
+      // only let one motor at a time home  in a given coordinate system
       //
-      //  Don't go on if
-      //
-      //    we are homing         or      ( not in position                while     in open loop)
-      //
-      if( m2->homing || (((m2->status2 & 0x01)==0) && ((m2->status1 & 0x040000) != 0)))
+      if( m2->homing)
 	nogo = 1;
-      pthread_mutex_unlock( &(m2->mutex));
-      if( nogo) {
-	pthread_mutex_unlock( &(mp->mutex));
-	return;
+    } else {
+      if( lsredis_getl( m2->home_group) < home_group) {
+	pthread_mutex_lock( &(m2->mutex));
+	//
+	//  Don't go on if
+	//
+	// we are homing or ( not in position       while     in open loop)
+	//
+	if( m2->homing || (((m2->status2 & 0x01)==0) && ((m2->status1 & 0x040000) != 0)))
+	  nogo = 1;
+	pthread_mutex_unlock( &(m2->mutex));
       }
+    }
+    if( nogo) {
+      pthread_mutex_unlock( &(mp->mutex));
+      return;
     }
   }
   mp->homing   = 1;
+  lslogging_log_message( "%s homing = %d", mp->name, mp->homing);
   mp->not_done = 1;	// set up waiting for cond
   mp->motion_seen = 0;
   // This opens the control loop.
@@ -1395,6 +1403,7 @@ void lspmac_home2_queue(
   }
 
   mp->homing = 2;
+  lslogging_log_message( "%s homing = %d", mp->name, mp->homing);
   pthread_mutex_unlock( &(mp->mutex));
 }
 
@@ -1588,6 +1597,7 @@ void lspmac_pmacmotor_read(
   if( (mp->homing == 2) && ((mp->status2 & 0x000400) != 0) && ((mp->status2 & 0x000001) != 0)) {
     mp->homing = 0;
     lsevents_send_event( "%s Homed", mp->name);
+    lslogging_log_message( "%s homing = %d", mp->name, mp->homing);
   }
 
   pthread_mutex_lock( &ncurses_mutex);
@@ -3469,6 +3479,7 @@ int lspmac_move_or_jog_abs_queue(
 
   pthread_mutex_lock( &(mp->mutex));
   if( use_jog) {
+    lslogging_log_message( "Jogging %s: #%d j=%d", mp->name, motor_num, requested_pos_cnts);
     lspmac_SockSendDPline( mp->name, "#%d j=%d", motor_num, requested_pos_cnts);
   } else {
     lspmac_SockSendDPline( mp->name, fmt, coord_num, requested_pos_cnts, q100);
