@@ -991,9 +991,6 @@ void lsredis_set_preset( char *motor_name, char *preset_name, double dval) {
     //
     // Found it.  Things are simple.
     //
-    pthread_mutex_unlock( &p1->mutex);
-
-
     pl = entry_outp->data;
     lsredis_setstr( pl->position, "%.3f", dval);
     pthread_mutex_unlock( &lsredis_preset_list_mutex);
@@ -1097,6 +1094,38 @@ void lsredis_log( char *fmt, ...) {
     pthread_mutex_unlock( &lsredis_mutex);
     
   }
+}
+
+
+void lsredis_sendStatusReport( int severity, char *fmt, ...) {
+  static lsredis_obj_t *messp  = NULL;
+  char msg[256];     // our (almost) processed string
+  char emsg[256];   // escaped version of the string.  Using a long string with tons of quotes will cause truncation.  If you think this is a bug then feel free to fix it.
+  int i, j;
+  va_list arg_ptr;
+
+  if( messp == NULL) {
+    messp = lsredis_get_obj( "md2.status");
+    if( messp == NULL) {
+      lslogging_log_message( "Could not find redis object for md2.status");
+      return;
+    }
+  }
+  
+  va_start( arg_ptr, fmt);
+  vsnprintf( msg, sizeof( msg)-1, fmt, arg_ptr);
+  va_end( arg_ptr);
+
+  // escape double quotes
+  // TODO: find some nice general JSON package and put it in a utilities module
+  //
+  for( i=0, j=0; i<sizeof( msg)-1 && j<sizeof(emsg)-1 && msg[i]!=0; i++, j++) {
+    if( msg[i]=='"')
+      emsg[j++] = '\\';
+    emsg[j] = msg[i];
+  }
+
+  lsredis_setstr( messp, "\"severity\": %d, \"msg\": \"%s\"", severity, emsg);
 }
 
 
@@ -1283,9 +1312,6 @@ void lsredis_config() {
   pthread_mutex_unlock( &lsredis_config_mutex);
 
 }
-
-
-
 
 
 /** service the socket requests
