@@ -294,8 +294,11 @@ int md2cmds_transfer( const char *dummy) {
   int mmask;
   double move_time;
 
+  lsredis_sendStatusReport( 0, "Processing Sample Transfer Request");
+
   nextsample = lspg_nextsample_all( &err);
   if( err) {
+    lsredis_sendStatusReport( 1, "No sample transfer request found: aborting");
     lslogging_log_message( "md2cmds_transfer: %s", err == 2 ? "query error looking for next sample" : "no sample requested to be transfered, false alarm");
     return 1;
   }
@@ -304,8 +307,10 @@ int md2cmds_transfer( const char *dummy) {
   // Wait for motors to stop
   //
   if( md2cmds_is_moving()) {
+    lsredis_sendStatusReport( 0, "Waiting for previously requested motions to finish");
     lslogging_log_message( "md2cmds_transfer: Waiting for previous motion to finish");
     if( md2cmds_move_wait( 30.0)) {
+      lsredis_sendStatusReport( 1, "Waited for a bit but the previously requested motion did not finish.  Aborting.");
       lslogging_log_message( "md2cmds_transfer: Timed out waiting for previous motion to finish.  Aborting transfer");
       lsevents_send_event( "Transfer Aborted");
       return 1;
@@ -330,12 +335,11 @@ int md2cmds_transfer( const char *dummy) {
   horz = cx * cos(oref) + cy * sin(oref);
   vert = cx * sin(oref) - cy * cos(oref);
 
+  lsredis_sendStatusReport( 0, "Moving MD2 devices to sample transfer position");
 
   mmask = 0;
   err = lspmac_est_move_time( &move_time, &mmask,
-			      apery,     1, "In",    0.0,
 			      aperz,     1, "Cover", 0.0,
-			      capy,      1, "In",    0.0,
 			      capz,      1, "Cover", 0.0,
 			      scint,     1, "Cover", 0.0,
                               blight,    1, NULL,    0.0,
@@ -361,6 +365,7 @@ int md2cmds_transfer( const char *dummy) {
   // Wait for the kappa/omega homing routines to finish
   //
   if( md2cmds_home_wait( 30.0)) {
+    lsredis_sendStatusReport( 1, "Kappa and/or Omega homing routines timed out.  Aborting transfer.");
     lslogging_log_message( "md2cmds_transfer: kappa/omega homing routines taking too long.  Aborting transfer.");
     lsevents_send_event( "Transfer Aborted");
     return 1;
@@ -376,6 +381,7 @@ int md2cmds_transfer( const char *dummy) {
   //
   lspg_starttransfer_wait();
   if( lspg_starttransfer.query_error) {
+    lsredis_sendStatusReport( 1, "An database related error occurred trying to start the transfer.  This is neither normal nor OK.  Aborting transfer.");
     lslogging_log_message( "md2cmds_transfer: query error starting transfer");
     lsevents_send_event( "Transfer Aborted");
     lspg_starttransfer_done();
@@ -401,6 +407,7 @@ int md2cmds_transfer( const char *dummy) {
   // Wait for the homing routines to finish
   //
   if( md2cmds_home_wait( 30.0)) {
+    lsredis_sendStatusReport( 1, "Homing phi timed out.  This is unusual.  Aborting");
     lslogging_log_message( "md2cmds_transfer: phi homing routine taking too long.  Aborting transfer.");
     lsevents_send_event( "Transfer Aborted");
     return 1;
@@ -411,15 +418,14 @@ int md2cmds_transfer( const char *dummy) {
   //
   err = lspmac_est_move_time_wait( move_time + 10.0,
 				   mmask,
-				   apery,
 				   aperz,
-				   capy,
 				   capz,
 				   scint,
 				   blight_ud,
 				   fluo,
 				   NULL);
   if( err) {
+    lsredis_sendStatusReport( 1, "Timed out waiting for MD2 to ready itself.  Aborting transfer.");
     lsevents_send_event( "Transfer Aborted");
     return 1;
   }
@@ -432,6 +438,7 @@ int md2cmds_transfer( const char *dummy) {
   // see if we have a sample mounted problem (is abort_now misnamed?)
   //
   if( abort_now) {
+    lsredis_sendStatusReport( 1, "We don't know where the sample that we think is on the diffractometer should go.  Aborting transfer.");
     lslogging_log_message( "md2cmds_transfer: Apparently there is a sample already mounted but we don't know where it is supposed to go");
     lsevents_send_event( "Transfer Aborted");
     return 1;
@@ -441,6 +448,7 @@ int md2cmds_transfer( const char *dummy) {
   // fluorescence detector is back  (TODO: how about all those organs?)
   //
   if( lspmac_getBIPosition( blight_down) != 1 ||lspmac_getBIPosition( fluor_back) != 1) {
+    lsredis_sendStatusReport( 1, "Either the backlight or the fluorescence detector is possibly stuck in the wrong position.  Aborting transfer.");
     lslogging_log_message( "md2cmds_transfer: It looks like either the back light is not down or the fluoescence dectector is not back");
     lsevents_send_event( "Transfer Aborted");
     return 1;
@@ -450,7 +458,9 @@ int md2cmds_transfer( const char *dummy) {
   // Wait for the robot to unlock the cryo which signals us that we need to
   // move the cryo back and drop air rights
   //
+  lsredis_sendStatusReport( 0, "Waiting for the robot to unlock the cryo position and request air rights.");
   if( lspg_waitcryo_all()) {
+    lsredis_sendStatusReport( 1, "Query error waiting for the cyro lock.  Aborting transfer.");
     lslogging_log_message( "md2cmds_transfer: query error waiting for the cryo lock, aborting");
     lsevents_send_event( "Transfer Aborted");
     return 1;
@@ -469,7 +479,9 @@ int md2cmds_transfer( const char *dummy) {
   // wait for the result
   // TODO: find an easy way out of this in case of error
   //
+  lsredis_sendStatusReport( 0, "Waiting for the requested sample to be mounted.");
   if( lspg_getcurrentsampleid_wait_for_id( nextsample)) {
+    lsredis_sendStatusReport( 1, "Error while waiting for the sample transfer to finish.  Aborting transfer.");
     lslogging_log_message( "md2cmds_transfer: query error waiting for the sample transfer");
     lsevents_send_event( "Transfer Aborted");
     return 1;
@@ -477,7 +489,9 @@ int md2cmds_transfer( const char *dummy) {
 
   // grab the airrights again
   //
+  lsredis_sendStatusReport( 0, "Demanding air rights for the MD2.");
   if( lspg_demandairrights_all() ) {
+    lsredis_sendStatusReport( 1, "Error while demanding air rights.  Aborting transfer.");
     lslogging_log_message( "md2cmds_transfer: query error while demanding air rights, aborting");
     lsevents_send_event( "Transfer Aborted");
     return 1;
@@ -488,6 +502,7 @@ int md2cmds_transfer( const char *dummy) {
   cryo->moveAbs( cryo, 0);
   lspmac_moveabs_wait( cryo, 10.0);
 
+  lsredis_sendStatusReport( 0, "Transfer completed.");
   lsevents_send_event( "Transfer Done");
 
   return 0;
