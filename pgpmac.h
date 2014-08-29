@@ -601,3 +601,4 @@ extern void pgpmac_request_stay_of_execution( int secs);
 extern void md2cmds_push_queue( char *action);
 extern pmac_cmd_queue_t *lspmac_SockSendControlCharPrint( char *event, char c);
 extern void lsredis_config();
+extern void lsredis_sendStatusReport( int severity, char *fmt, ...);
