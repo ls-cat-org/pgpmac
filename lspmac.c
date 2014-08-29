@@ -1277,6 +1277,7 @@ void lspmac_home1_queue(
   int motor_num;
   int coord_num;
   int home_group;
+  int active;
   char **home;
   lspmac_motor_t *m2;
 
@@ -1291,6 +1292,7 @@ void lspmac_home1_queue(
   }    
 
 
+  active     = lsredis_getb( mp->active);
   motor_num  = lsredis_getl( mp->motor_num);
   coord_num  = lsredis_getl( mp->coord_num);
   home       = lsredis_get_string_array( mp->home);
@@ -1355,13 +1357,24 @@ void lspmac_home1_queue(
   // where we've already moved the home2 routine (and queue the homing program motion)
   // before the open loop command is dequeued and acted on.
   //
-  if( ~(mp->status1) & 0x040000) {
-    lspmac_SockSendDPline( mp->name, "#%d$*", motor_num);
+
+  if( active && (~(mp->status1) & 0x040000)) {
+      lspmac_SockSendDPline( mp->name, "#%d$*", motor_num);
   }
 
   pthread_mutex_unlock( &(mp->mutex));
 
   lsevents_send_event( "%s Homing", mp->name);
+
+  if( !active) {
+    // Since we are not active there is no way to reach the home2_queue step
+    // and hence we need to pretend that the motor is homed.
+    //
+    // We only got here cause someone called us directly, not becuase we figured out
+    // on our own that a motor needed to be homed.
+    mp->homing = 0;
+    lsevents_send_event( "%s Homed", mp->name);
+  }
 }
 
 /** Second stage of homing
