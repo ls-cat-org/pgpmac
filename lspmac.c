@@ -3003,8 +3003,11 @@ int lspmac_est_move_time( double *est_time, int *mmaskp, lspmac_motor_t *mp_1, i
       //
       if( ps != NULL && *ps != 0) {
 	err = lsredis_find_preset( mp->name, ps, &maybe_ep);
-	if( err != 0)
-	  ep = maybe_ep;
+	if( err == 0) {
+	  lslogging_log_message( "lspmac_est_move_time: bad preset name, move not attempted");
+	  return 1;
+	}
+	ep = maybe_ep;
       }
 
       u2c = lsredis_getd( mp->u2c);
@@ -3670,6 +3673,7 @@ void _lspmac_motor_init( lspmac_motor_t *d, char *name) {
   d->pos_limit_hit       = lsredis_get_obj( "%s.posLimitSet",       d->name);
   d->precision           = lsredis_get_obj( "%s.precision",         d->name);
   d->printf_fmt		 = lsredis_get_obj( "%s.printf",            d->name);
+  d->printPrecision      = lsredis_get_obj( "%s.printPrecision",    d->name);
   d->status_str          = lsredis_get_obj( "%s.status_str",        d->name);
   d->u2c                 = lsredis_get_obj( "%s.u2c",               d->name);
   d->unit		 = lsredis_get_obj( "%s.unit",              d->name);
