@@ -958,6 +958,7 @@ int lsredis_find_preset( char *motor_name, char *preset_name, double *dval) {
       //
       // Guess not.  Give up.  We tried
       //
+      lslogging_log_message( "lsredis_find_preset: no preset named '%s' for motor '%s' found", motor_name, preset_name);
       *dval = 0.0;
       return 0;
     }
@@ -1100,8 +1101,9 @@ void lsredis_log( char *fmt, ...) {
 void lsredis_sendStatusReport( int severity, char *fmt, ...) {
   static lsredis_obj_t *messp  = NULL;
   char msg[256];     // our (almost) processed string
-  char emsg[256];   // escaped version of the string.  Using a long string with tons of quotes will cause truncation.  If you think this is a bug then feel free to fix it.
-  int i, j;
+  char emsg[256];   // escaped version of the string.  Using a long string with tons of odd characters will cause truncation.  If you think this is a bug then feel free to fix it.
+  int i, j, k;
+  int mask, badutf8;
   va_list arg_ptr;
 
   if( messp == NULL) {
@@ -1116,16 +1118,106 @@ void lsredis_sendStatusReport( int severity, char *fmt, ...) {
   vsnprintf( msg, sizeof( msg)-1, fmt, arg_ptr);
   va_end( arg_ptr);
 
-  // escape double quotes
+  // escape various and sundry things
+  //
+  // Our goal is to only generate legal JSON even if we are called with garbage: we do not want a wild pointer
+  // to kill the user's UI.
+  //
   // TODO: find some nice general JSON package and put it in a utilities module
   //
-  for( i=0, j=0; i<sizeof( msg)-1 && j<sizeof(emsg)-1 && msg[i]!=0; i++, j++) {
-    if( msg[i]=='"')
-      emsg[j++] = '\\';
-    emsg[j] = msg[i];
+  //
+  // From UTF-8 wikipedia page
+  //=============+============+=============+==============+==========+==========+==========+==========+==========+==========|
+  //    Bits of  |   First    |     Last    |     Bytes in |   Byte 1 | Byte 2   |  Byte 3  |  Byte 4  |  Byte 5  |  Byte 6  |
+  //  code point | code point | code point  |  sequence    |          |          |          |          |          |          |
+  //=============+============+=============+==============+==========+==========+==========+==========+==========+==========|
+  //   7         | U+0000     | U+007F      |      1       | 0xxxxxxx |          |          |          |          |          |
+  //  11         | U+0080     | U+07FF      |      2       | 110xxxxx | 10xxxxxx |          |          |          |          |
+  //  16         | U+0800     | U+FFFF      |      3       | 1110xxxx | 10xxxxxx | 10xxxxxx |          |          |          |
+  //  21         | U+10000    | U+1FFFFF    |      4       | 11110xxx | 10xxxxxx | 10xxxxxx | 10xxxxxx |          |          |
+  //  26         | U+200000   | U+3FFFFFF   |      5       | 111110xx | 10xxxxxx | 10xxxxxx | 10xxxxxx | 10xxxxxx |          |
+  //  31         | U+4000000  | U+7FFFFFFF  |      6       | 1111110x | 10xxxxxx | 10xxxxxx | 10xxxxxx | 10xxxxxx | 10xxxxxx |
+  //=============+============+=============+==============+==========+==========+==========+==========+==========+==========|
+  //
+
+  emsg[0] = 0;
+  //
+  // msg might end with a 6 byte unicode character and we'll still need room for the trailing 0, so emsg will be shorter than msg
+  // if someone makes msg wacky long with crap at the end that looks like the start of a unicode sequence.
+  //
+  for( i=0, j=0; i<sizeof( msg)-1 && j<sizeof(emsg)-7 && msg[i]!=0; i++, j++) {
+    //
+    // add (only) legal utf-8 characters.
+    //
+    if( (msg[i] & 0x80) == 0) {
+      //
+      // OK, ASCII.  Life is good.
+      //
+      switch( msg[i]) {
+      case '"':
+      case '\\':
+      case '/':
+	emsg[j++] = '\\';
+	emsg[j] = msg[i];
+	break;
+      
+      case '\b':
+	emsg[j++] = '\\';
+	emsg[j] = 'b';
+	break;
+	
+      case '\r':
+	emsg[j++] = '\\';
+	emsg[j] = 'r';
+	break;
+	
+      case '\f':
+	emsg[j++] = '\\';
+	emsg[j] = 'f';
+	break;
+	
+      case '\n':
+	emsg[j++] = '\\';
+	emsg[j] = 'n';
+	break;
+	
+      case '\t':
+	emsg[j++] = '\\';
+	emsg[j] = 't';
+	break;
+	
+      default:
+	emsg[j] = msg[i];
+      }
+    } else {
+      //
+      // Non-ASCII utf-8, we hope.
+      //
+      badutf8 = 0;
+      mask    = 0x40;
+      for( k=0; k<6 && ((msg[i] & mask) == mask) && i+k < sizeof(msg)-1 && j+k < sizeof(emsg)-1 ; k++, mask >>= 1) {
+	if( k==0) {
+	  emsg[j] = msg[i];
+	} else if( (msg[i+k] & 0xe0) == 0x80) {
+	  emsg[j+k] = msg[i+k];
+	} else {
+	  badutf8 = 1;
+	  lslogging_log_message( "lsredis_sendStatusReport: non-UTF-8 character detected %s", msg);
+	  return;
+	}
+      }
+      if( badutf8 || (msg[i] & mask) == mask) {
+	emsg[j] = 0;	// erase what we've added
+	i += k;         // skip over the source characters that we do not understand
+	continue;
+      }
+      j += k;
+      i += k;
+    }
+    emsg[j+1] = 0;
   }
 
-  lsredis_setstr( messp, "\"severity\": %d, \"msg\": \"%s\"", severity, emsg);
+  lsredis_setstr( messp, "{\"severity\": %d, \"msg\": \"%s\"}", severity, emsg);
 }
 
 
