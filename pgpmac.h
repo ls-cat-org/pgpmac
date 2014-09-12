@@ -141,6 +141,7 @@ typedef struct lspmac_motor_struct {
   lsredis_obj_t *neg_limit_hit;			//!< negative limit status
   lsredis_obj_t *precision;			//!< moves of less than this amount may be ignored
   lsredis_obj_t *printf_fmt;			//!< printf format
+  lsredis_obj_t *printPrecision;                //!< number of digits after the decimal for custom messages
   lsredis_obj_t *redis_fmt;			//!< special format string to create text array for putting the position back into redis
   lsredis_obj_t *redis_position;		//!< how we report our position to the world
   lsredis_obj_t *status_str;			//!< A talky version of the status
@@ -547,6 +548,8 @@ extern int lspg_seq_run_prep_all( long long skey, double kappa, double phi, doub
 extern void lspg_starttransfer_call( unsigned int nextsample, int sample_detected, double ax, double ay, double az, double horz, double vert, double esttime);
 extern void lspg_starttransfer_done();
 extern void lspg_starttransfer_wait();
+extern void lspg_lock_detector_all();
+extern void lspg_unlock_detector_all();
 extern int lspg_waitcryo_all();
 extern void lspg_waitcryo_cb( lspg_query_queue_t *qqp, PGresult *pgr);
 extern void lspg_zoom_lut_call();
