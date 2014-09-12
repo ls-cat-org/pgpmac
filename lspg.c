@@ -1243,6 +1243,77 @@ void lspg_lock_detector_all() {
   lspg_lock_detector_done();
 }
 
+/** unlock detector object
+ *  Implements detector lock for exposure control
+ */
+typedef struct lspg_unlock_detector_struct {
+  pthread_mutex_t mutex;
+  pthread_cond_t  cond;
+  int new_value_ready;
+  int query_error;
+} lspg_unlock_detector_t;
+static lspg_unlock_detector_t lspg_unlock_detector;
+
+/** Initialize detector unlock object
+ */
+void lspg_unlock_detector_init() {
+  lspg_unlock_detector.new_value_ready = 0;
+  lspg_unlock_detector.query_error     = 0;
+  pthread_mutex_init( &(lspg_unlock_detector.mutex), NULL);
+  pthread_cond_init(  &(lspg_unlock_detector.cond),  NULL);
+}
+
+/** Callback for when the detector lock has been released
+ */
+void lspg_unlock_detector_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+  pthread_mutex_lock( &(lspg_unlock_detector.mutex));
+  lspg_unlock_detector.new_value_ready = 1;
+  pthread_cond_signal( &(lspg_unlock_detector.cond));
+  pthread_mutex_unlock( &(lspg_unlock_detector.mutex));
+}
+
+/** unlock detector query error callback
+ */
+void lspg_unlock_detector_error_cb() {
+  pthread_mutex_lock( &lspg_unlock_detector.mutex);
+  lspg_unlock_detector.query_error = 1;
+  pthread_cond_signal( &lspg_unlock_detector.cond);
+  pthread_mutex_unlock( &lspg_unlock_detector.mutex);
+}
+
+/** Release a detector lock
+ */
+void lspg_unlock_detector_call() {
+  pthread_mutex_lock( &(lspg_unlock_detector.mutex));
+  lspg_unlock_detector.new_value_ready = 0;
+  lspg_unlock_detector.query_error     = 0;
+  pthread_mutex_unlock( &(lspg_unlock_detector.mutex));
+
+  lspg_query_push( lspg_unlock_detector_cb, lspg_unlock_detector_error_cb, "SELECT px.unlock_detector()");
+}
+
+/** Wait for the detector to be unlocked lock
+ */
+void lspg_unlock_detector_wait() {
+  pthread_mutex_lock( &(lspg_unlock_detector.mutex));
+  while( lspg_unlock_detector.new_value_ready == 0 && lspg_unlock_detector.query_error == 0)
+    pthread_cond_wait( &(lspg_unlock_detector.cond), &(lspg_unlock_detector.mutex));
+}
+
+/** Finish waiting.
+ */
+void lspg_unlock_detector_done() {
+  pthread_mutex_unlock( &(lspg_unlock_detector.mutex));
+}
+
+/** Detector unlock convinence function
+ */
+void lspg_unlock_detector_all() {
+  lspg_unlock_detector_call();
+  lspg_unlock_detector_wait();
+  lspg_unlock_detector_done();
+}
+
 /** Data collection running object
  */
 typedef struct lspg_seq_run_prep_struct {
@@ -2168,6 +2239,7 @@ void lspg_init() {
   lspg_getcenter_init();
   lspg_getcurrentsampleid_init();
   lspg_lock_detector_init();
+  lspg_unlock_detector_init();
   lspg_lock_diffractometer_init();
   lspg_nextsample_init();
   lspg_nextshot_init();
