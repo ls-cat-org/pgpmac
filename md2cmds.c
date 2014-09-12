@@ -523,7 +523,8 @@ int md2cmds_moveAbs(
   double fpos;
   char *endptr;
   lspmac_motor_t *mp;
-  int err;
+  int err, prec;
+  double move_time;
 
   // ignore nothing
   if( ccmd == NULL || *ccmd == 0) {
@@ -539,6 +540,7 @@ int md2cmds_moveAbs(
   ignore = strtok_r( cmd, " ", &ptr);
   if( ignore == NULL) {
     lslogging_log_message( "md2cmds_moveAbs: ignoring blank command '%s'", cmd);
+    lsredis_sendStatusReport( 1, "moveAbs ignoring blank command");
     free( cmd);
     return 1;
   }
@@ -549,6 +551,7 @@ int md2cmds_moveAbs(
   mtr = strtok_r( NULL, " ", &ptr);
   if( mtr == NULL) {
     lslogging_log_message( "md2cmds_moveAbs: missing motor name");
+    lsredis_sendStatusReport( 1, "moveAbs motor name not given");
     free( cmd);
     return 1;
   }
@@ -556,6 +559,7 @@ int md2cmds_moveAbs(
   mp = lspmac_find_motor_by_name( mtr);
   if( mp == NULL) {
     lslogging_log_message( "md2cmds_moveAbs: cannot find motor %s", mtr);
+    lsredis_sendStatusReport( 1, "moveAbs can't find motor named %s", mtr);
     free( cmd);
     return 1;
   }
@@ -563,6 +567,7 @@ int md2cmds_moveAbs(
   pos = strtok_r( NULL, " ", &ptr);
   if( pos == NULL) {
     lslogging_log_message( "md2cmds_moveAbs: missing position");
+    lsredis_sendStatusReport( 1, "moveAbs couldn't figure out where to move %s", mtr);
     free( cmd);
     return 1;
   }
@@ -572,16 +577,50 @@ int md2cmds_moveAbs(
   if( pos == endptr) {
     //
     // Maybe we have a preset.  Give it a whirl
-    // In any case we are done here.
     //
-    err = lspmac_move_preset_queue( mp, pos);
+    lsredis_sendStatusReport( 0, "moving  %s to '%s'", mtr, pos);
+
+    err = lspmac_est_move_time( &move_time, NULL,
+				mp, 1, pos, 0.0,
+				NULL);
+
+    if( err) {
+      lsredis_sendStatusReport( 1, "Failed to move motor %s to '%s'", mp->name, pos);
+      free( cmd);
+      return err;
+    }
+
+    err = lspmac_est_move_time_wait( move_time + 10.0, 0, mp, NULL);
+
+    if( err) {
+      lsredis_sendStatusReport( 1, "Timed out waiting %.1f seconds for motor %s to finish moving", move_time+10.0, mp->name);
+    } else {
+      lsredis_sendStatusReport( 0, "%s", "");
+    }
     free( cmd);
     return err;
   }
 
+  prec = lsredis_getl( mp->printPrecision);
   if( mp != NULL && mp->moveAbs != NULL) {
     pgpmac_printf( "Moving %s to %f\n", mtr, fpos);
-    err = mp->moveAbs( mp, fpos);
+    lsredis_sendStatusReport( 0, "moving  %s to %.*f", mtr, prec, fpos);
+    err = lspmac_est_move_time( &move_time, NULL,
+				mp, 1, NULL, fpos,
+				NULL);
+    
+    if( err) {
+      lsredis_sendStatusReport( 1, "Failed to move motor %s to '%.*f'", mp->name, prec, fpos);
+      free( cmd);
+      return err;
+    }
+
+    err = lspmac_est_move_time_wait( move_time + 10.0, 0, mp, NULL);
+    if( err) {
+      lsredis_sendStatusReport( 1, "Timed out waiting %.1f seconds for motor %s to finish moving", move_time+10.0, mp->name);
+    } else {
+      lsredis_sendStatusReport( 0, "%s", "");
+    }
   }
 
   free( cmd);
@@ -1351,9 +1390,16 @@ int md2cmds_collect( const char *dummy) {
     }
 
     //
+    // Wait for the detector to drop its lock indicating that it is ready for the exposure
+    //
+    lspg_lock_detector_all();
+    lspg_unlock_detector_all();
+
+
+    //
     // Start the exposure
     //
-    lspmac_set_motion_flags( &mmask, omega);
+    lspmac_set_motion_flags( &mmask, omega, NULL);
     lspmac_SockSendDPline( "Exposure",
 			   "&1 P170=%.1f P171=%.1f P173=%.1f P174=0 P175=%.1f P176=0 P177=1 P178=0 P180=%.1f M431=1 &1B131R",
 			   p170,         p171,     p173,            p175,                          p180);
