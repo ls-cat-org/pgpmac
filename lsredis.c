@@ -332,7 +332,7 @@ void lsredis_setstr( lsredis_obj_t *p, char *fmt, ...) {
   argv[0] = "HSET";
   argv[1] = p->key;
   argv[2] = "VALUE";
-  argv[3] = v;		//!< redisAsyncCommandArgv shouldn't need to access this after it's made up it's packet (before it returns) so we should be OK with this location disappearing soon.
+  argv[3] = v;		//!< redisAsyncCommandArgv shouldn't need to access this after it's made up its packet (before it returns) so we should be OK with this location disappearing soon.
 
 
   pthread_mutex_lock( &lsredis_mutex);
