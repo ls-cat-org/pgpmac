@@ -386,10 +386,13 @@ void lspg_starttransfer_cb(
     lspg_starttransfer.starttransfer = 0;
   } else {
     lspg_starttransfer.no_rows_returned = 0;
-    if( PQgetisnull( pgr, 0, 0) || strcmp( PQgetvalue( pgr,0,0), "1") != 0)
+    if( PQgetisnull( pgr, 0, 0))
       lspg_starttransfer.starttransfer = 0;
-    else
+    else {
       lspg_starttransfer.starttransfer = 1;
+      lsredis_setstr( lsredis_get_obj( "robot.predictedFinish"), PQgetvalue( pgr, 0, 0));
+      lslogging_log_message( "lspg_starttransfer returned '%s'", PQgetvalue( pgr, 0, 0));
+    }
   }
   pthread_cond_signal( &(lspg_starttransfer.cond));
   pthread_mutex_unlock( &(lspg_starttransfer.mutex));
@@ -409,7 +412,7 @@ void lspg_starttransfer_call( unsigned int nextsample, int sample_detected, doub
   pthread_mutex_unlock( &(lspg_starttransfer.mutex));
 
   lspg_query_push( lspg_starttransfer_cb, lspg_starttransfer_error_cb,
-		   "SELECT px.starttransfer( %d, %s, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f)",
+		   "SELECT node.starttransfer( %d, %s, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f)",
 		   nextsample, sample_detected ? "True" : "False", ax, ay, az, horz, vert, esttime);
 }
 
