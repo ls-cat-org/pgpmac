@@ -4051,13 +4051,18 @@ void lspmac_init(
 
 
 void lspmac_cryoSwitchChanged_cb( char *event) {
+  static int first_time = 1;  // Workaround to keep cryo from pulling back on startup
   int pos;
 
   pthread_mutex_lock( &(cryo->mutex));
   pos = cryo->position;
   pthread_mutex_unlock( &(cryo->mutex));
 
-  cryo->moveAbs( cryo, pos ? 0.0 : 1.0);
+  if( first_time) {
+    first_time = 0;
+  } else {
+    cryo->moveAbs( cryo, pos ? 0.0 : 1.0);
+  }
 }
 
 /** Maybe start drying off the scintilator
@@ -4516,7 +4521,7 @@ pthread_t *lspmac_run() {
     }    
 
     // if there is a problem with "active" then don't do anything
-    // On the other hand, various combinations of yes/no true/fals 1/0 should work
+    // On the other hand, various combinations of yes/no true/false 1/0 should work
     //
     switch( active) {
     case 1:
