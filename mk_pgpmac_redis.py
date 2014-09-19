@@ -77,8 +77,16 @@ extras = [
     {"k" : "overlay.centers.8.height", "v" : "100"},
     {"k" : "overlay.centers.length",   "v" : "9"},
     {"k" : "overlay.curentCenter",     "v" : "3"},
-    ]
-
+    {"k" : "detector.state",           "v" : "Unknown"},
+    {"k" : "detector.checkdir",        "v" : '{"dir": "unknown", "valid", "false"}'},
+    {"k" : "detector.path",            "v" : '{"directory": "unknown", "filename": "unknown"}'},
+    {"k" : "detector.beam.x",          "v" : "0"},
+    {"k" : "detector.beam.y",          "v" : "0"},
+    {"k" : "detector.dist",            "v" : "700"},
+    {"k" : "detector.running",         "v" : "false"},
+    {"k" : "detector.info",            "v" : '{ "info": "unknown",  "xpixsize": 78.0, "ypixsize": 78.0, "xsize": 1024, "ysize": 1024, "bin": 2}'},
+    {"k" : "robot.predictedFinish",    "v" : "0"}
+]
 
 # M5001=M1	; Omega
 # M5002=M2	; Alignment Table X
