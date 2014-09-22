@@ -48,6 +48,7 @@ int md2cmds_moveRel(          const char *);
 int md2cmds_phase_change(     const char *);
 int md2cmds_run_cmd(          const char *);
 int md2cmds_rotate(           const char *);
+int md2cmds_nonrotate(        const char *);
 int md2cmds_set(              const char *);
 int md2cmds_settransferpoint( const char *);
 int md2cmds_test(             const char *);
@@ -71,6 +72,7 @@ static md2cmds_cmd_kv_t md2cmds_cmd_kvs[] = {
 //
 static md2cmds_cmd_kv_t md2cmds_cmd_pg_kvs[] = {
   { "collect",          md2cmds_collect},
+  { "nonrotate",        md2cmds_nonrotate},
   { "rotate",           md2cmds_rotate},
   { "settransferpoint", md2cmds_settransferpoint},
   { "transfer",         md2cmds_transfer}
@@ -1716,6 +1718,163 @@ void md2cmds_maybe_rotate_done_cb( char *event) {
 }
 
 
+
+/** Do not spin 360 or make a video
+ * For local centering without a movie
+ *  \param dummy Unused
+ *  returns non-zero on error
+ *  
+ */
+int md2cmds_nonrotate( const char *dummy) {
+  double cx, cy, ax, ay, az,   zm;
+  double        bax, bay, baz;
+  int mmask;
+  int err;
+  double move_time;
+
+  mmask = 0;
+
+  //
+  // get the new center information
+  //
+  lspg_getcenter_call();
+  lspg_getcenter_wait();
+
+  if( lspg_getcenter.query_error) {
+    lslogging_log_message( "md2cmds_nonrotate: get center query error, aborting");
+    lsevents_send_event( "Local Centering Aborted");
+    lspg_getcenter_done();
+    return 1;
+  }
+
+
+  // put up the back light
+  blight_ud->moveAbs( blight_ud, 1);
+
+  //
+  // Get ready to move our motors
+  md2cmds_home_prep();
+
+  //
+  // make sure omega is homed
+  //
+  lspmac_home1_queue( omega);
+
+  //
+  // Grab the current positions
+  //
+  cx = lspmac_getPosition( cenx);
+  cy = lspmac_getPosition( ceny);
+  ax = lspmac_getPosition( alignx);
+  ay = lspmac_getPosition( aligny);
+  az = lspmac_getPosition( alignz);
+
+  lslogging_log_message( "md2cmds_nonrotate: actual positions cx %f, cy %f, ax %f, ay %f, az %f", cx, cy, ax, ay, az);
+
+  if( lspg_getcenter.no_rows_returned) {
+    //
+    // Always specify zoom even if no other center information is found
+    //
+    zm = 1;
+  } else {
+    lslogging_log_message( "md2cmds_nonrotate: getcenter returned dcx %f, dcy %f, dax %f, day %f, daz %f, zoom %d",
+			   lspg_getcenter.dcx, lspg_getcenter.dcy, lspg_getcenter.dax, lspg_getcenter.day, lspg_getcenter.daz,lspg_getcenter.zoom);
+
+    if( lspg_getcenter.zoom_isnull == 0) {
+      zm = lspg_getcenter.zoom;
+    } else {
+      zm = 1.0;
+    }
+
+    if( lspg_getcenter.dcx_isnull == 0)
+      cx += lspg_getcenter.dcx;
+
+    if( lspg_getcenter.dcy_isnull == 0)
+      cy  += lspg_getcenter.dcy;
+
+    //
+    // Slightly complicated procedure for alignment stage since we might want to update
+    // the presets.  Use the preset Back_Vector to calculate the new Back preset from our
+    // current position.
+    //
+    if( lspg_getcenter.dax_isnull == 0) {
+      err = lsredis_find_preset( "align.x", "Back_Vector", &bax);
+      if( err == 0)
+	bax = 0.0;
+      bax += lspg_getcenter.dax;
+      lsredis_set_preset( "align.x", "Back", bax);
+
+      ax  += lspg_getcenter.dax;
+      lsredis_set_preset( "align.x", "Beam", ax);
+    }      
+
+
+    if( lspg_getcenter.day_isnull == 0) {
+      err = lsredis_find_preset( "align.y", "Back_Vector", &bay);
+      if( err == 0)
+	bay = 0.0;
+      bay += lspg_getcenter.day;
+      lsredis_set_preset( "align.y", "Back", bay);
+
+      ay  += lspg_getcenter.day;
+      lsredis_set_preset( "align.y", "Beam", ay);
+    }
+			  
+    if( lspg_getcenter.daz_isnull == 0) {
+      err = lsredis_find_preset( "align.z", "Back_Vector", &baz);
+      if( err == 0)
+	baz = 0.0;
+      baz += lspg_getcenter.daz;
+      lsredis_set_preset( "align.z", "Back", baz);
+
+      az  += lspg_getcenter.daz;
+      lsredis_set_preset( "align.z", "Beam", az);
+    }
+  }
+  lspg_getcenter_done();
+
+  if( lspmac_est_move_time( &move_time, &mmask,
+			    scint,  0,  "Cover", 0.0,
+			    capz,   0,  "Cover", 0.0,
+			    cenx,   0,  NULL,    cx,
+			    ceny,   0,  NULL,    cy,
+			    alignx, 0,  NULL,    ax,
+			    aligny, 0,  NULL,    ay,
+			    alignz, 0,  NULL,    az,
+			    zoom,   1,  NULL,    zm,
+			    NULL)) {
+    lslogging_log_message( "md2cmds_nonrotate: organ motion request failed");
+    lsevents_send_event( "Local Centering Aborted");
+    return 1;
+  }
+
+  if( lspmac_est_move_time_wait( move_time + 10.0, mmask,
+				 zoom,
+				 NULL)) {
+    lslogging_log_message( "md2cmds_nonrotate: organ motion timed out %f seconds", move_time + 10.0);
+    lsevents_send_event( "Local Centering Aborted");
+    return 1;
+  }
+
+  if( md2cmds_home_wait( 20.0)) {
+    lslogging_log_message( "md2cmds_nonrotate: homing motors timed out.  Rotate aborted");
+    lsevents_send_event( "Local Centering Aborted");
+    return 1;
+  }
+
+
+  // Report new center positions
+  cx = lspmac_getPosition( cenx);
+  cy = lspmac_getPosition( ceny);
+  ax = lspmac_getPosition( alignx);
+  ay = lspmac_getPosition( aligny);
+  az = lspmac_getPosition( alignz);
+  lspg_query_push( NULL, NULL, "SELECT px.applycenter( %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f)", cx, cy, ax, ay, az, lspmac_getPosition(kappa), lspmac_getPosition( phi));
+
+  lslogging_log_message( "md2cmds_nonrotate: done with applycenter");
+
+  return 0;
+}
 
 /** Fix up xscale and yscale when zoom changes
  *  xscale and yscale have units of microns per pixel
