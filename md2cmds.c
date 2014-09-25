@@ -68,7 +68,7 @@ static md2cmds_cmd_kv_t md2cmds_cmd_kvs[] = {
 };
 
 //
-// Commands to do rely on lspg calls
+// Commands that do rely on lspg calls
 //
 static md2cmds_cmd_kv_t md2cmds_cmd_pg_kvs[] = {
   { "collect",          md2cmds_collect},
@@ -1220,9 +1220,12 @@ int md2cmds_collect( const char *dummy) {
   int err;
   double move_time;
   int mmask;
-
+  lsredis_obj_t *collection_running;
 
   lsevents_send_event( "Data Collection Starting");
+
+  collection_running = lsredis_get_obj( "collection.running");
+  lsredis_setstr( collection_running, "True");
 
   u2c         = lsredis_getd( omega->u2c);
   neutral_pos = lsredis_getd( omega->neutral_pos);
@@ -1238,6 +1241,7 @@ int md2cmds_collect( const char *dummy) {
   if( md2cmds_phase_change( "changeMode dataCollection")) {
     lsredis_sendStatusReport( 1, "Failed to put MD2 into data collection mode within a reasonable amount of time.");
     lsevents_send_event( "Data Collection Aborted");
+    lsredis_setstr( collection_running, "False");
     return 1;
   }  
 
@@ -1256,6 +1260,7 @@ int md2cmds_collect( const char *dummy) {
       lslogging_log_message( "md2cmds_collect: query error retrieving next shot info.  aborting");
       lsevents_send_event( "Data Collection Aborted");
       lspg_nextshot_done();
+      lsredis_setstr( collection_running, "False");
       return 1;
     }
 
@@ -1297,6 +1302,7 @@ int md2cmds_collect( const char *dummy) {
 	  lsevents_send_event( "Data Collection Aborted");
 	  lsredis_sendStatusReport( 1, "Failed to start moving to next sample position.");
 	  lspg_nextshot_done();
+	  lsredis_setstr( collection_running, "False");
 	  return 1;
 	}
 
@@ -1306,6 +1312,7 @@ int md2cmds_collect( const char *dummy) {
 	  lsevents_send_event( "Data Collection Aborted");
 	  //	  lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");   // Should we even have the diffractometer lock at this point?
 	  lspg_nextshot_done();
+	  lsredis_setstr( collection_running, "False");
 	  return 1;
 	}
       }
@@ -1330,6 +1337,7 @@ int md2cmds_collect( const char *dummy) {
 	lsevents_send_event( "Data Collection Aborted");
 	lsredis_sendStatusReport( 1, "Moving Kappa failed");
 	lspg_nextshot_done();
+	lsredis_setstr( collection_running, "False");
 	return 1;
       }	
 
@@ -1339,6 +1347,7 @@ int md2cmds_collect( const char *dummy) {
 	lsevents_send_event( "Data Collection Aborted");
 	lsredis_sendStatusReport( 1, "Moving Kappa timed out");
 	lspg_nextshot_done();
+	lsredis_setstr( collection_running, "False");
 	return 1;
       }	
     }
@@ -1376,6 +1385,7 @@ int md2cmds_collect( const char *dummy) {
       lslogging_log_message( "md2cmds_collect: seq run prep query error, aborting");
       lsredis_sendStatusReport( 1, "Preparing MD2 failed");
       lsevents_send_event( "Data Collection Aborted");
+      lsredis_setstr( collection_running, "False");
       return 1;
     }
     
@@ -1400,6 +1410,7 @@ int md2cmds_collect( const char *dummy) {
       lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
       lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
       lsevents_send_event( "Data Collection Aborted");
+      lsredis_setstr( collection_running, "False");
       return 1;
     }
 
@@ -1441,6 +1452,7 @@ int md2cmds_collect( const char *dummy) {
       lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
       lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
       lsevents_send_event( "Data Collection Aborted");
+      lsredis_setstr( collection_running, "False");
       return 1;
     }
 
@@ -1466,6 +1478,7 @@ int md2cmds_collect( const char *dummy) {
       lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
       lslogging_log_message( "md2cmds_collect: Timed out waiting for shutter to close.  Data collection aborted.");
       lsevents_send_event( "Data Collection Aborted");
+      lsredis_setstr( collection_running, "False");
       return 1;
     }
 
@@ -1493,6 +1506,7 @@ int md2cmds_collect( const char *dummy) {
       lslogging_log_message( "md2cmds_collect: Giving up waiting for omega to stop moving. Data collection aborted.");
       lsredis_sendStatusReport( 1, "Timed out waiting for omega to stop.");
       lsevents_send_event( "Data Collection Aborted");
+      lsredis_setstr( collection_running, "False");
       return 1;
     }
 
@@ -1519,6 +1533,7 @@ int md2cmds_collect( const char *dummy) {
   }
   lsevents_send_event( "Data Collection Done");
   lsredis_sendStatusReport( 0, "");
+  lsredis_setstr( collection_running, "False");
   return 0;
 }
 
