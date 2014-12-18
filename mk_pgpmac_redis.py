@@ -83,7 +83,7 @@ extras = [
     {"k" : "detector.beam.x",          "v" : "0"},
     {"k" : "detector.beam.y",          "v" : "0"},
     {"k" : "detector.dist",            "v" : "700"},
-    {"k" : "detector.running",         "v" : "false"},
+    {"k" : "detector.running",         "v" : "False"},
     {"k" : "detector.info",            "v" : '{ "info": "unknown",  "xpixsize": 78.0, "ypixsize": 78.0, "xsize": 1024, "ysize": 1024, "bin": 2}'},
     {"k" : "robot.predictedFinish",    "v" : "0"},
     {"k" : "collection.running",       "v" : "False"},
