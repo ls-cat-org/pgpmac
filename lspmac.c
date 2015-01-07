@@ -1756,22 +1756,26 @@ void lspmac_get_status_cb(
     if( bp->first_time) {
       bp->first_time = 0;
       if( bp->position==1 && bp->changeEventOn != NULL && bp->changeEventOn[0] != 0) {
-	lsevents_send_event( lspmac_bis[i].changeEventOn);
-	lsredis_setstr( bp->status_str, bp->onStatus);
+	  lsevents_send_event( bp->changeEventOn);
+	  if( bp->onStatus != NULL)
+	    lsredis_setstr( bp->status_str, bp->onStatus);
       }
       if( bp->position==0 && bp->changeEventOff != NULL && bp->changeEventOff[0] != 0) {
-	lsevents_send_event( lspmac_bis[i].changeEventOff);
-	lsredis_setstr( bp->status_str, bp->offStatus);
+	  lsevents_send_event( bp->changeEventOff);
+	  if( bp->offStatus != NULL)
+	    lsredis_setstr( bp->status_str, bp->offStatus);
       }
     } else {
       if( bp->position != bp->previous) {
 	if( bp->position==1 && bp->changeEventOn != NULL && bp->changeEventOn[0] != 0) {
-	  lsevents_send_event( lspmac_bis[i].changeEventOn);
-	  lsredis_setstr( bp->status_str, bp->onStatus);
+	    lsevents_send_event( bp->changeEventOn);
+	    if( bp->onStatus != NULL)
+	      lsredis_setstr( bp->status_str, bp->onStatus);
 	}
 	if(bp->position==0 && bp->changeEventOff != NULL && bp->changeEventOff[0] != 0) {
-	  lsevents_send_event( lspmac_bis[i].changeEventOff);
-	  lsredis_setstr( bp->status_str, bp->offStatus);
+	    lsevents_send_event( bp->changeEventOff);
+	    if( bp->offStatus != NULL)
+	      lsredis_setstr( bp->status_str, bp->offStatus);
 	}
       }
     }
@@ -3004,7 +3008,7 @@ int lspmac_est_move_time( double *est_time, int *mmaskp, lspmac_motor_t *mp_1, i
       if( ps != NULL && *ps != 0) {
 	err = lsredis_find_preset( mp->name, ps, &maybe_ep);
 	if( err == 0) {
-	  lslogging_log_message( "lspmac_est_move_time: bad preset name, move not attempted");
+	  lslogging_log_message( "lspmac_est_move_time: bad preset name '%s' for motor '%s', move not attempted", ps, mp->name);
 	  return 1;
 	}
 	ep = maybe_ep;
@@ -3835,15 +3839,18 @@ lspmac_bi_t *lspmac_bi_init( lspmac_bi_t *d, char *name, int *ptr, int mask, cha
   d->name           = strdup( name);
   d->ptr            = ptr;
   d->mask           = mask;
-  d->changeEventOn  = strdup( onEvent);
-  d->changeEventOff = strdup( offEvent);
-  d->onStatus       = strdup( onStatus);
-  d->offStatus      = strdup( offStatus);
+  d->changeEventOn  = (onEvent  == NULL) ? NULL : strdup( onEvent);
+  d->changeEventOff = (offEvent == NULL) ? NULL : strdup( offEvent);
+  d->onStatus       = (onStatus  == NULL) ? NULL : strdup( onStatus);
+  d->offStatus      = (offStatus == NULL) ? NULL : strdup( offStatus);
   d->first_time     = 1;
   d->status_str     = lsredis_get_obj( "%s.status_str", d->name);
 
-  lsevents_preregister_event( "%s", d->changeEventOn);
-  lsevents_preregister_event( "%s", d->changeEventOff);
+  if( d->changeEventOn != NULL)
+    lsevents_preregister_event( "%s", d->changeEventOn);
+
+  if( d->changeEventOff != NULL)
+    lsevents_preregister_event( "%s", d->changeEventOff);
 
   return d;
 }
@@ -3938,7 +3945,7 @@ void lspmac_init(
     blight_up       = lspmac_bi_init( &(lspmac_bis[ 4]), "backLightUp",      &(md2_status.acc11c_1),  0x10, "Backlight Up",         "Backlight Not Up",         "Up",      "Not Up");
     cryo_back       = lspmac_bi_init( &(lspmac_bis[ 5]), "cryoBack",         &(md2_status.acc11c_1),  0x40, "Cryo Back",            "Cryo Not Back",            "Back",    "Not Back");
     fluor_back	    = lspmac_bi_init( &(lspmac_bis[ 6]), "detectorParked",   &(md2_status.acc11c_2),  0x01, "Fluor. Det. Parked",   "Fluor. Det. Not Parked",   "Parked",  "Not Parked");
-    sample_detected = lspmac_bi_init( &(lspmac_bis[ 7]), "sampleDetector",   &(md2_status.acc11c_2),  0x02, "SamplePresent",        "SampleAbsent",             "Present", "Absent" );
+    sample_detected = lspmac_bi_init( &(lspmac_bis[ 7]), "sampleDetector",   &(md2_status.acc11c_2),  0x02, NULL,                   NULL,                       "Present", "Absent" );
     etel_ready      = lspmac_bi_init( &(lspmac_bis[ 8]), "etelReady",        &(md2_status.acc11c_2),  0x20, "ETEL Ready",           "ETEL Not Ready",           "Ready",   "Not Ready");
     etel_on         = lspmac_bi_init( &(lspmac_bis[ 9]), "etelOn",           &(md2_status.acc11c_2),  0x40, "ETEL On",              "ETEL Off",                 "On",      "Off");
     etel_init_ok    = lspmac_bi_init( &(lspmac_bis[10]), "etelOk",           &(md2_status.acc11c_2),  0x80, "ETEL Init OK",         "ETEL Init Not OK",         "OK",      "Not OK");
