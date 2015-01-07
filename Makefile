@@ -20,6 +20,9 @@ dist:
 	tar czvf ls-cat-pgpmac-$(VERSION).tar.gz ls-cat-pgpmac-$(VERSION)/*.c ls-cat-pgpmac-$(VERSION)/*.h ls-cat-pgpmac-$(VERSION)/pmac_md2.sql ls-cat-pgpmac-$(VERSION)/Makefile ls-cat-pgpmac-$(VERSION)/pmac_md2_ls-cat.pmc ls-cat-pgpmac-$(VERSION)/pgpmac.pdf
 	rm -f ls-cat-pgpmac-$(VERSION)
 
+install: pgpmac
+	install -p pgpmac /usr/local/bin
+
 clean:
 	rm *.o pgpmac
 
