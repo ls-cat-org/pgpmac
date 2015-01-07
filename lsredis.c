@@ -958,7 +958,7 @@ int lsredis_find_preset( char *motor_name, char *preset_name, double *dval) {
       //
       // Guess not.  Give up.  We tried
       //
-      lslogging_log_message( "lsredis_find_preset: no preset named '%s' for motor '%s' found", motor_name, preset_name);
+      lslogging_log_message( "lsredis_find_preset: no preset named '%s' for motor '%s' found", preset_name, motor_name);
       *dval = 0.0;
       return 0;
     }
