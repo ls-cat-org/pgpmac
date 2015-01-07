@@ -24,14 +24,22 @@ else:
 
 
 configs = {
-    "orange-2"            : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E", "pg" : "1", "autoscint" : "1", "robopub" : "ROBOT-21-ID-E"},
-    "orange-2.ls-cat.org" : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E", "pg" : "1", "autoscint" : "1", "robopub" : "ROBOT-21-ID-E"},
-    "venison.ls-cat.org"  : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E", "pg" : "1", "autoscint" : "1", "robopub" : "ROBOT-21-ID-E"},
-    "mung-2"              : { "re" : "redis\.kvseq|stns\.1\.(.+)", "head" : "stns.1", "pub" : "MD2-21-ID-D", "pg" : "1", "autoscint" : "1", "robopub" : "ROBOT-21-ID-D"},
-    "mung-2.ls-cat.org"   : { "re" : "redis\.kvseq|stns\.1\.(.+)", "head" : "stns.1", "pub" : "MD2-21-ID-D", "pg" : "1", "autoscint" : "1", "robopub" : "ROBOT-21-ID-D"},
-    "vidalia.ls-cat.org"  : { "re" : "redis\.kvseq|stns\.1\.(.+)", "head" : "stns.1", "pub" : "MD2-21-ID-D", "pg" : "1", "autoscint" : "1", "robopub" : "ROBOT-21-ID-D"},
-    "vanilla.ls-cat.org"  : { "re" : "redis\.kvseq|stns\.3\.(.+)", "head" : "stns.3", "pub" : "MD2-21-ID-F", "pg" : "1", "autoscint" : "1", "robopub" : "ROBOT-21-ID-F"},
-    "vinegar.ls-cat.org"  : { "re" : "redis\.kvseq|stns\.4\.(.+)", "head" : "stns.4", "pub" : "MD2-21-ID-G", "pg" : "1", "autoscint" : "1", "robopub" : "ROBOT-21-ID-G"}
+    "orange-2"            : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E", "pg" : "1", "autoscint" : "1",
+                              "robopub" : "ROBOT-21-ID-E", "fullname" : "21-ID-E", "shortname" : "e"},
+    "orange-2.ls-cat.org" : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E", "pg" : "1", "autoscint" : "1",
+                              "robopub" : "ROBOT-21-ID-E", "fullname" : "21-ID-E", "shortname" : "e"},
+    "venison.ls-cat.org"  : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E", "pg" : "1", "autoscint" : "1",
+                              "robopub" : "ROBOT-21-ID-E", "fullname" : "21-ID-E", "shortname" : "e"},
+    "mung-2"              : { "re" : "redis\.kvseq|stns\.1\.(.+)", "head" : "stns.1", "pub" : "MD2-21-ID-D", "pg" : "1", "autoscint" : "1",
+                              "robopub" : "ROBOT-21-ID-D", "fullname" : "21-ID-D", "shortname" : "d"},
+    "mung-2.ls-cat.org"   : { "re" : "redis\.kvseq|stns\.1\.(.+)", "head" : "stns.1", "pub" : "MD2-21-ID-D", "pg" : "1", "autoscint" : "1",
+                              "robopub" : "ROBOT-21-ID-D", "fullname" : "21-ID-D", "shortname" : "d"},
+    "vidalia.ls-cat.org"  : { "re" : "redis\.kvseq|stns\.1\.(.+)", "head" : "stns.1", "pub" : "MD2-21-ID-D", "pg" : "1", "autoscint" : "1",
+                              "robopub" : "ROBOT-21-ID-D", "fullname" : "21-ID-D", "shortname" : "d"},
+    "vanilla.ls-cat.org"  : { "re" : "redis\.kvseq|stns\.3\.(.+)", "head" : "stns.3", "pub" : "MD2-21-ID-F", "pg" : "1", "autoscint" : "1",
+                              "robopub" : "ROBOT-21-ID-F", "fullname" : "21-ID-F", "shortname" : "f"},
+    "vinegar.ls-cat.org"  : { "re" : "redis\.kvseq|stns\.4\.(.+)", "head" : "stns.4", "pub" : "MD2-21-ID-G", "pg" : "1", "autoscint" : "1",
+                              "robopub" : "ROBOT-21-ID-G", "fullname" : "21-ID-G", "shortname" : "d"}
 }
 
 plcc2_dict = {
@@ -612,6 +620,12 @@ motor_presets = {
         [ "Back",        "1.9",        "1",    "PHIAxisXYZTable",         "ZScintillatorOut_Z2"],
         [ "Back_Vector", "1.9",        "1",    "PHIAxisXYZTable",         "ZScintillatorOut_Z2"]
         ],
+    "centering.x" : [
+        [ "Beam",        "0.0",        "1",    None,                      None]
+        ],
+    "centering.y" : [
+        [ "Beam",        "0.0",        "1",    None,                      None]
+        ],
     "appy" : [
         # name   value       canTune    pref_ini section           pref_ini option
         [ "In", "0.117",         "1",    "ApertureYZTable",        "BeamHorizontalPosition_Y0"]
@@ -681,6 +695,8 @@ zoom_settings = [
 for c in configs.keys():
     print "HMSET config.%s HEAD '%s' PUB '%s' RE '%s' PG '%s' AUTOSCINT '%s' ROBOPUB '%s'" % \
         (c.lower(), configs[c]["head"], configs[c]["pub"], configs[c]["re"], configs[c]["pg"], configs[c]["autoscint"], configs[c]["robopub"])
+    print "HMSET %s.config.longname VALUE %s" % (configs[c].longname)
+    print "HMSET %s.config.shortname VALUE %s" % (configs[c].shortname)
 
 # station stuff
 print "HSETNX %s.phase VALUE unknown" % (head)
@@ -826,6 +842,20 @@ for lev, f, b, p, x, y, section in zoom_settings:
         fnc = "HSET"
     print "%s %s.cam.zoom.%d.ScaleY VALUE %s"              % (fnc, head, lev, y)
     print "PUBLISH mk_pgpmac_redis %s.cam.zoom.%d.ScaleY"              % (head, lev)
+
+    fnc = "HSETNX"
+    if pref_ini != None and pi.has_section( section) and pi.has_option( section, "CenterX"):
+        x = pi.get( section, "CenterX")
+        fnc = "HSET"
+    print "%s %s.cam.zoom.%d.CenterX VALUE %s"              % (fnc, head, lev, x)
+    print "PUBLISH mk_pgpmac_redis %s.cam.zoom.%d.CenterX"              % (head, lev)
+
+    fnc = "HSETNX"
+    if pref_ini != None and pi.has_section( section) and pi.has_option( section, "CenterY"):
+        y = pi.get( section, "CenterY")
+        fnc = "HSET"
+    print "%s %s.cam.zoom.%d.CenterY VALUE %s"              % (fnc, head, lev, y)
+    print "PUBLISH mk_pgpmac_redis %s.cam.zoom.%d.CenterY"              % (head, lev)
 
 
 for e in extras:
