@@ -25,21 +25,29 @@ else:
 
 configs = {
     "orange-2"            : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E", "pg" : "1", "autoscint" : "1",
-                              "robopub" : "ROBOT-21-ID-E", "fullname" : "21-ID-E", "shortname" : "e"},
+                              "robopub" : "ROBOT-21-ID-E", "longname" : "21-ID-E", "shortname" : "e"},
     "orange-2.ls-cat.org" : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E", "pg" : "1", "autoscint" : "1",
-                              "robopub" : "ROBOT-21-ID-E", "fullname" : "21-ID-E", "shortname" : "e"},
+                              "robopub" : "ROBOT-21-ID-E", "longname" : "21-ID-E", "shortname" : "e"},
     "venison.ls-cat.org"  : { "re" : "redis\.kvseq|stns\.2\.(.+)", "head" : "stns.2", "pub" : "MD2-21-ID-E", "pg" : "1", "autoscint" : "1",
-                              "robopub" : "ROBOT-21-ID-E", "fullname" : "21-ID-E", "shortname" : "e"},
+                              "robopub" : "ROBOT-21-ID-E", "longname" : "21-ID-E", "shortname" : "e"},
     "mung-2"              : { "re" : "redis\.kvseq|stns\.1\.(.+)", "head" : "stns.1", "pub" : "MD2-21-ID-D", "pg" : "1", "autoscint" : "1",
-                              "robopub" : "ROBOT-21-ID-D", "fullname" : "21-ID-D", "shortname" : "d"},
+                              "robopub" : "ROBOT-21-ID-D", "longname" : "21-ID-D", "shortname" : "d"},
     "mung-2.ls-cat.org"   : { "re" : "redis\.kvseq|stns\.1\.(.+)", "head" : "stns.1", "pub" : "MD2-21-ID-D", "pg" : "1", "autoscint" : "1",
-                              "robopub" : "ROBOT-21-ID-D", "fullname" : "21-ID-D", "shortname" : "d"},
+                              "robopub" : "ROBOT-21-ID-D", "longname" : "21-ID-D", "shortname" : "d"},
     "vidalia.ls-cat.org"  : { "re" : "redis\.kvseq|stns\.1\.(.+)", "head" : "stns.1", "pub" : "MD2-21-ID-D", "pg" : "1", "autoscint" : "1",
-                              "robopub" : "ROBOT-21-ID-D", "fullname" : "21-ID-D", "shortname" : "d"},
+                              "robopub" : "ROBOT-21-ID-D", "longname" : "21-ID-D", "shortname" : "d"},
     "vanilla.ls-cat.org"  : { "re" : "redis\.kvseq|stns\.3\.(.+)", "head" : "stns.3", "pub" : "MD2-21-ID-F", "pg" : "1", "autoscint" : "1",
-                              "robopub" : "ROBOT-21-ID-F", "fullname" : "21-ID-F", "shortname" : "f"},
+                              "robopub" : "ROBOT-21-ID-F", "longname" : "21-ID-F", "shortname" : "f"},
+    "kiwi-2.ls-cat.org"   : { "re" : "redis\.kvseq|stns\.3\.(.+)", "head" : "stns.3", "pub" : "MD2-21-ID-F", "pg" : "1", "autoscint" : "1",
+                              "robopub" : "ROBOT-21-ID-F", "longname" : "21-ID-F", "shortname" : "f"},
+    "kiwi-2"              : { "re" : "redis\.kvseq|stns\.3\.(.+)", "head" : "stns.3", "pub" : "MD2-21-ID-F", "pg" : "1", "autoscint" : "1",
+                              "robopub" : "ROBOT-21-ID-F", "longname" : "21-ID-F", "shortname" : "f"},
     "vinegar.ls-cat.org"  : { "re" : "redis\.kvseq|stns\.4\.(.+)", "head" : "stns.4", "pub" : "MD2-21-ID-G", "pg" : "1", "autoscint" : "1",
-                              "robopub" : "ROBOT-21-ID-G", "fullname" : "21-ID-G", "shortname" : "d"}
+                              "robopub" : "ROBOT-21-ID-G", "longname" : "21-ID-G", "shortname" : "g"},
+    "mango-2.ls-cat.org"  : { "re" : "redis\.kvseq|stns\.4\.(.+)", "head" : "stns.4", "pub" : "MD2-21-ID-G", "pg" : "1", "autoscint" : "1",
+                              "robopub" : "ROBOT-21-ID-G", "longname" : "21-ID-G", "shortname" : "g"},
+    "mango-2"             : { "re" : "redis\.kvseq|stns\.4\.(.+)", "head" : "stns.4", "pub" : "MD2-21-ID-G", "pg" : "1", "autoscint" : "1",
+                              "robopub" : "ROBOT-21-ID-G", "longname" : "21-ID-G", "shortname" : "g"}
 }
 
 plcc2_dict = {
@@ -695,8 +703,8 @@ zoom_settings = [
 for c in configs.keys():
     print "HMSET config.%s HEAD '%s' PUB '%s' RE '%s' PG '%s' AUTOSCINT '%s' ROBOPUB '%s'" % \
         (c.lower(), configs[c]["head"], configs[c]["pub"], configs[c]["re"], configs[c]["pg"], configs[c]["autoscint"], configs[c]["robopub"])
-    print "HMSET %s.config.longname VALUE %s" % (configs[c].longname)
-    print "HMSET %s.config.shortname VALUE %s" % (configs[c].shortname)
+    print "HMSET %s.config.longname VALUE %s"  % (configs[c]["head"],configs[c]["longname"])
+    print "HMSET %s.config.shortname VALUE %s" % (configs[c]["head"],configs[c]["shortname"])
 
 # station stuff
 print "HSETNX %s.phase VALUE unknown" % (head)
