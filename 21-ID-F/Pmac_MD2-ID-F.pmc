@@ -1,0 +1,4647 @@
+;****************************************************************************
+;* Configuration File of MICRODIFFRACTOMETER embedding the MiniKappa specs
+;*   The DTAU Compact UMAC Turbo cards (formerly called UMAC-CPCI Turbo) 
+;           	sit in the CPCI Main Rack
+;****************************************************************************
+;  IC2  > &1	Moteur 1 Axe phi via ampli Etel 
+;       > &3	Moteur 2 Axe X
+;       	Moteur 3 Axe Y
+;      		Moteur 4 Axe Z
+;
+;  IC3  	Moteur 5 Analyser
+;       > &4	Moteur 6 Zoom
+;       > &5 	Moteur 7 Axe Y Aperture
+;          	Moteur 8 Axe Z Aperture
+;
+;  IC4  > &5	Moteur 9 Axe Y Capillary / Beamstop
+;    	   	Moteur 10 Axe Z Capillary / Beamstop
+;       	Moteur 11 Axe Z Scintillator / Photodiode
+;		Moteur 12 Unused
+
+;  IC5     	Moteur 13 Unused (No 4-Axis cPCI PMAC board)
+;  		Moteur 14 Unused (No 4-Axis cPCI PMAC board)
+;       	Moteur 15 Unused (No 4-Axis cPCI PMAC board)
+;       	Moteur 16 Unused (No 4-Axis cPCI PMAC board)
+;
+;  IC6  > &2	Moteur 18 Axis Y table XY
+;       	Moteur 17 Axis X table XY
+;  	> &7	Moteur 19 Mini Kappa 1 (Elbow rotation)
+;       	Moteur 20 Mini Kappa 2 (Sample Holder rotation)
+
+;  IC7     	Moteur 21 Unused (No 4-Axis cPCI PMAC board)
+;  		Moteur 22 Unused (No 4-Axis cPCI PMAC board)
+;       	Moteur 23 Unused (No 4-Axis cPCI PMAC board)
+;       	Moteur 24 Unused (No 4-Axis cPCI PMAC board)
+;
+;  Backplane Delta tau > IC2, IC3, IC4, IC6
+
+
+
+;*******************************************************************************
+;*      Date de creation : 07/02/2007   Version : 1.0 Version DSPGate : D      *
+;*******************************************************************************
+undefine all
+end gather
+delete gather
+delete trace
+close
+
+
+
+;*******************************************************************************
+;*                            I VARIABLES GENERALE                             *
+;*******************************************************************************
+I0=0            ; numéro de série de la carte
+I1=0            ; mode du port série : CS handshake used; no software card address required
+I2=1            ; control panel : disabled ???????????
+I3=2            ; I/O handshake control : <CR>/<ACK>
+I4=0            ; communications integrity mode : cks disabled, serial error reported immediately
+I5=0            ; PLC : Off
+I6=1            ; error reporting mode : default value
+I7=0            ; phase cycle extension : default value
+I8=2            ; real time IT period : default value
+I9=2            ; Full abbreviated listing control : default value
+I10=928497.7    ; servo IT time : 640/9*(2*I7200+3)*(I7201+1)*(I7202+1)
+;  		; I10 Configured for 110us
+;  		; (for 440us: I10=3713991.111)
+I11=0           ; programmed move calculation time : default value
+; 		; I12, I13  NA
+I14=0           ; Temporary buffer save : default value, pas de sauvegarde du buffer
+I15=0           ; degree : default value
+I16=5           ; rotary buffer request on point : default value
+I17=5           ; rotary buffer request off point
+I18=10          ; fixed buffer full warning point : default value
+; 		;  I19 ----- I45 : NA
+I46=0           ;  P&Q Var storage location : default value
+I47=0           ; dpram motor  data foreground period : default value (on demand)
+I48=0           ; dpram motor data foreground enable : default value (on demand)
+I49=0           ; dpram background data report enable: default value  (disable)
+I50=0           ; dpram background data report period : defaul value (on demand)
+I51=0           ; compensation table enable : default value (disabled)
+I52=7           ; Cpu frequency = default value (80Mhz)
+I53=12          ; auxiliary RS 232 baud= (38400)
+I54=12          ; RS232 baud = (38400)
+I55=0           ; dpram background variable buffer enable : default value (disabled)
+I56=0           ; dpram ascii : default value (disabled)
+I57=0           ; dpram motor back enable : default value (disabled)
+I58=1           ; dpram ascci com enable : default value (enabled)
+I59=0           ; Motor / coordinate system : default value
+I60=15          ; filtered velocity : default value
+I61=16          ; filtered velocity shift : default value ???????? (a confirmer par Hugo)
+I62=0           ; Internal message Carriage Return control : <CR> en fin de commande
+;               ; I63-64 NA
+;               ; I65 - I67 : concerne les cartes MACRO
+I68=6           ; Number of coordinate system activated  = I68+1 : 7 coordinate system (last one for Mini Kappa axis)
+;               ; I69 - I85 : concerne les cartes MACRO
+I90=$39         ; VME Address : default value
+I91=$4          ; VME Address modifier don't care bits : default value
+I92=$FF         ; VME address bits A31-A24 : default value
+I93=$7F         ; VME mailbox base adress bits A23-A16 : default value ($7F : VME)
+I94=$A0         ; VME mailbox base address bits A14-A8 : default value ($A0 : VME)
+I95=$2          ; VME IT level : default value
+I96=$A1         ; VME IT vector : default value
+I97=$0          ; VME dpram base address bits A23-A20 : default value
+I98=$60         ; VME dpram enable : default value
+I99=$90         ; VME address width control : adressage 24 bits avec dpram
+
+
+
+;*******************************************************************************
+;*                     I VARIABLES MOTOR ETEL Axis PHI No1                     *
+;*******************************************************************************
+; Moteur ETEL
+
+I100=1          ; activation control
+I101=0          ; motor commutation (default value :0 disabled)
+I102=$78202     ; Adresse moteurs
+I103=$3501      ; Table codeur
+I104=$3501      ; Table codeur
+I105=$35C0      ;
+I106=0          ; motor positon following enable & mode
+I107=96         ; motor master
+I108=96         ; Position scale factor (default value : 96)
+I109=96         ; Velocity scale factor (default value : 96)
+I110=0          ;
+I111=64000      ; Fatal Following Error Limit (1/16 count) ; 64000 
+I112=16000      ; Warning Following Error Limit (1/16 count); 16000
+I113=0          ; + Software Position Limit (cnts, 0=disabled)
+I114=0          ; - Software Position Limit (cnts, 0=disabled)
+I115=50         ; Abort/Lim Decel Rate (cnts/ms**2)
+I116=1664       ; Maximum Velocity (cnts/ms)
+I117=2          ; Max Prog Acceleration (cnts/ms**2)
+I119=20          ; I119=2 before BM14  Max Jog/home Acceleration (cnts/ms**2) !!! attention en competition avec Ix20 / Ix21
+I120=1          ; Jog/Home Acceleration Time(ms). !!! attention en competition avec Ix19
+I121=2          ; Jog/Home S-Curve Time (ms)
+I122=1664 	;  Jog Speed (cnts/ms)
+I123=-1664 	;  Homing Speed and Direction (cnts/ms)
+I124=$220001    ;  Limites inactivees (inactives : $220001 / actives : $200001 )
+I125=$78200     ;  Flag Address
+I126=0          ;  Home Offset (1/16 count) fait par j+ dynamique insuffisante cf prog home1.
+I127=0          ;  Position Rollover Range (1/16 count)
+I128=160        ;  Motor In-Position Band (1/16 count)
+I129=20         ;  Motor Output Offset (1 LSB of 16 bits DAC)
+
+;*********************** Parametre regulation PID ******************************
+
+I130=15000 	; witk ETEL Kp =1100 ; 35000 to minimize Foll Err but SIFFLE - 70000 on BM14      ;  Gain proportionnel 6000 pour clock 440 us
+I131=850        ; 950 to minimize Foll Err but SIFFLE  - Derivee 600 pour clock 440 us
+I132=850        ; 950 to minimize Foll Err but SIFFLE  - Velocity feeed forward gain   600 pour clock 440 us
+I133=70000      ; 120000 to minimize Foll Err but SIFFLE - Integral 900000 pour clock 440 us
+I134=0          ; Integration mode
+I135=0          ; Acceleration feed forward
+I136=0          ; Notch filter N1
+I137=0          ; Notch filter N2
+I138=0          ; Notch filter D1
+I139=0          ; Notch filter D2
+I155=$0
+I156=0
+I157=0
+I158=0
+I159=0
+I160=0          ;  Servo Cycle Period Extension Period
+I161=0
+I162=0
+I163=4194304
+I164=-16        ;  Dead Band Gain Factor
+I165=32         ;  Dead Band Size (1/16)
+I166=6527
+I167=4194304
+I168=0
+I169=32767
+I170=1          ; nb of commutation cycle (default value :1)
+I171=1000       ; counts per N commutation cycles (default value :1000)
+I172=85         ; backlash take-up rate
+I173=0
+I174=0
+I175=0
+I176=0
+I177=0
+I178=0
+I179=0
+I180=0
+I181=0
+I182=0
+I183=$78201     ;  *****??? Adresse utilise pour relecture sortie en stepper ????
+I184=0
+I185=0
+I186=0
+I187=0
+I188=0
+I189=0
+I190=0
+I191=0
+I192=10         ; jog move calculation time (default value = 10)
+I195=0
+I196=0
+I197=0
+I198=0
+I199=0
+
+;*******************************************************************************
+;*                          I VARIABLES MOTOR Axis X                           *
+;*******************************************************************************
+; Moteur DC type B1
+; Physical  encoder résolution 60620.8 pulse/mm Transmission ratio : 1mm/tr
+
+I200=1          ; activation control
+I201=0          ; motor commutation (default value :0 disabled)
+I202=$7820A     ; Adresse moteurs (carte 1 channel 2)
+I203=$3502      ; Table codeur
+I204=$3502      ; Table codeur
+I205=$35C0      ;
+I206=0          ; motor positon following enable & mode
+I207=96         ; motor master
+I208=96         ; Position scale factor (default value : 96)
+I209=96         ; Velocity scale factor (default value : 96)
+I210=0          ;
+I211=32000      ; Fatal Following Error Limit (1/16 count)
+I212=16000      ; Warning Following Error Limit (1/16 count)
+I213=0          ; + Software Position Limit (cnts, 0=disabled)
+I214=0          ; - Software Position Limit (cnts, 0=disabled)
+I215=1          ; Abort/Lim Decel Rate (cnts/ms**2)
+I216=120        ; Maximum Velocity (cnts/ms)
+I217=0.5        ; Max Prog Acceleration (cnts/ms**2)
+I219=0.5        ; Max Jog/home Acceleration (cnts/ms**2) !!! attention en competition avec Ix20 / Ix21
+I220=1          ; Jog/Home Acceleration Time(ms). !!! attention en competition avec Ix19
+I221=0          ; Jog/Home S-Curve Time (ms)
+I222=120        ; Jog Speed (cnts/ms)
+I223=-120       ; Homing Speed and Direction (cnts/ms)
+I224=$200001    ; /!\ Limites activees (actives : $200001)
+I225=$78208     ; Flag Address
+I226=0          ; Home Offset (1/16 count) fait par j+ dynamique insuffisante cf prog home1.
+I227=0          ; Position Rollover Range (1/16 count)
+I228=160        ; Motor In-Position Band (1/16 count)
+I229=0          ; Motor Output Offset (1 LSB of 16 bits DAC)
+
+;*********************** Parametre regulation PID ******************************
+
+I230=800000     ; Gain proportionnel
+I231=700        ; Derivee
+I232=700        ; Velocity feeed forward gain
+I233=50000      ; Integral
+I234=0          ; Integration mode
+I235=35000      ; Acceleration feed forward
+I236=0          ; Notch filter N1
+I237=0          ; Notch filter N2
+I238=0          ; Notch filter D1
+I239=0          ; Notch filter D2
+I255=$0
+I256=0
+I257=0
+I258=0
+I259=0
+I260=3          ; Servo Cycle Period Extension Period
+I261=0
+I262=0
+I263=4194304
+I264=-16        ; Dead Band Gain Factor
+I265=32         ; Dead Band Size (1/16)
+I266=6527
+I267=4194304
+I268=0
+I269=32567
+I270=0          ; nb of commutation cycle (default value :1)
+I271=1000       ; counts per N commutation cycles (default value :1000)
+I272=85         ; backlash take-up rate
+I273=0
+I274=0
+I275=0
+I276=0
+I277=0
+I278=0
+I279=0
+I280=0
+I281=0
+I282=0
+I283=$78209     ; *****??? Adresse utilise pour relecture sortie en stepper ????
+I284=0
+I285=0
+I286=0
+I287=0
+I288=0
+I289=0
+I290=0
+I291=0
+I292=10         ; jog move calculation time (default value = 10)
+I295=0
+I296=0
+I297=0
+I298=0
+I299=0
+
+;*******************************************************************************
+;*                        I VARIABLES MOTOR Axis Y                             *
+;*******************************************************************************
+; Moteur DC type B1
+; Physical  encoder résolution 60620.8 pulse/mm
+
+I300=1          ; activation control
+I301=0          ; motor commutation (default value :0 disabled)
+I302=$78212     ; Adresse moteurs
+I303=$3503      ; Table codeur
+I304=$3503      ; Table codeur
+I305=$35C0      ;
+I306=0          ; motor positon following enable & mode
+I307=96         ; motor master
+I308=96         ; Position scale factor (default value : 96)
+I309=96         ; Velocity scale factor (default value : 96)
+I310=0          ;
+I311=32000      ; Fatal Following Error Limit (1/16 count)
+I312=16000      ; Warning Following Error Limit (1/16 count)
+I313=0          ; + Software Position Limit (cnts, 0=disabled)
+I314=0          ; - Software Position Limit (cnts, 0=disabled)
+I315=1          ; Abort/Lim Decel Rate (cnts/ms**2)
+I316=50         ; Maximum Velocity (cnts/ms)
+I317=0.5        ; Max Prog Acceleration (cnts/ms**2)
+I319=0.5        ; Max Jog/home Acceleration (cnts/ms**2) !!! attention en competition avec Ix20 / Ix21
+I320=1          ; Jog/Home Acceleration Time(ms). !!! attention en competition avec Ix19
+I321=0          ; Jog/Home S-Curve Time (ms)
+I322=120        ; Jog Speed (cnts/ms)
+I323=-120       ; Homing Speed and Direction (cnts/ms)
+I324=$200001    ; /!\ Limites activees (actives : $200001)
+I325=$78210     ; Flag Address
+I326=0          ; Home Offset (1/16 count) fait par j+ dynamique insuffisante cf prog home1.
+I327=0          ; Position Rollover Range (1/16 count)
+I328=160        ; Motor In-Position Band (1/16 count)
+I329=0          ; Motor Output Offset (1 LSB of 16 bits DAC)
+
+;******************** Parametre regulation PID ******************************
+
+I330=550000     ; Gain proportionnel
+I331=3500       ; Derivee
+I332=3500       ; Velocity feeed forward gain
+I333=200000     ; Integral
+I334=0          ; Integration mode
+I335=35000      ; Acceleration feed forward
+I336=0          ; Notch filter N1
+I337=0          ; Notch filter N2
+I338=0          ; Notch filter D1
+I339=0          ; Notch filter D2
+I355=$0         ;
+I356=0          ;
+I357=0          ;
+I358=0          ;
+I359=0          ;
+I360=3          ; Servo Cycle Period Extension Period
+I361=0          ;
+I362=0          ;
+I363=4194304    ;
+I364=-16        ; Dead Band Gain Factor
+I365=32         ; Dead Band Size (1/16)
+I366=6527       ;
+I367=4194304    ;
+I368=0          ;
+I369=32767      ;
+I370=0          ; nb of commutation cycle (default value :1)
+I371=1000       ; counts per N commutation cycles (default value :1000)
+I372=85         ; backlash take-up rate
+I373=0          ;
+I374=0          ;
+I375=0          ;
+I376=0          ;
+I377=0          ;
+I378=0          ;
+I379=0          ;
+I380=0          ;
+I381=0          ;
+I382=0          ;
+I383=$78211     ; *****??? Adresse utilise pour relecture sortie en stepper ????
+I384=0          ;
+I385=0          ;
+I386=0          ;
+I387=0          ;
+I388=0          ;
+I389=0          ;
+I390=0          ;
+I391=0          ;
+I392=10         ; jog move calculation time (default value = 10)
+I395=0          ;
+I396=0          ;
+I397=0          ;
+I398=0          ;
+I399=0          ;
+
+;*******************************************************************************
+;*                        I VARIABLES MOTOR Axis Z                             *
+;*******************************************************************************
+; Moteur DC type B1
+; Physical  encoder résolution 60620.8 pulse/mm
+
+I400=1          ; activation control
+I401=0          ; motor commutation (default value :0 disabled)
+I402=$7821A     ; Adresse moteurs
+I403=$3504      ; Table codeur
+I404=$3504      ; Table codeur
+I405=$35C0      ;
+I406=0          ; motor positon following enable & mode
+I407=96         ; motor master
+I408=96         ; Position scale factor (default value : 96)
+I409=96         ; Velocity scale factor (default value : 96)
+I410=0          ;
+I411=32000      ; Fatal Following Error Limit (1/16 count)
+I412=16000      ; Warning Following Error Limit (1/16 count)
+I413=0          ; + Software Position Limit (cnts, 0=disabled)
+I414=0          ; - Software Position Limit (cnts, 0=disabled)
+I415=1          ; Abort/Lim Decel Rate (cnts/ms**2)
+I416=120        ; Maximum Velocity (cnts/ms)
+I417=0.5        ; Max Prog Acceleration (cnts/ms**2)
+I419=0.5        ; Max Jog/home Acceleration (cnts/ms**2) !!! attention en competition avec Ix20 / Ix21
+I420=1          ; Jog/Home Acceleration Time(ms). !!! attention en competition avec Ix19
+I421=0          ; Jog/Home S-Curve Time (ms)
+I422=120        ; Jog Speed (cnts/ms)
+I423=-120       ; Homing Speed and Direction (cnts/ms)
+I424=$200001    ; /!\ Limites activees (actives : $200001)
+I425=$78218     ; Flag Address
+I426=0          ; Home Offset (1/16 count) fait par j+ dynamique insuffisante cf prog home1.
+I427=0          ; Position Rollover Range (1/16 count)
+I428=160        ; Motor In-Position Band (1/16 count)
+I429=0          ; Motor Output Offset (1 LSB of 16 bits DAC)
+
+;*********************** Parametre regulation PID ******************************
+
+I430=6000000    ; Gain proportionnel
+I431=2500       ; Derivee
+I432=2500       ; Velocity feeed forward gain
+I433=150000     ; Integral
+I434=0          ; Integration mode
+I435=35000      ; Acceleration feed forward
+I436=0          ; Notch filter N1
+I437=0          ; Notch filter N        2
+I438=0          ; Notch filter D1
+I439=0          ; Notch filter D2
+I455=$0         ;
+I456=0          ;
+I457=0          ;
+I458=0          ;
+I459=0          ;
+I460=3          ; Servo Cycle Period Extension Period
+I461=0          ;
+I462=0          ;
+I463=4194304    ;
+I464=-16        ; Dead Band Gain Factor
+I465=32         ; Dead Band Size         (1/16)
+I466=6527       ;
+I467=4194304    ;
+I468=0          ;
+I469=32767      ;
+I470=0          ; nb of commutation cycle (default value :1)
+I471=1000       ; counts per N commutation cycles (default value :1000)
+I472=85         ; backlash take-up rate
+I473=0          ;
+I474=0          ;
+I475=0          ;
+I476=0          ;
+I477=0          ;
+I478=0          ;
+I479=0          ;
+I480=0          ;
+I481=0          ;
+I482=0          ;
+I483=$78219     ;  *****??? Adresse utilise pour relecture sortie en stepper ????
+I484=0          ;
+I485=0          ;
+I486=0          ;
+I487=0          ;
+I488=0          ;
+I489=0          ;
+I490=0          ;
+I491=0          ;
+I492=10         ; jog move calculation time (default value = 10)
+I495=0          ;
+I496=0          ;
+I497=0          ;
+I498=0          ;
+I499=0          ;
+
+;*******************************************************************************
+;*                      I VARIABLES MOTOR ANALYSER No5                         *
+;*******************************************************************************
+; Moteur DC type C
+; Physical  encoder résolution 51200puls/rev
+
+I500=1          ; activation control
+I501=0          ; motor commutation (default value :0 disabled)
+I502=$78302     ; Adresse moteurs
+I503=$3505      ; Table codeur
+I504=$3505      ; Table codeur
+I505=$35C0      ;
+I506=0          ; motor positon following enable & mode
+I507=96         ; motor master
+I508=96         ; Position scale factor (default value : 96)
+I509=96         ; Velocity scale factor (default value : 96)
+I510=0          ;
+I511=16000      ;  Fatal Following Error Limit (1/16 count)
+I512=16000      ;  Warning Following Error Limit (1/16 count)
+I513=0          ;  + Software Position Limit (cnts, 0=disabled)
+I514=0          ;  - Software Position Limit (cnts, 0=disabled)
+I515=2          ;  Abort/Lim Decel Rate (cnts/ms**2)
+I516=3          ;  Maximum Velocity (cnts/ms)
+I517=0.2        ;  Max Prog Acceleration (cnts/ms**2)
+I519=0.2        ;  Max Jog/home Acceleration (cnts/ms **2) !!! attention en competition avec Ix20 / Ix21
+I520=0          ;  Jog/Home Acceleration Time(ms). !! ! attention en competition avec Ix19
+I521=0          ;  Jog/Home S-Curve Time (ms)
+I522=3          ;  Jog Speed (cnts/ms)
+I523=-1         ;  Homing Speed and Direction (cnts/ms)
+I524=$220001    ;  /!\ Limites activees (actives : $200001)
+I525=$78300     ;  Flag Address
+I526=0          ;  Home Offset (1/16 count) fait par j+ dynamique insuffisante cf prog home1.
+I527=0          ;  Position Rollover Range (1/16 count)
+I528=160        ;  Motor In-Position Band (1/16 count )
+I529=0          ;  Motor Output Offset (1 LSB of 16 bits DAC)
+
+;*********************** Parametre regulation PID ******************************
+
+I530=8000000    ;  Gain proportionnel 6000 pour clock 440 us
+I531=2000      ;  Derivee 600 pour clock 440 us
+I532=2000      ;  Velocity feeed forward gain 600 pour clock 440 us
+I533=500       ;  Integral 900000 pour clock 440 us
+I534=0         ;  Integration mode
+I535=20000     ;  Acceleration feed forward
+I536=0         ;  Notch filter N1
+I537=0         ;  Notch filter N2
+I538=0         ;  Notch filter D1
+I539=0         ;  Notch filter D2
+I555=$0        ;
+I556=0         ;
+I557=0         ;
+I558=0         ;
+I559=0         ;
+I560=0         ;  Servo Cycle Period Extension   Period
+I561=0         ;
+I562=0         ;
+I563=4194304   ;
+I564=-16       ; Dead Band Gain Factor
+I565=32        ; Dead Band Size (1/16)
+I566=6527      ;
+I567=4194304   ;
+I568=0         ;
+I569=32767     ;
+I570=0         ; nb of commutation cycle (default value :1)
+I571=1000      ; counts per N commutation cycles (default value :1000)
+I572=85        ; backlash take-up rate
+I573=0         ;
+I574=0         ;
+I575=0         ;
+I576=0         ;
+I577=0         ;
+I578=0         ;
+I579=0         ;
+I580=0         ;
+I581=0         ;
+I582=0         ;
+I583=$78301    ;  *****??? Adresse utilise pour relecture sortie en stepper ????
+I584=0         ;
+I585=0         ;
+I586=0         ;
+I587=0         ;
+I588=0         ;
+I589=0         ;
+I590=0         ;
+I591=0         ;
+I592=10        ; jog move calculation time (default value = 10)
+I595=0         ;
+I596=0         ;
+I597=0         ;
+I598=0         ;
+I599=0         ;
+
+
+
+;****************************************************************************
+;*                     I VARIABLES MOTOR ZOOM CAMERA N°6                   *
+;****************************************************************************
+; Motor DC type D
+;       xx pas/tours
+; Physical  encoder résolution 124160 pulse/mm
+
+
+I600=1         ; activation control
+I601=0         ; motor commutation (default value :0 disabled)
+I602=$7830A    ; Adresse moteurs $78308+2
+I603=$3506     ; Table codeur
+I604=$3506     ; Table codeur
+I605=$35C0     ;
+I606=0         ; motor positon following enable & mode
+I607=96        ; motor master
+I608=96        ; Position scale factor (default value : 96)
+I609=96        ; Velocity scale factor (default value : 96)
+I610=0         ;
+I611=16000     ; Fatal Following Error Limit (1/16 count)
+I612=16000     ; Warning Following Error Limit (1/16 count)
+I613=0         ; + Software Position Limit (cnts, 0=disabled)
+I614=0         ; - Software Position Limit (cnts, 0=disabled)
+I615=5         ; Abort/Lim Decel Rate (cnts/ms**2)
+I616=50        ; Maximum Velocity (cnts/ms)
+I617=0.2       ; Max Prog Acceleration (cnts/ms**2)
+I619=0.2       ; Max Jog/home Acceleration (cnts/ms**2) !!! attention en competition avec Ix20 / Ix21
+I620=0.5         ; Jog/Home Acceleration Time(ms). !!! attention en competition avec Ix19
+I621=0         ; Jog/Home S-Curve Time (ms)
+I622=10        ; Jog Speed (cnts/ms)
+I623=-5        ; Homing Speed 
+I624=$200001   ; /!\ Limites activees (actives : $200001) car aucune limite cablee
+I625=$78308    ; Flag Address
+I626=0         ; Home Offset (1/16 count) fait par j+ dynamique insuffisante cf prog home1.
+I627=0         ; Position Rollover Range (1/16 count)
+I628=1600       ; Motor In-Position Band (1/16 count)
+I629=0         ; Motor Output Offset (1 LSB of 16 bits DAC)
+
+;******************** Parametre regulation PID ******************************
+
+I630=800000       ; Gain proportionnel
+I631=50000         ; Derivee
+I632=50000     ; 60140 does work with i1960 = 0 but .....
+I633=500         ; Integral
+I634=0         ; Integration mode
+I635=20000         ; Acceleration feed forward
+I636=0         ; Notch filter N1
+I637=0         ; Notch filter N2
+I638=0         ; Notch filter D1
+I639=0         ; Notch filter D2
+;*******
+I655=$0        ;
+I656=0         ;
+I657=0         ;
+I658=0         ;
+I659=0         ;
+                ; PATCH ICI , ORI -> I1960=0 ; Servo Cycle Period Extension Period
+I660=0         ;  Servo Cycle Period Extension Period
+I661=0         ;
+I662=0         ;
+I663=4194304   ;
+I664=-16       ; Dead Band Gain Factor
+I665=32        ; Dead Band Size (1/16)
+I666=6527      ;
+I667=4194304   ;
+I668=0         ;
+I669=32767      ;
+I670=0         ; nb of commutation cycle (default value :1)
+I671=1000      ; counts per N commutation cycles (default value :1000)
+I672=85        ; backlash take-up rate
+I673=0         ;
+I674=0         ;
+I675=0         ;
+I676=0         ;
+I677=0         ;
+I678=0         ;
+I679=0         ;
+I680=0         ;
+I681=0         ;
+I682=0         ;
+I683=$78309    ;  *****??? Adresse utilise pour relecture sortie en stepper ????
+I684=0         ;
+I685=0         ;
+I686=0         ;
+I687=0         ;
+I688=0         ;
+I689=0         ;
+I690=0         ;
+I691=0         ;
+I692=10        ; jog move calculation time (default value = 10)
+I695=0         ;
+I696=0         ;
+I697=0         ;
+I698=0         ;
+I699=0         ;
+
+
+;*******************************************************************************
+;*                   I VARIABLES MOTOR APERTURE Axis Y No7                     *
+;*******************************************************************************
+; Moteur DC type B1A
+; Physical  encoder résolution 121241.6 pulse/mm Transmission ratio : 0.5mm/tr
+
+I700=1          ; activation control
+I701=0          ; motor commutation (default value :0 disabled)
+I702=$78312     ; Adresse moteurs (carte 2 channel 3)
+I703=$3507      ; Table codeur
+I704=$3507      ; Table codeur
+I705=$35C0      ;
+I706=0          ; motor positon following enable & mode
+I707=96         ; motor master
+I708=96         ; Position scale factor (default value : 96)
+I709=96         ; Velocity scale factor (default value : 96)
+I710=0          ;
+I711=32000      ; Fatal Following Error Limit (1/16 count)
+I712=16000      ; Warning Following Error Limit (1/16 count)
+I713=0          ; + Software Position Limit (cnts, 0=disabled)
+I714=0          ; - Software Position Limit (cnts, 0=disabled)
+I715=1          ; Abort/Lim Decel Rate (cnts/ms**2)
+I716=200        ; Maximum Velocity (cnts/ms)
+I717=1          ; Max Prog Acceleration (cnts/ms**2)
+I719=1          ; Max Jog/home Acceleration (cnts/ms**2) !!! attention en competition avec Ix20 / Ix21
+I720=1          ; Jog/Home Acceleration Time(ms). !!! attention en competition avec Ix19
+I721=0          ; Jog/Home S-Curve Time (ms)
+I722=200        ; Jog Speed (cnts/ms)
+I723=-200       ; Homing Speed and Direction (cnts/ms)
+I724=$200001    ; /!\ Limites activees (actives : $200001)
+I725=$78310     ; Flag Address
+I726=0          ; Home Offset (1/16 count) fait par j+ dynamique insuffisante cf prog home1.
+I727=0          ; Position Rollover Range (1/16 count)
+I728=160        ; Motor In-Position Band (1/16 count)
+I729=0          ; Motor Output Offset (1 LSB of 16 bits DAC)
+
+;*********************** Parametre regulation PID ******************************
+
+I730=8000000    ; Gain proportionnel
+I731=4000       ; Derivee
+I732=4000       ; Velocity feeed forward gain
+I733=30000      ; Integral
+I734=0          ; Integration mode
+I735=35000      ; Acceleration feed forward
+I736=0          ; Notch filter N1
+I737=0          ; Notch filter N2
+I738=0          ; Notch filter D1
+I739=0          ; Notch filter D2
+I755=$0
+I756=0
+I757=0
+I758=0
+I759=0
+I760=0          ; Servo Cycle Period Extension Period (440 µs)
+I761=0
+I762=0
+I763=4194304
+I764=-16        ; Dead Band Gain Factor
+I765=32         ; Dead Band Size (1/16)
+I766=6527
+I767=4194304
+I768=0
+I769=32567
+I770=0          ; nb of commutation cycle (default value :1)
+I771=1000       ; counts per N commutation cycles (default value :1000)
+I772=85         ; backlash take-up rate
+I773=0
+I774=0
+I775=0
+I776=0
+I777=0
+I778=0
+I779=0
+I780=0
+I781=0
+I782=0
+I783=$78311     ; *****??? Adresse utilise pour relecture sortie en stepper ????
+I784=0
+I785=0
+I786=0
+I787=0
+I788=0
+I789=0
+I790=0
+I791=0
+I792=10         ; jog move calculation time (default value = 10)
+I795=0
+I796=0
+I797=0
+I798=0
+I799=0
+
+;*******************************************************************************
+;*                 I VARIABLES MOTOR APERTURE Axis Z No8                       *
+;*******************************************************************************
+; Moteur DC type B1
+; Physical  encoder résolution 60620.8 pulse/mm Transmission ratio : 1mm/tr
+
+I800=1          ; activation control
+I801=0          ; motor commutation (default value :0 disabled)
+I802=$7831A     ; Adresse moteurs (carte 2 channel 4)
+I803=$3508      ; Table codeur
+I804=$3508      ; Table codeur
+I805=$35C0      ;
+I806=0          ; motor positon following enable & mode
+I807=96         ; motor master
+I808=96         ; Position scale factor (default value : 96)
+I809=96         ; Velocity scale factor (default value : 96)
+I810=0          ;
+I811=32000      ; Fatal Following Error Limit (1/16 count)
+I812=16000      ; Warning Following Error Limit (1/16 count)
+I813=0          ; + Software Position Limit (cnts, 0=disabled)
+I814=0          ; - Software Position Limit (cnts, 0=disabled)
+I815=1          ; Abort/Lim Decel Rate (cnts/ms**2)
+I816=200        ; Maximum Velocity (cnts/ms)
+I817=1          ; Max Prog Acceleration (cnts/ms**2)
+I819=1          ; Max Jog/home Acceleration (cnts/ms**2) !!! attention en competition avec Ix20 / Ix21
+I820=1          ; Jog/Home Acceleration Time(ms). !!! attention en competition avec Ix19
+I821=0          ; Jog/Home S-Curve Time (ms)
+I822=200        ; Jog Speed (cnts/ms)
+I823=-200       ; Homing Speed and Direction (cnts/ms)
+I824=$200001    ; /!\ Limites activees (actives : $200001)
+I825=$78318     ; Flag Address
+I826=0          ; Home Offset (1/16 count) fait par j+ dynamique insuffisante cf prog home1.
+I827=0          ; Position Rollover Range (1/16 count)
+I828=160        ; Motor In-Position Band (1/16 count)
+I829=0          ; Motor Output Offset (1 LSB of 16 bits DAC)
+
+;*********************** Parametre regulation PID ******************************
+
+I830=8000000    ; Gain proportionnel
+I831=1500       ; Derivee
+I832=1500       ; Velocity feeed forward gain
+I833=10000      ; Integral
+I834=0          ; Integration mode
+I835=35000      ; Acceleration feed forward
+I836=0          ; Notch filter N1
+I837=0          ; Notch filter N2
+I838=0          ; Notch filter D1
+I839=0          ; Notch filter D2
+I855=$0
+I856=0
+I857=0
+I858=0
+I859=0
+I860=0          ; Servo Cycle Period Extension Period (440 µs)
+I861=0
+I862=0
+I863=4194304
+I864=-16        ; Dead Band Gain Factor
+I865=32         ; Dead Band Size (1/16)
+I866=6527
+I867=4194304
+I868=0
+I869=32567
+I870=0          ; nb of commutation cycle (default value :1)
+I871=1000       ; counts per N commutation cycles (default value :1000)
+I872=85         ; backlash take-up rate
+I873=0
+I874=0
+I875=0
+I876=0
+I877=0
+I878=0
+I879=0
+I880=0
+I881=0
+I882=0
+I883=$78319     ; *****??? Adresse utilise pour relecture sortie en stepper ????
+I884=0
+I885=0
+I886=0
+I887=0
+I888=0
+I889=0
+I890=0
+I891=0
+I892=10         ; jog move calculation time (default value = 10)
+I895=0
+I896=0
+I897=0
+I898=0
+I899=0
+
+;*******************************************************************************
+;*               I VARIABLES MOTOR CAPILLARY/BEAMSTOP Axis Y No9               *
+;*******************************************************************************
+; Moteur DC type B1A
+; Physical  encoder résolution 121241.6 pulse/mm Transmission ratio : 0.5mm/tr
+
+I900=1          ; activation control
+I901=0          ; motor commutation (default value :0 disabled)
+I902=$79202     ; Adresse moteurs (carte 3 channel 1)
+I903=$3509      ; Table codeur
+I904=$3509      ; Table codeur
+I905=$35C0      ;
+I906=0          ; motor positon following enable & mode
+I907=96         ; motor master
+I908=96         ; Position scale factor (default value : 96)
+I909=96         ; Velocity scale factor (default value : 96)
+I910=0          ;
+I911=32000      ; Fatal Following Error Limit (1/16 count)
+I912=16000      ; Warning Following Error Limit (1/16 count)
+I913=0          ; 255000 + Software Position Limit (cnts, 0=disabled) a cause du levier de trappe sur le scintillateur
+I914=0          ; - Software Position Limit (cnts, 0=disabled)
+I915=1          ; Abort/Lim Decel Rate (cnts/ms**2)
+I916=100        ; Maximum Velocity (cnts/ms)
+I917=1          ; Max Prog Acceleration (cnts/ms**2)
+I919=1          ; Max Jog/home Acceleration (cnts/ms**2) !!! attention en competition avec Ix20 / Ix21
+I920=1          ; Jog/Home Acceleration Time(ms). !!! attention en competition avec Ix19
+I921=0          ; Jog/Home S-Curve Time (ms)
+I922=100        ; Jog Speed (cnts/ms)
+I923=-100       ; Homing Speed and Direction (cnts/ms)
+I924=$200001    ; /!\ Limites activees (actives : $200001)
+I925=$79200     ; Flag Address
+I926=0          ; Home Offset (1/16 count) fait par j+ dynamique insuffisante cf prog home1.
+I927=0          ; Position Rollover Range (1/16 count)
+I928=160        ; Motor In-Position Band (1/16 count)
+I929=0          ; Motor Output Offset (1 LSB of 16 bits DAC)
+
+;*********************** Parametre regulation PID ******************************
+
+I930=8000000    ; Gain proportionnel
+I931=4000       ; Derivee
+I932=4000       ; Velocity feeed forward gain
+I933=30000      ; Integral
+I934=0          ; Integration mode
+I935=35000      ; Acceleration feed forward
+I936=0          ; Notch filter N1
+I937=0          ; Notch filter N2
+I938=0          ; Notch filter D1
+I939=0          ; Notch filter D2
+I955=$0
+I956=0
+I957=0
+I958=0
+I959=0
+I960=0          ; Servo Cycle Period Extension Period (440 µs)
+I961=0
+I962=0
+I963=4194304
+I964=-16        ; Dead Band Gain Factor
+I965=32         ; Dead Band Size (1/16)
+I966=6527
+I967=4194304
+I968=0
+I969=32567
+I970=0          ; nb of commutation cycle (default value :1)
+I971=1000       ; counts per N commutation cycles (default value :1000)
+I972=85         ; backlash take-up rate
+I973=0
+I974=0
+I975=0
+I976=0
+I977=0
+I978=0
+I979=0
+I980=0
+I981=0
+I982=0
+I983=$79201     ; *****??? Adresse utilise pour relecture sortie en stepper ????
+I984=0
+I985=0
+I986=0
+I987=0
+I988=0
+I989=0
+I990=0
+I991=0
+I992=10         ; jog move calculation time (default value = 10)
+I995=0
+I996=0
+I997=0
+I998=0
+I999=0
+
+;*******************************************************************************
+;*                I VARIABLES MOTOR CAPILLARY/BEAMSTOP Axis Z N°10             *
+;*******************************************************************************
+; Moteur DC type B2
+; Physical  encoder résolution 19685.6 pulse/mm Transmission ratio : 1mm/tr
+
+I1000=1         ; activation control
+I1001=0         ; motor commutation (default value :0 disabled)
+I1002=$7920A    ; Adresse moteurs (carte 3 channel 2)
+I1003=$350A     ; Table codeur
+I1004=$350A     ; Table codeur
+I1005=$35C0     ;
+I1006=0         ; motor positon following enable & mode
+I1007=96        ; motor master
+I1008=96        ; Position scale factor (default value : 96)
+I1009=96        ; Velocity scale factor (default value : 96)
+I1010=0         ;
+I1011=32000     ;  Fatal Following Error Limit (1/16 count)
+I1012=16000     ;  Warning Following Error Limit (1/16 count)
+I1013=0         ; + Software Position Limit (cnts, 0=disabled)
+I1014=0         ;  - Software Position Limit (cnts, 0=disabled)
+I1015=2         ;  Abort/Lim Decel Rate (cnts/ms**2)
+I1016=150       ;  Maximum Velocity (cnts/ms)
+I1017=0.5       ;  Max Prog Acceleration (cnts/ms**2)
+I1019=0.5       ;  Max Jog/home Acceleration (cnts/ms**2) !!! attention en competition avec Ix20 / Ix21
+I1020=2         ;  Jog/Home Acceleration Time(ms). !!! attention en competition avec Ix19
+I1021=0         ;  Jog/Home S-Curve Time (ms)
+I1022=150       ;  Jog Speed (cnts/ms)				; MD2C PID a faire pour avoir 200
+I1023=-50       ;  2009-05-15 changeded from -150 / Homing Speed and Direction (cnts/ms)		; MD2C PID a faire pour avoir -200
+I1024=$200001   ;  /!\ Limites activees (actives : $200001)
+I1025=$79208    ;  Flag Address
+I1026=0         ;  Home Offset (1/16 count) fait par j+ dynamique insuffisante cf prog home1.
+I1027=0         ;  Position Rollover Range (1/16 count)
+I1028=160       ;  Motor In-Position Band (1/16 count)
+I1029=0         ;  Motor Output Offset (1 LSB of 16 bits DAC)
+
+;*********************** Parametre regulation PID ******************************
+
+I1030=8000000   ; Gain proportionnel
+I1031=3500      ; Derivee
+I1032=3500      ; Velocity feeed forward gain
+I1033=10000     ; Integral
+I1034=0         ; Integration mode
+I1035=35000     ; Acceleration feed forward
+I1036=0         ; Notch filter N1
+I1037=0         ; Notch filter N2
+I1038=0         ; Notch filter D1
+I1039=0         ; Notch filter D2
+;
+I1055=$0
+I1056=0
+I1057=0
+I1058=0
+I1059=0
+I1060=0          ; Servo Cycle Period Extension Period (440 µs)
+I1061=0
+I1062=0
+I1063=4194304
+I1064=-16        ; Dead Band Gain Factor
+I1065=32         ; Dead Band Size (1/16)
+I1066=6527
+I1067=4194304
+I1068=0
+I1069=32567
+I1070=0          ; nb of commutation cycle (default value :1)
+I1071=1000       ; counts per N commutation cycles (default value :1000)
+I1072=85         ; backlash take-up rate
+I1073=0
+I1074=0
+I1075=0
+I1076=0
+I1077=0
+I1078=0
+I1079=0
+I1080=0
+I1081=0
+I1082=0
+I1083=$79209     ; *****??? Adresse utilise pour relecture sortie en stepper ????
+I1084=0
+I1085=0
+I1086=0
+I1087=0
+I1088=0
+I1089=0
+I1090=0
+I1091=0
+I1092=10         ; jog move calculation time (default value = 10)
+I1095=0
+I1096=0
+I1097=0
+I1098=0
+I1099=0
+
+;*******************************************************************************
+;*                  I VARIABLES MOTOR SCINTILLATOR Axis Z No11                 *
+;*******************************************************************************
+; Moteur DC type B2
+; Physical  encoder résolution 19685.6 pulse/mm Transmission ratio : 1mm/tr
+
+I1100=1          ; activation control
+I1101=0          ; motor commutation (default value :0 disabled)
+I1102=$79212     ; Adresse moteurs (carte 3 channel 3)
+I1103=$350B      ; Table codeur
+I1104=$350B      ; Table codeur
+I1105=$35C0      ;
+I1106=0          ; motor positon following enable & mode
+I1107=96         ; motor master
+I1108=96         ; Position scale factor (default value : 96)
+I1109=96         ; Velocity scale factor (default value : 96)
+I1110=0          ;
+I1111=32000      ; Fatal Following Error Limit (1/16 count)
+I1112=16000      ; Warning Following Error Limit (1/16 count)
+I1113=0          ; + Software Position Limit (cnts, 0=disabled)
+I1114=0          ; - Software Position Limit (cnts, 0=disabled)
+I1115=2          ; Abort/Lim Decel Rate (cnts/ms**2)
+I1116=150        ; Maximum Velocity (cnts/ms)
+I1117=0.5        ; Max Prog Acceleration (cnts/ms**2) ; MD2C 1 c'est deja trop (2 pour SLS)
+I1119=0.5        ; Max Jog/home Acceleration (cnts/ms**2) !!! attention en competition avec Ix20 / Ix21 ; MD2C 1 c'est deja trop (2 pour SLS)
+I1120=1          ; Jog/Home Acceleration Time(ms). !!! attention en competition avec Ix19
+I1121=3          ; Jog/Home S-Curve Time (ms)
+I1122=150        ; Jog Speed (cnts/ms)
+I1123=-100       ; Homing Speed and Direction (cnts/ms)
+I1124=$200001    ; /!\ Limites activees (actives : $200001)
+I1125=$79210     ; Flag Address
+I1126=0          ; Home Offset (1/16 count) fait par j+ dynamique insuffisante cf prog home1.
+I1127=0          ; Position Rollover Range (1/16 count)
+I1128=160        ; Motor In-Position Band (1/16 count)
+I1129=0          ; Motor Output Offset (1 LSB of 16 bits DAC)
+
+;*********************** Parametre regulation PID ******************************
+
+I1130=8000000    ; Gain proportionnel
+I1131=15000      ; Derivee
+I1132=15000      ; Velocity feeed forward gain
+I1133=40000      ; Integral
+I1134=0          ; Integration mode
+I1135=35000      ; Acceleration feed forward
+I1136=0          ; Notch filter N1
+I1137=0          ; Notch filter N2
+I1138=0          ; Notch filter D1
+I1139=0          ; Notch filter D2
+I1155=$0
+I1156=0
+I1157=0
+I1158=0
+I1159=0
+I1160=0          ; Servo Cycle Period Extension Period (440 µs)
+I1161=0
+I1162=0
+I1163=4194304
+I1164=-16        ; Dead Band Gain Factor
+I1165=32         ; Dead Band Size (1/16)
+I1166=6527
+I1167=4194304
+I1168=0
+I1169=32567
+I1170=0          ; nb of commutation cycle (default value :1)
+I1171=1000       ; counts per N commutation cycles (default value :1000)
+I1172=85         ; backlash take-up rate
+I1173=0
+I1174=0
+I1175=0
+I1176=0
+I1177=0
+I1178=0
+I1179=0
+I1180=0
+I1181=0
+I1182=0
+I1183=$78210     ; *****??? Adresse utilise pour relecture sortie en stepper ????
+I1184=0
+I1185=0
+I1186=0
+I1187=0
+I1188=0
+I1189=0
+I1190=0
+I1191=0
+I1192=10         ; jog move calculation time (default value = 10)
+I1195=0
+I1196=0
+I1197=0
+I1198=0
+I1199=0
+
+;*******************************************************************************
+;*                    I VARIABLES MOTOR AXE X TABLE XY No17                    *
+;*******************************************************************************
+; Moteur ST type A
+;       24 pas/tours
+;       50 µpas =>1200 pas/tour - Vmax = 5 000rpm => 100 000 pulses/s
+;       Fréquence de sortie Pmac est divisée par 2 ??? => I1722 =200 (200 000 pulses/s)
+; Physical  encoder résolution 5744.88198 pulse/mm
+
+I1700=1         ; activation control
+I1701=0         ; motor commutation (default value :0 disabled)
+I1702=$7A204    ; Adresse moteurs
+I1703=$3511     ; Table codeur
+I1704=$3511     ; Table codeur
+I1705=$35C0     ;
+I1706=0         ; motor positon following enable & mode
+I1707=96        ; motor master
+I1708=96        ; Position scale factor (default value : 96)
+I1709=96        ; Velocity scale factor (default value : 96)
+I1710=0         ;
+I1711=16000     ; Fatal Following Error Limit (1/16 count)
+I1712=16000     ; Warning Following Error Limit (1/16 count)
+I1713=0         ; +Software Position Limit (cnts, 0=disabled)
+I1714=0         ; -Software Position Limit (cnts, 0=disabled)
+I1715=1         ; Abort/Lim Decel Rate (cnts/ms**2)
+I1716=150       ; Maximum Velocity (cnts/ms)
+I1717=0.5       ; Max Prog Acceleration (cnts/ms**2)
+I1719=0.5       ; Max Jog/home Acceleration (cnts/ms**2) !!! attention en competition avec Ix20 / Ix21
+I1720=1         ; Jog/Home Acceleration Time(ms). !!! attention en competition avec Ix19
+I1721=0         ; Jog/Home S-Curve Time (ms)
+I1722=100       ; Jog Speed (cnts/ms)
+I1723=-100      ; Homing Speed and Direction (cnts/ms)
+I1724=$200001   ; /!\ Limites activees (actives : $200001)
+I1725=$7A200    ; Flag Address
+I1726=0         ; Home Offset (1/16 count) fait par j+ dynamique insuffisante cf prog home1.
+I1727=0         ; Position Rollover Range (1/16 count)
+I1728=160       ; Motor In-Position Band (1/16 count)
+I1729=0         ; Motor Output Offset (1 LSB of 16 bits DAC)
+
+;*********************** Parametre regulation PID ******************************
+
+I1730=700       ; Gain proportionnel
+I1731=0         ; Derivee
+;I1732=60140    ; Check i1760=0 Velocity feeed forward gain  = 6600 * servo Freq 2.26 Mhz
+I1732=15050	; Check i1760=3
+I1733=0         ; Integral
+I1734=0         ; Integration mode
+I1735=0         ; Acceleration feed forward
+I1736=0         ; Notch filter N  1
+I1737=0         ; Notch filter N  2
+I1738=0         ; Notch filter D  1
+I1739=0         ; Notch filter D  2
+;*******
+I1755=$0        ;
+I1756=0         ;
+I1757=0         ;
+I1758=0         ;
+I1759=0         ;
+                ; PATCH ICI , ORI -> I1760=0; Servo Cycle Period Extension Period
+I1760=3         ;  Servo Cycle Period Extension Period
+I1761=0         ;
+I1762=0         ;
+I1763=4194304   ;
+I1764=-16       ; Dead Band Gain Factor
+I1765=16        ; Dead Band Size (1/16)
+I1766=6527      ;
+I1767=4194304   ; 
+I1768=0         ;
+I1769=3333      ;
+I1770=0         ; nb of commutation cycle (default value :1)
+I1771=1000      ; counts per N commutation cycles (default value :1000)
+I1772=85        ; backlash take-up rate
+I1773=0         ;
+I1774=0         ;
+I1775=0         ;
+I1776=0         ;
+I1777=0         ;
+I1778=0         ;
+I1779=0         ;
+I1780=0         ;
+I1781=0         ;
+I1782=0         ;
+I1783=$7A201    ; *****??? Adres  se utilise pour relecture sortie en stepper ????
+I1784=0         ;
+I1785=0         ;
+I1786=0         ;
+I1787=0         ;
+I1788=0         ;
+I1789=0         ;
+I1790=0         ;
+I1791=0         ;
+I1792=10        ; jog move calculation time (default value = 10)
+I1795=0         ;
+I1796=0         ;
+I1797=0         ;
+I1798=0         ;
+I1799=0         ;
+
+;*******************************************************************************
+;*                     I VARIABLES MOTOR AXE Y TABLE XY No18                   *
+;*******************************************************************************
+; Moteur ST type A
+;       24 pas/tours
+;       50 µpas =>1200 pas/tour - Vmax = 5 000rpm => 100 000 pulses/s
+;       Fréquence de sortie Pmac est divisée par 2 ??? => I1822 =200 (200 000 pulses/s)
+; Physical  encoder résolution 5744.88198 pulse/mm
+
+I1800=1         ; activation control
+I1801=0         ; motor commutation (default value :0 disabled)
+I1802=$7A20C    ; Adresse moteurs $7A20A+2
+I1803=$3512     ; Table codeur
+I1804=$3512     ; Table codeur
+I1805=$35C0     ;
+I1806=0         ; motor positon following enable & mode
+I1807=96        ; motor master
+I1808=96        ; Position scale factor (default value : 96)
+I1809=96        ; Velocity scale factor (default value : 96)
+I1810=0         ;
+I1811=16000     ; Fatal Following Error Limit (1/16 count)
+I1812=16000     ; Warning Following Error Limit (1/16 count)
+I1813=0         ; + Software Position Limit (cnts, 0=disabled)
+I1814=0         ; - Software Position Limit (cnts, 0=disabled)
+I1815=1         ; Abort/Lim Decel Rate (cnts/ms**2)
+I1816=150       ; Maximum Velocity (cnts/ms)
+I1817=0.5       ; Max Prog Acceleration (cnts/ms**2)
+I1819=0.5       ; Max Jog/home Acceleration (cnts/ms**2) !!! attention en competition avec Ix20 / Ix21
+I1820=1         ; Jog/Home Acceleration Time(ms). !!! attention en competition avec Ix19
+I1821=0         ; Jog/Home S-Curve Time (ms)
+I1822=100       ; Jog Speed (cnts/ms)
+I1823=-100      ; Homing Speed and Direction (cnts/ms) OK normalement
+I1824=$200001   ; /!\ Limites activees (actives : $200001)
+I1825=$7A208    ; Flag Address
+I1826=0         ; Home Offset (1/16 count) fait par j+ dynamique insuffisante cf prog home1.
+I1827=0         ; Position Rollover Range (1/16 count)
+I1828=160       ; Motor In-Position Band (1/16 count)
+I1829=0         ; Motor Output Offset (1 LSB of 16 bits DAC)
+
+;*********************** Parametre regulation PID ******************************
+
+I1830=700       ; Gain proportionnel
+I1831=0         ; Derivee
+I1832=15050	; Check i1860=3
+I1833=0         ; Integral
+I1834=0         ; Integration mode
+I1835=0         ; Acceleration feed forward
+I1836=0         ; Notch filter N1
+I1837=0         ; Notch filter N2
+I1838=0         ; Notch filter D1
+I1839=0         ; Notch filter D2
+
+I1855=$0        ;
+I1856=0         ;
+I1857=0         ;
+I1858=0         ;
+I1859=0         ;                
+; PATCH ICI I1860=0 ; Servo Cycle Period Extension Period
+I1860=3         ; Servo Cycle Period Extension Period
+I1861=0         ;
+I1862=0         ;
+I1863=4194304   ;
+I1864=-16       ; Dead Band Gain Factor
+I1865=16        ; Dead Band Size (1/16)
+I1866=6527      ;
+I1867=4194304   ;
+I1868=0         ;
+I1869=3333      ;
+I1870=0         ; nb of commutation cycle (default value :1)
+I1871=1000      ; counts per N commutation cycles (default value :1000)
+I1872=85        ; backlash take-up rate
+I1873=0         ;
+I1874=0         ;
+I1875=0         ;
+I1876=0         ;
+I1877=0         ;
+I1878=0         ;
+I1879=0         ;
+I1880=0         ;
+I1881=0         ;
+I1882=0         ;
+I1883=$7A209    ; *****??? Adresse utilise pour relecture sortie en stepper ????
+I1884=0         ;
+I1885=0         ;
+I1886=0         ;
+I1887=0         ;
+I1888=0         ;
+I1889=0         ;
+I1890=0         ;
+I1891=0         ;
+I1892=10        ; jog move calculation time (default value = 10)
+I1895=0         ;
+I1896=0         ;
+I1897=0         ;
+I1898=0         ;
+I1899=0         ;
+
+;*******************************************************************************
+;*             I VARIABLES MOTOR Mini Kappa 1 (Elbow rotation) N°19            *
+;*******************************************************************************
+; Moteur ST type B + encoder type B2
+; 20 steps/rev * 1024 gearatio * 50 microsteps
+
+I1900=1         ; activation control
+I1901=0         ; motor commutation (default value :0 disabled)
+I1902=$7A214    ; Adresse moteurs (carte 7 channel 1) $7A302+2
+I1903=$3513     ; Table codeur
+I1904=$3513     ; Table codeur
+I1905=$35C0     ;
+I1906=0         ; motor positon following enable & mode
+I1907=96        ; motor master
+I1908=96        ; Position scale factor (default value : 96)
+I1909=96        ; Velocity scale factor (default value : 96)
+I1910=0         ;
+I1911=32000     ; Fatal Following Error Limit (1/16 count)
+I1912=16000     ; Warning Following Error Limit (1/16 count)
+I1913=0         ; + Software Position Limit (cnts, 0=disabled)
+I1914=0         ; - Software Position Limit (cnts, 0=disabled)
+I1915=1         ; Abort/Lim Decel Rate (cnts/ms**2)
+I1916=60        ; Maximum Velocity (cnts/ms)
+I1917=0.2       ; Max Prog Acceleration (cnts/ms**2)
+I1919=0.2       ; Max Jog/home Acceleration (cnts/ms**2) !!! attention en competition avec Ix20 / Ix21
+I1920=1         ; Jog/Home Acceleration Time(ms). !!! attention en competition avec Ix19
+I1921=0         ; Jog/Home S-Curve Time (ms)
+I1922=50        ; Jog Speed (cnts/ms)
+I1923=-25       ; Homing Speed and Direction (cnts/ms)
+I1924=$200001   ; /!\ Limites activees with Zoom DC (inactives : $220001 / actives : $200001 )
+I1925=$7A210    ; Flag Address
+I1926=0         ; Home Offset (1/16 count) fait par j+ dynamique insuffisante cf prog home1.
+I1927=0         ; Position Rollover Range (1/16 count)
+I1928=160       ; Motor In-Position Band (1/16 count)
+I1929=0         ; Motor Output Offset (1 LSB of 16 bits DAC)
+
+;*********************** Parametre regulation PID ******************************
+
+I1930=700    	; Gain proportionnel
+I1931=0    	; Derivee
+I1932=15050  	; Velocity feeed forward gain - Check i1760=3
+I1933=0     	; Integral
+I1934=0         ; Integration mode
+I1935=0		; Acceleration feed forward
+I1936=0        	; Notch filter N1
+I1937=0         ; Notch filter N2
+I1938=0         ; Notch filter D1
+I1939=0         ; Notch filter D2
+;*******
+I1955=$0
+I1956=0
+I1957=0
+I1958=0
+I1959=0
+I1960=3         ; Servo Cycle Period Extension Period
+I1961=0
+I1962=0
+I1963=4194304
+I1964=-16       ; Dead Band Gain Factor
+I1965=32        ; Dead Band Size (1/16)
+I1966=6527
+I1967=4194304
+I1968=0
+I1969=32567     ; ???
+I1970=0         ; nb of commutation cycle (default value :1)
+I1971=1000      ; counts per N commutation cycles (default value :1000)
+I1972=85        ; backlash take-up rate
+I1973=0
+I1974=0
+I1975=0
+I1976=0
+I1977=0
+I1978=0
+I1979=0
+I1980=0
+I1981=0
+I1982=0
+I1983=$7A211    ; *****??? Adresse utilise pour relecture sortie en stepper ????
+I1984=0
+I1985=0
+I1986=0
+I1987=0
+I1988=0
+I1989=0
+I1990=0
+I1991=0
+I1992=10        ; jog move calculation time (default value = 10)
+I1995=0
+I1996=0
+I1997=0
+I1998=0
+I1999=0
+
+;*******************************************************************************
+;*        I VARIABLES MOTOR Mini Kappa 2 (Sample Holder rotation) N°20         *
+;*******************************************************************************
+; Moteur ST type B + encoder type B2
+; 20 steps/rev * 256 gearatio * 50 microsteps
+
+
+I2000=1         ; activation control
+I2001=0         ; motor commutation (default value :0 disabled)
+I2002=$7A21C    ; Adresse moteurs (carte 7 channel 2) $7A30A+2
+I2003=$3514     ; Table codeur
+I2004=$3514     ; Table codeur
+I2005=$35C0     ;
+I2006=0         ; motor positon following enable & mode
+I2007=96        ; motor master
+I2008=96        ; Position scale factor (default value : 96)
+I2009=96        ; Velocity scale factor (default value : 96)
+I2010=0         ;
+I2011=32000     ; Fatal Following Error Limit (1/16 count)
+I2012=16000     ; Warning Following Error Limit (1/16 count)
+I2013=0         ; + Software Position Limit (cnts, 0=disabled)
+I2014=0         ; - Software Position Limit (cnts, 0=disabled)
+I2015=1    	; Abort/Lim Decel Rate (cnts/ms**2)
+I2016=60 	; Maximum Velocity (cnts/ms)
+I2017=0.2       ; Max Prog Acceleration (cnts/ms**2)
+I2019=0.2       ; Max Jog/home Acceleration (cnts/ms**2) !!! attention en competition avec Ix20 / Ix21
+I2020=1         ; Jog/Home Acceleration Time(ms). !!! attention en competition avec Ix19
+I2021=0         ; Jog/Home S-Curve Time (ms)
+I2022=50        ; Jog Speed (cnts/ms)
+I2023=50        ; Homing Speed and Direction (cnts/ms)
+I2024=$220001   ; /!\ Limites activees (inactives : $220001 / actives : $200001 )
+I2025=$7A218    ;  Flag Address
+I2026=0         ; Home Offset (1/16 count) fait par j+ dynamique insuffisante cf prog home1.
+I2027=0         ; Position Rollover Range (1/16 count)
+I2028=160       ; Motor In-Position Band (1/16 count)
+I2029=0         ; Motor Output Offset (1 LSB of 16 bits DAC)
+
+;*********************** Parametre regulation PID ******************************
+
+I2030=700      	; Gain proportionnel
+I2031=0		; Derivee
+I2032=15050     ; Velocity feeed forward gain
+I2033=0		; Integral
+I2034=0         ; Integration mode
+I2035=0         ; Acceleration feed forward
+I2036=0         ; Notch filter N1
+I2037=0         ; Notch filter N2
+I2038=0         ; Notch filter D1
+I2039=0         ; Notch filter D2
+;******
+I2055=$0
+I2056=0
+I2057=0
+I2058=0
+I2059=0
+I2060=3          ; Servo Cycle Period Extension Period
+I2061=0
+I2062=0
+I2063=4194304
+I2064=-16        ; Dead Band Gain Factor
+I2065=32         ; Dead Band Size (1/16)
+I2066=6527
+I2067=4194304
+I2068=0
+I2069=32567      ; ???
+I2070=0          ; nb of commutation cycle (default value :1)
+I2071=1000       ; counts per N commutation cycles (default value :1000)
+I2072=85         ; backlash take-up rate
+I2073=0
+I2074=0
+I2075=0
+I2076=0
+I2077=0
+I2078=0
+I2079=0
+I2080=0
+I2081=0
+I2082=0
+I2083=$7A211     ; *****??? Adresse utilise pour relecture sortie en stepper ????
+I2084=0
+I2085=0
+I2086=0
+I2087=0
+I2088=0
+I2089=0
+I2090=0
+I2091=0
+I2092=10         ; jog move calculation time (default value = 10)
+I2095=0
+I2096=0
+I2097=0
+I2098=0
+I2099=0
+
+
+
+;*******************************************************************************
+;*                          DATA GATHERING SETTING                             *
+;*******************************************************************************
+I5000=2           ; Stored in PMAC=0, DPRAM=2
+I5001=$80008B     ; Motor 1 Encoder address
+I5002=$80010B     ; Motor 2 Encoder address
+I5003=$80018B     ; Motor 3 Encoder address
+I5004=$80020B     ; Motor 4 Encoder address
+I5005=$80028B     ; Motor 5 Encoder address
+I5006=$80030B     ; Motor 6 Encoder address
+I5007=$80038B     ; Motor 7 Encoder address
+I5008=$80040B     ; Motor 8 Encoder address
+I5009=$80048B     ; Motor 9 Encoder address
+I5010=$80050B     ; Motor 10 Encoder address
+I5011=$80058B     ; Motor 11 Encoder address
+I5012=$80060B     ; Motor 12 Encoder address
+I5013=$80068B     ; Motor 13 Encoder address
+I5014=$80070B     ; Motor 14 Encoder address
+I5015=$80078B     ; Motor 15 Encoder address
+I5016=$80080B     ; Motor 16 Encoder address
+I5017=$07A205     ; ADC No1, Registre X, Photodiode 1 (interne) MACRO N1 ???
+I5018=$07A215     ; ADC No2, Registre X, Photodiode 2 (externe) MACRO N1 ???
+;I5019=$?????     ; ADC No3, Fluorescence detector
+I5020=$078C02     ; FastShutterIsOpen = 0 sur carte 11C ???
+;I5020=$478208    ; FastShutterIsOpen = 0 entrée ENCC2 ???
+I5021=$800091     ; Phi Following Error(/Ixx08 * 32) ???
+I5049=1        	  ; Data Gathering Period (Servo Cycles)
+I5050=0           ; Disable the 24 first sources
+I5051=0           ; Disable the 24 next sources
+
+
+
+;*******************************************************************************
+;*                       COORDINATE SYSTEMS SET UP                             *
+;*******************************************************************************
+
+;************************* Systeme de coordonnee 1  ****************************
+i5189=3000   ; Vitesse de mouvement par defaut  3000 inc/ms
+i5190=1      ; Unite de temps du C.S ( ms )
+i5394=10000  ; Vitesse de changement de slew rate (%)
+
+;************************* Systeme de coordonnee 2  ****************************
+
+i5289=200    ; Vitesse de mouvement par defaut  200 inc/ms.
+i5290=1	     ; Unite de temps du C.S ( ms )
+i5294=10000  ; Vitesse de changement de slew rate (%)
+
+;************************* Systeme de coordonnee 3  ****************************
+
+i5389=50     ; Vitesse de mouvement par defaut  200 inc/ms.
+i5390=1      ; Unite de temps du C.S ( ms )
+i5394=10000  ; Vitesse de changement de slew rate (%)
+
+;************************* Systeme de coordonnee 4  ****************************
+i5489=80     ; Vitesse de mouvement par defaut  80 inc/ms.
+i5490=1      ; Unite de temps du C.S ( ms )
+i5494=10000  ; Vitesse de changement de slew rate (%)
+
+;************************* Systeme de coordonnee 5  ****************************
+i5589=80     ; Vitesse de mouvement par defaut  80 inc/ms.
+i5590=1      ; Unite de temps du C.S ( ms )
+i5594=10000  ; Vitesse de changement de slew rate (%)
+
+;************************* Systeme de coordonnee 6  ****************************
+i5689=80     ; Vitesse de mouvement par defaut  80 inc/ms.
+i5690=1      ; Unite de temps du C.S ( ms )
+i5694=10000  ; Vitesse de changement de slew rate (%)
+
+;************************* Systeme de coordonnee 7  ****************************
+i5789=200    ; Vitesse de mouvement par defaut  200 inc/ms.
+i5790=1      ; Unite de temps du C.S ( ms )
+i5794=10000  ; Vitesse de changement de slew rate (%)
+
+
+
+;*******************************************************************************
+;*                      Declaration des systemes de coordonnees                *
+;*******************************************************************************
+&1
+#1->X   ; Axe Phi
+
+&2
+#17->X  ; XCentring
+#18->Y  ; YCentring
+
+&3
+#2->X   ; x Translation
+#3->Y   ; Y Translation
+#4->Z   ; Z Translation
+
+&4
+#6->Z   ; Zoom
+
+&5
+#7->Y   ; Y Aperture
+#8->Z   ; Z Aperture
+#9->U   ; Y Capillary
+#10->V  ; Z Capillary
+#11->W  ; Z Scintillator
+
+;&6
+;No axis in this c.s.
+
+&7
+#19->X   ;  Mini Kappa 1 (Elbow rotation)
+#20->Y   ;  Mini Kappa 2 (Sample Holder rotation)
+
+
+
+;*******************************************************************************
+;*                               Pourcentage                                   *
+;*******************************************************************************
+%100
+
+
+
+;*******************************************************************************
+;*                          Multi channel ivar IC*                             *
+;*******************************************************************************
+
+;************************* Multi channel ivar IC2 : Phi, Main Table X,Y,Z ******
+;(la carte 1 genere la clock du systeme UMAC CPCI ) ...
+;I7200..I7202 DEFINITIONS SUPERSEED ALL OTHER I7x00..I7x02 other definitions below
+i7200=6527  ; Max phase clock : default value
+i7201=0     ; Phase clock freq : default value
+i7202=0     ; diviseur de clock 0:110 us 3:440 us 
+	    ; Att. X,Y,Z ont un diviseur de cette frequence
+i7203=2256  ; Servo IC Hardware control 
+	    ; Att. la valeur a ete modifie pour le codeur etel a 4.600.000 incs/tr
+i7204=15    ; Pfm pulse width control
+i7207=0
+
+;************************* Multi channel ivar IC3 ******************************
+; (la carte 2 recoit la clock de la carte 1) ...
+; I7300..I7302 DEFINITIONS HERE ARE USELESS - CHECK I7200..I7202 instead 
+i7300=6527  ; Max phase clock - USELESS
+i7302=3     ; Servo clock frequency control 440 us - WARNING = 110 us INDEED !!!!
+i7303=2258  ; Servo IC Hardware control - USELESS
+i7304=15    ; Pfm pulse width control
+i7307=3     ; la carte 2 recoit la clock de la carte 1
+
+;************************* Multi channel ivar IC4 ******************************
+; (la carte 3 recoit la clock de la carte 1) ...
+; I7400..I7402 DEFINITIONS HERE ARE USELESS - CHECK I7200..I7202 instead 
+i7400=6527  ; Max phase clock - USELESS
+i7402=3     ; Servo clock frequency control 440 us - WARNING = 110 us INDEED !!!
+i7403=2258  ; Servo IC Hardware control - USELESS
+i7404=15    ; Pfm pulse width control
+i7407=3     ; la carte 3 recoit la clock de la carte 1
+
+;************************* Multi channel ivar IC5 ******************************
+; (la carte 4 recoit la clock de la carte 1) ...
+; I7500..I7502 DEFINITIONS HERE ARE USELESS - CHECK I7200..I7202 instead 
+i7500=6527  ; Max phase clock - USELESS
+i7502=3     ; Servo clock frequency control 440 us - WARNING = 110 us INDEED !!!
+i7503=2258  ; Servo IC Hardware control - USELESS
+i7504=15    ; Pfm pulse width control
+i7507=3     ; la carte 4 recoit la clock de la carte 1
+
+;************************* Multi channel ivar IC6 carte 24c2a IO analogiques****
+; (la carte 5 recoit la clock de la carte 1) ...
+; I7600..I7602 DEFINITIONS HERE ARE USELESS - CHECK I7200..I7202 instead 
+i7600=6527  ; Max phase clock	- USELESS
+i7601=0     ; Phase clock frequency ; USELESS
+i7602=3     ; Servo clock frequency control 440 us - WARNING = 110 us INDEED !!!
+i7603=2258  ; Servo IC Hardware control - NOT USELESS BUT I1960 USED INSTEAD 
+i7604=15    ; Pfm pulse width control
+i7607=3     ; la carte 5 recoit la clock de la carte 1
+i7606=$1FFFFF ; valeur à mettre pour le dspgate version D (pour lire les ADC)
+i7626=3
+
+
+;*******************************************************************************
+;*                              Params Ch*                                     *
+;*******************************************************************************
+
+;************************* Params Ch1 : Phi axis *******************************
+i7210=$7    ;  Ch1 encoder decode control 3=4*CW or 7=4*CCW
+i7212=$1    ;  Ch1 capture control  flag high      ;on index (CHCn) high
+i7213=$0    ;  Ch1 capture flag select 2=NLim
+i7216=$3    ;  Ch1 output mode select A/B en Dac,C/P
+i7217=$0    ;  Ch1 Output Invert Control (=0 -> Do not invert Outputs)
+
+;************************* Params Ch2 : XYZ table X axis ***********************
+i7220=$3    ;  Ch2 encoder decode control 3=4xCW or 7=4xCCW
+i7222=$2    ;  Ch2 capture control flag high
+i7223=$2    ;  Ch2 capture flag select 2=Nlim
+i7226=$3    ;  Ch2 output mode select C/PFM
+i7227=$0    ;  CH2 output invert control
+
+;************************* Params Ch3 : XYZ table Y axis ***********************
+i7230=$3    ;  Ch3 encoder decode control 3=4xCW or 7=4xCCW
+i7232=$2    ;  Ch3 capture control  flag high
+i7233=$2    ;  Ch3 capture flag select 2=Nlim
+i7236=$3    ;  Ch3 output mode select A/B en Dac,C/P
+i7237=$0    ;  CH3 output invert control
+
+;************************* Params Ch4 : XYZ table Z axis ***********************
+i7240=$3    ;  Ch4 encoder decode control 3=4xCW or 7=4xCCW
+i7242=$2    ;  Ch4 capture control  flag high
+i7243=$2    ;  Ch4 capture flag select 0=Home
+i7246=$3    ;  Ch4 output mode select A/B en Dac,C/P
+i7247=$0    ;  CH4 output invert control
+
+;************************* Params Ch5 : Analyser *******************************
+i7310=$3    ;  Ch5 encoder decode control 3=4xCW or 7=4xCCW
+i7312=$2    ;  Ch5 capture control  flag high
+i7313=$2    ;  Ch5 capture flag select 0=Home
+i7316=$3    ;  Ch5 output mode select A/B en Dac,C/P
+
+;************************ Params Ch6 : Zoom Camera *************************
+i7320=$7    ;  Ch6 encoder decode control 8=registre interne
+i7322=$2    ;  Ch6 capture control  flag high
+i7323=$2    ;  Ch6 capture flag select 0=Home / 2=Nlim
+i7326=$3    ;  Ch6 output mode select A/B en Dac,C/P
+i7327=$3    ;  ICI COCO 2: Do not invert Outputs A and B; Invert Output C $3=Invert Outputs A and B;and C Ch19 output invert control
+
+
+;************************* Params Ch7 : Aperture Y axis*************************
+i7330=$7    ;  Ch7 encoder decode control 3=4xCW or 7=4xCCW 
+i7332=$2    ;  Ch7 capture control  flag high
+i7333=$2    ;  Ch7 capture flag select 0=Home
+i7336=$3    ;  Ch7 output mode select A/B en Dac,C/P
+
+;************************* Params Ch8 : Aperture Z axis ************************
+i7340=$3    ;  Ch8 encoder decode control 3=4*CW or 7=4*CCW
+i7342=$2    ;  Ch8 capture control  flag high
+i7343=$2    ;  Ch8 capture flag select 0=Home
+i7346=$3    ;  Ch8 output mode select A/B en Dac,C/P
+i7347=$0    ;  Ch8 output invert control A/B en Dac,C/P
+
+;************************* Params Ch9 : Capillary Y axis ***********************
+i7410=$7    ;  Ch9 encoder decode control 3=4*CW or 7=4*CCW
+i7412=$2    ;  Ch9 capture control  flag high
+i7413=$2    ;  Ch9 capture flag select 0=Home
+i7416=$3    ;  Ch9 output mode select A/B en Dac,C/P
+
+;************************* Params Ch10 : Capillary Z axis **********************
+i7420=$3    ;  2009-05-14 changed from 7 / Ch10 encoder decode control 3=4*CW or 7=4*CCW
+i7422=$2    ;  Ch10 capture control  flag high
+i7423=$2    ;  Ch10 capture flag select 0=Home
+i7426=$3    ;  Ch10 output mode select A/B en Dac,C/P
+i7427=$0    ;  2009-05-14 changed from 3 / Ch10 output invert control A/B en Dac,C/P
+
+;************************* Params Ch11 : Scintillator Y axis *******************
+i7430=$7    ;  Ch11 encoder decode control 3=4xCW or 7=4xCCW
+i7432=$2    ;  Ch11 capture control  flag high
+i7433=$2    ;  Ch11 capture flag select 0=Home
+i7436=$3    ;  Ch11 output mode select A/B en Dac,C/P
+
+;************************* Params Ch17 : XY table centring Y axis **************
+i7600=6527  ;
+i7610=$8    ;  Ch17 encoder decode control 8=registre interne
+i7612=$2    ;  Ch17 capture control  flag high
+i7613=$2    ;  Ch17 capture flag select 0=Home / 2=Nlim
+i7616=$3    ;  Ch17 output mode select A/B en Dac,C/P
+i7617=$2    ;  ICI COCO 2: Do not invert Outputs A and B
+	    ;  Invert Output C $3=Invert Outputs A and B
+	    ;  and C  - Load Screw go CW for J+/Lim+
+
+;************************* Params Ch18 : XY table centring X axis **************
+i7600=6527  ;
+i7620=$8    ;  Ch18 encoder decode control 8=registre interne
+i7622=$2    ;  Ch18 capture control  flag high
+i7623=$2    ;  Ch18 capture flag select 0=Home / 2=Nlim
+i7626=$3    ;  Ch18 output mode select A/B en Dac,C/P
+i7627=$2    ;  ICI COCO 2: Do not invert Outputs A and B
+	    ;  Invert Output C $3=Invert Outputs A and B
+            ;  and C - Load Screw go CW for J+/Lim+
+
+;************************* Params Ch19 : Mini Kappa 1 (Elbow rotation)**********
+i7600=6527  ;
+i7630=$8    ;  Ch19 encoder decode control 8=registre interne
+i7632=$2    ;  Ch19 capture control  flag high
+i7633=$2    ;  Ch19 capture flag select 0=Home / 2=Nlim
+i7636=$3    ;  Ch19 output mode select A/B en Dac,C/P
+i7637=$0    ;  Ch19 output invert control; 
+	;Warning: i7637=$2 to invert move direction but not $3  (for sake of ADC Option) 
+
+;************************* Params Ch20 : Mini Kappa 2 (Sample Holder rotation) *
+i7600=6527  ;
+i7640=$8    ;  Ch20 encoder decode control 8=registre interne
+i7642=$2    ;  Ch20 capture control  flag high
+i7643=$0    ;  Ch20 capture flag select 0=Home / 2=Nlim
+i7646=$3    ;  Ch20 output mode select A/B en Dac,C/P
+i7647=$0    ;  Ch20 output invert control
+
+
+
+;*******************************************************************************
+;*                     Params table de conversion codeur                       *
+;*******************************************************************************
+
+i8000=$78200   ; Adresse ECT codeur Moteur 1
+i8001=$78208   ; Moteur 2 DC
+i8002=$78210   ; Moteur 3 DC
+i8003=$78218   ; Moteur 4 DC
+i8004=$78300   ; Moteur 5 DC
+i8005=$78308   ; Moteur 6 DC
+i8006=$78310   ; Moteur 7 DC
+I8007=$78318   ; Moteur 8 DC
+I8008=$79200   ; Moteur 9 DC
+I8009=$79208   ; Moteur 10 DC
+I8010=$79210   ; Moteur 11 DC
+I8011=$79218
+I8012=$79300
+I8013=$79308
+I8014=$79310
+I8015=$79318
+I8016=$C7A200  ; moteur 17 ST
+I8017=$C7A208  ; moteur 18 ST
+I8018=$C7A210  ; moteur 19 ST
+I8019=$C7A218  ; moteur 20 ST
+
+
+
+;*******************************************************************************
+;*                          Entrees accessoire 11C                             *
+;*******************************************************************************
+M1000->y:$78C00,0,1	; IN0 AirPressureIsOk
+M1001->y:$78C00,1,1     ; IN1 AirBearingIsOk
+M1002->y:$78C00,2,1     ; IN2 CryoFront Push Button 
+M1003->y:$78C00,3,1     ; IN3 CondenserIsIn  (out off the beam)
+M1004->y:$78C00,4,1     ; IN4 CondenserIsOut (on the beam)
+			; M1005->y:$78C00,5,1 >IN5 CryoIsFront >Not used
+M1006->y:$78C00,6,1     ; IN6 CryoIsBack
+			; M1007->y:$78C00,7,1 >IN7 FluoDetectorIsFront >Not used
+M1008->y:$78C01,0,1     ; IN8 FluoDetectorIsBack
+M1009->y:$78C01,1,1     ; IN9 SampleIsDetected
+
+M1013->y:$78C01,5,1     ; IN13 EtelIsReady
+M1014->y:$78C01,6,1     ; IN14 EtelPowerIsOn
+M1015->y:$78C01,7,1     ; IN15 EtelIsInitOk
+
+M1020->y:$78C01,2,1	; IN10 SCLoadRequest
+M1021->y:$78C01,3,1	; IN11 SCMoveCryoBackRequest
+M1022->y:$78C01,4,1	; IN12 SCSampleMagnetControl
+M1023->y:$78c02,1,1	; IN17 SCUnloadRequest
+M1024->y:$78C02,2,1     ; IN18 SmartMagnetIsOn ; Unused in VB and not refreshed in PMAC Viewer ...
+M1025->y:$78C02,0,1     ; IN16 MiniKappaIsOK
+M1027->y:$78C02,3,1	; IN19 Arm is parked
+
+; Those mappings require revision 'C0' on 'Interface Shutter' board
+;Before TRACK 595 M1028->Y:$78C02,4,1	; IN20 Head detector (M1028,M1029,M1030 = 100 => MiniKappa Head on phi axis)
+;Before TRACK 595 M1029->Y:$78C02,5,1 	; IN21 Head detector (M1028,M1029,M1030 = 110 => SmartMagnet Head on phi axis)
+;Before TRACK 595 M1030->Y:$78C02,6,1 	; IN22 Head detector (M1028,M1029,M1030 = 111 => Another Head on phi axis)
+;M1028->Y:$78C02,5,1	; IN21 Head detector (M1028,M1029,M1030 = 100 => MiniKappa Head on phi axis)
+;M1029->Y:$78C02,6,1 	; IN22 Head detector (M1028,M1029,M1030 = 110 => SmartMagnet Head on phi axis)
+;M1030->Y:$78C02,7,1 	; IN23 Head detector (M1028,M1029,M1030 = 111 => Another Head on phi axis)
+
+M1031->y:$78C02,4,1	; IN20 SmartMagnetError : coil is broken (HZ)
+M1032->y:$78C03,0,1	; IN24 LaserMirrorIsBack
+M1033->y:$78C03,1,1	; IN25 Laser_PSS_OK
+M1034->y:$78C03,2,1	; IN26 Laser_ShutterIsOpened
+
+
+M1048->y:$78C02,8,1    	;  IN48 Shutter is open (entrée  lente !!!)
+
+			; TODO comme sur EH3 MINI KAPPA ? M2002->X:$78208,14,1
+			; IN48 Shutter is open (entrée rapide sur ENCC2 IC2,chan2)
+
+;************************** Affectations Entrees *******************************
+#Define SCCryoBackRequest M1021
+#Define SCCryoBackOldRequest P1021
+#Define SCSampleMagnetControlRequest M1022
+#Define SCSampleMagnetControlOldRequest P1022
+#Define CryoIsBack M1110 ;or M1006 for IN6 CryoIsBack
+#Define SCLoadRequest M1020
+#Define SCUnloadRequest M1023
+#Define CryoBackPushButtonIsEnabled P2100
+#Define CryoPushButtonIsFront M1002
+SCCryoBackOldRequest = SCCryoBackRequest
+SCSampleMagnetControlOldRequest = SCSampleMagnetControlRequest
+
+
+
+;*******************************************************************************
+;*           Registre de controle des IO carte accessoire 11C                  *
+;*******************************************************************************
+M1098->y:$078C07,0,8    ; registre de controle In0-In31 Out0 Out15
+M1099->y:$078c07,8,8    ; registre de controle In32-In63 Out16-Out31
+
+
+
+;*******************************************************************************
+;*                            Sorties accessoire 11C                           *
+;*******************************************************************************
+; Base rank used here (y:$78c0?,0,?
+M1100->y:$78C04,0,1     ; OUT0 Sample Magnet Off - USED With I/O Panel REV B0 instead of M1105
+M1100=0                 ; Binder off (magnetized)
+M1101->y:$78c04,1,1     ; OUT1 Condenser OUT (on the beam)
+M1101=0                 ; condenser in TEST OK APS
+M1102->y:$78C04,2,1     ; OUT2 CryoBack
+M1102=0                 ; cryo front; TEST OK APS
+M1103->y:$78C04,3,1     ; OUT3 DryerOn
+M1103=0                 ; dryer off; TEST OK APS
+M1104->y:$78C04,4,1     ; OUT4  FluoDetectorFront
+M1104=0                 ; not used - TEST OK APS
+M1105->y:$78C04,5,1     ; OUT5 Smart Sample Magnet Off - NO MORE USED With I/O Panel REV B0
+M1105=0                 ; smart sample magnet off
+M1106->y:$78C04,6,1     ; OUT6 Smart Magnet Binder Magnet Select
+M1106=1                 ; = 1 for Smart Magnet declaration and = 0 for Binder Magnet declaration
+M1115->y:$78C05,7,1     ; OUT15 EtelEnable
+M1115=0                 ; Etel enable TEST OK APS
+M1140->y:$78c05,0,1     ;  OUT8 SCTransferIsOn - bit 40 of Base
+
+; Option-1 rank used here (y:$78c0?,8,?)
+M1124->y:$78c05,8,1     ; OUT24 FShutterScanEnable - bit 40 of Option-1
+M1124=0                 ; shutter disable
+M1125->y:$78c05,9,1     ; OUT25 FShutterManualEnable - bit 41 of Option-1
+M1125=0                 ; manual shutter disable
+M1126->y:$78c05,10,1    ; OUT26 FShutterManualOn - bit 42 of Option-1
+M1126=0                 ; shutter manual off
+M1128->y:$78c05,12,1    ; OUT28 ADC1GainBit0 (photodiode internal) - bit 44 of Option-1
+M1128=0
+M1129->y:$78c05,13,1    ; OUT29 ADC1GainBit1 - bit 45 of Option-1
+M1129=0
+M1130->y:$78c05,14,1    ; OUT30 ADC2GainBit0 (photodiode external) - bit 46 of Option-1
+M1130=0
+M1131->y:$78c05,15,1    ; OUT31 ADC2GainBit1 - bit 47 of Option-1
+M1131=0
+
+;**************************** Affectation sortie *******************************
+#Define CryoBack M1102
+
+
+
+;*******************************************************************************
+;*         Analog Output From ACC-24C2A OPT1 DACs  (B1+,B2+ and B3+)           * 
+;*******************************************************************************
+; front light intensity analog output
+; calcul de l'adresse du DAC : adresse de base du chanel + 1 de la carte IC6
+; ex pour le channel 1 : adr IC6: 7A200,  ch1: 7A202 -> DACB1+ : 7A203
+; ex pour le channel 2 : adr IC6: 7A200,  ch2: 7A20A -> DACB2+ : 7A20B
+; check that I7626 = $3 (activation A/B et C)
+; check also that I76[1|2|3]7=$2 when does not work with I76[1|2|3]7=$2
+; cause = $3 inverts output but can also invert the Data Latch (9 kHz signal)
+
+; DACB1+ and DACB2+ : 18 bits DAC with 16 useful bits cause
+; downrange from (-10V - +10V) to (0V -> 5V (M1200=M1201=16000))
+
+; DACB1+ - Backlight Output
+M1200->y:$7A203,8,16,s  	; DACB1+ : 18 bits DAC with 16 useful bits
+M1200=0                		; FrontLight off
+
+; DACB2+ - FrontLight Output
+M1201->y:$7A20B,8,16,s  	; DACB2+ : 18 bits DAC with 16 useful bits
+M1201=0                 	; Backlight off
+
+; DACB3+ - range Output (0 to 32000 for 0V to 100V)
+
+; DACB3+ - Scintillator Piezo
+M1203->y:$7A213,8,16,s  	; DACB3+ : 18 bits DAC with 16 useful bits 
+M1203=0                 	; piezo off
+
+
+
+;*******************************************************************************
+;*                    Analog input on ACC-24c2A Board OPT2 ADCs                *
+;*******************************************************************************
+M1301->y:$7A205,12,12   ; pin A1 (ADCA1) Acc24c2A - Internal Photodiode 
+			;(sticked beneath scintillator) 
+M1302->y:$7A20D,12,12   ; pin B1 (ADCB1) Acc24c2A - External Photodiode
+M1303->y:$7A215,12,12	; Frequency input
+
+;************************** Affectations Entrees *******************************
+#define AirbearingIsOk                  M1001
+#define EtelIsReady                     M1013
+#define EtelPowerIsOn                   M1014
+#define EtelIsInitOk                    M1015
+#define FShutterIsOpen                  M1048
+
+;**************************** Affectation sortie *******************************
+#define EtelEnable                      M1115	; validation Etel
+
+#define FShutterScanEnable              M1124
+#define FShutterManualEnable            M1125
+#define FShutterManualOn                M1126
+
+#define ADC1gainbit0                    M1128   ; Internal Photodiode
+#define ADC1gainbit1                    M1129
+#define ADC2gainbit0                    M1130   ; External Photodiode
+#define ADC2gainbit1                    M1131
+
+#define FrontLightIntensity             M1200	; Condenser Light
+;#define BackLightIntensity 			; Camera Light
+#Define SampleMagnetOff                 M1100  	; M1105(OUT5) with I/O Panel REV A0 
+						; M1100(OUT0) with I/O Panel REV B0
+
+
+
+;*******************************************************************************
+;*                           Définition des variable                           *
+;*******************************************************************************
+; IC2 Channel 2
+M3020->Y:$078209,0,24,S       ; Hardware position count value (counts)
+M3021->Y:$07820F,0,24,S       ; Position compare A value (counts)
+M3022->X:$07820F,0,24,S       ; Position compare B value (counts)
+M3023->X:$07820E,0,24,S       ; Compare auto-increment Value (counts)
+M3024->X:$07820D,11           ; Position compare write enable
+M3025->X:$07820D,12           ; Position compare direct-write
+
+; (initial-state) value
+M3026->X:$078208,9            ; Position compare output status
+
+; IC2 Channel 3
+M3030->Y:$078211,0,24,S       ; Hardware position count value (counts)
+M3031->Y:$078217,0,24,S       ; Position compare A value (counts)
+M3032->X:$078217,0,24,S       ; Position compare B value (counts)
+M3033->X:$078216,0,24,S       ; Compare auto-increment Value (counts)
+M3034->X:$078215,11           ; Position compare write enable
+M3035->X:$078215,12           ; Position compare direct-write
+
+;(initial-state) value
+M3036->X:$078210,9            ; Position compare output status
+
+I7221=1     ;  Utilise le codeur 1 (PHI)
+I7231=1     ;  Utilise le codeur 1 (PHI)
+
+; ************************** Define negative limit *****************************
+; Negative end limit set-bit
+M241->x:$0B0,22,1   	; Phi
+M242->x:$130,22,1   	; Table XYZ : X
+M243->x:$1b0,22,1   	; Table XYZ : Y
+M244->x:$230,22,1   	; Table XYZ : Z
+M245->x:$2b0,22,1   	; Analyser
+M246->x:$330,22,1   	; Zoom DC
+M247->x:$3b0,22,1   	; Aperture Y
+M248->x:$430,22,1   	; Aperture Z
+M249->x:$4b0,22,1   	; Capillary Y
+M250->x:$530,22,1   	; Capillary Z
+M251->x:$5b0,22,1   	; Scintillator Z
+M252->x:$630,22,1   	; Undefined Motor 12	
+M253->x:$6b0,22,1   	; Undefined Motor 13
+M254->x:$730,22,1   	; Undefined Motor 14
+M255->x:$7b0,22,1   	; Undefined Motor 15
+M256->x:$830,22,1   	; Undefined Motor 16
+M257->x:$8b0,22,1   	; Centring X
+M258->x:$930,22,1   	; Centring Y
+M259->x:$9b0,22,1   	; Mini Kappa 1
+M260->x:$a30,22,1   	; Mini Kappa 2
+M261->x:$ab0,22,1   	; Undefined Motor 22
+M262->x:$b30,22,1   	; Undefined Motor 22
+M263->x:$BB0,22,1   	; Undefined Motor 23
+M264->x:$C30,22,1   	; Undefined Motor 24
+
+#define  	Nlim1   M241
+#define  	Nlim2   M242
+#define  	Nlim3   M243
+#define  	Nlim4   M244
+#define  	Nlim5   M245
+#define  	Nlim6   M246
+#define  	Nlim7   M247
+#define  	Nlim8   M248
+#define  	Nlim9   M249
+#define  	Nlim10  M250
+#define  	Nlim11  M251
+; #define  	Nlim12  M252
+; #define  	Nlim13  M253
+; #define  	Nlim14  M254
+; #define  	Nlim15  M255
+; #define  	Nlim16  M256
+#define  	Nlim17  M257
+#define  	Nlim18  M258
+#define  	Nlim19  M259
+#define  	Nlim20  M260
+; #define  	Nlim21  M261
+; #define  	Nlim22  M262 
+; #define 	Nlim23  M263
+; #define  	Nlim24  M264
+
+; ****************************** Define positive limit *************************
+;Positive end limit set-bit
+M271->x:$0B0,21,1   ; Phi
+M272->x:$130,21,1   ; Table XYZ : X
+M273->x:$1b0,21,1   ; Table XYZ : Y
+M274->x:$230,21,1   ; Table XYZ : Z
+M275->x:$2b0,21,1   ; Analyser
+M276->x:$330,21,1   ; Zoom DC
+M277->x:$3b0,21,1   ; Aperture Y
+M278->x:$430,21,1   ; Aperture Z
+M279->x:$4b0,21,1   ; Capillary Y
+M280->x:$530,21,1   ; Capillary Z
+M281->x:$5b0,21,1   ; Scintillator Z
+M282->x:$630,21,1   ; UndefinedMotor12
+M283->x:$6b0,21,1   ; UndefinedMotor13
+M284->x:$730,21,1   ; UndefinedMotor14
+M285->x:$7b0,21,1   ; UndefinedMotor15
+M286->x:$830,21,1   ; UndefinedMotor16
+M287->x:$8b0,21,1   ; Centring Motor #17 (X as for EH3)
+M288->x:$930,21,1   ; Centring Motor #18 (Y as for EH3)
+M289->x:$9b0,21,1   ; Mini Kappa 1
+M290->x:$a30,21,1   ; Mini Kappa 2
+M291->x:$ab0,21,1   ; Undefined Motor21
+M292->x:$b30,21,1   ; Undefined Motor22
+M293->x:$bb0,21,1   ; Undefined Motor23
+M294->x:$c30,21,1   ; Undefined Motor24
+
+#define  	Plim1   M271
+#define  	Plim2   M272
+#define  	Plim3   M273
+#define  	Plim4   M274
+#define  	Plim5   M275
+#define  	Plim6   M276
+#define  	Plim7   M277
+#define  	Plim8   M278
+#define  	Plim10  M279
+#define  	Plim9   M280
+#define  	Plim11  M281
+; #define  	Plim12  M282
+; #define  	Plim13  M283
+; #define  	Plim14  M284
+; #define  	Plim15  M285
+; #define  	Plim16  M286
+#define  	Plim17  M287
+#define  	Plim18  M288
+#define  	Plim19  M289
+#define  	Plim20  M290
+; #define  	Plim21  M291
+; #define  	Plim22  M292
+; #define  	Plim23  M293
+; #define  	Plim24  M294
+
+; ************************ Define ShutterPulseDuration  ************************
+#define ShutterPulseDuration        M600
+M600=5
+
+;****** define for global flags to relate faulty hardware (in DPRAM) ********
+#define Phi_LimitsFlagsKO 			Nlim1 & Plim1
+#define X_TableXYZ_LimitsFlagsKO 		Nlim2 & Plim2
+#define Y_TableXYZ_LimitsFlagsKO 		Nlim3 & Plim3
+#define Y_TableXYZ_BothLimitsKO 		Nlim3 & Plim3
+#define Z_TableXYZ_LimitsFlagsKO 		Nlim4 & Plim4
+#define Analyser_LimitsFlagsKO 			Nlim5 & Plim5
+#define ZoomDC_Camera_LimitsFlagsKO 		Nlim6 & Plim6
+#define Y_Aperture_LimitsFlagsKO 		Nlim7 & Plim7
+#define Z_Aperture_LimitsFlagsKO 		Nlim8 & Plim8
+#define Y_Capillary_LimitsFlagsKO 		Nlim9 & Plim9
+#define Z_Capillary_LimitsFlagsKO 		Nlim10 & Plim10
+#define Z_Scintillator_LimitsFlagsKO 		Nlim11 & Plim11
+#define X_Table_Centring_LimitsFlagsKO 		Nlim17 & Plim17
+#define Y_Table_Centring_LimitsFlagsKO 		Nlim18 & Plim18
+#define Mini_Kappa_1_LimitsFlagsKO 		Nlim19 & Plim19
+#define Mini_Kappa_2_LimitsFlagsKO 		Nlim20 & Plim20
+;#define UndefinedMotor21_LimitsFlagsKO  	Nlim21 & Plim21
+;#define UndefinedMotor22_LimitsFlagsKO  	Nlim22 & Plim22
+;#define UndefinedMotor23_LimitsFlagsKO  	Nlim23 & Plim23
+;#define UndefinedMotor24_LimitsFlagsKO  	Nlim24 & Plim24
+
+
+#define Phi_Err 				M151
+#define X_TableXYZ_Err 				M152
+#define Y_TableXYZ_Err 				M153
+#define Z_TableXYZ_Err				M154
+#define Analyser_Err				M155
+#define ZoomDC_Camera_Err			M156
+#define Y_Aperture_Err				M157
+#define Z_Aperture_Err				M158
+#define Y_Capillary_Err				M159
+#define Z_Capillary_Err				M160
+#define Z_Scintillator_Err			M161
+;#define UndefinedMotor12_Err			M162
+;#define UndefinedMotor13_Err			M163
+;#define UndefinedMotor14_Err			M164
+;#define UndefinedMotor15_Err			M165
+;#define UndefinedMotor16_Err			M166
+#define X_Table_Centring_Err			M167
+#define Y_Table_Centring_Err			M168
+#define Mini_Kappa_1_Err			M169
+#define Mini_Kappa_2_Err			M170
+#define UndefinedMotor21_Err			M171
+#define UndefinedMotor22_Err			M172
+;#define UndefinedMotor23_Err			M173
+;#define UndefinedMotor24_Err			M174
+
+; ************************************** Mask **********************************
+#define DisableMaskForParrallelMoveProg		M700
+M700=0
+
+; Motor Id to build a mask to disabled any parallel motion programm (synchronized move or not)
+#define PhiMaskPos				$000001
+#define XTableXYZMaskPos			$000002
+#define YTableXYZMaskPos	 		$000004
+#define ZTableXYZMaskPos	 		$000008
+#define AnalyserMaskPos				$000010
+#define ZoomDCMaskPos				$000020
+#define YApertureMaskPos			$000040
+#define ZApertureMaskPos			$000080
+#define YCapillaryMaskPos	  		$000100
+#define ZCapillaryMaskPos	    		$000200
+#define ZScintillatorMaskPos			$000400
+#define OrganMaskPos				$0007C0
+; define Undefinemotor12MaskPos			$000800
+; define Undefinemotor13MaskPos			$001000
+; define Undefinemotor14MaskPos			$002000
+; define Undefinemotor15MaskPos			$004000
+; define Undefinemotor16MaskPos			$008000
+#define XTableCentringMaskPos			$010000	 ; WARNING here #17 is X Centring Table
+#define YTableCentringMaskPos			$020000	 ; WARNING here #18 is Y Centring Table
+#define MiniKappa1MaskPos			$040000
+#define MiniKappa2MaskPos			$080000
+; define Undefinemotor21MaskPos			$100000
+; define Undefinemotor22MaskPos			$200000
+; define Undefinemotor23MaskPos			$400000
+; define Undefinemotor24MaskPos			$800000
+
+
+
+;****************************************************************************
+;M DATA GATHERING SETTING
+;Use indirect addressing to access a DPRAM range of registers without having to 
+;define a separate variable for each register. 
+; Check Turbo PMAC User Manual p 261/438 (first register = M500, second register= M501)
+;****************************************************************************
+M4000->X:$003120,0,24       	; begining of the gathering buffer in RAM (if I5000=0)
+M4001->Y:$003120,0,24       	; end of the gathering buffer in RAM (if I5000=0)
+
+M500->DP:$060000		; Adresse du début de la DPRam(data gathering)
+;M500->D:$10800			; Adresse du début de la RAM(data gathering)
+M501->Y:$41F4,0,16		; Pointeur sur M500: Pour accéder au résultat du data Gathering, M501=[$450,...]
+M502->X:$06044F,0,16
+M503->D:$1f800
+M504->D:$1f801
+M505->D:$1f802
+M506->D:$1f803
+M510->D:$0
+M511->Y:$41FE,0,16		; Pointeur sur M510
+
+
+#define  StartGathering		M2200
+#define	BufferStartOffset	$450
+#define	BufferIndex		M501
+#define	BufferSize		M502
+#define	BufferValue		M500
+
+; Table XYZ
+#define  HomeClear2         120000   ; dégagement X table XYZ
+#define  HomeOffset2        242744   ; 181862  ; home offset X table XYZ mid-range =6 mm/2* unitratio
+#define  HomeClear3         120000   ; dégagement Y table XYZ
+#define  HomeOffset3        363724   ; home offset Y table XYZ mid-range =12 mm/2* unitratio - should be = NeutralPosition
+#define  HomeClear4         120000   ; dégagement Z table XYZ
+#define  HomeOffset4        120000   ; home offset Z table XYZ mi course ?????
+
+; Zoom
+#Define  HomeClear6         5000   ; OK with motor #6 Zoom DC (16768 cts/rev)
+#Define  HomeOffset6        500   ; OK with motor #6 Zoom DC (16768 cts/rev)
+
+; Organs
+#define  HomeClear7         240000   ; dégagement Y aperture 2 mm(reducteur 29.7 pas de 0.5)
+#define  HomeOffset7        200000   ; home offset Y aperture ; verifie MRC 240000 pour EH3
+#define  HomeClear8         120000   ; dégagement Z aperture (reducteur 29.7 pas de 1)
+#define  HomeOffset8        120000   ; home offset Z aperture 2mm; put in NeutralPosition of configuration file 
+#define  HomeClear9         240000   ; dégagement Y Capillary  2mm (reducteur 29.7 pas de 0.5)
+#define  HomeOffset9        240000   ; home offset Y Capillary 2mm
+#define  HomeClear10        40000    ; dégagement Z Capillary 2mm (reducteur 9.7 pas de 1)
+#define  HomeOffset10       25000    ; home offset Z Capillary x mm (for cover insertion)
+#define  HomeClear11        40000    ; dégagement Scintillator
+#define  HomeOffset11       40000    ; home offset Scintillator
+
+; Centring table XY
+#define  HomeClear18        30000    ; move off limit - table XY-Y 
+#define  HomeOffset18       479000   ; Checked for LS_CAT_D ; home offset Y table XY
+#define  HomeClear17        30000    ; move off limit - table XY-X
+#define  HomeOffset17       473087   ; A6-CF table - 458087 With A6BO-2 Table; home offset X table XY 
+
+; Mini Kappa
+#define  HomeClear19        20000    ;
+#Define  HomeOffset19       730000   ; unused except for Stress Test (see prog 20) 
+#define  HomeClear20        256000   ; 1 circle
+#Define  HomeOffset20       0        ; unused
+
+
+#Define SampleChangerEnabled P200
+#Define SampleChangerIsRunning P201
+SampleChangerEnabled = 0
+SampleChangerIsRunning = 0
+
+;*******************************************************************************
+;*                           M variable definitions                            *
+;*******************************************************************************
+M0->X:$000000,0,24,U ; Servo cycle counter
+
+;***************** Motor Status 1,Limits,Open loop *****************************
+;PMAC side
+M1->X:$0B0,24   	; Phi
+M2->X:$130,24   	; Table XYZ : X
+M3->X:$1B0,24   	; Table XYZ : Y
+M4->X:$230,24   	; Table XYZ : Z
+M5->X:$2B0,24   	; Analyser
+M6->X:$330,24   	; Zoom DC Camera
+M7->X:$3B0,24   	; Aperture Y
+M8->X:$430,24   	; Aperture Z
+M9->X:$4B0,24   	; Capillary Y
+M10->X:$530,24  	; Capillary Z
+M11->X:$5B0,24  	; Scintillator Z
+M12->X:$630,24	; Unused
+M13->X:$6B0,24	; Unused
+M14->X:$730,24	; Unused
+M15->X:$7B0,24	; Unused
+M16->X:$830,24	; Unused
+M17->X:$8B0,24  	; Centring Table Motor #17
+M18->X:$930,24  	; Centring Table Motor #18
+M19->X:$9B0,24  	; Mini Kappa 1
+M20->X:$A30,24		; Mini Kappa 2
+M21->X:$AB0,24  	; Unused
+M22->X:$B30,24  	; Unused
+M23->X:$BB0,24  	; Unused
+M24->X:$C30,24   	; Unused
+
+;open loop status
+M61->x:$0B0,18,1 	; Phi
+M62->x:$130,18,1 	; Table XYZ : X
+M63->x:$1B0,18,1 	; Table XYZ : Y
+M64->x:$230,18,1 	; Table XYZ : Z
+M65->x:$2B0,18,1 	; Analyser
+M66->x:$330,18,1 	; Zoom DC Camera
+M67->x:$3B0,18,1 	; Aperture Y
+M68->x:$430,18,1 	; Aperture Z
+M69->x:$4B0,18,1 	; Capillary Y
+M70->x:$530,18,1 	; Capillary Z
+M71->x:$5B0,18,1 	; Scintillator Z
+M72->x:$630,18,1	; Unused
+M73->x:$6B0,18,1	; Unused
+M74->x:$730,18,1	; Unused
+M75->x:$7B0,18,1	; Unused
+M76->x:$830,18,1	; Unused
+M77->x:$8B0,18,1 	; Centring Table Motor X #17
+M78->x:$930,18,1 	; Centring Table Motor Y #18
+M79->x:$9B0,18,1 	; Mini Kappa 1
+M80->x:$A30,18,1	; Mini Kappa 2
+; M81->x:$AB0,18,1 	; Unused	
+; M82->x:$B30,18,1 	; Unused	
+; M83->X:$BB0,18,1 	; Unused
+; M84->X:$C30,18,1	; Unused
+
+;*************** Motor Status 2,I2T,Fatal following error **********************
+;PMAC side
+M91->Y:$0C0,24  	; Phi
+M92->Y:$140,24  	; Table XYZ : X
+M93->Y:$1C0,24  	; Table XYZ : Y
+M94->Y:$240,24  	; Table XYZ : Z
+M95->Y:$2C0,24  	; Analyser
+M96->Y:$340,24  	; Zoom DC Camera
+M97->Y:$3C0,24  	; Aperture Y
+M98->Y:$440,24  	; Aperture Z
+M99->Y:$4C0,24  	; Capillary Y
+M100->Y:$540,24 	; Capillary Z
+M101->Y:$5C0,24 	; Scintillator Z
+M102->Y:$640,24	; Unused
+M103->Y:$6C0,24	; Unused
+M104->Y:$740,24	; Unused
+M105->Y:$7C0,24	; Unused
+M106->Y:$840,24	; Unused
+M107->Y:$8C0,24 	; Centring Table Motor #17
+M108->Y:$940,24 	; Centring Table Motor #18
+M109->Y:$9C0,24 	; Mini Kappa 1
+M110->Y:$A40,24		; Mini Kappa 2
+M111->Y:$AC0,24 	; Unused	
+M112->Y:$B40,24 	; Unused	
+M113->Y:$BC0,24	; Unused
+M114->Y:$C40,24	; Unused
+
+;**************************** In position status *******************************
+M121->Y:$0C0,0,1 	; Phi
+M122->Y:$140,0,1 	; Table XYZ : X
+M123->Y:$1C0,0,1 	; Table XYZ : Y
+M124->Y:$240,0,1 	; Table XYZ : Z
+M125->Y:$2C0,0,1 	; Analyser
+;			;M125=1 Patch when Analyser goes really wrong !
+M126->Y:$340,0,1 	; Zoom DC Camera
+M127->Y:$3C0,0,1 	; Aperture Y
+M128->Y:$440,0,1 	; Aperture Z
+M129->Y:$4C0,0,1 	; Capillary Y
+M130->Y:$540,0,1 	; Capillary Z
+M131->Y:$5C0,0,1 	; Scintillator Z
+M132->Y:$640,0,1	; Unused
+M133->Y:$6C0,0,1	; Unused
+M134->Y:$740,0,1	; Unused
+M135->Y:$7C0,0,1	; Unused
+M136->Y:$840,0,1	; Unused
+M137->Y:$8C0,0,1 	; Centring Table Motor #17
+M138->Y:$940,0,1 	; Centring Table Motor #18
+M139->Y:$9C0,0,1 	; Mini Kappa 1
+M140->Y:$A40,0,1	; Mini Kappa 2
+M141->Y:$AC0,0,1 	; Unused
+M142->Y:$B40,0,1 	; Unused
+M143->Y:$BC0,0,1	; Unused
+M144->Y:$C40,0,1 	; Unused
+
+#define PhiInPos 			M121
+#define XTableXYZInPos			M122
+#define YTableXYZInPos			M123
+#define ZTableXYZInPos			M124
+#define AnalyserInPos 			M125
+#define ZoomDCInPos			M126
+#define YApertureInPos			M127
+#define ZApertureInPos			M128
+#define YCapillaryInPos			M129
+#define ZCapillaryInPos			M130
+#define ZScintillatorInPos		M131
+; #define UndefinedMotor12InPos 	M132
+; #define UndefinedMotor13InPos		M133
+; #define UndefinedMotor14InPos		M134
+; #define UndefinedMotor15InPos		M135
+; #define UndefinedMotor16InPos		M136
+#define XTableCentringInPos		M137
+#define YTableCentringInPos		M138
+#define MiniKappa1InPos			M139
+#define MiniKappa2InPos	 		M140
+; #define UndefinedMotor21InPos		M141
+; #define UndefinedMotor22InPos		M142
+; #define UndefinedMotor23InPos 	M143
+; #define UndefinedMotor24InPos 	M144
+
+; OK cause P2001 .. P2024 only used here (p2020 has been changed to p2025 elsewhere) - 27 May 2005
+#define PhiStill 			P2001
+#define XTableXYZStill			P2002
+#define YTableXYZStill			P2003
+#define ZTableXYZStill			P2004
+#define AnalyserStill 			P2005
+#define ZoomDCCameraStill		P2006
+#define YApertureStill			P2007
+#define ZApertureStill			P2008
+#define YCapillaryStill			P2009
+#define ZCapillaryStill			P2010
+#define ZScintillatorStill		P2011
+; #define UndefinedMotor12Still		P2012
+; #define UndefinedMotor13Still		P2013
+; #define UndefinedMotor14Still		P2014
+; #define UndefinedMotor15Still		P2015
+; #define UndefinedMotor16Still		P2016
+#define XTableCentringStill		P2017
+#define YTableCentringStill		P2018
+#define MiniKappa1Still			P2019
+#define MiniKappa2Still			P2020
+; #define UndefinedMotor21Still		P2021
+; #define UndefinedMotor22Still		P2022
+; #define UndefinedMotor23Still		P2023
+; #define UndefinedMotor24Still		P2024
+
+;****************** Motor encoder home capture position ************************
+;PMAC side
+M520->Y:$0CE,24 ; axe phi
+
+;DPRam side
+M521->DP:$60060 ; axe phi
+
+;************************* Motor Actual Position *******************************
+;PMAC side
+M181->D:$08B 		; Phi
+M182->D:$10B 		; Table XYZ : X
+M183->D:$18B 		; Table XYZ : Y
+M184->D:$20B 		; Table XYZ : Z
+M185->D:$28B 		; Analyser
+M186->D:$30B 		; Zoom DC camera
+M187->D:$38B 		; Aperture Y
+M188->D:$40B 		; Aperture Z
+M189->D:$48B 		; Capillary Y
+M190->D:$50B 		; Capillary Z
+M191->D:$58B 		; Scintillator Z
+M192->D:$60B		; Unused
+M193->D:$68B		; Unused
+M194->D:$70B		; Unused
+M195->D:$78B  		; Unused
+M196->D:$80B		; Unused
+M197->D:$88B 		; Centring Table Motor #17
+M198->D:$90B 		; Centring Table Motor #18
+M199->D:$98B 		; Mini Kappa 1
+M200->D:$A0B		; Mini Kappa 2
+M201->D:$A8B 		; Unused
+M202->D:$B0B 		; Unused
+M203->D:$B8B		; Unused
+M204->D:$C0B		; Unused
+
+;DPRAM side
+M211->DP:$60080 	; Phi
+M212->DP:$60081 	; Table XYZ : X
+M213->DP:$60082 	; Table XYZ : Y
+M214->DP:$60083 	; Table XYZ : Z
+M215->DP:$60084 	; Analyser
+M216->DP:$60085 	; Zoom DC camera
+M217->DP:$60086 	; Aperture Y
+M218->DP:$60087 	; Aperture Z
+M219->DP:$60088 	; Capillary Y
+M220->DP:$60089 	; Capillary Z
+M221->DP:$6008A 	; Scintillator Z
+M222->DP:$6008B		; Unused
+M223->DP:$6008C		; Unused
+M224->DP:$6008D		; Unused
+M225->DP:$6008E		; Unused
+M226->DP:$6008F		; Unused
+M227->DP:$60090 	; Centring Table Motor #17
+M228->DP:$60091 	; Centring Table Motor #18
+M229->DP:$60092 	; Mini Kappa 1
+M230->DP:$60093		; Mini Kappa 2
+M231->DP:$60094 	; Unused	
+M232->DP:$60095 	; Unused	
+M233->DP:$60096		; Unused
+M234->DP:$60097		; Unused
+
+;***************************** Autres variables ********************************
+;M332 ->DP:$600B4 ; frequ input
+
+; LG@MAATEL: recopie DPRAM pour facilite du cache et ajout de l'ID du(es) moteur(s) en faute
+M350->DP:$600C0  				; global status flag (a motor is faulty)
+M351->DP:$600C1  				; other global status flag (include faulty motor ID)
+;						; Not used
+M360->DP:$600C2  				; other global status flag (include ETEL status and air pressure state)
+#define HardwareFlags			M360 & $000F ;Masque bit 0 a 3
+M361->Y:$600C2,0,1
+#define AirPreassureIsOK_DPFlag		M361
+M362->Y:$600C2,1,1
+#define AirBearingIsOK_DPFlag		M362
+M363->Y:$600C2,2,1
+#define ETELPowerIsOn_DPFlag 		M363
+M364->Y:$600C2,3,1
+#define Power24V_DPFlag			M364
+
+
+#define AreMotorsInErr			M350
+#define FaultyMotorId			M351	; Not used
+#define IsHardwareBusy			M370
+
+
+
+M2200->X:$6,19,1 				;  Start Gathering Command/Info
+
+M1098=$0f	 				; registre de controle In0-In31 Out0 Out15 of base ACC-11C
+M1099=$0f 					; registre de controle In32-In63 Out16-Out31 of ACC-11C Option 1
+
+; Variables du programe de centrage
+; M300 to M304 not used !!!
+; M302->Y:$140,0,1    				; X in position
+; M303->Y:$1C0,0,1    				; Y in position
+; #define NewMoveCmd  			M301
+; #define EndOfApplication 		M300
+; #define AbortMove   			M304
+; #define XInPosition 			M302
+; #define YInPosition 			M303
+
+#define FastShutterOpenHist  		P3000 	;M2008
+#define FastShutterHasOpened 		P3001 	;M2009
+#define PhiScan              		P3002
+#define FastShutterCloseGlobalHist	P3003 
+#define FastShutterOpenGlobalHist	P3004
+#define FastShutterHasGloballyOpened	P3005
+#define FastShutterHasGloballyClosed	P3006 	; unused so far
+
+
+;*******************************************************************************
+;***************************                  **********************************
+;***************************   PLC PROGRAM    **********************************
+;***************************                  **********************************
+;*******************************************************************************
+OPEN PLCC1 CLEAR
+
+;Motor encoder home capture position
+M522=M520  ;Used for A&B registers set up.
+
+; Motor actual position
+M211=(M181/(I108*32))		; Phi             
+M212=(M182/(I208*32))		; Table XYZ : X   
+M213=(M183/(I308*32))		; Table XYZ : Y   
+M214=(M184/(I408*32))		; Table XYZ : Z   
+M215=(M185/(I508*32))		; Analyser        
+M216=(M186/(I608*32))		; Zoom camera            
+M217=(M187/(I708*32))		; Aperture Y      
+M218=(M188/(I808*32))		; Aperture Z      
+M219=(M189/(I908*32))		; Capillary Y     
+M220=(M190/(I1008*32))		; Capillary Z     
+M221=(M191/(I1108*32))		; Scintillator Z  
+; M222=(M192/(I1208*32))	                  
+; M223=(M193/(I1308*32))	                  
+; M224=(M194/(I1408*32))	                  
+; M225=(M195/(I1508*32))	                  
+; M226=(M196/(I1608*32))	                  
+M227=(M197/(I1708*32))		; Centring #17    
+M228=(M198/(I1808*32))		; Centring #18      
+M229=(M199/(I1908*32))		; Mini Kappa 1     
+M230=(M200/(I2008*32))	        ; Mini Kappa 2          
+; M231=(M201/(I2108*32))  
+; M232=(M202/(I2208*32))	   
+; M233=(M203/(I2308*32))	                  
+; M234=(M204/(I2408*32))	                  
+
+;******************************** Photodiodes **********************************
+P1001=M1301 & $7ff800      	; Masque bit 12 a 23
+P1000=M1302 & $7ff800      	; Masque bit 12 a 23
+M330 =ABS (P1000 / 2048)
+M331 =ABS (P1001 / 2048)
+
+;******************************* Entree Frequence ******************************
+M332 = M1303
+
+;********************* global flag to relate busy hardware *********************
+;in position => motor is in position or is open loop (simulation or fault)
+PhiStill 	= PhiInPos 			| M61
+XTableXYZStill	= XTableXYZInPos		| M62
+YTableXYZStill	= YTableXYZInPos		| M63
+ZTableXYZStill	= ZTableXYZInPos		| M64
+AnalyserStill 	= AnalyserInPos 		| M65
+ZoomDCCameraStill = ZoomDCInPos			| M66
+YApertureStill	= YApertureInPos		| M67
+ZApertureStill	= ZApertureInPos		| M68
+YCapillaryStill	= YCapillaryInPos		| M69
+ZCapillaryStill	= ZCapillaryInPos		| M70
+ZScintillatorStill     	= ZScintillatorInPos	| M71
+; UndefinedMotor12Still = UndefinedMotor12InPos | M72
+; UndefinedMotor13Still = UndefinedMotor13InPos | M73
+; UndefinedMotor14Still = UndefinedMotor14InPos | M74
+; UndefinedMotor15Still = UndefinedMotor15InPos | M75
+; UndefinedMotor16Still = UndefinedMotor16InPos | M76
+XTableCentringStill	= XTableCentringInPos 	| M77
+YTableCentringStill	= YTableCentringInPos 	| M78
+MiniKappa1Still		= MiniKappa1InPos 	| M79   
+MiniKappa2Still		= MiniKappa2InPos  	| M80   
+; UndefinedMotor23Still = UndefinedMotor23InPos	| M81
+; UndefinedMotor23Still = UndefinedMotor23InPos	| M82
+; UndefinedMotor23Still = UndefinedMotor23InPos | M83
+; UndefinedMotor24Still = UndefinedMotor24InPos | M84
+
+P2000 = PhiStill & XTableXYZStill & YTableXYZStill & ZTableXYZStill & AnalyserStill & ZoomDCCameraStill & YApertureStill & ZApertureStill & YCapillaryStill & ZCapillaryStill & ZScintillatorStill 
+;No MiniKappa -> P2000 = 1^(P2000 & XTableCentringStill & YTableCentringStill & MiniKappa1Still & MiniKappa2Still) 
+P2000 = 1^(P2000 & XTableCentringStill & YTableCentringStill  & MiniKappa1Still & MiniKappa2Still)
+
+;Get motion program status
+P2025 = M401 + M402 + M403 + M404 + M406 + M407 + M408 + M409 + M410 + M411 + M417 + M418 + M419 + M420 + M431 + M434 + M435 + M437 + M450 + M454
+
+IsHardwareBusy = P2000 + P2025
+
+
+
+;************** global flag to relate faulty hardware (in DPRAM) ***************
+;************ when open loop flag is set and the motor is enabled **************
+Phi_Err 	=  		M61 & M31
+X_TableXYZ_Err 	=  		M62 & M32
+Y_TableXYZ_Err 	=  		M63 & M33
+Z_TableXYZ_Err	=  		M64 & M34
+Analyser_Err	=  		M65 & M35
+ZoomDC_Camera_Err =  		M66 & M36
+Y_Aperture_Err	=  		M67 & M37
+Z_Aperture_Err	=  		M68 & M38
+Y_Capillary_Err	=  		M69 & M39
+Z_Capillary_Err	=  		M70 & M40
+Z_Scintillator_Err =    	M71 & M41
+; UndefinedMotor12_Err =	M72 & M42
+; UndefinedMotor13_Err =	M73 & M43
+; UndefinedMotor14_Err =	M74 & M44
+; UndefinedMotor15_Err =	M75 & M45
+; UndefinedMotor16_Err =	M76 & M46
+X_Table_Centring_Err =		M77 & M47
+Y_Table_Centring_Err =  	M78 & M48
+Mini_Kappa_1_Err =  		M79 & M49
+Mini_Kappa_2_Err =		M80 & M50
+; UndefinedMotor21_Err =  	M81 & M51
+; UndefinedMotor22_Err =  	M82 & M52
+; UndefinedMotor23_Err =	M83 & M53
+; UndefinedMotor24_Err =	M84 & M54
+
+; Split into 2 commands otherwize the PeWinPro 3.2.3 program parser hangs
+AreMotorsInErr= Phi_Err + X_TableXYZ_Err + Y_TableXYZ_Err + Z_TableXYZ_Err + Y_Aperture_Err
+AreMotorsInErr= AreMotorsInErr + Z_Aperture_Err + Y_Capillary_Err + Z_Capillary_Err + Z_Scintillator_Err + X_Table_Centring_Err + Y_Table_Centring_Err + ZoomDC_Camera_Err + Analyser_Err + Mini_Kappa_1_Err + Mini_Kappa_2_Err
+
+;********************** global flag to relate Hardware Status ******************
+;******************** include ETEL status and air pressure state ***************
+
+AirPreassureIsOK_DPFlag = M1000	; IN0 AirPressureIsOk
+AirBearingIsOK_DPFlag = M1001	;IN1 AirBearingIsOk
+
+ETELPowerIsOn_DPFlag = (M31 & M1014) | (1 ^ M31)	;IN14 EtelPowerIsOn & PHI is not simulated
+
+
+Power24V_DPFlag =  1^(M36 & ZoomDC_Camera_LimitsFlagsKO) ; if both limits are set, there is a problem ! Should be checked on every motors !!!
+							; EtelIsReady not used in VB polling except when starting the ETEL
+ 	 						; EtelIsInitOk not used in VB polling except when starting the ETEL
+
+;M1108 = 1^M1008  ; Used when IN8 FluoDetectorIsBack is inverted
+;M1110 = 1^M1006  ; Used when IN6 CryoIsBack is inverted
+
+
+CLOSE
+ENABLE PLCC1
+
+;*******************************************************************************
+;************************** MOTION PROGRAMMES **********************************
+;*******************************************************************************
+
+;*******************************************************************************
+;*                             Homing Axe PHI                                  *
+;*******************************************************************************
+Open Prog 1 Clear
+%100
+dwell0
+dwell0
+inc
+lin
+
+dwell0
+dwell0
+home1          ;  chercher le home
+dwell0
+dwell0
+
+M401=0         ;  Clear the VB synchro. flag
+
+close
+
+;*******************************************************************************
+;*                              Homing X Main Table                            *
+;*******************************************************************************
+Open Prog 2 Clear
+%100
+dwell0
+dwell0
+inc
+lin
+i224=$200001         ;  validate stop on X-axis hard limits detected
+;To enable X-axis move even if Y or Z axis status are not OK (same c.s.):
+i324=$220001         ;  Y-axis does not use negative hard limit as overtravel limit
+i424=$220001         ;  Z-axis does not use negative hard limit as overtravel limit
+dwell0
+dwell0
+
+If (Nlim2 = 1)    ;  If negative limit is reached, move off
+  X HomeClear2		
+EndIf
+dwell0
+dwell0
+i224=$220001	; X-axis does not use negative hard limit as overtravel limit ...
+dwell0
+dwell0
+Home2                ;  .. but as a home capture position
+dwell0
+dwell0
+i224=$200001         ;  X-axis use negative hard limit as overtravel limit
+i324=$200001         ;  Y-axis use negative hard limit as overtravel limit
+i424=$200001         ;  Z-axis use negative hard limit as overtravel limit
+dwell0
+X HomeOffset2	     ; Move to an arbitrary position (see also NeutralPosition in hard.ini)
+dwell0
+M402=0               ;Clear the VB synchro. flag
+
+Close
+;*******************************************************************************
+;*                               Homing Y Main Table                           *
+;*******************************************************************************
+Open Prog 3 Clear
+%100
+P1=0
+P2=0
+dwell0
+dwell0
+inc
+lin
+i324=$200001         ;  validate stop on Y-axis hard limits detected
+;To enable Y-axis move even if X or Z axis status are not OK (same c.s.):
+i224=$220001         ;  X-axis does not use negative hard limit as overtravel limit
+i424=$220001         ;  Z-axis does not use negative hard limit as overtravel limit
+dwell0
+dwell0
+If (Nlim3 = 1)    ;  If negative limit is reached, move off
+  P2 = P2+1
+  Y HomeClear3
+EndIf
+P1 = 1
+dwell0
+dwell0
+i324=$220001	; Y-axis does not use negative hard limit as overtravel limit ...
+P1=2
+dwell0
+dwell0
+Home3           ;  .. but as a home capture position
+P1=3
+dwell0
+dwell0
+i224=$200001	;  X-axis use negative hard limit as overtravel limit
+i324=$200001	;  Y-axis use negative hard limit as overtravel limit
+i424=$200001	;  Z-axis use negative hard limit as overtravel limit
+P1=4
+dwell0
+Y HomeOffset3	; Move to an arbitrary position (see also NeutralPosition in hard.ini)
+dwell0
+M403=0               ; Clear the VB synchro. flag
+
+Close
+
+;*******************************************************************************
+;*                             Homing Z Main Table                             *
+;*******************************************************************************
+Open Prog 4 Clear
+%100
+dwell0
+dwell0
+inc
+lin
+i424=$200001        ;  validate stop on Z-axis hard limits detected
+;To enable Z-axis move even if X or Y axis status are not OK (same c.s.):
+i324=$220001         ;  Y-axis does not use negative hard limit as overtravel limit
+i224=$220001         ;  X-axis does not use negative hard limit as overtravel limit
+dwell0
+dwell0
+If (Nlim4 = 1)    ;  If negative limit is reached, move off
+  Z HomeClear4	  ; un degagement et un seul (sinon le LookAhead avec un While peut envoyer vers la butee +)
+EndIf
+dwell0
+dwell0
+i424=$220001	; X-axis does not use negative hard limit as overtravel limit ...
+dwell0
+dwell0
+Home4       	;  .. but as a home capture position
+dwell0
+dwell0
+i224=$200001         ;  X-axis use negative hard limit as overtravel limit
+i324=$200001         ;  Y-axis use negative hard limit as overtravel limit
+i424=$200001         ;  Z-axis use negative hard limit as overtravel limit
+dwell0
+Z HomeOffset4	; ; Move to an arbitrary position (see also NeutralPosition in hard.ini)
+dwell0
+M404=0               ; Clear the VB synchro. flag
+Close
+
+
+;*******************************************************************************
+;*                      Homing Camera (DC Zoom motor)                          *
+;*******************************************************************************
+Open Prog 6 Clear
+%100
+dwell0
+dwell0
+inc
+lin
+i624=$200001         ;  validate stop on rotation axis hard limits detected
+dwell0
+dwell0
+
+If (Nlim6 = 1)    ;  If limit is reached move off it
+  Z HomeClear6		
+EndIf
+dwell0
+dwell0
+i624=$220001	; axis does not use negative hard limit as overtravel limit ...
+dwell0
+dwell0
+Home6               ;  .. but as a home capture position
+dwell0
+dwell0
+i624=$200001        ;  rotation axis use negative hard limit as overtravel limit
+dwell0
+Z HomeOffset6
+dwell0
+Abs
+dwell0
+dwell0
+M406=0               ;Clear the VB synchro. flag
+Close
+
+;*******************************************************************************
+;*                               Homing Aperture Y                             *
+;*******************************************************************************
+
+Open Prog 7 Clear
+%100
+dwell0
+dwell0
+inc
+lin
+i724=$200001        ;  validate stop on Y-axis hard limits detected
+;To enable Y-axis move even if other axis status in same c.s. are not OK:
+i824=$220001	;  Aperture Z axis does not use negative hard limit as overtravel limit 
+i924=$220001	;  Capillary Y axis does not use negative hard limit as overtravel limit
+i1024=$220001	;  Capillary Z axis does not use negative hard limit as overtravel limit 
+i1124=$220001	;  Scinti Z axis does not use negative hard limit as overtravel limit 
+dwell0
+dwell0
+If (Nlim7 = 1)    ;  If negative limit is reached, move off
+  Y HomeClear7
+EndIf
+dwell0
+dwell0
+i724=$220001 	; Y-axis does not use negative hard limit as overtravel limit ...
+dwell0
+dwell0
+Home7           ;  .. but as a home capture position
+dwell0
+dwell0
+i724=$200001	;  Aperture Y use negative hard limit as overtravel limit
+i824=$200001	;  Aperture Z use negative hard limit as overtravel limit
+i924=$200001	;  Capillary Y use negative hard limit as overtravel limit
+i1024=$200001	;  Capillary Z use negative hard limit as overtravel limit
+i1124=$200001	;  Scinti Z use negative hard limit as overtravel limit
+dwell0
+dwell0
+Y HomeOffset7	; Move to an arbitrary position (see also NeutralPosition in hard.ini)
+dwell0
+dwell0
+
+M407=0               ; Clear the VB synchro. flag
+Close
+
+;*******************************************************************************
+;*                                Homing Aperture Z                            *
+;*******************************************************************************
+
+Open Prog 8 Clear
+%100
+dwell0
+dwell0
+inc
+lin
+i824=$200001         ;  validate stop on Aperture Z-axis negative hard limit detection
+;empecher qu'un mouvement de Aperture Y soit interdit si les autres axes sont KO
+i724=$220001         ;  devalidation des securites Aperture Y
+i924=$220001         ;  devalidation des securites Capillaire Y
+i1024=$220001         ;  devalidation des securites Capillaire Z
+i1124=$220001         ;  devalidation des securites Scinti Z
+dwell0
+dwell0
+If (Nlim8 = 1)    ;  Si limite negative
+  Z HomeClear8	  ; un degagement et un seul (meme si le LookAhead avec un While n'enverra pas jusque vers la butee +)
+EndIf
+dwell0
+dwell0
+i824=$220001         ;  devalidation des securites
+dwell0
+dwell0
+Home8                ;  Config pour arret sur lim -
+dwell0
+dwell0
+i724=$200001         ;  Revalidation des securites Aperture Y
+i824=$200001         ;  Revalidation des securites Aperture Z
+i924=$200001         ;  Revalidation des securites Capillaire Y
+i1024=$200001         ;  Revalidation des securites Capillaire Z
+i1124=$200001        ;  Revalidation des securites Scinti Z
+dwell0
+dwell0
+Z HomeOffset8        ;  dégagement
+dwell0
+dwell0
+M408=0               ; Clear the VB synchro. flag
+Close
+
+;*******************************************************************************  
+;*                             Homing Capillary Y                              *
+;*******************************************************************************
+
+Open Prog 9 Clear
+%100
+dwell0
+dwell0
+inc
+lin
+i924=$200001         ;  validate stop on Capillary Y-axis negative hard limit detection
+;empecher qu'un mouvement de Aperture Y soit interdit si les autres axes sont KO
+i824=$220001         ;  devalidation des securites Aperture Z
+i724=$220001         ;  devalidation des securites Aperture Y
+i1024=$220001         ;  devalidation des securites Capillaire Z
+i1124=$220001         ;  devalidation des securites Scinti Z
+dwell0
+dwell0
+If (Nlim9 = 1)    ;  Si limite negative 
+  U HomeClear9    ; ; un degagement et un seul (sinon le LookAhead avec un While peut envoyer vers la butee +)
+EndIf
+dwell0
+M409=2
+dwell0
+i924=$220001         ;  devalidation des securites
+dwell0
+dwell0
+Home9                ;  Config pour arret sur lim -
+dwell0
+M409=3
+dwell0
+i724=$200001         ;  Revalidation des securites Aperture Y
+i824=$200001         ;  Revalidation des securites Aperture Z
+i924=$200001         ;  Revalidation des securites Capillaire Y
+i1024=$200001         ;  Revalidation des securites Capillaire Z
+i1124=$200001        ;  Revalidation des securites Scinti Z
+dwell0
+M409=4
+dwell0
+U HomeOffset9        ;  dégagement
+dwell0
+dwell0
+M409=0               ; Clear the VB synchro. flag
+Close
+
+;*******************************************************************************
+;*                              Homing Capillary Z                             *
+;*******************************************************************************
+
+Open Prog 10 Clear
+%100
+dwell0
+dwell0
+inc
+lin
+i1024=$200001         ;  validate stop on Capillary Z-axis negative hard limit detection
+;empecher qu'un mouvement de Aperture Y soit interdit si les autres axes sont KO
+i824=$220001         ;  devalidation des securites Aperture Z
+i924=$220001         ;  devalidation des securites Capillaire Y
+i724=$220001         ;  devalidation des securites Aperture Y
+i1124=$220001         ;  devalidation des securites Scinti Z
+dwell0
+dwell0
+If (Nlim10 = 1)    ;  Si limite negative
+  V HomeClear10	   ; un degagement et un seul (meme si le LookAhead avec un While ne peut pas envoyer jusque vers la butee +)
+EndIf
+dwell0
+dwell0
+i1024=$220001         ;  devalidation des securites
+dwell0
+dwell0
+Home10                ;  Config pour arret sur lim -
+dwell0
+dwell0
+i724=$200001         ;  Revalidation des securites Aperture Y
+i824=$200001         ;  Revalidation des securites Aperture Z
+i924=$200001         ;  Revalidation des securites Capillaire Y
+i1024=$200001         ;  Revalidation des securites Capillaire Z
+i1124=$200001        ;  Revalidation des securites Scinti Z
+dwell0
+dwell0
+V HomeOffset10        ;  dégagement
+dwell0
+dwell0
+M410=0                ; Clear the VB synchro. flag
+Close
+
+;*******************************************************************************
+;*                           Homing ScintillatorPhotodiode Z                   *
+;*******************************************************************************
+
+Open Prog 11 Clear
+%100
+dwell0
+dwell0
+inc
+lin
+i1124=$200001         ;  validate stop on SciPd Z-axis negative hard limit detection
+;empecher qu'un mouvement de Aperture Y soit interdit si les autres axes sont KO
+i824=$220001         ;  devalidation des securites Aperture Z
+i924=$220001         ;  devalidation des securites Capillaire Y
+i1024=$220001         ;  devalidation des securites Capillaire Z
+i724=$220001         ;  devalidation des securites Aperture Y
+dwell0
+dwell0
+If (Nlim11 = 1)    ;  Si limite negative
+  W HomeClear11	   ; un degagement et un seul (sinon le LookAhead avec un While peut envoyer vers la butee +)
+EndIf
+dwell0
+dwell0
+i1124=$220001         ;  devalidation des securites
+dwell0
+dwell0
+Home11                ;  Config pour arret sur lim -
+dwell0
+dwell0
+i724=$200001         ;  Revalidation des securites Aperture Y
+i824=$200001         ;  Revalidation des securites Aperture Z
+i924=$200001         ;  Revalidation des securites Capillaire Y
+i1024=$200001         ;  Revalidation des securites Capillaire Z
+i1124=$200001        ;  Revalidation des securites Scinti Z
+dwell0
+dwell0
+W HomeOffset11        ;  dégagement
+dwell0
+dwell0
+M411=0                ; Clear the VB synchro. flag
+Close
+
+
+
+;*******************************************************************************
+;*                               Homing X Centring                             *
+;*******************************************************************************
+Open Prog 17 Clear
+%100
+dwell0
+dwell0
+inc
+lin
+i1724=$200001     ;  validation des limites X
+;empecher qu'un mouvement de X soit interdit si Y est KO
+i1824=$220001     ;  Devalidation des limites Y
+dwell0
+dwell0
+If (Nlim17 = 1) ;  Si limite negative #2
+  X HomeClear17    ;  1/2 tour de degagement et un seul (sinon le lookAhead avec un While peut envoyer vers la butee +)
+EndIf 
+dwell0
+dwell0
+i1724=$220001     ;  Devalidation des limites
+dwell0
+dwell0
+Home17             ;  Config pour arret sur lim -
+dwell0
+dwell0
+i1724=$200001     ;  Revalidation des limites X
+i1824=$200001     ;  Revalidation des limites Y
+dwell0
+dwell0
+X HomeOffset17     ;  Modif pour pouvoir depasser la capacite du home offset
+dwell0
+dwell0
+homez17
+dwell0
+dwell0
+P1=P1+1           ;  Home OK
+dwell0
+dwell0
+M417=0            ;  maj synchro flag
+close
+
+;*******************************************************************************
+;*                              Homing Y Centring                              *
+;*******************************************************************************
+
+Open Prog 18 Clear
+%100
+dwell0
+dwell0
+inc
+lin
+i1824=$200001     ;  validation des limites Y
+;empecher qu'un mouvement de X soit interdit si Y est KO
+i1724=$220001     ;  Devalidation des limites X
+dwell0
+dwell0
+
+If(Nlim18 = 1)    ;  Si limite negative #3
+  Y HomeClear18	  ;un degagement et un seul (sinon le lookAhead avec un While peut envoyer vers la butee +)
+EndIf
+dwell0
+dwell0
+i1824=$220001        ;  devalidation des securites
+dwell0
+dwell0
+Home18                ;  Config pour arret sur lim -
+dwell0
+dwell0
+i1724=$200001     ;  Revalidation des limites X
+i1824=$200001     ;  Revalidation des limites Y
+dwell0
+dwell0
+Y HomeOffset18        ;  Modif pour pouvoir depasser la capacite du home offset
+dwell0
+dwell0
+homez18
+dwell0
+dwell0
+P1=P1+1              ;  Home  OK
+dwell1500
+dwell0
+dwell0
+M418=0               ;  Clear the VB synchro. flag
+close
+
+;*******************************************************************************
+;*                              X & Y synchronized Homing                      *
+;*******************************************************************************
+Open Prog 53 Clear
+%100
+dwell0
+dwell0
+inc
+lin
+dwell0          ;$$$ a priori pas necessaire a supprimer plus tard
+dwell0          ;$$$ a priori pas necessaire a supprimer plus tard
+i1724=$200001     ;  validation des limites X
+i1824=$220001     ;  Devalidation des limites Y
+If (Nlim17 = 1)    ;  Si limite negative #17
+  X HomeClear17       ;  1/2 tour de degagement
+EndIf
+dwell0
+dwell0
+i1824=$200001     ;  validation des limites Y
+i1724=$220001     ;  Devalidation des limites X
+dwell0
+dwell0
+If (Nlim18 = 1)    ;  Si limite negative #18
+  Y HomeClear18       ;  1/2 tour de degagement
+EndIf
+dwell0
+dwell0
+i1724=$220001         ;  Devalidation des limites
+i1824=$220001         ;  Devalidation des limites
+dwell0
+dwell0
+Home17,18             ;  Config pour arret sur lim -
+dwell0
+dwell0
+i1724=$200001         ;  Revalidation des limites
+i1824=$200001         ;  Revalidation des limites
+dwell0
+dwell0
+X HomeOffset17  Y HomeOffset18  ;  Modif pour pouvoir depasser la capacite du home offset
+dwell0
+dwell0
+homez17 homez18
+dwell0
+dwell0
+P1=P1+1               ;  Home OK
+dwell0
+dwell0
+M453=0                ;  maj synchro flag
+close
+
+
+;***************************************************************************
+; Homing Mini Kappa 1 - Elbow Rotation
+;***************************************************************************
+
+Open Prog 19 Clear
+%100
+dwell0
+inc
+lin
+dwell0
+While (Nlim19 = 1)    ;  Si limite negative #21
+  dwell0
+  X HomeClear19
+  dwell0
+EndWhile
+dwell0
+I1924=$220001         ;  Devalidation des securites
+dwell0
+home 19
+hmz 19                ; BEWARE ! This is mandatory to take into account the fact that the Mini Kappa elbow can be moved of 180 degrees by the user !
+dwell0
+I1924=$200001         ;  Revalidation des securites
+dwell0
+
+M419=0                        ;Clear the VB synchro. flag
+dwell0
+dwell0
+
+Close
+
+;***************************************************************************
+; Homing Mini Kappa 2 - Sample Holder Rotation - USELESS (free rotation)
+;***************************************************************************
+
+Open Prog 20 Clear
+%100
+dwell0
+inc
+lin
+dwell0
+Y HomeClear20
+dwell0
+hmz 20
+dwell0
+
+M420=0               ;Clear the VB synchro. flag
+
+Close
+
+;***************************************************************************
+; Stress Test of Mini Kappa 1 #19 - Elbow Rotation
+;***************************************************************************
+
+Open Prog 25 Clear
+
+P90=16777216 ; Counter rollover value (2^24)
+
+P91=M0 ; Store starting value of M0 (X:$0) servo cycle counter
+P92=0 ; Time elapsed so far
+p93=0
+p94=0
+p95=500000 
+p96=0
+
+; store it into DPRAM starting at BufferIndex = $450
+P100 = BufferStartOffset
+BufferIndex = P100
+  
+While (P96 < 64)    ;  128
+  ;Cmd"&1b19r"
+  p96 = p96 + 1 ; Makes Omega jogg of 30 deg. 
+  if (M419 = 0)  ; if homing prog #21 is not already running 
+  	M419=1
+	Call(19)   ;  PMAC does not allow Sample Holder rotation negative move meanwhile
+	;Y(-10000) X(-10000) Call(19)   ;  Sample Holder rotation negative move meanwhile
+  EndIf
+  dwell0
+  dwell0  
+
+  
+  I1924=$200001 ; To be safe with limit switch
+  INC(Y)
+  p95 = - p95
+  X HomeOffset19 Y(p95) ; Do 3/4 Elbow rotation round and jogg Sample Holder rotation meanwhile  
+  dwell0
+  dwell0
+  
+  P92=(M0-P91)%P90 ; Calculate time elapsed since last HomeOffset
+  BufferValue = P92 
+  BufferIndex = BufferIndex + 1
+  
+  
+  P91=M0 ; Store starting value of M0 (X:$0) servo cycle counter  
+  P93=2*P92 ; No move time should be twice last Homing + MoveHO cycle time
+  P94=P92
+  WHILE (P94<P93) ; Loop until past specified time
+  	P94=(M0-P91)%P90 ; Calculate time elapsed
+	;; Modulo (%) operation to handle rollover
+	dwell0
+	dwell0
+  ENDWHILE ; Loop back
+  P91=M0 ; Store starting value of M0 (X:$0) servo cycle counter  
+  
+EndWhile
+
+BufferIndex = BufferStartOffset - 1
+BufferValue = P96
+
+dwell0
+dwell0
+
+Close
+
+;***************************************************************************
+; See Combinated X/Y Centring PROG 50 as reference			*
+;*                       Combinated Kappa PHI/Main Omega Test PROG	*
+;*				P170->Main Omega Increment. Ratio=12800cts/rev*
+;*				P171->Kappa PHI Increment. Ratio=711.11cts/rev*
+;***************************************************************************
+
+Open Prog 26 Clear
+
+INC(X,Y)
+
+X(P170) Y(P171)
+
+dwell0
+dwell0
+
+Close
+
+
+;*******************************************************************************
+;*                    Scan Phi/Shutter&Photodiodes Gathering                   *
+;*******************************************************************************
+; M220->Encoder Phi               M128->FastShutterIsOpen = 0 (not used)
+; P170->Start position from VB    P171->Stop position from VB
+; P172->Not Used                  P173->Phi Velocity (floating point)
+; P174->I5049 sampling rate       P175->Acceleration time (floating point)
+; P176->Gathering sources 2       P177->Number of passes
+; P178->Shutter Rising Distance   P179->Shutter Falling Distance
+; P180->Exposure Time (ms)
+
+&1
+OPEN PROG 31 CLEAR
+%100
+dwell0
+dwell0
+FastShutterOpenHist = 0 ; clear shutter openings history
+PhiScan = 1
+P5000=P173*(P175 + 200)/2 ;  Calcul of Accel Dist + 200 ms of margin
+TM(1)                   ;  In order to have the maximum speed
+ABS(X)
+If ( P170 = P171)
+  X(P170)                 ;  Move Phi to the start position
+Else
+  X(P170-P5000-P178)      ;  Move Phi to the start position
+EndIf
+DWELL0
+If (P174 != 0 And P176 != 0)
+  CMD"ENDG"
+  DWELL0
+  CMD"DELETE GATHER"
+  DWELL0
+  CMD"DEFINE GATHER"
+  DWELL0
+  I5049=P174
+  I5050=0 ; I5001 source enabled, ie Motor 1 Encoder address gathering
+  I5050=P176
+EndIf
+LINEAR
+F(P173)              ;  New velocity
+TS(P175/2)              ;  S curve acceleration  time set to 0
+DWELL0
+If (P174 != 0 And P176 != 0)
+  ;StartGathering=1 ne fonctionne qu'en mode online !!!!!
+  cmd "gat"  ;  Start gathering datas
+EndIf
+If ( P170 = P171)
+  FShutterScanEnable = 0
+  FShutterManualEnable = 1
+  FastShutterHasOpened = 0
+  DWELL1 ; Allow data gathering to see the shutter command
+  FShutterManualOn     = 1
+  DWell(P180)
+  FShutterManualOn     = 0
+  DWELL1 ; Allow data gathering to see the shutter command
+  FShutterManualEnable = 0
+  If (FastShutterHasOpened = 1)
+    FastShutterOpenHist =  FastShutterOpenHist + 1
+  EndIf
+Else
+  FShutterManualEnable  = 0
+  M601=ShutterPulseDuration * P173 ; get the phi delta position for the shutter pulse
+  While (P177 > 0)
+    If (P177 > 0)
+      M3021=M522+P170-P178      ;  CaptureOffset + OpenPos - RisingDist
+      M3022=M3021+M601           ;  Large step to support the RC on ETEL card
+      M3031=M522+P171-P179      ;  CaptureOffset + ClosePos - FallingDist
+      M3032=M3031+M601
+
+      DWELL0
+      M3025=0
+      M3024=1
+      M3035=0
+      M3034=1
+      FastShutterHasOpened = 0
+      DWELL0
+      Cmd "m1124=1" ;FShutterScanEnable=1
+      DWELL0
+      X(P171+P5000+P178)       ;  Phi to the stop position
+      DWELL0
+      Cmd "m1124=0" ;FShutterScanEnable=0
+      DWELL0
+      If (FastShutterHasOpened = 1)
+        FastShutterOpenHist =  FastShutterOpenHist + 1
+      EndIf
+      P177=P177-1
+    EndIf
+    If (P177 > 0)               ;  Here P171 & P170 are inverted because the sens has changed
+      M3021=M522+P171+P178      ;  CaptureOffset + OpenPos + RisingDist
+      M3022=M3021-M601
+      M3031=M522+P170+P179      ;  CaptureOffset + OpenPos + FallingDist
+      M3032=M3031-M601
+      DWELL0
+      M3025=0
+      M3024=1
+      M3035=0
+      M3034=1
+      FastShutterHasOpened = 0
+      DWELL0
+      cmd "m1124=1" ;FShutterScanEnable=1
+      DWELL0
+      X(P170-P5000-P178)       ;  Phi to the stop position
+      DWELL0
+      cmd "m1124=0" ;FShutterScanEnable=0
+      DWELL0
+      If (FastShutterHasOpened = 1)
+        FastShutterOpenHist =  FastShutterOpenHist + 1
+      EndIf
+  
+      P177=P177-1
+    EndIf
+  EndWhile
+EndIf
+If (P174 != 0 And P176 != 0)
+  StartGathering=0             ;  Stop gathering
+EndIf
+DWELL0
+F(I122)
+DWELL0
+PhiScan = 0
+FShutterManualEnable = 1
+FShutterScanEnable = 0
+M431=0                         ;  Clear the VB synchro. flag
+CLOSE
+
+;*******************************************************************************
+;*                                 ORGAN SCAN                                  *
+;*******************************************************************************
+;P169->Motor Number from VB      P170->Start position from VB
+;P171->Stop position from VB     P172->Step Size
+;P173->Motor Speed
+
+&5
+OPEN PROG 34 CLEAR
+;	Le prépositionnement est effectué par VB
+%100
+ABS
+DWell 0
+LIN
+DWell 0
+TM(1)
+DWELL0
+TS(0)
+DWELL0
+TM(ABS(P171-P170+2*P172)/P173)	;	Clacul du TM en fonction du feedrate(F(X) ne fonctionne pas???)
+DWELL0
+
+P55 = 0
+p50 = 0
+P51 = 0
+P52 = 0
+P100 = BufferStartOffset
+P103 = 0
+
+If (P169 = 7)                      ;#7 Aperture Y -> Y
+  M511 = $38B					;	Fixe le codeur à étudier
+  DWell 0
+  M505 = M510 / 3072		;	Sauvegarde de la valeur actuelle du codeur
+  DWell 0
+  P60 = 1						;	Démarre le PLCC 0
+  DWell 0
+  Y(P171 + P172)				;	Dégagement d'un StepSize pour bien prendre le dernier pt
+EndIf
+
+If (P169 = 8)                      ;#8 Aperture Z -> Z
+  M511 = $40B					;	Fixe le codeur à étudier
+  DWell 0
+  M505 = M510 / 3072		;	Sauvegarde de la valeur actuelle du codeur
+  DWell 0
+  P60 = 1						;	Démarre le PLCC 0
+  DWell 0
+  Z(P171 + P172)				;	Dégagement d'un StepSize pour bien prendre le dernier pt
+EndIf
+
+If (P169 = 9)                   ;#9 capillary Y -> U
+  M511 = $48B					;	Fixe le codeur à étudier
+  DWell 0
+  M505 = M510 / 3072		;	Sauvegarde de la valeur actuelle du codeur
+  DWell 0
+  P60 = 1						;	Démarre le PLCC 0
+  DWell 0
+  U(P171 + P172)				;	Dégagement d'un StepSize pour bien prendre le dernier pt
+EndIf
+
+If (P169 = 10)                  ;#10 capillary Z -> V
+  M511 = $50B					;	Fixe le codeur à étudier
+  DWell 0
+  M505 = M510 / 3072		;	Sauvegarde de la valeur actuelle du codeur
+  DWell 0
+  P60 = 1						;	Démarre le PLCC 0
+  DWell 0
+  V(P171 + P172)				;	Dégagement d'un StepSize pour bien prendre le dernier pt
+EndIf
+
+If (P169 = 11)                  ;#11 Scintillator Z -> W
+  M511 = $58B					;	Fixe le codeur à étudier
+  DWell 0
+  M505 = M510 / 3072		;	Sauvegarde de la valeur actuelle du codeur
+  DWell 0
+  P60 = 1						;	Démarre le PLCC 0
+  DWell 0
+  W(P171 + P172)				;	Dégagement d'un StepSize pour bien prendre le dernier pt
+EndIf
+
+DWELL0
+P60 = 0						;	Stoppe le PLCC 0
+DWELL0
+
+M434=0               	;  Clear the VB synchro. flag
+CLOSE
+
+
+;*******************************************************************************
+;*                                  ORGUE HOMING                               *
+;*                   Beam conditionners synchronized homing                    *
+;*******************************************************************************
+&5
+OPEN PROG 35 CLEAR
+%100
+dwell0
+INC
+LIN
+dwell0
+
+
+; BE secure !
+i724=$200001         ;  Revalidation des securites
+i824=$200001         ;  Revalidation des securites
+i924=$200001         ;  Revalidation des securites
+i1024=$200001        ;  Revalidation des securites
+i1124=$200001        ;  Revalidation des securites
+
+; il faut devalider les securites des autres axes du systeme pour autoriser
+; le mouvement d'un axe si un autre moteur est en butée
+If ( M37 = 1 )
+	i724=$220001         ;  devalidation des securites Y Aperture
+EndIf
+If ( M38 = 1 )
+	i824=$220001         ;  devalidation des securites Z aperture
+EndIf
+If ( M39 = 1 )
+	i924=$220001         ;  devalidation des securites Y Capillary
+EndIf
+If ( M40 = 1 )
+	i1024=$220001        ;  devalidation des securites Z Capillary
+EndIf
+If ( M41 = 1 )
+	i1124=$220001        ;  devalidation des securites Scintillator
+EndIf
+
+
+; Move Off the negative limit switch if already reached
+If ( M37 = 1 )
+	i724=$200001         ;  Revalidation des securites Y Aperture
+	dwell0
+	If (Nlim7 = 1)    ;  Si limite negative aperture y on degage mais pas tant qu'elle est detectee sinon on arrive possiblement butee positive
+		Y HomeClear7
+	EndIf
+	dwell0
+	i724=$220001         ;  devalidation des securites Y aperture
+EndIf
+
+If ( M38 = 1 )
+	i824=$200001         ;  Revalidation des securites Z aperture
+	M435=2
+	If (Nlim8 = 1)    ;  Si limite negative aperture z
+		Z HomeClear8
+	EndIf
+	dwell0
+	i824=$220001         ;  devalidation des securites Z aperture
+EndIf
+
+If ( M39 = 1 )
+	i924=$200001         ;  Revalidation des securites Y capillary
+	dwell0
+	M435=3
+	If (Nlim9 = 1)    ;  Si limite negative capil y on degage mais pas tant qu'elle est detectee sinon on arrive possiblement butee positive
+		U HomeClear9
+	EndIf
+	dwell0
+	i924=$220001         ;  devalidation des securites Y Capillary
+EndIf
+
+If ( M40 = 1 )
+	i1024=$200001         ;  Revalidation des securites Z Capillary
+	dwell0
+	M435=4
+	If (Nlim10 = 1)    ;  Si limite negative capil z
+		V HomeClear10
+	EndIf
+	dwell0
+	i1024=$220001         ;  devalidation des securites Z Capillary
+EndIf
+
+If ( M41 = 1 )
+	i1124=$200001         ;  Revalidation des securites Scintillator
+	dwell0
+	M435=4
+	If (Nlim11 = 1)    ;  Si limite negative scinti
+		W HomeClear11
+	EndIf
+	dwell0
+	M435=5
+	i1124=$220001         ;  devalidation des securites Scintillator
+EndIf
+
+dwell0
+dwell0
+M435=6
+
+If ( DisableMaskForParrallelMoveProg & OrganMaskPos = 0 )
+	; Multiple homing moves are started together by specifying a list or range of motor numbers
+	HOME7,8,9,10,11
+	dwell0
+	dwell0
+Else
+	if (DisableMaskForParrallelMoveProg & YApertureMaskPos = 0)
+		HOME7
+		dwell0
+		dwell0
+	EndIf
+	if (DisableMaskForParrallelMoveProg & ZApertureMaskPos = 0)
+		HOME8
+		dwell0
+		dwell0
+	EndIf
+	if (DisableMaskForParrallelMoveProg & YCapillaryMaskPos = 0)
+		HOME9
+		dwell0
+		dwell0
+	EndIf
+	if (DisableMaskForParrallelMoveProg & ZCapillaryMaskPos = 0)
+		HOME10
+		dwell0
+		dwell0
+	EndIf
+	if (DisableMaskForParrallelMoveProg & ZScintillatorMaskPos = 0)
+		HOME11
+		dwell0
+		dwell0
+	EndIf	
+EndIf
+
+M435=7
+i724=$200001         ;  Revalidation des securites
+i824=$200001         ;  Revalidation des securites
+i924=$200001         ;  Revalidation des securites
+i1024=$200001        ;  Revalidation des securites
+i1124=$200001        ;  Revalidation des securites
+DWELL0
+
+If ( DisableMaskForParrallelMoveProg & OrganMaskPos = 0 )
+; Here command are sequential but not processed in parallel
+	Y HomeOffset7 Z HomeOffset8 U HomeOffset9 V HomeOffset10 W HomeOffset11
+	dwell0
+Else
+	if (DisableMaskForParrallelMoveProg & YApertureMaskPos = 0)
+		Y HomeOffset7
+		dwell0
+	EndIf
+	if (DisableMaskForParrallelMoveProg & ZApertureMaskPos = 0)
+		Z HomeOffset8
+		dwell0
+	EndIf
+	if (DisableMaskForParrallelMoveProg & YCapillaryMaskPos = 0)
+		U HomeOffset9
+		dwell0
+	EndIf
+	if (DisableMaskForParrallelMoveProg & ZCapillaryMaskPos = 0)
+		V HomeOffset10
+		dwell0
+	EndIf
+	if (DisableMaskForParrallelMoveProg & ZScintillatorMaskPos = 0)
+		W HomeOffset11
+		dwell0
+	EndIf	
+EndIf
+
+DWELL0
+M435=0            ;  Clear the VB synchro. flag
+CLOSE
+
+
+;*******************************************************************************
+;*                                 ORGUE MOVE                                  *
+;*          retrait partiel de l'orgue pour chargement et dechargement         *
+;*          		P169->Z off capillaire                                 *
+;*          		P170->Z off scintillateur                              *
+;*          		P171->Z of aperture                                    *
+;*******************************************************************************
+&5
+OPEN PROG 37 CLEAR
+%100
+dwell0
+ABS
+LIN
+dwell0
+F(150)
+V(P169)
+W(P170)
+Z(P171)
+DWELL0
+M437=0
+close
+
+;*******************************************************************************
+;*                       Combinated X/Y Centring PROG                          *
+;*				P170->X Increment  			       *		
+;*				P171->Y Increment                              *
+;*******************************************************************************
+OPEN PROG 50 CLEAR
+INC(X,Y)
+
+X(P170) Y(P171)
+DWELL0
+M450=0
+CLOSE
+
+;*******************************************************************************
+;*                          XCentring table ocsillation                        *
+;*			       M320->XCentringOscilEn                          *
+;*******************************************************************************
+OPEN PROG 52 CLEAR
+%100
+dwell0
+dwell0
+
+INC(X)
+While (M320 = 1)
+  X 50000
+  X -50000
+EndWhile
+
+CLOSE
+
+
+
+;*****************************************************************************
+; PROG 54 Combinated Main translation table OutBeam movement for Scintillator
+;*****************************************************************************
+; P170->X Absolute position    P171->Y Absolute position 
+; P172->Z Absolute position 
+;***************************************************************************
+Open PROG 54 Clear
+Abs
+
+X(P170) Y(P171) Z(P172)
+DWELL0
+DWELL0
+M454=0
+Close
+
+
+OPEN PLCC 0 CLEAR
+If (P60 = 1)
+  M503 = M510 / 3072	; Position en cours
+  P101 = M1301 * 4096	; Valeur photodiode en cours
+  ;	Calcul de la prochaine position recherchée
+  P102 = P170 + (P103 * P172)
+  P51 = P51 + 1
+  If (ABS(P102-M503) !> ABS(P102-M505))					; ABS(P102 - BufferValue) < ABS(P102 - P106))
+    ; On se rapproche de la position recherchée
+    M505 = M503			;	Sauvegarde de la position précédente
+    P104 = P101			;	Sauvegarde de la photodiode pécédente
+  Else   
+    P52 = P52 + 1
+    BufferIndex = P100
+    BufferValue = ( M505 * 3072 ) & $00FFFFFF
+    BufferIndex = P100 + 1
+    BufferValue = ( ( M505 * 3072 ) / 16777216 ) & $00FFFFFF
+    BufferIndex = P100 + 2
+    BufferValue = P104
+    M505 = M503			;	Sauvegarde de la position précédente
+    P104 = P101			;	Sauvegarde de la photodiode pécédente
+    P100 = P100 + 3
+    P103 = P103 + 1
+  EndIf
+Else
+		If (M2001 = 1) ; debug HERE - Refill all coordinate system (except Arc cause replaced by ZoomDC)
+			M2001 = 0
+			m31=1
+			m32=1
+			m33=1
+			m34=1
+			m35=1 ; = 0 to begin with Soft Limit/NeutralPos tuning
+			m36=1 ; Zoom DC
+			m37=1 ; = 0 to begin with Soft Limit/NeutralPos tuning
+			m38=1 ; = 0 to begin with Soft Limit/NeutralPos tuning
+			m39=1 ; = 0 to begin with Soft Limit/NeutralPos tuning
+			m40=1 ; = 0 to begin with Soft Limit/NeutralPos tuning			
+			m41=1 ; = 0 to begin with Soft Limit/NeutralPos tuning
+			m42=0 ; No device here
+			m43=0 ; No device here
+			m44=0 ; No device here
+			m45=0 ; No device here
+			m46=0 ; No device here
+			m47=1 ; to begin with Soft Limit/NeutralPos tuning
+			m48=1 ; to begin with Soft Limit/NeutralPos tuning
+			m49=1 ; MiniKappa Elbow
+			m50=1 ; MiniKappa Rotation axis
+			m51=0 ; No device here
+			m52=0 ; No device here
+			m53=0 ; No device here
+			m54=0 ; No device here			
+		Else
+  ;********************* PLC0 can process a RESET LIMITS SAFE *****************
+  If (M2000 = 1)
+    M2000 = 0
+    ; Set to 1 the bit 17 of PHI motor will ask for limits detection
+    I124=$220001   I119=20 I122=1664 ;I119=2 before BM14
+    
+    ; Set to 0 the bit 17 of all motors - except PHI  ans Zoom motors - will ask for limits detection
+    I224=$200001   I219=0.5 I222=120 
+    I324=$200001   I319=0.5 I322=120 
+    I424=$200001   I419=0.5 I422=120
+    I524=$220001   I519=0.2 I522=3
+    I624=$200001   I619=0.2 I622=10
+    I724=$200001   I715=1 I717=1  I719=1  I720=1 I722= 200
+    I824=$200001   I815=1 I817=1  I819=1  I820=2
+    I924=$200001   I915=1 I917=1  I919=1  I920=2
+    I1024=$200001  I1015=2 I1017=0.5  I1019=0.5  I1020=2
+    I1124=$200001  I1115=2 I1117=0.5  I1119=0.5  I1120=1
+    ; I1224=$2x0001
+    ; I1324=$2x0001
+    ; I1424=$2x0001
+    ; I1524=$2x0001
+    ; I1624=$2x0001
+    I1724=$200001 I1719=0.5 I1722=100
+    I1824=$200001 I1819=0.5 I1822=100
+    I1924=$200001  I1915=1	I1917=0.2 I1919=0.2	I1920=1 I1921=0 I1922=50
+    I2024=$220001  I2015=1	I2017=0.2 I2019=0.2	I2020=1 I2021=0 I2022=50
+    ;I2124=$2x0001
+    ;I2224=$2x0001  
+    ;I2324=$2x0001
+    ;I2424=$2x0001
+    
+    
+    ; clear all program flags otherwise the MD2 Control Software believes we are busy
+    Cmd"M401..420=0"
+    Cmd"M431=0"
+    Cmd"M434=0"
+    Cmd"M435=0"
+    Cmd"M437=0"
+    Cmd"M450=0"
+    Cmd"M454=0"
+    
+
+    ; Redefine coordinate system in case a motor was removed because of simulations
+    ;		Use the Motor Enabled flag current value set in Device.Init()
+    ; axis/CS mapping must be here BUT NOT IN A STANDALONE PROG Since CMD"#MotorNumber->AxisLetter" does nothing in a motion prog (CMD"#MotorNumber->0" seems OK) !!!!!
+    ; A Mxx00 activation flag is also managed in VB for devices.Init() (set Ixx00), but PMAC care about the activation flag of all motors in C.S. before any motion prog running 
+    ;	-> ERR013 A motor in the coordinate system is not activated (should set Ix00 to 1 or remove motor from C.S.)
+
+
+    
+    ;HeadTypeDetection  = HEAD_TYPE.Unknown
+    ; Those mappings require Revision C0 on 'Interface Shutter' board
+    M1028=0
+    M1029=0
+    M1030=0
+    
+  ;DisableMaskForParrallelMoveProg=0
+	If (M31 = 1)
+    	Cmd"&1#1->X"    ;  Axe Phi
+	DisableMaskForParrallelMoveProg = (DisableMaskForParrallelMoveProg | PhiMaskPos ) ^ PhiMaskPos			
+  Else
+   		Cmd"&1#1->0"
+		M401=0
+   		DisableMaskForParrallelMoveProg = DisableMaskForParrallelMoveProg | PhiMaskPos
+	End If
+
+    ; centring table
+	If (M47 = 1) 
+    	Cmd"&2#17->X"   ;  XCentring
+		DisableMaskForParrallelMoveProg = (DisableMaskForParrallelMoveProg | XTableCentringMaskPos ) ^ XTableCentringMaskPos			
+  Else
+		Cmd"&2#17->0"
+		M417=0
+		DisableMaskForParrallelMoveProg = DisableMaskForParrallelMoveProg | XTableCentringMaskPos
+  End If
+  
+	If (M48 = 1)         	
+    	Cmd"&2#18->Y"   ;  YCentring
+		DisableMaskForParrallelMoveProg = (DisableMaskForParrallelMoveProg | YTableCentringMaskPos ) ^ YTableCentringMaskPos			
+  Else
+		Cmd"&2#18->0"
+		M418=0
+		DisableMaskForParrallelMoveProg = DisableMaskForParrallelMoveProg | YTableCentringMaskPos
+	End If
+    
+    ; main xyz table
+	If (M32 = 1)    
+    	CMD"&3#2->X"    ;  X Translation
+		DisableMaskForParrallelMoveProg = (DisableMaskForParrallelMoveProg | XTableXYZMaskPos ) ^ XTableXYZMaskPos			
+  Else
+  	Cmd"&3#2->0"
+		m402=0
+  	DisableMaskForParrallelMoveProg = DisableMaskForParrallelMoveProg | XTableXYZMaskPos
+	End If
+	If (M33 = 1)    
+		Cmd"&3#3->Y"    ;  Y Translation
+		DisableMaskForParrallelMoveProg = (DisableMaskForParrallelMoveProg | YTableXYZMaskPos ) ^ YTableXYZMaskPos		
+  Else
+		Cmd"&3#3->0"
+		m403=0
+		DisableMaskForParrallelMoveProg = DisableMaskForParrallelMoveProg | YTableXYZMaskPos
+	End If 
+	If (M34 = 1)
+		CMD"&3#4->Z"    ;  Z Translation
+		DisableMaskForParrallelMoveProg = (DisableMaskForParrallelMoveProg | ZTableXYZMaskPos ) ^ ZTableXYZMaskPos
+  Else
+		Cmd"&3#4->0"
+		m404=0
+		DisableMaskForParrallelMoveProg = DisableMaskForParrallelMoveProg | ZTableXYZMaskPos
+	End If
+
+;       video zoom DC
+	If (M36 = 1)
+		Cmd"&4#6->Z"   ;  Z (Zoom DC)
+		DisableMaskForParrallelMoveProg = (DisableMaskForParrallelMoveProg | ZoomDCMaskPos ) ^ ZoomDCMaskPos
+	Else
+		Cmd"&4#6->0"
+		Cmd"M406=0"
+		DisableMaskForParrallelMoveProg = DisableMaskForParrallelMoveProg | ZoomDCMaskPos
+	End If
+		
+    ;  orgue
+	If (M37 = 1)
+		CMD"&5#7->Y"    ;  Y Aperture		
+		DisableMaskForParrallelMoveProg = (DisableMaskForParrallelMoveProg | YApertureMaskPos ) ^ YApertureMaskPos
+	Else
+		Cmd"&5#7->0"
+		M407=0
+		DisableMaskForParrallelMoveProg = DisableMaskForParrallelMoveProg | YApertureMaskPos
+	End If
+	If (M38 = 1)	
+		CMD"&5#8->Z"    ;  Z Aperture
+		DisableMaskForParrallelMoveProg = (DisableMaskForParrallelMoveProg | ZApertureMaskPos ) ^ ZApertureMaskPos		
+	Else
+		Cmd"&5#8->0"
+		M408=0
+		DisableMaskForParrallelMoveProg = DisableMaskForParrallelMoveProg | ZApertureMaskPos
+	End If
+	If (M39 = 1)
+		CMD"&5#9->U"    ;  Y Capillary
+		DisableMaskForParrallelMoveProg = (DisableMaskForParrallelMoveProg | YCapillaryMaskPos ) ^ YCapillaryMaskPos		
+	Else
+		Cmd"&5#9->0"
+		M409=0
+		DisableMaskForParrallelMoveProg = DisableMaskForParrallelMoveProg | YCapillaryMaskPos
+	End If
+	If (M40 = 1)
+		CMD"&5#10->V"   ;  Z Capillary
+		DisableMaskForParrallelMoveProg = (DisableMaskForParrallelMoveProg | ZCapillaryMaskPos ) ^ ZCapillaryMaskPos		
+	Else
+		Cmd"&5#10->0"
+		M410=0
+		DisableMaskForParrallelMoveProg = DisableMaskForParrallelMoveProg | ZCapillaryMaskPos
+	End If
+	If (M41 = 1)
+		CMD"&5#11->W"   ;  Z Scintillator
+		DisableMaskForParrallelMoveProg = (DisableMaskForParrallelMoveProg | ZScintillatorMaskPos ) ^ ZScintillatorMaskPos		
+	Else
+		Cmd"&5#11->0"
+		M411=0
+		DisableMaskForParrallelMoveProg = DisableMaskForParrallelMoveProg | ZScintillatorMaskPos
+	End If
+	                     
+	If (M49 = 1)
+		CMD"&7#19->X"   ;  Mini Kappa 1 (Elbow rotation)
+		DisableMaskForParrallelMoveProg = (DisableMaskForParrallelMoveProg | MiniKappa1MaskPos ) ^ MiniKappa1MaskPos		
+	Else
+		CMD"&7#19->0"
+		M419=0 
+		DisableMaskForParrallelMoveProg = DisableMaskForParrallelMoveProg | MiniKappa1MaskPos
+	End If
+	If (M50 = 1)
+		CMD"&7#20->Y"   ;  Mini Kappa 2 (Sample Holder rotation)
+		DisableMaskForParrallelMoveProg = (DisableMaskForParrallelMoveProg | MiniKappa2MaskPos ) ^ MiniKappa2MaskPos		
+	Else
+		CMD"&7#20->0"
+		M420=0
+		DisableMaskForParrallelMoveProg = DisableMaskForParrallelMoveProg | MiniKappa2MaskPos
+	End If
+	
+    ;  divers
+    ; (M35): Analyser is not in a CS.
+		
+  P0=0
+	CMD"P0=1" ; synchronize coordinate system changes
+	While ( P0 = 0 ) ; check the previous command execution
+	EndWhile
+	      
+	FastShutterHasGloballyOpened = 0
+	FastShutterOpenGlobalHist = 0
+	FastShutterCloseGlobalHist = 0
+  EndIf
+	Endif ; end of M2000 (ResetLimitSafe) and M2001 (debug) HERE 
+  
+  If (FShutterIsOpen = 1)
+  If ( PhiScan = 1 )                        ;If (FShutterScanEnable = 1)
+      FastShutterHasOpened = 1
+    EndIf
+    If (FastShutterHasGloballyOpened = 0)
+    	FastShutterHasGloballyOpened = 1
+    	FastShutterOpenGlobalHist = FastShutterOpenGlobalHist + 1
+  EndIf
+  Else	; shutter closed
+  	if (FastShutterHasGloballyOpened = 1)
+  		FastShutterHasGloballyOpened = 0
+  		FastShutterCloseGlobalHist = FastShutterCloseGlobalHist + 1
+  	EndIf
+  EndIf  
+  
+
+  ; if the sample changer is off both SCLoadRequest and SCUnloadRequest are set to 1
+  SampleChangerIsRunning = 1^(SCLoadRequest & SCUnloadRequest)
+  
+If (CryoBackPushButtonIsEnabled = 1)
+   CryoBack = 1^CryoPushButtonIsFront
+Else
+     ; listen to cryo back requests from SC
+   If (SampleChangerEnabled = 1 And SampleChangerIsRunning = 1)
+         If (SCCryoBackRequest != CryoIsBack)
+            CryoBack = SCCryoBackRequest
+            SCCryoBackOldRequest = SCCryoBackRequest
+         EndIf
+  EndIf
+EndIf
+
+If (SampleChangerEnabled = 1 And SampleChangerIsRunning = 1)
+   SampleMagnetOff = SCSampleMagnetControlRequest
+EndIf
+
+
+      
+EndIf
+
+Close
+Enable PLCC 0
+
+
+; ======================== LS-CAT Modifications below
+
+;
+; M variable to collect motor status information
+;
+; Status 1: Limits, open loop
+;
+M5001->DP:$60101	; Omega
+M5002->DP:$60102	; Alignment Table X
+M5003->DP:$60103	; Alignment Table Y
+M5004->DP:$60104	; Alignment Table Z
+M5005->DP:$60105	; Analyser
+M5006->DP:$60106	; Zoom
+M5007->DP:$60107	; Aperture Y
+M5008->DP:$60108	; Aperture Z
+M5009->DP:$60109	; Capillary Y
+M5010->DP:$6010A	; Capillary Z
+M5011->DP:$6010B	; Scintillator Z
+M5012->DP:$6010C	; Center X
+M5013->DP:$6010D	; Center Y
+M5014->DP:$6010E	; Kappa
+M5015->DP:$6010F	; Phi
+;
+; Status 2: I2T, Fatal following error
+;
+M5021->DP:$60111	; Omega
+M5022->DP:$60112	; Alignment Table X
+M5023->DP:$60113	; Alignment Table Y
+M5024->DP:$60114	; Alignment Table Z
+M5025->DP:$60115	; Analyser
+M5026->DP:$60116	; Zoom
+M5027->DP:$60117	; Aperture Y
+M5028->DP:$60118	; Aperture Z
+M5029->DP:$60119	; Capillary Y
+M5030->DP:$6011A	; Capillary Z
+M5031->DP:$6011B	; Scintillator Z
+M5032->DP:$6011C	; Center X
+M5033->DP:$6011D	; Center Y
+M5034->DP:$6011E	; Kappa
+M5035->DP:$6011F	; Phi
+
+;
+; Positions (cts)
+;
+M5041->DP:$60121	; Omega
+M5042->DP:$60122	; Alignment Table X
+M5043->DP:$60123	; Alignment Table Y
+M5044->DP:$60124	; Alignment Table Z
+M5045->DP:$60125	; Analyser
+M5046->DP:$60126	; Zoom
+M5047->DP:$60127	; Aperture Y
+M5048->DP:$60128	; Aperture Z
+M5049->DP:$60129	; Capillary Y
+M5050->DP:$6012A	; Capillary Z
+M5051->DP:$6012B	; Scintillator Z
+M5052->DP:$6012C	; Center X
+M5053->DP:$6012D	; Center Y
+M5054->DP:$6012E	; Kappa
+M5055->DP:$6012F	; Phi
+
+M5060->DP:$60130	; Accessory 11C byte 1
+M5061->DP:$60131	; Accessory 11C byte 2
+M5062->DP:$60132	; Accessory 11C byte 3
+M5063->DP:$60133	; Accessory 11C byte 5
+M5064->DP:$60134	; Accessory 11C byte 6
+M5065->DP:$60135	; Front Light DAC
+M5066->DP:$60136	; Back Light DAC
+M5067->DP:$60137	; Scintillator Piezo
+
+;
+; Shutter
+;
+M5070->DP:$60140	; FShutterIsOpen
+M5071->DP:$60141	; PhiScan
+M5072->DP:$60142	; FastShutterHasOpened
+M5073->DP:$60143	; FastShutterHasGloballyOpened
+M5074->DP:$60144	; Number of passes (FShutterIsOpen false and FastShutterHasOpened true and npasses=1 means we can read the detector)
+
+M5075->DP:$60145	; Coordinate System Moving Flags
+
+M6000->Y:$78C00,0,24,U	; 0 Air Pressure OK, 1 Air Bearing OK, 2 Cryo Front PB, 6 Cryo is Back
+M6001->Y:$78C01,0,24,U	; 0 Fluo Det is Back, 1 Sample Detected, 5 Etel Ready, 6 Etel On, 7 Etel Init OK
+M6002->Y:$78C02,0,24,U	; 0 MiniKappaOK, 3 Arm Parked
+M6003->Y:$78C04,0,24,U	; 0 Mag Off, 1 Condenser Out, 2 Cryo Back, 3 Dryer On, 4 FluoDet Out, 6 (1=Smart Mag, 0=Binder Mag(?))
+M6004->Y:$78C05,0,24,U	; 7 Etel Enable, 8 F Shutter Enable, 9 F Shutter Man Enable, 10 F Shutter On
+
+OPEN PLCC 2 CLEAR
+
+;Motor encoder home capture position
+M522=M520  ;Used for A&B registers set up.
+
+
+M5001=M1	; Omega
+M5002=M2	; Alignment Table X
+M5003=M3	; Alignment Table Y
+M5004=M4	; Alignment Table Z
+M5005=M5	; Analyser
+M5006=M6	; Zoom
+M5007=M7	; Aperture Y
+M5008=M8	; Aperture Z
+M5009=M9	; Capillary Y
+M5010=M10	; Capillary Z
+M5011=M11	; Scintillator Z
+M5012=M17	; Center X
+M5013=M18	; Center Y
+M5014=M19	; Kappa
+M5015=M20	; Phi
+
+M5021=M91	; Omega
+M5022=M92	; Alignment Table X
+M5023=M93	; Alignment Table Y
+M5024=M94	; Alignment Table Z
+M5025=M95	; Analyser
+M5026=M96	; Zoom
+M5027=M97	; Aperture Y
+M5028=M98	; Aperture Z
+M5029=M99	; Capillary Y
+M5030=M100	; Capillary Z
+M5031=M101	; Scintillator Z
+M5032=M107	; Center X
+M5033=M108	; Center Y
+M5034=M109	; Kappa
+M5035=M110	; Phi
+
+
+; Motor actual position
+M5041=(M181/(I108*32))		; Phi
+M5042=(M182/(I208*32))		; Table XYZ : X
+M5043=(M183/(I308*32))		; Table XYZ : Y
+M5044=(M184/(I408*32))		; Table XYZ : Z
+M5045=(M185/(I508*32))		; Analyser
+M5046=(M186/(I608*32))		; Zoom camera
+M5047=(M187/(I708*32))		; Aperture Y
+M5048=(M188/(I808*32))		; Aperture Z
+M5049=(M189/(I908*32))		; Capillary Y
+M5050=(M190/(I1008*32))		; Capillary Z
+M5051=(M191/(I1108*32))		; Scintillator Z
+M5052=(M197/(I1708*32))		; Centring #17
+M5053=(M198/(I1808*32))		; Centring #18
+M5054=(M199/(I1908*32))		; Mini Kappa 1
+M5055=(M200/(I2008*32))	        ; Mini Kappa 2
+
+M5060=M6000			; 11C byte 1
+M5061=M6001			; 11C byte 2
+M5062=M6002			; 11C byte 3
+M5063=M6003			; 11C byte 5
+M5064=M6004			; 11C byte 6
+M5065=M1200			; Front Light DAC
+M5066=M1201			; Back Light DAC
+M5067=M1203			; Scintillator Piezo
+
+;
+; Shutter
+;
+M5070=M1048	; FShutterIsOpen
+M5071=P3002	; PhiScan
+M5072=P3001	; FastShutterHasOpened
+M5073=P3005	; FastShutterHasGloballyOpened
+M5074=P177	; Number of passes (FShutterIsOpen false and FastShutterHasOpened true and npasses=1 means we can read the detector)
+
+; M5075 is set directly, no need to do anything here
+
+CLOSE
+
+
+
+
+;
+; LS-CAT modification to kappa homing routing prog 19
+;
+#Define  HomeOffset119      22760    ; cnts from limit switch to zero position
+
+OPEN PROG 119 CLEAR
+%100
+dwell0
+inc
+lin
+dwell0
+While (Nlim19 = 1)    ;  Si limite negative #21
+  dwell0
+  X HomeClear19
+  dwell0
+EndWhile
+dwell0
+I1924=$220001         ;  Devalidation des securites
+dwell0
+home 19
+hmz 19                ; BEWARE ! This is mandatory to take into account the fact that the Mini Kappa elbow can be moved of 180 degrees by the user !
+dwell0
+X HomeOffset119       ; goto a measure zero point (Yikes! No real home marker!)
+dwell0
+dwell0
+I1924=$200001         ;  Revalidation des securites
+dwell0
+M419=0                ;Clear the VB synchro. flag
+dwell0
+dwell0
+
+CLOSE
+
+
+;
+; LS-CAT modification to omega scan prog 31
+;
+; P170->Shutter Open Counts       P171->Delta omega counts
+;                                 P173->Phi Velocity (floating point)
+;                                 P175->Acceleration time (floating point)
+;                                 P177->Number of passes
+; P178->Shutter Rising Distance   P179->Shutter Falling Distance
+; P180->Exposure Time (ms)
+
+OPEN PROG 131 CLEAR
+M5075 = (M5075 | 1)		; Raise the running flag (should have been set in application program)
+dwell0
+dwell0
+FastShutterOpenHist = 0 ; clear shutter openings history
+PhiScan = 1
+P5000=P173*(P175 + 200)/2      ;  Calcul of Accel Dist + 200 ms of margin
+TM(1)                    ;  In order to have the maximum speed
+ABS(X)
+If (P171 = 0)
+  RAPID X(P170)                 ;  Move Phi to the start position
+Else
+  RAPID X(P170-P5000-P178)      ;  Move Phi to the start position
+EndIf
+DWELL0
+LINEAR
+F(P173)                 ;  New velocity
+TS(P175/2)              ;  S curve acceleration  time set to 0
+DWELL0
+If (P171 = 0)
+  FShutterScanEnable = 0
+  FShutterManualEnable = 1
+  FastShutterHasOpened = 0
+  DWELL1 ; Allow data gathering to see the shutter command
+  FShutterManualOn     = 1
+  DWell(P180)
+  FShutterManualOn     = 0
+  DWELL1 ; Allow data gathering to see the shutter command
+  FShutterManualEnable = 0
+  If (FastShutterHasOpened = 1)
+    FastShutterOpenHist =  FastShutterOpenHist + 1
+  EndIf
+Else
+  FShutterManualEnable  = 0
+  M601=ShutterPulseDuration * P173 ; get the phi delta position for the shutter pulse
+  While (P177 > 0)
+    If (P177 > 0)
+      M3021=M522+P170-P178          ;  CaptureOffset + OpenPos - RisingDist
+      M3022=M3021+M601              ;  Large step to support the RC on ETEL card
+      M3031=M522+P170+P171-P179     ;  CaptureOffset + ClosePos - FallingDist
+      M3032=M3031+M601
+      DWELL0
+      M3025=0
+      M3024=1
+      M3035=0
+      M3034=1
+      FastShutterHasOpened = 0
+      DWELL0
+      Cmd "m1124=1" ;FShutterScanEnable=1
+      DWELL0
+      INC(X)
+      DWELL0
+      X(P171+2*P5000+P178+P179)       ;  Phi to the stop position
+      DWELL0
+      Cmd "m1124=0" ;FShutterScanEnable=0
+      DWELL0
+      If (FastShutterHasOpened = 1)
+        FastShutterOpenHist =  FastShutterOpenHist + 1
+      EndIf
+      P177=P177-1
+    EndIf
+    If (P177 > 0)               ;  Here P171 & P170 are inverted because the sens has changed
+      M3021=M522+P170+P171+P178 ;  CaptureOffset + OpenPos + RisingDist
+      M3022=M3021-M601
+      M3031=M522+P170+P179      ;  CaptureOffset + OpenPos + FallingDist
+      M3032=M3031-M601
+      DWELL0
+      M3025=0
+      M3024=1
+      M3035=0
+      M3034=1
+      FastShutterHasOpened = 0
+      DWELL0
+      cmd "m1124=1" ;FShutterScanEnable=1
+      DWELL0
+      INC(A)
+      DWELL0
+      X(-P171-2*P5000-P178-P178)       ;  Phi to the stop position
+      DWELL0
+      cmd "m1124=0" ;FShutterScanEnable=0
+      DWELL0
+      If (FastShutterHasOpened = 1)
+        FastShutterOpenHist =  FastShutterOpenHist + 1
+      EndIf
+  
+      P177=P177-1
+    EndIf
+  EndWhile
+EndIf
+DWELL0
+F(I122)
+DWELL0
+PhiScan = 0
+FShutterManualEnable = 1
+FShutterScanEnable = 0
+DWELL0
+;
+; Set up the next scan
+;
+If (P171 != 0)
+  ABS(X)
+  DWELL0
+  RAPID X(P170+P171-P5000-P178)      ;  Move Phi to the next start position
+EndIf
+DWELL0
+M5075 = (M5075 | 1) ^ 1		; Lower the running flag
+CLOSE
+
+;140		LS-CAT Move X Absolute
+;			Q10    = X Value (cts)
+;			Q100   = 1 << (coord sys no  - 1)
+OPEN PROG 140 CLEAR
+  DWELL0
+  TM(1)
+  M5075 = (M5075 | Q100)		; Raise the running flag (should have been set in application program)
+  ABS(X)
+  X(Q10)
+  DWELL0
+  M5075 = (M5075 | Q100) ^ Q100		; Lower the running flag
+CLOSE
+
+			
+;141		LS-CAT Move Y Absolute
+;			Q11    = Y Value (cts)
+;			Q100   = 1 << (coord sys no  - 1)
+OPEN PROG 141 CLEAR
+  DWELL0
+  TM(1)
+  M5075 = (M5075 | Q100)		; Raise the running flag (should have been set in application program)
+  ABS(Y)
+  Y(Q11)
+  DWELL0
+  M5075 = (M5075 | Q100) ^ Q100		; Lower the running flag
+CLOSE
+
+;142		LS-CAT Move Z Absolute
+;			Q12    = Z Value (cts)
+;			Q100   = 1 << (coord sys no  - 1)
+OPEN PROG 142 CLEAR
+  DWELL0
+  TM(1)
+  M5075 = (M5075 | Q100)		; Raise the running flag (should have been set in application program)
+  ABS(Z)
+  Z(Q12)
+  DWELL0
+  M5075 = (M5075 | Q100) ^ Q100		; Lower the running flag
+CLOSE
+			
+;143		LS-CAT Move U Absolute
+;			Q13    = U Value (cts)
+;			Q100   = 1 << (coord sys no  - 1)
+OPEN PROG 143 CLEAR
+  DWELL0
+  TM(1)
+  M5075 = (M5075 | Q100)		; Raise the running flag (should have been set in application program)
+  ABS(U)
+  U(Q13)
+  DWELL0
+  M5075 = (M5075 | Q100) ^ Q100		; Lower the running flag
+CLOSE
+			
+;144		LS-CAT Move V Absolute
+;			Q14    = V Value (cts)
+;			Q100   = 1 << (coord sys no  - 1)
+OPEN PROG 144 CLEAR
+  DWELL0
+  TM(1)
+  M5075 = (M5075 | Q100)		; Raise the running flag (should have been set in application program)
+  ABS(V)
+  V(Q14)
+  DWELL0
+  M5075 = (M5075 | Q100) ^ Q100		; Lower the running flag
+CLOSE
+			
+;145		LS-CAT Move W Absolute
+;			Q15    = W Value (cts)
+;			Q100   = 1 << (coord sys no  - 1)
+OPEN PROG 145 CLEAR
+  DWELL0
+  TM(1)
+  M5075 = (M5075 | Q100)		; Raise the running flag (should have been set in application program)
+  ABS(W)
+  W(Q15)
+  DWELL0
+  M5075 = (M5075 | Q100) ^ Q100		; Lower the running flag
+CLOSE
+			
+;146		LS-CAT Move A Absolute
+;			Q16    = A Value (cts)
+;			Q100   = 1 << (coord sys no  - 1)
+OPEN PROG 146 CLEAR
+  DWELL0
+  TM(1)
+  M5075 = (M5075 | Q100)		; Raise the running flag (should have been set in application program)
+  ABS(A)
+  A(Q16)
+  DWELL0
+  M5075 = (M5075 | Q100) ^ Q100		; Lower the running flag
+CLOSE
+			
+;147		LS-CAT Move B Absolute
+;			Q17    = B Value (cts)
+;			Q100   = 1 << (coord sys no  - 1)
+OPEN PROG 147 CLEAR
+  DWELL0
+  TM(1)
+  M5075 = (M5075 | Q100)		; Raise the running flag (should have been set in application program)
+  ABS(B)
+  B(Q17)
+  DWELL0
+  M5075 = (M5075 | Q100) ^ Q100		; Lower the running flag
+CLOSE
+			
+;145		LS-CAT Move C Absolute
+;			Q18    = C Value (cts)
+;			Q100   = 1 << (coord sys no  - 1)
+OPEN PROG 148 CLEAR
+  DWELL0
+  TM(1)
+  M5075 = (M5075 | Q100)		; Raise the running flag (should have been set in application program)
+  ABS(C)
+  C(Q18)
+  DWELL0
+  M5075 = (M5075 | Q100) ^ Q100		; Lower the running flag
+CLOSE
+			
+;150		LS-CAT Move X, Y Absolute
+;			Q20    = X Value
+;			Q21    = Y Value
+;			Q100   = 1 << (coord sys no  - 1)
+OPEN PROG 150 CLEAR
+  DWELL0
+  TM(1)
+  M5075 = (M5075 | Q100)		; Raise the running flag (should have been set in application program)
+  ABS(X,Y)
+  X(Q20) Y(Q21)
+  DWELL0
+  DWELL0
+  M5075 = (M5075 | Q100) ^ Q100		; Lower the running flag
+  DWELL0
+CLOSE
+
+;160		LS-CAT Move X, Y, Z  Absolute
+;			Q30    = X Value
+;			Q31    = Y Value
+;			Q32    = Z Value
+;			Q100   = 1 << (coord sys no  - 1)
+OPEN PROG 160 CLEAR
+  DWELL0
+  TM(1)
+  M5075 = (M5075 | Q100)		; Raise the running flag (should have been set in application program)
+  ABS(X,Y,Z)
+  X(Q30) Y(Q31) Z(Q32)
+  DWELL0
+  DWELL0
+  M5075 = (M5075 | Q100) ^ Q100		; Lower the running flag
+  DWELL0
+CLOSE
+
+; 170          LS-CAT Move U, V, W, X, Y, Z Absolute
+; 	       	      Q40     = X Value
+;		      Q41     = Y Value
+;		      Q42     = Z Value
+;		      Q43     = U Value
+;		      Q44     = V Value
+;		      Q45     = W Value
+;                     Q100    = 1 << (coord sys no  - 1)
+OPEN PROG 170 CLEAR
+  DWELL0
+  TM(1)
+  M5075 = (M5075 | Q100)		; Raise the running flag (should have been set in application program)
+  ABS(X,Y,Z,U,V,W)
+  X(Q40) Y(Q41) Z(Q42) U(Q43) V(Q44) W(Q45)
+  DWELL0
+  DWELL0
+  M5075 = (M5075 | Q100) ^ Q100		; Lower the running flag
+  DWELL0
+CLOSE
+
+; 180          LS-CAT Move U, V, W, X, Y, Z Timed Incremental Move
+; 	       	      Q40     = X Value
+;		      Q41     = Y Value
+;		      Q42     = Z Value
+;		      Q43     = U Value
+;		      Q44     = V Value
+;		      Q45     = W Value
+;                     Q46     = A Value
+;                     Q47     = B Value
+;                     Q48     = C Value
+;                     Q49     = Time in milliseconds to complete move
+;                     Q100    = 1 << (coord sys no  - 1)
+OPEN PROG 180 CLEAR
+  DWELL0
+  TM(Q49)
+  M5075 = (M5075 | Q100)		; Raise the running flag (should have been set in application program)
+  INC(X,Y,Z,U,V,W,A,B,C)
+  X(Q40) Y(Q41) Z(Q42) U(Q43) V(Q44) W(Q45) A(Q46) B(Q47) C(Q48)
+  DWELL0
+  DWELL0
+  M5075 = (M5075 | Q100) ^ Q100		; Lower the running flag
+  DWELL0
+CLOSE
+
+
+
+
+;240		LS-CAT Timed X move
+;		Q10    = Starting X value (cnts)
+;		Q11    = Delta X value   (cnts)
+;		Q12    = Time to run between the two points (msec)
+;		Q13    = Maximum acceleration (cts/msec/msec)
+;		Q14    = Velocity to restore
+;		Q100   = 1 << (coord sys no - 1)
+OPEN PROG 240 CLEAR
+  DWELL0
+  M5075 = (M5075 | Q100)		; Raise the running flag (should have been set in application program)
+  TM(1)
+  DWELL0
+  ABS(X)
+  IF (Q12 > 0 AND Q13 > 0)		; Non positive times are not interesting but at least shouldn't kill us
+    Q200 = Q11 / Q12			; Final Velocity
+    Q201 = Q200 / Q13			; Time to accelerate to final velocity
+    Q202 = Q200 * Q201 / 2		; Distance required to reach final velocity
+    LINEAR				; Should never be any other, but just in case, this is the mode we want
+    RAPID X(Q10-Q202)			; Go to the start point less a tad for acceleration
+    DWELL0
+    FRAX(X)
+    TS(Q201/2)				; S-Curve acceleration time
+    F(Q200)
+    DWELL0
+    LINEAR
+    INC(X)
+    DWELL0
+    X(Q11+2*Q202)
+    DWELL0
+  ELSE
+    RAPID X(Q10)			; Just move to the beginning.  Probably not what was desired but beats trying to move at infinite speed and/or acceleration
+  ENDIF
+  DWELL0
+  F(Q14)				; Restore speed
+  DWELL0
+  M5075 = (M5075 | Q100) ^ Q100		; Lower the running flag
+CLOSE
