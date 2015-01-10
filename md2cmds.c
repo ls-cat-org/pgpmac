@@ -1913,8 +1913,22 @@ void md2cmds_set_scale_cb( char *event) {
   lsredis_setstr( p1, vp);
   free( vp);
 
+  p1  = lsredis_get_obj( "cam.CenterX");
+  p2  = lsredis_get_obj( "cam.zoom.%d.CenterX", mag);
+
+  vp = lsredis_getstr( p2);
+  lsredis_setstr( p1, vp);
+  free( vp);
+
   p1  = lsredis_get_obj( "cam.yScale");
   p2  = lsredis_get_obj( "cam.zoom.%d.ScaleY", mag);
+
+  vp = lsredis_getstr( p2);
+  lsredis_setstr( p1, vp);
+  free( vp);
+
+  p1  = lsredis_get_obj( "cam.CenterY");
+  p2  = lsredis_get_obj( "cam.zoom.%d.CenterY", mag);
 
   vp = lsredis_getstr( p2);
   lsredis_setstr( p1, vp);
