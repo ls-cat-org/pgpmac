@@ -93,6 +93,8 @@ extras = [
     {"k" : "overlay.centers.8.height", "v" : "100"},
     {"k" : "overlay.centers.length",   "v" : "9"},
     {"k" : "overlay.curentCenter",     "v" : "3"},
+    {"k" : "cam.CenterX",              "v" : "384"},
+    {"k" : "cam.CenterY",              "v" : "288"},
     {"k" : "detector.state",           "v" : "Unknown"},
     {"k" : "detector.checkdir",        "v" : '{"dir": "unknown", "valid", "false"}'},
     {"k" : "detector.path",            "v" : '{"directory": "unknown", "filename": "unknown"}'},
