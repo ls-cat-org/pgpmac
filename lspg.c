@@ -2178,12 +2178,13 @@ void lspg_unset_current_preset_moving_cb( char *event) {
 }
 
 
-/** Fix up xscale and yscale when zoom changes
+/** Fix up xscale, yscale, CenterX, and CenterY  when zoom changes
  */
 void lspg_set_scale_cb( char *event) {
   int mag;
   lsredis_obj_t *px, *py;
   char *sx, *sy;
+  char *cx, *cy;
 
   //
   // There is already a call back to set the redis variables xScale and yScale
@@ -2198,9 +2199,18 @@ void lspg_set_scale_cb( char *event) {
   py  = lsredis_get_obj( "cam.zoom.%d.ScaleY", mag);
   sy = lsredis_getstr( py);
 
-  lspg_query_push( NULL, NULL, "EXECUTE kvupdate( '{cam.xScale,%s,cam.yScale,%s}')", sx, sy);
+  px  = lsredis_get_obj( "cam.zoom.%d.CenterX", mag);
+  cx = lsredis_getstr( px);
+
+  py  = lsredis_get_obj( "cam.zoom.%d.CenterY", mag);
+  cy = lsredis_getstr( py);
+
+  lspg_query_push( NULL, NULL, "EXECUTE kvupdate( '{cam.xScale,%s,cam.yScale,%s,cam.CenterX,%s,cam.CenterY,%s}')", sx, sy, cx, cy);
+
   free( sx);
   free( sy);
+  free( cx);
+  free( cy);
 }
 
 
