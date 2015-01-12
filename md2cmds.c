@@ -2157,6 +2157,8 @@ int md2cmds_set( const char *cmd) {
   lsredis_obj_t *p;
   lspmac_motor_t *mp;
   regmatch_t pmatch[16];
+  char motor_name[64];
+  char prefix_name[64];
   char cp[64];
   char *rp;
   
@@ -2168,47 +2170,35 @@ int md2cmds_set( const char *cmd) {
   lslogging_log_message( "md2cmds_set: recieved '%s'", cmd);
   
 
+
   err = regexec( &md2cmds_cmd_regex, cmd, 16, pmatch, 0);
   if( err) {
     lslogging_log_message( "md2cmds_set: no match found from '%s'", cmd);
     return 1;
   }
 
-  if( pmatch[2].rm_so == -1) {
-    lslogging_log_message( "md2cmds_set: could not parse preset name from '%s'", cmd);
-    return 1;
-  }
-
-  
   //
   // get motor name
   //
-  snprintf( cp, sizeof( cp)-1, "%.*s", pmatch[3].rm_eo - pmatch[3].rm_so, cmd+pmatch[3].rm_so);
-  cp[sizeof( cp)-1] = 0;
+  snprintf( motor_name, sizeof( motor_name)-1, "%.*s", pmatch[4].rm_eo - pmatch[4].rm_so, cmd+pmatch[4].rm_so);
+  motor_name[sizeof( motor_name)-1] = 0;
 
   mp = lspmac_find_motor_by_name( cp);
   if( mp == NULL) {
     lslogging_log_message( "md2cmds_set: could not find motor '%s'", cp);
     return 1;
   }
-
-  //
-  // get redis preset position name
-  //
-
-  p = lsredis_get_obj( "%.*s.position", pmatch[2].rm_eo - pmatch[2].rm_so, cmd+pmatch[2].rm_so);
-  if( p == NULL) {
-    lslogging_log_message( "md2cmds_set: could not find preset name in '%s'", cmd);
-    return 1;
-  }
-    
   rp = lsredis_getstr( mp->redis_position);
 
+
   //
-  // set the preset to the current position
+  // get preset name
   //
-  lsredis_setstr( p, "%s", rp);
-  lsevents_send_event( "Preset Changed %s", p->events_name);
+  snprintf( preset_name, sizeof( preset_name)-1, ".*s", pmatch[5].rm_eo - pmatch[5].rm_so, cmd+pmatch[5].rm_so);
+  preset_name[sizeof(preset_name)-1] = 0;
+
+
+  lsredis_set_preset( motor_name, preset_name, rp);
 
   free( rp);
   return 0;
@@ -2286,6 +2276,7 @@ void md2cmds_coordsys_5_stopped_cb( char *event) {
 }
 void md2cmds_coordsys_7_stopped_cb( char *event) {
 }
+
 
 static int ca_last_enabled = 1;
 void md2cmds_disable_ca_last_cb( char *event) {
@@ -2377,6 +2368,7 @@ void md2cmds_init() {
 
   pthread_mutex_init( &md2cmds_homing_mutex, &mutex_initializer);
   pthread_cond_init(  &md2cmds_homing_cond, NULL);
+
 
   err = regcomp( &md2cmds_cmd_regex, " *([^ ]+) (([^ ]+)\\.presets\\..)*([^ ]*) *([^ ]*)", REG_EXTENDED);
   if( err != 0) {
