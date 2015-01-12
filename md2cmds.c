@@ -2287,6 +2287,23 @@ void md2cmds_coordsys_5_stopped_cb( char *event) {
 void md2cmds_coordsys_7_stopped_cb( char *event) {
 }
 
+static int ca_last_enabled = 1;
+void md2cmds_disable_ca_last_cb( char *event) {
+  ca_last_enabled = 0;
+}
+
+void md2cmds_enable_ca_last_cb( char *event) {
+  double scint_target;
+
+  pthread_mutex_lock( &scint->mutex);
+  scint_target = scint->requested_position;
+  pthread_mutex_unlock( &scint->mutex);
+
+  if( scint_target < 10.0) {
+    ca_last_enabled = 1;
+  }
+}
+
 /** Save centering and alignment stage positions
  *  to restore on restart
  */
@@ -2295,6 +2312,12 @@ void md2cmds_ca_last_cb( char *event) {
   char motor_name[64];
   int i;
   lspmac_motor_t *mp;
+
+  //
+  // don't save the current position if the scintilator is out
+  //
+  if( !ca_last_enabled)
+    return;
 
   phase = lsredis_getstr( lsredis_get_obj( "phase"));
   if( strcmp( phase, "center") == 0 || strcmp( phase, "dataCollection") == 0) {
@@ -2417,7 +2440,8 @@ pthread_t *md2cmds_run() {
   lsevents_add_listener( "^Coordsys 7 Stopped$",        md2cmds_coordsys_7_stopped_cb);
   lsevents_add_listener( "^cam.zoom Moving$",	        md2cmds_set_scale_cb);
   lsevents_add_listener( "^(align\\.(x|y|z)|centering.(x|y)) In Position$", md2cmds_ca_last_cb);
+  lsevents_add_listener( "^scint Moving$",              md2cmds_disable_ca_last_cb);
+  lsevents_add_listener( "^scint In Position$",         md2cmds_enable_ca_last_cb);
   lsevents_add_listener( "^LSPMAC Done Initializing$",  md2cmds_lspmac_ready_cb);
-
   return &md2cmds_thread;
 }
