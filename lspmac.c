@@ -1810,16 +1810,16 @@ void lspmac_get_status_cb(
   if( md2_status.acc11c_2 & 0x01) {
     mvwprintw( term_status2, 3, 10, "%*s", -8, "Fluor Out");
   } else {
-    mvwprintw( term_status2, 3, 10, "%*s", -8, "Fluor In");
+    mvwprintw( term_status2, 3, 10, "%*s", -8, "Fluor In ");
   }
 
   if( md2_status.acc11c_5 & 0x08) {
-    mvwprintw( term_status2, 4, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Dryer On");
+    mvwprintw( term_status2, 4, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Dryer On ");
   } else {
     mvwprintw( term_status2, 4, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Dryer Off");
   }
   if( md2_status.acc11c_2 & 0x02) {
-    mvwprintw( term_status2, 2, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Cap Dectected");
+    mvwprintw( term_status2, 2, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Cap Dectected    ");
   } else {
     mvwprintw( term_status2, 2, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Cap Not Dectected");
   }
