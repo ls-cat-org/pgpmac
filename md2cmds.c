@@ -29,6 +29,9 @@ static pthread_t md2cmds_thread;
 
 static int rotating = 0;		//!< flag: when omega is in position after a rotate we want to re-home omega
 
+static int abort_requested = 0;		//!< flag: indicates an out of band abort request
+static pthread_mutex_t abort_requested_mutex;
+
 static double md2cmds_capz_moving_time = NAN;
 
 static struct hsearch_data md2cmds_hmap;
@@ -296,7 +299,12 @@ int md2cmds_transfer( const char *dummy) {
   int mmask;
   double move_time;
 
+
   lsredis_sendStatusReport( 0, "Processing Sample Transfer Request");
+
+  pthread_mutex_lock( &abort_requested_mutex);
+  abort_requested = 0;  // lower the abort flag
+  pthread_mutex_unlock( &abort_requested_mutex);
 
   nextsample = lspg_nextsample_all( &err);
   if( err) {
@@ -376,8 +384,8 @@ int md2cmds_transfer( const char *dummy) {
   //
   // Home phi (whatever that means)
   //
-  md2cmds_home_prep();
-  lspmac_home1_queue( phi);
+  // md2cmds_home_prep();
+  // lspmac_home1_queue( phi);
 
   // Now let's get back to postresql (remember our query so long ago?)
   //
@@ -408,12 +416,12 @@ int md2cmds_transfer( const char *dummy) {
   //
   // Wait for the homing routines to finish
   //
-  if( md2cmds_home_wait( 30.0)) {
-    lsredis_sendStatusReport( 1, "Homing phi timed out.  This is unusual.  Aborting");
-    lslogging_log_message( "md2cmds_transfer: phi homing routine taking too long.  Aborting transfer.");
-    lsevents_send_event( "Transfer Aborted");
-    return 1;
-  }
+  //  if( md2cmds_home_wait( 30.0)) {
+  //    lsredis_sendStatusReport( 1, "Homing phi timed out.  This is unusual.  Aborting");
+  //    lslogging_log_message( "md2cmds_transfer: phi homing routine taking too long.  Aborting transfer.");
+  //    lsevents_send_event( "Transfer Aborted");
+  //    return 1;
+  //  }
 
   //
   // Wait for all those other motors to stop moving
@@ -2350,6 +2358,18 @@ void md2cmds_lspmac_ready_cb( char *event) {
     free( phase);
 }
 
+/** request that whatever md2cmds command is running that it stop and clean up
+ */
+void md2cmds_lspmac_abort_cb( char *event) {
+  pthread_mutex_lock( &abort_requested_mutex);
+  abort_requested = 1;
+  pthread_mutex_unlock( &abort_requested_mutex);
+}
+
+void md2cmds_quitting_cb( char *event) {
+  lsredis_sendStatusReport( 1, "MD2 Program Stopped");
+}
+
 
 /** Initialize the md2cmds module
  */
@@ -2439,5 +2459,11 @@ pthread_t *md2cmds_run() {
   lsevents_add_listener( "^scint Moving$",              md2cmds_disable_ca_last_cb);
   lsevents_add_listener( "^scint In Position$",         md2cmds_enable_ca_last_cb);
   lsevents_add_listener( "^LSPMAC Done Initializing$",  md2cmds_lspmac_ready_cb);
+  lsevents_add_listener( "^Abort Requested$",           md2cmds_lspmac_abort_cb);
+  lsevents_add_listener( "^Quitting Program$",          md2cmds_quitting_cb);
+
+  lsredis_sendStatusReport( 0, "MD2 Started");
+
+
   return &md2cmds_thread;
 }
