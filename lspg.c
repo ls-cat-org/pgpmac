@@ -37,6 +37,9 @@ State		Description
 #define LS_PG_STATE_RECV	 4
 #define LS_PG_STATE_QUITTING     5
 
+static int abort_requested = 0;			//!< signal an out of band abort request
+static pthread_mutex_t abort_requested_mutex;
+
 static int ls_pg_state = LS_PG_STATE_INIT;	//!< State of the lspg state machine
 static struct timeval lspg_time_sent, now;	//!< used to ensure we do not inundate the db server with connection requests
 
@@ -519,12 +522,23 @@ unsigned int lspg_getcurrentsampleid_all() {
  */
 int lspg_getcurrentsampleid_wait_for_id( unsigned int test) {
   int rtn;
+  int abort_flag;
+
+  pthread_mutex_lock( &abort_requested_mutex);
+  abort_requested = 0;
+  pthread_mutex_unlock( &abort_requested_mutex);
 
   pthread_mutex_lock( &lspg_getcurrentsampleid.mutex);
-  while( lspg_getcurrentsampleid.getcurrentsampleid != test && lspg_getcurrentsampleid.query_error == 0)
-    pthread_cond_wait( &lspg_getcurrentsampleid.cond, &lspg_getcurrentsampleid.mutex);
+  while( lspg_getcurrentsampleid.getcurrentsampleid != test && lspg_getcurrentsampleid.query_error == 0) {
+    pthread_mutex_lock( &abort_requested_mutex);
+    abort_flag = abort_requested;
+    pthread_mutex_unlock( &abort_requested_mutex);
+    if( !abort_flag)
+      pthread_cond_wait( &lspg_getcurrentsampleid.cond, &lspg_getcurrentsampleid.mutex);
+  }
   
-  rtn = lspg_getcurrentsampleid.query_error;
+  rtn = lspg_getcurrentsampleid.query_error + abort_flag;
+
   pthread_mutex_unlock( &lspg_getcurrentsampleid.mutex);
 
   return rtn;
@@ -1856,7 +1870,8 @@ void lspg_pg_service(
 	} else if( strstr( pgn->relname, "_mess") != NULL) {
 	  lspg_query_push( lspg_nexterrors_cb, lspg_nexterrors_error_cb, "EXECUTE nexterrors");
 	} else if( strstr( pgn->relname, "_pause") != NULL) {
-	  
+	} else if( strstr( pgn->relname, "_kill") != NULL) {
+	  lsevents_send_event( "%s", "Abort Requested");
 	}
 	PQfreemem( pgn);
       }
@@ -2242,11 +2257,32 @@ void lspg_quitting_cb( char *event) {
 
 }
 
+void lspg_abort_cb( char *event) {
+  int err;
+  int didit;
+
+  didit = 0;
+  pthread_mutex_lock( &abort_requested_mutex);
+  abort_requested = 1;
+  pthread_mutex_unlock( &abort_requested_mutex);
+
+  err = pthread_mutex_trylock( &lspg_getcurrentsampleid.mutex);
+  if( err != EBUSY) {
+    didit = 1;
+    pthread_cond_signal( &lspg_getcurrentsampleid.cond);
+    pthread_mutex_unlock( &lspg_getcurrentsampleid.mutex);
+  }
+
+  lslogging_log_message( "lspg_abort_cb: We did%s do it", (didit ? "" : "n't"));
+
+};
+
 /** Initiallize the lspg module
  */
 void lspg_init() {
   pthread_mutex_init( &lspg_queue_mutex, NULL);
   pthread_cond_init( &lspg_queue_cond, NULL);
+  pthread_mutex_init( &abort_requested_mutex, NULL);
 
   lspg_demandairrights_init();
   lspg_getcenter_init();
@@ -2274,6 +2310,7 @@ pthread_t *lspg_run() {
   lsevents_add_listener( "^Timer Update KVs$",                        lspg_update_kvs_cb);
   lsevents_add_listener( "^cam.zoom In Position$",                    lspg_set_scale_cb);
   lsevents_add_listener( "^Quitting Program$",                        lspg_quitting_cb);
+  lsevents_add_listener( "^Abort Requested$",                         lspg_abort_cb);
   lstimer_set_timer(     "Timer Update KVs", -1, 0, 500000000);
 
   //
