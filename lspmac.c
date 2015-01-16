@@ -2152,6 +2152,10 @@ void lspmac_abort() {
   //
   lspmac_SockSendDPline( "Reset", "%s", "M5075=0");
 
+  //
+  // and, by the way, close the shutter
+  //
+  fshut->moveAbs( fshut, 0);
 }
 
 
@@ -4268,9 +4272,6 @@ void lspmac_scint_dried_cb( char *event) {
 void lspmac_zoom_lut_setup() {
   int i;
   lsredis_obj_t *p;
-  double neutral_pos;
-
-  neutral_pos = lsredis_getd( zoom->neutral_pos);
 
   pthread_mutex_lock( &zoom->mutex);
 
