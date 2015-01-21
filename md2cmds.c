@@ -436,7 +436,6 @@ int md2cmds_transfer( const char *dummy) {
 
   mmask = 0;
   err = lspmac_est_move_time( &move_time, &mmask,
-			      aperz,     1, "Cover", 0.0,
 			      capz,      1, "Cover", 0.0,
 			      scint,     1, "Cover", 0.0,
                               blight,    1, NULL,    0.0,
@@ -515,7 +514,6 @@ int md2cmds_transfer( const char *dummy) {
   //
   err = lspmac_est_move_time_wait( move_time + 10.0,
 				   mmask,
-				   aperz,
 				   capz,
 				   scint,
 				   blight_ud,
@@ -820,7 +818,6 @@ int md2cmds_phase_manualMount() {
                               kappa,     0, "manualMount", 0.0,
                               omega,     0, "manualMount", 0.0,
                               phi,       0, NULL,          0.0,
-                              aperz,     1, "Cover",       0.0,
                               capz,      1, "Cover",       0.0,
                               scint,     1, "Cover",       0.0,
                               blight,    1, NULL,          0.0,
@@ -841,7 +838,6 @@ int md2cmds_phase_manualMount() {
   //
 
   err = lspmac_est_move_time_wait( move_time+10.0, mmask,
-				   aperz,
 				   capz,
 				   scint,
 				   blight_ud,
