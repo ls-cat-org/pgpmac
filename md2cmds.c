@@ -6,6 +6,93 @@
  */
 #include "pgpmac.h"
 
+/*
+The following 3 commands are acted on immediately without waiting for the "enter" key:
+<pre>
+ Command      Meaning
+ pmac         change to PMAC mode (Real or Wannabe Experts only)
+ md2cmds      change to MD-2 command mode
+ quit         clean up and exit the program
+</pre>
+
+For the PMAC commands you'll need a manual or two.
+
+Here are the MD2 commands.  Anything MD2 command that you can use from the remote interface can also be typed here.
+
+All positions are in millimeters or degrees.
+
+<pre>
+ Command                                    Meaning
+
+ abort                                      Stop the current motion and put the system into a known state
+
+ changeMode  <mode>                         Where <mode> is one of "manualMount", "robotMount", "center", "dataCollection", "beamLocation", "safe"
+
+ collect                                    Start collecting data
+
+ moveAbs  <motor> <position_or_presetName>  Move the given motor to the said position.  Common preset names are "In", "Out", "Cover".
+
+ moveRel  <motor> <relative_position>       Move the given motor by the relative amount from its current position
+
+ nonrotate                                  Used for local centering when we do not want to trigger movie making
+
+ rotate                                     Used for remote centering where we do want to make a movie
+
+ run <motor> <command>                      Run a special command on <motor> where <command> is one of "home", "spin", "stop"
+
+ set <motor> <preset>                       Set <motor>'s current position as <preset>.  <preset> will be created if it does not currently exist.
+
+ settransferpoint                           Set the current motor positions at the alignment point for robot transfers.
+
+ test                                       Run unit tests (which are not very complete at this point)
+
+ transfer                                   Transfer the next transfer
+
+</pre>
+
+Here are the motors:
+
+<pre>
+
+ Motor                       Presets
+
+align.x                      Beam Back Back_Vector
+align.y                      Beam Back Back_Vector
+align.z                      Beam Back Back_Vector
+appy                         In
+appz                         In Out Cover
+backLight                    On Off
+backLight.factor
+backLight.intensity
+cam.zoom
+capy                         In
+capz                         In Out Cover
+centering.x                  Beam
+centering.y                  Beam
+cryo
+dryer
+fluo
+frontLight                   On Off
+frontLight.factor
+frontLight.intensity
+kappa                        manualMount
+lightPolar
+omega                        manualMount Reference
+phi
+scint                        Photodiode Scintillator Cover
+scint.focus                  tuner
+smartMagnet
+
+</pre>
+
+All presets listed above are absolute positions EXCEPT Back_Vector.
+For the alignment stage this is the amount to add to the Beam preset
+to get to the Back preset.  Back_Vector is updated any time the
+alignment stage is moved while in "center" or "dataCollection" mode.
+
+
+*/
+
 
 pthread_cond_t  md2cmds_cond;		//!< condition to signal when it's time to run an md2 command
 pthread_mutex_t md2cmds_mutex;		//!< mutex for the condition
