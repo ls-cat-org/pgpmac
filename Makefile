@@ -1,4 +1,4 @@
-VERSION= 0.5
+VERSION= 1.0
 # 
 # Makefile for pgpmac project
 # (C) 2012 - 2013 by Keith Brister and Northwesern University
@@ -22,9 +22,12 @@ dist:
 
 install: pgpmac
 	install -p pgpmac /usr/local/bin
+	-@rm /tmp/pgpmac.log
+
+.SILENT: clean
 
 clean:
-	rm *.o pgpmac
+	-@rm *.o pgpmac 2>/dev/null
 
 docs:   *.c *.h Makefile
 	/usr/local/bin/doxygen
