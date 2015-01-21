@@ -295,9 +295,9 @@ void stdinService(
   static int current_line = 0;
   static int previous_line = 0;
   static char *cmdsp;
-  static char *prompt = "PMAC>";;
+  static char *prompt = "md2cmds>";;
   static int cmds_on = 0;
-  static int cmd_mode = 0;
+  static int cmd_mode = 1;
   static char cevt[32];
   int ch;
   int i;
