@@ -690,7 +690,7 @@ int main(
 						      
   term_input  = newwin( 3, 5*LS_DISPLAY_WINDOW_WIDTH, 20+4*LS_DISPLAY_WINDOW_HEIGHT, 0);
   box( term_input, 0, 0);			      
-  mvwprintw( term_input, 1, 1, "PMAC> ");	      
+  mvwprintw( term_input, 1, 1, "md2cmds> ");	      
   nodelay( term_input, TRUE);			      
   keypad( term_input, TRUE);			      
   wnoutrefresh( term_input);			      
