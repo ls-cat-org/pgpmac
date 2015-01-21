@@ -164,7 +164,7 @@ void lsevents_remove_listener (char *event, void (*cb)(char *)) {
   pthread_mutex_lock( &lsevents_listener_mutex);
   last = NULL;
   for( current = lsevents_listeners_p; current != NULL; current = current->next) {
-    if( strcmp( last->raw_regexp, event) == 0 && last->cb == cb) {
+    if( strcmp( current->raw_regexp, event) == 0 && current->cb == cb) {
       if( last == NULL) {
 	lsevents_listeners_p = current->next;
       } else {
