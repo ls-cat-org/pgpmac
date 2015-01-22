@@ -160,6 +160,18 @@ void lsredis_debugCB( redisAsyncContext *ac, void *reply, void *privdata) {
   }
 }
 
+/**
+ * notify callback when a variable is set
+ */
+void lsredis_set_onSet( lsredis_obj_t *p, void (*cb)()) {
+  if( p == NULL)
+    return;
+
+  pthread_mutex_lock( &p->mutex);
+  p->onSet = cb;
+  pthread_mutex_unlock( &p->mutex);
+}
+
 /** set_value and setstr helper funciton
  *  p->mutex must be locked before calling
  */
@@ -215,6 +227,9 @@ void _lsredis_set_value( lsredis_obj_t *p, char *v) {
 
   p->valid = 1;				//!< We can consider this value valid
   p->creating = 0;			//!< At this point the key is considered created
+
+  if( p->onSet)
+    p->onSet();
 }
 
 /** Set the value of a redis object and make it valid.  Called by mgetCB to set the value as it is in redis
@@ -601,7 +616,8 @@ lsredis_obj_t *_lsredis_get_obj( char *key) {
     p->wait_for_me = 0;
     p->key = strdup( key);
     p->hits = 0;
-  
+    p->onSet = NULL;
+
     htab_input.key  = p->key;
     htab_input.data = p;
 
@@ -822,7 +838,7 @@ void lsredis_subCB( redisAsyncContext *ac, void *reply, void *privdata) {
 
       //
       // We shouldn't get here if wait_for_me is zero and we are the publisher.
-      // If somehow we did (ie we did an hset with out incrementing wait_for_me or if we published too many times), it shouldn't hurt to get the value again.
+      // If somehow we did (ie we did an hset without incrementing wait_for_me or if we published too many times), it shouldn't hurt to get the value again.
       //
       redisAsyncCommand( roac, lsredis_hgetCB, p, "HGET %s VALUE", k);
     }
