@@ -52,6 +52,7 @@ typedef struct lsredis_obj_struct {
   int bvalue;						//!< our value as a boolean (1 or 0) -1 means we couldn't figure it out
   char cvalue;						//!< just the first character of our value
   int hits;						//!< number of times we've searched for this key
+  void (*onSet)();					//!< function to call when object is set (used for out of band aborts in md2cmds)
 } lsredis_obj_t;
 
 //! Number of status box rows
@@ -605,3 +606,4 @@ extern void md2cmds_push_queue( char *action);
 extern pmac_cmd_queue_t *lspmac_SockSendControlCharPrint( char *event, char c);
 extern void lsredis_config();
 extern void lsredis_sendStatusReport( int severity, char *fmt, ...);
+extern void lsredis_set_onSet( lsredis_obj_t *p, void (*cb)());
