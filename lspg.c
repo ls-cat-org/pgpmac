@@ -538,6 +538,7 @@ int lspg_getcurrentsampleid_wait_for_id( unsigned int test) {
   lsevents_add_listener( "^Abort Requested$", lspg_getcurrentsampleid_abort_cb);
 
   pthread_mutex_lock( &lspg_getcurrentsampleid.mutex);
+  lspg_getcurrentsampleid_abort = 0;
   while( !lspg_getcurrentsampleid_abort && lspg_getcurrentsampleid.getcurrentsampleid != test && lspg_getcurrentsampleid.query_error == 0) {
     pthread_cond_wait( &lspg_getcurrentsampleid.cond, &lspg_getcurrentsampleid.mutex);
   }
@@ -659,6 +660,15 @@ void lspg_waitcryo_init() {
   pthread_cond_init( &lspg_waitcryo.cond, NULL);
 }
 
+static int lspg_waitcryo_abort = 0;
+
+void lspg_waitcryo_abort_cb( char *event) {
+  pthread_mutex_lock( &lspg_waitcryo.mutex);
+  lspg_waitcryo_abort = 1;
+  pthread_cond_signal( &lspg_waitcryo.cond);
+  pthread_mutex_unlock( &lspg_waitcryo.mutex);
+}
+
 void lspg_waitcryo_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   pthread_mutex_lock( &lspg_waitcryo.mutex);
   lspg_waitcryo.new_value_ready = 1;
@@ -678,17 +688,36 @@ void lspg_waitcryo_error_cb() {
  */
 int lspg_waitcryo_all() {
   int rtn;
+  int err;
+  char errmsg[256];
+  PGcancel *pgc;
+
   pthread_mutex_lock( &lspg_waitcryo.mutex);
   lspg_waitcryo.new_value_ready = 0;
   lspg_waitcryo.query_error     = 0;
+  lspg_waitcryo_abort           = 0;
+  lsevents_add_listener( "^Abort Requested$", lspg_waitcryo_abort_cb);
 
   lspg_query_push( lspg_waitcryo_cb, lspg_waitcryo_error_cb, "SELECT px.waitcryo()");
 
-  while( lspg_waitcryo.new_value_ready == 0 && lspg_waitcryo.query_error == 0)
+  while( !lspg_waitcryo_abort && lspg_waitcryo.new_value_ready == 0 && lspg_waitcryo.query_error == 0)
     pthread_cond_wait( &lspg_waitcryo.cond, &lspg_waitcryo.mutex);
 
-  rtn = lspg_waitcryo.query_error;
+  if( lspg_waitcryo_abort) {
+    pgc = PQgetCancel( q);
+    err = PQcancel( pgc, errmsg, sizeof(errmsg)-1);
+    errmsg[sizeof(errmsg)-1] = 0;
+    if( err)
+      lslogging_log_message( "lspg_waitcryo abort failed: %s", errmsg);
+    else
+      lslogging_log_message( "lspg_waitcryo aborted");
+    PQfreeCancel( pgc);
+  }
+
+  rtn = lspg_waitcryo.query_error + lspg_waitcryo_abort;
   pthread_mutex_unlock( &lspg_waitcryo.mutex);
+
+  lsevents_remove_listener( "^Abort Requested$", lspg_waitcryo_abort_cb);
 
   return rtn;
 }
