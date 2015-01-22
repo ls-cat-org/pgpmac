@@ -1364,8 +1364,9 @@ int md2cmds_collect( const char *dummy) {
     exp_time = lspg_nextshot.dsexp;
 
     skey = lspg_nextshot.skey;
+    lslogging_log_message( "md2cmds next shot is %lld", skey);
     lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Preparing')", skey);
-    lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Preparing\"}");
+    lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Preparing\"}", skey);
     lsredis_sendStatusReport( 0, "Preparing...");
 
     if( lspg_nextshot.active) {
@@ -2522,9 +2523,26 @@ void md2cmds_init() {
   }
 }
 
+void md2cmds_redis_abort_cb() {
+  lsredis_obj_t *p;
+
+  p = lsredis_get_obj( "md2cmds.abort");
+  
+  lslogging_log_message( "md2cmds_redis_abort_cb: arrived with value %d", lsredis_getb(p));
+
+  if( lsredis_getb( p)) {
+    lsevents_send_event( "Abort Requested");
+    lsredis_setstr( p, "0");
+  }
+}
+
+
+
 /** Start up the thread
  */
 pthread_t *md2cmds_run() {
+  lsredis_set_onSet( lsredis_get_obj( "md2cmds.abort"), md2cmds_redis_abort_cb);
+  
   pthread_create( &md2cmds_thread, NULL,                md2cmds_worker, NULL);
   lsevents_add_listener( "^omega crossed zero$",        md2cmds_rotate_cb);
   lsevents_add_listener( "^omega In Position$",         md2cmds_maybe_rotate_done_cb);
