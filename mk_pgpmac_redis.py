@@ -72,6 +72,7 @@ plcc2_dict = {
 # Extra stuff not found from the ini file and, therefore, will likely need editing
 #
 extras = [
+    {"k" : "md2cmds.abort",            "v" : "0"},
     {"k" : "overlay.centers.0.type",   "v" : "circle"},
     {"k" : "overlay.centers.0.diam",   "v" : "5"},
     {"k" : "overlay.centers.1.type",   "v" : "circle"},
