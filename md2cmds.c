@@ -44,6 +44,8 @@ All positions are in millimeters or degrees.
 
  settransferpoint                           Set the current motor positions at the alignment point for robot transfers.
 
+ setbackvector                              Set the current alignment stage position as the Back preset and the difference between Back and Beam as Back_Vector
+
  test                                       Run unit tests (which are not very complete at this point)
 
  transfer                                   Transfer the next transfer
@@ -141,6 +143,7 @@ int md2cmds_rotate(           const char *);
 int md2cmds_nonrotate(        const char *);
 int md2cmds_set(              const char *);
 int md2cmds_settransferpoint( const char *);
+int md2cmds_setbackvector(    const char *);
 int md2cmds_test(             const char *);
 int md2cmds_transfer(         const char *);
 
@@ -154,7 +157,8 @@ static md2cmds_cmd_kv_t md2cmds_cmd_kvs[] = {
   { "moveRel",          md2cmds_moveRel},
   { "run",              md2cmds_run_cmd},
   { "test",             md2cmds_test},
-  { "set",              md2cmds_set}
+  { "set",              md2cmds_set},
+  { "setbackvector",    md2cmds_setbackvector}
 };
 
 //
@@ -2243,6 +2247,45 @@ int md2cmds_settransferpoint( const char *cmd) {
   return 0;
 }
 
+/** set the "Back_Vector" preset as the difference between the current position and the Beam position
+ *
+*/
+int md2cmds_setbackvector( const char *cmd) {
+  double ax, ay, az;	// current positions
+  double axb, ayb, azb;	// preset Beam positions
+  double dx, dy, dz;    // the vector components
+
+  //
+  // get the current position
+  //
+  ax = lspmac_getPosition( alignx);
+  ay = lspmac_getPosition( aligny);
+  az = lspmac_getPosition( alignz);
+
+
+  if( !lsredis_find_preset( "align.x", "Beam", &axb) ||
+      !lsredis_find_preset( "align.y", "Beam", &ayb) ||
+      !lsredis_find_preset( "align.z", "Beam", &azb)) {
+    lslogging_log_message( "Could not find preset 'Beam' for at least one of the alignment stage motors");
+    lsredis_sendStatusReport( 1, "Beam preset missing.  Go to center moded and center the crystal.");
+    return 1;
+  }
+  
+  dx = ax - axb;
+  dy = ay - ayb;
+  dz = az - azb;
+
+  lsredis_set_preset( "align.x", "Back_Vector", dx);
+  lsredis_set_preset( "align.y", "Back_Vector", dy);
+  lsredis_set_preset( "align.z", "Back_Vector", dz);
+  
+  lsredis_set_preset( "align.x", "Back", ax);
+  lsredis_set_preset( "align.y", "Back", ay);
+  lsredis_set_preset( "align.z", "Back", az);
+  
+  lsredis_sendStatusReport( 0, "Back_Vector and Back presets set");
+  return 0;
+}
 
 int md2cmds_set( const char *cmd) {
   int err, i;
