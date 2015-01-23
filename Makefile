@@ -22,7 +22,7 @@ dist:
 
 install: pgpmac
 	install -p pgpmac /usr/local/bin
-	-@rm /tmp/pgpmac.log
+	-@rm /tmp/pgpmac.log 2>/dev/null
 
 .SILENT: clean
 
