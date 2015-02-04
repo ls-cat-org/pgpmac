@@ -1132,6 +1132,11 @@ int md2cmds_phase_change( const char *ccmd) {
   char *mode;
   int err;
 
+  // Regardless of what phase we are going to start with making sure the shutter is closed
+  //
+  fshut->moveAbs( fshut, 0);
+
+
   if( ccmd == NULL || *ccmd == 0)
     return 1;
 
