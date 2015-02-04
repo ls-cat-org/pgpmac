@@ -64,8 +64,6 @@ void lspmac_get_ascii( char *);			//!< Forward declarateion
 static int lspmac_running = 1;			//!< exit worker thread when zero
 int lspmac_shutter_state;			//!< State of the shutter, used to detect changes
 int lspmac_shutter_has_opened;			//!< Indicates that the shutter had opened, perhaps briefly even if the state did not change
-pthread_mutex_t lspmac_shutter_mutex;		//!< Coordinates threads reading shutter status
-pthread_cond_t  lspmac_shutter_cond;		//!< Allows waiting for the shutter status to change
 pthread_mutex_t lspmac_moving_mutex;		//!< Coordinate moving motors between threads
 pthread_cond_t  lspmac_moving_cond;		//!< Wait for motor(s) to finish moving condition
 int lspmac_moving_flags;			//!< Flag used to implement motor moving condition
@@ -1231,19 +1229,22 @@ void lspmac_shutter_read(
   //
   // track the shutter state and signal if it has changed
   //
-  pthread_mutex_lock( &lspmac_shutter_mutex);
+  pthread_mutex_lock( &(mp->mutex));
   if( md2_status.fs_has_opened && !lspmac_shutter_has_opened && !md2_status.fs_is_open) {
     //
     // Here the shutter opened and closed again before we got the memo
     // Treat it as a shutter closed event
     //
-    pthread_cond_signal( &lspmac_shutter_cond);
+    pthread_cond_signal( &mp->cond);
   }
   lspmac_shutter_has_opened = md2_status.fs_has_opened;
 
   if( lspmac_shutter_state !=  md2_status.fs_is_open) {
     lspmac_shutter_state = md2_status.fs_is_open;
-    pthread_cond_signal( &lspmac_shutter_cond);
+    mp->motion_seen = 1;
+    mp->not_done    = 0;
+
+    pthread_cond_signal( &(mp->cond));
   }
 
   pthread_mutex_lock( &ncurses_mutex);
@@ -1257,14 +1258,17 @@ void lspmac_shutter_read(
   pthread_mutex_unlock( &ncurses_mutex);
 
   if( fshut->reported_position != fshut->position) {
+    mp->motion_seen = 1;
+    mp->not_done    = 0;
     fmt = lsredis_getstr( fshut->redis_fmt);
     lsredis_setstr( fshut->redis_position, fmt, fshut->position);
     lsredis_setstr( fshut->status_str, "%s", fshut->reported_position == 0 ? "Open" : "Closed");
     free(fmt);
     fshut->reported_position = fshut->position;
+    pthread_cond_signal( &(mp->cond));
   }
 
-  pthread_mutex_unlock( &lspmac_shutter_mutex);
+  pthread_mutex_unlock( &(mp->mutex));
 }
 
 /** Home the motor.
@@ -4013,8 +4017,6 @@ void lspmac_init(
     pthread_cond_init(  &pmac_queue_cond, NULL);
 
     lspmac_shutter_state = 0;				// assume the shutter is now closed: not a big deal if we are wrong
-    pthread_mutex_init( &lspmac_shutter_mutex, &mutex_initializer);
-    pthread_cond_init(  &lspmac_shutter_cond, NULL);
     pmacfd.fd = -1;
 
     pthread_mutex_init( &lspmac_moving_mutex, &mutex_initializer);

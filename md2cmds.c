@@ -1494,13 +1494,14 @@ int md2cmds_collect( const char *dummy) {
     timeout.tv_nsec = now.tv_nsec;
 
     err = 0;
-    pthread_mutex_lock( &lspmac_shutter_mutex);
+
+    pthread_mutex_lock( &fshut->mutex);
     while( err == 0 && lspmac_shutter_has_opened != 0)
-      err = pthread_cond_timedwait( &lspmac_shutter_cond, &lspmac_shutter_mutex, &timeout);
-    pthread_mutex_unlock( &lspmac_shutter_mutex);
+      err = pthread_cond_timedwait( &fshut->cond, &fshut->mutex, &timeout);
+    pthread_mutex_unlock( &fshut->mutex);
 
     if( err == ETIMEDOUT) {
-      pthread_mutex_unlock( &lspmac_shutter_mutex);
+      pthread_mutex_unlock( &fshut->mutex);
       lsredis_sendStatusReport( 1, "Timed out waiting for shutter closed confirmation.");
       lslogging_log_message( "md2cmds_collect: Timed out waiting for shutter to be confirmed closed.  Data collection aborted.");
       lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
@@ -1537,12 +1538,13 @@ int md2cmds_collect( const char *dummy) {
     timeout.tv_nsec = now.tv_nsec;
 
     err = 0;
-    pthread_mutex_lock( &lspmac_shutter_mutex);
+
+    pthread_mutex_lock( &fshut->mutex);
     while( err == 0 && lspmac_shutter_has_opened == 0)
-      err = pthread_cond_timedwait( &lspmac_shutter_cond, &lspmac_shutter_mutex, &timeout);
+      err = pthread_cond_timedwait( &fshut->cond, &fshut->mutex, &timeout);
 
     if( err == ETIMEDOUT) {
-      pthread_mutex_unlock( &lspmac_shutter_mutex);
+      pthread_mutex_unlock( &fshut->mutex);
       lslogging_log_message( "md2cmds_collect: Timed out waiting for shutter to open.  Data collection aborted.");
       lsredis_sendStatusReport( 1, "Timed out waiting for shutter to open.");
       lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
@@ -1562,13 +1564,14 @@ int md2cmds_collect( const char *dummy) {
     timeout.tv_nsec = now.tv_nsec;
 
     err = 0;
+
     while( err == 0 && lspmac_shutter_state == 1)
-      err = pthread_cond_timedwait( &lspmac_shutter_cond, &lspmac_shutter_mutex, &timeout);
-    pthread_mutex_unlock( &lspmac_shutter_mutex);
+      err = pthread_cond_timedwait( &fshut->cond, &fshut->mutex, &timeout);
+    pthread_mutex_unlock( &fshut->mutex);
 
 
     if( err == ETIMEDOUT) {
-      pthread_mutex_unlock( &lspmac_shutter_mutex);
+      pthread_mutex_unlock( &fshut->mutex);
       lsredis_sendStatusReport( 1, "Timed out waiting for shutter to close.");
       lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
       lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
