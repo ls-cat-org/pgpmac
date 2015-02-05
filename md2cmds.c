@@ -46,6 +46,8 @@ All positions are in millimeters or degrees.
 
  setbackvector                              Set the current alignment stage position as the Back preset and the difference between Back and Beam as Back_Vector
 
+ setsamplebeam                              Set the current alignment and centering positions as the the Beam preset for the respective stages
+
  test                                       Run unit tests (which are not very complete at this point)
 
  transfer                                   Transfer the next transfer
@@ -144,6 +146,7 @@ int md2cmds_nonrotate(        const char *);
 int md2cmds_set(              const char *);
 int md2cmds_settransferpoint( const char *);
 int md2cmds_setbackvector(    const char *);
+int md2cmds_setsamplebeam(    const char *);
 int md2cmds_test(             const char *);
 int md2cmds_transfer(         const char *);
 
@@ -158,7 +161,8 @@ static md2cmds_cmd_kv_t md2cmds_cmd_kvs[] = {
   { "run",              md2cmds_run_cmd},
   { "test",             md2cmds_test},
   { "set",              md2cmds_set},
-  { "setbackvector",    md2cmds_setbackvector}
+  { "setbackvector",    md2cmds_setbackvector},
+  { "setsamplebeam",    md2cmds_setsamplebeam}
 };
 
 //
@@ -1795,6 +1799,8 @@ int md2cmds_rotate( const char *dummy) {
   az = lspmac_getPosition( alignz);
   lspg_query_push( NULL, NULL, "SELECT px.applycenter( %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f)", cx, cy, ax, ay, az, lspmac_getPosition(kappa), lspmac_getPosition( phi));
 
+  md2cmds_setsamplebeam( "dummy argument");
+
   lslogging_log_message( "md2cmds_rotate: done with applycenter");
   lspmac_video_rotate( 4.0);
   lslogging_log_message( "md2cmds_rotate: starting rotation");
@@ -1989,6 +1995,8 @@ int md2cmds_nonrotate( const char *dummy) {
   ay = lspmac_getPosition( aligny);
   az = lspmac_getPosition( alignz);
   lspg_query_push( NULL, NULL, "SELECT px.applycenter( %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f)", cx, cy, ax, ay, az, lspmac_getPosition(kappa), lspmac_getPosition( phi));
+
+  md2cmds_setsamplebeam( "dummy argument");
 
   lslogging_log_message( "md2cmds_nonrotate: done with applycenter");
 
@@ -2292,6 +2300,30 @@ int md2cmds_setbackvector( const char *cmd) {
   lsredis_set_preset( "align.z", "Back", az);
   
   lsredis_sendStatusReport( 0, "Back_Vector and Back presets set");
+  return 0;
+}
+
+/** set the current position of the alignment and centering stages as the "Beam" preset
+ *
+*/
+int md2cmds_setsamplebeam( const char *cmd) {
+  double ax, ay, az, cx, cy;	// current positions
+  
+  //
+  // get the current position
+  //
+  ax = lspmac_getPosition( alignx);
+  ay = lspmac_getPosition( aligny);
+  az = lspmac_getPosition( alignz);
+  cx = lspmac_getPosition( cenx);
+  cy = lspmac_getPosition( ceny);
+
+  lsredis_set_preset( "align.x",     "Beam", ax);
+  lsredis_set_preset( "align.y",     "Beam", ay);
+  lsredis_set_preset( "align.z",     "Beam", az);
+  lsredis_set_preset( "centering.x", "Beam", cx);
+  lsredis_set_preset( "centering.y", "Beam", cy);
+
   return 0;
 }
 
@@ -2607,9 +2639,9 @@ pthread_t *md2cmds_run() {
   lsevents_add_listener( "^Coordsys 5 Stopped$",        md2cmds_coordsys_5_stopped_cb);
   lsevents_add_listener( "^Coordsys 7 Stopped$",        md2cmds_coordsys_7_stopped_cb);
   lsevents_add_listener( "^cam.zoom Moving$",	        md2cmds_set_scale_cb);
-  lsevents_add_listener( "^(align\\.(x|y|z)|centering.(x|y)) In Position$", md2cmds_ca_last_cb);
-  lsevents_add_listener( "^scint Moving$",              md2cmds_disable_ca_last_cb);
-  lsevents_add_listener( "^scint In Position$",         md2cmds_enable_ca_last_cb);
+  //  lsevents_add_listener( "^(align\\.(x|y|z)|centering.(x|y)) In Position$", md2cmds_ca_last_cb);
+  //  lsevents_add_listener( "^scint Moving$",              md2cmds_disable_ca_last_cb);
+  //  lsevents_add_listener( "^scint In Position$",         md2cmds_enable_ca_last_cb);
   lsevents_add_listener( "^LSPMAC Done Initializing$",  md2cmds_lspmac_ready_cb);
   lsevents_add_listener( "^Abort Requested$",           md2cmds_lspmac_abort_cb);
   lsevents_add_listener( "^Quitting Program$",          md2cmds_quitting_cb);
