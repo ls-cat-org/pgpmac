@@ -1308,7 +1308,9 @@ void md2cmds_kappaphi_move( double kappa_deg, double phi_deg) {
  *  returns non-zero on error
  */
 int md2cmds_collect( const char *dummy) {
-  long long skey;	//!< index of shot to be taken
+  long long skey;	//!< shots table key of shot to be taken
+  int sindex;		//!< index of shot to be taken
+  int issnap;		//!< flag if this is a snap shot instead of a normal shot
   double exp_time;      //!< Exposure time (saved to compute shutter timeout)
   double p170;		//!< start cnts
   double p171;		//!< delta cnts
@@ -1376,11 +1378,13 @@ int md2cmds_collect( const char *dummy) {
 
     exp_time = lspg_nextshot.dsexp;
 
-    skey = lspg_nextshot.skey;
+    skey   = lspg_nextshot.skey;
+    sindex = lspg_nextshot.sindex;
+    issnap = strcmp( lspg_nextshot.stype, "snap") == 0;
     lslogging_log_message( "md2cmds next shot is %lld", skey);
     lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Preparing')", skey);
     lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Preparing\"}", skey);
-    lsredis_sendStatusReport( 0, "Preparing...");
+    lsredis_sendStatusReport( 0, "Preparing %s %d", issnap ? "Snap" : "Frame", sindex);
 
     if( lspg_nextshot.active) {
       if(
@@ -1408,6 +1412,7 @@ int md2cmds_collect( const char *dummy) {
 	  lsredis_sendStatusReport( 1, "Failed to start moving to next sample position.");
 	  lspg_nextshot_done();
 	  lsredis_setstr( collection_running, "False");
+	  lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
 	  return 1;
 	}
 
@@ -1418,6 +1423,7 @@ int md2cmds_collect( const char *dummy) {
 	  //	  lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");   // Should we even have the diffractometer lock at this point?
 	  lspg_nextshot_done();
 	  lsredis_setstr( collection_running, "False");
+	  lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
 	  return 1;
 	}
       }
@@ -1430,7 +1436,7 @@ int md2cmds_collect( const char *dummy) {
       kappa_pos = lspg_nextshot.dskappa_isnull ? lspmac_getPosition( kappa) : lspg_nextshot.dskappa;
       phi_pos   = lspg_nextshot.dsphi_isnull   ? lspmac_getPosition( phi)   : lspg_nextshot.dsphi;
 
-      lsredis_sendStatusReport( 0, "Moving Kappa");
+      lsredis_sendStatusReport( 0, "Moving Kappa %s %d", issnap ? "Snap" : "Frame", sindex);
       lslogging_log_message( "md2cmds_collect: move phy/kappa: kappa=%f  phi=%f", kappa_pos, phi_pos);
 
       err = lspmac_est_move_time( &move_time, &mmask,
@@ -1443,6 +1449,7 @@ int md2cmds_collect( const char *dummy) {
 	lsredis_sendStatusReport( 1, "Moving Kappa failed");
 	lspg_nextshot_done();
 	lsredis_setstr( collection_running, "False");
+	lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
 	return 1;
       }	
 
@@ -1453,6 +1460,7 @@ int md2cmds_collect( const char *dummy) {
 	lsredis_sendStatusReport( 1, "Moving Kappa timed out");
 	lspg_nextshot_done();
 	lsredis_setstr( collection_running, "False");
+	lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
 	return 1;
       }	
     }
@@ -1490,6 +1498,7 @@ int md2cmds_collect( const char *dummy) {
       lslogging_log_message( "md2cmds_collect: seq run prep query error, aborting");
       lsredis_sendStatusReport( 1, "Preparing MD2 failed");
       lsevents_send_event( "Data Collection Aborted");
+      lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
       lsredis_setstr( collection_running, "False");
       return 1;
     }
@@ -1516,6 +1525,7 @@ int md2cmds_collect( const char *dummy) {
       lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
       lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
       lsevents_send_event( "Data Collection Aborted");
+      lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
       lsredis_setstr( collection_running, "False");
       return 1;
     }
@@ -1530,7 +1540,7 @@ int md2cmds_collect( const char *dummy) {
     //
     // Start the exposure
     //
-    lsredis_sendStatusReport( 0, "Exposing.");
+    lsredis_sendStatusReport( 0, "Exposing %s %d", issnap ? "Snap" : "Frame", sindex);
     lspmac_set_motion_flags( &mmask, omega, NULL);
     lspmac_SockSendDPline( "Exposure",
 			   "&1 P170=%.1f P171=%.1f P173=%.1f P174=0 P175=%.1f P176=0 P177=1 P178=0 P180=%.1f M431=1 &1B131R",
@@ -1559,6 +1569,7 @@ int md2cmds_collect( const char *dummy) {
       lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
       lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
       lsevents_send_event( "Data Collection Aborted");
+      lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
       lsredis_setstr( collection_running, "False");
       return 1;
     }
@@ -1587,6 +1598,7 @@ int md2cmds_collect( const char *dummy) {
       lslogging_log_message( "md2cmds_collect: Timed out waiting for shutter to close.  Data collection aborted.");
       lsevents_send_event( "Data Collection Aborted");
       lsredis_setstr( collection_running, "False");
+      lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
       return 1;
     }
 
@@ -1595,12 +1607,13 @@ int md2cmds_collect( const char *dummy) {
     // Signal the detector to start reading out
     //
     lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
-    lsredis_sendStatusReport( 0, "Reading out image.");
+    lsredis_sendStatusReport( 0, "Reading %s %d", issnap ? "Snap" : "Frame", sindex);
 
     //
     // Update the shot status
     //
     lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Writing')", skey);
+    lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Writing\"}", skey);
 
     //
     // reset shutter has opened flag
@@ -1640,7 +1653,7 @@ int md2cmds_collect( const char *dummy) {
     }
   }
   lsevents_send_event( "Data Collection Done");
-  lsredis_sendStatusReport( 0, "");
+  lsredis_sendStatusReport( 0, "Finished data collection.");
   lsredis_setstr( collection_running, "False");
   return 0;
 }
