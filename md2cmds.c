@@ -437,8 +437,8 @@ int md2cmds_transfer( const char *dummy) {
   cy = lspmac_getPosition(ceny);
   oref = lsredis_getd(lsredis_get_obj( "omega.reference")) * M_PI/180.;
 
-  horz = cx * cos(oref) + cy * sin(oref);
-  vert = cx * sin(oref) - cy * cos(oref);
+  horz = -(cx * cos(oref) + cy * sin(oref));
+  vert = -(cx * sin(oref) - cy * cos(oref));
 
   lsredis_sendStatusReport( 0, "Moving MD2 devices to sample transfer position");
 
