@@ -384,14 +384,69 @@ void md2cmds_organs_move_presets( char *pay, char *paz, char *pcy, char *pcz, ch
 }
 
 
+int md2cmds_robotMount_start( double *move_time, int *mmask) {
+  *mmask = 0;
+  int err;
+  md2cmds_home_prep();
+
+  //
+  // Move 'em
+  //
+
+  lspmac_home1_queue( kappa);
+  lspmac_home1_queue( omega);
+
+  mmask = 0;
+  err = lspmac_est_move_time( move_time, mmask,
+                              apery,     1, "In",    0.0,
+                              aperz,     1, "In",    0.0,
+                              capz,      1, "Cover", 0.0,
+                              scint,     1, "Cover", 0.0,
+                              blight,    1, NULL,    0.0,
+                              blight_ud, 1, NULL,    0.0,
+                              cryo,      1, NULL,    0.0,
+                              fluo,      1, NULL,    0.0,
+                              zoom,      0, NULL,    1.0,
+                              NULL);
+  return err;
+}
+
+int md2cmds_robotMount_finish( double move_time, int mmask) {
+  int err;
+
+  err = lspmac_est_move_time_wait( move_time + 10.0, mmask,
+				   apery,
+				   aperz,
+				   capz,
+				   scint,
+				   blight_ud,
+				   cryo,
+				   fluo,
+				   NULL);
+  if( err) {
+    lsevents_send_event( "Mode robotMount Aborted");
+    return err;
+  }
+
+  err = md2cmds_home_wait( 60.0);
+  if( err) {
+    lslogging_log_message( "md2cmds_phase_robotMount: timed out homing omega or kappa");
+    lsevents_send_event( "Mode robotMount Aborted");
+    return err;
+  }
+
+  lsevents_send_event( "Mode robotMount Done");
+  
+  return err;
+}
+
 /** Transfer a sample
  *  \param dummy Unused
  */
 int md2cmds_transfer( const char *dummy) {
   int nextsample, abort_now;
   double ax, ay, az, cx, cy, horz, vert, oref;
-  int err;
-  int mmask;
+  int mmask, err;
   double move_time;
 
 
@@ -422,10 +477,18 @@ int md2cmds_transfer( const char *dummy) {
     }
   }
 
+  lsredis_sendStatusReport( 0, "Moving MD2 devices to sample transfer position");
+  //
+  // Go to sample transfer mode
+  //
+  lsredis_sendStatusReport( 0, "Preparing MD2 for robotic mounting");
+  if( md2cmds_robotMount_start( &move_time, &mmask)) {
+    lsredis_sendStatusReport( 1, "Failed to start motors");
+    lsevents_send_event( "Transfer Aborted");
+    return 1;
+  }  
 
-  //
-  // BLUMax sets up an abort dialogbox here.  TODO: We should figure out how we are going to handle that.
-  //
+  // Out of band transfer abort implemented via Abort Requested event
 
   //
   // get positions we'll be needed to report to postgres
@@ -437,52 +500,11 @@ int md2cmds_transfer( const char *dummy) {
   cy = lspmac_getPosition(ceny);
   oref = lsredis_getd(lsredis_get_obj( "omega.reference")) * M_PI/180.;
 
-  horz = -(cx * cos(oref) + cy * sin(oref));
-  vert = -(cx * sin(oref) - cy * cos(oref));
-
-  lsredis_sendStatusReport( 0, "Moving MD2 devices to sample transfer position");
-
-  mmask = 0;
-  err = lspmac_est_move_time( &move_time, &mmask,
-			      capz,      1, "Cover", 0.0,
-			      scint,     1, "Cover", 0.0,
-                              blight,    1, NULL,    0.0,
-			      blight_ud, 1, NULL,    0.0,
-			      fluo,      1, NULL,    0.0,
-			      NULL);
+  horz = -( cx * cos(oref) - cy * sin(oref));
+  vert =    cx * sin(oref) + cy * cos(oref);
 
   lspg_starttransfer_call( nextsample, lspmac_getBIPosition( sample_detected), ax, ay, az, horz, vert, move_time);
 
-  md2cmds_home_prep();
-
-  //
-  // Home Kappa
-  //
-  lspmac_home1_queue( kappa);
-
-  //
-  // Home omega
-  //
-  lspmac_home1_queue( omega);
-
-  //
-  // Wait for the kappa/omega homing routines to finish
-  //
-  if( md2cmds_home_wait( 30.0)) {
-    lsredis_sendStatusReport( 1, "Kappa and/or Omega homing routines timed out.  Aborting transfer.");
-    lslogging_log_message( "md2cmds_transfer: kappa/omega homing routines taking too long.  Aborting transfer.");
-    lsevents_send_event( "Transfer Aborted");
-    return 1;
-  }
-
-  //
-  // Home phi (whatever that means)
-  //
-  // md2cmds_home_prep();
-  // lspmac_home1_queue( phi);
-
-  // Now let's get back to postresql (remember our query so long ago?)
-  //
   lspg_starttransfer_wait();
   if( lspg_starttransfer.query_error) {
     lsredis_sendStatusReport( 1, "An database related error occurred trying to start the transfer.  This is neither normal nor OK.  Aborting transfer.");
@@ -506,33 +528,12 @@ int md2cmds_transfer( const char *dummy) {
 
   lspg_starttransfer_done();
 
- 
-  //
-  // Wait for the homing routines to finish
-  //
-  //  if( md2cmds_home_wait( 30.0)) {
-  //    lsredis_sendStatusReport( 1, "Homing phi timed out.  This is unusual.  Aborting");
-  //    lslogging_log_message( "md2cmds_transfer: phi homing routine taking too long.  Aborting transfer.");
-  //    lsevents_send_event( "Transfer Aborted");
-  //    return 1;
-  //  }
-
-  //
-  // Wait for all those other motors to stop moving
-  //
-  err = lspmac_est_move_time_wait( move_time + 10.0,
-				   mmask,
-				   capz,
-				   scint,
-				   blight_ud,
-				   fluo,
-				   NULL);
-  if( err) {
-    lsredis_sendStatusReport( 1, "Timed out waiting for MD2 to ready itself.  Aborting transfer.");
+  if( md2cmds_robotMount_finish( move_time, mmask)) {
+    lsredis_sendStatusReport( 1, "Failed to put MD2 in transfer mode");
+    lslogging_log_message( "md2cmds_transfer: tired of waiting for motors.  Tried for %d seconds.", move_time);
     lsevents_send_event( "Transfer Aborted");
     return 1;
   }
-
 
   // TODO: check that all the motors are where we told them to go  
   //
@@ -862,72 +863,23 @@ int md2cmds_phase_manualMount() {
 }
 
 
+
 /** Go to robot mount phase
  *  Normally this would not be called as md2cmds_transfer would put things into the correct position
  *  If you need to change the behaviour of this function be sure to change md2cmds_transfer as well.
 */
 int md2cmds_phase_robotMount() {
   double move_time;
-  int mmask, err;
+  int mmask;
 
   lsevents_send_event( "Mode robotMount Starting");
-
-  md2cmds_home_prep();
-
-  //
-  // Move 'em
-  //
-
-  lspmac_home1_queue( kappa);
-  lspmac_home1_queue( omega);
-  lspmac_home1_queue( kappa);
-
-  mmask = 0;
-  err = lspmac_est_move_time( &move_time, &mmask,
-                              apery,     1, "In",    0.0,
-                              aperz,     1, "In",    0.0,
-                              capz,      1, "Cover", 0.0,
-                              scint,     1, "Cover", 0.0,
-                              blight,    1, NULL,    0.0,
-                              blight_ud, 1, NULL,    0.0,
-                              cryo,      1, NULL,    0.0,
-                              fluo,      1, NULL,    0.0,
-                              zoom,      0, NULL,    1.0,
-                              NULL);
-
-  err = lspmac_est_move_time_wait( move_time + 10.0, mmask,
-				   apery,
-				   aperz,
-				   capz,
-				   scint,
-				   blight_ud,
-				   cryo,
-				   fluo,
-				   NULL);
-  if( err) {
+  if( md2cmds_robotMount_start( &move_time, &mmask)) {
+    lslogging_log_message( "md2cmds_phase_robotMount: error starting move");
     lsevents_send_event( "Mode robotMount Aborted");
-    return err;
+    return 1;
   }
 
-  err = md2cmds_home_wait( 60.0);
-  if( err) {
-    lslogging_log_message( "md2cmds_phase_robotMount: timed out homing omega or kappa");
-    lsevents_send_event( "Mode robotMount Aborted");
-    return err;
-  }
-
-  md2cmds_home_prep();
-  lspmac_home1_queue( phi);
-  err = md2cmds_home_wait( 60.0);
-  if( err) {
-    lslogging_log_message( "md2cmds_phase_robotMount: timed out homing phi");
-    lsevents_send_event( "Mode robotMount Aborted");
-    return err;
-  }
-
-
-  lsevents_send_event( "Mode robotMount Done");
-  return 0;
+  return md2cmds_robotMount_finish( move_time, mmask);
 }
 
 /** Go to center phase
