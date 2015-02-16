@@ -901,8 +901,6 @@ int md2cmds_phase_center() {
 			      alignz,    0, "Beam", 0.0,
 			      cenx,      0, "Beam", 0.0,
 			      ceny,      0, "Beam", 0.0,
-                              kappa,     0, NULL,    0.0,
-                              phi,       0, NULL,    0.0,
                               apery,     0, "In",    0.0,
                               aperz,     0, "Out",    0.0,
                               capy,      0, "In",    0.0,
