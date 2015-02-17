@@ -553,7 +553,7 @@ int md2cmds_transfer( const char *dummy) {
   //
   if( lspmac_getBIPosition( blight_down) != 1 ||lspmac_getBIPosition( fluor_back) != 1) {
     lsredis_sendStatusReport( 1, "Either the backlight or the fluorescence detector is possibly stuck in the wrong position.  Aborting transfer.");
-    lslogging_log_message( "md2cmds_transfer: It looks like either the back light is not down or the fluoescence dectector is not back");
+    lslogging_log_message( "md2cmds_transfer: It looks like either the back light is not down or the fluorescence dectector is not back");
     lsevents_send_event( "Transfer Aborted");
     return 1;
   }
@@ -882,6 +882,50 @@ int md2cmds_phase_robotMount() {
   return md2cmds_robotMount_finish( move_time, mmask);
 }
 
+int md2cmds_phase_fluorescence() {
+  double move_time;
+  int mmask, err;
+
+  lsevents_send_event( "Mode fluorescence Starting");
+  lsredis_sendStatusReport( 0, "Putting MD-2 in Fluorescence mode");
+
+  // Yeah,  Let's move
+
+  mmask = 0;
+  err = lspmac_est_move_time( &move_time, &mmask,
+			      apery,      0, "In",    0.0,
+			      aperz,      0, "In",    0.0,
+			      capy,       0, "In",    0.0,
+			      capz,       0, "Out",   0.0,
+			      scint,      0, "Cover", 0.0,
+			      blight_ud,  1, NULL,    0.0,
+			      cryo,       1, NULL,    0.0,
+			      fluo,       1, NULL,    1.0,
+			      NULL);
+  if( err) {
+    lsevents_send_event( "Mode fluorescence Aborted");
+    lsredis_sendStatusReport( 1, "Error starting motors");
+    return 1;
+  }
+
+  err = lspmac_est_move_time_wait( move_time + 10.0, mmask,
+				   cryo,
+				   fluo,
+				   NULL);
+  if( err) {
+    lsevents_send_event( "Mode fluorescence Aborted");
+    lsredis_sendStatusReport( 0, "Gave up waiting for motors");
+    return 1;
+  }
+
+  lsevents_send_event( "Mode fluorescence Done");
+  lsredis_sendStatusReport( 0, "In fluorescence mode");
+
+  return 0;
+}
+
+
+
 /** Go to center phase
  */
 
@@ -902,7 +946,7 @@ int md2cmds_phase_center() {
 			      cenx,      0, "Beam", 0.0,
 			      ceny,      0, "Beam", 0.0,
                               apery,     0, "In",    0.0,
-                              aperz,     0, "Out",    0.0,
+                              aperz,     0, "In",    0.0,
                               capy,      0, "In",    0.0,
                               capz,      0, "Out",    0.0,
                               scint,     0, "Cover", 0.0,
@@ -928,6 +972,31 @@ int md2cmds_phase_center() {
   lsevents_send_event( "Mode center Done");
   return 0;
 }
+
+
+int md2cmds_phase_fastCentering() {
+
+  lsredis_sendStatusReport( 0, "Starting Fast Centering Mode");
+  lsevents_send_event( "Mode fast center Starting");
+
+  //
+  // Move 'em
+  //
+  lspmac_est_move_time( NULL, NULL,
+			apery,     0, "In",    0.0,
+			aperz,     0, "In",    0.0,
+			capy,      0, "In",    0.0,
+			capz,      0, "Out",    0.0,
+			scint,     0, "Cover", 0.0,
+			blight_ud, 1, NULL,    1.0,
+			zoom,      1, NULL,    1.0,
+			cryo,      1, NULL,    0.0,
+			fluo,      1, NULL,    0.0,
+			NULL);
+  lsevents_send_event( "Mode fast center done");
+  return 0;
+}
+
 
 
 /** Go to data collection phase
@@ -1142,6 +1211,13 @@ int md2cmds_phase_change( const char *ccmd) {
     err = md2cmds_phase_beamLocation();
   } else if( strcmp( mode, "safe") == 0) {
     err = md2cmds_phase_safe();
+  } else if( strcmp( mode, "fastCentering") == 0) {
+    err = md2cmds_phase_fastCentering();
+  } else if( strcmp( mode, "fluorescence") == 0) {
+    err = md2cmds_phase_fluorescence();
+  } else {
+    lslogging_log_message( "md2cmds_phase_change: Unknown mode %s", mode);
+    return 1;
   }
 
   lsredis_setstr( lsredis_get_obj( "phase"), err ? "unknown" : mode);
@@ -1725,13 +1801,13 @@ int md2cmds_rotate( const char *dummy) {
   lspg_getcenter_done();
 
   if( lspmac_est_move_time( &move_time, &mmask,
-			    scint,  0,  "Cover", 0.0,
-			    capz,   0,  "Cover", 0.0,
-			    cenx,   0,  NULL,    cx,
-			    ceny,   0,  NULL,    cy,
-			    alignx, 0,  NULL,    ax,
-			    aligny, 0,  NULL,    ay,
-			    alignz, 0,  NULL,    az,
+			    scint,  1,  "Cover", 0.0,
+			    capz,   1,  "Out",   0.0,
+			    cenx,   1,  NULL,    cx,
+			    ceny,   1,  NULL,    cy,
+			    alignx, 1,  NULL,    ax,
+			    aligny, 1,  NULL,    ay,
+			    alignz, 1,  NULL,    az,
 			    zoom,   1,  NULL,    zm,
 			    NULL)) {
     lslogging_log_message( "md2cmds_rotate: organ motion request failed");
@@ -1740,6 +1816,13 @@ int md2cmds_rotate( const char *dummy) {
   }
 
   if( lspmac_est_move_time_wait( move_time + 10.0, mmask,
+				 scint,
+				 capz,
+				 cenx,
+				 ceny,
+				 alignx,
+				 aligny,
+				 alignz,
 				 zoom,
 				 NULL)) {
     lslogging_log_message( "md2cmds_rotate: organ motion timed out %f seconds", move_time + 10.0);
@@ -1922,13 +2005,13 @@ int md2cmds_nonrotate( const char *dummy) {
   lspg_getcenter_done();
 
   if( lspmac_est_move_time( &move_time, &mmask,
-			    scint,  0,  "Cover", 0.0,
-			    capz,   0,  "Cover", 0.0,
-			    cenx,   0,  NULL,    cx,
-			    ceny,   0,  NULL,    cy,
-			    alignx, 0,  NULL,    ax,
-			    aligny, 0,  NULL,    ay,
-			    alignz, 0,  NULL,    az,
+			    scint,  1,  "Cover", 0.0,
+			    capz,   1,  "Out", 0.0,
+			    cenx,   1,  NULL,    cx,
+			    ceny,   1,  NULL,    cy,
+			    alignx, 1,  NULL,    ax,
+			    aligny, 1,  NULL,    ay,
+			    alignz, 1,  NULL,    az,
 			    zoom,   1,  NULL,    zm,
 			    NULL)) {
     lslogging_log_message( "md2cmds_nonrotate: organ motion request failed");
@@ -1937,6 +2020,12 @@ int md2cmds_nonrotate( const char *dummy) {
   }
 
   if( lspmac_est_move_time_wait( move_time + 10.0, mmask,
+				 scint,
+				 capz,
+				 cenx,
+				 alignx,
+				 aligny,
+				 alignz,
 				 zoom,
 				 NULL)) {
     lslogging_log_message( "md2cmds_nonrotate: organ motion timed out %f seconds", move_time + 10.0);
