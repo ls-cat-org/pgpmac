@@ -2865,7 +2865,7 @@ int lspmac_set_motion_flags( int *mmaskp, lspmac_motor_t *mp_1, ...) {
 
 /** Move the motors and estimate the time it'll take to finish the job.
  * Returns the estimate time and the coordinate system mask to wait for
- * \param est_time     Returns number of seconds we estimate the move(s) will take
+ * \param est_time     Returns number of seconds we estimate the move(s) will take (ignored if NULL);
  * \param mmaskp       Mask of coordinate systems we are trying to move, excluding jogs.  Used to wait for motions to complete
  * \param mp_1         Pointer to first motor
  * \param jog_1        1 to force a jog, 0 to try a motion program  DO NOT MIX JOGS AND MOTION PROGRAMS IN THE SAME COORDINATE SYSTEM!
@@ -2876,6 +2876,7 @@ int lspmac_set_motion_flags( int *mmaskp, lspmac_motor_t *mp_1, ...) {
  */
 int lspmac_est_move_time( double *est_time, int *mmaskp, lspmac_motor_t *mp_1, int jog_1, char *preset_1, double end_point_1, ...) {
   static char axes[] = "XYZUVWABC";
+  double local_est_time;
   int qs[9];
   lspmac_combined_move_t motions[32];
   char s[256];
@@ -2913,7 +2914,10 @@ int lspmac_est_move_time( double *est_time, int *mmaskp, lspmac_motor_t *mp_1, i
   //
   // Initialze first iteration
   //
-  *est_time = 0.0;
+  local_est_time = 0.0;
+  if( est_time != NULL)
+    *est_time = local_est_time;
+
   mp  = mp_1;
   ps  = preset_1;
   ep  = end_point_1;
@@ -3137,10 +3141,11 @@ int lspmac_est_move_time( double *est_time, int *mmaskp, lspmac_motor_t *mp_1, i
       //
       // Update the estimated time
       //
-      *est_time = *est_time < Tt ? Tt : *est_time;
-      
-      lslogging_log_message( "lspmac_est_move_time: est_time=%f", *est_time);
-
+      local_est_time = local_est_time < Tt ? Tt : local_est_time;
+      if( est_time != NULL) {
+	*est_time = local_est_time;
+      }
+      lslogging_log_message( "lspmac_est_move_time: est_time=%f", local_est_time);
     }
 
 
@@ -3214,7 +3219,7 @@ int lspmac_est_move_time( double *est_time, int *mmaskp, lspmac_motor_t *mp_1, i
     
     if( foundone) {
       sprintf( s, "&%d Q40=%d Q41=%d Q42=%d Q43=%d Q44=%d Q45=%d Q46=%d Q47=%d Q48=%d Q49=%.1f Q100=%d B180R",
-	       i, qs[0], qs[1], qs[2], qs[3], qs[4], qs[5], qs[6], qs[7], qs[8], *est_time * 1000., 1 << (i-1));
+	       i, qs[0], qs[1], qs[2], qs[3], qs[4], qs[5], qs[6], qs[7], qs[8], local_est_time * 1000., 1 << (i-1));
       
       lspmac_SockSendDPline( NULL, s);
       
