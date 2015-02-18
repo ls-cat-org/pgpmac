@@ -604,7 +604,12 @@ int md2cmds_transfer( const char *dummy) {
   // Return the cryo
   //
   cryo->moveAbs( cryo, 0);
-  lspmac_moveabs_wait( cryo, 10.0);
+
+  if( nextsample != 0) {
+    md2cmds_phase_change( "changeMode fastCentering");
+  }
+
+  lspmac_moveabs_wait( cryo, 2.0);
 
   lsredis_sendStatusReport( 0, "Transfer completed.");
   lsevents_send_event( "Transfer Done");
@@ -1803,11 +1808,11 @@ int md2cmds_rotate( const char *dummy) {
   if( lspmac_est_move_time( &move_time, &mmask,
 			    scint,  1,  "Cover", 0.0,
 			    capz,   1,  "Out",   0.0,
-			    cenx,   1,  NULL,    cx,
-			    ceny,   1,  NULL,    cy,
-			    alignx, 1,  NULL,    ax,
-			    aligny, 1,  NULL,    ay,
-			    alignz, 1,  NULL,    az,
+			    cenx,   0,  NULL,    cx,
+			    ceny,   0,  NULL,    cy,
+			    alignx, 0,  NULL,    ax,
+			    aligny, 0,  NULL,    ay,
+			    alignz, 0,  NULL,    az,
 			    zoom,   1,  NULL,    zm,
 			    NULL)) {
     lslogging_log_message( "md2cmds_rotate: organ motion request failed");
@@ -1815,17 +1820,13 @@ int md2cmds_rotate( const char *dummy) {
     return 1;
   }
 
-  if( lspmac_est_move_time_wait( move_time + 10.0, mmask,
+  move_time += 3;
+  if( lspmac_est_move_time_wait( move_time, mmask,
 				 scint,
 				 capz,
-				 cenx,
-				 ceny,
-				 alignx,
-				 aligny,
-				 alignz,
 				 zoom,
 				 NULL)) {
-    lslogging_log_message( "md2cmds_rotate: organ motion timed out %f seconds", move_time + 10.0);
+    lslogging_log_message( "md2cmds_rotate: organ motion timed out %f seconds", move_time);
     lsevents_send_event( "Rotate Aborted");
     return 1;
   }
@@ -1836,6 +1837,7 @@ int md2cmds_rotate( const char *dummy) {
     return 1;
   }
 
+  lsredis_setstr( lsredis_get_obj( "phase"), "center");
 
   // Report new center positions
   cx = lspmac_getPosition( cenx);
@@ -1923,15 +1925,6 @@ int md2cmds_nonrotate( const char *dummy) {
   blight_ud->moveAbs( blight_ud, 1);
 
   //
-  // Get ready to move our motors
-  md2cmds_home_prep();
-
-  //
-  // make sure omega is homed
-  //
-  lspmac_home1_queue( omega);
-
-  //
   // Grab the current positions
   //
   cx = lspmac_getPosition( cenx);
@@ -2007,11 +2000,11 @@ int md2cmds_nonrotate( const char *dummy) {
   if( lspmac_est_move_time( &move_time, &mmask,
 			    scint,  1,  "Cover", 0.0,
 			    capz,   1,  "Out", 0.0,
-			    cenx,   1,  NULL,    cx,
-			    ceny,   1,  NULL,    cy,
-			    alignx, 1,  NULL,    ax,
-			    aligny, 1,  NULL,    ay,
-			    alignz, 1,  NULL,    az,
+			    cenx,   0,  NULL,    cx,
+			    ceny,   0,  NULL,    cy,
+			    alignx, 0,  NULL,    ax,
+			    aligny, 0,  NULL,    ay,
+			    alignz, 0,  NULL,    az,
 			    zoom,   1,  NULL,    zm,
 			    NULL)) {
     lslogging_log_message( "md2cmds_nonrotate: organ motion request failed");
@@ -2019,26 +2012,18 @@ int md2cmds_nonrotate( const char *dummy) {
     return 1;
   }
 
-  if( lspmac_est_move_time_wait( move_time + 10.0, mmask,
+  move_time += 3;
+  if( lspmac_est_move_time_wait( move_time, mmask,
 				 scint,
 				 capz,
-				 cenx,
-				 alignx,
-				 aligny,
-				 alignz,
 				 zoom,
 				 NULL)) {
-    lslogging_log_message( "md2cmds_nonrotate: organ motion timed out %f seconds", move_time + 10.0);
+    lslogging_log_message( "md2cmds_nonrotate: organ motion timed out %f seconds", move_time);
     lsevents_send_event( "Local Centering Aborted");
     return 1;
   }
 
-  if( md2cmds_home_wait( 20.0)) {
-    lslogging_log_message( "md2cmds_nonrotate: homing motors timed out.  Rotate aborted");
-    lsevents_send_event( "Local Centering Aborted");
-    return 1;
-  }
-
+  lsredis_setstr( lsredis_get_obj( "phase"), "center");
 
   // Report new center positions
   cx = lspmac_getPosition( cenx);
@@ -2048,8 +2033,10 @@ int md2cmds_nonrotate( const char *dummy) {
   az = lspmac_getPosition( alignz);
   lspg_query_push( NULL, NULL, "SELECT px.applycenter( %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f)", cx, cy, ax, ay, az, lspmac_getPosition(kappa), lspmac_getPosition( phi));
 
-  md2cmds_setsamplebeam( "dummy argument");
 
+  md2cmds_moveRel( "moveRel omega -180");
+
+  md2cmds_setsamplebeam( "dummy argument");
   lslogging_log_message( "md2cmds_nonrotate: done with applycenter");
 
   return 0;
