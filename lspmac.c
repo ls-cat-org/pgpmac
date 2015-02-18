@@ -63,7 +63,7 @@ void lspmac_get_ascii( char *);			//!< Forward declarateion
 
 static int lspmac_running = 1;			//!< exit worker thread when zero
 int lspmac_shutter_state;			//!< State of the shutter, used to detect changes
-int lspmac_shutter_has_opened;			//!< Indicates that the shutter had opened, perhaps briefly even if the state did not change
+int lspmac_shutter_has_opened_globally;		//!< Indicates that the shutter had opened, perhaps briefly even if the state did not change
 pthread_mutex_t lspmac_moving_mutex;		//!< Coordinate moving motors between threads
 pthread_cond_t  lspmac_moving_cond;		//!< Wait for motor(s) to finish moving condition
 int lspmac_moving_flags;			//!< Flag used to implement motor moving condition
@@ -1230,14 +1230,14 @@ void lspmac_shutter_read(
   // track the shutter state and signal if it has changed
   //
   pthread_mutex_lock( &(mp->mutex));
-  if( md2_status.fs_has_opened && !lspmac_shutter_has_opened && !md2_status.fs_is_open) {
+  if( md2_status.fs_has_opened_globally && !lspmac_shutter_has_opened_globally && !md2_status.fs_is_open) {
     //
     // Here the shutter opened and closed again before we got the memo
     // Treat it as a shutter closed event
     //
     pthread_cond_signal( &mp->cond);
   }
-  lspmac_shutter_has_opened = md2_status.fs_has_opened;
+  lspmac_shutter_has_opened_globally = md2_status.fs_has_opened_globally;
 
   if( lspmac_shutter_state !=  md2_status.fs_is_open) {
     lspmac_shutter_state = md2_status.fs_is_open;
@@ -1751,6 +1751,7 @@ void lspmac_get_status_cb(
   // Read the binary inputs and perhaps send an event
   //
   for( i=0; i<lspmac_nbis; i++) {
+    int newValue = 0;
     bp = &(lspmac_bis[i]);
     
     pthread_mutex_lock( &(bp->mutex));
@@ -1758,6 +1759,7 @@ void lspmac_get_status_cb(
     bp->position = (*(bp->ptr) & bp->mask) == 0 ? 0 : 1;
 
     if( bp->first_time) {
+      newValue       = 1;
       bp->first_time = 0;
       if( bp->position==1 && bp->changeEventOn != NULL && bp->changeEventOn[0] != 0) {
 	  lsevents_send_event( bp->changeEventOn);
@@ -1772,18 +1774,24 @@ void lspmac_get_status_cb(
     } else {
       if( bp->position != bp->previous) {
 	if( bp->position==1 && bp->changeEventOn != NULL && bp->changeEventOn[0] != 0) {
-	    lsevents_send_event( bp->changeEventOn);
-	    if( bp->onStatus != NULL)
-	      lsredis_setstr( bp->status_str, bp->onStatus);
+	  newValue = 1;
+	  lsevents_send_event( bp->changeEventOn);
+	  if( bp->onStatus != NULL)
+	    lsredis_setstr( bp->status_str, bp->onStatus);
 	}
 	if(bp->position==0 && bp->changeEventOff != NULL && bp->changeEventOff[0] != 0) {
-	    lsevents_send_event( bp->changeEventOff);
-	    if( bp->offStatus != NULL)
-	      lsredis_setstr( bp->status_str, bp->offStatus);
+	  newValue = 1;
+	  lsevents_send_event( bp->changeEventOff);
+	  if( bp->offStatus != NULL)
+	    lsredis_setstr( bp->status_str, bp->offStatus);
 	}
       }
     }
     bp->previous = bp->position;
+
+    if( newValue)
+      pthread_cond_signal( &(bp->cond));
+
     pthread_mutex_unlock( &(bp->mutex));
   }
 
@@ -3847,8 +3855,15 @@ lspmac_motor_t *lspmac_soft_motor_init( lspmac_motor_t *d, char *name, int (*mov
 /** Initialize binary input
  */
 lspmac_bi_t *lspmac_bi_init( lspmac_bi_t *d, char *name, int *ptr, int mask, char *onEvent, char *offEvent, char *onStatus, char *offStatus) {
+  pthread_mutexattr_t mutex_initializer;
+  // Use recursive mutexs
+  //
+  pthread_mutexattr_init( &mutex_initializer);
+  pthread_mutexattr_settype( &mutex_initializer, PTHREAD_MUTEX_RECURSIVE);
+
   lspmac_nbis++;
-  pthread_mutex_init( &(d->mutex), NULL);
+  pthread_mutex_init( &(d->mutex), &mutex_initializer);
+  pthread_cond_init ( &(d->cond),  NULL);
   d->name           = strdup( name);
   d->ptr            = ptr;
   d->mask           = mask;
@@ -4018,7 +4033,7 @@ void lspmac_init(
     // Initialize some mutexs and conditions
     //
 
-    pthread_mutex_init( &pmac_queue_mutex, &mutex_initializer);
+    pthread_mutex_init( &pmac_queue_mutex, NULL);
     pthread_cond_init(  &pmac_queue_cond, NULL);
 
     lspmac_shutter_state = 0;				// assume the shutter is now closed: not a big deal if we are wrong
