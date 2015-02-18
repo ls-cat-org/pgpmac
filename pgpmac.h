@@ -165,6 +165,7 @@ typedef struct lspmac_motor_struct {
 typedef struct lspmac_bi_struct {
   int *ptr;			//!< points to the location in the status buffer
   pthread_mutex_t mutex;	//!< so we don't get confused
+  pthread_cond_t  cond;		//!< so we don't get signals confused
   char *name;			//!< what we'd like to be called
   int mask;			//!< mask for the bit in the status register
   int position;			//!< the current value.
@@ -501,7 +502,7 @@ extern pthread_cond_t  pmac_queue_cond;
 extern pthread_mutex_t lspmac_shutter_mutex;
 extern pthread_cond_t  lspmac_shutter_cond;
 extern int lspmac_shutter_state;
-extern int lspmac_shutter_has_opened;
+extern int lspmac_shutter_has_opened_globally;
 extern pthread_mutex_t lspmac_moving_mutex;
 extern pthread_cond_t  lspmac_moving_cond;
 extern int lspmac_moving_flags;
