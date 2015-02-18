@@ -109,6 +109,9 @@ int md2cmds_homing_count = 0;		//!< We've asked a motor to home
 pthread_cond_t md2cmds_homing_cond;	//!< coordinate homing and homed
 pthread_mutex_t md2cmds_homing_mutex;	//!< our mutex;
 
+int md2cmds_shutter_open_flag = 0;	//!< Our own shutter open flag (may not work for very short open times
+pthread_cond_t  md2cmds_shutter_cond;
+pthread_mutex_t md2cmds_shutter_mutex;
 
 int md2cmds_moving_count = 0;
 
@@ -128,7 +131,6 @@ static double md2cmds_capz_moving_time = NAN;
 static struct hsearch_data md2cmds_hmap;
 
 static regex_t md2cmds_cmd_regex;
-
 
 typedef struct md2cmds_cmd_kv_struct {
   char *k;
@@ -235,6 +237,19 @@ int md2cmds_home_wait( double timeout_secs) {
     return 1;
   } 
   return 0;
+}
+
+
+void md2cmds_motion_reset_cb( char *evt) {
+  lsredis_setstr( md2cmds_md_status_code, "%s", "4");
+  pthread_mutex_lock( &md2cmds_moving_mutex);
+  md2cmds_moving_count = 0;
+  pthread_cond_signal( &md2cmds_moving_cond);
+  pthread_mutex_unlock( &md2cmds_moving_mutex);
+}
+
+void md2cmds_motion_reset() {
+  lspmac_abort();
 }
 
 
@@ -1160,19 +1175,19 @@ int md2cmds_phase_change( const char *ccmd) {
   char *mode;
   int err;
 
-  // Regardless of what phase we are going to start with making sure the shutter is closed
   //
-  fshut->moveAbs( fshut, 0);
+  // Just kill all current motions and close the shutter;
+  //
+  md2cmds_motion_reset();
 
 
   if( ccmd == NULL || *ccmd == 0)
     return 1;
 
   // use a copy as strtok_r modifies the string it is parsing
+  // Ignore the first token, that's just the command that called this routing
   //
-
   cmd = strdup( ccmd);
-
   ignore = strtok_r( cmd, " ", &ptr);
   if( ignore == NULL) {
     lslogging_log_message( "md2cmds_phase_change: ignoring empty command string (how did we let things get this far?");
@@ -1181,7 +1196,7 @@ int md2cmds_phase_change( const char *ccmd) {
   }
 
   //
-  // ignore should point to "mode" cause that's how we got here.  Ignore it
+  // The next token is the mode we wish to put the MD2 in.
   //
   mode = strtok_r( NULL, " ", &ptr);
   if( mode == NULL) {
@@ -1189,18 +1204,9 @@ int md2cmds_phase_change( const char *ccmd) {
     return 1;
   }
 
-  if( md2cmds_is_moving()) {
-    int err;
-    lspmac_SockSendDPControlChar( "Aborting Motions", '\x01');
-    err = md2cmds_move_wait( 2.0);
-    if( err) {
-      lslogging_log_message( "md2cmds_phase_change: Timed out waiting for previous moves to finish");
-      return 1;
-    }
-  }
 
   //
-  // Tangled web.  Probably not worth fixing.  O(N) but N is 6.
+  // Tangled web.  Probably not worth fixing.  O(N) but N is pretty small.
   //
 
   err = 1;
@@ -1334,6 +1340,21 @@ void md2cmds_kappaphi_move( double kappa_deg, double phi_deg) {
 }
 
 
+void md2cmds_shutter_open_cb( char *evt) {
+  pthread_mutex_lock( &md2cmds_shutter_mutex);
+  md2cmds_shutter_open_flag = 1;
+  pthread_cond_signal( &md2cmds_shutter_cond);
+  pthread_mutex_unlock( &md2cmds_shutter_mutex);
+}
+
+void md2cmds_shutter_not_open_cb( char *evt) {
+  pthread_mutex_lock( &md2cmds_shutter_mutex);
+  md2cmds_shutter_open_flag = 0;
+  pthread_cond_signal( &md2cmds_shutter_cond);
+  pthread_mutex_unlock( &md2cmds_shutter_mutex);
+}
+
+
 /** Collect some data
  *  \param dummy Unused
  *  returns non-zero on error
@@ -1386,7 +1407,7 @@ int md2cmds_collect( const char *dummy) {
   //
   // reset shutter has opened flag
   //
-  lspmac_SockSendDPline( NULL, "P3001=0 P3002=0");
+  lspmac_SockSendDPline( NULL, "P3001=0 P3002=0 P3005=0");
 
   while( 1) {
     lspg_nextshot_call();
@@ -1536,7 +1557,7 @@ int md2cmds_collect( const char *dummy) {
     
     //
     // make sure our opened flag is down
-    // wait for the p3001=0 command to be noticed
+    // wait for the p3005=0 command to be noticed
     //
     clock_gettime( CLOCK_REALTIME, &now);
     timeout.tv_sec  = now.tv_sec + 10;
@@ -1544,22 +1565,25 @@ int md2cmds_collect( const char *dummy) {
 
     err = 0;
 
-    pthread_mutex_lock( &fshut->mutex);
-    while( err == 0 && lspmac_shutter_has_opened != 0)
-      err = pthread_cond_timedwait( &fshut->cond, &fshut->mutex, &timeout);
-    pthread_mutex_unlock( &fshut->mutex);
+    pthread_mutex_lock( &md2cmds_shutter_mutex);
+    if( md2cmds_shutter_open_flag) {
+      fshut->moveAbs( fshut, 0);
+      while( err == 0 && md2cmds_shutter_open_flag)
+	err = pthread_cond_timedwait( &md2cmds_shutter_cond, &md2cmds_shutter_mutex, &timeout);
 
-    if( err == ETIMEDOUT) {
-      pthread_mutex_unlock( &fshut->mutex);
-      lsredis_sendStatusReport( 1, "Timed out waiting for shutter closed confirmation.");
-      lslogging_log_message( "md2cmds_collect: Timed out waiting for shutter to be confirmed closed.  Data collection aborted.");
-      lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
-      lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
-      lsevents_send_event( "Data Collection Aborted");
-      lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
-      lsredis_setstr( collection_running, "False");
-      return 1;
+      if( err == ETIMEDOUT) {
+	pthread_mutex_unlock( &md2cmds_shutter_mutex);
+	lsredis_sendStatusReport( 1, "Timed out waiting for shutter closed confirmation.");
+	lslogging_log_message( "md2cmds_collect: Timed out waiting for shutter to be confirmed closed.  Data collection aborted.");
+	lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
+	lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
+	lsevents_send_event( "Data Collection Aborted");
+	lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+	lsredis_setstr( collection_running, "False");
+	return 1;
+      }
     }
+    pthread_mutex_unlock( &md2cmds_shutter_mutex);
 
     //
     // Wait for the detector to drop its lock indicating that it is ready for the exposure
@@ -1589,12 +1613,12 @@ int md2cmds_collect( const char *dummy) {
 
     err = 0;
 
-    pthread_mutex_lock( &fshut->mutex);
-    while( err == 0 && lspmac_shutter_has_opened == 0)
-      err = pthread_cond_timedwait( &fshut->cond, &fshut->mutex, &timeout);
+    pthread_mutex_lock( &md2cmds_shutter_mutex);
+    while( err == 0 && !md2cmds_shutter_open_flag)
+      err = pthread_cond_timedwait( &md2cmds_shutter_cond, &md2cmds_shutter_mutex, &timeout);
 
     if( err == ETIMEDOUT) {
-      pthread_mutex_unlock( &fshut->mutex);
+      pthread_mutex_unlock( &md2cmds_shutter_mutex);
       lslogging_log_message( "md2cmds_collect: Timed out waiting for shutter to open.  Data collection aborted.");
       lsredis_sendStatusReport( 1, "Timed out waiting for shutter to open.");
       lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
@@ -1604,6 +1628,7 @@ int md2cmds_collect( const char *dummy) {
       lsredis_setstr( collection_running, "False");
       return 1;
     }
+    pthread_mutex_unlock( &md2cmds_shutter_mutex);
 
 
     //
@@ -1611,18 +1636,17 @@ int md2cmds_collect( const char *dummy) {
     //
     clock_gettime( CLOCK_REALTIME, &now);
     lslogging_log_message( "md2cmds_collect: waiting %f seconds for the shutter to close", 4 + exp_time);
-    timeout.tv_sec  = now.tv_sec + 4 + ceil(exp_time);	// hopefully 4 seconds is long enough to never catch a legitimate shutter close and short enough to bail when something is really wrong
+    timeout.tv_sec  = now.tv_sec + 4 + ceil(exp_time);	// hopefully 4 seconds is long enough to never miss a legitimate shutter close and short enough to bail when something is really wrong
     timeout.tv_nsec = now.tv_nsec;
 
     err = 0;
 
-    while( err == 0 && lspmac_shutter_state == 1)
-      err = pthread_cond_timedwait( &fshut->cond, &fshut->mutex, &timeout);
-    pthread_mutex_unlock( &fshut->mutex);
-
+    pthread_mutex_lock( &md2cmds_shutter_mutex);
+    while( err == 0 && md2cmds_shutter_open_flag)
+      err = pthread_cond_timedwait( &md2cmds_shutter_cond, &md2cmds_shutter_mutex, &timeout);
 
     if( err == ETIMEDOUT) {
-      pthread_mutex_unlock( &fshut->mutex);
+      pthread_mutex_unlock( &md2cmds_shutter_mutex);
       lsredis_sendStatusReport( 1, "Timed out waiting for shutter to close.");
       lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
       lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
@@ -1632,6 +1656,7 @@ int md2cmds_collect( const char *dummy) {
       lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
       return 1;
     }
+    pthread_mutex_unlock( &md2cmds_shutter_mutex);
 
 
     //
@@ -1649,7 +1674,7 @@ int md2cmds_collect( const char *dummy) {
     //
     // reset shutter has opened flag
     //
-    lspmac_SockSendDPline( NULL, "P3001=0");
+    lspmac_SockSendDPline( NULL, "P3005=0");
 
     //
     // Wait for omega to stop moving
@@ -2599,6 +2624,9 @@ void md2cmds_init() {
   pthread_mutex_init( &md2cmds_homing_mutex, &mutex_initializer);
   pthread_cond_init(  &md2cmds_homing_cond, NULL);
 
+  pthread_mutex_init( &md2cmds_shutter_mutex, &mutex_initializer);
+  pthread_cond_init(  &md2cmds_shutter_cond, NULL);
+
 
   err = regcomp( &md2cmds_cmd_regex, " *([^ ]+) (([^ ]+)\\.presets\\..)*([^ ]*) *([^ ]*)", REG_EXTENDED);
   if( err != 0) {
@@ -2666,6 +2694,9 @@ pthread_t *md2cmds_run() {
   lsredis_set_onSet( lsredis_get_obj( "md2cmds.abort"), md2cmds_redis_abort_cb);
   
   pthread_create( &md2cmds_thread, NULL,                md2cmds_worker, NULL);
+
+  lsevents_add_listener( "^Reset queued$", md2cmds_motion_reset_cb);
+
   lsevents_add_listener( "^omega crossed zero$",        md2cmds_rotate_cb);
   lsevents_add_listener( "^omega In Position$",         md2cmds_maybe_rotate_done_cb);
   lsevents_add_listener( ".+ (Moving|In Position)$",    md2cmds_maybe_done_moving_cb);
@@ -2678,13 +2709,11 @@ pthread_t *md2cmds_run() {
   lsevents_add_listener( "^Coordsys 5 Stopped$",        md2cmds_coordsys_5_stopped_cb);
   lsevents_add_listener( "^Coordsys 7 Stopped$",        md2cmds_coordsys_7_stopped_cb);
   lsevents_add_listener( "^cam.zoom Moving$",	        md2cmds_set_scale_cb);
-  //  lsevents_add_listener( "^(align\\.(x|y|z)|centering.(x|y)) In Position$", md2cmds_ca_last_cb);
-  //  lsevents_add_listener( "^scint Moving$",              md2cmds_disable_ca_last_cb);
-  //  lsevents_add_listener( "^scint In Position$",         md2cmds_enable_ca_last_cb);
   lsevents_add_listener( "^LSPMAC Done Initializing$",  md2cmds_lspmac_ready_cb);
   lsevents_add_listener( "^Abort Requested$",           md2cmds_lspmac_abort_cb);
   lsevents_add_listener( "^Quitting Program$",          md2cmds_quitting_cb);
-
+  lsevents_add_listener( "^Shutter Open$",              md2cmds_shutter_open_cb);
+  lsevents_add_listener( "^Shutter Not Open$",          md2cmds_shutter_not_open_cb);
   lsredis_sendStatusReport( 0, "MD2 Started");
 
 
