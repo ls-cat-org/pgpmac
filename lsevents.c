@@ -104,8 +104,6 @@ void lsevents_add_listener( char *raw_regexp, void (*cb)(char *)) {
   char *errbuf;
   int nerrbuf;
 
-
-
   new = calloc( 1, sizeof( lsevents_listener_t));
   if( new == NULL) {
     lslogging_log_message( "lsevents_add_listener: out of memory");
