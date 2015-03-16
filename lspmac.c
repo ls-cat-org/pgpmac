@@ -2160,14 +2160,15 @@ void lspmac_abort() {
   lspmac_SockSendDPControlChar( "Abort Request", 0x01);
 
   //
+  // and, by the way, close the shutter
+  //
+  fshut->moveAbs( fshut, 0);
+
+  //
   // and reset motion flag
   //
   lspmac_SockSendDPline( "Reset", "%s", "M5075=0");
 
-  //
-  // and, by the way, close the shutter
-  //
-  fshut->moveAbs( fshut, 0);
 }
 
 
@@ -2456,10 +2457,24 @@ int lspmac_movedac_queue(
     lslogging_log_message( "lspmac_movedac_queue: motor %s requested position %f  requested counts %d  u2c %f",
 			   mp->name, mp->requested_position, mp->requested_pos_cnts, u2c);
 
-    mp->not_done    = 1;
-    mp->motion_seen = 0;
+    //
+    // fake the move
+    //
+    mp->not_done     = 1;
+    mp->motion_seen  = 0;
+    mp->command_sent = 1;
+    pthread_mutex_unlock( &mp->mutex);
 
+    lsevents_send_event( "%s Moving", mp->name);
     lspmac_SockSendDPline( mp->name, "%s=%d", mp->dac_mvar, mp->requested_pos_cnts);
+
+    pthread_mutex_lock( &mp->mutex);
+    mp->not_done     = 0;
+    mp->motion_seen  = 1;
+    mp->command_sent = 1;
+    pthread_cond_signal(  &mp->cond);
+    pthread_mutex_unlock( &(mp->mutex));
+    lsevents_send_event( "%s In Position", mp->name);
   }
 
   pthread_mutex_unlock( &(mp->mutex));
@@ -2701,55 +2716,82 @@ void lspmac_moveabs_timed_queue(
 int lspmac_moveabs_frontlight_oo_queue( lspmac_motor_t *mp, double pos) {
   pthread_mutex_lock( &(mp->mutex));
   *mp->actual_pos_cnts_p = pos;
-  mp->position =           pos;
+  mp->position           = pos;
+  mp->not_done           = 1;
+  mp->motion_seen        = 0;
+  mp->command_sent       = 1;
   pthread_mutex_unlock( &(mp->mutex));
+
+  lsevents_send_event( "%s Moving", mp->name);
   if( pos == 0.0) {
     flight->moveAbs( flight, 0.0);
   } else {
     flight->moveAbs( flight, lspmac_getPosition( zoom));
   }
+  pthread_mutex_lock( &mp->mutex);
+  mp->not_done     = 0;
+  mp->motion_seen  = 1;
+  mp->command_sent = 1;
+  pthread_cond_signal(  &mp->cond);
+  pthread_mutex_unlock( &mp->mutex);
+  lsevents_send_event( "%s In Position", mp->name);
   return 0;
 }
 
 int lspmac_moveabs_flight_factor_queue( lspmac_motor_t *mp, double pos) {
-  char *fmt;
-
-  if( pos >= 60 && pos <= 140) {
-    pthread_mutex_lock( &(mp->mutex));
+  if( pos >= 50 && pos <= 150) {
+    pthread_mutex_lock( &mp->mutex);
     *mp->actual_pos_cnts_p = pos;
-    mp->position =           pos;
-    pthread_mutex_unlock( &(mp->mutex));
+    mp->position           = pos;
+    mp->not_done           = 1;
+    mp->motion_seen        = 0;
+    mp->command_sent       = 1;
+    pthread_mutex_unlock( &mp->mutex);
 
-    pthread_mutex_lock( &(flight->mutex));
-
-    fmt = lsredis_getstr( flight->redis_fmt);
-    lsredis_setstr( flight->u2c, fmt, pos / 100.0);
-    free( fmt);
-
-    pthread_mutex_unlock( &(flight->mutex));
+    pthread_mutex_lock( &flight->mutex);
+    lsredis_setstr( flight->u2c, "%0.3f", pos / 100.0);
+    pthread_mutex_unlock( &flight->mutex);
 
     flight->moveAbs( flight, lspmac_getPosition( zoom));
+    lsevents_send_event( "%s Moving", mp->name);
+
+    pthread_mutex_lock( &mp->mutex);
+    mp->not_done     = 0;
+    mp->motion_seen  = 1;
+    mp->command_sent = 1;
+    pthread_cond_signal(  &mp->cond);
+    pthread_mutex_unlock( &mp->mutex);
+    lsevents_send_event( "%s In Position", mp->name);
+
     return 0;
   }
   return 1;
 }
 
 int lspmac_moveabs_blight_factor_queue( lspmac_motor_t *mp, double pos) {
-  char *fmt;
-
-  if( pos >= 60 && pos <= 140) {
-    pthread_mutex_lock( &(mp->mutex));
+  if( pos >= 50 && pos <= 150) {
+    pthread_mutex_lock( &mp->mutex);
     *mp->actual_pos_cnts_p = pos;
-    mp->position =           pos;
-    pthread_mutex_unlock( &(mp->mutex));
+    mp->position           = pos;
+    mp->not_done           = 1;
+    mp->motion_seen        = 0;
+    mp->command_sent       = 1;
+    pthread_mutex_unlock( &mp->mutex);
 
-    pthread_mutex_lock( &(blight->mutex));
-    fmt = lsredis_getstr( blight->redis_fmt);
-    lsredis_setstr( blight->u2c, fmt, pos / 100.0);
-    free( fmt);
-    pthread_mutex_unlock( &(blight->mutex));
+    pthread_mutex_lock( &blight->mutex);
+    lsredis_setstr( blight->u2c, "%0.3f", pos / 100.0);
+    pthread_mutex_unlock( &blight->mutex);
 
     blight->moveAbs( blight, lspmac_getPosition( zoom));
+    lsevents_send_event( "%s Moving", mp->name);
+
+    pthread_mutex_lock( &mp->mutex);
+    mp->not_done     = 0;
+    mp->motion_seen  = 1;
+    mp->command_sent = 1;
+    pthread_cond_signal(  &mp->cond);
+    pthread_mutex_unlock( &(mp->mutex));
+    lsevents_send_event( "%s In Position", mp->name);
   }
 
   return 0;
