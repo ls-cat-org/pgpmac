@@ -992,10 +992,35 @@ void lsredis_set_preset( char *motor_name, char *preset_name, double dval) {
   char s[512];
   int plength;
   int err;
+  double min_pos, max_pos, neutral_pos, vec;
+  lspmac_motor_t *mp;
   ENTRY entry_in, *entry_outp;
   lsredis_obj_t *p1, *p2, *presets_length_p;
   lsredis_preset_list_t *pl;
   struct timespec timeout;
+
+  mp = lspmac_find_motor_by_name( motor_name);
+  if( mp) {
+    neutral_pos = lsredis_getd( mp->neutral_pos);
+    min_pos     = lsredis_getd( mp->min_pos) - neutral_pos;
+    max_pos     = lsredis_getd( mp->max_pos) - neutral_pos;
+    if( dval < min_pos || dval > max_pos) {
+      lslogging_log_message( "Cannot set preset '%s' for motor '%s' to %.3f  min pos: %.3f   max pos: %.3f\n", preset_name, motor_name, dval, min_pos, max_pos);
+      lsredis_sendStatusReport( 1, "Point out of range. Try again");
+      return;
+    }
+    /*
+    **  We may have to reconfigure our back vectors before implementing this here.  In the mean time we should move in the direction of the back vector until just before a limit.
+    */
+    if( strcmp( preset_name, "Beam") == 0 && lsredis_find_preset( motor_name, "Back_Vector", &vec)) {
+      if( dval + vec > max_pos || dval + vec < min_pos) {
+	lslogging_log_message( "Cannot set preset '%s' for motor '%s' to %.3f  min pos: %.3f   max pos: %.3f  Back_Vector: %.3f\n", preset_name, motor_name, dval, min_pos, max_pos, vec);
+	lsredis_sendStatusReport( 1, "'Out of Beam' position out of range. Try again");
+	return;
+      }
+    }
+    /**/
+  }
 
   snprintf( s, sizeof( s)-1, "%s%s", motor_name, preset_name);
   s[sizeof(s)-1] = 0;
