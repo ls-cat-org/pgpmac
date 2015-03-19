@@ -992,7 +992,7 @@ void lsredis_set_preset( char *motor_name, char *preset_name, double dval) {
   char s[512];
   int plength;
   int err;
-  double min_pos, max_pos, neutral_pos, vec;
+  double min_pos, max_pos, neutral_pos;
   lspmac_motor_t *mp;
   ENTRY entry_in, *entry_outp;
   lsredis_obj_t *p1, *p2, *presets_length_p;
@@ -1009,17 +1009,6 @@ void lsredis_set_preset( char *motor_name, char *preset_name, double dval) {
       lsredis_sendStatusReport( 1, "Point out of range. Try again");
       return;
     }
-    /*
-    **  We may have to reconfigure our back vectors before implementing this here.  In the mean time we should move in the direction of the back vector until just before a limit.
-    */
-    if( strcmp( preset_name, "Beam") == 0 && lsredis_find_preset( motor_name, "Back_Vector", &vec)) {
-      if( dval + vec > max_pos || dval + vec < min_pos) {
-	lslogging_log_message( "Cannot set preset '%s' for motor '%s' to %.3f  min pos: %.3f   max pos: %.3f  Back_Vector: %.3f\n", preset_name, motor_name, dval, min_pos, max_pos, vec);
-	lsredis_sendStatusReport( 1, "'Out of Beam' position out of range. Try again");
-	return;
-      }
-    }
-    /**/
   }
 
   snprintf( s, sizeof( s)-1, "%s%s", motor_name, preset_name);
@@ -1096,7 +1085,38 @@ int lsredis_find_preset_index_by_position( lspmac_motor_t *mp) {
   return -1;
 }
 
+/** For the given motor object return the index of the named prefix or
+ ** -1 if the preset is not found
+ */
+int lsredis_find_preset_index_by_name( lspmac_motor_t *mp, char *searchPresetName) {
+  lsredis_obj_t *p;
+  char *tmp;
+  int plength;
+  int i;
+  int found;
 
+  p = lsredis_get_obj( "%s.presets.length", mp->name);
+  plength = lsredis_get_or_set_l( p, 0);
+  if( plength <= 0) {
+    return -1;
+  }
+
+  found = 0;
+  for( i=0; i<plength && !found; i++) {
+    p = lsredis_get_obj( "%s.presets.%d.name", mp->name, i);
+    tmp = lsredis_getstr( p);
+    if( tmp) {
+      if( strcmp( tmp, searchPresetName) == 0) {
+	found = 1;
+      }
+      free( tmp);
+    }
+  }
+
+  if( !found)
+    return -1;
+  return i;
+}
 
 /** send log message to our redis log key
  */
