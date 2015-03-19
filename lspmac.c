@@ -4260,64 +4260,147 @@ void lspmac_quitting_cb( char *event) {
 /** Perhaps we need to move the sample out of the way
  */
 void lspmac_scint_maybe_move_sample_cb( char *event) {
-  static int trigger = 1;
+  static int trigger   = 0;
+  static int firstTime = 1;
   double scint_target;
+  double neutral_pos;
+  double min_pos, max_pos, pos;
   int err;
-  double move_time;
-  int mmask;
+  int abort;
+  int capDetected;
+  lspmac_motor_t *astage[3];
+  int i;
+
+  if( firstTime) {
+    //
+    // Assume that if we are already up that we do not need to move the sample out of the we.
+    // Either we've already done it or it's way too late.
+    //
+    trigger = lspmac_getPosition( scint) > 10.0 ? 0 : 1;
+    firstTime = 0;
+  }
 
   pthread_mutex_lock( &scint->mutex);
   scint_target = scint->requested_position;
   pthread_mutex_unlock( &scint->mutex);
   
-  // This should be pretty conservative since the out position is around 80
-  //
-  if( scint_target > 10.0) {
-    if( trigger) {
-      mmask = 0;
-      err = lspmac_est_move_time( &move_time, &mmask,
-				  alignx, 0, "Back", -2.0,
-				  aligny, 0, "Back",  1.0,
-				  alignz, 0, "Back",  1.0,
-				  NULL);
-      if( err) {
-	lspmac_abort();
-	lsevents_send_event( "Move Aborted");
-	lslogging_log_message( "lspmac_scint_maybe_move_sample_cb: Failed move request, aborting motion to keep scint from hitting sample");
-      }    
-      trigger = 0;
-    }
-  } else {
+  // Reset the trigger if we are not on our way up
+  if( scint_target < 10.0) {
     trigger = 1;
+    return;
+  }
+
+  // Without a trigger it means we've already done whatever it was
+  // that we were going to do.
+  if( !trigger)
+    return;
+
+  
+  // Lower our flag
+  trigger = 0;
+
+  capDetected = lsredis_getl( lsredis_get_obj( "capDetected"));
+  if( !capDetected) {
+    lslogging_log_message( "No cap detected: it's safe to move the scintillator without moving the sample");
+    return;
+  }
+
+  // Check the alignment stage to see if our proposed new position is
+  // within the limits
+  //
+  astage[0] = alignx;
+  astage[1] = aligny;
+  astage[2] = alignz;
+  abort     = 0;
+  
+  for( i=0; i<3 && !abort; i++) {
+    neutral_pos = lsredis_getd( astage[i]->neutral_pos);
+    min_pos     = lsredis_getd( astage[i]->min_pos) - neutral_pos;
+    max_pos     = lsredis_getd( astage[i]->max_pos) - neutral_pos;
+    if( !lsredis_find_preset( astage[i]->name, "Back", &pos)) {
+      abort = 1;
+    } else {
+      if( pos < min_pos || pos > max_pos)
+	abort = 1;
+    }
+  }
+  if( !abort) {
+    err = lspmac_est_move_time( NULL, NULL,
+				alignx, 0, "Back", 0.0,
+				aligny, 0, "Back", 0.0,
+				alignz, 0, "Back", 0.0,
+				NULL);
+    if( err)
+      abort = 1;
+  }
+  if( abort) {
+    lspmac_abort();
+    lsevents_send_event( "Move Aborted");
+    lslogging_log_message( "Motion aborted: Cannot move sample to a safe position.  Dismount sample before moving scintillator");
+    lspmac_est_move_time( NULL, NULL, scint, 0, "Cover", 0, NULL);
+    lsredis_sendStatusReport( 1, "Remove sample before continuing.");
+    return;
   }
 }
 
 /** Perhaps we need to return the sample to the beam
  */
 void lspmac_scint_maybe_return_sample_cb( char *event) {
-  static int trigger = 1;
+  static int trigger   = 0;
+  static int firstTime = 1;
   double scint_target;
-  double move_time;
-  int mmask;
+  int currentPresetIndex, backPresetIndex;
+  lspmac_motor_t *astage[3];
+  int i;
+  int nfound;
+
+  if( firstTime) {
+    trigger = lspmac_getPosition( scint) <= 10.0 ? 0 : 1;
+    firstTime = 0;
+  }
 
   pthread_mutex_lock( &scint->mutex);
   scint_target = scint->requested_position;
   pthread_mutex_unlock( &scint->mutex);
   
-  // This should be pretty conservative since the out position is around 80
-  //
-  if( scint_target < 10.0) {
-    if( trigger) {
-      mmask = 0;
-      lspmac_est_move_time( &move_time, &mmask,
-			    alignx, 0, "Beam",  0.0,
-			    aligny, 0, "Beam",  0.0,
-			    alignz, 0, "Beam",  0.0,
-			    NULL);
-      trigger = 0;
-    }
-  } else {
+  // Reset trigger if we are not decending
+  if( scint_target >= 10.0) {
     trigger = 1;
+    return;
+  }
+
+  if( !trigger)
+    return;
+
+  // Only perform this action once each trip past our magic 10.0
+  // trigger point.
+  trigger = 0;
+
+  astage[0] = alignx;
+  astage[1] = aligny;
+  astage[2] = alignz;
+  nfound    = 0;
+  //
+  // See if we are in the "Back" position
+  //
+  for( i=0; i<3; i++) {
+    currentPresetIndex = lsredis_find_preset_index_by_position( astage[i]);
+    backPresetIndex    = lsredis_find_preset_index_by_name(     astage[i], "Back");
+    lslogging_log_message( "i: %d  current: %d    back: %d", i, currentPresetIndex, backPresetIndex);
+    if( currentPresetIndex == -1 || backPresetIndex == -1 || currentPresetIndex != backPresetIndex) {
+      break;
+    }
+    nfound++;
+  }
+  //
+  // And move to the "Beam" position if we are.
+  //
+  if( nfound != 3) {
+    lspmac_est_move_time( NULL, NULL,
+			  alignx, 0, "Beam",  0.0,
+			  aligny, 0, "Beam",  0.0,
+			  alignz, 0, "Beam",  0.0,
+			  NULL);
   }
 }
 
