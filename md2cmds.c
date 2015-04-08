@@ -463,7 +463,7 @@ int md2cmds_transfer( const char *dummy) {
   double ax, ay, az, cx, cy, horz, vert, oref;
   int mmask, err;
   double move_time;
-
+  int transferAborted;
 
   lsredis_sendStatusReport( 0, "Processing Sample Transfer Request");
 
@@ -592,6 +592,7 @@ int md2cmds_transfer( const char *dummy) {
   cryo->moveAbs( cryo, 1);
   lspmac_moveabs_wait( cryo, 10.0);
 
+  transferAborted = 0;
   // simplest query yet!
   lspg_query_push( NULL, NULL, "SELECT px.dropairrights()");
 
@@ -603,7 +604,7 @@ int md2cmds_transfer( const char *dummy) {
     lsredis_sendStatusReport( 1, "Error while waiting for the sample transfer to finish.  Aborting transfer.");
     lslogging_log_message( "md2cmds_transfer: query error waiting for the sample transfer");
     lsevents_send_event( "Transfer Aborted");
-    return 1;
+    transferAborted = 1;
   }
 
   // grab the airrights again
@@ -619,6 +620,9 @@ int md2cmds_transfer( const char *dummy) {
   // Return the cryo
   //
   cryo->moveAbs( cryo, 0);
+
+  if( transferAborted)
+    return transferAborted;
 
   if( nextsample != 0) {
     md2cmds_phase_change( "changeMode fastCentering");
