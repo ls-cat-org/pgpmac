@@ -43,8 +43,6 @@
  *
  *  lspg.c		Handles communications with the controlling posgresql database
  *
- *  lsupdate.c		Periodically update the px.kvs table with new positions.
- *
  *  md2cmds.c		Provides the equivilant (mostly) of the LS-CAT BLUMax code.
  *
  *  pgpmac.c		Main: parses command line and starts up the various threads
