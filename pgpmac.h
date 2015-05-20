@@ -120,7 +120,7 @@ typedef struct lspmac_motor_struct {
   double requested_position;			//!< The position as requested by the user
   int *status1_p;				//!< First 24 bit PMAC motor status word
   int status1;					//!< local copy of status1
-  int *status2_p;				//!< Sectond 24 bit PMAC motor status word
+  int *status2_p;				//!< Second 24 bit PMAC motor status word
   int status2;					//!< local copy of status2
   char *dac_mvar;				//!< controlling mvariable as a string
   char *name;					//!< Name of motor as refered by ls database kvs table
