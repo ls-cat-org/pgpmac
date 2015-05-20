@@ -4353,6 +4353,7 @@ void lspmac_scint_maybe_return_sample_cb( char *event) {
   lspmac_motor_t *astage[3];
   int i;
   int nfound;
+  int not_done;
 
   if( firstTime) {
     trigger = lspmac_getPosition( scint) <= 10.0 ? 0 : 1;
@@ -4386,10 +4387,19 @@ void lspmac_scint_maybe_return_sample_cb( char *event) {
   for( i=0; i<3; i++) {
     currentPresetIndex = lsredis_find_preset_index_by_position( astage[i]);
     backPresetIndex    = lsredis_find_preset_index_by_name(     astage[i], "Back");
-    lslogging_log_message( "i: %d  current: %d    back: %d", i, currentPresetIndex, backPresetIndex);
     if( currentPresetIndex == -1 || backPresetIndex == -1 || currentPresetIndex != backPresetIndex) {
       break;
     }
+    pthread_mutex_lock( &astage[i]->mutex);
+    not_done = astage[i]->not_done;
+    pthread_mutex_unlock( &astage[i]->mutex);
+    
+    // When we go from beamlocation back to centering then md2cmds
+    // starts us moving (to the correct place).  If this is the case
+    // then not_done should be true and we should do nothing here.
+    if( not_done)
+      break;
+
     nfound++;
   }
   //
