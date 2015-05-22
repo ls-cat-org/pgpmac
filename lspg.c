@@ -2203,7 +2203,7 @@ void lspg_preset_changed_cb( char *event) {
     lslogging_log_message( "lspg_preset_chanted_cb: Value for preset %s is %s", pn, v==NULL ? "NULL" : "Empty");
     return;
   }
-  lspg_query_push( NULL, NULL, "EXECUTE kvupdate('{%s,%s}'::text[])", pn, v);
+  //  lspg_query_push( NULL, NULL, "EXECUTE kvupdate('{%s,%s}'::text[])", pn, v);
 }
 
 void lspg_check_preset_in_position_cb( char *event) {
@@ -2223,7 +2223,7 @@ void lspg_check_preset_in_position_cb( char *event) {
     return;
   }
   i = lsredis_find_preset_index_by_position( mp);
-  lspg_query_push( NULL, NULL, "EXECUTE kvupdate( '{%s.currentPreset,%d}')", cp, i);
+  //lspg_query_push( NULL, NULL, "EXECUTE kvupdate( '{%s.currentPreset,%d}')", cp, i);
 
 }
 
@@ -2244,7 +2244,7 @@ void lspg_unset_current_preset_moving_cb( char *event) {
     lslogging_log_message( "lspg_unset_current_reset_moving_cb: Could not find motor '%s'", cp);
     return;
   }
-  lspg_query_push( NULL, NULL, "EXECUTE kvupdate( '{%s.currentPreset,-1}')", cp);
+  // lspg_query_push( NULL, NULL, "EXECUTE kvupdate( '{%s.currentPreset,-1}')", cp);
 }
 
 
@@ -2275,7 +2275,7 @@ void lspg_set_scale_cb( char *event) {
   py  = lsredis_get_obj( "cam.zoom.%d.CenterY", mag);
   cy = lsredis_getstr( py);
 
-  lspg_query_push( NULL, NULL, "EXECUTE kvupdate( '{cam.xScale,%s,cam.yScale,%s,cam.CenterX,%s,cam.CenterY,%s}')", sx, sy, cx, cy);
+  // lspg_query_push( NULL, NULL, "EXECUTE kvupdate( '{cam.xScale,%s,cam.yScale,%s,cam.CenterX,%s,cam.CenterY,%s}')", sx, sy, cx, cy);
 
   free( sx);
   free( sy);
@@ -2342,10 +2342,10 @@ pthread_t *lspg_run() {
   lsevents_add_listener( "^(appy|appz|capy|capz|scint) Moving$",      lspg_unset_current_preset_moving_cb);
   lsevents_add_listener( "^Preset Changed (.+)",                      lspg_preset_changed_cb);
   lsevents_add_listener( "^Sample(Detected|Absent)$",                 lspg_sample_detector_cb);
-  lsevents_add_listener( "^Timer Update KVs$",                        lspg_update_kvs_cb);
+  //  lsevents_add_listener( "^Timer Update KVs$",                        lspg_update_kvs_cb);
   lsevents_add_listener( "^cam.zoom In Position$",                    lspg_set_scale_cb);
   lsevents_add_listener( "^Quitting Program$",                        lspg_quitting_cb);
-  lstimer_set_timer(     "Timer Update KVs", -1, 0, 500000000);
+  //  lstimer_set_timer(     "Timer Update KVs", -1, 0, 500000000);
 
   //
   // Make sure we own the airrights
