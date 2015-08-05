@@ -1461,6 +1461,12 @@ int md2cmds_collect( const char *dummy) {
     lsredis_sendStatusReport( 0, "Preparing %s %d", issnap ? "Snap" : "Frame", sindex);
 
     if( lspg_nextshot.active) {
+      lsredis_set_preset( "centering.x", "Beam", lspg_nextshot.cx);
+      lsredis_set_preset( "centering.y", "Beam", lspg_nextshot.cy);
+      lsredis_set_preset( "align.x",     "Beam", lspg_nextshot.ax);
+      lsredis_set_preset( "align.y",     "Beam", lspg_nextshot.ay);
+      lsredis_set_preset( "align.z",     "Beam", lspg_nextshot.az);
+
       if(
 	 //
 	 // Don't move if we are within 0.1 microns of our destination
