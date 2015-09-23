@@ -1039,6 +1039,42 @@ int md2cmds_phase_fastCentering() {
   return 0;
 }
 
+int md2cmds_phase_centerNoZoom() {
+  double move_time;
+  int mmask, err;
+
+  lsredis_sendStatusReport( 0, "Starting Center No Zoom Mode");
+  lsevents_send_event( "Mode center no zoom Starting");
+
+  mmask = 0;
+  err = lspmac_est_move_time( &move_time, &mmask,
+                              apery,     0, "In",    0.0,
+                              aperz,     0, "In",    0.0,
+                              capy,      0, "In",    0.0,
+                              capz,      0, "Out",    0.0,
+                              scint,     0, "Cover", 0.0,
+                              blight_ud, 1, NULL,    1.0,
+                              cryo,      1, NULL,    0.0,
+                              fluo,      1, NULL,    0.0,
+                              NULL);
+  if( err) {
+    lsevents_send_event( "Mode center no zoom Aborted");
+    return err;
+  }
+
+  err = lspmac_est_move_time_wait( move_time + 10.0, mmask,
+				   cryo,
+				   fluo,
+				   NULL);
+  if( err) {
+    lsevents_send_event( "Mode center no zoom Aborted");
+    return err;
+  }
+
+  lsevents_send_event( "Mode center no zoom Done");
+  return 0;
+}
+
 
 
 /** Go to data collection phase
@@ -1104,9 +1140,9 @@ int md2cmds_phase_beamLocation() {
                               //motor   jog, preset,      position if no preset
 			      kappa,      0, NULL,           0.0,
                               apery,      0, "In",           0.0,
-                              aperz,      0, "In",           0.0,
+                              aperz,      0, "Out",          0.0,
                               capy,       0, "In",           0.0,
-                              capz,       0, "In",           0.0,
+                              capz,       0, "Out",          0.0,
                               scint,      0, "Scintillator", 0.0,
                               blight,     1, NULL,           0.0,
                               blight_ud,  1, NULL,           0.0,
@@ -1246,6 +1282,8 @@ int md2cmds_phase_change( const char *ccmd) {
     err = md2cmds_phase_safe();
   } else if( strcmp( mode, "fastCentering") == 0) {
     err = md2cmds_phase_fastCentering();
+  } else if( strcmp( mode, "centerNoZoom") == 0) {
+    err = md2cmds_phase_centerNoZoom();
   } else if( strcmp( mode, "fluorescence") == 0) {
     err = md2cmds_phase_fluorescence();
   } else {
