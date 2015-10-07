@@ -137,8 +137,12 @@ typedef struct md2cmds_cmd_kv_struct {
   int (*v)( const char *);
 } md2cmds_cmd_kv_t;
 
+void md2cmds_mvcenter_move(double, double, double, double, double);
+
+
 int md2cmds_abort(            const char *);
 int md2cmds_collect(          const char *);
+int md2cmds_goto_point(       const char *);
 int md2cmds_moveAbs(          const char *);
 int md2cmds_moveRel(          const char *);
 int md2cmds_phase_change(     const char *);
@@ -158,6 +162,7 @@ int md2cmds_transfer(         const char *);
 static md2cmds_cmd_kv_t md2cmds_cmd_kvs[] = {
   { "abort",            md2cmds_abort},
   { "changeMode",       md2cmds_phase_change},
+  { "gotoPoint",        md2cmds_goto_point},
   { "moveAbs",          md2cmds_moveAbs},
   { "moveRel",          md2cmds_moveRel},
   { "run",              md2cmds_run_cmd},
@@ -1219,7 +1224,71 @@ int md2cmds_phase_safe() {
   return 0;
 }
 
+int md2cmds_goto_point( const char *ccmd) {
+  char *cmd;		// command that brought us here
+  char *ignore;	        // likely the string 'gotoPoint' since that is how we were called
+  char *ptr;		// pointer to the next item to parse in 'cmd'
+  char *pts;		// a string version of the point number
+  char *endptr;
+  int pt;
+  int clength;
+  double cx, cy, ax, ay, az;
 
+  // ignore nothing
+  if( ccmd == NULL || *ccmd == 0) {
+    return 1;
+  }
+
+  // operate on a copy of the string since strtok_r will modify its argument
+  //
+  cmd = strdup( ccmd);
+
+  // Parse the command string
+  //
+  ignore = strtok_r( cmd, " ", &ptr);
+  if( ignore == NULL) {
+    lslogging_log_message( "md2cmds_goto_point: ignoring blank command '%s'", cmd);
+    lsredis_sendStatusReport( 1, "gotoPoint ignoring blank command");
+    free( cmd);
+    return 1;
+  }
+  // The first string should be "gotoPoint" cause that's how we got here.
+  // Toss it. (It's called 'ignore' for a reason
+  
+  pts = strtok_r( NULL, " ", &ptr);
+  if( pts == NULL) {
+    lslogging_log_message( "md2cmds_goto_point: missing point number");
+    lsredis_sendStatusReport( 1, "gotoPoint missing point number");
+    free( cmd);
+    return 1;
+  }
+  pt = strtol( pts, &endptr, 10);
+  if( pts == endptr) {
+    lslogging_log_message( "md2cmds_goto_point: cannot parse point number");
+    lsredis_sendStatusReport( 1, "gotoPoint cannot parse point number");
+    free( cmd);
+    return 1;
+  }
+  
+  clength = lsredis_getl( lsredis_get_obj( "centers.length"));
+  if( pt < 0 || pt >= clength) {
+    lslogging_log_message( "md2cmds_goto_point: invalid point number.  Found %d but centers.length is %d", pt, clength);
+    lsredis_sendStatusReport( 1, "gotoPoint: invalid point number.  Found %d but centers.length is %d", pt, clength);
+    free( cmd);
+    return 1;
+  }
+
+  cx = lsredis_getd( lsredis_get_obj( "centers.%d.cx", pt));
+  cy = lsredis_getd( lsredis_get_obj( "centers.%d.cy", pt));
+  ax = lsredis_getd( lsredis_get_obj( "centers.%d.ax", pt));
+  ay = lsredis_getd( lsredis_get_obj( "centers.%d.ay", pt));
+  az = lsredis_getd( lsredis_get_obj( "centers.%d.az", pt));
+
+  md2cmds_mvcenter_move( cx, cy, ax, ay, az);
+
+  free( cmd);
+  return 0;
+}
 
 /** Move md2 devices to a preconfigured state.
  *  EMBL calls these states "phases" and this language is partially retained here
@@ -1296,6 +1365,7 @@ int md2cmds_phase_change( const char *ccmd) {
   free( cmd);
   return err;
 }
+
 
 
 
@@ -1493,10 +1563,11 @@ int md2cmds_collect( const char *dummy) {
     skey   = lspg_nextshot.skey;
     sindex = lspg_nextshot.sindex;
     issnap = strcmp( lspg_nextshot.stype, "snap") == 0;
-    lslogging_log_message( "md2cmds next shot is %lld", skey);
+    lslogging_log_message( "md2cmds next shot is %lld  active %d  cx %f  cy %f  ax %f  ay %f  az %f", skey, lspg_nextshot.active, lspg_nextshot.cx,lspg_nextshot.cy,lspg_nextshot.ax,lspg_nextshot.ay,lspg_nextshot.az);
     lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Preparing')", skey);
     lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Preparing\"}", skey);
     lsredis_sendStatusReport( 0, "Preparing %s %d", issnap ? "Snap" : "Frame", sindex);
+
 
     if( lspg_nextshot.active) {
       lsredis_set_preset( "centering.x", "Beam", lspg_nextshot.cx);
