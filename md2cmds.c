@@ -1233,6 +1233,9 @@ int md2cmds_goto_point( const char *ccmd) {
   int pt;
   int clength;
   double cx, cy, ax, ay, az;
+  int err;
+  double move_time;
+  int mmask;
 
   // ignore nothing
   if( ccmd == NULL || *ccmd == 0) {
@@ -1277,6 +1280,7 @@ int md2cmds_goto_point( const char *ccmd) {
     free( cmd);
     return 1;
   }
+  free( cmd);
 
   cx = lsredis_getd( lsredis_get_obj( "centers.%d.cx", pt));
   cy = lsredis_getd( lsredis_get_obj( "centers.%d.cy", pt));
@@ -1284,9 +1288,31 @@ int md2cmds_goto_point( const char *ccmd) {
   ay = lsredis_getd( lsredis_get_obj( "centers.%d.ay", pt));
   az = lsredis_getd( lsredis_get_obj( "centers.%d.az", pt));
 
-  md2cmds_mvcenter_move( cx, cy, ax, ay, az);
 
-  free( cmd);
+  err = lspmac_est_move_time( &move_time, &mmask,
+			      cenx,    0, NULL, cx,
+			      ceny,    0, NULL, cy,
+			      alignx,  0, NULL, ax,
+			      aligny,  0, NULL, ay,
+			      alignz,  0, NULL, az,
+			      NULL);
+  if( err) {
+    lsevents_send_event( "gotoPoint failed");
+    return err;
+  }
+
+  err = lspmac_est_move_time_wait( move_time + 5.0, mmask,
+				   NULL);
+
+  if( err) {
+    lsevents_send_event( "gotoPoint failed");
+    return err;
+  }
+
+  lsevents_send_event( "gotoPoint Done");
+
+  //  md2cmds_mvcenter_move( cx, cy, ax, ay, az);
+
   return 0;
 }
 
