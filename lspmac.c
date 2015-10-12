@@ -659,7 +659,7 @@ pmac_cmd_queue_t *lspmac_push_queue(
 /** Remove the oldest queue item.
  *  Used to send command to PMAC.
  *  Note that there is a separate reply index
- *  to ensure we've know to what command a reply
+ *  to ensure so know to what command a reply
  *  is refering.
  *  Returns the item.
  */
@@ -3322,7 +3322,7 @@ int lspmac_est_move_time_wait( double move_time, int cmask, lspmac_motor_t *mp_1
     }
 
     if( lspmac_moveabs_wait( mp, move_time)) {
-      lslogging_log_message( "lspmac_est_move_time_wait: timed out waiting %f seconds for motor %s", move_time, mp->name);
+      lslogging_log_message( "lspmac_est_move_time_wait: timed out waiting %f seconds for motor %s   cmask = 0x%0x  moving_flags = 0x%0x", move_time, mp->name, cmask, lspmac_moving_flags);
       return 1;
     }
   }
@@ -3659,6 +3659,7 @@ int lspmac_moveabs_wait( lspmac_motor_t *mp, double timeout_secs) {
     if( err != ETIMEDOUT) {
       lslogging_log_message( "lspmac_moveabs_wait: unexpected error from timedwait %d  tv_sec %ld   tv_nsec %ld", err, timeout.tv_sec, timeout.tv_nsec);
     }
+    lslogging_log_message( "lspmac_moveabs_wait: timed out waiting for command to be sent to PMAC. Motor %s", mp->name);
     return 1;
   }
 
@@ -3669,7 +3670,7 @@ int lspmac_moveabs_wait( lspmac_motor_t *mp, double timeout_secs) {
 
   err = 0;
   pthread_mutex_lock( &(mp->mutex));
-  while( err == 0 && mp->motion_seen == 0)
+  while( err == 0 && mp->motion_seen == 0 && mp->not_done != 0)
     err = pthread_cond_timedwait( &(mp->cond), &(mp->mutex), &timeout);
   
   if( err != 0) {
@@ -3677,6 +3678,7 @@ int lspmac_moveabs_wait( lspmac_motor_t *mp, double timeout_secs) {
       lslogging_log_message( "lspmac_moveabs_wait: unexpected error from timedwait: %d  tv_sec %ld   tv_nsec %ld", err, timeout.tv_sec, timeout.tv_nsec);
     }
     pthread_mutex_unlock( &(mp->mutex));
+    lslogging_log_message( "lspmac_moveabs_wait: timed out waiting for motion to be seen. Motor %s  motion_seen %d   not_done  %d", mp->name, mp->motion_seen, mp->not_done);
     return 1;
   }
 
@@ -3693,6 +3695,7 @@ int lspmac_moveabs_wait( lspmac_motor_t *mp, double timeout_secs) {
       lslogging_log_message( "lspmac_moveabs_wait: unexpected error from timedwait: %d  tv_sec %ld   tv_nsec %ld", err, timeout.tv_sec, timeout.tv_nsec);
     }
     pthread_mutex_unlock( &(mp->mutex));
+    lslogging_log_message( "lspmac_moveabs_wait: timed out waiting for motion to finish. Motor %s", mp->name);
     return 1;
   }
 
