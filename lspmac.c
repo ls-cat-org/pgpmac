@@ -1459,7 +1459,7 @@ void lspmac_pmacmotor_read(
   // if this time and last time were both "in position"
   // and the position changed significantly then log the event
   //
-  // On E omega has been observed to change by 0x10000 on its own
+  // Only omega has been observed to change by 0x10000 on its own
   // with no real motion.
   //
   if( mp->status2 & 1 && mp->status2 == *mp->status2_p && abs( mp->actual_pos_cnts - *mp->actual_pos_cnts_p) > 256) {
@@ -1537,6 +1537,31 @@ void lspmac_pmacmotor_read(
   }
   mp->actual_pos_cnts = *mp->actual_pos_cnts_p;
 
+  // See if the motor is moving
+  //
+  //                move timer                  homing
+  //                  123456                    123456
+  if( mp->status1 & 0x020000 || mp->status1 & 0x000400) {
+    if( mp->motion_seen == 0) {
+      mp->motion_seen = 1;
+      pthread_cond_signal( &(mp->cond));
+    }
+  }
+
+  // If we have a really short move the motor may have arrived at its
+  // destination before we've noticed that it started.  Test for this
+  // case here:
+  //
+  //  motion not seen      motor not moving
+  if( !mp->motion_seen && (mp->status1 & 0x020000) == 0) {
+    int in_position_band;
+    in_position_band = lsredis_getl(   mp->in_position_band);
+    if( abs( mp->requested_pos_cnts - mp->actual_pos_cnts) * 16 < in_position_band) {
+      mp->motion_seen = 1;
+      pthread_cond_signal( &(mp->cond));
+    }
+  }
+
   //
   // See if we are done moving, ie, in position
   //
@@ -1547,17 +1572,6 @@ void lspmac_pmacmotor_read(
     }
   } else if( mp->not_done == 0) {
     mp->not_done = 1;
-  }
-
-  // See if the motor is moving
-  //
-  //                move timer                  homing
-  //                  123456                    123456
-  if( mp->status1 & 0x020000 || mp->status1 & 0x000400) {
-    if( mp->motion_seen == 0) {
-      mp->motion_seen = 1;
-      pthread_cond_signal( &(mp->cond));
-    }
   }
 
   pthread_mutex_lock( &ncurses_mutex);
@@ -3460,14 +3474,12 @@ int lspmac_move_or_jog_abs_queue(
   mp->motion_seen  = 0;
   mp->command_sent = 0;
 
-
   if( use_jog || axis == NULL || *axis == 0) {
     use_jog = 1;
   } else {
     use_jog = 0;
     q100 = 1 << (coord_num -1);
   }
-
 
   pthread_mutex_unlock( &(mp->mutex));
 
@@ -3670,7 +3682,7 @@ int lspmac_moveabs_wait( lspmac_motor_t *mp, double timeout_secs) {
 
   err = 0;
   pthread_mutex_lock( &(mp->mutex));
-  while( err == 0 && mp->motion_seen == 0 && mp->not_done != 0)
+  while( err == 0 && mp->motion_seen == 0)
     err = pthread_cond_timedwait( &(mp->cond), &(mp->mutex), &timeout);
   
   if( err != 0) {
