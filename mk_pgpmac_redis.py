@@ -483,7 +483,7 @@ motor_dict = {
                 "update_resolution" :  "0.5","canStop" :  "false", "active" : "1", "in_position_band" : "0"
                 },
     "fluo" : { "canHome" :  "false","type" :  "BO",
-               "update_resolution" :  "0.5","canStop" :  "false", "active" : "1", "in_position_band" : "0"
+               "update_resolution" :  "0.5","canStop" :  "false", "active" : "1", "in_position_band" : "0", "format": "%.0f"
                },
     "frontLight" : { "canHome" :  "false","type" :  "BO",
                      "update_resolution" :  "0.5","canStop" :  "false", "active" : "1", "in_position_band" : "0"
