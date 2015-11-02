@@ -1100,6 +1100,7 @@ int md2cmds_phase_dataCollection() {
   lsevents_send_event( "Mode dataCollection Starting");
 
   mmask = 0;
+
   err = lspmac_est_move_time( &move_time, &mmask,
 			      alignx,    0, "Beam", 0.0,
 			      aligny,    0, "Beam", 0.0,
@@ -1116,6 +1117,7 @@ int md2cmds_phase_dataCollection() {
                               cryo,      1, NULL,      0.0,
                               fluo,      1, NULL,      0.0,
                               NULL);
+
   if( err) {
     lsevents_send_event( "Mode dataCollection Aborted");
     return err;
@@ -1131,6 +1133,7 @@ int md2cmds_phase_dataCollection() {
 				   cryo,
 				   fluo,
 				   NULL);
+
   if( err) {
     lsevents_send_event( "Mode dataCollection Aborted");
     return err;
