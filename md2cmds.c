@@ -568,12 +568,21 @@ int md2cmds_transfer( const char *dummy) {
     return 1;
   }
   
-  // refuse to go on if we do not have positive confirmation that the backlight is down and the
-  // fluorescence detector is back  (TODO: how about all those organs?)
+  // refuse to go on if we do not have positive confirmation that the
+  // fluorescence detector is back (TODO: how about all those organs?)
   //
-  if( lspmac_getBIPosition( blight_down) != 1 ||lspmac_getBIPosition( fluor_back) != 1) {
-    lsredis_sendStatusReport( 1, "Either the backlight or the fluorescence detector is possibly stuck in the wrong position.  Aborting transfer.");
-    lslogging_log_message( "md2cmds_transfer: It looks like either the back light is not down or the fluorescence dectector is not back");
+  if( lspmac_getBIPosition( fluor_back) != 1) {
+    lsredis_sendStatusReport( 1, "The fluorescence detector is possibly stuck in the wrong position.  Aborting transfer.");
+    lslogging_log_message( "md2cmds_transfer: It looks like the fluorescence dectector is not back");
+    lsevents_send_event( "Transfer Aborted");
+    return 1;
+  }
+
+  // refuse to go on if we do not have positive confirmation that the backlight is down 
+  //
+  if( lspmac_getBIPosition( blight_down) != 1) {
+    lsredis_sendStatusReport( 1, "The backlight is possibly stuck in the wrong position.  Aborting transfer.");
+    lslogging_log_message( "md2cmds_transfer: It looks like the back light is not down");
     lsevents_send_event( "Transfer Aborted");
     return 1;
   }

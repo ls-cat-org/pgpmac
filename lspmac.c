@@ -1810,7 +1810,7 @@ void lspmac_get_status_cb(
   //
   // acc11c_2	INPUTS
   // mask  bit
-  // 0x01  0	M1008	Fluor Dector back
+  // 0x01  0	M1008	Fluor Detector back
   // 0x02  1	M1009	Sample Detected
   // 0x04  2	M1020	{SC load request}
   // 0x08  3	M1021	{SC move cryo back request}
