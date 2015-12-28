@@ -259,6 +259,7 @@ static int nOurThreads = 0;
 #define PGPMAC_COMMAND_LINE_LENGTH 128
 #define PGPMAC_N_COMMAND_LINES     128
 
+
 /** Sigterm is simple
  */
 void *sigtermWorker ( void *arg) {
@@ -284,6 +285,78 @@ void *sigtermWorker ( void *arg) {
   return NULL;
 }
 
+/** Set up ncurses string (why is this not itself a fork or a separate thread?)
+ */
+void setupTermWindow() {
+  //
+  // set up our screen
+  //
+  static struct winsize wss;
+  static int haveWindows = 0;
+  static int term_output_height;
+  int start_row;
+  int i;
+
+  pthread_mutex_lock( &ncurses_mutex);
+  ioctl( 0, TIOCGWINSZ, &wss);
+
+  if (haveWindows) {
+    resizeterm( wss.ws_row, wss.ws_col);
+    delwin( term_status);
+    delwin( term_status2);
+    delwin( term_output);
+    delwin( term_input);
+    erase();
+    refresh();
+    for( i=0; i<lspmac_nmotors; i++) {
+      if( lspmac_motors[i].win != NULL)
+	redrawwin( lspmac_motors[i].win);
+    }
+  }
+
+
+  //                    TERM ROWS   Motors                         STATUS ROWS            INPUT ROWS
+  term_output_height = wss.ws_row - 3*LS_DISPLAY_WINDOW_HEIGHT - LS_DISPLAY_WINDOW_HEIGHT - 3;
+  if (term_output_height <= 0) {
+    term_output_height = 1;
+  }
+
+  start_row = 3 * LS_DISPLAY_WINDOW_HEIGHT;
+
+  term_status = newwin( LS_DISPLAY_WINDOW_HEIGHT, LS_DISPLAY_WINDOW_WIDTH, start_row, 0*LS_DISPLAY_WINDOW_WIDTH);
+  box( term_status, 0, 0);
+  wnoutrefresh( term_status);
+						      
+  term_status2 = newwin( LS_DISPLAY_WINDOW_HEIGHT, LS_DISPLAY_WINDOW_WIDTH, start_row, 1*LS_DISPLAY_WINDOW_WIDTH);
+  box( term_status2, 0, 0);
+  wnoutrefresh( term_status2);
+						      
+  start_row += LS_DISPLAY_WINDOW_HEIGHT;
+
+  term_output = newwin( term_output_height, 5*LS_DISPLAY_WINDOW_WIDTH, start_row, 0);
+  scrollok( term_output, 1);			      
+  wnoutrefresh( term_output);			      
+						      
+  start_row += term_output_height;
+
+  term_input  = newwin( 3, 5*LS_DISPLAY_WINDOW_WIDTH, start_row, 0);
+  box( term_input, 0, 0);			      
+  mvwprintw( term_input, 1, 1, "md2cmds> ");	      
+  nodelay( term_input, TRUE);			      
+  keypad( term_input, TRUE);			      
+  wnoutrefresh( term_input);			      
+						      
+  doupdate();					      
+  haveWindows = 1;
+  pthread_mutex_unlock( &ncurses_mutex);
+}
+
+void  *sigwinchHandler(int sig) {
+  setupTermWindow();
+  return NULL;
+}
+
+
 /** Handle stdin
  */
 void stdinService(
@@ -307,6 +380,12 @@ void stdinService(
   for( ch=wgetch(term_input); ch != ERR && running; ch=wgetch(term_input)) {
 
     switch( ch) {
+    case ERR:
+      lslogging_log_message( ".");
+      break;
+    case KEY_RESIZE:
+      break;
+
     case KEY_F(1):
     case KEY_F(2):
       lspmac_abort();					// send abort now (as opposed to an event listener) in case a cleanup routine wants to move something (we don't want to abort it).
@@ -344,6 +423,7 @@ void stdinService(
 
     case 0x000c:	// Control-L
       pthread_mutex_lock( &ncurses_mutex);
+      erase();
       redrawwin( term_status);
       redrawwin( term_status2);
       redrawwin( term_output);
@@ -579,8 +659,14 @@ int main(
   sigaddset( &our_sigset, SIGINT);
   sigaddset( &our_sigset, SIGRTMIN);
   err = pthread_sigmask(SIG_BLOCK, &our_sigset, NULL);
-  if( err) {
+  if (err) {
     lslogging_log_message( "main: pthread_sigmask returned error");
+  }
+  sigemptyset( &our_sigset);
+  sigaddset( &our_sigset, SIGWINCH);
+  err = pthread_sigmask(SIG_UNBLOCK, &our_sigset, NULL);
+  if (err) {
+    lslogging_log_message( "main: pthread_sigmask returned error unblocking sigwinch");
   }
   
 
@@ -618,6 +704,8 @@ int main(
   keypad( stdscr, TRUE);		// Why is F1 nifty?
   refresh();
 
+  signal(SIGWINCH, (void *)sigwinchHandler);
+  
   // Use recursive mutexs
   //
   pthread_mutexattr_init( &mutex_initializer);
@@ -670,31 +758,8 @@ int main(
 
   md2cmds_init();
 
-  //
-  // set up our screen
-  //
-  pthread_mutex_lock( &ncurses_mutex);
-  term_status = newwin( LS_DISPLAY_WINDOW_HEIGHT, LS_DISPLAY_WINDOW_WIDTH, 3*LS_DISPLAY_WINDOW_HEIGHT, 0*LS_DISPLAY_WINDOW_WIDTH);
-  box( term_status, 0, 0);
-  wnoutrefresh( term_status);
-						      
-  term_status2 = newwin( LS_DISPLAY_WINDOW_HEIGHT, LS_DISPLAY_WINDOW_WIDTH, 3*LS_DISPLAY_WINDOW_HEIGHT, 1*LS_DISPLAY_WINDOW_WIDTH);
-  box( term_status2, 0, 0);
-  wnoutrefresh( term_status2);
-						      
-  term_output = newwin( 20, 5*LS_DISPLAY_WINDOW_WIDTH, 4*LS_DISPLAY_WINDOW_HEIGHT, 0);
-  scrollok( term_output, 1);			      
-  wnoutrefresh( term_output);			      
-						      
-  term_input  = newwin( 3, 5*LS_DISPLAY_WINDOW_WIDTH, 20+4*LS_DISPLAY_WINDOW_HEIGHT, 0);
-  box( term_input, 0, 0);			      
-  mvwprintw( term_input, 1, 1, "md2cmds> ");	      
-  nodelay( term_input, TRUE);			      
-  keypad( term_input, TRUE);			      
-  wnoutrefresh( term_input);			      
-						      
-  doupdate();					      
-  pthread_mutex_unlock( &ncurses_mutex);
+  setupTermWindow();
+
 
   //
   // Now run the world
