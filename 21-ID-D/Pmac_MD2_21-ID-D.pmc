@@ -4607,8 +4607,6 @@ OPEN PROG 180 CLEAR
 CLOSE
 
 
-
-
 ;240		LS-CAT Timed X move
 ;		Q10    = Starting X value (cnts)
 ;		Q11    = Delta X value   (cnts)
@@ -4645,4 +4643,143 @@ OPEN PROG 240 CLEAR
   F(Q14)				; Restore speed
   DWELL0
   M5075 = (M5075 | Q100) ^ Q100		; Lower the running flag
+CLOSE
+
+
+
+;
+; LS-CAT modification to omega scan prog 31 for multi axes scan
+;
+;   P178->Shutter Rising Distance  (Keep as P178)
+;   P179->Shutter Falling Distance (Keep as P179)
+;
+;   Q1    Exposure Time     (mSec)
+;   Q2    Acceleration time (mSec)
+;
+;   Q4    Calculated X velocity in counts/mSec
+;   Q5    Calculated X distance needed to get a running start (counts)
+;   Q6    Running start distance scaled to delta X            (ratio)
+;   Q7    Wind down distance                                  (counts)
+;   Q8    Wind down disatnce scaled to delta X                (ratio)
+;
+;   Omega
+;   Q10 X Desired Shutter Open Position   (counts)
+;   Q11 X Calculated starting position    (counts)
+;   Q12 X Desired Shutter Close Position  (counts)
+;   Q13 X Calculated Ending Position      (counts)
+;   
+;   Alignment Y
+;   Q15 Y Desired Shutter Open Position
+;   Q16 Y Calculated starting Position
+;   Q17 Y Desired Shutter Close Position
+;   Q18 Y Calculated Ending Position
+;   
+;   Center X
+;   Q20 Z Desired Shutter Open Position
+;   Q21 Z Calculated Starting Position
+;   Q22 Z Desired Shuttter Close Position
+;   Q23 Z Calculated Ending Position
+;
+;   Center Y
+;   Q25 U Desired Shutter Open Position
+;   Q26 U Calculated String Position
+;   Q27 U Desired Shutter Close Position
+;   Q28 U Calculated Ending Position
+;
+
+OPEN PROG 231 CLEAR
+M5075 = (M5075 | 1)		; Raise the running flag (should have been set in application program)
+dwell0
+dwell0
+FastShutterOpenHist = 0 ; clear shutter openings history
+PhiScan = 1
+;;
+IF (Q10 != Q12)
+  Q4  = (Q12-Q10) / Q1;
+  Q5  = Q4*Q2/2 + P178        ; Backup distance for X.
+  Q6  = Q5/(Q12-Q10)          ; Backup distance scaled to delta X to calculate how far to move back the other axes.
+  Q7  = Q4*Q2/2 + P179        ; Wind down distance for X.
+  Q8  = Q7/(Q12-Q10)          ; Scaled wind down distance.
+  ;;
+  ;; Calculate starting positions
+  ;;
+  Q11 = Q10 - Q5              ; X Starting Position
+  Q16 = Q15 - Q6*(Q17-Q15)    ; Y Starting Position (scaled from X starting position)
+  Q21 = Q20 - Q6*(Q22-Q20)    ; Z Starting Position (scaled from X starting position)
+  Q26 = Q25 - Q6*(Q27-Q25)    ; U Starting Position (scaled from X starting position)
+  ;;
+  ;; Calculate ending positions
+  Q13 = Q12 + Q7;             ; X Ending Position
+  Q18 = Q17 + Q8*(Q17-Q15)    ; Y Ending Position
+  Q23 = Q22 + Q8*(Q22-Q20)    ; Z Ending Position
+  Q28 = Q27 + Q8*(Q27-Q25)    ; U Ending Position
+  ;;
+  ;;  TM(1)                       ;  In order to have the maximum speed (Docs say not used for RAPID and is overridden by F)
+  ABS (X,Y,Z,U)
+  RAPID X(Q10) Y(Q15) Z(Q20) U(Q25)      ;  Move motors to starting position
+  DWELL0
+  LINEAR
+  FRAX (X)		  ;  Use X (presumably Omega) to calculate the feed rate (the others start and end at the same time)
+  F (Q4)                  ;  New Feed Rate
+  TA1                     ;  Force 2*TS as the acceleration time
+  TS (Q2/2)               ;  S curve acceleration
+  DWELL0
+
+  FShutterManualEnable  = 0
+  ;;
+  ;; Set up PMAC pulse generator
+  ;;
+  M601=ShutterPulseDuration * (Q12-Q10) ; get the phi delta position for the shutter pulse
+  M3021=M522+Q10-P178           ;  CaptureOffset + OpenPos - RisingDist
+  M3022=M3021+M601              ;  Large step to support the RC on ETEL card
+  M3031=M522+Q12-P179           ;  CaptureOffset + ClosePos - FallingDist
+  M3032=M3031+M601
+  DWELL0
+  M3025=0
+  M3024=1
+  M3035=0
+  M3034=1
+  ;;
+  ;; Shutter bookkeeping and enable
+  ;;
+  FastShutterHasOpened = 0
+  DWELL0
+  CMD "M1124=1"
+  DWELL0
+  DWELL0
+  ;;
+  ;; Move'm
+  ;;
+  X(Q13) Y(Q18) Z(Q23) U(Q28)
+  DWELL0
+  Cmd "m1124=0" ;FShutterScanEnable=0
+  DWELL0
+  If (FastShutterHasOpened = 1)
+    FastShutterOpenHist =  FastShutterOpenHist + 1
+  EndIf
+Else
+  RAPID X(Q10) Y(Q15) Z(Q20) U(Q25)      ;  Move motors to starting position
+  FShutterScanEnable = 0
+  FShutterManualEnable = 1
+  FastShutterHasOpened = 0
+  DWELL1 ; Allow data gathering to see the shutter command
+  FShutterManualOn     = 1
+  DWell (Q1)
+  FShutterManualOn     = 0
+  DWELL1 ; Allow data gathering to see the shutter command
+  FShutterManualEnable = 0
+  If (FastShutterHasOpened = 1)
+    FastShutterOpenHist =  FastShutterOpenHist + 1
+  EndIf
+EndIf
+
+DWELL0
+F(I122)
+DWELL0
+PhiScan = 0
+FShutterManualEnable = 1
+FShutterScanEnable = 0
+DWELL0
+DWELL0
+M5075 = (M5075 | 1) ^ 1		; Lower the running flag
 CLOSE

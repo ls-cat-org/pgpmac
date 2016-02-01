@@ -40,6 +40,8 @@ All positions are in millimeters or degrees.
 
  run <motor> <command>                      Run a special command on <motor> where <command> is one of "home", "spin", "stop"
 
+ segment                                    Like collect but only used for line segment mode with the Eiger
+
  set <motor> <preset>                       Set <motor>'s current position as <preset>.  <preset> will be created if it does not currently exist.
 
  settransferpoint                           Set the current motor positions at the alignment point for robot transfers.
@@ -149,6 +151,7 @@ int md2cmds_phase_change(     const char *);
 int md2cmds_run_cmd(          const char *);
 int md2cmds_rotate(           const char *);
 int md2cmds_nonrotate(        const char *);
+int md2cmds_segment(          const char *);
 int md2cmds_set(              const char *);
 int md2cmds_settransferpoint( const char *);
 int md2cmds_setbackvector(    const char *);
@@ -179,6 +182,7 @@ static md2cmds_cmd_kv_t md2cmds_cmd_pg_kvs[] = {
   { "collect",          md2cmds_collect},
   { "nonrotate",        md2cmds_nonrotate},
   { "rotate",           md2cmds_rotate},
+  { "segment",          md2cmds_segment},
   { "settransferpoint", md2cmds_settransferpoint},
   { "transfer",         md2cmds_transfer}
 };
@@ -1523,6 +1527,244 @@ void md2cmds_shutter_not_open_cb( char *evt) {
 }
 
 
+void md2cmds_setAxis(lspmac_motor_t *mp, char axis, int old_coord, int new_coord) {
+  int motor_num;
+
+  motor_num = lsredis_getd( mp->motor_num);
+  
+  lspmac_SockSendDPline( NULL, "&%d #%d->0 &%d #%d->%c", old_coord, motor_num, new_coord, motor_num, axis);
+
+}
+
+
+/** Segment data collection
+ ** \param dummy Unused
+ ** returns non-zero on error
+ */
+int md2cmds_segment( const char *dummy) {
+  long long skey;	//!< px.shots key of our exposure
+  int sindex;		//!< px.shots sindex of our shot
+  double exp_time;	//!< Exposure Time from postgresql in seconds
+  double q1;            //!< Exposure Time in mSec
+  double q2;            //!< Acceleration Time in mSecs
+  double q10;		//!< Omega open position in counts
+  double q12;		//!< Omega close position in counts
+  double q15;           //!< Center X open position in counts
+  double q17;           //!< Center X close position in counts
+  double q20;           //!< Center Y open position in counts
+  double q22;		//!< Center Y close position in counts
+  double q25;           //!< Align Y open position in counts
+  double q27;           //!< Align Y close position in counts
+  double omega_u2c;	//!< Omega degrees to counts conversion
+  double omega_np;	//!< Omega home mark position where we measure omega from
+  double omega_ma;	//!< our maximum acceleration for omega
+  double cx_u2c;	//!< Center X mm to counts conversion
+  double cx_np;		//!< Center X neutral position
+  double cy_u2c;	//!< Center Y mm to counts conversion
+  double cy_np;		//!< Center Y neutral position
+  double ay_u2c;	//!< Align Y mm to counts conversion
+  double ay_np;		//!< Align Y neutral position
+  lsredis_obj_t *collection_running;
+  int clength;		//!< Length of centers array
+  double cx0, cx1;	//!< Center X points
+  double cy0, cy1;	//!< Center Y points
+  double ay0, ay1;	//!< Align Y points
+  struct timespec now, timeout;	//!< setup timeouts for shutter
+  int err;
+
+  lsevents_send_event("Segment Collection Starting");
+  collection_running = lsredis_get_obj("collection.running");
+  lsredis_setstr(collection_running, "True");
+
+  omega_u2c   = lsredis_getd( omega->u2c);
+  omega_np    = lsredis_getd( omega->neutral_pos);
+  omega_ma    = lsredis_getd( omega->max_accel);
+  cx_u2c      = lsredis_getd( cenx->u2c);
+  cx_np       = lsredis_getd( cenx->neutral_pos);
+  cy_u2c      = lsredis_getd( ceny->u2c);
+  cy_np       = lsredis_getd( ceny->neutral_pos);
+  ay_u2c      = lsredis_getd( aligny->u2c);
+  ay_np       = lsredis_getd( aligny->neutral_pos);
+  clength     = lsredis_getl( lsredis_get_obj("centers.length"));
+  cx0         = lsredis_getd( lsredis_get_obj("centers.0.cx"));
+  cy0         = lsredis_getd( lsredis_get_obj("centers.0.cy"));
+  ay0         = lsredis_getd( lsredis_get_obj("centers.0.ay"));
+  if (clength <= 1) {
+    cx1 = cx0;
+    cy1 = cy0;
+    ay1 = ay0;
+  } else {
+    cx1 = lsredis_getd( lsredis_get_obj("centers.1.cx"));
+    cy1 = lsredis_getd( lsredis_get_obj("centers.1.cy"));
+    ay1 = lsredis_getd( lsredis_get_obj("centers.1.ay"));
+  }
+
+  lspg_nextshot_call();
+  lspg_nextshot_wait();
+  if (lspg_nextshot.query_error) {
+    lsredis_sendStatusReport(1, "Cound not regrieve next shot info.");
+    lslogging_log_message("md2cmds_segment: query error retriveing next shot info. Aborting");
+    lsevents_send_event("Segment Collection Aborted");
+    lsredis_setstr(collection_running, "False");
+    return 1;
+  }
+
+  if (lspg_nextshot.no_rows_returned) {
+    lsredis_sendStatusReport(0, "No more images to collect");
+    lspg_nextshot_done();
+    return 0;
+  }
+
+  exp_time = lspg_nextshot.dsexp;
+  skey     = lspg_nextshot.skey;
+  sindex   = lspg_nextshot.sindex;
+  lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Preparing')", skey);
+  lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Preparing\"}", skey);
+  lsredis_sendStatusReport( 0, "Preparing Segment %d", sindex);
+
+  q1  = lspg_nextshot.dsexp * 1000.0;
+
+  q10 = omega_u2c * (lspg_nextshot.sstart + omega_np);
+  q12 = omega_u2c * (lspg_nextshot.sstart + lspg_nextshot.dsowidth + omega_np);
+  
+  //   (    velocity    ) / max acceleration = acceleration time (mSec) + kludge factor of dubious utility
+  q2 = ((q12 - q10) / q1) / omega_ma + 100;
+
+  // alignment y start and end
+  q15 = ay_u2c * (ay0 + ay_np);
+  q17 = ay_u2c * (ay1 + ay_np);
+  
+  // centering x start and end
+  q20 = cx_u2c * (cx0 + cx_np);
+  q22 = cx_u2c * (cx1 + cx_np);
+
+  // centering y start and end
+  q25 = cy_u2c * (cy0 + cy_np);
+  q27 = cy_u2c * (cy1 + cy_np);
+
+  // We don't need these query results anymore
+  lspg_nextshot_done();
+
+  //
+  // prepare the database and detector to expose
+  // On exit we own the diffractometer lock and
+  // have checked that all is OK with the detector
+  //
+  if( lspg_seq_run_prep_all( skey,
+			     kappa->position,
+			     phi->position,
+			     cenx->position,
+			     ceny->position,
+			     alignx->position,
+			     aligny->position,
+			     alignz->position
+			     )) {
+    lslogging_log_message( "md2cmds_segment: seq run prep query error, aborting");
+    lsredis_sendStatusReport( 1, "Preparing MD2 failed");
+    lsevents_send_event( "Segment Collection Aborted");
+    lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+    lsredis_setstr( collection_running, "False");
+    return 1;
+  }
+
+  //
+  // Wait for the detector to drop its lock indicating that it is ready for the exposure
+  //
+  lspg_lock_detector_all();
+  lspg_unlock_detector_all();
+
+  md2cmds_setAxis( aligny, 'Y', lsredis_getl( aligny->coord_num), 1);
+  md2cmds_setAxis( cenx,   'Z', lsredis_getl( cenx->coord_num),   1);
+  md2cmds_setAxis( ceny,   'U', lsredis_getl( ceny->coord_num),   1);
+
+  lsredis_sendStatusReport( 0, "Exposing Frames %d", sindex);
+  lspmac_set_motion_flags( NULL, omega, NULL);
+  lspmac_SockSendDPline( "Exposure",
+			 "&1 Q1=%.1f Q2=%.1f Q10=%.1f Q12=%.1f Q15=%.1f Q17=%.1f Q20=%.1f Q22=%.1f Q25=%.1f Q27=%.1f M431=1 B231R",
+			 q1, q2, q10, q12, q15, q17, q20, q22, q25, q27
+			 );
+
+  //
+  // wait for the shutter to open
+  //
+  clock_gettime( CLOCK_REALTIME, &now);
+  timeout.tv_sec  = now.tv_sec + 10;
+  timeout.tv_nsec = now.tv_nsec;
+
+  err = 0;
+
+  pthread_mutex_lock( &md2cmds_shutter_mutex);
+  while( err == 0 && !md2cmds_shutter_open_flag)
+    err = pthread_cond_timedwait( &md2cmds_shutter_cond, &md2cmds_shutter_mutex, &timeout);
+
+  if( err == ETIMEDOUT) {
+    pthread_mutex_unlock( &md2cmds_shutter_mutex);
+    lslogging_log_message( "md2cmds_segment: Timed out waiting for shutter to open.  Data collection aborted.");
+    lsredis_sendStatusReport( 1, "Timed out waiting for shutter to open.");
+    lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
+    lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
+    lsevents_send_event( "Segment Collection Aborted");
+    lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+    lsredis_setstr( collection_running, "False");
+    md2cmds_setAxis( ceny,   lsredis_getc( ceny->axis),   1, lsredis_getl( ceny->coord_num));
+    md2cmds_setAxis( cenx,   lsredis_getc( cenx->axis),   1, lsredis_getl( cenx->coord_num));
+    md2cmds_setAxis( aligny, lsredis_getc( aligny->axis), 1, lsredis_getl( aligny->coord_num));
+    return 1;
+  }
+  pthread_mutex_unlock( &md2cmds_shutter_mutex);
+
+
+  //
+  // wait for the shutter to close
+  //
+  clock_gettime( CLOCK_REALTIME, &now);
+  lslogging_log_message( "md2cmds_collect: waiting %f seconds for the shutter to close", 4 + exp_time);
+  timeout.tv_sec  = now.tv_sec + 4 + ceil(exp_time);	// hopefully 4 seconds is long enough to never miss a legitimate shutter close and short enough to bail when something is really wrong
+  timeout.tv_nsec = now.tv_nsec;
+
+  err = 0;
+
+  pthread_mutex_lock( &md2cmds_shutter_mutex);
+  while( err == 0 && md2cmds_shutter_open_flag)
+    err = pthread_cond_timedwait( &md2cmds_shutter_cond, &md2cmds_shutter_mutex, &timeout);
+
+  if( err == ETIMEDOUT) {
+    pthread_mutex_unlock( &md2cmds_shutter_mutex);
+    lsredis_sendStatusReport( 1, "Timed out waiting for shutter to close.");
+    lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
+    lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
+    lslogging_log_message( "md2cmds_segment: Timed out waiting for shutter to close.  Data collection aborted.");
+    lsevents_send_event( "Segment Collection Aborted");
+    lsredis_setstr( collection_running, "False");
+    lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+    md2cmds_setAxis( ceny,   lsredis_getc( ceny->axis),   1, lsredis_getl( ceny->coord_num));
+    md2cmds_setAxis( cenx,   lsredis_getc( cenx->axis),   1, lsredis_getl( cenx->coord_num));
+    md2cmds_setAxis( aligny, lsredis_getc( aligny->axis), 1, lsredis_getl( aligny->coord_num));
+    return 1;
+  }
+  pthread_mutex_unlock( &md2cmds_shutter_mutex);
+
+  //
+  // Signal the detector to start reading out
+  //
+  lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
+  lsredis_sendStatusReport( 0, "Reading Segment %d", sindex);
+
+  //
+  // Return the axes definitions to their original state
+  //
+  md2cmds_setAxis( ceny,   lsredis_getc( ceny->axis),   1, lsredis_getl( ceny->coord_num));
+  md2cmds_setAxis( cenx,   lsredis_getc( cenx->axis),   1, lsredis_getl( cenx->coord_num));
+  md2cmds_setAxis( aligny, lsredis_getc( aligny->axis), 1, lsredis_getl( aligny->coord_num));
+
+  //
+  // reset shutter has opened flag
+  //
+  lspmac_SockSendDPline( NULL, "P3005=0");
+
+  return 0;
+}
+
 /** Collect some data
  *  \param dummy Unused
  *  returns non-zero on error
@@ -1535,6 +1777,7 @@ int md2cmds_collect( const char *dummy) {
   double p170;		//!< start cnts
   double p171;		//!< delta cnts
   double p173;		//!< omega velocity cnts/msec
+
   double p175;		//!< acceleration time (msec)
   double p180;		//!< exposure time (msec)
   double u2c;		//!< unit to counts conversion
@@ -1832,7 +2075,6 @@ int md2cmds_collect( const char *dummy) {
       return 1;
     }
     pthread_mutex_unlock( &md2cmds_shutter_mutex);
-
 
     //
     // Signal the detector to start reading out
