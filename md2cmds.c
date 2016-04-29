@@ -527,11 +527,11 @@ int md2cmds_transfer( const char *dummy) {
   horz = -( cx * cos(oref) - cy * sin(oref));
   vert =    cx * sin(oref) + cy * cos(oref);
 
-  lspg_starttransfer_call( nextsample, lspmac_getBIPosition( sample_detected), ax, ay, az, horz, vert, move_time);
+  lspg_starttransfer_call( nextsample, 0, ax, ay, az, horz, vert, move_time);
 
   lspg_starttransfer_wait();
   if( lspg_starttransfer.query_error) {
-    lsredis_sendStatusReport( 1, "An database related error occurred trying to start the transfer.  This is neither normal nor OK.  Aborting transfer.");
+    lsredis_sendStatusReport( 1, "A database related error occurred trying to start the transfer.  This is neither normal nor OK.  Aborting transfer.");
     lslogging_log_message( "md2cmds_transfer: query error starting transfer");
     lsevents_send_event( "Transfer Aborted");
     lspg_starttransfer_done();
