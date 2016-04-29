@@ -1484,6 +1484,109 @@ int lspg_seq_run_prep_all(
   return rtn;
 }
 
+/** Data collection running object
+ */
+typedef struct lspg_eiger_run_prep_struct {
+  pthread_mutex_t mutex;
+  pthread_cond_t  cond;
+  int new_value_ready;
+  int query_error;
+} lspg_eiger_run_prep_t;
+static lspg_eiger_run_prep_t lspg_eiger_run_prep;
+
+/** Initialize the data collection object
+ */
+void lspg_eiger_run_prep_init() {
+  lspg_eiger_run_prep.new_value_ready = 0;
+  lspg_eiger_run_prep.query_error     = 0;
+  pthread_mutex_init( &(lspg_eiger_run_prep.mutex), NULL);
+  pthread_cond_init(  &(lspg_eiger_run_prep.cond),  NULL);
+}
+
+/** Callback for the eiger_run_prep query
+ */
+void lspg_eiger_run_prep_cb(
+			  lspg_query_queue_t *qqp,	/**< [in] The query item that generated this callback	*/
+			  PGresult *pgr			/**< [in] The result of the query			*/
+			  ) {
+  pthread_mutex_lock( &(lspg_eiger_run_prep.mutex));
+  lspg_eiger_run_prep.new_value_ready = 1;
+  pthread_cond_signal( &(lspg_eiger_run_prep.cond));
+  pthread_mutex_unlock( &(lspg_eiger_run_prep.mutex));
+}
+
+
+/** Callback for eiger_run error
+ */
+void lspg_eiger_run_prep_error_cb() {
+  pthread_mutex_lock( & (lspg_eiger_run_prep.mutex));
+  lspg_eiger_run_prep.query_error = 1;
+  pthread_cond_signal( &(lspg_eiger_run_prep.cond));
+  pthread_mutex_unlock( &(lspg_eiger_run_prep.mutex));
+}
+
+
+/** queue up the eiger_run_prep query
+ */
+void lspg_eiger_run_prep_call(
+			    long long skey,		/**< [in] px.shots key for this image			*/
+			    double kappa,		/**< [in] current kappa postion				*/
+			    double phi,			/**< [in] current phi postition				*/
+			    double cx,			/**< [in] current center table x			*/
+			    double cy,			/**< [in] current center table y			*/
+			    double ax,			/**< [in] current alignment table x			*/
+			    double ay,			/**< [in] current alignment table y			*/
+			    double az			/**< [in] current alignment table z			*/
+			    ) {
+  pthread_mutex_lock( &(lspg_eiger_run_prep.mutex));
+  lspg_eiger_run_prep.new_value_ready = 0;
+  lspg_eiger_run_prep.query_error     = 0;
+  pthread_mutex_unlock( &(lspg_eiger_run_prep.mutex));
+
+  lspg_query_push( lspg_eiger_run_prep_cb, lspg_eiger_run_prep_error_cb, 
+		   "SELECT eiger.seq_run_prep( %lld, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f)",
+		   skey, kappa, phi, cx, cy, ax, ay, az);
+}
+
+/** Wait for seq run prep query to return
+ */
+void lspg_eiger_run_prep_wait() {
+  pthread_mutex_lock( &(lspg_eiger_run_prep.mutex));
+  while( lspg_eiger_run_prep.new_value_ready == 0 && lspg_eiger_run_prep.query_error == 0)
+    pthread_cond_wait( &(lspg_eiger_run_prep.cond), &(lspg_eiger_run_prep.mutex));
+}
+
+/** Indicate we are done waiting
+ */
+void lspg_eiger_run_prep_done() {
+  pthread_mutex_unlock( &(lspg_eiger_run_prep.mutex));
+}
+
+/** Convinence function to call seq run prep
+ */
+int lspg_eiger_run_prep_all(
+			    long long skey,		/**< [in] px.shots key for this image			*/
+			    double kappa,		/**< [in] current kappa postion				*/
+			    double phi,			/**< [in] current phi postition				*/
+			    double cx,			/**< [in] current center table x			*/
+			    double cy,			/**< [in] current center table y			*/
+			    double ax,			/**< [in] current alignment table x			*/
+			    double ay,			/**< [in] current alignment table y			*/
+			    double az			/**< [in] current alignment table z			*/
+			   ) {
+  int rtn;
+  lslogging_log_message( "lspg_eiger_run_prep: starting call");
+  lslogging_log_message( "lspg_eiger_run_prep: 2");
+  lspg_eiger_run_prep_call( skey, kappa, phi, cx, cy, ax, ay, az);
+  lslogging_log_message( "lspg_eiger_run_prep: starting wait");
+  lspg_eiger_run_prep_wait();
+  lslogging_log_message( "lspg_eiger_run_prep: starting done");
+  rtn = lspg_eiger_run_prep.query_error;
+  lspg_eiger_run_prep_done();
+  lslogging_log_message( "lspg_eiger_run_prep: finished");
+  return rtn;
+}
+
 /** Retrieve the data to center the crystal
  */
 void lspg_getcenter_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
@@ -1615,6 +1718,11 @@ void lspg_nextaction_cb(
   if( strcmp( action, "noAction") == 0)
     return;
   
+  if( strcmp( action, "collect") == 0) {
+    md2cmds_push_queue( "segment");
+    return;
+  }
+
   md2cmds_push_queue( action);
 
 }
@@ -2328,6 +2436,7 @@ void lspg_init() {
   lspg_nextsample_init();
   lspg_nextshot_init();
   lspg_seq_run_prep_init();
+  lspg_eiger_run_prep_init();
   lspg_starttransfer_init();
   lspg_wait_for_detector_init();
   lspg_waitcryo_init();

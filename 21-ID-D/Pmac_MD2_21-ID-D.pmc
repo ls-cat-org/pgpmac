@@ -4715,11 +4715,11 @@ IF (Q10 != Q12)
   Q28 = Q27 + Q8*(Q27-Q25)    ; U Ending Position
   ;;
   ;;  TM(1)                       ;  In order to have the maximum speed (Docs say not used for RAPID and is overridden by F)
-  ABS (X,Y,Z,U)
+  ABS(X,Y,Z,U)
   RAPID X(Q10) Y(Q15) Z(Q20) U(Q25)      ;  Move motors to starting position
   DWELL0
   LINEAR
-  FRAX (X)		  ;  Use X (presumably Omega) to calculate the feed rate (the others start and end at the same time)
+  FRAX(X)		  ;  Use X (presumably Omega) to calculate the feed rate (the others start and end at the same time)
   F (Q4)                  ;  New Feed Rate
   TA1                     ;  Force 2*TS as the acceleration time
   TS (Q2/2)               ;  S curve acceleration
@@ -4729,10 +4729,10 @@ IF (Q10 != Q12)
   ;;
   ;; Set up PMAC pulse generator
   ;;
-  M601=ShutterPulseDuration * (Q12-Q10) ; get the phi delta position for the shutter pulse
-  M3021=M522+Q10-P178           ;  CaptureOffset + OpenPos - RisingDist
-  M3022=M3021+M601              ;  Large step to support the RC on ETEL card
-  M3031=M522+Q12-P179           ;  CaptureOffset + ClosePos - FallingDist
+  M601=ShutterPulseDuration * Q4 ; get the phi delta position for the shutter pulse
+  M3021=M522+Q10-P178            ;  CaptureOffset + OpenPos - RisingDist
+  M3022=M3021+M601               ;  Large step to support the RC on ETEL card
+  M3031=M522+Q12-P179            ;  CaptureOffset + ClosePos - FallingDist
   M3032=M3031+M601
   DWELL0
   M3025=0

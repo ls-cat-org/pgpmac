@@ -1844,11 +1844,13 @@ void lspmac_get_status_cb(
   } else {
     mvwprintw( term_status2, 4, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Dryer Off");
   }
+  /*
   if( md2_status.acc11c_2 & 0x02) {
     mvwprintw( term_status2, 2, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Cap Dectected    ");
   } else {
     mvwprintw( term_status2, 2, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Cap Not Dectected");
   }
+  */
   wnoutrefresh( term_status2);
 
 

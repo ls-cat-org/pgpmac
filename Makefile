@@ -12,8 +12,8 @@ VERSION= 1.0
 #
 PG_INCLUDE = -I /usr/include/postgresql
 
-pgpmac: pgpmac.c pgpmac.h lspg.o lsredis.o lspmac.o md2cmds.o lslogging.o lsevents.o lstimer.o lstest.o Makefile
-	gcc -g -pthread -o pgpmac pgpmac.c  ${PG_INCLUDE} -Wall md2cmds.o lspmac.o lspg.o lsredis.o lslogging.o lsevents.o lstimer.o lstest.o -lpq -lncurses -lpthread -lrt -lhiredis -lm
+pgpmac: pgpmac.c pgpmac.h lspg.o lsredis.o lspmac.o md2cmds.o lslogging.o lsevents.o lstimer.o lstest.o lsdetectorstate.o Makefile
+	gcc -g -pthread -o pgpmac pgpmac.c  ${PG_INCLUDE} -Wall md2cmds.o lspmac.o lspg.o lsredis.o lslogging.o lsevents.o lstimer.o lsdetectorstate.o lstest.o -lpq -lncurses -lpthread -lrt -lhiredis -lm
 
 dist:
 	ln -fs . ls-cat-pgpmac-$(VERSION)
@@ -35,6 +35,9 @@ docs:   *.c *.h Makefile
 
 lstimer.o: lstimer.c pgpmac.h Makefile
 	gcc -g -pthread -c lstimer.c ${PG_INCLUDE} -Wall
+
+lsdetectorstate.o: lsdetectorstate.c pgpmac.h Makefile
+	gcc -g -pthread -c lsdetectorstate.c ${PG_INCLUDE} -Wall
 
 lsevents.o: lsevents.c pgpmac.h Makefile
 	gcc -g -pthread -c lsevents.c ${PG_INCLUDE} -Wall

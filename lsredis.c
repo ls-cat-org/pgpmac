@@ -522,7 +522,7 @@ void lsredis_hgetCB( redisAsyncContext *ac, void *reply, void *privdata) {
   r = reply;
   p =  privdata;
 
-  //  lslogging_log_message( "hgetCB: %s %s", p == NULL ? "<NULL>" : p->key, r->type == REDIS_REPLY_STRING ? r->str : "Non-string value.  Why?");
+  //lslogging_log_message( "hgetCB: %s %s", p == NULL ? "<NULL>" : p->key, r->type == REDIS_REPLY_STRING ? r->str : "Non-string value.  Why?");
 
   //
   // Apparently this item does not exist
@@ -749,9 +749,6 @@ void lsredis_cleanup( void *data) {
 }
 
 
-
-
-
 /** Use the publication to request the new value
  */
 void lsredis_subCB( redisAsyncContext *ac, void *reply, void *privdata) {
@@ -824,7 +821,7 @@ void lsredis_subCB( redisAsyncContext *ac, void *reply, void *privdata) {
 
 	pthread_mutex_unlock( &p->mutex);
 	//
-	// Don't get a new value, either we set it last or we are still waiting for redis to report
+	// Didn't get a new value, either we set it last or we are still waiting for redis to report
 	// our publication
 	//
 	return;
@@ -839,7 +836,8 @@ void lsredis_subCB( redisAsyncContext *ac, void *reply, void *privdata) {
       //
       // We shouldn't get here if wait_for_me is zero and we are the publisher.
       // If somehow we did (ie we did an hset without incrementing wait_for_me or if we published too many times), it shouldn't hurt to get the value again.
-      //
+      // 
+
       redisAsyncCommand( roac, lsredis_hgetCB, p, "HGET %s VALUE", k);
     }
   }
@@ -848,6 +846,9 @@ void lsredis_subCB( redisAsyncContext *ac, void *reply, void *privdata) {
 
 void lsredis_maybe_add_key( char *k) {
   if( regexec( &lsredis_key_select_regex, k, 0, NULL, 0) == 0) {
+    if (strstr(k, "state_machine")) {
+	lslogging_log_message("lsredis_maybe_add_key adding key %s", k);
+      }
     _lsredis_get_obj( k);
   }
 }
@@ -1357,7 +1358,7 @@ void lsredis_configCB( redisAsyncContext *ac, void *reply, void *privdata) {
   */
 
 
-  if( redisAsyncCommand( subac, lsredis_subCB, NULL, "PSUBSCRIBE REDIS_PV_CONNECTOR REDIS_PG_CONNECTOR REDIS_NODE_CONNECTOR mk_pgpmac_redis UI* MD2-*") == REDIS_ERR) {
+  if( redisAsyncCommand( subac, lsredis_subCB, NULL, "PSUBSCRIBE REDIS_PV_CONNECTOR REDIS_PG_CONNECTOR REDIS_NODE_CONNECTOR mk_pgpmac_redis UI* MD2-* DETECTOR-21-ID-*") == REDIS_ERR) {
     lslogging_log_message( "Error sending PSUBSCRIBE command");
   }
   redisAsyncCommand( roac, lsredis_keysCB, NULL, "KEYS *");
