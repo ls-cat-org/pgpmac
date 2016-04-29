@@ -531,7 +531,7 @@ int md2cmds_transfer( const char *dummy) {
 
   lspg_starttransfer_wait();
   if( lspg_starttransfer.query_error) {
-    lsredis_sendStatusReport( 1, "An database related error occurred trying to start the transfer.  This is neither normal nor OK.  Aborting transfer.");
+    lsredis_sendStatusReport( 1, "A database related error occurred trying to start the transfer.  This is neither normal nor OK.  Aborting transfer.");
     lslogging_log_message( "md2cmds_transfer: query error starting transfer");
     lsevents_send_event( "Transfer Aborted");
     lspg_starttransfer_done();
@@ -1537,6 +1537,7 @@ void md2cmds_setAxis(lspmac_motor_t *mp, char axis, int old_coord, int new_coord
 }
 
 
+
 /** Segment data collection
  ** \param dummy Unused
  ** returns non-zero on error
@@ -1545,8 +1546,12 @@ int md2cmds_segment( const char *dummy) {
   long long skey;	//!< px.shots key of our exposure
   int sindex;		//!< px.shots sindex of our shot
   double exp_time;	//!< Exposure Time from postgresql in seconds
+  double p178;		//!< Shutter opening time (mSecs)
+  double p179;		//!< Shutter closing time (mSecs)
   double q1;            //!< Exposure Time in mSec
   double q2;            //!< Acceleration Time in mSecs
+  double q4;		//!< Omega velocity in counts/msec
+  double q5;		//!< Backup distance
   double q10;		//!< Omega open position in counts
   double q12;		//!< Omega close position in counts
   double q15;           //!< Center X open position in counts
@@ -1571,10 +1576,54 @@ int md2cmds_segment( const char *dummy) {
   double ay0, ay1;	//!< Align Y points
   struct timespec now, timeout;	//!< setup timeouts for shutter
   int err;
+  int ds;
+  double move_time;
+  int mmask;
+
+  //
+  // currently we do not deal well with a non-zero shutter open/close
+  // time.  Once we do we'll need to use those values here.
+  //
+  p178 = 0;
+  p179 = 0;
+
+  lslogging_log_message("segment 0");
 
   lsevents_send_event("Segment Collection Starting");
   collection_running = lsredis_get_obj("collection.running");
   lsredis_setstr(collection_running, "True");
+
+  //
+  // Go to data collection mode
+  //
+  lsredis_sendStatusReport( 0, "Putting MD2 in data collection mode");
+  if( md2cmds_phase_change( "changeMode dataCollection")) {
+    lsredis_sendStatusReport( 1, "Failed to put MD2 into data collection mode within a reasonable amount of time.");
+    lsevents_send_event( "Segment Collection Aborted");
+    lsredis_setstr( collection_running, "False");
+    return 1;
+  }  
+
+  lslogging_log_message("segment 1");
+
+  //
+  // Set up monitoring of the detector state and, by the way, get the
+  // current state.
+  //
+  pthread_mutex_lock( &detector_state_mutex);
+  ds = detector_state_int;
+  pthread_mutex_unlock( &detector_state_mutex);
+  if (ds != 1) {
+    //
+    // The detector is not ready, abort now
+    //
+    lsredis_sendStatusReport(1, "Detector does not appear to be ready");
+    lslogging_log_message("md2cmds_segment: Detector is not in ready state");
+    lsevents_send_event("Segment Collection Aborted");
+    lsredis_setstr(collection_running, "False");
+    return 1;
+  }
+  lslogging_log_message("segment 2");
 
   omega_u2c   = lsredis_getd( omega->u2c);
   omega_np    = lsredis_getd( omega->neutral_pos);
@@ -1602,15 +1651,19 @@ int md2cmds_segment( const char *dummy) {
   lspg_nextshot_call();
   lspg_nextshot_wait();
   if (lspg_nextshot.query_error) {
-    lsredis_sendStatusReport(1, "Cound not regrieve next shot info.");
+    lsredis_sendStatusReport(1, "Cound not retrieve next shot info.");
     lslogging_log_message("md2cmds_segment: query error retriveing next shot info. Aborting");
     lsevents_send_event("Segment Collection Aborted");
     lsredis_setstr(collection_running, "False");
     return 1;
   }
 
+  lslogging_log_message("segment 3");
+
   if (lspg_nextshot.no_rows_returned) {
+    lslogging_log_message("lspg_nextshot returned no rows");
     lsredis_sendStatusReport(0, "No more images to collect");
+    lsredis_setstr(collection_running, "False");
     lspg_nextshot_done();
     return 0;
   }
@@ -1642,15 +1695,65 @@ int md2cmds_segment( const char *dummy) {
   q25 = cy_u2c * (cy0 + cy_np);
   q27 = cy_u2c * (cy1 + cy_np);
 
+  if (q1 > 0) {
+    q4  = (q12-q10) / q1;	// Omega velocity in counts/msec
+    q5  = q4*q2/2 + p178;       // Backup distance for Omega (in counts)
+  } else {
+    q5 = 0;
+  }
+
+  /*
+  ** Move omega to the initial position
+  ** TODO: calculate the actual starting position, not just the shutter open position
+  */
+  if (fabs(lspmac_getPosition( omega)) > 360.0) {
+    md2cmds_home_prep();
+    lspmac_home1_queue( omega);
+    if( md2cmds_home_wait( 20.0)) {
+      lslogging_log_message( "md2cmds_segment: homing omega timed out.  Segment aborted");
+      lsevents_send_event( "Segment Collection Aborted");
+      lsredis_setstr(collection_running, "False");
+      lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+      lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
+      return 1;
+    }
+  }
+
+  err = lspmac_est_move_time( &move_time, &mmask,
+			      omega,  0, NULL, lspg_nextshot.sstart - q5/omega_u2c,
+			      NULL);
+  if( err) {
+    lsevents_send_event( "Segment Collection Aborted");
+    lsredis_sendStatusReport( 1, "Failed to move omega to start position.");
+    lspg_nextshot_done();
+    lsredis_setstr( collection_running, "False");
+    lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+    lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
+    return 1;
+  }
+  
+  err = lspmac_est_move_time_wait( move_time+10, mmask, NULL);
+  if( err) {
+    lsredis_sendStatusReport( 1, "Moving omega failed.");
+    lsevents_send_event( "Segment Collection Aborted");
+    lspg_nextshot_done();
+    lsredis_setstr( collection_running, "False");
+    lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
+    lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+    return 1;
+  }
+
   // We don't need these query results anymore
   lspg_nextshot_done();
 
+  lslogging_log_message("segment 3...");
+
   //
-  // prepare the database and detector to expose
-  // On exit we own the diffractometer lock and
-  // have checked that all is OK with the detector
+  // prepare the database and detector to expose On exit theexp
+  // detector.state_machine is in the state Arm or, if the detector
+  // was not ready, in the state Init.
   //
-  if( lspg_seq_run_prep_all( skey,
+  if( lspg_eiger_run_prep_all( skey,
 			     kappa->position,
 			     phi->position,
 			     cenx->position,
@@ -1659,38 +1762,70 @@ int md2cmds_segment( const char *dummy) {
 			     aligny->position,
 			     alignz->position
 			     )) {
-    lslogging_log_message( "md2cmds_segment: seq run prep query error, aborting");
+    lslogging_log_message( "md2cmds_segment: eiger run prep query error, aborting");
     lsredis_sendStatusReport( 1, "Preparing MD2 failed");
+    lsevents_send_event( "Segment Collection Aborted");
+    lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+    lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
+    lsredis_setstr( collection_running, "False");
+    return 1;
+  }
+
+  lslogging_log_message("segment 4");
+
+  //
+  // Wait for the detector to drop its lock indicating that it is ready for the exposure
+  //
+  clock_gettime( CLOCK_REALTIME, &now);
+  timeout.tv_sec  = now.tv_sec + 60;
+  timeout.tv_nsec = now.tv_nsec;
+
+  err = 0;
+  pthread_mutex_lock( &detector_state_mutex);
+  while (err == 0 && detector_state_int != 3) {
+    err = pthread_cond_timedwait( &detector_state_cond, &detector_state_mutex, &timeout);
+  }
+
+  if( err == ETIMEDOUT) {
+    pthread_mutex_unlock( &detector_state_mutex);
+    lslogging_log_message( "md2cmds_segment: Timed out waiting for detector to be armed.  Segment Collection aborted.");
+    lsredis_sendStatusReport( 1, "Timed out waiting for detector to be armed.");
+
+    lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
+
+    lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
     lsevents_send_event( "Segment Collection Aborted");
     lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
     lsredis_setstr( collection_running, "False");
     return 1;
   }
+  pthread_mutex_unlock( &detector_state_mutex);
+  lslogging_log_message("segment 4");
 
-  //
-  // Wait for the detector to drop its lock indicating that it is ready for the exposure
-  //
-  lspg_lock_detector_all();
-  lspg_unlock_detector_all();
 
   md2cmds_setAxis( aligny, 'Y', lsredis_getl( aligny->coord_num), 1);
   md2cmds_setAxis( cenx,   'Z', lsredis_getl( cenx->coord_num),   1);
   md2cmds_setAxis( ceny,   'U', lsredis_getl( ceny->coord_num),   1);
 
   lsredis_sendStatusReport( 0, "Exposing Frames %d", sindex);
+  lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Exposing')", skey);
+  lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Exposing\"}", skey);
+
   lspmac_set_motion_flags( NULL, omega, NULL);
   lspmac_SockSendDPline( "Exposure",
-			 "&1 Q1=%.1f Q2=%.1f Q10=%.1f Q12=%.1f Q15=%.1f Q17=%.1f Q20=%.1f Q22=%.1f Q25=%.1f Q27=%.1f M431=1 B231R",
-			 q1, q2, q10, q12, q15, q17, q20, q22, q25, q27
+			 "&1 P178=%.1f P179=%.1f Q1=%.1f Q2=%.1f Q10=%.1f Q12=%.1f Q15=%.1f Q17=%.1f Q20=%.1f Q22=%.1f Q25=%.1f Q27=%.1f M431=1",
+			 p178, p179, q1, q2, q10, q12, q15, q17, q20, q22, q25, q27
 			 );
 
+  lspmac_SockSendDPline(  NULL, "B231R");
+
+  lslogging_log_message("segment 5");
   //
   // wait for the shutter to open
   //
   clock_gettime( CLOCK_REALTIME, &now);
-  timeout.tv_sec  = now.tv_sec + 10;
+  timeout.tv_sec  = now.tv_sec + (int)(q2/1000+1) + 2;	// round the acceleration time up and add a couple of seconds for the command to be taken 
   timeout.tv_nsec = now.tv_nsec;
-
   err = 0;
 
   pthread_mutex_lock( &md2cmds_shutter_mutex);
@@ -1700,8 +1835,9 @@ int md2cmds_segment( const char *dummy) {
   if( err == ETIMEDOUT) {
     pthread_mutex_unlock( &md2cmds_shutter_mutex);
     lslogging_log_message( "md2cmds_segment: Timed out waiting for shutter to open.  Data collection aborted.");
+    lspmac_abort();
     lsredis_sendStatusReport( 1, "Timed out waiting for shutter to open.");
-    lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
+    lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
     lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
     lsevents_send_event( "Segment Collection Aborted");
     lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
@@ -1713,12 +1849,13 @@ int md2cmds_segment( const char *dummy) {
   }
   pthread_mutex_unlock( &md2cmds_shutter_mutex);
 
+  lslogging_log_message("segment 6");
 
   //
   // wait for the shutter to close
   //
   clock_gettime( CLOCK_REALTIME, &now);
-  lslogging_log_message( "md2cmds_collect: waiting %f seconds for the shutter to close", 4 + exp_time);
+  lslogging_log_message( "md2cmds_segment: waiting %f seconds for the shutter to close", 4 + exp_time);
   timeout.tv_sec  = now.tv_sec + 4 + ceil(exp_time);	// hopefully 4 seconds is long enough to never miss a legitimate shutter close and short enough to bail when something is really wrong
   timeout.tv_nsec = now.tv_nsec;
 
@@ -1731,9 +1868,9 @@ int md2cmds_segment( const char *dummy) {
   if( err == ETIMEDOUT) {
     pthread_mutex_unlock( &md2cmds_shutter_mutex);
     lsredis_sendStatusReport( 1, "Timed out waiting for shutter to close.");
-    lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
+    lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
     lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
-    lslogging_log_message( "md2cmds_segment: Timed out waiting for shutter to close.  Data collection aborted.");
+    lslogging_log_message( "md2cmds_segment: Timed out waiting for shutter to close.  Segment collection aborted.");
     lsevents_send_event( "Segment Collection Aborted");
     lsredis_setstr( collection_running, "False");
     lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
@@ -1744,11 +1881,15 @@ int md2cmds_segment( const char *dummy) {
   }
   pthread_mutex_unlock( &md2cmds_shutter_mutex);
 
+  lslogging_log_message("segment 7");
+
   //
   // Signal the detector to start reading out
   //
-  lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
+  lsredis_setstr( detector_state_redis, "{\"state\": \"Done\", \"expires\": %lld}", (long long)time(NULL)*1000 + 20000);
   lsredis_sendStatusReport( 0, "Reading Segment %d", sindex);
+
+  lslogging_log_message("segment 7.1");
 
   //
   // Return the axes definitions to their original state
@@ -1761,6 +1902,8 @@ int md2cmds_segment( const char *dummy) {
   // reset shutter has opened flag
   //
   lspmac_SockSendDPline( NULL, "P3005=0");
+
+  lslogging_log_message("segment Data Collection Done");
 
   return 0;
 }
@@ -1790,6 +1933,10 @@ int md2cmds_collect( const char *dummy) {
   double move_time;
   int mmask;
   lsredis_obj_t *collection_running;
+
+  if (1) {
+    md2cmds_segment(dummy);
+  }
 
   lsevents_send_event( "Data Collection Starting");
 
@@ -2830,7 +2977,7 @@ int md2cmds_set( const char *cmd) {
   for( i=0; i<16; i++) {
     if( pmatch[i].rm_so == -1)
       continue;
-    lslogging_log_message( "md2cmds_run_cmd: %d '%.*s'", i, pmatch[i].rm_eo - pmatch[i].rm_so, cmd+pmatch[i].rm_so);
+    lslogging_log_message( "md2cmds_run_set: %d '%.*s'", i, pmatch[i].rm_eo - pmatch[i].rm_so, cmd+pmatch[i].rm_so);
   }
 
   //
@@ -3039,7 +3186,6 @@ void md2cmds_init() {
   pthread_mutex_init( &md2cmds_shutter_mutex, &mutex_initializer);
   pthread_cond_init(  &md2cmds_shutter_cond, NULL);
 
-
   err = regcomp( &md2cmds_cmd_regex, " *([^ ]+) (([^ ]+)\\.presets\\..)*([^ ]*) *([^ ]*)", REG_EXTENDED);
   if( err != 0) {
     int nerrmsg;
@@ -3126,8 +3272,8 @@ pthread_t *md2cmds_run() {
   lsevents_add_listener( "^Quitting Program$",          md2cmds_quitting_cb);
   lsevents_add_listener( "^Shutter Open$",              md2cmds_shutter_open_cb);
   lsevents_add_listener( "^Shutter Not Open$",          md2cmds_shutter_not_open_cb);
-  lsredis_sendStatusReport( 0, "MD2 Started");
 
+  lsredis_sendStatusReport( 0, "MD2 Started");
 
   return &md2cmds_thread;
 }

@@ -46,11 +46,15 @@ static int new_timer = 0;		//!< indicate that a new timer exists and a call to s
 void lstimer_unset_timer( char *event) {
   int i;
 
+  pthread_mutex_lock( &lstimer_mutex);
   for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
     if( strcmp( event, lstimer_list[i].event) == 0) {
       lstimer_list[i].shots = 0;
+      lstimer_active_timers = lstimer_active_timers>0 ? lstimer_active_timers-1 : 0;  // shouldn't need to test for zero
+      //lslogging_log_message("lstimer_unset_timer: unset timer %d for event %s", i, event);
     }
   }
+  pthread_mutex_unlock( &lstimer_mutex);
 }
 
 
@@ -75,9 +79,23 @@ void lstimer_set_timer( char *event, int shots, unsigned long int secs, unsigned
 
   pthread_mutex_lock( &lstimer_mutex);
 
-  for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
-    if( lstimer_list[i].shots == 0)
+  for (i=0; i<LSTIMER_LIST_LENGTH; i++) {
+    if (strcmp(lstimer_list[i].event, event) == 0) {
+      if (lstimer_list[i].shots != 0) {
+	// We'll increment this later so if we don't do this we'll
+	// incorrectly be adding one.
+	lstimer_active_timers--;
+	new_timer--;
+      }
       break;
+    }
+  }
+
+  if (i == LSTIMER_LIST_LENGTH) {
+    for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
+      if( lstimer_list[i].shots == 0)
+	break;
+    }
   }
 
   if( i == LSTIMER_LIST_LENGTH) {
@@ -107,6 +125,8 @@ void lstimer_set_timer( char *event, int shots, unsigned long int secs, unsigned
     lstimer_active_timers++;
     new_timer++;
   }
+
+  //lslogging_log_message("lstimer_set_timer: active_timers=%d, new_timer=%d, event=%s", lstimer_active_timers, new_timer, lstimer_list[i].event);
 
   pthread_cond_signal(  &lstimer_cond);
   pthread_mutex_unlock( &lstimer_mutex);
@@ -138,7 +158,7 @@ static void service_timers() {
   then.tv_nsec = (now.tv_nsec + LSTIMER_RESOLUTION_NSECS) % 1000000000;
 
   found_active = 0;
-  for( i=0; i<lstimer_active_timers; i++) {
+  for( i=0; i<lstimer_active_timers && i<LSTIMER_LIST_LENGTH; i++) {
     p = &(lstimer_list[i]);
     if( p->shots != 0) {
       found_active++;
