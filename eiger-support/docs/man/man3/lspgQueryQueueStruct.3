@@ -1,0 +1,60 @@
+.TH "lspgQueryQueueStruct" 3 "Thu Jun 19 2014" "LS-CAT PGPMAC" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+lspgQueryQueueStruct \- 
+.PP
+Store each query along with it's callback function\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <pgpmac\&.h>\fP
+.SS "Data Fields"
+
+.in +1c
+.ti -1c
+.RI "char \fBqs\fP [\fBLS_PG_QUERY_STRING_LENGTH\fP]"
+.br
+.RI "\fIour queries should all be pretty short as we'll just be calling functions: fixed length here simplifies memory management \fP"
+.ti -1c
+.RI "void(* \fBonResponse\fP )(struct \fBlspgQueryQueueStruct\fP *qq, PGresult *pgr)"
+.br
+.RI "\fICallback function for when a query returns a result\&. \fP"
+.ti -1c
+.RI "void(* \fBonError\fP )()"
+.br
+.RI "\fIPerhaps the caller wants to clean up or recover\&. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+Store each query along with it's callback function\&. 
+
+All calls are asynchronous 
+.PP
+Definition at line 31 of file kvredis\&.c\&.
+.SH "Field Documentation"
+.PP 
+.SS "void(* lspgQueryQueueStruct::onError)()"
+
+.PP
+Perhaps the caller wants to clean up or recover\&. 
+.PP
+Definition at line 185 of file pgpmac\&.h\&.
+.SS "void(* lspgQueryQueueStruct::onResponse)(struct \fBlspgQueryQueueStruct\fP *qq, PGresult *pgr)"
+
+.PP
+Callback function for when a query returns a result\&. 
+.PP
+Definition at line 33 of file kvredis\&.c\&.
+.SS "char lspgQueryQueueStruct::qs"
+
+.PP
+our queries should all be pretty short as we'll just be calling functions: fixed length here simplifies memory management 
+.PP
+Definition at line 32 of file kvredis\&.c\&.
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for LS-CAT PGPMAC from the source code\&.

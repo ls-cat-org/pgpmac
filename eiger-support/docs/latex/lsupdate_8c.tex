@@ -1,0 +1,232 @@
+\hypertarget{lsupdate_8c}{\section{lsupdate.\-c File Reference}
+\label{lsupdate_8c}\index{lsupdate.\-c@{lsupdate.\-c}}
+}
+
+
+Brings this M\-D2 code and the database kvs table into agreement.  
+
+
+{\ttfamily \#include \char`\"{}pgpmac.\-h\char`\"{}}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \hyperlink{lsupdate_8c_af28d93f773e70f701699b323563fa218}{lsupdate\-\_\-updateit} ()
+\begin{DoxyCompactList}\small\item\em Query the motors and perhaps tell the D\-B about it. \end{DoxyCompactList}\item 
+void $\ast$ \hyperlink{lsupdate_8c_ac4e85ea626b76b06d68c27db1c3e8b43}{lsupdate\-\_\-worker} (void $\ast$dummy)
+\begin{DoxyCompactList}\small\item\em Our worker thread. \end{DoxyCompactList}\item 
+void \hyperlink{lsupdate_8c_adf63440ffbc65024fef87ea6a11ea8b0}{lsupdate\-\_\-init} ()
+\begin{DoxyCompactList}\small\item\em Initialize this module. \end{DoxyCompactList}\item 
+void \hyperlink{lsupdate_8c_af219e9b2cc124f109aa4c2c2e16b5d07}{lsupdate\-\_\-run} ()
+\begin{DoxyCompactList}\small\item\em run the update routines \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+static pthread\-\_\-t \hyperlink{lsupdate_8c_a00578477e1b3791fc8aed17ebe60b606}{lsupdate\-\_\-thread}
+\begin{DoxyCompactList}\small\item\em our worker thread \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Brings this M\-D2 code and the database kvs table into agreement. \begin{DoxyDate}{Date}
+2012 
+\end{DoxyDate}
+\begin{DoxyAuthor}{Author}
+Keith Brister 
+\end{DoxyAuthor}
+\begin{DoxyCopyright}{Copyright}
+All Rights Reserved 
+\end{DoxyCopyright}
+
+
+Definition in file \hyperlink{lsupdate_8c_source}{lsupdate.\-c}.
+
+
+
+\subsection{Function Documentation}
+\hypertarget{lsupdate_8c_adf63440ffbc65024fef87ea6a11ea8b0}{\index{lsupdate.\-c@{lsupdate.\-c}!lsupdate\-\_\-init@{lsupdate\-\_\-init}}
+\index{lsupdate\-\_\-init@{lsupdate\-\_\-init}!lsupdate.c@{lsupdate.\-c}}
+\subsubsection[{lsupdate\-\_\-init}]{\setlength{\rightskip}{0pt plus 5cm}void lsupdate\-\_\-init (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{lsupdate_8c_adf63440ffbc65024fef87ea6a11ea8b0}
+
+
+Initialize this module. 
+
+
+
+Definition at line 109 of file lsupdate.\-c.
+
+
+\begin{DoxyCode}
+                     \{
+\}
+\end{DoxyCode}
+\hypertarget{lsupdate_8c_af219e9b2cc124f109aa4c2c2e16b5d07}{\index{lsupdate.\-c@{lsupdate.\-c}!lsupdate\-\_\-run@{lsupdate\-\_\-run}}
+\index{lsupdate\-\_\-run@{lsupdate\-\_\-run}!lsupdate.c@{lsupdate.\-c}}
+\subsubsection[{lsupdate\-\_\-run}]{\setlength{\rightskip}{0pt plus 5cm}void lsupdate\-\_\-run (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{lsupdate_8c_af219e9b2cc124f109aa4c2c2e16b5d07}
+
+
+run the update routines 
+
+
+
+Definition at line 114 of file lsupdate.\-c.
+
+
+\begin{DoxyCode}
+                    \{
+  pthread\_create( &\hyperlink{lsupdate_8c_a00578477e1b3791fc8aed17ebe60b606}{lsupdate\_thread}, NULL, \hyperlink{lsupdate_8c_ac4e85ea626b76b06d68c27db1c3e8b43}{lsupdate\_worker}
+      , NULL);
+\}
+\end{DoxyCode}
+\hypertarget{lsupdate_8c_af28d93f773e70f701699b323563fa218}{\index{lsupdate.\-c@{lsupdate.\-c}!lsupdate\-\_\-updateit@{lsupdate\-\_\-updateit}}
+\index{lsupdate\-\_\-updateit@{lsupdate\-\_\-updateit}!lsupdate.c@{lsupdate.\-c}}
+\subsubsection[{lsupdate\-\_\-updateit}]{\setlength{\rightskip}{0pt plus 5cm}void lsupdate\-\_\-updateit (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{lsupdate_8c_af28d93f773e70f701699b323563fa218}
+
+
+Query the motors and perhaps tell the D\-B about it. 
+
+$<$ support for obsolete (ie, non .position) style 
+
+Definition at line 15 of file lsupdate.\-c.
+
+
+\begin{DoxyCode}
+                         \{
+  \textcolor{keyword}{static} \textcolor{keywordtype}{char} s[1024];
+  \textcolor{keyword}{static} \textcolor{keywordtype}{char} s1[512];
+  \textcolor{keyword}{static} \textcolor{keywordtype}{char} s2[512];          
+  \hyperlink{structlspmac__motor__struct}{lspmac\_motor\_t} *mp;
+  \textcolor{keywordtype}{int} i;
+  \textcolor{keywordtype}{int} needComma;
+  \textcolor{keywordtype}{int} gotone;
+
+  needComma = 0;
+  gotone = 0;
+  s[0] = 0;
+  strcpy(s, \textcolor{stringliteral}{"select px.kvupdate('\{"});
+
+  \textcolor{keywordflow}{for}( i=0; i<\hyperlink{lspmac_8c_a56260f012c50a591ee7f97e500f16994}{lspmac\_nmotors}; i++) \{
+    mp = &(\hyperlink{lspmac_8c_a894c709ddd0652583d6db22e86282503}{lspmac\_motors}[i]);
+
+    pthread\_mutex\_lock( &(mp->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex}));
+    \textcolor{comment}{//}
+    \textcolor{comment}{// Bit 0 of lspg\_initialized is 0 if we've not yet initialized the motor
+       values via the DB}
+    \textcolor{comment}{// Bit 1 of lspg\_initialized is 0 if we've not yet sent any update for this
+       motor}
+    \textcolor{comment}{//}
+    \textcolor{comment}{// Never update if the database has not initialized the motor values}
+    \textcolor{comment}{// Then, always update if we've not done so yet}
+    \textcolor{comment}{// Then, only update if the current position has changed significantly}
+    \textcolor{comment}{//}
+    \textcolor{keywordflow}{if}( ((mp->\hyperlink{structlspmac__motor__struct_af11e5f75c1cf88ed6842d04154d27a31}{lspg\_initialized} & 1) == 0) ||
+        ((mp->\hyperlink{structlspmac__motor__struct_af11e5f75c1cf88ed6842d04154d27a31}{lspg\_initialized} & 2) != 0) &&
+        (fabs( mp->\hyperlink{structlspmac__motor__struct_af8ffb3aed907d8664b65b37601954411}{position} - mp->\hyperlink{structlspmac__motor__struct_ae5f1f605a0f587500e627332ad4e5e7e}{reported\_position}) <
+       mp->\hyperlink{structlspmac__motor__struct_a18386126b724d9c7f72364db126f5b93}{update\_resolution})
+        ) \{
+      pthread\_mutex\_unlock( &(mp->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex}));
+    \} \textcolor{keywordflow}{else} \{
+
+      gotone = 1;
+      s1[0]=0;
+
+      snprintf( s1, \textcolor{keyword}{sizeof}(s1)-1, mp->\hyperlink{structlspmac__motor__struct_a514ee9ed48c7171157d579623f7de23f}{update\_format}, mp->\hyperlink{structlspmac__motor__struct_af8ffb3aed907d8664b65b37601954411}{position}
+      );
+      s1[\textcolor{keyword}{sizeof}(s1)-1] = 0;
+    
+      \textcolor{keywordflow}{if}( mp->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name} != NULL && *mp->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name} != 0) \{
+        snprintf( s2, \textcolor{keyword}{sizeof}(s2)-1, \textcolor{stringliteral}{",\(\backslash\)"%s\(\backslash\)",%.3f"}, mp->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name}, mp->\hyperlink{structlspmac__motor__struct_af8ffb3aed907d8664b65b37601954411}{position}
+      );
+        s2[\textcolor{keyword}{sizeof}(s2)-1] = 0;
+      \}
+
+      mp->\hyperlink{structlspmac__motor__struct_ae5f1f605a0f587500e627332ad4e5e7e}{reported\_position} = mp->\hyperlink{structlspmac__motor__struct_af8ffb3aed907d8664b65b37601954411}{position};
+      mp->\hyperlink{structlspmac__motor__struct_af11e5f75c1cf88ed6842d04154d27a31}{lspg\_initialized} |= 2;
+      pthread\_mutex\_unlock( &(mp->\hyperlink{structlspmac__motor__struct_a188c5b1e991750ce2ffd53e0192e0907}{mutex}));
+
+      \textcolor{keywordflow}{if}( strlen(s2) + strlen(s1) + strlen(s) + 32 >= \textcolor{keyword}{sizeof}( s)-1) \{
+        \textcolor{comment}{// send off update now and reset s}
+        strcat( s, \textcolor{stringliteral}{"\}'::text[])"});
+        \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, s);
+        
+        s[0] = 0;
+        strcpy( s, \textcolor{stringliteral}{"select px.kvupdate('\{"});
+        needComma = 0;
+        gotone    = 0;
+      \}
+
+      \textcolor{keywordflow}{if}( needComma)
+        strcat( s, \textcolor{stringliteral}{","});
+      \textcolor{keywordflow}{else}
+        needComma=1;
+
+      strcat( s, s1);
+      \textcolor{keywordflow}{if}( mp->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name} != NULL && *mp->\hyperlink{structlspmac__motor__struct_aa90af2f6f1489f1befe1d0891e51575a}{name} != 0) \{
+        strcat( s, s2);
+      \}
+    \}
+  \}
+
+  \textcolor{keywordflow}{if}( gotone) \{
+    strcat( s, \textcolor{stringliteral}{"\}'::text[])"});
+    \hyperlink{kvredis_8c_a0bb9ef42da8fa21c4df48ec384ab69f4}{lspg\_query\_push}( NULL, s);
+  \}
+\}
+\end{DoxyCode}
+\hypertarget{lsupdate_8c_ac4e85ea626b76b06d68c27db1c3e8b43}{\index{lsupdate.\-c@{lsupdate.\-c}!lsupdate\-\_\-worker@{lsupdate\-\_\-worker}}
+\index{lsupdate\-\_\-worker@{lsupdate\-\_\-worker}!lsupdate.c@{lsupdate.\-c}}
+\subsubsection[{lsupdate\-\_\-worker}]{\setlength{\rightskip}{0pt plus 5cm}void$\ast$ lsupdate\-\_\-worker (
+\begin{DoxyParamCaption}
+\item[{void $\ast$}]{dummy}
+\end{DoxyParamCaption}
+)}}\label{lsupdate_8c_ac4e85ea626b76b06d68c27db1c3e8b43}
+
+
+Our worker thread. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em dummy} & Unused argument required by protocol \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 94 of file lsupdate.\-c.
+
+
+\begin{DoxyCode}
+                        \{
+  \textcolor{keyword}{static} \textcolor{keyword}{struct }timespec naptime;
+
+  naptime.tv\_sec  = 0;
+  naptime.tv\_nsec = 500000000;
+  \textcolor{keywordflow}{while}( 1) \{
+    \hyperlink{lsupdate_8c_af28d93f773e70f701699b323563fa218}{lsupdate\_updateit}();
+    nanosleep( &naptime, NULL);
+  \}    
+\}
+\end{DoxyCode}
+
+
+\subsection{Variable Documentation}
+\hypertarget{lsupdate_8c_a00578477e1b3791fc8aed17ebe60b606}{\index{lsupdate.\-c@{lsupdate.\-c}!lsupdate\-\_\-thread@{lsupdate\-\_\-thread}}
+\index{lsupdate\-\_\-thread@{lsupdate\-\_\-thread}!lsupdate.c@{lsupdate.\-c}}
+\subsubsection[{lsupdate\-\_\-thread}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-t lsupdate\-\_\-thread\hspace{0.3cm}{\ttfamily [static]}}}\label{lsupdate_8c_a00578477e1b3791fc8aed17ebe60b606}
+
+
+our worker thread 
+
+
+
+Definition at line 10 of file lsupdate.\-c.
+

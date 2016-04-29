@@ -1,0 +1,749 @@
+\hypertarget{lsevents_8c}{\section{lsevents.\-c File Reference}
+\label{lsevents_8c}\index{lsevents.\-c@{lsevents.\-c}}
+}
+
+
+event subsystem for inter-\/pgpmac communication  
+
+
+{\ttfamily \#include \char`\"{}pgpmac.\-h\char`\"{}}\\*
+\subsection*{Data Structures}
+\begin{DoxyCompactItemize}
+\item 
+struct \hyperlink{structlsevents__queue__struct}{lsevents\-\_\-queue\-\_\-struct}
+\begin{DoxyCompactList}\small\item\em Storage definition for the events. \end{DoxyCompactList}\item 
+struct \hyperlink{structlsevents__listener__struct}{lsevents\-\_\-listener\-\_\-struct}
+\begin{DoxyCompactList}\small\item\em Linked list of event listeners. \end{DoxyCompactList}\item 
+struct \hyperlink{structlsevents__callbacks__struct}{lsevents\-\_\-callbacks\-\_\-struct}
+\begin{DoxyCompactList}\small\item\em lsevents linked list of callbacks for each event \end{DoxyCompactList}\item 
+struct \hyperlink{structlsevents__event__names__struct}{lsevents\-\_\-event\-\_\-names\-\_\-struct}
+\begin{DoxyCompactList}\small\item\em linked list of all the event names used to regenerate the hash table \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Macros}
+\begin{DoxyCompactItemize}
+\item 
+\#define \hyperlink{lsevents_8c_a75469307c70790f04b9b2bfcb1473a48}{L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H}~1024
+\end{DoxyCompactItemize}
+\subsection*{Typedefs}
+\begin{DoxyCompactItemize}
+\item 
+typedef struct \\*
+\hyperlink{structlsevents__queue__struct}{lsevents\-\_\-queue\-\_\-struct} \hyperlink{lsevents_8c_a82bd12b9e91198e33f44262d324616c4}{lsevents\-\_\-queue\-\_\-t}
+\begin{DoxyCompactList}\small\item\em Storage definition for the events. \end{DoxyCompactList}\item 
+typedef struct \\*
+\hyperlink{structlsevents__listener__struct}{lsevents\-\_\-listener\-\_\-struct} \hyperlink{lsevents_8c_a8be5b9ff7269a3b057e354536cf9b0aa}{lsevents\-\_\-listener\-\_\-t}
+\begin{DoxyCompactList}\small\item\em Linked list of event listeners. \end{DoxyCompactList}\item 
+typedef struct \\*
+\hyperlink{structlsevents__callbacks__struct}{lsevents\-\_\-callbacks\-\_\-struct} \hyperlink{lsevents_8c_af904cc333bdd09b03bf41131d9744e94}{lsevents\-\_\-callbacks\-\_\-t}
+\begin{DoxyCompactList}\small\item\em lsevents linked list of callbacks for each event \end{DoxyCompactList}\item 
+typedef struct \\*
+\hyperlink{structlsevents__event__names__struct}{lsevents\-\_\-event\-\_\-names\-\_\-struct} \hyperlink{lsevents_8c_af0673d1651902ed62acb18dd99c01197}{lsevents\-\_\-event\-\_\-names\-\_\-t}
+\begin{DoxyCompactList}\small\item\em linked list of all the event names used to regenerate the hash table \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \hyperlink{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{lsevents\-\_\-send\-\_\-event} (char $\ast$fmt,...)
+\begin{DoxyCompactList}\small\item\em Call the callback routines for the given event. \end{DoxyCompactList}\item 
+void \hyperlink{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{lsevents\-\_\-add\-\_\-listener} (char $\ast$raw\-\_\-regexp, void($\ast$cb)(char $\ast$))
+\begin{DoxyCompactList}\small\item\em Add a callback routine to listen for a specific event. \end{DoxyCompactList}\item 
+void \hyperlink{lsevents_8c_ab9c425de8de28f0089ad51676873f7e0}{lsevents\-\_\-remove\-\_\-listener} (char $\ast$event, void($\ast$cb)(char $\ast$))
+\begin{DoxyCompactList}\small\item\em Remove a listener previously added with lsevents\-\_\-add\-\_\-listener. \end{DoxyCompactList}\item 
+\hyperlink{lsevents_8c_af904cc333bdd09b03bf41131d9744e94}{lsevents\-\_\-callbacks\-\_\-t} $\ast$ \hyperlink{lsevents_8c_a5e3fd5e3c6d11f8a74d79978e00f8835}{lsevents\-\_\-register\-\_\-event} (char $\ast$event)
+\begin{DoxyCompactList}\small\item\em Add a new event name and find matching callbacks as a returned linked list. \end{DoxyCompactList}\item 
+void \hyperlink{lsevents_8c_ae09cfa92dba806d8f8808e5822ea713c}{lsevents\-\_\-preregister\-\_\-event} (char $\ast$fmt,...)
+\item 
+void $\ast$ \hyperlink{lsevents_8c_a48e8f9dee00710bbe293b4bbded37a39}{lsevents\-\_\-worker} (void $\ast$dummy)
+\begin{DoxyCompactList}\small\item\em Our worker. \end{DoxyCompactList}\item 
+void \hyperlink{lsevents_8c_af19a77187e7406fc87d36bd26e672e6d}{lsevents\-\_\-init} ()
+\begin{DoxyCompactList}\small\item\em Initialize this module. \end{DoxyCompactList}\item 
+pthread\-\_\-t $\ast$ \hyperlink{lsevents_8c_a7f2ed970b1c3b340b79311e73c5f1e11}{lsevents\-\_\-run} ()
+\begin{DoxyCompactList}\small\item\em Start up the thread and get out of the way. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+static \hyperlink{lsevents_8c_a82bd12b9e91198e33f44262d324616c4}{lsevents\-\_\-queue\-\_\-t} \hyperlink{lsevents_8c_ad1ff5e895b4016113c8414d9a5daa2f2}{lsevents\-\_\-queue} \mbox{[}\hyperlink{lsevents_8c_a75469307c70790f04b9b2bfcb1473a48}{L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H}\mbox{]}
+\begin{DoxyCompactList}\small\item\em simple list of events \end{DoxyCompactList}\item 
+static unsigned int \hyperlink{lsevents_8c_a3bccf603d56d5b2f4a92fad341d37e2c}{lsevents\-\_\-queue\-\_\-on} = 0
+\begin{DoxyCompactList}\small\item\em next queue location to write \end{DoxyCompactList}\item 
+static unsigned int \hyperlink{lsevents_8c_a50ad47e12cc4fc2d88659230b2fd44ff}{lsevents\-\_\-queue\-\_\-off} = 0
+\begin{DoxyCompactList}\small\item\em next queue location to read \end{DoxyCompactList}\item 
+static int \hyperlink{lsevents_8c_ad09b507c9a79282374a0474470454bb8}{lsevents\-\_\-max\-\_\-events} = 1024
+\item 
+static int \hyperlink{lsevents_8c_adcd8ba85365a869892608bb663790204}{lsevents\-\_\-n\-\_\-events} = 0
+\item 
+static struct hsearch\-\_\-data \hyperlink{lsevents_8c_a274c60d870a1b91ab606dcf024be1bf7}{lsevents\-\_\-event\-\_\-name\-\_\-ht}
+\item 
+static \hyperlink{lsevents_8c_a8be5b9ff7269a3b057e354536cf9b0aa}{lsevents\-\_\-listener\-\_\-t} $\ast$ \hyperlink{lsevents_8c_a300dc3edfa8546d75e9f8bab8fa06c5c}{lsevents\-\_\-listeners\-\_\-p} = N\-U\-L\-L
+\begin{DoxyCompactList}\small\item\em Pointer to the first item in the link list of listeners. \end{DoxyCompactList}\item 
+static \hyperlink{lsevents_8c_af0673d1651902ed62acb18dd99c01197}{lsevents\-\_\-event\-\_\-names\-\_\-t} $\ast$ \hyperlink{lsevents_8c_abec6bcf8613a6268e59e6c5409ee344c}{lsevents\-\_\-event\-\_\-names} = N\-U\-L\-L
+\item 
+static pthread\-\_\-t \hyperlink{lsevents_8c_a314640d7c3cb4fa90823ab2418fbac9b}{lsevents\-\_\-thread}
+\begin{DoxyCompactList}\small\item\em thread to run the event queue \end{DoxyCompactList}\item 
+static pthread\-\_\-mutex\-\_\-t \hyperlink{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{lsevents\-\_\-listener\-\_\-mutex}
+\begin{DoxyCompactList}\small\item\em mutex to protect the listener linked list \end{DoxyCompactList}\item 
+static pthread\-\_\-mutex\-\_\-t \hyperlink{lsevents_8c_ab46f4ebda5e926a213faedac1a545ec1}{lsevents\-\_\-queue\-\_\-mutex}
+\begin{DoxyCompactList}\small\item\em mutex to protect the event queue \end{DoxyCompactList}\item 
+static pthread\-\_\-cond\-\_\-t \hyperlink{lsevents_8c_a8079d9fb8c35db3ca5f83be5aeb2a747}{lsevents\-\_\-queue\-\_\-cond}
+\begin{DoxyCompactList}\small\item\em condition to pause the queue if needed \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+event subsystem for inter-\/pgpmac communication \begin{DoxyDate}{Date}
+2012 
+\end{DoxyDate}
+\begin{DoxyAuthor}{Author}
+Keith Brister 
+\end{DoxyAuthor}
+\begin{DoxyCopyright}{Copyright}
+All Rights Reserved 
+\end{DoxyCopyright}
+
+
+Definition in file \hyperlink{lsevents_8c_source}{lsevents.\-c}.
+
+
+
+\subsection{Macro Definition Documentation}
+\hypertarget{lsevents_8c_a75469307c70790f04b9b2bfcb1473a48}{\index{lsevents.\-c@{lsevents.\-c}!L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H@{L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H}}
+\index{L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H@{L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H}!lsevents.c@{lsevents.\-c}}
+\subsubsection[{L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H}]{\setlength{\rightskip}{0pt plus 5cm}\#define L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H~1024}}\label{lsevents_8c_a75469307c70790f04b9b2bfcb1473a48}
+
+
+Definition at line 10 of file lsevents.\-c.
+
+
+
+\subsection{Typedef Documentation}
+\hypertarget{lsevents_8c_af904cc333bdd09b03bf41131d9744e94}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-callbacks\-\_\-t@{lsevents\-\_\-callbacks\-\_\-t}}
+\index{lsevents\-\_\-callbacks\-\_\-t@{lsevents\-\_\-callbacks\-\_\-t}!lsevents.c@{lsevents.\-c}}
+\subsubsection[{lsevents\-\_\-callbacks\-\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf lsevents\-\_\-callbacks\-\_\-struct}  {\bf lsevents\-\_\-callbacks\-\_\-t}}}\label{lsevents_8c_af904cc333bdd09b03bf41131d9744e94}
+
+
+lsevents linked list of callbacks for each event 
+
+\hypertarget{lsevents_8c_af0673d1651902ed62acb18dd99c01197}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-event\-\_\-names\-\_\-t@{lsevents\-\_\-event\-\_\-names\-\_\-t}}
+\index{lsevents\-\_\-event\-\_\-names\-\_\-t@{lsevents\-\_\-event\-\_\-names\-\_\-t}!lsevents.c@{lsevents.\-c}}
+\subsubsection[{lsevents\-\_\-event\-\_\-names\-\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf lsevents\-\_\-event\-\_\-names\-\_\-struct}  {\bf lsevents\-\_\-event\-\_\-names\-\_\-t}}}\label{lsevents_8c_af0673d1651902ed62acb18dd99c01197}
+
+
+linked list of all the event names used to regenerate the hash table 
+
+\hypertarget{lsevents_8c_a8be5b9ff7269a3b057e354536cf9b0aa}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-listener\-\_\-t@{lsevents\-\_\-listener\-\_\-t}}
+\index{lsevents\-\_\-listener\-\_\-t@{lsevents\-\_\-listener\-\_\-t}!lsevents.c@{lsevents.\-c}}
+\subsubsection[{lsevents\-\_\-listener\-\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf lsevents\-\_\-listener\-\_\-struct}  {\bf lsevents\-\_\-listener\-\_\-t}}}\label{lsevents_8c_a8be5b9ff7269a3b057e354536cf9b0aa}
+
+
+Linked list of event listeners. 
+
+\hypertarget{lsevents_8c_a82bd12b9e91198e33f44262d324616c4}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-queue\-\_\-t@{lsevents\-\_\-queue\-\_\-t}}
+\index{lsevents\-\_\-queue\-\_\-t@{lsevents\-\_\-queue\-\_\-t}!lsevents.c@{lsevents.\-c}}
+\subsubsection[{lsevents\-\_\-queue\-\_\-t}]{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf lsevents\-\_\-queue\-\_\-struct}  {\bf lsevents\-\_\-queue\-\_\-t}}}\label{lsevents_8c_a82bd12b9e91198e33f44262d324616c4}
+
+
+Storage definition for the events. 
+
+Just a string for now. Perhaps one day we'll succumb to the temptation to add an argument or two. 
+
+\subsection{Function Documentation}
+\hypertarget{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-add\-\_\-listener@{lsevents\-\_\-add\-\_\-listener}}
+\index{lsevents\-\_\-add\-\_\-listener@{lsevents\-\_\-add\-\_\-listener}!lsevents.c@{lsevents.\-c}}
+\subsubsection[{lsevents\-\_\-add\-\_\-listener}]{\setlength{\rightskip}{0pt plus 5cm}void lsevents\-\_\-add\-\_\-listener (
+\begin{DoxyParamCaption}
+\item[{char $\ast$}]{raw\-\_\-regexp, }
+\item[{void($\ast$)(char $\ast$)}]{cb}
+\end{DoxyParamCaption}
+)}}\label{lsevents_8c_a1efedb183d9558ae0f3573712e7918b2}
+
+
+Add a callback routine to listen for a specific event. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em raw\-\_\-regexp} & String value of regular expression to listen to \\
+\hline
+{\em cb} & the routine to call \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 99 of file lsevents.\-c.
+
+
+\begin{DoxyCode}
+                                                                  \{
+  \hyperlink{structlsevents__listener__struct}{lsevents\_listener\_t}    *\textcolor{keyword}{new};
+  \hyperlink{structlsevents__event__names__struct}{lsevents\_event\_names\_t} *enp;
+  \hyperlink{structlsevents__callbacks__struct}{lsevents\_callbacks\_t}   *cbp;
+  \textcolor{keywordtype}{int} err;
+  \textcolor{keywordtype}{char} *errbuf;
+  \textcolor{keywordtype}{int} nerrbuf;
+
+
+
+  \textcolor{keyword}{new} = calloc( 1, \textcolor{keyword}{sizeof}( \hyperlink{structlsevents__listener__struct}{lsevents\_listener\_t}));
+  \textcolor{keywordflow}{if}( \textcolor{keyword}{new} == NULL) \{
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lsevents\_add\_listener: out of
+       memory"});
+    exit( -1);
+  \}
+
+  err = regcomp( &new->re, raw\_regexp, REG\_EXTENDED | REG\_NOSUB);
+  \textcolor{keywordflow}{if}( err != 0) \{
+    nerrbuf = regerror( err, &new->re, NULL, 0);
+    errbuf = calloc( nerrbuf, \textcolor{keyword}{sizeof}( \textcolor{keywordtype}{char}));
+    \textcolor{keywordflow}{if}( errbuf == NULL) \{
+      \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lsevents\_add\_listener: out
+       of memory (re)"});
+      exit( -1);
+    \}
+    regerror( err, &new->re, errbuf, nerrbuf);
+    free( errbuf);
+    free( \textcolor{keyword}{new});
+    \textcolor{keywordflow}{return};
+  \}
+
+  \textcolor{keyword}{new}->raw\_regexp = strdup( raw\_regexp);
+  \textcolor{keyword}{new}->cb   = cb;
+
+  pthread\_mutex\_lock( &\hyperlink{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{lsevents\_listener\_mutex});
+  \textcolor{keyword}{new}->next = \hyperlink{lsevents_8c_a300dc3edfa8546d75e9f8bab8fa06c5c}{lsevents\_listeners\_p};
+  \hyperlink{lsevents_8c_a300dc3edfa8546d75e9f8bab8fa06c5c}{lsevents\_listeners\_p} = \textcolor{keyword}{new};
+
+  \textcolor{keywordflow}{for}( enp = \hyperlink{lsevents_8c_abec6bcf8613a6268e59e6c5409ee344c}{lsevents\_event\_names}; enp != NULL; enp = enp->
+      \hyperlink{structlsevents__event__names__struct_a748e63bd8825f239936c5bf165ca869e}{next}) \{
+    \textcolor{keywordflow}{if}( regexec( &new->re, enp->\hyperlink{structlsevents__event__names__struct_a07e5a0f2b74c08f388626f18b37cd1b0}{event}, 0, NULL, 0) == 0) \{
+      cbp       = calloc( 1, \textcolor{keyword}{sizeof}( \hyperlink{structlsevents__callbacks__struct}{lsevents\_callbacks\_t}))
+      ;
+      cbp->\hyperlink{structlsevents__callbacks__struct_a523024faf274afe9056748ddbe6def5c}{cb}   = cb;
+      cbp->\hyperlink{structlsevents__callbacks__struct_a6d673746e36b16df34d53e143c1ba881}{next} = enp->\hyperlink{structlsevents__event__names__struct_afdd17d4d473fcf095a279953ea5e0f1c}{cbl};
+      enp->\hyperlink{structlsevents__event__names__struct_afdd17d4d473fcf095a279953ea5e0f1c}{cbl}  = cbp;
+    \}
+  \}
+  
+
+  pthread\_mutex\_unlock( &\hyperlink{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{lsevents\_listener\_mutex});
+
+\}
+\end{DoxyCode}
+\hypertarget{lsevents_8c_af19a77187e7406fc87d36bd26e672e6d}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-init@{lsevents\-\_\-init}}
+\index{lsevents\-\_\-init@{lsevents\-\_\-init}!lsevents.c@{lsevents.\-c}}
+\subsubsection[{lsevents\-\_\-init}]{\setlength{\rightskip}{0pt plus 5cm}void lsevents\-\_\-init (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{lsevents_8c_af19a77187e7406fc87d36bd26e672e6d}
+
+
+Initialize this module. 
+
+
+
+Definition at line 367 of file lsevents.\-c.
+
+
+\begin{DoxyCode}
+                     \{
+  pthread\_mutexattr\_t \hyperlink{lsredis_8c_a71c9f418904364d65c22d786f4dc5d39}{mutex\_initializer};
+
+  \textcolor{comment}{// Use recursive mutexs}
+  \textcolor{comment}{//}
+  pthread\_mutexattr\_init( &mutex\_initializer);
+  pthread\_mutexattr\_settype( &mutex\_initializer, PTHREAD\_MUTEX\_RECURSIVE);
+
+  pthread\_mutex\_init( &\hyperlink{lsevents_8c_ab46f4ebda5e926a213faedac1a545ec1}{lsevents\_queue\_mutex},    &
+      mutex\_initializer);
+  pthread\_cond\_init(  &\hyperlink{lsevents_8c_a8079d9fb8c35db3ca5f83be5aeb2a747}{lsevents\_queue\_cond},     NULL);
+  pthread\_mutex\_init( &\hyperlink{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{lsevents\_listener\_mutex}, &
+      mutex\_initializer);
+
+  hcreate\_r( 2*\hyperlink{lsevents_8c_ad09b507c9a79282374a0474470454bb8}{lsevents\_max\_events}, &\hyperlink{lsevents_8c_a274c60d870a1b91ab606dcf024be1bf7}{lsevents\_event\_name\_ht}
+      );
+\}
+\end{DoxyCode}
+\hypertarget{lsevents_8c_ae09cfa92dba806d8f8808e5822ea713c}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-preregister\-\_\-event@{lsevents\-\_\-preregister\-\_\-event}}
+\index{lsevents\-\_\-preregister\-\_\-event@{lsevents\-\_\-preregister\-\_\-event}!lsevents.c@{lsevents.\-c}}
+\subsubsection[{lsevents\-\_\-preregister\-\_\-event}]{\setlength{\rightskip}{0pt plus 5cm}void lsevents\-\_\-preregister\-\_\-event (
+\begin{DoxyParamCaption}
+\item[{char $\ast$}]{fmt, }
+\item[{}]{...}
+\end{DoxyParamCaption}
+)}}\label{lsevents_8c_ae09cfa92dba806d8f8808e5822ea713c}
+
+
+Definition at line 308 of file lsevents.\-c.
+
+
+\begin{DoxyCode}
+                                                 \{
+  \textcolor{keywordtype}{char}  s[128];
+  va\_list arg\_ptr;
+
+  va\_start( arg\_ptr, fmt);
+  vsnprintf( s, \textcolor{keyword}{sizeof}( s) - 1, fmt, arg\_ptr);
+  s[\textcolor{keyword}{sizeof}(s)-1] = 0;
+  va\_end( arg\_ptr);
+
+  \hyperlink{lsevents_8c_a5e3fd5e3c6d11f8a74d79978e00f8835}{lsevents\_register\_event}( s);
+\}
+\end{DoxyCode}
+\hypertarget{lsevents_8c_a5e3fd5e3c6d11f8a74d79978e00f8835}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-register\-\_\-event@{lsevents\-\_\-register\-\_\-event}}
+\index{lsevents\-\_\-register\-\_\-event@{lsevents\-\_\-register\-\_\-event}!lsevents.c@{lsevents.\-c}}
+\subsubsection[{lsevents\-\_\-register\-\_\-event}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lsevents\-\_\-callbacks\-\_\-t}$\ast$ lsevents\-\_\-register\-\_\-event (
+\begin{DoxyParamCaption}
+\item[{char $\ast$}]{event}
+\end{DoxyParamCaption}
+)}}\label{lsevents_8c_a5e3fd5e3c6d11f8a74d79978e00f8835}
+
+
+Add a new event name and find matching callbacks as a returned linked list. 
+
+
+
+Definition at line 218 of file lsevents.\-c.
+
+
+\begin{DoxyCode}
+                                                            \{
+  ENTRY entry\_in, *entry\_outp;
+  \textcolor{keywordtype}{int} err;
+  \hyperlink{structlsevents__callbacks__struct}{lsevents\_callbacks\_t} *new\_cb;
+  \hyperlink{structlsevents__event__names__struct}{lsevents\_event\_names\_t} *new\_event\_name, *enp;
+  \hyperlink{structlsevents__listener__struct}{lsevents\_listener\_t} *\hyperlink{namespacemk__pgpmac__redis_a11daf2847f2dc94562b5b61b3f412574}{p};
+
+
+  \textcolor{comment}{//}
+  \textcolor{comment}{// Search for event}
+  \textcolor{comment}{//}
+  entry\_in.key  = event;
+  entry\_in.data = NULL;
+
+  pthread\_mutex\_lock( &\hyperlink{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{lsevents\_listener\_mutex});
+  err = hsearch\_r( entry\_in, FIND, &entry\_outp, &\hyperlink{lsevents_8c_a274c60d870a1b91ab606dcf024be1bf7}{lsevents\_event\_name\_ht}
+      );
+  \textcolor{keywordflow}{if}( err != 0) \{
+    \textcolor{comment}{//}
+    \textcolor{comment}{// Success, we found the entry}
+    \textcolor{comment}{//}
+    enp = entry\_outp->data;
+    pthread\_mutex\_unlock( &\hyperlink{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{lsevents\_listener\_mutex});
+    \textcolor{keywordflow}{return} enp->\hyperlink{structlsevents__event__names__struct_afdd17d4d473fcf095a279953ea5e0f1c}{cbl};
+  \}
+
+  \textcolor{keywordflow}{if}( errno != ESRCH) \{
+    \textcolor{comment}{//}
+    \textcolor{comment}{// Something awful happened.  At least log it}
+    \textcolor{comment}{//}
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lsevents\_register\_event:
+       hsearch\_r returnd %d: %s"}, errno, strerror( errno));
+    pthread\_mutex\_unlock( &\hyperlink{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{lsevents\_listener\_mutex});
+    \textcolor{keywordflow}{return} NULL;
+  \}
+
+  \textcolor{comment}{//}
+  \textcolor{comment}{// Not Found}
+  \textcolor{comment}{//}
+  \textcolor{comment}{// Create new event name item}
+  new\_event\_name = calloc( 1, \textcolor{keyword}{sizeof}( \hyperlink{structlsevents__event__names__struct}{lsevents\_event\_names\_t}
+      ));
+  new\_event\_name->\hyperlink{structlsevents__event__names__struct_a07e5a0f2b74c08f388626f18b37cd1b0}{event} = strdup( event);
+  new\_event\_name->\hyperlink{structlsevents__event__names__struct_afdd17d4d473fcf095a279953ea5e0f1c}{cbl}   = NULL;
+
+  \textcolor{comment}{//}
+  \textcolor{comment}{// Find matching callbacks}
+  \textcolor{comment}{//}
+  \textcolor{keywordflow}{for}( p = \hyperlink{lsevents_8c_a300dc3edfa8546d75e9f8bab8fa06c5c}{lsevents\_listeners\_p}; p != NULL; p = p->\hyperlink{structlsevents__listener__struct_a8aed9196b0deab84e018b96c0cc59305}{next}
+      ) \{
+    \textcolor{keywordflow}{if}( regexec( &p->\hyperlink{structlsevents__listener__struct_a60b0f9e188a08e6101c494af89052d3f}{re}, event, 0, NULL, 0) == 0) \{
+      new\_cb = calloc( 1, \textcolor{keyword}{sizeof}( \hyperlink{structlsevents__callbacks__struct}{lsevents\_callbacks\_t}));
+      new\_cb->\hyperlink{structlsevents__callbacks__struct_a523024faf274afe9056748ddbe6def5c}{cb} = p->\hyperlink{structlsevents__listener__struct_a005906c1c9f0647e6ed1fb4592d8c5d0}{cb};
+      new\_cb->\hyperlink{structlsevents__callbacks__struct_a6d673746e36b16df34d53e143c1ba881}{next} = new\_event\_name->\hyperlink{structlsevents__event__names__struct_afdd17d4d473fcf095a279953ea5e0f1c}{cbl};
+      new\_event\_name->\hyperlink{structlsevents__event__names__struct_afdd17d4d473fcf095a279953ea5e0f1c}{cbl} = new\_cb;
+    \}
+  \}
+
+  \textcolor{comment}{//}
+  \textcolor{comment}{// Add the new event to our linked list}
+  \textcolor{comment}{//}
+  new\_event\_name->\hyperlink{structlsevents__event__names__struct_a748e63bd8825f239936c5bf165ca869e}{next}  = \hyperlink{lsevents_8c_abec6bcf8613a6268e59e6c5409ee344c}{lsevents\_event\_names};
+  \hyperlink{lsevents_8c_abec6bcf8613a6268e59e6c5409ee344c}{lsevents\_event\_names}  = new\_event\_name;
+
+  \textcolor{comment}{//}
+  \textcolor{comment}{// Also add the new event to our hash table}
+  \textcolor{comment}{//}
+  entry\_in.key  = new\_event\_name->\hyperlink{structlsevents__event__names__struct_a07e5a0f2b74c08f388626f18b37cd1b0}{event};
+  entry\_in.data = new\_event\_name;
+  err = hsearch\_r( entry\_in, ENTER, &entry\_outp, &\hyperlink{lsevents_8c_a274c60d870a1b91ab606dcf024be1bf7}{lsevents\_event\_name\_ht}
+      );
+  \textcolor{keywordflow}{if}( err == 0) \{
+    \textcolor{comment}{//}
+    \textcolor{comment}{// Something bad happend but we can still return a valid callback list.  We
+       just can't use the hash table to find it again later}
+    \textcolor{comment}{//}
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lsevents\_register\_event: Could
+       not add event name: hsearch\_r returned %d: %s"}, errno, strerror( errno));
+    pthread\_mutex\_unlock( &\hyperlink{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{lsevents\_listener\_mutex});
+    \textcolor{keywordflow}{return} new\_event\_name->\hyperlink{structlsevents__event__names__struct_afdd17d4d473fcf095a279953ea5e0f1c}{cbl};
+  \}
+
+  \textcolor{keywordflow}{if}( ++\hyperlink{lsevents_8c_adcd8ba85365a869892608bb663790204}{lsevents\_n\_events}  >= \hyperlink{lsevents_8c_ad09b507c9a79282374a0474470454bb8}{lsevents\_max\_events}
+      ) \{
+    hdestroy\_r( &\hyperlink{lsevents_8c_a274c60d870a1b91ab606dcf024be1bf7}{lsevents\_event\_name\_ht});
+    \hyperlink{lsevents_8c_ad09b507c9a79282374a0474470454bb8}{lsevents\_max\_events} *= 2;
+    hcreate\_r( \hyperlink{lsevents_8c_ad09b507c9a79282374a0474470454bb8}{lsevents\_max\_events} * 2, &
+      \hyperlink{lsevents_8c_a274c60d870a1b91ab606dcf024be1bf7}{lsevents\_event\_name\_ht});
+    \textcolor{keywordflow}{for}( enp = \hyperlink{lsevents_8c_abec6bcf8613a6268e59e6c5409ee344c}{lsevents\_event\_names}; enp != NULL; enp = enp
+      ->\hyperlink{structlsevents__event__names__struct_a748e63bd8825f239936c5bf165ca869e}{next}) \{
+      entry\_in.key  = enp->\hyperlink{structlsevents__event__names__struct_a07e5a0f2b74c08f388626f18b37cd1b0}{event};
+      entry\_in.data = enp;
+      hsearch\_r( entry\_in, ENTER, &entry\_outp, &\hyperlink{lsevents_8c_a274c60d870a1b91ab606dcf024be1bf7}{lsevents\_event\_name\_ht}
+      );
+    \}
+  \}
+  pthread\_mutex\_unlock( &\hyperlink{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{lsevents\_listener\_mutex});
+  \textcolor{keywordflow}{return} new\_event\_name->\hyperlink{structlsevents__event__names__struct_afdd17d4d473fcf095a279953ea5e0f1c}{cbl};
+\}  
+\end{DoxyCode}
+\hypertarget{lsevents_8c_ab9c425de8de28f0089ad51676873f7e0}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-remove\-\_\-listener@{lsevents\-\_\-remove\-\_\-listener}}
+\index{lsevents\-\_\-remove\-\_\-listener@{lsevents\-\_\-remove\-\_\-listener}!lsevents.c@{lsevents.\-c}}
+\subsubsection[{lsevents\-\_\-remove\-\_\-listener}]{\setlength{\rightskip}{0pt plus 5cm}void lsevents\-\_\-remove\-\_\-listener (
+\begin{DoxyParamCaption}
+\item[{char $\ast$}]{event, }
+\item[{void($\ast$)(char $\ast$)}]{cb}
+\end{DoxyParamCaption}
+)}}\label{lsevents_8c_ab9c425de8de28f0089ad51676873f7e0}
+
+
+Remove a listener previously added with lsevents\-\_\-add\-\_\-listener. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em event} & The name of the event (possibly a regular expression string) \\
+\hline
+{\em cb} & The callback routine to remove \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 154 of file lsevents.\-c.
+
+
+\begin{DoxyCode}
+                                                                \{
+  
+  \hyperlink{structlsevents__listener__struct}{lsevents\_listener\_t} *last, *current;
+  \hyperlink{structlsevents__event__names__struct}{lsevents\_event\_names\_t} *enp;
+  \hyperlink{structlsevents__callbacks__struct}{lsevents\_callbacks\_t}   *cbp, *last\_cbp;
+
+  \textcolor{comment}{//}
+  \textcolor{comment}{// Find the listener to remove}
+  \textcolor{comment}{// and unlink it from the list}
+  \textcolor{comment}{//}
+  pthread\_mutex\_lock( &\hyperlink{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{lsevents\_listener\_mutex});
+  last = NULL;
+  \textcolor{keywordflow}{for}( current = \hyperlink{lsevents_8c_a300dc3edfa8546d75e9f8bab8fa06c5c}{lsevents\_listeners\_p}; current != NULL; 
+      current = current->\hyperlink{structlsevents__listener__struct_a8aed9196b0deab84e018b96c0cc59305}{next}) \{
+    \textcolor{keywordflow}{if}( strcmp( last->\hyperlink{structlsevents__listener__struct_afffe7a6889fda47a3a7a91beefed9168}{raw\_regexp}, event) == 0 && last->\hyperlink{structlsevents__listener__struct_a005906c1c9f0647e6ed1fb4592d8c5d0}{cb} == cb) \{
+      \textcolor{keywordflow}{if}( last == NULL) \{
+        \hyperlink{lsevents_8c_a300dc3edfa8546d75e9f8bab8fa06c5c}{lsevents\_listeners\_p} = current->\hyperlink{structlsevents__listener__struct_a8aed9196b0deab84e018b96c0cc59305}{next};
+      \} \textcolor{keywordflow}{else} \{
+        last->\hyperlink{structlsevents__listener__struct_a8aed9196b0deab84e018b96c0cc59305}{next} = current->\hyperlink{structlsevents__listener__struct_a8aed9196b0deab84e018b96c0cc59305}{next};
+      \}
+      \textcolor{keywordflow}{break};
+    \}
+    last = current;
+  \}
+
+  \textcolor{keywordflow}{if}( current == NULL) \{
+    \hyperlink{lslogging_8c_a0e756b36671055ef02a8f04d2ba8a93b}{lslogging\_log\_message}( \textcolor{stringliteral}{"lsevents\_remove\_listener:
+       Could not find this listener for event '%s'"}, event);
+    pthread\_mutex\_unlock( &\hyperlink{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{lsevents\_listener\_mutex});
+    \textcolor{keywordflow}{return};
+  \}
+
+  \textcolor{comment}{//}
+  \textcolor{comment}{// Remove callback from lists of event names}
+  \textcolor{comment}{//}
+  \textcolor{keywordflow}{for}( enp = \hyperlink{lsevents_8c_abec6bcf8613a6268e59e6c5409ee344c}{lsevents\_event\_names}; enp != NULL; enp = enp->
+      \hyperlink{structlsevents__event__names__struct_a748e63bd8825f239936c5bf165ca869e}{next}) \{
+    \textcolor{keywordflow}{if}( regexec( &current->\hyperlink{structlsevents__listener__struct_a60b0f9e188a08e6101c494af89052d3f}{re}, enp->\hyperlink{structlsevents__event__names__struct_a07e5a0f2b74c08f388626f18b37cd1b0}{event}, 0, NULL, 0) == 0) \{
+      last\_cbp = NULL;
+      \textcolor{keywordflow}{for}( cbp = enp->\hyperlink{structlsevents__event__names__struct_afdd17d4d473fcf095a279953ea5e0f1c}{cbl}; cbp != NULL; cbp = cbp->\hyperlink{structlsevents__callbacks__struct_a6d673746e36b16df34d53e143c1ba881}{next}) \{
+        \textcolor{keywordflow}{if}( cbp->\hyperlink{structlsevents__callbacks__struct_a523024faf274afe9056748ddbe6def5c}{cb} == cb) \{
+          \textcolor{keywordflow}{if}( last\_cbp == NULL)
+            enp->\hyperlink{structlsevents__event__names__struct_afdd17d4d473fcf095a279953ea5e0f1c}{cbl} = NULL;
+          \textcolor{keywordflow}{else}
+            last\_cbp->\hyperlink{structlsevents__callbacks__struct_a6d673746e36b16df34d53e143c1ba881}{next} = cbp->\hyperlink{structlsevents__callbacks__struct_a6d673746e36b16df34d53e143c1ba881}{next};
+          free( cbp);
+          \textcolor{keywordflow}{break};
+        \}
+      \}
+    \}
+  \}
+
+
+  pthread\_mutex\_unlock( &\hyperlink{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{lsevents\_listener\_mutex});
+
+  \textcolor{comment}{//}
+  \textcolor{comment}{// Now remove it}
+  \textcolor{comment}{//}
+  \textcolor{keywordflow}{if}( current->\hyperlink{structlsevents__listener__struct_afffe7a6889fda47a3a7a91beefed9168}{raw\_regexp} != NULL)
+    free( current->\hyperlink{structlsevents__listener__struct_afffe7a6889fda47a3a7a91beefed9168}{raw\_regexp});
+  free(current);
+
+\}
+\end{DoxyCode}
+\hypertarget{lsevents_8c_a7f2ed970b1c3b340b79311e73c5f1e11}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-run@{lsevents\-\_\-run}}
+\index{lsevents\-\_\-run@{lsevents\-\_\-run}!lsevents.c@{lsevents.\-c}}
+\subsubsection[{lsevents\-\_\-run}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-t$\ast$ lsevents\-\_\-run (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{lsevents_8c_a7f2ed970b1c3b340b79311e73c5f1e11}
+
+
+Start up the thread and get out of the way. 
+
+
+
+Definition at line 384 of file lsevents.\-c.
+
+
+\begin{DoxyCode}
+                          \{
+  pthread\_create( &\hyperlink{lsevents_8c_a314640d7c3cb4fa90823ab2418fbac9b}{lsevents\_thread}, NULL, \hyperlink{lsevents_8c_a48e8f9dee00710bbe293b4bbded37a39}{lsevents\_worker}
+      , NULL);
+  \textcolor{keywordflow}{return} &\hyperlink{lsevents_8c_a314640d7c3cb4fa90823ab2418fbac9b}{lsevents\_thread};
+\}
+\end{DoxyCode}
+\hypertarget{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-send\-\_\-event@{lsevents\-\_\-send\-\_\-event}}
+\index{lsevents\-\_\-send\-\_\-event@{lsevents\-\_\-send\-\_\-event}!lsevents.c@{lsevents.\-c}}
+\subsubsection[{lsevents\-\_\-send\-\_\-event}]{\setlength{\rightskip}{0pt plus 5cm}void lsevents\-\_\-send\-\_\-event (
+\begin{DoxyParamCaption}
+\item[{char $\ast$}]{fmt, }
+\item[{}]{...}
+\end{DoxyParamCaption}
+)}}\label{lsevents_8c_a5c6f122382dea3dcc231b772e5e75b46}
+
+
+Call the callback routines for the given event. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em fmt} & a printf style formating string \\
+\hline
+{\em ...} & list of arguments specified by the format string \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 73 of file lsevents.\-c.
+
+
+\begin{DoxyCode}
+                                          \{
+  \textcolor{keywordtype}{char} \textcolor{keyword}{event}[\hyperlink{pgpmac_8h_ab61d790b5572f116e091babfda53627b}{LSEVENTS\_EVENT\_LENGTH}];
+  va\_list arg\_ptr;
+
+  va\_start( arg\_ptr, fmt);
+  vsnprintf( event, \textcolor{keyword}{sizeof}(event)-1, fmt, arg\_ptr);
+  \textcolor{keyword}{event}[\textcolor{keyword}{sizeof}(event)-1]=0;
+  va\_end( arg\_ptr);
+
+  pthread\_mutex\_lock( &\hyperlink{lsevents_8c_ab46f4ebda5e926a213faedac1a545ec1}{lsevents\_queue\_mutex});
+
+  \textcolor{comment}{// maybe wait for room on the queue}
+  \textcolor{keywordflow}{while}( (\hyperlink{lsevents_8c_a3bccf603d56d5b2f4a92fad341d37e2c}{lsevents\_queue\_on} + 1) % \hyperlink{lsevents_8c_a75469307c70790f04b9b2bfcb1473a48}{LSEVENTS\_QUEUE\_LENGTH}
+       == \hyperlink{lsevents_8c_a50ad47e12cc4fc2d88659230b2fd44ff}{lsevents\_queue\_off} % \hyperlink{lsevents_8c_a75469307c70790f04b9b2bfcb1473a48}{LSEVENTS\_QUEUE\_LENGTH}
+      )
+    pthread\_cond\_wait( &\hyperlink{lsevents_8c_a8079d9fb8c35db3ca5f83be5aeb2a747}{lsevents\_queue\_cond}, &
+      \hyperlink{lsevents_8c_ab46f4ebda5e926a213faedac1a545ec1}{lsevents\_queue\_mutex});
+  
+  \hyperlink{lsevents_8c_ad1ff5e895b4016113c8414d9a5daa2f2}{lsevents\_queue}[(\hyperlink{lsevents_8c_a3bccf603d56d5b2f4a92fad341d37e2c}{lsevents\_queue\_on}++) % 
+      LSEVENTS\_QUEUE\_LENGTH].evp = strdup(event);
+
+  pthread\_cond\_signal(  &\hyperlink{lsevents_8c_a8079d9fb8c35db3ca5f83be5aeb2a747}{lsevents\_queue\_cond});
+  pthread\_mutex\_unlock( &\hyperlink{lsevents_8c_ab46f4ebda5e926a213faedac1a545ec1}{lsevents\_queue\_mutex});
+\}
+\end{DoxyCode}
+\hypertarget{lsevents_8c_a48e8f9dee00710bbe293b4bbded37a39}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-worker@{lsevents\-\_\-worker}}
+\index{lsevents\-\_\-worker@{lsevents\-\_\-worker}!lsevents.c@{lsevents.\-c}}
+\subsubsection[{lsevents\-\_\-worker}]{\setlength{\rightskip}{0pt plus 5cm}void$\ast$ lsevents\-\_\-worker (
+\begin{DoxyParamCaption}
+\item[{void $\ast$}]{dummy}
+\end{DoxyParamCaption}
+)}}\label{lsevents_8c_a48e8f9dee00710bbe293b4bbded37a39}
+
+
+Our worker. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em dummy} & Unused but needed by pthreads to be happy \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 325 of file lsevents.\-c.
+
+
+\begin{DoxyCode}
+                       \{
+  
+  \textcolor{keywordtype}{char} *event;
+  \hyperlink{structlsevents__callbacks__struct}{lsevents\_callbacks\_t} *cbi;
+
+  \textcolor{keywordflow}{while}( 1) \{
+    pthread\_mutex\_lock( &\hyperlink{lsevents_8c_ab46f4ebda5e926a213faedac1a545ec1}{lsevents\_queue\_mutex});
+
+    \textcolor{comment}{//}
+    \textcolor{comment}{// wait for someone to send an event}
+    \textcolor{comment}{//}
+    \textcolor{keywordflow}{while}( \hyperlink{lsevents_8c_a50ad47e12cc4fc2d88659230b2fd44ff}{lsevents\_queue\_off} == \hyperlink{lsevents_8c_a3bccf603d56d5b2f4a92fad341d37e2c}{lsevents\_queue\_on}
+      )
+      pthread\_cond\_wait( &\hyperlink{lsevents_8c_a8079d9fb8c35db3ca5f83be5aeb2a747}{lsevents\_queue\_cond}, &
+      \hyperlink{lsevents_8c_ab46f4ebda5e926a213faedac1a545ec1}{lsevents\_queue\_mutex});
+
+    \textcolor{comment}{//}
+    \textcolor{comment}{// Get our event name}
+    \textcolor{comment}{//}
+    \textcolor{keyword}{event} = \hyperlink{lsevents_8c_ad1ff5e895b4016113c8414d9a5daa2f2}{lsevents\_queue}[(\hyperlink{lsevents_8c_a50ad47e12cc4fc2d88659230b2fd44ff}{lsevents\_queue\_off}+
+      +) % \hyperlink{lsevents_8c_a75469307c70790f04b9b2bfcb1473a48}{LSEVENTS\_QUEUE\_LENGTH}].evp;
+
+    \textcolor{comment}{//}
+    \textcolor{comment}{// let the send event process know there is room on the queue again}
+    \textcolor{comment}{//}
+    pthread\_cond\_signal(  &\hyperlink{lsevents_8c_a8079d9fb8c35db3ca5f83be5aeb2a747}{lsevents\_queue\_cond});
+    pthread\_mutex\_unlock( &\hyperlink{lsevents_8c_ab46f4ebda5e926a213faedac1a545ec1}{lsevents\_queue\_mutex});
+
+    \textcolor{comment}{// call our callbacks}
+    \textcolor{comment}{//}
+    pthread\_mutex\_lock( &\hyperlink{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{lsevents\_listener\_mutex});
+    \textcolor{keywordflow}{for}( cbi = \hyperlink{lsevents_8c_a5e3fd5e3c6d11f8a74d79978e00f8835}{lsevents\_register\_event}( event); cbi != 
+      NULL; cbi = cbi->\hyperlink{structlsevents__callbacks__struct_a6d673746e36b16df34d53e143c1ba881}{next}) \{
+      cbi->\hyperlink{structlsevents__callbacks__struct_a523024faf274afe9056748ddbe6def5c}{cb}( event);
+    \}
+    pthread\_mutex\_unlock( &\hyperlink{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{lsevents\_listener\_mutex});
+
+    free( event);
+  \}
+  \textcolor{keywordflow}{return} NULL;
+\}
+\end{DoxyCode}
+
+
+\subsection{Variable Documentation}
+\hypertarget{lsevents_8c_a274c60d870a1b91ab606dcf024be1bf7}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-event\-\_\-name\-\_\-ht@{lsevents\-\_\-event\-\_\-name\-\_\-ht}}
+\index{lsevents\-\_\-event\-\_\-name\-\_\-ht@{lsevents\-\_\-event\-\_\-name\-\_\-ht}!lsevents.c@{lsevents.\-c}}
+\subsubsection[{lsevents\-\_\-event\-\_\-name\-\_\-ht}]{\setlength{\rightskip}{0pt plus 5cm}struct hsearch\-\_\-data lsevents\-\_\-event\-\_\-name\-\_\-ht\hspace{0.3cm}{\ttfamily [static]}}}\label{lsevents_8c_a274c60d870a1b91ab606dcf024be1bf7}
+
+
+Definition at line 31 of file lsevents.\-c.
+
+\hypertarget{lsevents_8c_abec6bcf8613a6268e59e6c5409ee344c}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-event\-\_\-names@{lsevents\-\_\-event\-\_\-names}}
+\index{lsevents\-\_\-event\-\_\-names@{lsevents\-\_\-event\-\_\-names}!lsevents.c@{lsevents.\-c}}
+\subsubsection[{lsevents\-\_\-event\-\_\-names}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lsevents\-\_\-event\-\_\-names\-\_\-t}$\ast$ lsevents\-\_\-event\-\_\-names = N\-U\-L\-L\hspace{0.3cm}{\ttfamily [static]}}}\label{lsevents_8c_abec6bcf8613a6268e59e6c5409ee344c}
+
+
+Definition at line 60 of file lsevents.\-c.
+
+\hypertarget{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-listener\-\_\-mutex@{lsevents\-\_\-listener\-\_\-mutex}}
+\index{lsevents\-\_\-listener\-\_\-mutex@{lsevents\-\_\-listener\-\_\-mutex}!lsevents.c@{lsevents.\-c}}
+\subsubsection[{lsevents\-\_\-listener\-\_\-mutex}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-mutex\-\_\-t lsevents\-\_\-listener\-\_\-mutex\hspace{0.3cm}{\ttfamily [static]}}}\label{lsevents_8c_a70bba59930a1c7d7d181aa03cdfb6c00}
+
+
+mutex to protect the listener linked list 
+
+
+
+Definition at line 65 of file lsevents.\-c.
+
+\hypertarget{lsevents_8c_a300dc3edfa8546d75e9f8bab8fa06c5c}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-listeners\-\_\-p@{lsevents\-\_\-listeners\-\_\-p}}
+\index{lsevents\-\_\-listeners\-\_\-p@{lsevents\-\_\-listeners\-\_\-p}!lsevents.c@{lsevents.\-c}}
+\subsubsection[{lsevents\-\_\-listeners\-\_\-p}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lsevents\-\_\-listener\-\_\-t}$\ast$ lsevents\-\_\-listeners\-\_\-p = N\-U\-L\-L\hspace{0.3cm}{\ttfamily [static]}}}\label{lsevents_8c_a300dc3edfa8546d75e9f8bab8fa06c5c}
+
+
+Pointer to the first item in the link list of listeners. 
+
+
+
+Definition at line 42 of file lsevents.\-c.
+
+\hypertarget{lsevents_8c_ad09b507c9a79282374a0474470454bb8}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-max\-\_\-events@{lsevents\-\_\-max\-\_\-events}}
+\index{lsevents\-\_\-max\-\_\-events@{lsevents\-\_\-max\-\_\-events}!lsevents.c@{lsevents.\-c}}
+\subsubsection[{lsevents\-\_\-max\-\_\-events}]{\setlength{\rightskip}{0pt plus 5cm}int lsevents\-\_\-max\-\_\-events = 1024\hspace{0.3cm}{\ttfamily [static]}}}\label{lsevents_8c_ad09b507c9a79282374a0474470454bb8}
+
+
+Definition at line 29 of file lsevents.\-c.
+
+\hypertarget{lsevents_8c_adcd8ba85365a869892608bb663790204}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-n\-\_\-events@{lsevents\-\_\-n\-\_\-events}}
+\index{lsevents\-\_\-n\-\_\-events@{lsevents\-\_\-n\-\_\-events}!lsevents.c@{lsevents.\-c}}
+\subsubsection[{lsevents\-\_\-n\-\_\-events}]{\setlength{\rightskip}{0pt plus 5cm}int lsevents\-\_\-n\-\_\-events = 0\hspace{0.3cm}{\ttfamily [static]}}}\label{lsevents_8c_adcd8ba85365a869892608bb663790204}
+
+
+Definition at line 30 of file lsevents.\-c.
+
+\hypertarget{lsevents_8c_ad1ff5e895b4016113c8414d9a5daa2f2}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-queue@{lsevents\-\_\-queue}}
+\index{lsevents\-\_\-queue@{lsevents\-\_\-queue}!lsevents.c@{lsevents.\-c}}
+\subsubsection[{lsevents\-\_\-queue}]{\setlength{\rightskip}{0pt plus 5cm}{\bf lsevents\-\_\-queue\-\_\-t} lsevents\-\_\-queue\mbox{[}{\bf L\-S\-E\-V\-E\-N\-T\-S\-\_\-\-Q\-U\-E\-U\-E\-\_\-\-L\-E\-N\-G\-T\-H}\mbox{]}\hspace{0.3cm}{\ttfamily [static]}}}\label{lsevents_8c_ad1ff5e895b4016113c8414d9a5daa2f2}
+
+
+simple list of events 
+
+
+
+Definition at line 21 of file lsevents.\-c.
+
+\hypertarget{lsevents_8c_a8079d9fb8c35db3ca5f83be5aeb2a747}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-queue\-\_\-cond@{lsevents\-\_\-queue\-\_\-cond}}
+\index{lsevents\-\_\-queue\-\_\-cond@{lsevents\-\_\-queue\-\_\-cond}!lsevents.c@{lsevents.\-c}}
+\subsubsection[{lsevents\-\_\-queue\-\_\-cond}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-cond\-\_\-t lsevents\-\_\-queue\-\_\-cond\hspace{0.3cm}{\ttfamily [static]}}}\label{lsevents_8c_a8079d9fb8c35db3ca5f83be5aeb2a747}
+
+
+condition to pause the queue if needed 
+
+
+
+Definition at line 67 of file lsevents.\-c.
+
+\hypertarget{lsevents_8c_ab46f4ebda5e926a213faedac1a545ec1}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-queue\-\_\-mutex@{lsevents\-\_\-queue\-\_\-mutex}}
+\index{lsevents\-\_\-queue\-\_\-mutex@{lsevents\-\_\-queue\-\_\-mutex}!lsevents.c@{lsevents.\-c}}
+\subsubsection[{lsevents\-\_\-queue\-\_\-mutex}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-mutex\-\_\-t lsevents\-\_\-queue\-\_\-mutex\hspace{0.3cm}{\ttfamily [static]}}}\label{lsevents_8c_ab46f4ebda5e926a213faedac1a545ec1}
+
+
+mutex to protect the event queue 
+
+
+
+Definition at line 66 of file lsevents.\-c.
+
+\hypertarget{lsevents_8c_a50ad47e12cc4fc2d88659230b2fd44ff}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-queue\-\_\-off@{lsevents\-\_\-queue\-\_\-off}}
+\index{lsevents\-\_\-queue\-\_\-off@{lsevents\-\_\-queue\-\_\-off}!lsevents.c@{lsevents.\-c}}
+\subsubsection[{lsevents\-\_\-queue\-\_\-off}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int lsevents\-\_\-queue\-\_\-off = 0\hspace{0.3cm}{\ttfamily [static]}}}\label{lsevents_8c_a50ad47e12cc4fc2d88659230b2fd44ff}
+
+
+next queue location to read 
+
+
+
+Definition at line 23 of file lsevents.\-c.
+
+\hypertarget{lsevents_8c_a3bccf603d56d5b2f4a92fad341d37e2c}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-queue\-\_\-on@{lsevents\-\_\-queue\-\_\-on}}
+\index{lsevents\-\_\-queue\-\_\-on@{lsevents\-\_\-queue\-\_\-on}!lsevents.c@{lsevents.\-c}}
+\subsubsection[{lsevents\-\_\-queue\-\_\-on}]{\setlength{\rightskip}{0pt plus 5cm}unsigned int lsevents\-\_\-queue\-\_\-on = 0\hspace{0.3cm}{\ttfamily [static]}}}\label{lsevents_8c_a3bccf603d56d5b2f4a92fad341d37e2c}
+
+
+next queue location to write 
+
+
+
+Definition at line 22 of file lsevents.\-c.
+
+\hypertarget{lsevents_8c_a314640d7c3cb4fa90823ab2418fbac9b}{\index{lsevents.\-c@{lsevents.\-c}!lsevents\-\_\-thread@{lsevents\-\_\-thread}}
+\index{lsevents\-\_\-thread@{lsevents\-\_\-thread}!lsevents.c@{lsevents.\-c}}
+\subsubsection[{lsevents\-\_\-thread}]{\setlength{\rightskip}{0pt plus 5cm}pthread\-\_\-t lsevents\-\_\-thread\hspace{0.3cm}{\ttfamily [static]}}}\label{lsevents_8c_a314640d7c3cb4fa90823ab2418fbac9b}
+
+
+thread to run the event queue 
+
+
+
+Definition at line 64 of file lsevents.\-c.
+

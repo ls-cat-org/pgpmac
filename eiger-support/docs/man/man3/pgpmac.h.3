@@ -1,0 +1,4984 @@
+.TH "pgpmac.h" 3 "Thu Jun 19 2014" "LS-CAT PGPMAC" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+pgpmac.h \- 
+.PP
+Headers for the entire pgpmac project\&.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stdint\&.h>\fP
+.br
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <unistd\&.h>\fP
+.br
+\fC#include <sys/types\&.h>\fP
+.br
+\fC#include <sys/socket\&.h>\fP
+.br
+\fC#include <netdb\&.h>\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+\fC#include <netinet/in\&.h>\fP
+.br
+\fC#include <errno\&.h>\fP
+.br
+\fC#include <poll\&.h>\fP
+.br
+\fC#include <libpq-fe\&.h>\fP
+.br
+\fC#include <ncurses\&.h>\fP
+.br
+\fC#include <math\&.h>\fP
+.br
+\fC#include <pthread\&.h>\fP
+.br
+\fC#include <signal\&.h>\fP
+.br
+\fC#include <sys/signalfd\&.h>\fP
+.br
+\fC#include <sys/time\&.h>\fP
+.br
+\fC#include <time\&.h>\fP
+.br
+\fC#include <getopt\&.h>\fP
+.br
+\fC#include <regex\&.h>\fP
+.br
+\fC#include <hiredis/hiredis\&.h>\fP
+.br
+\fC#include <hiredis/async\&.h>\fP
+.br
+\fC#include <search\&.h>\fP
+.br
+\fC#include <ctype\&.h>\fP
+.br
+
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBlsredis_obj_struct\fP"
+.br
+.RI "\fIRedis Object Basic object whose value is sychronized with our redis db\&. \fP"
+.ti -1c
+.RI "struct \fBtagEthernetCmd\fP"
+.br
+.RI "\fIPMAC ethernet packet definition\&. \fP"
+.ti -1c
+.RI "struct \fBlspmac_cmd_queue_struct\fP"
+.br
+.RI "\fIPMAC command queue item\&. \fP"
+.ti -1c
+.RI "struct \fBlspmac_motor_struct\fP"
+.br
+.RI "\fIMotor information\&. \fP"
+.ti -1c
+.RI "struct \fBlspmac_bi_struct\fP"
+.br
+.RI "\fIStorage for binary inputs\&. \fP"
+.ti -1c
+.RI "struct \fBlspgQueryQueueStruct\fP"
+.br
+.RI "\fIStore each query along with it's callback function\&. \fP"
+.ti -1c
+.RI "struct \fBlspg_waitcryo_struct\fP"
+.br
+.ti -1c
+.RI "struct \fBlspg_getcurrentsampleid_struct\fP"
+.br
+.ti -1c
+.RI "struct \fBlspg_demandairrights_struct\fP"
+.br
+.ti -1c
+.RI "struct \fBlspg_getcenter_struct\fP"
+.br
+.RI "\fIStorage for getcenter query Used for the md2 ROTATE command that generates the centering movies\&. \fP"
+.ti -1c
+.RI "struct \fBlspg_starttransfer_struct\fP"
+.br
+.RI "\fIreturns 1 if transfer can continue 0 to abort \fP"
+.ti -1c
+.RI "struct \fBlspg_nextsample_struct\fP"
+.br
+.RI "\fIReturns the next sample number Just a 32 bit int (Ha!, take that, nextshot!) \fP"
+.ti -1c
+.RI "struct \fBlspg_nextshot_struct\fP"
+.br
+.RI "\fIStorage definition for nextshot query\&. \fP"
+.in -1c
+.SS "Macros"
+
+.in +1c
+.ti -1c
+.RI "#define \fB_GNU_SOURCE\fP"
+.br
+.ti -1c
+.RI "#define \fBLS_DISPLAY_WINDOW_HEIGHT\fP   8"
+.br
+.RI "\fINumber of status box rows\&. \fP"
+.ti -1c
+.RI "#define \fBLS_DISPLAY_WINDOW_WIDTH\fP   24"
+.br
+.RI "\fINumber of status box columns\&. \fP"
+.ti -1c
+.RI "#define \fBLS_PG_QUERY_STRING_LENGTH\fP   1024"
+.br
+.RI "\fIFixed length postgresql query strings\&. Queries should all be function calls so this is not as weird as one might think\&. \fP"
+.ti -1c
+.RI "#define \fBLSEVENTS_EVENT_LENGTH\fP   256"
+.br
+.RI "\fIFixed length for event names: simplifies string handling\&. \fP"
+.ti -1c
+.RI "#define \fBLSPMAC_MAGIC_NUMBER\fP   0x9700436"
+.br
+.ti -1c
+.RI "#define \fBMD2CMDS_CMD_LENGTH\fP   32"
+.br
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef struct \fBlsredis_obj_struct\fP \fBlsredis_obj_t\fP"
+.br
+.RI "\fIRedis Object Basic object whose value is sychronized with our redis db\&. \fP"
+.ti -1c
+.RI "typedef struct \fBtagEthernetCmd\fP \fBpmac_cmd_t\fP"
+.br
+.RI "\fIPMAC ethernet packet definition\&. \fP"
+.ti -1c
+.RI "typedef struct 
+.br
+\fBlspmac_cmd_queue_struct\fP \fBpmac_cmd_queue_t\fP"
+.br
+.RI "\fIPMAC command queue item\&. \fP"
+.ti -1c
+.RI "typedef struct \fBlspmac_motor_struct\fP \fBlspmac_motor_t\fP"
+.br
+.RI "\fIMotor information\&. \fP"
+.ti -1c
+.RI "typedef struct \fBlspmac_bi_struct\fP \fBlspmac_bi_t\fP"
+.br
+.RI "\fIStorage for binary inputs\&. \fP"
+.ti -1c
+.RI "typedef struct \fBlspgQueryQueueStruct\fP \fBlspg_query_queue_t\fP"
+.br
+.RI "\fIStore each query along with it's callback function\&. \fP"
+.ti -1c
+.RI "typedef struct \fBlspg_waitcryo_struct\fP \fBlspg_waitcryo_t\fP"
+.br
+.ti -1c
+.RI "typedef struct 
+.br
+\fBlspg_getcurrentsampleid_struct\fP \fBlspg_getcurrentsampleid_t\fP"
+.br
+.ti -1c
+.RI "typedef struct 
+.br
+\fBlspg_demandairrights_struct\fP \fBlspg_demandairrights_t\fP"
+.br
+.ti -1c
+.RI "typedef struct 
+.br
+\fBlspg_getcenter_struct\fP \fBlspg_getcenter_t\fP"
+.br
+.RI "\fIStorage for getcenter query Used for the md2 ROTATE command that generates the centering movies\&. \fP"
+.ti -1c
+.RI "typedef struct 
+.br
+\fBlspg_starttransfer_struct\fP \fBlspg_starttransfer_t\fP"
+.br
+.RI "\fIreturns 1 if transfer can continue 0 to abort \fP"
+.ti -1c
+.RI "typedef struct 
+.br
+\fBlspg_nextsample_struct\fP \fBlspg_nextsample_t\fP"
+.br
+.RI "\fIReturns the next sample number Just a 32 bit int (Ha!, take that, nextshot!) \fP"
+.ti -1c
+.RI "typedef struct \fBlspg_nextshot_struct\fP \fBlspg_nextshot_t\fP"
+.br
+.RI "\fIStorage definition for nextshot query\&. \fP"
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "double \fBlspmac_getPosition\fP (\fBlspmac_motor_t\fP *)"
+.br
+.RI "\fIget the motor position (with locking) \fP"
+.ti -1c
+.RI "char ** \fBlspg_array2ptrs\fP (char *)"
+.br
+.RI "\fIreturns a null terminated list of strings parsed from postgresql array \fP"
+.ti -1c
+.RI "char ** \fBlsredis_get_string_array\fP (\fBlsredis_obj_t\fP *p)"
+.br
+.ti -1c
+.RI "void \fBlspmac_SockSendDPline\fP (char *, char *fmt,\&.\&.\&.)"
+.br
+.RI "\fIprepare (queue up) a line to send the dpram ascii command interface \fP"
+.ti -1c
+.RI "\fBpmac_cmd_queue_t\fP * \fBlspmac_SockSendline\fP (char *, char *,\&.\&.\&.)"
+.br
+.RI "\fISend a one line command\&. \fP"
+.ti -1c
+.RI "\fBlsredis_obj_t\fP * \fBlsredis_get_obj\fP (char *,\&.\&.\&.)"
+.br
+.ti -1c
+.RI "char * \fBlsredis_getstr\fP (\fBlsredis_obj_t\fP *p)"
+.br
+.RI "\fIreturn a copy of the key's string value be sure to free the result \fP"
+.ti -1c
+.RI "void \fBPmacSockSendline\fP (char *s)"
+.br
+.ti -1c
+.RI "unsigned int \fBlspg_nextsample_all\fP (int *err)"
+.br
+.ti -1c
+.RI "char \fBlsredis_getc\fP (\fBlsredis_obj_t\fP *p)"
+.br
+.ti -1c
+.RI "long int \fBlsredis_getl\fP (\fBlsredis_obj_t\fP *p)"
+.br
+.ti -1c
+.RI "void \fBlsevents_add_listener\fP (char *, void(*cb)(char *))"
+.br
+.RI "\fIAdd a callback routine to listen for a specific event\&. \fP"
+.ti -1c
+.RI "void \fBlsevents_init\fP ()"
+.br
+.RI "\fIInitialize this module\&. \fP"
+.ti -1c
+.RI "void \fBlsevents_remove_listener\fP (char *, void(*cb)(char *))"
+.br
+.RI "\fIRemove a listener previously added with lsevents_add_listener\&. \fP"
+.ti -1c
+.RI "pthread_t * \fBlsevents_run\fP ()"
+.br
+.RI "\fIStart up the thread and get out of the way\&. \fP"
+.ti -1c
+.RI "void \fBlsevents_send_event\fP (char *,\&.\&.\&.)"
+.br
+.RI "\fICall the callback routines for the given event\&. \fP"
+.ti -1c
+.RI "void \fBlsevents_preregister_event\fP (char *fmt,\&.\&.\&.)"
+.br
+.ti -1c
+.RI "void \fBlslogging_init\fP ()"
+.br
+.RI "\fIInitialize the lslogging objects\&. \fP"
+.ti -1c
+.RI "void \fBlslogging_log_message\fP (char *fmt,\&.\&.\&.)"
+.br
+.RI "\fIThe routine everyone will be talking about\&. \fP"
+.ti -1c
+.RI "void \fBlsredis_log\fP (char *fmt,\&.\&.\&.)"
+.br
+.RI "\fIsend log message to our redis log key \fP"
+.ti -1c
+.RI "pthread_t * \fBlslogging_run\fP ()"
+.br
+.RI "\fIStart up the worker thread\&. \fP"
+.ti -1c
+.RI "int \fBlspg_demandairrights_all\fP ()"
+.br
+.RI "\fIdo nothing until we get airrights \fP"
+.ti -1c
+.RI "void \fBlspg_getcenter_call\fP ()"
+.br
+.RI "\fIRequest a getcenter query\&. \fP"
+.ti -1c
+.RI "void \fBlspg_getcenter_done\fP ()"
+.br
+.RI "\fIDone with getcenter query\&. \fP"
+.ti -1c
+.RI "void \fBlspg_getcenter_wait\fP ()"
+.br
+.RI "\fIWait for a getcenter query to return\&. \fP"
+.ti -1c
+.RI "unsigned int \fBlspg_getcurrentsampleid_all\fP ()"
+.br
+.RI "\fIreturn the current sampleid \fP"
+.ti -1c
+.RI "int \fBlspg_getcurrentsampleid_wait_for_id\fP (unsigned int test)"
+.br
+.ti -1c
+.RI "void \fBlspg_init\fP ()"
+.br
+.RI "\fIInitiallize the lspg module\&. \fP"
+.ti -1c
+.RI "void \fBlspg_nextshot_call\fP ()"
+.br
+.RI "\fIQueue up a nextshot query\&. \fP"
+.ti -1c
+.RI "void \fBlspg_nextshot_done\fP ()"
+.br
+.RI "\fICalled when the next shot query has been processed\&. \fP"
+.ti -1c
+.RI "void \fBlspg_nextshot_wait\fP ()"
+.br
+.RI "\fIWait for the next shot query to get processed\&. \fP"
+.ti -1c
+.RI "void \fBlspg_query_push\fP (void(*cb)(\fBlspg_query_queue_t\fP *, PGresult *), void(*ecb)(), char *fmt,\&.\&.\&.)"
+.br
+.RI "\fIPlace a query on the queue\&. \fP"
+.ti -1c
+.RI "pthread_t * \fBlspg_run\fP ()"
+.br
+.RI "\fIStart 'er runnin'\&. \fP"
+.ti -1c
+.RI "int \fBlspg_seq_run_prep_all\fP (long long skey, double \fBkappa\fP, double \fBphi\fP, double cx, double cy, double ax, double ay, double az)"
+.br
+.RI "\fIConvinence function to call seq run prep\&. \fP"
+.ti -1c
+.RI "void \fBlspg_starttransfer_call\fP (unsigned int nextsample, int \fBsample_detected\fP, double ax, double ay, double az, double horz, double vert, double esttime)"
+.br
+.ti -1c
+.RI "void \fBlspg_starttransfer_done\fP ()"
+.br
+.ti -1c
+.RI "void \fBlspg_starttransfer_wait\fP ()"
+.br
+.ti -1c
+.RI "int \fBlspg_waitcryo_all\fP ()"
+.br
+.RI "\fIno need to get fancy with the wait cryo command It should not return until the robot is almost ready for air rights \fP"
+.ti -1c
+.RI "void \fBlspg_waitcryo_cb\fP (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
+.br
+.ti -1c
+.RI "void \fBlspg_zoom_lut_call\fP ()"
+.br
+.ti -1c
+.RI "int \fBlspmac_getBIPosition\fP (\fBlspmac_bi_t\fP *)"
+.br
+.RI "\fIget binary input value \fP"
+.ti -1c
+.RI "void \fBlspmac_home1_queue\fP (\fBlspmac_motor_t\fP *mp)"
+.br
+.RI "\fIHome the motor\&. \fP"
+.ti -1c
+.RI "void \fBlspmac_home2_queue\fP (\fBlspmac_motor_t\fP *mp)"
+.br
+.RI "\fISecond stage of homing\&. \fP"
+.ti -1c
+.RI "void \fBlspmac_abort\fP ()"
+.br
+.RI "\fIabort motion and try to recover \fP"
+.ti -1c
+.RI "void \fBlspmac_spin\fP (\fBlspmac_motor_t\fP *)"
+.br
+.ti -1c
+.RI "void \fBlspmac_init\fP (int, int)"
+.br
+.RI "\fIInitialize this module\&. \fP"
+.ti -1c
+.RI "int \fBlspmac_jogabs_queue\fP (\fBlspmac_motor_t\fP *, double)"
+.br
+.RI "\fIUse jog to move motor to requested position\&. \fP"
+.ti -1c
+.RI "int \fBlspmac_move_or_jog_abs_queue\fP (\fBlspmac_motor_t\fP *mp, double requested_position, int use_jo)"
+.br
+.RI "\fIMove method for normal stepper and servo motor objects Returns non-zero on abort, zero if OK\&. \fP"
+.ti -1c
+.RI "int \fBlspmac_move_or_jog_preset_queue\fP (\fBlspmac_motor_t\fP *, char *, int)"
+.br
+.RI "\fImove using a preset value returns 0 on success, non-zero on error \fP"
+.ti -1c
+.RI "void \fBlspmac_move_or_jog_queue\fP (\fBlspmac_motor_t\fP *, double, int)"
+.br
+.ti -1c
+.RI "int \fBlspmac_move_preset_queue\fP (\fBlspmac_motor_t\fP *mp, char *preset_name)"
+.br
+.RI "\fIMove a given motor to one of its preset positions\&. \fP"
+.ti -1c
+.RI "int \fBlspmac_moveabs_queue\fP (\fBlspmac_motor_t\fP *, double)"
+.br
+.RI "\fIUse coordinate system motion program, if available, to move motor to requested position\&. \fP"
+.ti -1c
+.RI "int \fBlspmac_moveabs_wait\fP (\fBlspmac_motor_t\fP *mp, double timeout)"
+.br
+.RI "\fIWait for motor to finish moving\&. \fP"
+.ti -1c
+.RI "pthread_t * \fBlspmac_run\fP ()"
+.br
+.RI "\fIStart up the lspmac thread\&. \fP"
+.ti -1c
+.RI "void \fBlspmac_video_rotate\fP (double secs)"
+.br
+.RI "\fISpecial motion program to collect centering video\&. \fP"
+.ti -1c
+.RI "int \fBlsredis_cmpnstr\fP (\fBlsredis_obj_t\fP *p, char *s, int n)"
+.br
+.ti -1c
+.RI "int \fBlsredis_cmpstr\fP (\fBlsredis_obj_t\fP *p, char *s)"
+.br
+.ti -1c
+.RI "int \fBlsredis_find_preset\fP (char *base, char *preset_name, double *dval)"
+.br
+.RI "\fIGet the value of the given preset and return it in dval Returns 0 on error, non-zero on success;\&. \fP"
+.ti -1c
+.RI "int \fBlsredis_getb\fP (\fBlsredis_obj_t\fP *p)"
+.br
+.ti -1c
+.RI "double \fBlsredis_getd\fP (\fBlsredis_obj_t\fP *p)"
+.br
+.ti -1c
+.RI "void \fBlsredis_init\fP ()"
+.br
+.RI "\fIInitialize this module, that is, set up the connections\&. \fP"
+.ti -1c
+.RI "int \fBlsredis_regexec\fP (const regex_t *preg, \fBlsredis_obj_t\fP *p, size_t nmatch, regmatch_t *pmatch, int eflags)"
+.br
+.ti -1c
+.RI "pthread_t * \fBlsredis_run\fP ()"
+.br
+.ti -1c
+.RI "void \fBlsredis_setstr\fP (\fBlsredis_obj_t\fP *p, char *fmt,\&.\&.\&.)"
+.br
+.RI "\fISet the value and update redis\&. \fP"
+.ti -1c
+.RI "void \fBlstimer_set_timer\fP (char *, int, unsigned long int, unsigned long int)"
+.br
+.RI "\fICreate a timer\&. \fP"
+.ti -1c
+.RI "void \fBlstimer_unset_timer\fP (char *event)"
+.br
+.RI "\fIUnsets all timers for the given event\&. \fP"
+.ti -1c
+.RI "void \fBlstimer_init\fP ()"
+.br
+.RI "\fIInitialize the timer list and pthread stuff\&. \fP"
+.ti -1c
+.RI "pthread_t * \fBlstimer_run\fP ()"
+.br
+.RI "\fIStart up our thread\&. \fP"
+.ti -1c
+.RI "void \fBlsupdate_init\fP ()"
+.br
+.ti -1c
+.RI "pthread_t * \fBlsupdate_run\fP ()"
+.br
+.ti -1c
+.RI "void \fBmd2cmds_init\fP ()"
+.br
+.RI "\fIInitialize the md2cmds module\&. \fP"
+.ti -1c
+.RI "pthread_t * \fBmd2cmds_run\fP ()"
+.br
+.RI "\fIStart up the thread\&. \fP"
+.ti -1c
+.RI "void \fBpgpmac_printf\fP (char *fmt,\&.\&.\&.)"
+.br
+.RI "\fITerminal output routine ala printf\&. \fP"
+.ti -1c
+.RI "void \fBlstest_main\fP ()"
+.br
+.ti -1c
+.RI "int \fBlspmac_est_move_time\fP (double *est_time, int *mmask, \fBlspmac_motor_t\fP *mp_1, int jog_1, char *preset_1, double end_point_1,\&.\&.\&.)"
+.br
+.RI "\fIMove the motors and estimate the time it'll take to finish the job\&. \fP"
+.ti -1c
+.RI "int \fBlspmac_est_move_time_wait\fP (double move_time, int cmask, \fBlspmac_motor_t\fP *mp_1,\&.\&.\&.)"
+.br
+.RI "\fIwait for motion to stop returns non-zero if the wait timed out \fP"
+.ti -1c
+.RI "void \fBlsredis_set_preset\fP (char *base, char *preset_name, double dval)"
+.br
+.RI "\fIset the given preset to the given value create a new preset if we can't find it \fP"
+.ti -1c
+.RI "\fBlsredis_obj_t\fP * \fB_lsredis_get_obj\fP (char *key)"
+.br
+.RI "\fIMaybe add a new object Used internally for this module Must be called with lsredis_mutex locked\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBlspmac_find_motor_by_name\fP (char *name)"
+.br
+.ti -1c
+.RI "int \fBlsredis_find_preset_index_by_position\fP (\fBlspmac_motor_t\fP *mp)"
+.br
+.RI "\fIFor the given motor object return the index of the current preset or -1 if we are not at a preset position\&. \fP"
+.ti -1c
+.RI "void \fBlspmac_SockSendDPControlChar\fP (char *event, char c)"
+.br
+.RI "\fIuse dpram ascii interface to send a control character \fP"
+.ti -1c
+.RI "int \fBlspmac_set_motion_flags\fP (int *mmaskp, \fBlspmac_motor_t\fP *mp_1,\&.\&.\&.)"
+.br
+.RI "\fISet the coordinate system motion flags (m5075) for the null terminated list of motors that we are planning on running a motion program with\&. \fP"
+.ti -1c
+.RI "void \fBlsredis_load_presets\fP (char *motor_name)"
+.br
+.RI "\fIupdate the presets hash table for the named motor \fP"
+.ti -1c
+.RI "void \fBpgpmac_request_stay_of_execution\fP (int secs)"
+.br
+.RI "\fIPostpone the day of reckoning This assumes the quit_cb routine is called once a second\&. \fP"
+.ti -1c
+.RI "void \fBmd2cmds_push_queue\fP (char *action)"
+.br
+.ti -1c
+.RI "\fBpmac_cmd_queue_t\fP * \fBlspmac_SockSendControlCharPrint\fP (char *event, char c)"
+.br
+.RI "\fISend a control character\&. \fP"
+.ti -1c
+.RI "void \fBlsredis_config\fP ()"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "\fBlspg_waitcryo_t\fP \fBlspg_waitcryo\fP"
+.br
+.RI "\fIsignal the robot \fP"
+.ti -1c
+.RI "\fBlspg_getcurrentsampleid_t\fP \fBlspg_getcurrentsampleid\fP"
+.br
+.RI "\fIour currentsample id \fP"
+.ti -1c
+.RI "\fBlspg_demandairrights_t\fP \fBlspg_demandairrights\fP"
+.br
+.RI "\fIour demandairrights object \fP"
+.ti -1c
+.RI "\fBlspg_getcenter_t\fP \fBlspg_getcenter\fP"
+.br
+.RI "\fIthe getcenter object \fP"
+.ti -1c
+.RI "\fBlspg_starttransfer_t\fP \fBlspg_starttransfer\fP"
+.br
+.RI "\fIstart a sample transfer \fP"
+.ti -1c
+.RI "\fBlspg_nextsample_t\fP \fBlspg_nextsample\fP"
+.br
+.RI "\fIthe very next sample \fP"
+.ti -1c
+.RI "int \fBpgpmac_use_pg\fP"
+.br
+.RI "\fInon-zero to start up lspg thread, 0 to not (reids hash PG in config\&.HOSTNAME sets this) \fP"
+.ti -1c
+.RI "int \fBpgpmac_use_autoscint\fP"
+.br
+.RI "\fInon-zero to automatically move the alignment stage when the scintillator moves (redis hash AUTOSCINT in config\&.HOSTNAME sets this) \fP"
+.ti -1c
+.RI "\fBlspg_nextshot_t\fP \fBlspg_nextshot\fP"
+.br
+.RI "\fIthe nextshot object \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP \fBlspmac_motors\fP []"
+.br
+.RI "\fIAll our motors\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBomega\fP"
+.br
+.RI "\fIMD2 omega axis (the air bearing) \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBalignx\fP"
+.br
+.RI "\fIAlignment stage X\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBaligny\fP"
+.br
+.RI "\fIAlignment stage Y\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBalignz\fP"
+.br
+.RI "\fIAlignment stage X\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBanal\fP"
+.br
+.RI "\fIPolaroid analyzer motor\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBzoom\fP"
+.br
+.RI "\fIOptical zoom\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBapery\fP"
+.br
+.RI "\fIAperture Y\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBaperz\fP"
+.br
+.RI "\fIAperture Z\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBcapy\fP"
+.br
+.RI "\fICapillary Y\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBcapz\fP"
+.br
+.RI "\fICapillary Z\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBscint\fP"
+.br
+.RI "\fIScintillator Z\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBcenx\fP"
+.br
+.RI "\fICentering Table X\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBceny\fP"
+.br
+.RI "\fICentering Table Y\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBkappa\fP"
+.br
+.RI "\fIKappa\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBphi\fP"
+.br
+.RI "\fIPhi (not data collection axis) \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBfshut\fP"
+.br
+.RI "\fIFast shutter\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBflight\fP"
+.br
+.RI "\fIFront Light DAC\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBblight\fP"
+.br
+.RI "\fIBack Light DAC\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBfscint\fP"
+.br
+.RI "\fIScintillator Piezo DAC\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBsmart_mag_oo\fP"
+.br
+.RI "\fISmart Magnet on/off\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBblight_ud\fP"
+.br
+.RI "\fIBack light Up/Down actuator\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBcryo\fP"
+.br
+.RI "\fIMove the cryostream towards or away from the crystal\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBdryer\fP"
+.br
+.RI "\fIblow air on the scintilator to dry it off \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBfluo\fP"
+.br
+.RI "\fIMove the fluorescence detector in/out\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBflight_oo\fP"
+.br
+.RI "\fITurn front light on/off\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBblight_f\fP"
+.br
+.RI "\fIBack light scale factor\&. \fP"
+.ti -1c
+.RI "\fBlspmac_motor_t\fP * \fBflight_f\fP"
+.br
+.RI "\fIFront light scale factor\&. \fP"
+.ti -1c
+.RI "int \fBlspmac_nmotors\fP"
+.br
+.RI "\fIThe number of motors we manage\&. \fP"
+.ti -1c
+.RI "\fBlspmac_bi_t\fP * \fBlp_air\fP"
+.br
+.RI "\fILow pressure air OK\&. \fP"
+.ti -1c
+.RI "\fBlspmac_bi_t\fP * \fBhp_air\fP"
+.br
+.RI "\fIHigh pressure air OK\&. \fP"
+.ti -1c
+.RI "\fBlspmac_bi_t\fP * \fBcryo_switch\fP"
+.br
+.RI "\fIthat little toggle switch for the cryo \fP"
+.ti -1c
+.RI "\fBlspmac_bi_t\fP * \fBblight_down\fP"
+.br
+.RI "\fIBacklight is down\&. \fP"
+.ti -1c
+.RI "\fBlspmac_bi_t\fP * \fBblight_up\fP"
+.br
+.RI "\fIBacklight is up\&. \fP"
+.ti -1c
+.RI "\fBlspmac_bi_t\fP * \fBcryo_back\fP"
+.br
+.RI "\fIcryo is in the back position \fP"
+.ti -1c
+.RI "\fBlspmac_bi_t\fP * \fBfluor_back\fP"
+.br
+.RI "\fIfluor is in the back position \fP"
+.ti -1c
+.RI "\fBlspmac_bi_t\fP * \fBsample_detected\fP"
+.br
+.RI "\fIsmart magnet detected sample \fP"
+.ti -1c
+.RI "\fBlspmac_bi_t\fP * \fBetel_ready\fP"
+.br
+.RI "\fIETEL is ready\&. \fP"
+.ti -1c
+.RI "\fBlspmac_bi_t\fP * \fBetel_on\fP"
+.br
+.RI "\fIETEL is on\&. \fP"
+.ti -1c
+.RI "\fBlspmac_bi_t\fP * \fBetel_init_ok\fP"
+.br
+.RI "\fIETEL initialized OK\&. \fP"
+.ti -1c
+.RI "\fBlspmac_bi_t\fP * \fBminikappa_ok\fP"
+.br
+.RI "\fIMinikappa is OK (whatever that means) \fP"
+.ti -1c
+.RI "\fBlspmac_bi_t\fP * \fBsmart_mag_on\fP"
+.br
+.RI "\fIsmart magnet is on \fP"
+.ti -1c
+.RI "\fBlspmac_bi_t\fP * \fBarm_parked\fP"
+.br
+.RI "\fI(whose arm? parked where?) \fP"
+.ti -1c
+.RI "\fBlspmac_bi_t\fP * \fBshutter_open\fP"
+.br
+.RI "\fIshutter is open (note in pmc says this is a slow input) \fP"
+.ti -1c
+.RI "\fBlspmac_bi_t\fP * \fBsmart_mag_off\fP"
+.br
+.RI "\fIsmart magnet is off \fP"
+.ti -1c
+.RI "\fBlspmac_bi_t\fP * \fBsmart_mag_err\fP"
+.br
+.RI "\fIsmart magnet error (coil broken perhaps) \fP"
+.ti -1c
+.RI "struct timespec \fBomega_zero_time\fP"
+.br
+.RI "\fITime we believe that omega crossed zero\&. \fP"
+.ti -1c
+.RI "WINDOW * \fBterm_output\fP"
+.br
+.RI "\fIplace to print stuff out \fP"
+.ti -1c
+.RI "WINDOW * \fBterm_input\fP"
+.br
+.RI "\fIplace to put the cursor \fP"
+.ti -1c
+.RI "WINDOW * \fBterm_status\fP"
+.br
+.RI "\fIshutter, lamp, air, etc status \fP"
+.ti -1c
+.RI "WINDOW * \fBterm_status2\fP"
+.br
+.RI "\fIshutter, lamp, air, etc status \fP"
+.ti -1c
+.RI "pthread_mutex_t \fBncurses_mutex\fP"
+.br
+.RI "\fIallow more than one thread access to the screen \fP"
+.ti -1c
+.RI "pthread_cond_t \fBmd2cmds_cond\fP"
+.br
+.RI "\fIcondition to signal when it's time to run an md2 command \fP"
+.ti -1c
+.RI "pthread_mutex_t \fBmd2cmds_mutex\fP"
+.br
+.RI "\fImutex for the condition \fP"
+.ti -1c
+.RI "pthread_cond_t \fBmd2cmds_pg_cond\fP"
+.br
+.ti -1c
+.RI "pthread_mutex_t \fBmd2cmds_pg_mutex\fP"
+.br
+.ti -1c
+.RI "pthread_mutex_t \fBpmac_queue_mutex\fP"
+.br
+.RI "\fImanage access to the pmac command queue \fP"
+.ti -1c
+.RI "pthread_cond_t \fBpmac_queue_cond\fP"
+.br
+.RI "\fIwait for a command to be sent to PMAC before continuing \fP"
+.ti -1c
+.RI "pthread_mutex_t \fBlspmac_shutter_mutex\fP"
+.br
+.RI "\fICoordinates threads reading shutter status\&. \fP"
+.ti -1c
+.RI "pthread_cond_t \fBlspmac_shutter_cond\fP"
+.br
+.RI "\fIAllows waiting for the shutter status to change\&. \fP"
+.ti -1c
+.RI "int \fBlspmac_shutter_state\fP"
+.br
+.RI "\fIState of the shutter, used to detect changes\&. \fP"
+.ti -1c
+.RI "int \fBlspmac_shutter_has_opened\fP"
+.br
+.RI "\fIIndicates that the shutter had opened, perhaps briefly even if the state did not change\&. \fP"
+.ti -1c
+.RI "pthread_mutex_t \fBlspmac_moving_mutex\fP"
+.br
+.RI "\fICoordinate moving motors between threads\&. \fP"
+.ti -1c
+.RI "pthread_cond_t \fBlspmac_moving_cond\fP"
+.br
+.RI "\fIWait for motor(s) to finish moving condition\&. \fP"
+.ti -1c
+.RI "int \fBlspmac_moving_flags\fP"
+.br
+.RI "\fIFlag used to implement motor moving condition\&. \fP"
+.ti -1c
+.RI "pthread_mutex_t \fBmd2_status_mutex\fP"
+.br
+.RI "\fISynchronize reading/writting status buffer\&. \fP"
+.ti -1c
+.RI "char \fBmd2cmds_cmd\fP []"
+.br
+.RI "\fIour command; \fP"
+.ti -1c
+.RI "\fBlsredis_obj_t\fP * \fBmd2cmds_md_status_code\fP"
+.br
+.ti -1c
+.RI "pthread_mutex_t \fBlsredis_mutex\fP"
+.br
+.ti -1c
+.RI "pthread_cond_t \fBlsredis_cond\fP"
+.br
+.ti -1c
+.RI "int \fBlsredis_running\fP"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+Headers for the entire pgpmac project\&. 
+
+\fBDate:\fP
+.RS 4
+2012 
+.RE
+.PP
+\fBAuthor:\fP
+.RS 4
+Keith Brister 
+.RE
+.PP
+\fBCopyright:\fP
+.RS 4
+All Rights Reserved 
+.RE
+.PP
+
+.PP
+Definition in file \fBpgpmac\&.h\fP\&.
+.SH "Macro Definition Documentation"
+.PP 
+.SS "#define _GNU_SOURCE"
+
+.PP
+Definition at line 7 of file pgpmac\&.h\&.
+.SS "#define LS_DISPLAY_WINDOW_HEIGHT   8"
+
+.PP
+Number of status box rows\&. 
+.PP
+Definition at line 58 of file pgpmac\&.h\&.
+.SS "#define LS_DISPLAY_WINDOW_WIDTH   24"
+
+.PP
+Number of status box columns\&. 
+.PP
+Definition at line 62 of file pgpmac\&.h\&.
+.SS "#define LS_PG_QUERY_STRING_LENGTH   1024"
+
+.PP
+Fixed length postgresql query strings\&. Queries should all be function calls so this is not as weird as one might think\&. 
+.PP
+Definition at line 65 of file pgpmac\&.h\&.
+.SS "#define LSEVENTS_EVENT_LENGTH   256"
+
+.PP
+Fixed length for event names: simplifies string handling\&. 
+.PP
+Definition at line 68 of file pgpmac\&.h\&.
+.SS "#define LSPMAC_MAGIC_NUMBER   0x9700436"
+
+.PP
+Definition at line 97 of file pgpmac\&.h\&.
+.SS "#define MD2CMDS_CMD_LENGTH   32"
+
+.PP
+Definition at line 509 of file pgpmac\&.h\&.
+.SH "Typedef Documentation"
+.PP 
+.SS "typedef struct \fBlspg_demandairrights_struct\fP  \fBlspg_demandairrights_t\fP"
+
+.SS "typedef struct \fBlspg_getcenter_struct\fP  \fBlspg_getcenter_t\fP"
+
+.PP
+Storage for getcenter query Used for the md2 ROTATE command that generates the centering movies\&. 
+.SS "typedef struct \fBlspg_getcurrentsampleid_struct\fP  \fBlspg_getcurrentsampleid_t\fP"
+
+.SS "typedef struct \fBlspg_nextsample_struct\fP  \fBlspg_nextsample_t\fP"
+
+.PP
+Returns the next sample number Just a 32 bit int (Ha!, take that, nextshot!) 
+.SS "typedef struct \fBlspg_nextshot_struct\fP  \fBlspg_nextshot_t\fP"
+
+.PP
+Storage definition for nextshot query\&. The next shot query returns all the information needed to collect the next data frame\&. Since SQL allows for null fields independently from blank strings a separate integer is used as a flag for this case\&. This adds to the program complexity but allows for some important cases\&. Suck it up\&.definition of the next image to be taken (and the one after that, too!) 
+.SS "typedef struct \fBlspgQueryQueueStruct\fP  \fBlspg_query_queue_t\fP"
+
+.PP
+Store each query along with it's callback function\&. All calls are asynchronous 
+.SS "typedef struct \fBlspg_starttransfer_struct\fP  \fBlspg_starttransfer_t\fP"
+
+.PP
+returns 1 if transfer can continue 0 to abort 
+.SS "typedef struct \fBlspg_waitcryo_struct\fP  \fBlspg_waitcryo_t\fP"
+
+.SS "typedef struct \fBlspmac_bi_struct\fP  \fBlspmac_bi_t\fP"
+
+.PP
+Storage for binary inputs\&. 
+.SS "typedef struct \fBlspmac_motor_struct\fP  \fBlspmac_motor_t\fP"
+
+.PP
+Motor information\&. A catchall for motors and motor like objects\&. Not all members are used by all objects\&. 
+.SS "typedef struct \fBlsredis_obj_struct\fP  \fBlsredis_obj_t\fP"
+
+.PP
+Redis Object Basic object whose value is sychronized with our redis db\&. 
+.SS "typedef struct \fBlspmac_cmd_queue_struct\fP  \fBpmac_cmd_queue_t\fP"
+
+.PP
+PMAC command queue item\&. Command queue items are fixed length to simplify memory management\&. 
+.SS "typedef struct \fBtagEthernetCmd\fP  \fBpmac_cmd_t\fP"
+
+.PP
+PMAC ethernet packet definition\&. Taken directly from the Delta Tau documentation\&. 
+.SH "Function Documentation"
+.PP 
+.SS "\fBlsredis_obj_t\fP* _lsredis_get_obj (char *key)"
+
+.PP
+Maybe add a new object Used internally for this module Must be called with lsredis_mutex locked\&. 
+.PP
+Definition at line 544 of file lsredis\&.c\&.
+.PP
+.nf
+                                            {
+  lsredis_obj_t *p;
+  regmatch_t pmatch[2];
+  int err;
+  ENTRY htab_input, *htab_output;
+
+  // Dispense with obviously bad keys straight away
+  // unless p->valid == 0 in which case we call HGET first
+  //
+  // TODO: review logic: is there ever a time when valid is zero for a preexisting p and HGET has not been called?
+  //       If not then we should just return p without checking for validity\&.
+  //
+  if( key == NULL || *key == 0 || strchr( key, ' ') != NULL) {
+    lslogging_log_message( '_lsredis_get_obj: bad key '%s'', key == NULL ? '<NULL>' : key);
+    return NULL;
+  }
+
+  // If the key is already there then just return it
+  //
+
+  htab_input\&.key  = key;
+  htab_input\&.data = NULL;
+  errno = 0;
+  err = hsearch_r( htab_input, FIND, &htab_output, &lsredis_htab);
+
+  if( err == 0)
+    p = NULL;
+  else
+    p = htab_output->data;
+
+
+  if( p != NULL) {
+    return p;
+  } else {
+    // make a new one\&.
+    p = calloc( 1, sizeof( lsredis_obj_t));
+    if( p == NULL) {
+      lslogging_log_message( '_lsredis_get_obj: Out of memory');
+      exit( -1);
+    }
+    
+    err = regexec( &lsredis_key_select_regex, key, 2, pmatch, 0);
+    if( err == 0 && pmatch[1]\&.rm_so != -1) {
+      p->events_name = strndup( key+pmatch[1]\&.rm_so, pmatch[1]\&.rm_eo - pmatch[1]\&.rm_so);
+    } else {
+      p->events_name = strdup( key);
+    }
+    if( p->events_name == NULL) {
+      lslogging_log_message( '_lsredis_get_obj: Out of memory (events_name)');
+      exit( -1);
+    }
+
+    pthread_mutex_init( &p->mutex, &mutex_initializer);
+    pthread_cond_init(  &p->cond, NULL);
+    p->value = NULL;
+    p->valid = 0;
+    // lsevents_send_event( '%s Invalid', p->events_name);
+    p->wait_for_me = 0;
+    p->key = strdup( key);
+    p->hits = 0;
+  
+    htab_input\&.key  = p->key;
+    htab_input\&.data = p;
+
+    errno = 0;
+    err = hsearch_r( htab_input, ENTER, &htab_output, &lsredis_htab);
+    if( err == 0) {
+      lslogging_log_message( '_lsredis_get_obj: hseach error on enter\&.  errno=%d', errno);
+    }
+
+    //
+    // Shouldn't need the linked list unless we need to rebuild the hash table when, for example, we run out of room\&.
+    // TODO: resize hash table when needed\&.
+    //
+    p->next = lsredis_objs;
+    lsredis_objs = p;
+  }
+  //
+  // We arrive here with the valid flag lowered\&.  Go ahead and request the latest value\&.
+  //
+  redisAsyncCommand( roac, lsredis_hgetCB, p, 'HGET %s VALUE', key);
+
+  return p;
+}
+.fi
+.SS "void lsevents_add_listener (char *raw_regexp, void(*)(char *)cb)"
+
+.PP
+Add a callback routine to listen for a specific event\&. \fBParameters:\fP
+.RS 4
+\fIraw_regexp\fP String value of regular expression to listen to 
+.br
+\fIcb\fP the routine to call 
+.RE
+.PP
+
+.PP
+Definition at line 99 of file lsevents\&.c\&.
+.PP
+.nf
+                                                                  {
+  lsevents_listener_t    *new;
+  lsevents_event_names_t *enp;
+  lsevents_callbacks_t   *cbp;
+  int err;
+  char *errbuf;
+  int nerrbuf;
+
+
+
+  new = calloc( 1, sizeof( lsevents_listener_t));
+  if( new == NULL) {
+    lslogging_log_message( 'lsevents_add_listener: out of memory');
+    exit( -1);
+  }
+
+  err = regcomp( &new->re, raw_regexp, REG_EXTENDED | REG_NOSUB);
+  if( err != 0) {
+    nerrbuf = regerror( err, &new->re, NULL, 0);
+    errbuf = calloc( nerrbuf, sizeof( char));
+    if( errbuf == NULL) {
+      lslogging_log_message( 'lsevents_add_listener: out of memory (re)');
+      exit( -1);
+    }
+    regerror( err, &new->re, errbuf, nerrbuf);
+    free( errbuf);
+    free( new);
+    return;
+  }
+
+  new->raw_regexp = strdup( raw_regexp);
+  new->cb   = cb;
+
+  pthread_mutex_lock( &lsevents_listener_mutex);
+  new->next = lsevents_listeners_p;
+  lsevents_listeners_p = new;
+
+  for( enp = lsevents_event_names; enp != NULL; enp = enp->next) {
+    if( regexec( &new->re, enp->event, 0, NULL, 0) == 0) {
+      cbp       = calloc( 1, sizeof( lsevents_callbacks_t));
+      cbp->cb   = cb;
+      cbp->next = enp->cbl;
+      enp->cbl  = cbp;
+    }
+  }
+  
+
+  pthread_mutex_unlock( &lsevents_listener_mutex);
+
+}
+.fi
+.SS "void lsevents_init ()"
+
+.PP
+Initialize this module\&. 
+.PP
+Definition at line 367 of file lsevents\&.c\&.
+.PP
+.nf
+                     {
+  pthread_mutexattr_t mutex_initializer;
+
+  // Use recursive mutexs
+  //
+  pthread_mutexattr_init( &mutex_initializer);
+  pthread_mutexattr_settype( &mutex_initializer, PTHREAD_MUTEX_RECURSIVE);
+
+  pthread_mutex_init( &lsevents_queue_mutex,    &mutex_initializer);
+  pthread_cond_init(  &lsevents_queue_cond,     NULL);
+  pthread_mutex_init( &lsevents_listener_mutex, &mutex_initializer);
+
+  hcreate_r( 2*lsevents_max_events, &lsevents_event_name_ht);
+}
+.fi
+.SS "void lsevents_preregister_event (char *fmt, \&.\&.\&.)"
+
+.PP
+Definition at line 308 of file lsevents\&.c\&.
+.PP
+.nf
+                                                 {
+  char  s[128];
+  va_list arg_ptr;
+
+  va_start( arg_ptr, fmt);
+  vsnprintf( s, sizeof( s) - 1, fmt, arg_ptr);
+  s[sizeof(s)-1] = 0;
+  va_end( arg_ptr);
+
+  lsevents_register_event( s);
+}
+.fi
+.SS "void lsevents_remove_listener (char *event, void(*)(char *)cb)"
+
+.PP
+Remove a listener previously added with lsevents_add_listener\&. \fBParameters:\fP
+.RS 4
+\fIevent\fP The name of the event (possibly a regular expression string) 
+.br
+\fIcb\fP The callback routine to remove 
+.RE
+.PP
+
+.PP
+Definition at line 154 of file lsevents\&.c\&.
+.PP
+.nf
+                                                                {
+  
+  lsevents_listener_t *last, *current;
+  lsevents_event_names_t *enp;
+  lsevents_callbacks_t   *cbp, *last_cbp;
+
+  //
+  // Find the listener to remove
+  // and unlink it from the list
+  //
+  pthread_mutex_lock( &lsevents_listener_mutex);
+  last = NULL;
+  for( current = lsevents_listeners_p; current != NULL; current = current->next) {
+    if( strcmp( last->raw_regexp, event) == 0 && last->cb == cb) {
+      if( last == NULL) {
+        lsevents_listeners_p = current->next;
+      } else {
+        last->next = current->next;
+      }
+      break;
+    }
+    last = current;
+  }
+
+  if( current == NULL) {
+    lslogging_log_message( 'lsevents_remove_listener: Could not find this listener for event '%s'', event);
+    pthread_mutex_unlock( &lsevents_listener_mutex);
+    return;
+  }
+
+  //
+  // Remove callback from lists of event names
+  //
+  for( enp = lsevents_event_names; enp != NULL; enp = enp->next) {
+    if( regexec( &current->re, enp->event, 0, NULL, 0) == 0) {
+      last_cbp = NULL;
+      for( cbp = enp->cbl; cbp != NULL; cbp = cbp->next) {
+        if( cbp->cb == cb) {
+          if( last_cbp == NULL)
+            enp->cbl = NULL;
+          else
+            last_cbp->next = cbp->next;
+          free( cbp);
+          break;
+        }
+      }
+    }
+  }
+
+
+  pthread_mutex_unlock( &lsevents_listener_mutex);
+
+  //
+  // Now remove it
+  //
+  if( current->raw_regexp != NULL)
+    free( current->raw_regexp);
+  free(current);
+
+}
+.fi
+.SS "pthread_t* lsevents_run ()"
+
+.PP
+Start up the thread and get out of the way\&. 
+.PP
+Definition at line 384 of file lsevents\&.c\&.
+.PP
+.nf
+                          {
+  pthread_create( &lsevents_thread, NULL, lsevents_worker, NULL);
+  return &lsevents_thread;
+}
+.fi
+.SS "void lsevents_send_event (char *fmt, \&.\&.\&.)"
+
+.PP
+Call the callback routines for the given event\&. \fBParameters:\fP
+.RS 4
+\fIfmt\fP a printf style formating string 
+.br
+\fI\&.\&.\&.\fP list of arguments specified by the format string 
+.RE
+.PP
+
+.PP
+Definition at line 73 of file lsevents\&.c\&.
+.PP
+.nf
+                                          {
+  char event[LSEVENTS_EVENT_LENGTH];
+  va_list arg_ptr;
+
+  va_start( arg_ptr, fmt);
+  vsnprintf( event, sizeof(event)-1, fmt, arg_ptr);
+  event[sizeof(event)-1]=0;
+  va_end( arg_ptr);
+
+  pthread_mutex_lock( &lsevents_queue_mutex);
+
+  // maybe wait for room on the queue
+  while( (lsevents_queue_on + 1) % LSEVENTS_QUEUE_LENGTH == lsevents_queue_off % LSEVENTS_QUEUE_LENGTH)
+    pthread_cond_wait( &lsevents_queue_cond, &lsevents_queue_mutex);
+  
+  lsevents_queue[(lsevents_queue_on++) % LSEVENTS_QUEUE_LENGTH]\&.evp = strdup(event);
+
+  pthread_cond_signal(  &lsevents_queue_cond);
+  pthread_mutex_unlock( &lsevents_queue_mutex);
+}
+.fi
+.SS "void lslogging_init ()"
+
+.PP
+Initialize the lslogging objects\&. 
+.PP
+Definition at line 37 of file lslogging\&.c\&.
+.PP
+.nf
+                      {
+  pthread_mutex_init( &lslogging_mutex, NULL);
+  pthread_cond_init(  &lslogging_cond, NULL);
+
+  lslogging_file = fopen( LSLOGGING_FILE_NAME, 'w');
+}
+.fi
+.SS "void lslogging_log_message (char *fmt, \&.\&.\&.)"
+
+.PP
+The routine everyone will be talking about\&. \fBParameters:\fP
+.RS 4
+\fIfmt\fP A printf style formating string\&. 
+.br
+\fI\&.\&.\&.\fP The arguments specified by fmt 
+.RE
+.PP
+
+.PP
+Definition at line 48 of file lslogging\&.c\&.
+.PP
+.nf
+                                            {
+  char msg[LSLOGGING_MSG_LENGTH];
+  struct timespec theTime;
+  va_list arg_ptr;
+  unsigned int on;
+
+  clock_gettime( CLOCK_REALTIME, &theTime);
+
+  va_start( arg_ptr, fmt);
+  vsnprintf( msg, sizeof(msg)-1, fmt, arg_ptr);
+  va_end( arg_ptr);
+  msg[sizeof(msg)-1]=0;
+
+  pthread_mutex_lock( &lslogging_mutex);
+  
+  on = (lslogging_on++) % LSLOGGING_QUEUE_LENGTH;
+  strncpy( lslogging_queue[on]\&.lmsg, msg, LSLOGGING_MSG_LENGTH - 1);
+  lslogging_queue[on]\&.lmsg[LSLOGGING_MSG_LENGTH-1] = 0;
+  
+  memcpy( &(lslogging_queue[on]\&.ltime), &theTime, sizeof(theTime));
+
+  pthread_cond_signal(  &lslogging_cond);
+  pthread_mutex_unlock( &lslogging_mutex);
+
+}
+.fi
+.SS "pthread_t* lslogging_run ()"
+
+.PP
+Start up the worker thread\&. 
+.PP
+Definition at line 123 of file lslogging\&.c\&.
+.PP
+.nf
+                           {
+  pthread_create( &lslogging_thread, NULL, &lslogging_worker, NULL);
+  lslogging_log_message( 'Start up');
+  lsevents_add_listener( '\&.+', lslogging_event_cb);
+  return &lslogging_thread;
+}
+.fi
+.SS "char** lspg_array2ptrs (char *)"
+
+.PP
+returns a null terminated list of strings parsed from postgresql array 
+.PP
+Definition at line 165 of file lspg\&.c\&.
+.PP
+.nf
+                                 {
+  char **rtn, *sp, *acums;
+  int i, n, inquote, havebackslash, rtni;;
+  int mxsz;
+  
+  inquote       = 0;
+  havebackslash = 0;
+
+  // Despense with the null input condition before we complicate the code below
+  if( a == NULL || a[0] != '{' || a[strlen(a)-1] != '}')
+    return NULL;
+
+  // Count the maximum number of strings
+  // Actual number will be less if there are quoted commas
+  //
+  n = 1;
+  for( i=0; a[i]; i++) {
+    if( a[i] == ',')
+      n++;
+  }
+  //
+  // The maximum size of any string is the length of a (+1)
+  //
+  mxsz = strlen(a) + 1;
+
+  // This is the accumulation string to make up the array elements
+  acums = (char *)calloc( mxsz, sizeof( char));
+  if( acums == NULL) {
+    lslogging_log_message( 'lspg_array2ptrs: out of memory (acums)');
+    exit( 1);
+  }
+  
+  //
+  // allocate storage for the pointer array and the null terminator
+  //
+  rtn = (char **)calloc( n+1, sizeof( char *));
+  if( rtn == NULL) {
+    lslogging_log_message( 'lspg_array2ptrs: out of memory (rtn)');
+    exit( 1);
+  }
+  rtni = 0;
+  
+  // Go through and create the individual strings
+  sp = acums;
+  *sp = 0;
+
+  inquote = 0;
+  havebackslash = 0;
+  for( i=1; a[i] != 0; i++) {
+    switch( a[i]) {
+    case ''':
+      if( havebackslash) {
+        // a quoted quote\&.  Cool
+        //
+        *(sp++) = a[i];
+        *sp = 0;
+        havebackslash = 0;
+      } else {
+        // Toggle the flag
+        inquote = 1 - inquote;
+      }
+      break;
+
+    case '\\':
+      if( havebackslash) {
+        *(sp++) = a[i];
+        *sp = 0;
+        havebackslash = 0;
+      } else {
+        havebackslash = 1;
+      }
+      break;
+
+    case ',':
+      if( inquote || havebackslash) {
+        *(sp++) = a[i];
+        *sp = 0;
+        havebackslash = 0;
+      } else {
+        rtn[rtni++] = strdup( acums);
+        sp = acums;
+      }
+      break;
+      
+    case '}':
+      if( inquote || havebackslash) {
+        *(sp++) = a[i];
+        *sp = 0;
+        havebackslash = 0;
+      } else {
+        rtn[rtni++] = strdup( acums);
+        rtn[rtni]   = NULL;
+        free( acums);
+        return( rtn);
+      }
+      break;
+
+    default:
+      *(sp++) = a[i];
+      *sp = 0;
+      havebackslash = 0;
+    }
+  }
+  //
+  // Getting here means the final '}' was missing
+  // Probably we should throw an error or log it or something\&.
+  // Through out the last entry since this there is not resonable expectation that
+  // we should be parsing it anyway\&.
+  //
+  rtn[rtni]   = NULL;
+  free( acums);
+  return( rtn);
+}
+.fi
+.SS "int lspg_demandairrights_all ()"
+
+.PP
+do nothing until we get airrights 
+.PP
+Definition at line 726 of file lspg\&.c\&.
+.PP
+.nf
+                               {
+  lspg_demandairrights_call();
+  return lspg_demandairrights_wait();
+  // there is no 'done' version
+}
+.fi
+.SS "void lspg_getcenter_call ()"
+
+.PP
+Request a getcenter query\&. 
+.PP
+Definition at line 1426 of file lspg\&.c\&.
+.PP
+.nf
+                           {
+  pthread_mutex_lock( &lspg_getcenter\&.mutex);
+  lspg_getcenter\&.new_value_ready = 0;
+  lspg_getcenter\&.query_error     = 0;
+  pthread_mutex_unlock( &lspg_getcenter\&.mutex);
+
+  lspg_query_push( lspg_getcenter_cb, lspg_getcenter_error_cb, 'SELECT * FROM px\&.getcenter2()');
+}
+.fi
+.SS "void lspg_getcenter_done ()"
+
+.PP
+Done with getcenter query\&. 
+.PP
+Definition at line 1445 of file lspg\&.c\&.
+.PP
+.nf
+                           {
+  pthread_mutex_unlock( &(lspg_getcenter\&.mutex));
+}
+.fi
+.SS "void lspg_getcenter_wait ()"
+
+.PP
+Wait for a getcenter query to return\&. 
+.PP
+Definition at line 1437 of file lspg\&.c\&.
+.PP
+.nf
+                           {
+  pthread_mutex_lock( &(lspg_getcenter\&.mutex));
+  while( lspg_getcenter\&.new_value_ready == 0 && lspg_getcenter\&.query_error == 0)
+    pthread_cond_wait( &(lspg_getcenter\&.cond), &(lspg_getcenter\&.mutex));
+}
+.fi
+.SS "unsigned int lspg_getcurrentsampleid_all ()"
+
+.PP
+return the current sampleid 
+.PP
+Definition at line 510 of file lspg\&.c\&.
+.PP
+.nf
+                                           {
+  lspg_getcurrentsampleid_call();
+  return lspg_getcurrentsampleid_read();
+}
+.fi
+.SS "int lspg_getcurrentsampleid_wait_for_id (unsigned inttest)"
+
+.PP
+Definition at line 517 of file lspg\&.c\&.
+.PP
+.nf
+                                                            {
+  int rtn;
+
+  pthread_mutex_lock( &lspg_getcurrentsampleid\&.mutex);
+  while( lspg_getcurrentsampleid\&.getcurrentsampleid != test && lspg_getcurrentsampleid\&.query_error == 0)
+    pthread_cond_wait( &lspg_getcurrentsampleid\&.cond, &lspg_getcurrentsampleid\&.mutex);
+  
+  rtn = lspg_getcurrentsampleid\&.query_error;
+  pthread_mutex_unlock( &lspg_getcurrentsampleid\&.mutex);
+
+  return rtn;
+}
+.fi
+.SS "void lspg_init ()"
+
+.PP
+Initiallize the lspg module\&. 
+.PP
+Definition at line 2163 of file lspg\&.c\&.
+.PP
+.nf
+                 {
+  pthread_mutex_init( &lspg_queue_mutex, NULL);
+  pthread_cond_init( &lspg_queue_cond, NULL);
+
+  lspg_demandairrights_init();
+  lspg_getcenter_init();
+  lspg_getcurrentsampleid_init();
+  lspg_lock_detector_init();
+  lspg_lock_diffractometer_init();
+  lspg_nextsample_init();
+  lspg_nextshot_init();
+  lspg_seq_run_prep_init();
+  lspg_starttransfer_init();
+  lspg_wait_for_detector_init();
+  lspg_waitcryo_init();
+}
+.fi
+.SS "unsigned int lspg_nextsample_all (int *err)"
+
+.PP
+Definition at line 608 of file lspg\&.c\&.
+.PP
+.nf
+                                            {
+  unsigned int rtn;
+
+  lspg_nextsample_call();
+  lspg_nextsample_wait();
+
+  if( lspg_nextsample\&.no_rows_returned || lspg_nextsample\&.query_error) {
+    rtn = 0;
+    *err = lspg_nextsample\&.query_error ? 2 : 1;
+  } else {
+    if( lspg_nextsample\&.nextsample_isnull) {
+      rtn = 0;
+      *err = 1;
+    } else {
+      rtn = lspg_nextsample\&.nextsample;
+      *err = 0;
+    }
+  }
+  lspg_nextsample_done();
+
+  return rtn;
+}
+.fi
+.SS "void lspg_nextshot_call ()"
+
+.PP
+Queue up a nextshot query\&. 
+.PP
+Definition at line 1003 of file lspg\&.c\&.
+.PP
+.nf
+                          {
+  pthread_mutex_lock( &(lspg_nextshot\&.mutex));
+  lspg_nextshot\&.new_value_ready = 0;
+  lspg_nextshot\&.query_error     = 0;
+  pthread_mutex_unlock( &(lspg_nextshot\&.mutex));
+  
+  lspg_query_push( lspg_nextshot_cb, lspg_nextshot_error_cb, 'SELECT * FROM px\&.nextshot2()');
+}
+.fi
+.SS "void lspg_nextshot_done ()"
+
+.PP
+Called when the next shot query has been processed\&. 
+.PP
+Definition at line 1022 of file lspg\&.c\&.
+.PP
+.nf
+                          {
+  pthread_mutex_unlock( &(lspg_nextshot\&.mutex));
+}
+.fi
+.SS "void lspg_nextshot_wait ()"
+
+.PP
+Wait for the next shot query to get processed\&. 
+.PP
+Definition at line 1014 of file lspg\&.c\&.
+.PP
+.nf
+                          {
+  pthread_mutex_lock( &(lspg_nextshot\&.mutex));
+  while( lspg_nextshot\&.new_value_ready == 0 && lspg_nextshot\&.query_error == 0)
+    pthread_cond_wait( &(lspg_nextshot\&.cond), &(lspg_nextshot\&.mutex));
+}
+.fi
+.SS "void lspg_query_push (void(*)(\fBlspg_query_queue_t\fP *, PGresult *)cb, void(*)()ecb, char *fmt, \&.\&.\&.)"
+
+.PP
+Place a query on the queue\&. \fBParameters:\fP
+.RS 4
+\fIcb\fP Our callback function that deals with the response 
+.br
+\fIecb\fP error response 
+.br
+\fIfmt\fP Printf style function to generate the query 
+.RE
+.PP
+
+.PP
+Definition at line 130 of file lspg\&.c\&.
+.PP
+.nf
+                       {
+  int idx;
+  va_list arg_ptr;
+
+  pthread_mutex_lock( &lspg_queue_mutex);
+
+  //
+  // Pause the thread while we service the queue
+  //
+  while( (lspg_query_queue_on + 1) % LS_PG_QUERY_QUEUE_LENGTH == lspg_query_queue_off % LS_PG_QUERY_QUEUE_LENGTH) {
+    pthread_cond_wait( &lspg_queue_cond, &lspg_queue_mutex);
+  }
+
+  idx = lspg_query_queue_on % LS_PG_QUERY_QUEUE_LENGTH;
+
+  va_start( arg_ptr, fmt);
+  vsnprintf( lspg_query_queue[idx]\&.qs, LS_PG_QUERY_STRING_LENGTH-1, fmt, arg_ptr);
+  va_end( arg_ptr);
+
+  lspg_query_queue[idx]\&.qs[LS_PG_QUERY_STRING_LENGTH - 1] = 0;
+  lspg_query_queue[idx]\&.onResponse = cb;
+  lspg_query_queue[idx]\&.onError    = er;
+  lspg_query_queue_on++;
+
+  pthread_kill( lspg_thread, SIGUSR1);
+  pthread_mutex_unlock( &lspg_queue_mutex);
+};
+.fi
+.SS "pthread_t* lspg_run ()"
+
+.PP
+Start 'er runnin'\&. 
+.PP
+Definition at line 2182 of file lspg\&.c\&.
+.PP
+.nf
+                      {
+
+  pthread_create( &lspg_thread, NULL, lspg_worker, NULL);
+  lsevents_add_listener( '^(appy|appz|capy|capz|scint) In Position$', lspg_check_preset_in_position_cb);
+  lsevents_add_listener( '^(appy|appz|capy|capz|scint) Moving$',      lspg_unset_current_preset_moving_cb);
+  lsevents_add_listener( '^Preset Changed (\&.+)',                      lspg_preset_changed_cb);
+  lsevents_add_listener( '^Sample(Detected|Absent)$',                 lspg_sample_detector_cb);
+  lsevents_add_listener( '^Timer Update KVs$',                        lspg_update_kvs_cb);
+  lsevents_add_listener( '^cam\&.zoom In Position$',                    lspg_set_scale_cb);
+  lsevents_add_listener( '^Quitting Program$',                        lspg_quitting_cb);
+  lstimer_set_timer(     'Timer Update KVs', -1, 0, 500000000);
+
+  //
+  // Make sure we own the airrights
+  //
+  lspg_demandairrights_all();
+
+  return( &lspg_thread);
+}
+.fi
+.SS "int lspg_seq_run_prep_all (long longskey, doublekappa, doublephi, doublecx, doublecy, doubleax, doubleay, doubleaz)"
+
+.PP
+Convinence function to call seq run prep\&. \fBParameters:\fP
+.RS 4
+\fIskey\fP px\&.shots key for this image 
+.br
+\fIkappa\fP current kappa postion 
+.br
+\fIphi\fP current phi postition 
+.br
+\fIcx\fP current center table x 
+.br
+\fIcy\fP current center table y 
+.br
+\fIax\fP current alignment table x 
+.br
+\fIay\fP current alignment table y 
+.br
+\fIaz\fP current alignment table z 
+.RE
+.PP
+
+.PP
+Definition at line 1326 of file lspg\&.c\&.
+.PP
+.nf
+                             {
+  int rtn;
+  lspg_seq_run_prep_call( skey, kappa, phi, cx, cy, ax, ay, az);
+  lspg_seq_run_prep_wait();
+  rtn = lspg_seq_run_prep\&.query_error;
+  lspg_seq_run_prep_done();
+  return rtn;
+}
+.fi
+.SS "void lspg_starttransfer_call (unsigned intnextsample, intsample_detected, doubleax, doubleay, doubleaz, doublehorz, doublevert, doubleesttime)"
+
+.PP
+Definition at line 405 of file lspg\&.c\&.
+.PP
+.nf
+                                                                                                                                                       {
+  pthread_mutex_lock( &(lspg_starttransfer\&.mutex));
+  lspg_starttransfer\&.new_value_ready = 0;
+  lspg_starttransfer\&.query_error     = 0;
+  pthread_mutex_unlock( &(lspg_starttransfer\&.mutex));
+
+  lspg_query_push( lspg_starttransfer_cb, lspg_starttransfer_error_cb,
+                   'SELECT px\&.starttransfer( %d, %s, %\&.3f, %\&.3f, %\&.3f, %\&.3f, %\&.3f, %\&.3f)',
+                   nextsample, sample_detected ? 'True' : 'False', ax, ay, az, horz, vert, esttime);
+}
+.fi
+.SS "void lspg_starttransfer_done ()"
+
+.PP
+Definition at line 422 of file lspg\&.c\&.
+.PP
+.nf
+                               {
+  pthread_mutex_unlock( &(lspg_starttransfer\&.mutex));
+}
+.fi
+.SS "void lspg_starttransfer_wait ()"
+
+.PP
+Definition at line 416 of file lspg\&.c\&.
+.PP
+.nf
+                               {
+  pthread_mutex_lock( &(lspg_starttransfer\&.mutex));
+  while( lspg_starttransfer\&.new_value_ready == 0 && lspg_starttransfer\&.query_error == 0)
+    pthread_cond_wait( &(lspg_starttransfer\&.cond), &(lspg_starttransfer\&.mutex));
+}
+.fi
+.SS "int lspg_waitcryo_all ()"
+
+.PP
+no need to get fancy with the wait cryo command It should not return until the robot is almost ready for air rights 
+.PP
+Definition at line 655 of file lspg\&.c\&.
+.PP
+.nf
+                        {
+  int rtn;
+  pthread_mutex_lock( &lspg_waitcryo\&.mutex);
+  lspg_waitcryo\&.new_value_ready = 0;
+  lspg_waitcryo\&.query_error     = 0;
+
+  lspg_query_push( lspg_waitcryo_cb, lspg_waitcryo_error_cb, 'SELECT px\&.waitcryo()');
+
+  while( lspg_waitcryo\&.new_value_ready == 0 && lspg_waitcryo\&.query_error == 0)
+    pthread_cond_wait( &lspg_waitcryo\&.cond, &lspg_waitcryo\&.mutex);
+
+  rtn = lspg_waitcryo\&.query_error;
+  pthread_mutex_unlock( &lspg_waitcryo\&.mutex);
+
+  return rtn;
+}
+.fi
+.SS "void lspg_waitcryo_cb (\fBlspg_query_queue_t\fP *qqp, PGresult *pgr)"
+
+.PP
+Definition at line 638 of file lspg\&.c\&.
+.PP
+.nf
+                                                               {
+  pthread_mutex_lock( &lspg_waitcryo\&.mutex);
+  lspg_waitcryo\&.new_value_ready = 1;
+  pthread_cond_signal( &lspg_waitcryo\&.cond);
+  pthread_mutex_unlock( &lspg_waitcryo\&.mutex);
+}
+.fi
+.SS "void lspg_zoom_lut_call ()"
+
+.SS "void lspmac_abort ()"
+
+.PP
+abort motion and try to recover 
+.PP
+Definition at line 2127 of file lspmac\&.c\&.
+.PP
+.nf
+                    {
+  //
+  // Stop everything!  (consider ^O instead of ^A)
+  //
+  lspmac_SockSendDPControlChar( 'Abort Request', 0x01);
+
+  //
+  // and reset motion flag
+  //
+  lspmac_SockSendDPline( 'Reset', '%s', 'M5075=0');
+
+}
+.fi
+.SS "int lspmac_est_move_time (double *est_time, int *mmaskp, \fBlspmac_motor_t\fP *mp_1, intjog_1, char *preset_1, doubleend_point_1, \&.\&.\&.)"
+
+.PP
+Move the motors and estimate the time it'll take to finish the job\&. Returns the estimate time and the coordinate system mask to wait for 
+.PP
+\fBParameters:\fP
+.RS 4
+\fIest_time\fP Returns number of seconds we estimate the move(s) will take 
+.br
+\fImmaskp\fP Mask of coordinate systems we are trying to move, excluding jogs\&. Used to wait for motions to complete 
+.br
+\fImp_1\fP Pointer to first motor 
+.br
+\fIjog_1\fP 1 to force a jog, 0 to try a motion program DO NOT MIX JOGS AND MOTION PROGRAMS IN THE SAME COORDINATE SYSTEM! 
+.br
+\fIpreset_1\fP Name of preset we'd like to move to or NULL if end_point_1 should be used instead 
+.br
+\fIend_point_1\fP End point for the first motor\&. Ignored if preset_1 is non null and identifies a valid preset for this motor 
+.br
+\fI\&.\&.\&.\fP Perhaps more quads of motors, jog flags, preset names, and end points\&. End is a NULL motor pointer MUST END ARG LIST WITH NULL 
+.RE
+.PP
+< units to counts
+.PP
+< The total distance we need to go
+.PP
+< Our maximum velocity
+.PP
+< Our maximum acceleration
+.PP
+< Total time for this motor
+.PP
+< coordinate system motion flags 
+.PP
+Definition at line 2852 of file lspmac\&.c\&.
+.PP
+.nf
+                                                                                                                                   {
+  static char axes[] = 'XYZUVWABC';
+  int qs[9];
+  lspmac_combined_move_t motions[32];
+  char s[256];
+  int foundone;
+  int moving_flags;
+  struct timespec timeout;
+  int j;
+  va_list arg_ptr;
+  lspmac_motor_t *mp;
+  double ep, maybe_ep;
+  char *ps;
+  double
+    min_pos,
+    max_pos,
+    neutral_pos,
+    u2c,                
+    D,                  
+    V,                  
+    A,                  
+    Tt;                 
+  int err;
+  int jog;
+  int i;
+  uint32_t m5075;               
+
+  // reset our coordinate flags and command strings
+  //
+  for( i=0; i<32; i++) {
+    motions[i]\&.moveme = 0;
+  }
+  m5075  = 0;
+  if( mmaskp != NULL)
+    *mmaskp = 0;
+
+  //
+  // Initialze first iteration
+  //
+  *est_time = 0\&.0;
+  mp  = mp_1;
+  ps  = preset_1;
+  ep  = end_point_1;
+  jog = jog_1;
+
+  va_start( arg_ptr, end_point_1);
+  while( 1) {
+    /*
+     *    :                  |       Constant       |
+     *    :                  |<---   Velocity   --->|
+     *    :                  |       Time (Ct)      |
+     *  V :                   ----------------------              ---------
+     *  e :                 /                        \               ^
+     *  l :                /                          \              |
+     *  o :               /                            \             |
+     *  c :              /                              \            V
+     *  i :             /                                \           |
+     *  t :            /                                  \          |
+     *  y :___________/\&.\&.\&.\&.\&.\&.\&.\&.\&.\&.\&.\&.\&.\&.\&.\&.\&.\&.\&.\&.\&.\&.\&.\&.\&.\&.\&.\&.\&.\&.\&.\&.\&.\&.\&.\&.\_________v___________
+     *                |      |         Time              
+     *                |      |
+     *             -->|      |<-- Acceleration Time  (At)
+     *                |
+     *                |<-----    Total  Time (Tt)  ------->|
+     *
+     *      Assumption 1: We can replace S curve acceleration with linear acceleration
+     *      for the purposes of distance and time calculations for the timeout
+     *      period that we are attempting to calculate here\&.
+     *
+     *      Ct  = Constant Velocity Time\&.  The time spent at constant velocity\&.
+     *
+     *      At  = Acceleration Time\&.  Time spent accelerating at either end of the ramp, that is,
+     *      1/2 the total time spent accelerating and decelerating\&.
+     *
+     *      D   = the total distance we need to travel
+     *
+     *      V   = constant velocity\&.  Here we use the motor's maximum velocity\&.
+     *
+     *      A   = the motor acceleration, Here it's the maximum acceleration\&.
+     *
+     *      V = A * At   
+     *
+     *      or  At = V/A
+     *
+     *      The Total Time (Tt) is
+     *
+     *      Tt = Ct + 2 * At
+     *
+     *
+     *
+     *      If we had infinite acceleration the total time would be D/V\&.  To account for finite acceleration we just need to
+     *      adjust this for the average velocity while accelerating (0\&.5 V)\&.  This neatly adds a single V/A term:
+     *
+     *      (1)     Tt = D/V  + V/A
+     *
+     *      When the distance is short, we need a different calculation:
+     *
+     *      D = 0\&.5 * A * T1^2  + 0\&.5 * A * T2^2  (T1 = acceleration time and T2 = deceleration time)
+     *
+     *      or, since total time  Tt = T1 + T2 and T1 = T2,
+     *
+     *      D = A * (0\&.5*Tt)^2
+     *
+     *      or
+     *      
+     *      (2)    Tt = 2 * sqrt( D/A)
+     *
+     *
+     *      When we accelerate to the maximum speed the time it takes is V/A so the distance we travel (Da) is
+     *
+     *      Da = 0\&.5 * A * (V/A)^2
+     *
+     *      or
+     *
+     *      Da = 0\&.5 * V^2 / A
+     *
+     *      So when D > 2 * Da, or
+     *
+     *      D > V^2 / A
+     *         
+     *      we need to use equation (1) otherwise we need to use equation (2)
+     *
+     */
+
+    if( mp->magic != LSPMAC_MAGIC_NUMBER) {
+      lslogging_log_message( 'lspmac_est_move_time: WARNING: bad motor structure\&.  Check that your motor list is NULL terminated\&.');
+      break;
+    }
+
+
+    //lslogging_log_message( 'lspmac_est_move_time: find motor %s, jog %d, preset %s, endpoint %f',
+    //mp->name, jog, ps == NULL ? 'NULL' : ps, ep);
+
+    Tt = 0\&.0;
+    if( mp != NULL && mp->max_speed != NULL && mp->max_accel != NULL && mp->u2c != NULL) {
+
+      //
+      // get the real endpoint if a preset was mentioned
+      //
+      if( ps != NULL && *ps != 0) {
+        err = lsredis_find_preset( mp->name, ps, &maybe_ep);
+        if( err != 0)
+          ep = maybe_ep;
+      }
+
+      u2c = lsredis_getd( mp->u2c);
+
+      //
+      // For look up tables user units are (or should be) counts and u2c should be 1
+      //
+      if( mp->nlut > 0 && mp->lut != NULL) {
+        u2c = 1\&.0;
+        D = lspmac_lut( mp->nlut, mp->lut, ep) - lspmac_lut( mp->nlut, mp->lut, lspmac_getPosition( mp));
+      } else {
+        D = ep - lspmac_getPosition( mp);                               // User units
+      }
+
+      V = lsredis_getd( mp->max_speed) / u2c * 1000\&.;            // User units per second
+      A = lsredis_getd( mp->max_accel) / u2c * 1000\&. * 1000;     // User units per second per second
+
+
+      neutral_pos = lsredis_getd( mp->neutral_pos);
+      min_pos     = lsredis_getd( mp->min_pos) - neutral_pos;
+      max_pos     = lsredis_getd( mp->max_pos) - neutral_pos;
+
+      if( ep < min_pos || ep > max_pos) {
+        lslogging_log_message( 'lspmac_est_move_time: Motor %s Requested position %f out of range: min=%f, max=%f', mp->name, ep, min_pos, max_pos);
+        lsevents_send_event( '%s Move Aborted', mp->name);
+        return 1;
+      }
+
+      mp->requested_position = ep;
+      mp->requested_pos_cnts = u2c * (mp->requested_position + neutral_pos);
+
+
+      //
+      // Don't bother with motors without velocity or acceleration defined
+      //
+      if( V > 0\&.0 && A > 0\&.0) {
+        if( fabs(D) > V*V/A) {
+          //
+          // Normal ramp up, constant velocity, and ramp down
+          //
+          Tt = fabs(D)/V + V/A;
+        } else {
+          //
+          // Never reach constantant velocity, just ramp up a bit and back down
+          //
+          Tt = 2\&.0 * sqrt( fabs(D)/A);
+        }
+
+        lslogging_log_message( 'lspmac_est_move_time: Motor: %s  D: %f  VV/A: %f  Tt: %f', mp->name, D, V*V/A, Tt);
+      }  else {
+        //
+        // TODO: insert move time based for DAC or BO motor like objects;
+        // For now assume 100 msec;
+        //
+        Tt = 0\&.1;
+      }
+
+      // Perhaps flag a coordinate system
+      //
+      // We can move a motor that's not in a coordinate system but we cannot move a motor that is but does not
+      // have an axis defined if we are also moving one that does\&.  It's a limitation, I guess\&.
+      //
+      if( jog != 1 &&
+          mp->coord_num != NULL && lsredis_getl( mp->coord_num) > 0 && lsredis_getl( mp->coord_num) <= 16 &&
+          mp->motor_num != NULL && lsredis_getl( mp->motor_num) > 0 && mp->axis != NULL && lsredis_getc( mp->axis) != 0) {
+        int axis;
+        int motor_num;
+
+        motor_num = lsredis_getl( mp->motor_num);
+
+        axis = lsredis_getc( mp->axis);
+        for( j=0; j<sizeof(axes); j++) {
+          if( axis == axes[j])
+            break;
+        }
+
+        if( j < sizeof( axes)) {
+          //
+          // Store the motion request for a normal PMAC motor
+          //
+          int cn;
+          int in_position_band;
+
+          cn = lsredis_getl( mp->coord_num);
+          in_position_band = lsredis_getl( mp->in_position_band);
+
+          motions[motor_num - 1]\&.coord_num = cn;
+          motions[motor_num - 1]\&.axis      = j;
+          motions[motor_num - 1]\&.Delta     = D * u2c;
+          //
+          // Don't ask to run a motion program if we are already where we want to be
+          //
+          // Deadband is 10 counts except for zoom which is 100\&.
+          // We use Ixx28 In-Position Band which has units of 1/16 count
+          //
+          //
+          if( abs(motions[motor_num - 1]\&.Delta)*16 >= in_position_band) {
+            m5075 |= (1 << (cn - 1));
+            motions[motor_num - 1]\&.moveme    = 1;
+          }       
+          lslogging_log_message( 'lspmac_est_move_time: moveme=%d  motor '%s' motions index=%d coord_num=%d axis=%d Delta=%d   m5075=%u',
+                                 motions[motor_num-1]\&.moveme,  mp->name, motor_num -1, motions[motor_num-1]\&.coord_num, motions[motor_num-1]\&.axis, motions[motor_num-1]\&.Delta,
+                                 m5075);
+        }
+      } else {
+        //
+        // Here we are dealing with a DAC or BO motor or just want to jog\&.
+        //
+        if( mp->jogAbs( mp, ep)) {
+          lslogging_log_message( 'lspmac_est_move_time: motor %s failed to queue move of distance %f from %f', mp->name, D, lspmac_getPosition(mp));
+          lsevents_send_event( 'Move Aborted');
+          return 1;
+        }
+      }
+      //
+      // Update the estimated time
+      //
+      *est_time = *est_time < Tt ? Tt : *est_time;
+      
+      lslogging_log_message( 'lspmac_est_move_time: est_time=%f', *est_time);
+
+    }
+
+
+    mp = va_arg( arg_ptr, lspmac_motor_t *);
+    if( mp == NULL)
+      break;
+
+    jog = va_arg( arg_ptr, int);
+    ps  = va_arg( arg_ptr, char *);
+    ep  = va_arg( arg_ptr, double);
+
+  }
+  va_end( arg_ptr);
+
+  
+  // Set the motion program flags
+  //
+  if( m5075 != 0) {
+    if( mmaskp != NULL)
+      *mmaskp |= m5075; // Tell the caller about our new mask
+
+    
+    pthread_mutex_lock( &lspmac_moving_mutex);
+    moving_flags = lspmac_moving_flags;
+    pthread_mutex_unlock( &lspmac_moving_mutex);
+
+    if( (moving_flags & m5075) != m5075) {
+      lspmac_SockSendDPline( NULL, 'M5075=(M5075 | %d)', m5075);
+    
+
+      pthread_mutex_lock( &lspmac_moving_mutex);
+      clock_gettime( CLOCK_REALTIME, &timeout);
+      //
+      timeout\&.tv_sec += 2;       // 2 seconds should be more than enough time to set the flags
+      err = 0;
+      while( err == 0 && ((lspmac_moving_flags & m5075) != m5075))
+        err = pthread_cond_timedwait( &lspmac_moving_cond, &lspmac_moving_mutex, &timeout);
+      moving_flags = lspmac_moving_flags;
+      pthread_mutex_unlock( &lspmac_moving_mutex);
+    
+      if( ((moving_flags & m5075) != m5075) && err == ETIMEDOUT) {
+        lslogging_log_message( 'lspmac_est_move_time: Timed out waiting for moving flags\&.  lspmac_moving_flags = 0x%0x, looking for 0x%0x  test exp: 0x%0x  test: %d',
+                               moving_flags, m5075, (moving_flags & m5075), (moving_flags & m5075) != m5075);
+        lsevents_send_event( 'Combined Move Aborted');
+        return 1;
+      }
+    }
+  }
+
+
+  for( i=1; i<=16; i++) {
+    //
+    // Loop over coordinate systems
+    //
+    foundone = 0;
+    
+    for( j=0; j<9; j++)
+      qs[j] = 0;
+    
+    for( j=0; j<31; j++) {
+      //
+      // Loop over motors
+      //
+      if( motions[j]\&.moveme && motions[j]\&.coord_num == i) {
+        if( abs(motions[j]\&.Delta) > 0) {
+          qs[(int)(motions[j]\&.axis)] = motions[j]\&.Delta;
+          foundone=1;
+        }
+      }
+    }
+    
+    if( foundone) {
+      sprintf( s, '&%d Q40=%d Q41=%d Q42=%d Q43=%d Q44=%d Q45=%d Q46=%d Q47=%d Q48=%d Q49=%\&.1f Q100=%d B180R',
+               i, qs[0], qs[1], qs[2], qs[3], qs[4], qs[5], qs[6], qs[7], qs[8], *est_time * 1000\&., 1 << (i-1));
+      
+      lspmac_SockSendDPline( NULL, s);
+      
+    }
+  }
+  return 0;
+}
+.fi
+.SS "int lspmac_est_move_time_wait (doublemove_time, intcmask, \fBlspmac_motor_t\fP *mp_1, \&.\&.\&.)"
+
+.PP
+wait for motion to stop returns non-zero if the wait timed out \fBParameters:\fP
+.RS 4
+\fImove_time\fP The time out in seconds 
+.br
+\fIcmask\fP A coordinate system mask to wait for 
+.br
+\fImp_1\fP NULL terminated list of individual motors to wait for
+.RE
+.PP
+Both values are returned from lspmac_est_move_time 
+.PP
+Definition at line 3207 of file lspmac\&.c\&.
+.PP
+.nf
+                                                                                       {
+  int err;
+  double isecs, fsecs;
+  struct timespec timeout;
+  va_list arg_ptr;
+  lspmac_motor_t *mp;
+
+  clock_gettime( CLOCK_REALTIME, &timeout);
+  fsecs = modf( move_time, &isecs);
+  timeout\&.tv_sec  += (long)floor(isecs);
+  timeout\&.tv_nsec += (long)floor(fsecs * 1\&.e9);
+  timeout\&.tv_sec  += timeout\&.tv_nsec / 1000000000;
+  timeout\&.tv_nsec %= 1000000000;
+
+  err = 0;
+  pthread_mutex_lock( &lspmac_moving_mutex);
+  while( err == 0 && (lspmac_moving_flags & cmask) != 0)
+    err = pthread_cond_timedwait( &lspmac_moving_cond, &lspmac_moving_mutex, &timeout);
+  pthread_mutex_unlock( &lspmac_moving_mutex);
+
+  if( err != 0) {
+    if( err == ETIMEDOUT) {
+      lslogging_log_message( 'lstest_lspmac_est_move_time_wait: timed out waiting %f seconds, cmask = 0x%0x', move_time, cmask);
+    }
+    lspmac_abort();
+    return 1;
+  }
+
+  va_start( arg_ptr, mp_1);
+  for( mp = mp_1; mp != NULL; mp = va_arg( arg_ptr, lspmac_motor_t *)) {
+    if( mp->magic != LSPMAC_MAGIC_NUMBER) {
+      lslogging_log_message( 'lspmac_est_move_time_wait: WARNING: motor list must be NULL terminated\&.  Check your call to lspmac_est_move_time_wait\&.');
+    }
+
+    if( lspmac_moveabs_wait( mp, move_time)) {
+      lslogging_log_message( 'lspmac_est_move_time_wait: timed out waiting %f seconds for motor %s', move_time, mp->name);
+      return 1;
+    }
+  }
+  va_end( arg_ptr);
+
+  return 0;
+}
+.fi
+.SS "\fBlspmac_motor_t\fP* lspmac_find_motor_by_name (char *name)"
+
+.PP
+Definition at line 4367 of file lspmac\&.c\&.
+.PP
+.nf
+                                                       {
+  lspmac_motor_t *rtn;
+  ENTRY entry_in, *entry_outp;
+  int err;
+  
+  entry_in\&.key  = name;
+  entry_in\&.data = NULL;
+  err = hsearch_r( entry_in, FIND, &entry_outp, &motors_ht);
+  if( err == 0) {
+    lslogging_log_message( 'lspmac_find_motor_by_name: hsearch_r failed for motor '%s': %s', name, strerror( errno));
+    return NULL;
+  }    
+  rtn = entry_outp->data;
+
+  return rtn;
+}
+.fi
+.SS "int lspmac_getBIPosition (\fBlspmac_bi_t\fP *)"
+
+.PP
+get binary input value 
+.PP
+Definition at line 1661 of file lspmac\&.c\&.
+.PP
+.nf
+                                            {
+  int rtn;
+  pthread_mutex_lock( &bip->mutex);
+  rtn = bip->position;
+  pthread_mutex_unlock( &bip->mutex);
+  return rtn;
+}
+.fi
+.SS "double lspmac_getPosition (\fBlspmac_motor_t\fP *mp)"
+
+.PP
+get the motor position (with locking) \fBParameters:\fP
+.RS 4
+\fImp\fP the motor object 
+.RE
+.PP
+
+.PP
+Definition at line 1413 of file lspmac\&.c\&.
+.PP
+.nf
+                                               {
+  double rtn;
+  pthread_mutex_lock( &(mp->mutex));
+  rtn = mp->position;
+  pthread_mutex_unlock( &(mp->mutex));
+  return rtn;
+}
+.fi
+.SS "void lspmac_home1_queue (\fBlspmac_motor_t\fP *mp)"
+
+.PP
+Home the motor\&. \fBParameters:\fP
+.RS 4
+\fImp\fP motor we are concerned about 
+.RE
+.PP
+
+.PP
+Definition at line 1272 of file lspmac\&.c\&.
+.PP
+.nf
+                          {
+  int i;
+  int nogo;
+  int motor_num;
+  int coord_num;
+  int home_group;
+  char **home;
+  lspmac_motor_t *m2;
+
+  pthread_mutex_lock( &(mp->mutex));
+
+  // We've already been called\&.  Don't home again until
+  // we're finish with the last time\&.
+  //
+  if( mp->homing) {
+    pthread_mutex_unlock( &(mp->mutex));
+    return;
+  }    
+
+
+  motor_num  = lsredis_getl( mp->motor_num);
+  coord_num  = lsredis_getl( mp->coord_num);
+  home       = lsredis_get_string_array( mp->home);
+  home_group = lsredis_getl( mp->home_group);
+  
+  // Each of the motors should have this defined
+  // but let's not seg fault if home is missing
+  //
+  if( home == NULL || *home == NULL) {
+    //
+    // Note we are already initialized
+    // so if we are here there is something wrong\&.
+    //
+    lslogging_log_message( 'lspmac_home1_queue: null or empty home strings for motor %s', mp->name);
+    pthread_mutex_unlock( &(mp->mutex));
+    return;
+  }
+
+  //
+  // Don't go on if any other motors in this coordinate system are homing or if any motors in a lower home_group are not homed
+  // It's possible to write the homing program to home all the motors in the coordinate
+  // system at the pmac level\&.  TODO  (hint hint)
+  //
+  nogo = 0;
+  for( i=0; i<lspmac_nmotors; i++) {
+    m2 = &(lspmac_motors[i]);
+    if( m2 == mp || !lsredis_getb(m2->active))
+      continue;
+    if( lsredis_getl(m2->coord_num) == coord_num) {
+      // only let one motor at a time home  in a given coordinate system
+      //
+      if( m2->homing)
+        nogo = 1;
+    } else {
+      if( lsredis_getl( m2->home_group) < home_group) {
+        pthread_mutex_lock( &(m2->mutex));
+        //
+        //  Don't go on if
+        //
+        // we are homing or ( not in position       while     in open loop)
+        //
+        if( m2->homing || (((m2->status2 & 0x01)==0) && ((m2->status1 & 0x040000) != 0)))
+          nogo = 1;
+        pthread_mutex_unlock( &(m2->mutex));
+      }
+    }
+    if( nogo) {
+      pthread_mutex_unlock( &(mp->mutex));
+      return;
+    }
+  }
+  mp->homing   = 1;
+  lslogging_log_message( '%s homing = %d', mp->name, mp->homing);
+  mp->not_done = 1;     // set up waiting for cond
+  mp->motion_seen = 0;
+  // This opens the control loop\&.
+  // The status routine should notice this and the fact that
+  // the homing flag is set and call on the home2 routine
+  //
+  // Only send the open loop command if we are not in
+  // open loop mode already\&.  This test might prevent a race condition
+  // where we've already moved the home2 routine (and queue the homing program motion)
+  // before the open loop command is dequeued and acted on\&.
+  //
+  if( ~(mp->status1) & 0x040000) {
+    lspmac_SockSendDPline( mp->name, '#%d$*', motor_num);
+  }
+
+  pthread_mutex_unlock( &(mp->mutex));
+
+  lsevents_send_event( '%s Homing', mp->name);
+}
+.fi
+.SS "void lspmac_home2_queue (\fBlspmac_motor_t\fP *mp)"
+
+.PP
+Second stage of homing\&. \fBParameters:\fP
+.RS 4
+\fImp\fP motor we are concerned about 
+.RE
+.PP
+
+.PP
+Definition at line 1370 of file lspmac\&.c\&.
+.PP
+.nf
+                          {
+
+  char **spp;
+  char **home;
+
+  //
+  // At this point we are in open loop\&.
+  // Run the motor specific commands
+  //
+
+  pthread_mutex_lock( &(mp->mutex));
+
+  home = lsredis_get_string_array( mp->home);
+
+  //
+  // We don't have any motors that have a null home text array so 
+  // there is currently no need to worry about this case other than
+  // not to seg fault
+  //
+  // Also, Only go on if the first homing phase has been started
+  //
+  if( home == NULL || mp->homing != 1) {
+    pthread_mutex_unlock( &(mp->mutex));
+    return;
+  }
+
+  for( spp = home; *spp != NULL; spp++) {
+
+    lslogging_log_message( 'home2 is queuing '%s'\n', *spp);
+
+    lspmac_SockSendDPline( mp->name, *spp);
+  }
+
+  mp->homing = 2;
+  lslogging_log_message( '%s homing = %d', mp->name, mp->homing);
+  pthread_mutex_unlock( &(mp->mutex));
+}
+.fi
+.SS "void lspmac_init (int, int)"
+
+.PP
+Initialize this module\&. 
+.PP
+Definition at line 3857 of file lspmac\&.c\&.
+.PP
+.nf
+                   {
+  static int first_time = 1;
+  int i;
+  int err;
+  ENTRY entry_in, *entry_outp;
+  md2_status_t *p;
+  pthread_mutexattr_t mutex_initializer;
+
+  if( first_time) {
+    // Set our global harvest flags
+    getivars = ivarsflag;
+    getmvars = mvarsflag;
+
+    // Use recursive mutexs
+    //
+    pthread_mutexattr_init( &mutex_initializer);
+    pthread_mutexattr_settype( &mutex_initializer, PTHREAD_MUTEX_RECURSIVE);
+
+    // All important status mutex
+    pthread_mutex_init( &md2_status_mutex, &mutex_initializer);
+
+    //
+    // Initialize the motor objects
+    //
+
+    p = &md2_status;
+
+    omega  = lspmac_motor_init( &(lspmac_motors[ 0]), 0, 0, &p->omega_act_pos,     &p->omega_status_1,     &p->omega_status_2,     'Omega   #1 &1 X', 'omega',       lspmac_moveabs_queue, lspmac_jogabs_queue);
+    alignx = lspmac_motor_init( &(lspmac_motors[ 1]), 0, 1, &p->alignx_act_pos,    &p->alignx_status_1,    &p->alignx_status_2,    'Align X #2 &3 X', 'align\&.x',     lspmac_moveabs_queue, lspmac_jogabs_queue);
+    aligny = lspmac_motor_init( &(lspmac_motors[ 2]), 0, 2, &p->aligny_act_pos,    &p->aligny_status_1,    &p->aligny_status_2,    'Align Y #3 &3 Y', 'align\&.y',     lspmac_moveabs_queue, lspmac_jogabs_queue);
+    alignz = lspmac_motor_init( &(lspmac_motors[ 3]), 0, 3, &p->alignz_act_pos,    &p->alignz_status_1,    &p->alignz_status_2,    'Align Z #4 &3 Z', 'align\&.z',     lspmac_moveabs_queue, lspmac_jogabs_queue);
+    anal   = lspmac_motor_init( &(lspmac_motors[ 4]), 0, 4, &p->analyzer_act_pos,  &p->analyzer_status_1,  &p->analyzer_status_2,  'Anal    #5',      'lightPolar',  lspmac_moveabs_queue, lspmac_jogabs_queue);
+    zoom   = lspmac_motor_init( &(lspmac_motors[ 5]), 1, 0, &p->zoom_act_pos,      &p->zoom_status_1,      &p->zoom_status_2,      'Zoom    #6 &4 Z', 'cam\&.zoom',    lspmac_movezoom_queue, lspmac_movezoom_queue);
+    apery  = lspmac_motor_init( &(lspmac_motors[ 6]), 1, 1, &p->aperturey_act_pos, &p->aperturey_status_1, &p->aperturey_status_2, 'Aper Y  #7 &5 Y', 'appy',        lspmac_moveabs_queue, lspmac_jogabs_queue);
+    aperz  = lspmac_motor_init( &(lspmac_motors[ 7]), 1, 2, &p->aperturez_act_pos, &p->aperturez_status_1, &p->aperturez_status_2, 'Aper Z  #8 &5 Z', 'appz',        lspmac_moveabs_queue, lspmac_jogabs_queue);
+    capy   = lspmac_motor_init( &(lspmac_motors[ 8]), 1, 3, &p->capy_act_pos,      &p->capy_status_1,      &p->capy_status_2,      'Cap Y   #9 &5 U', 'capy',        lspmac_moveabs_queue, lspmac_jogabs_queue);
+    capz   = lspmac_motor_init( &(lspmac_motors[ 9]), 1, 4, &p->capz_act_pos,      &p->capz_status_1,      &p->capz_status_2,      'Cap Z  #10 &5 V', 'capz',        lspmac_moveabs_queue, lspmac_jogabs_queue);
+    scint  = lspmac_motor_init( &(lspmac_motors[10]), 2, 0, &p->scint_act_pos,     &p->scint_status_1,     &p->scint_status_2,     'Scin Z #11 &5 W', 'scint',       lspmac_moveabs_queue, lspmac_jogabs_queue);
+    cenx   = lspmac_motor_init( &(lspmac_motors[11]), 2, 1, &p->centerx_act_pos,   &p->centerx_status_1,   &p->centerx_status_2,   'Cen X  #17 &2 X', 'centering\&.x', lspmac_moveabs_queue, lspmac_jogabs_queue);
+    ceny   = lspmac_motor_init( &(lspmac_motors[12]), 2, 2, &p->centery_act_pos,   &p->centery_status_1,   &p->centery_status_2,   'Cen Y  #18 &2 Y', 'centering\&.y', lspmac_moveabs_queue, lspmac_jogabs_queue);
+    kappa  = lspmac_motor_init( &(lspmac_motors[13]), 2, 3, &p->kappa_act_pos,     &p->kappa_status_1,     &p->kappa_status_2,     'Kappa  #19 &7 X', 'kappa',       lspmac_moveabs_queue, lspmac_jogabs_queue);
+    phi    = lspmac_motor_init( &(lspmac_motors[14]), 2, 4, &p->phi_act_pos,       &p->phi_status_1,       &p->phi_status_2,       'Phi    #20 &7 Y', 'phi',         lspmac_moveabs_queue, lspmac_jogabs_queue);
+
+    fshut  = lspmac_fshut_init( &(lspmac_motors[15]));
+    flight = lspmac_dac_init( &(lspmac_motors[16]), &p->front_dac,   'M1200', 'frontLight\&.intensity', lspmac_movedac_queue);
+    blight = lspmac_dac_init( &(lspmac_motors[17]), &p->back_dac,    'M1201', 'backLight\&.intensity',  lspmac_movedac_queue);
+    fscint = lspmac_dac_init( &(lspmac_motors[18]), &p->scint_piezo, 'M1203', 'scint\&.focus',          lspmac_movedac_queue);
+
+    smart_mag_oo  = lspmac_bo_init( &(lspmac_motors[19]), 'smartMagnet','M1100=%d', &(md2_status\&.acc11c_5), 0x01);
+    blight_ud     = lspmac_bo_init( &(lspmac_motors[20]), 'backLight',  'M1101=%d', &(md2_status\&.acc11c_5), 0x02);
+    cryo          = lspmac_bo_init( &(lspmac_motors[21]), 'cryo',       'M1102=%d', &(md2_status\&.acc11c_5), 0x04);
+    dryer         = lspmac_bo_init( &(lspmac_motors[22]), 'dryer',      'M1103=%d', &(md2_status\&.acc11c_5), 0x08);
+    fluo          = lspmac_bo_init( &(lspmac_motors[23]), 'fluo',       'M1104=%d', &(md2_status\&.acc11c_5), 0x10);
+    flight_oo     = lspmac_soft_motor_init( &(lspmac_motors[24]), 'frontLight',        lspmac_moveabs_frontlight_oo_queue);
+    blight_f      = lspmac_soft_motor_init( &(lspmac_motors[25]), 'backLight\&.factor',  lspmac_moveabs_blight_factor_queue);
+    flight_f      = lspmac_soft_motor_init( &(lspmac_motors[26]), 'frontLight\&.factor', lspmac_moveabs_flight_factor_queue);
+
+    lp_air          = lspmac_bi_init( &(lspmac_bis[ 0]), 'lowpressureair',   &(md2_status\&.acc11c_1),  0x01, 'Low Pressure Air OK',  'Low Pressure Air Failed',  'OK',      'Failed');
+    hp_air          = lspmac_bi_init( &(lspmac_bis[ 1]), 'highpressureair',  &(md2_status\&.acc11c_1),  0x02, 'High Pressure Air OK', 'High Pressure Air Failed', 'OK',      'Failed');
+    cryo_switch     = lspmac_bi_init( &(lspmac_bis[ 2]), 'cryoswitch',       &(md2_status\&.acc11c_1),  0x04, 'CryoSwitchChanged',    'CryoSwitchChanged',        'On',      'Off');
+    blight_down     = lspmac_bi_init( &(lspmac_bis[ 3]), 'backLightDown',    &(md2_status\&.acc11c_1),  0x08, 'Backlight Down',       'Backlight Not Down',       'Down',    'Not Down');
+    blight_up       = lspmac_bi_init( &(lspmac_bis[ 4]), 'backLightUp',      &(md2_status\&.acc11c_1),  0x10, 'Backlight Up',         'Backlight Not Up',         'Up',      'Not Up');
+    cryo_back       = lspmac_bi_init( &(lspmac_bis[ 5]), 'cryoBack',         &(md2_status\&.acc11c_1),  0x40, 'Cryo Back',            'Cryo Not Back',            'Back',    'Not Back');
+    fluor_back      = lspmac_bi_init( &(lspmac_bis[ 6]), 'detectorParked',   &(md2_status\&.acc11c_2),  0x01, 'Fluor\&. Det\&. Parked',   'Fluor\&. Det\&. Not Parked',   'Parked',  'Not Parked');
+    sample_detected = lspmac_bi_init( &(lspmac_bis[ 7]), 'sampleDetector',   &(md2_status\&.acc11c_2),  0x02, 'SamplePresent',        'SampleAbsent',             'Present', 'Absent' );
+    etel_ready      = lspmac_bi_init( &(lspmac_bis[ 8]), 'etelReady',        &(md2_status\&.acc11c_2),  0x20, 'ETEL Ready',           'ETEL Not Ready',           'Ready',   'Not Ready');
+    etel_on         = lspmac_bi_init( &(lspmac_bis[ 9]), 'etelOn',           &(md2_status\&.acc11c_2),  0x40, 'ETEL On',              'ETEL Off',                 'On',      'Off');
+    etel_init_ok    = lspmac_bi_init( &(lspmac_bis[10]), 'etelOk',           &(md2_status\&.acc11c_2),  0x80, 'ETEL Init OK',         'ETEL Init Not OK',         'OK',      'Not OK');
+    minikappa_ok    = lspmac_bi_init( &(lspmac_bis[11]), 'miniKappaOk',      &(md2_status\&.acc11c_3),  0x01, 'Minikappa OK',         'Minikappa Not OK',         'OK',      'Not OK');
+    smart_mag_on    = lspmac_bi_init( &(lspmac_bis[12]), 'smartMagnetOn',    &(md2_status\&.acc11c_3),  0x04, 'Smart Magnet On',      'Smart Magnet Not On',      'On',      'Not On');
+    arm_parked      = lspmac_bi_init( &(lspmac_bis[13]), 'armParked',        &(md2_status\&.acc11c_3),  0x08, 'Arm Parked',           'Arm Not Parked',           'Parked',  'Not Parked');
+    smart_mag_err   = lspmac_bi_init( &(lspmac_bis[14]), 'smartMagnetError', &(md2_status\&.acc11c_3),  0x10, 'Smart Magnet Error',   'Smart Magnet OK',          'Error',   'OK');
+    shutter_open    = lspmac_bi_init( &(lspmac_bis[15]), 'shutterOpen',      &(md2_status\&.acc11c_3), 0x100, 'Shutter Open',         'Shutter Not Open',         'Open',    'Not Open');
+    smart_mag_off   = lspmac_bi_init( &(lspmac_bis[16]), 'smartMagnetOff',   &(md2_status\&.acc11c_5),  0x01, 'Smart Magnet Off',     'Smart Magnet Not Off',     'Off',     'Not Off');
+  
+
+
+    // Set up hash table
+    //
+    err = hcreate_r( LSPMAC_MAX_MOTORS * 2, &motors_ht);
+    if( err == 0) {
+      lslogging_log_message( 'lspmac_init: hcreate_r failed: '%s'', strerror( errno));
+      exit( -1);
+    }
+    for( i=0; i<lspmac_nmotors; i++) {
+      entry_in\&.key   = lspmac_motors[i]\&.name;
+      entry_in\&.data  = &(lspmac_motors[i]);
+      err = hsearch_r( entry_in, ENTER, &entry_outp, &motors_ht);
+      if( err == 0) {
+        lslogging_log_message( 'lspmac_init: hsearch_r failed for motor %s: '%s'', lspmac_motors[i]\&.name, strerror( errno));
+        exit( -1);
+      }
+    }
+
+
+
+    //
+    // Initialize several commands that get called, perhaps, alot
+    //
+    rr_cmd\&.RequestType = VR_UPLOAD;
+    rr_cmd\&.Request     = VR_PMAC_READREADY;
+    rr_cmd\&.wValue      = 0;
+    rr_cmd\&.wIndex      = 0;
+    rr_cmd\&.wLength     = htons(2);
+    memset( rr_cmd\&.bData, 0, sizeof(rr_cmd\&.bData));
+
+    gb_cmd\&.RequestType = VR_UPLOAD;
+    gb_cmd\&.Request     = VR_PMAC_GETBUFFER;
+    gb_cmd\&.wValue      = 0;
+    gb_cmd\&.wIndex      = 0;
+    gb_cmd\&.wLength     = htons(1400);
+    memset( gb_cmd\&.bData, 0, sizeof(gb_cmd\&.bData));
+
+    cr_cmd\&.RequestType = VR_UPLOAD;
+    cr_cmd\&.Request     = VR_CTRL_RESPONSE;
+    cr_cmd\&.wValue      = 0;
+    cr_cmd\&.wIndex      = 0;
+    cr_cmd\&.wLength     = htons(1400);
+    memset( cr_cmd\&.bData, 0, sizeof(cr_cmd\&.bData));
+
+    //
+    // Initialize some mutexs and conditions
+    //
+
+    pthread_mutex_init( &pmac_queue_mutex, &mutex_initializer);
+    pthread_cond_init(  &pmac_queue_cond, NULL);
+
+    lspmac_shutter_state = 0;                           // assume the shutter is now closed: not a big deal if we are wrong
+    pthread_mutex_init( &lspmac_shutter_mutex, &mutex_initializer);
+    pthread_cond_init(  &lspmac_shutter_cond, NULL);
+    pmacfd\&.fd = -1;
+
+    pthread_mutex_init( &lspmac_moving_mutex, &mutex_initializer);
+    pthread_cond_init(  &lspmac_moving_cond, NULL);
+
+    pthread_mutex_init( &lspmac_ascii_mutex, &mutex_initializer);
+
+    pthread_mutex_init( &lspmac_ascii_buffers_mutex, &mutex_initializer);
+
+    lsevents_preregister_event( 'omega crossed zero');
+    lsevents_preregister_event( 'Move Aborted');
+    lsevents_preregister_event( 'Combined Move Aborted');
+    lsevents_preregister_event( 'Abort Request queued');
+    lsevents_preregister_event( 'Abort Request accepted');
+    lsevents_preregister_event( 'Reset queued');
+    lsevents_preregister_event( 'Reset command accepted');
+  
+
+    for( i=1; i<=16; i++) {
+      lsevents_preregister_event( 'Coordsys %d Stopped', i);
+    }
+    first_time = 0;
+  }
+  //
+  // clear the ascii communications buffers
+  //
+  {
+    uint32_t cc;
+    cc = 0;
+    lspmac_send_command( VR_UPLOAD, VR_PMAC_SETMEM, 0x0e9e, 0, 4, (char *)&cc, NULL, 1, NULL);
+
+    cc = 0x18;
+    lspmac_send_command( VR_UPLOAD, VR_PMAC_SETMEM, 0x0e9e, 0, 4, (char *)&cc, NULL, 1, NULL);
+  }
+
+  lspmac_SockSendDPline( NULL, 'I5=0');                 // disable plcc's
+  lspmac_SockSendDPline( NULL, 'P2100=0');              // Don't let plcc0 control the shutter
+  lspmac_SockSendDPline( NULL, 'I36=1');                // Don't let ^A put a disabled motor into closed loop mode
+  lspmac_SockSendDPline( NULL, 'ENABLE PLCC 0,2');      // use plcc0 (Probably not needed but allows easy reset with M2000=0) plcc2 is ours used to fill db memory with status
+  lspmac_SockSendDPline( NULL, 'DISABLE PLCC 1');       // Don't use plcc 1, it's embl's status routine for old md2 code
+  lspmac_SockSendDPline( NULL, 'I5=3');                 // allow the enabled plcc's to run
+
+
+}
+.fi
+.SS "int lspmac_jogabs_queue (\fBlspmac_motor_t\fP *, double)"
+
+.PP
+Use jog to move motor to requested position\&. 
+.PP
+Definition at line 3536 of file lspmac\&.c\&.
+.PP
+.nf
+                            {
+  
+  return lspmac_move_or_jog_abs_queue( mp, requested_position, 1);
+}
+.fi
+.SS "int lspmac_move_or_jog_abs_queue (\fBlspmac_motor_t\fP *mp, doublerequested_position, intuse_jo)"
+
+.PP
+Move method for normal stepper and servo motor objects Returns non-zero on abort, zero if OK\&. < format string for coordinate system move
+.PP
+< coordinate system bit
+.PP
+< the requested position in units of 'counts'
+.PP
+< motor and coordinate system;
+.PP
+< 0= don't use this motor, 1= do use it
+.PP
+< our axis \fBParameters:\fP
+.RS 4
+\fImp\fP The motor to move 
+.br
+\fIrequested_position\fP Where to move it 
+.br
+\fIuse_jo\fP 1 to force jog, 0 for motion prog 
+.RE
+.PP
+
+.PP
+Definition at line 3258 of file lspmac\&.c\&.
+.PP
+.nf
+                                   {
+  char *fmt;                    
+  int q100;                     
+  int requested_pos_cnts;       
+  int coord_num, motor_num;     
+  int active;                   
+  char *axis;                   
+  double u2c;
+  double neutral_pos;
+  double min_pos, max_pos;
+  int pos_limit_hit, neg_limit_hit, in_position_band;
+  struct timespec timeout, now;
+  int err;
+
+  pthread_mutex_lock( &(mp->mutex));
+
+  active           = lsredis_getb(   mp->active);
+  u2c              = lsredis_getd(   mp->u2c);
+  motor_num        = lsredis_getl(   mp->motor_num);
+  coord_num        = lsredis_getl(   mp->coord_num);
+  axis             = lsredis_getstr( mp->axis);
+  neutral_pos      = lsredis_getd(   mp->neutral_pos);
+  min_pos          = lsredis_getd(   mp->min_pos) - neutral_pos;
+  max_pos          = lsredis_getd(   mp->max_pos) - neutral_pos;
+  pos_limit_hit    = lsredis_getd(   mp->pos_limit_hit);
+  neg_limit_hit    = lsredis_getd(   mp->neg_limit_hit);
+  in_position_band = lsredis_getl(   mp->in_position_band);
+
+  if( u2c == 0\&.0 || requested_position < min_pos || requested_position > max_pos) {
+    //
+    // Shouldn't try moving a motor that's in trouble
+    //
+    pthread_mutex_unlock( &(mp->mutex));
+    lslogging_log_message( 'lspmac_move_or_jog_abs_queue: %s  u2c=%f  requested position=%f  min allowed=%f  max allowed=%f', mp->name, u2c, requested_position, min_pos, max_pos);
+    lsevents_send_event( '%s Move Aborted', mp->name);
+    return 1;
+  }
+
+  if( active != 1) {
+    //
+    // Don't really move this motor
+    // although it's not an error to try
+    // This is here since we want to check the soft limits (above) but ignore the hard limits (below)
+    // We'll fake the move\&.
+    //
+    mp->requested_position = requested_position;
+    if( mp->nlut > 0 && mp->lut != NULL) {
+      mp->requested_pos_cnts = lspmac_lut( mp->nlut, mp->lut, requested_position);
+    } else {
+      mp->requested_pos_cnts = u2c * (requested_position + neutral_pos);
+    }
+    requested_pos_cnts = mp->requested_pos_cnts;
+
+    mp->not_done     = 1;
+    mp->motion_seen  = 0;
+    mp->command_sent = 0;
+
+    lsevents_send_event( '%s Moving', mp->name);
+
+    mp->not_done     = 0;
+    mp->motion_seen  = 1;
+    mp->command_sent = 1;
+
+    mp->position = requested_position;
+    mp->actual_pos_cnts = requested_pos_cnts;
+
+    pthread_mutex_unlock( &(mp->mutex));
+
+    lsevents_send_event( '%s In Position', mp->name);
+    return 0;
+
+  }
+
+
+  if( (neg_limit_hit && (requested_position < mp->position)) || (pos_limit_hit && (requested_position > mp->position))) {
+    pthread_mutex_unlock( &(mp->mutex));
+    lslogging_log_message( 'lspmac_move_or_jog_abs_queue: %s Moving wrong way on limit: requested position=%f  current position=%f  low limit=%d high limit=%d',
+                           mp->name, requested_position, mp->position, neg_limit_hit, pos_limit_hit);
+    lsevents_send_event( '%s Move Aborted', mp->name);
+    return 2;
+  }
+
+
+  mp->requested_position = requested_position;
+  if( mp->nlut > 0 && mp->lut != NULL) {
+    mp->requested_pos_cnts = lspmac_lut( mp->nlut, mp->lut, requested_position);
+  } else {
+    mp->requested_pos_cnts = u2c * (requested_position + neutral_pos);
+  }
+  requested_pos_cnts = mp->requested_pos_cnts;
+
+  //
+  // Bluff if we are already there
+  //
+  if( (abs( requested_pos_cnts - mp->actual_pos_cnts) * 16 < in_position_band)) {
+    //
+    // Lie and say we moved even though we didn't\&.  Who will know? We are within the deadband or not active\&.
+    //
+    mp->not_done     = 1;
+    mp->motion_seen  = 0;
+    mp->command_sent = 0;
+
+    lsevents_send_event( '%s Moving', mp->name);
+
+    mp->not_done     = 0;
+    mp->motion_seen  = 1;
+    mp->command_sent = 1;
+    
+    pthread_mutex_unlock( &(mp->mutex));
+
+    lsevents_send_event( '%s In Position', mp->name);
+    return 0;
+  }
+
+  mp->not_done     = 1;
+  mp->motion_seen  = 0;
+  mp->command_sent = 0;
+
+
+  if( use_jog || axis == NULL || *axis == 0) {
+    use_jog = 1;
+  } else {
+    use_jog = 0;
+    q100 = 1 << (coord_num -1);
+  }
+
+
+  pthread_mutex_unlock( &(mp->mutex));
+
+  if( !use_jog) {
+    //
+    // Make sure the coordinate system is not moving something, wait if it is
+    //
+    pthread_mutex_lock( &lspmac_moving_mutex);
+
+    clock_gettime( CLOCK_REALTIME, &now);
+    //
+    // TODO: Have all moves estimate how long they'll take and use that here
+    //
+    timeout\&.tv_sec  = now\&.tv_sec + 60\&.0;           // a long timeout, but we might really be moving something that takes this long (or longer)
+    timeout\&.tv_nsec = now\&.tv_nsec;
+
+    err = 0;
+    while( err == 0 &&  (lspmac_moving_flags & q100) != 0)
+      err = pthread_cond_timedwait( &lspmac_moving_cond, &lspmac_moving_mutex, &timeout);
+    
+    pthread_mutex_unlock( &lspmac_moving_mutex);
+
+    if( err == ETIMEDOUT) {
+      lslogging_log_message( 'lspmac_move_or_jog_abs_queue: Timed Out\&.  lspmac_moving_flags = %0x', lspmac_moving_flags);
+      lsevents_send_event( '%s Move Aborted', mp->name);
+      return 1;
+    }
+
+    //
+    // Set the 'we are moving this coordinate system' flag
+    //
+    lspmac_SockSendDPline( NULL, 'M5075=(M5075 | %d)', q100);
+    
+    switch( *axis) {
+    case 'A':
+      fmt = '&%d Q16=%d Q100=%d B146R';
+      break;
+
+    case 'B':
+      fmt = '&%d Q17=%d Q100=%d B147R';
+      break;
+
+    case 'C':
+      fmt = '&%d Q18=%d Q100=%d B148R';
+      break;
+    case 'X':
+      fmt = '&%d Q10=%d Q100=%d B140R';
+      break;
+
+    case 'Y':
+      fmt = '&%d Q11=%d Q100=%d B141R';
+      break;
+
+    case 'Z':
+      fmt = '&%d Q12=%d Q100=%d B142R';
+      break;
+
+    case 'U':
+      fmt = '&%d Q13=%d Q100=%d B143R';
+      break;
+
+    case 'V':
+      fmt = '&%d Q14=%d Q100=%d B144R';
+      break;
+
+    case 'W':
+      fmt = '&%d Q15=%d Q100=%d B145R';
+      break;
+    }
+
+    //
+    // Make sure the flag has been seen
+    //
+
+    clock_gettime( CLOCK_REALTIME, &now);
+    timeout\&.tv_sec  = now\&.tv_sec + 4\&.0;            // also a long timeout\&.  This should really only take a few milliseconds on a slow day
+    timeout\&.tv_nsec = now\&.tv_nsec;
+
+    pthread_mutex_lock( &lspmac_moving_mutex);
+
+    err = 0;
+    while( err == 0 && (lspmac_moving_flags & q100) == 0)
+      err = pthread_cond_timedwait( &lspmac_moving_cond, &lspmac_moving_mutex, &timeout);
+    pthread_mutex_unlock( &lspmac_moving_mutex);
+
+    if( err == ETIMEDOUT) {
+      lslogging_log_message( 'lspmac_move_or_jog_abs_queue: Did not see flag propagate\&.  Move aborted\&.');
+      lsevents_send_event( '%s Move Aborted', mp->name);
+      return 1;
+    }
+  }
+
+  pthread_mutex_lock( &(mp->mutex));
+  if( use_jog) {
+    lslogging_log_message( 'Jogging %s: #%d j=%d', mp->name, motor_num, requested_pos_cnts);
+    lspmac_SockSendDPline( mp->name, '#%d j=%d', motor_num, requested_pos_cnts);
+  } else {
+    lspmac_SockSendDPline( mp->name, fmt, coord_num, requested_pos_cnts, q100);
+  }
+  pthread_mutex_unlock( &(mp->mutex));
+
+  free( axis);
+
+  return 0;
+}
+.fi
+.SS "int lspmac_move_or_jog_preset_queue (\fBlspmac_motor_t\fP *, char *, int)"
+
+.PP
+move using a preset value returns 0 on success, non-zero on error 
+.PP
+Definition at line 3497 of file lspmac\&.c\&.
+.PP
+.nf
+                                       {
+  double pos;
+  int err;
+  int rtn;
+
+  if( preset == NULL || *preset == 0) {
+    lsevents_send_event( '%s Move Aborted', mp->name);
+    return 0;
+  }
+
+  err = lsredis_find_preset( mp->name, preset, &pos);
+
+  if( err != 0)
+    rtn = lspmac_move_or_jog_abs_queue( mp, pos, use_jog);
+  else {
+    lsevents_send_event( '%s Move Aborted', mp->name);
+    rtn = 1;
+  }
+  return rtn;
+}
+.fi
+.SS "void lspmac_move_or_jog_queue (\fBlspmac_motor_t\fP *, double, int)"
+
+.SS "int lspmac_move_preset_queue (\fBlspmac_motor_t\fP *mp, char *preset_name)"
+
+.PP
+Move a given motor to one of its preset positions\&. No movement if the preset is not found\&. 
+.PP
+\fBParameters:\fP
+.RS 4
+\fImp\fP lspmac motor pointer 
+.br
+\fIpreset_name\fP Name of the preset to use 
+.RE
+.PP
+
+.PP
+Definition at line 2496 of file lspmac\&.c\&.
+.PP
+.nf
+                                                                     {
+  double pos;
+  int err;
+
+  //lslogging_log_message( 'lspmac_move_preset_queue: Called with motor %s and preset named '%s'', mp->name, preset_name);
+
+  err = lsredis_find_preset( mp->name, preset_name, &pos);
+  if( err == 0)
+    return 1;
+
+  err = mp->jogAbs( mp, pos);
+  if( !err)
+    lslogging_log_message( 'lspmac_move_preset_queue: moving %s to preset '%s' (%f)', mp->name, preset_name, pos);
+  //
+  // the abort event should have been sent in moveAbs
+  //
+  return err;
+}
+.fi
+.SS "int lspmac_moveabs_queue (\fBlspmac_motor_t\fP *, double)"
+
+.PP
+Use coordinate system motion program, if available, to move motor to requested position\&. 
+.PP
+Definition at line 3525 of file lspmac\&.c\&.
+.PP
+.nf
+                            {
+  
+  return lspmac_move_or_jog_abs_queue( mp, requested_position, 0);
+}
+.fi
+.SS "int lspmac_moveabs_wait (\fBlspmac_motor_t\fP *mp, doubletimeout_secs)"
+
+.PP
+Wait for motor to finish moving\&. Assume motion already queued, now just wait
+.PP
+\fBParameters:\fP
+.RS 4
+\fImp\fP The motor object to wait for 
+.br
+\fItimeout_secs\fP The number of seconds to wait for\&. Fractional values fine\&. 
+.RE
+.PP
+
+.PP
+Definition at line 3551 of file lspmac\&.c\&.
+.PP
+.nf
+                                                                  {
+  struct timespec timeout, now;
+  double isecs, fsecs;
+  int err;
+
+  //
+  // Copy the queue item for the most recent move request
+  //
+  clock_gettime( CLOCK_REALTIME, &now);
+
+  fsecs = modf( timeout_secs, &isecs);
+
+  timeout\&.tv_sec  = now\&.tv_sec  + (long)floor( isecs);
+  timeout\&.tv_nsec = now\&.tv_nsec + (long)floor( fsecs * 1\&.0e9);
+  
+  timeout\&.tv_sec  += timeout\&.tv_nsec / 1000000000;
+  timeout\&.tv_nsec %= 1000000000;
+
+  err = 0;
+  pthread_mutex_lock( &(mp->mutex));
+  
+  while( err == 0 && mp->command_sent == 0)
+    err = pthread_cond_timedwait( &mp->cond, &mp->mutex, &timeout);
+  pthread_mutex_unlock( &(mp->mutex));
+  if( err != 0) {
+    if( err != ETIMEDOUT) {
+      lslogging_log_message( 'lspmac_moveabs_wait: unexpected error from timedwait %d  tv_sec %ld   tv_nsec %ld', err, timeout\&.tv_sec, timeout\&.tv_nsec);
+    }
+    return 1;
+  }
+
+  //
+  // wait for the motion to have started
+  // This will time out if the motion ends before we can read the status back
+  // hence the added complication of time stamp of the sent packet\&.
+
+  err = 0;
+  pthread_mutex_lock( &(mp->mutex));
+  while( err == 0 && mp->motion_seen == 0)
+    err = pthread_cond_timedwait( &(mp->cond), &(mp->mutex), &timeout);
+  
+  if( err != 0) {
+    if( err != ETIMEDOUT) {
+      lslogging_log_message( 'lspmac_moveabs_wait: unexpected error from timedwait: %d  tv_sec %ld   tv_nsec %ld', err, timeout\&.tv_sec, timeout\&.tv_nsec);
+    }
+    pthread_mutex_unlock( &(mp->mutex));
+    return 1;
+  }
+
+  //
+  // wait for the motion that we know has started to finish
+  //
+  err = 0;
+  while( err == 0 && mp->not_done)
+    err = pthread_cond_timedwait( &(mp->cond), &(mp->mutex), &timeout);
+
+  
+  if( err != 0) {
+    if( err != ETIMEDOUT) {
+      lslogging_log_message( 'lspmac_moveabs_wait: unexpected error from timedwait: %d  tv_sec %ld   tv_nsec %ld', err, timeout\&.tv_sec, timeout\&.tv_nsec);
+    }
+    pthread_mutex_unlock( &(mp->mutex));
+    return 1;
+  }
+
+  //
+  // if return code was not 0 then we know we shouldn't wait for not_done flag\&.
+  // In this case the motion ended before we read the status registers
+  //
+  pthread_mutex_unlock( &(mp->mutex));
+  return 0;
+}
+.fi
+.SS "pthread_t* lspmac_run ()"
+
+.PP
+Start up the lspmac thread\&. 
+.PP
+Definition at line 4426 of file lspmac\&.c\&.
+.PP
+.nf
+                        {
+  static int first_time = 1;
+  char **inits;
+  lspmac_motor_t *mp;
+  char evts[64];
+  int i;
+  int active;
+  int motor_num;
+
+  pthread_create( &pmac_thread, NULL, lspmac_worker, NULL);
+  lsevents_send_event( 'LSPMAC Initializing');
+
+  if( first_time) {
+    first_time = 0;
+    lsevents_add_listener( '^CryoSwitchChanged$',        lspmac_cryoSwitchChanged_cb);
+    lsevents_add_listener( '^scint In Position$',        lspmac_scint_maybe_turn_on_dryer_cb);
+    lsevents_add_listener( '^scint Moving$',             lspmac_scint_maybe_turn_off_dryer_cb);
+    lsevents_add_listener( '^scintDried$',               lspmac_scint_dried_cb);
+    lsevents_add_listener( '^backLight 1$' ,           lspmac_backLight_up_cb);
+    lsevents_add_listener( '^backLight 0$' ,           lspmac_backLight_down_cb);
+    lsevents_add_listener( '^cam\&.zoom Moving$',          lspmac_light_zoom_cb);
+    //    lsevents_add_listener( '^Quitting Program$',         lspmac_quitting_cb);
+    lsevents_add_listener( '^Control-[BCFGV] accepted$', lspmac_request_control_response_cb);
+    lsevents_add_listener( '^Full Card Reset$',          lspmac_full_card_reset_cb);
+
+    if( pgpmac_use_autoscint) {
+      lsevents_add_listener( '^scint In Position$',        lspmac_scint_maybe_return_sample_cb);
+      lsevents_add_listener( '^scint Moving$',             lspmac_scint_maybe_move_sample_cb);
+    }
+
+    for( i=0; i<lspmac_nmotors; i++) {
+      snprintf( evts, sizeof( evts)-1, '^%s command accepted$', lspmac_motors[i]\&.name);
+      evts[sizeof(evts)-1] = 0;
+      lsevents_add_listener( evts, lspmac_command_done_cb);
+    }
+
+
+
+    lspmac_zoom_lut_setup();
+    lspmac_flight_lut_setup();
+    lspmac_blight_lut_setup();
+    lspmac_fscint_lut_setup();
+  }
+
+  //
+  // Clear the command interfaces
+  //
+  // lspmac_SockSendControlCharPrint( 'Control-X', '\x18'); // why does this kill the initialzation?
+
+  {
+    uint32_t cc;
+    cc = 0;
+    lspmac_send_command( VR_UPLOAD, VR_PMAC_SETMEM, 0x0e9e, 0, 4, (char *)&cc, NULL, 1, NULL);
+
+    cc = 0x18;
+    lspmac_send_command( VR_UPLOAD, VR_PMAC_SETMEM, 0x0e9e, 0, 4, (char *)&cc, NULL, 1, NULL);
+  }
+
+  //
+  // Initialize the pmac's support for each motor
+  // (ie, set the various flag for when a motor is active or not)
+  //
+  for( i=0; i<lspmac_nmotors; i++) {
+    mp        = &(lspmac_motors[i]);
+    active    = lsredis_getb( mp->active);
+    motor_num = lsredis_getl( mp->motor_num);
+
+    if( motor_num >= 1 && motor_num <= 32) {
+      
+      //
+      // Set the PMAC to be consistant with redis
+      //
+      lspmac_SockSendDPline( NULL, 'I%d16=%f I%d17=%f I%d28=%d', motor_num, lsredis_getd( mp->max_speed), motor_num, lsredis_getd( mp->max_accel), motor_num, lsredis_getl( mp->in_position_band));
+    }    
+
+    // if there is a problem with 'active' then don't do anything
+    // On the other hand, various combinations of yes/no true/fals 1/0 should work
+    //
+    switch( active) {
+    case 1:
+      inits = lsredis_get_string_array( mp->active_init);
+      break;
+
+    case 0:
+      inits = lsredis_get_string_array( mp->inactive_init);
+      break;
+
+    default:
+      lslogging_log_message( 'lspmac_run: motor %s is neither active nor inactive (!?)', mp->name);
+      inits = NULL;
+    }
+    if( inits != NULL) {
+      while( *inits != NULL) {
+        lspmac_SockSendDPline( NULL, *inits);
+        inits++;
+      }
+    }
+  }
+
+  
+
+
+  lsevents_send_event( 'LSPMAC Done Initializing');
+  return &pmac_thread;
+}
+.fi
+.SS "int lspmac_set_motion_flags (int *mmaskp, \fBlspmac_motor_t\fP *mp_1, \&.\&.\&.)"
+
+.PP
+Set the coordinate system motion flags (m5075) for the null terminated list of motors that we are planning on running a motion program with\&. Note that lspmac_est_move_time already takes care of this, use when calling a motion program directly
+.PP
+\fBParameters:\fP
+.RS 4
+\fImmaskp\fP Returned value of the mask generated\&. Ignored if null\&. 
+.br
+\fImp_1\fP start of null terminated list of motors\&. 
+.RE
+.PP
+
+.PP
+Definition at line 2766 of file lspmac\&.c\&.
+.PP
+.nf
+                                                                     {
+  va_list arg_ptr;
+  struct timespec timeout;
+  int err;
+  int cn;
+  int need_flag;
+  lspmac_motor_t *mp;
+  int mmask;
+
+  mmask = 0;
+  if( mmaskp != NULL)
+    *mmaskp = 0;
+
+  if( mp_1==NULL)
+    return 0;
+  
+  
+  //
+  // add the coordinate system flags to mmask
+  //
+  va_start( arg_ptr, mp_1);
+  for( mp = mp_1; mp!=NULL; mp = va_arg( arg_ptr, lspmac_motor_t *)) {
+    if( mp->magic != LSPMAC_MAGIC_NUMBER) {
+      lslogging_log_message( 'lspmac_set_motion_flags: WARNING: motor list must be NULL terminated\&.  Check your call to lspmac_set_motion_flags\&.');
+      break;
+    }
+    cn = lsredis_getl( mp->coord_num);
+    if( cn < 1 || cn > 16)
+      continue;
+    
+    mmask |= 1 << (cn - 1);
+  }
+  va_end( arg_ptr);
+
+  if( mmaskp != NULL)
+    *mmaskp = mmask;
+    
+  //
+  // It could be the flag is already what we want\&.  We might set up a race condition if we
+  // try to set it again\&.  (so don't)
+  //
+  pthread_mutex_lock( &lspmac_moving_mutex);
+
+  if( (lspmac_moving_flags & mmask) != 0)
+    need_flag = 0;
+  else
+    need_flag = 1;
+  
+  pthread_mutex_unlock( &lspmac_moving_mutex);
+
+  if( !need_flag)
+    return 0;
+  
+  //
+  // Set m5075 and make sure it propagates
+  //
+  lspmac_SockSendDPline( NULL, 'M5075=(M5075 | %d)', mmask);
+  clock_gettime( CLOCK_REALTIME, &timeout);
+  timeout\&.tv_sec += 2;
+
+  err = 0;
+  pthread_mutex_lock( &lspmac_moving_mutex);
+  while( err == 0 && (lspmac_moving_flags & mmask) != mmask)
+    err = pthread_cond_timedwait( &lspmac_moving_cond, &lspmac_moving_mutex, &timeout);
+
+  pthread_mutex_unlock( &lspmac_moving_mutex);
+  
+  if( err == ETIMEDOUT) {
+    lslogging_log_message( 'lspmac_set_motion_flags: timed out waiting for motion %d flag to be set', mmask);
+    return 1;
+  }
+  return 0;
+}
+.fi
+.SS "\fBpmac_cmd_queue_t\fP* lspmac_SockSendControlCharPrint (char *event, charc)"
+
+.PP
+Send a control character\&. \fBParameters:\fP
+.RS 4
+\fIevent\fP base name for events 
+.br
+\fIc\fP The control character to send 
+.RE
+.PP
+
+.PP
+Definition at line 1133 of file lspmac\&.c\&.
+.PP
+.nf
+                                                    {
+  lspmac_control_char = c;
+  //  return lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDCTRLCHAR, c, 0, 1400, NULL, lspmac_SendControlReplyPrintCB, 0, event);
+  return lspmac_send_command( VR_UPLOAD, VR_CTRL_RESPONSE, c, 0, 1400, NULL, lspmac_SendControlReplyPrintCB, 0, event);
+}
+.fi
+.SS "void lspmac_SockSendDPControlChar (char *event, charc)"
+
+.PP
+use dpram ascii interface to send a control character 
+.PP
+Definition at line 2090 of file lspmac\&.c\&.
+.PP
+.nf
+                                                        {
+  uint16_t buff;
+
+  buff = 0x07 & c;
+  lspmac_send_command( VR_UPLOAD, VR_PMAC_SETMEM, 0x0e9e, 0, 2, (char *)&buff, lspmac_SockSendDPControlCharCB, 1, event);
+  if( event != NULL)
+    lsevents_send_event( '%s queued', event);
+}
+.fi
+.SS "void lspmac_SockSendDPline (char *, char *fmt, \&.\&.\&.)"
+
+.PP
+prepare (queue up) a line to send the dpram ascii command interface 
+.PP
+Definition at line 2047 of file lspmac\&.c\&.
+.PP
+.nf
+                                                         {
+  va_list arg_ptr;
+  uint32_t index;
+  char *pl;
+  
+  pthread_mutex_lock( &lspmac_ascii_mutex);
+  index = lspmac_dpascii_on++ % LSPMAC_DPASCII_QUEUE_LENGTH;
+
+  pl = lspmac_dpascii_queue[index]\&.pl;
+
+  va_start( arg_ptr, fmt);
+  vsnprintf( pl, 159, fmt, arg_ptr);
+  pl[159] = 0;
+  va_end( arg_ptr);
+
+  lspmac_dpascii_queue[index]\&.event = event;
+
+  pthread_mutex_unlock( &lspmac_ascii_mutex);
+}
+.fi
+.SS "\fBpmac_cmd_queue_t\fP* lspmac_SockSendline (char *event, char *fmt, \&.\&.\&.)"
+
+.PP
+Send a one line command\&. Uses printf style arguments\&. \fBParameters:\fP
+.RS 4
+\fIevent\fP base name for events 
+.br
+\fIfmt\fP Printf style format string 
+.RE
+.PP
+
+.PP
+Definition at line 1090 of file lspmac\&.c\&.
+.PP
+.nf
+                                         {
+  va_list arg_ptr;
+  char payload[1400];
+
+  va_start( arg_ptr, fmt);
+  vsnprintf( payload, sizeof(payload)-1, fmt, arg_ptr);
+  payload[ sizeof(payload)-1] = 0;
+  va_end( arg_ptr);
+
+  lslogging_log_message( '%s', payload);
+
+  return lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( payload), payload, lspmac_GetShortReplyCB, 0, event);
+}
+.fi
+.SS "void lspmac_spin (\fBlspmac_motor_t\fP *)"
+
+.PP
+Definition at line 4414 of file lspmac\&.c\&.
+.PP
+.nf
+                                      {
+  if( strcmp( mp->name, 'omega')==0) {
+    lspmac_SockSendDPline( NULL, '&%d', lsredis_getl( mp->coord_num));
+    lspmac_SockSendDPline( NULL, '#%d', lsredis_getl( mp->motor_num));
+    lspmac_SockSendDPline( NULL, 'j+');
+  }
+  return;
+}
+.fi
+.SS "void lspmac_video_rotate (doublesecs)"
+
+.PP
+Special motion program to collect centering video\&. 
+.PP
+Definition at line 2728 of file lspmac\&.c\&.
+.PP
+.nf
+                                       {
+  double q10;           // starting position (counts)
+  double q11;           // delta counts
+  double q12;           // milliseconds to run over delta
+  
+  double u2c;
+  double neutral_pos;
+
+  if( secs <= 0\&.0)
+    return;
+
+  omega_zero_search = 1;
+
+  pthread_mutex_lock( &(omega->mutex));
+  u2c         = lsredis_getd( omega->u2c);
+  neutral_pos = lsredis_getd( omega->neutral_pos);
+
+  q10 = neutral_pos * u2c;
+  q11 = 360\&.0 * u2c;
+  q12 = 1000 * secs;
+  
+
+  omega_zero_velocity = 360\&.0 * u2c / secs;      // counts/second to back calculate zero crossing time
+
+  lspmac_SockSendDPline( omega->name, '&1 Q10=%\&.1f Q11=%\&.1f Q12=%\&.1f Q13=(I117) Q14=(I116) B240R', q10, q11, q12);
+  pthread_mutex_unlock( &(omega->mutex));
+}
+.fi
+.SS "int lsredis_cmpnstr (\fBlsredis_obj_t\fP *p, char *s, intn)"
+
+.PP
+Definition at line 254 of file lsredis\&.c\&.
+.PP
+.nf
+                                                       {
+  int rtn;
+  pthread_mutex_lock( &p->mutex);
+  while( p->valid == 0)
+    pthread_cond_wait( &p->cond, &p->mutex);
+  
+  rtn = strncmp( p->value, s, n);
+  pthread_mutex_unlock( &p->mutex);
+  return rtn;
+}
+.fi
+.SS "int lsredis_cmpstr (\fBlsredis_obj_t\fP *p, char *s)"
+
+.PP
+Definition at line 243 of file lsredis\&.c\&.
+.PP
+.nf
+                                               {
+  int rtn;
+  pthread_mutex_lock( &p->mutex);
+  while( p->valid == 0)
+    pthread_cond_wait( &p->cond, &p->mutex);
+  
+  rtn = strcmp( p->value, s);
+  pthread_mutex_unlock( &p->mutex);
+  return rtn;
+}
+.fi
+.SS "void lsredis_config ()"
+
+.PP
+Definition at line 1264 of file lsredis\&.c\&.
+.PP
+.nf
+                      {
+  char hostname[128], lhostname[128];
+  int i;
+
+  if( gethostname( hostname, sizeof(hostname)-1)) {
+    lslogging_log_message( 'lsredis_init: cannot get our own host name\&.  Cannot configure redis variables\&.');
+  } else {
+    for( i=0; i<strlen(hostname); i++) {
+      lhostname[i] = tolower( hostname[i]);
+    }
+    lhostname[i] = 0;
+
+    lslogging_log_message( 'lsredis_init: our host name is '%s'', lhostname);
+    redisAsyncCommand( roac, lsredis_configCB, NULL, 'hgetall config\&.%s', lhostname);
+  }
+  
+  pthread_mutex_lock( &lsredis_config_mutex);
+  while( lsredis_head == NULL)
+    pthread_cond_wait( &lsredis_config_cond, &lsredis_config_mutex);
+  pthread_mutex_unlock( &lsredis_config_mutex);
+
+}
+.fi
+.SS "int lsredis_find_preset (char *base, char *preset_name, double *dval)"
+
+.PP
+Get the value of the given preset and return it in dval Returns 0 on error, non-zero on success;\&. 
+.PP
+Definition at line 937 of file lsredis\&.c\&.
+.PP
+.nf
+                                                                            {
+  char s[512];
+  int err;
+  ENTRY entry_in, *entry_outp;
+  lsredis_preset_list_t *pl;
+
+  snprintf( s, sizeof( s)-1, '%s%s', motor_name, preset_name);
+  s[sizeof(s)-1] = 0;
+
+  entry_in\&.key  = s;
+  entry_in\&.data = NULL;
+  err = hsearch_r( entry_in, FIND, &entry_outp, &lsredis_preset_ht);
+
+  if( err == 0) {
+    // not found (or some other problem that means we don't have an answer
+    //
+    // Maybe someone added a new preset and we don't know about it yet
+    //
+    lsredis_load_presets( motor_name);
+    err = hsearch_r( entry_in, FIND, &entry_outp, &lsredis_preset_ht);
+    if( err == 0) {
+      //
+      // Guess not\&.  Give up\&.  We tried
+      //
+      *dval = 0\&.0;
+      return 0;
+    }
+  }
+  pl = entry_outp->data;
+  *dval = lsredis_getd( pl->position);
+  return 1;
+}
+.fi
+.SS "int lsredis_find_preset_index_by_position (\fBlspmac_motor_t\fP *mp)"
+
+.PP
+For the given motor object return the index of the current preset or -1 if we are not at a preset position\&. 
+.PP
+Definition at line 1035 of file lsredis\&.c\&.
+.PP
+.nf
+                                                               {
+  lsredis_obj_t *p;
+  int plength;
+  int i;
+  double ur, pos;
+
+  p = lsredis_get_obj( '%s\&.presets\&.length', mp->name);
+  plength = lsredis_get_or_set_l( p, 0);
+  
+  if( plength <= 0) {
+    return -1;
+  }
+
+  ur = lsredis_getd( mp->update_resolution);
+  pos = lspmac_getPosition( mp);
+
+  for( i=0; i<plength; i++) {
+    p = lsredis_get_obj( '%s\&.presets\&.%d\&.position', mp->name, i);
+    if( fabs( pos - lsredis_getd( p)) <= ur) {
+      return i;
+    }
+  }
+  return -1;
+}
+.fi
+.SS "\fBlsredis_obj_t\fP* lsredis_get_obj (char *, \&.\&.\&.)"
+
+.PP
+Definition at line 630 of file lsredis\&.c\&.
+.PP
+.nf
+                                                {
+  lsredis_obj_t *rtn;
+  va_list arg_ptr;
+  char k[512];
+  char *kp;
+  int nkp;
+
+  va_start( arg_ptr, fmt);
+  vsnprintf( k, sizeof(k)-1, fmt, arg_ptr);
+  k[sizeof(k)-1] = 0;
+  va_end( arg_ptr);
+
+  nkp = strlen(k) + strlen( lsredis_head) + 16;         // 16 is overkill\&. I know\&. Get over it\&.
+  kp = calloc( nkp, sizeof( char));
+  if( kp == NULL) {
+    lslogging_log_message( 'lsredis_get_obj: Out of memory');
+    exit( -1);
+  }
+  
+  snprintf( kp, nkp-1, '%s\&.%s', lsredis_head, k);
+  kp[nkp-1] = 0;
+
+  pthread_mutex_lock( &lsredis_mutex);
+  while( lsredis_running == 0)
+    pthread_cond_wait( &lsredis_cond, &lsredis_mutex);
+
+  rtn = _lsredis_get_obj( kp);
+  pthread_mutex_unlock( &lsredis_mutex);
+
+  free( kp);
+  return rtn;
+}
+.fi
+.SS "char** lsredis_get_string_array (\fBlsredis_obj_t\fP *p)"
+
+.PP
+Definition at line 448 of file lsredis\&.c\&.
+.PP
+.nf
+                                                   {
+  char **rtn;
+
+  pthread_mutex_lock( &p->mutex);
+  if( p->creating != 0) {
+    pthread_mutex_unlock( &p->mutex);
+    lsredis_setstr( p, '');
+    pthread_mutex_lock( &p->mutex);
+  }
+
+  while( p->valid == 0)
+    pthread_cond_wait( &p->cond, &p->mutex);
+
+  rtn = p->avalue;
+  pthread_mutex_unlock( &p->mutex);
+  
+  return rtn;
+}
+.fi
+.SS "int lsredis_getb (\fBlsredis_obj_t\fP *p)"
+
+.PP
+Definition at line 467 of file lsredis\&.c\&.
+.PP
+.nf
+                                    {
+  int rtn;
+
+  pthread_mutex_lock( &p->mutex);
+  if( p->creating != 0) {
+    pthread_mutex_unlock( &p->mutex);
+    lsredis_setstr( p, '');
+    pthread_mutex_lock( &p->mutex);
+  }
+  while( p->valid == 0)
+    pthread_cond_wait( &p->cond, &p->mutex);
+
+  rtn = p->bvalue;
+  pthread_mutex_unlock( &p->mutex);
+  
+  return rtn;
+}  
+.fi
+.SS "char lsredis_getc (\fBlsredis_obj_t\fP *p)"
+
+.PP
+Definition at line 485 of file lsredis\&.c\&.
+.PP
+.nf
+                                     {
+  int rtn;
+
+  pthread_mutex_lock( &p->mutex);
+  if( p->creating != 0) {
+    pthread_mutex_unlock( &p->mutex);
+    lsredis_setstr( p, '');
+    pthread_mutex_lock( &p->mutex);
+  }
+  while( p->valid == 0)
+    pthread_cond_wait( &p->cond, &p->mutex);
+
+  rtn = p->cvalue;
+  pthread_mutex_unlock( &p->mutex);
+  
+  return rtn;
+}  
+.fi
+.SS "double lsredis_getd (\fBlsredis_obj_t\fP *p)"
+
+.PP
+Definition at line 384 of file lsredis\&.c\&.
+.PP
+.nf
+                                       {
+  double rtn;
+
+  pthread_mutex_lock( &p->mutex);
+  if( p->creating != 0) {
+    pthread_mutex_unlock( &p->mutex);
+    lsredis_setstr( p, '');
+    pthread_mutex_lock( &p->mutex);
+  }
+
+  while( p->valid == 0)
+    pthread_cond_wait( &p->cond, &p->mutex);
+
+  rtn = p->dvalue;
+  pthread_mutex_unlock( &p->mutex);
+  
+  return rtn;
+}
+.fi
+.SS "long int lsredis_getl (\fBlsredis_obj_t\fP *p)"
+
+.PP
+Definition at line 403 of file lsredis\&.c\&.
+.PP
+.nf
+                                         {
+  long int rtn;
+
+  pthread_mutex_lock( &p->mutex);
+  if( p->creating != 0) {
+    pthread_mutex_unlock( &p->mutex);
+    lsredis_setstr( p, '');
+    pthread_mutex_lock( &p->mutex);
+  }
+
+  while( p->valid == 0)
+    pthread_cond_wait( &p->cond, &p->mutex);
+
+  rtn = p->lvalue;
+  pthread_mutex_unlock( &p->mutex);
+  
+  return rtn;
+}  
+.fi
+.SS "char* lsredis_getstr (\fBlsredis_obj_t\fP *p)"
+
+.PP
+return a copy of the key's string value be sure to free the result 
+.PP
+Definition at line 282 of file lsredis\&.c\&.
+.PP
+.nf
+                                        {
+  char *rtn;
+
+  //
+  // Have to use strdup since we cannot guarantee that p->value won't be freed while the caller is still using it
+  //
+  pthread_mutex_lock( &p->mutex);
+  while( p->valid == 0)
+    pthread_cond_wait( &p->cond, &p->mutex);
+
+  rtn = strdup(p->value);
+  pthread_mutex_unlock( &p->mutex);
+  return rtn;
+}
+.fi
+.SS "void lsredis_init ()"
+
+.PP
+Initialize this module, that is, set up the connections\&. \fBParameters:\fP
+.RS 4
+\fIpub\fP Publish under this (unique) name 
+.br
+\fIre\fP Regular expression to select keys we want to mirror 
+.br
+\fIhead\fP Prepend this (+ a dot) to the beginning of requested objects 
+.RE
+.PP
+
+.PP
+Definition at line 1193 of file lsredis\&.c\&.
+.PP
+.nf
+                    {
+  int err;
+
+
+  //
+  // set up hash map to store redis objects
+  //
+  err = hcreate_r( 8192, &lsredis_htab);
+  if( err == 0) {
+    lslogging_log_message( 'lsredis_init: Cannot create hash table\&.  Really bad things are going to happen\&.  hcreate_r returned %d', err);
+  }
+
+  pthread_cond_init( &lsredis_cond, NULL);
+
+  subac = redisAsyncConnect('127\&.0\&.0\&.1', 6379);
+  if( subac->err) {
+    lslogging_log_message( 'Error: %s', subac->errstr);
+  }
+
+  subfd\&.fd           = subac->c\&.fd;
+  subfd\&.events       = 0;
+  subac->ev\&.data     = &subfd;
+  subac->ev\&.addRead  = lsredis_addRead;
+  subac->ev\&.delRead  = lsredis_delRead;
+  subac->ev\&.addWrite = lsredis_addWrite;
+  subac->ev\&.delWrite = lsredis_delWrite;
+  subac->ev\&.cleanup  = lsredis_cleanup;
+
+  roac = redisAsyncConnect('127\&.0\&.0\&.1', 6379);
+  if( roac->err) {
+    lslogging_log_message( 'Error: %s', roac->errstr);
+  }
+
+  rofd\&.fd           = roac->c\&.fd;
+  rofd\&.events       = 0;
+  roac->ev\&.data     = &rofd;
+  roac->ev\&.addRead  = lsredis_addRead;
+  roac->ev\&.delRead  = lsredis_delRead;
+  roac->ev\&.addWrite = lsredis_addWrite;
+  roac->ev\&.delWrite = lsredis_delWrite;
+  roac->ev\&.cleanup  = lsredis_cleanup;
+
+  wrac = redisAsyncConnect('127\&.0\&.0\&.1', 6379);
+  if( wrac->err) {
+    lslogging_log_message( 'Error: %s', wrac->errstr);
+  }
+
+  wrfd\&.fd           = wrac->c\&.fd;
+  wrfd\&.events       = 0;
+  wrac->ev\&.data     = &wrfd;
+  wrac->ev\&.addRead  = lsredis_addRead;
+  wrac->ev\&.delRead  = lsredis_delRead;
+  wrac->ev\&.addWrite = lsredis_addWrite;
+  wrac->ev\&.delWrite = lsredis_delWrite;
+  wrac->ev\&.cleanup  = lsredis_cleanup;
+
+
+  // separate hash table for the presets
+  //
+  hcreate_r( lsredis_preset_max_n * 2, &lsredis_preset_ht);
+
+  pthread_mutexattr_init( &mutex_initializer);
+  pthread_mutexattr_settype( &mutex_initializer, PTHREAD_MUTEX_RECURSIVE);
+
+  pthread_mutex_init( &lsredis_mutex, &mutex_initializer);
+  pthread_mutex_init( &lsredis_preset_list_mutex, &mutex_initializer);
+  pthread_mutex_init( &lsredis_config_mutex, &mutex_initializer);
+  pthread_cond_init(  &lsredis_config_cond,  NULL);
+
+}
+.fi
+.SS "void lsredis_load_presets (char *motor_name)"
+
+.PP
+update the presets hash table for the named motor 
+.PP
+Definition at line 864 of file lsredis\&.c\&.
+.PP
+.nf
+                                             {
+  lsredis_obj_t *p;
+  lsredis_preset_list_t *pl;
+  int plength;
+  char *preset_name;
+  int i;
+  int key_length;
+  ENTRY entry_in, *entry_outp;
+
+  p = lsredis_get_obj( '%s\&.presets\&.length', motor_name);
+  plength = lsredis_get_or_set_l( p, 0);
+  if( plength <= 0)
+    return;
+
+  pthread_mutex_lock( &lsredis_preset_list_mutex);
+
+  for( i=0; i<plength; i++) {
+    pl = calloc( 1, sizeof( lsredis_preset_list_t));
+    pl->name      = lsredis_get_obj( '%s\&.presets\&.%d\&.name',     motor_name, i);
+    pl->position  = lsredis_get_obj( '%s\&.presets\&.%d\&.position', motor_name, i);
+    pl->index     = i;
+    
+    preset_name   = lsredis_getstr( pl->name);
+    key_length    = strlen( motor_name) + strlen( preset_name) + 1;
+    pl->key       = calloc( key_length, 1);
+
+    pl->next            = lsredis_preset_list;
+    lsredis_preset_list = pl;
+
+    snprintf( pl->key, key_length, '%s%s', motor_name, preset_name);
+
+    entry_in\&.key  = pl->key;
+    entry_in\&.data = pl;
+    hsearch_r( entry_in, ENTER, &entry_outp, &lsredis_preset_ht);
+    if( entry_outp->data != pl) {
+      //
+      // The key was already there or we couldn't add it
+      //
+      if( entry_outp->data == NULL)
+        lslogging_log_message( 'lsredis_load_presets: could not add preset '%s' for motor '%s'', preset_name, motor_name);
+
+      free( pl->key);
+      free( pl);
+    } else {
+      //
+      // We've successfully added the new key
+      //
+      lsredis_preset_n++;
+      //
+      // Resize the hash table if we are starting to fill it up
+      // Generally we prefer a sparse table
+      //
+      if( lsredis_preset_n >= lsredis_preset_max_n) {
+        lslogging_log_message( 'lsredis_load_presets: increasing preset hash table size\&.  max now %d', lsredis_preset_max_n);
+        hdestroy_r( &lsredis_preset_ht);
+        lsredis_preset_max_n *= 2;
+        hcreate_r( 2 * lsredis_preset_max_n, &lsredis_preset_ht);
+        for( pl = lsredis_preset_list; pl != NULL; pl = pl->next) {
+          entry_in\&.key  = pl->key;
+          entry_in\&.data = pl;
+          hsearch_r( entry_in, ENTER, &entry_outp, &lsredis_preset_ht);
+        }
+        lslogging_log_message( 'lsredis_load_presets: done increasing preset hash table size\&.', lsredis_preset_max_n);
+      }
+    }
+    free( preset_name);
+  }
+  pthread_mutex_unlock( &lsredis_preset_list_mutex);
+}
+.fi
+.SS "void lsredis_log (char *fmt, \&.\&.\&.)"
+
+.PP
+send log message to our redis log key 
+.PP
+Definition at line 1064 of file lsredis\&.c\&.
+.PP
+.nf
+                                  {
+  static lsredis_obj_t *loghashs[32];
+  static int firstTime = 1;
+  static int lhi = 0;
+  char msg[2048+64];
+  va_list arg_ptr;
+  
+  
+  
+  if( pthread_mutex_trylock( &lsredis_mutex) == 0) {
+    
+    
+    if( lsredis_head == NULL) {                 // Ignore messages that come before redis is initiallized
+      pthread_mutex_unlock( &lsredis_mutex);
+      return;
+    }
+    
+    if( firstTime) {
+      int i;
+      for( i=0; i<sizeof(loghashs)/sizeof(loghashs[0]); i++) {
+        loghashs[i] = lsredis_get_obj( 'log\&.message\&.%d', i);
+      }
+      lhi = 0;
+      firstTime=0;
+    }
+    
+    va_start( arg_ptr, fmt);
+    vsnprintf( msg, sizeof(msg)-1, fmt, arg_ptr);
+    va_end( arg_ptr);
+    msg[sizeof(msg)-1]=0;
+    
+    lsredis_setstr( loghashs[lhi], '%s', msg);
+    lhi = (lhi+1) % (sizeof(loghashs)/sizeof(loghashs[0]));
+    pthread_mutex_unlock( &lsredis_mutex);
+    
+  }
+}
+.fi
+.SS "int lsredis_regexec (const regex_t *preg, \fBlsredis_obj_t\fP *p, size_tnmatch, regmatch_t *pmatch, inteflags)"
+
+.PP
+Definition at line 265 of file lsredis\&.c\&.
+.PP
+.nf
+                                                                                                           {
+  int rtn;
+
+  pthread_mutex_lock( &p->mutex);
+  while( p->valid == 0) 
+    pthread_cond_wait( &p->cond, &p->mutex);
+
+  rtn = regexec( preg, p->value, nmatch, pmatch, eflags);
+
+  pthread_mutex_unlock( &p->mutex);
+
+  return rtn;
+}
+.fi
+.SS "pthread_t* lsredis_run ()"
+
+.PP
+Definition at line 1440 of file lsredis\&.c\&.
+.PP
+.nf
+                         {
+  pthread_create( &lsredis_thread, NULL, lsredis_worker, NULL);
+  return &lsredis_thread;
+}
+.fi
+.SS "void lsredis_set_preset (char *base, char *preset_name, doubledval)"
+
+.PP
+set the given preset to the given value create a new preset if we can't find it 
+.PP
+Definition at line 974 of file lsredis\&.c\&.
+.PP
+.nf
+                                                                           {
+  char s[512];
+  int plength;
+  int err;
+  ENTRY entry_in, *entry_outp;
+  lsredis_obj_t *p1, *p2, *presets_length_p;
+  lsredis_preset_list_t *pl;
+  struct timespec timeout;
+
+  snprintf( s, sizeof( s)-1, '%s%s', motor_name, preset_name);
+  s[sizeof(s)-1] = 0;
+
+  entry_in\&.key  = s;
+  entry_in\&.data = NULL;
+  pthread_mutex_lock( &lsredis_preset_list_mutex);
+  err = hsearch_r( entry_in, FIND, &entry_outp, &lsredis_preset_ht);
+  if( err != 0) {
+    //
+    // Found it\&.  Things are simple\&.
+    //
+    pthread_mutex_unlock( &p1->mutex);
+
+
+    pl = entry_outp->data;
+    lsredis_setstr( pl->position, '%\&.3f', dval);
+    pthread_mutex_unlock( &lsredis_preset_list_mutex);
+    return;
+  }
+  //
+  // OK, our preset was not found, add it
+  //
+  presets_length_p = lsredis_get_obj(  '%s\&.presets\&.length', motor_name);
+  plength = lsredis_get_or_set_l( presets_length_p, 0);
+  plength += 1;
+
+  snprintf( s, sizeof( s)-1, '%s\&.%s\&.presets\&.%d\&.name', lsredis_head, motor_name, plength-1);
+  s[sizeof(s)-1] = 0;
+
+  p1 = lsredis_get_obj( '%s\&.presets\&.%d\&.name', motor_name, plength-1);
+  pthread_mutex_lock( &p1->mutex);
+  err = 0;
+  while( err == 0 && p1->valid == 0)
+    err = pthread_cond_timedwait( &p1->cond, &p1->mutex, &timeout);
+
+  if( err == ETIMEDOUT) {
+    lslogging_log_message( 'lsredis_set_preset: timed out waiting for name to become valid');
+  }
+  pthread_mutex_unlock( &p1->mutex);
+  lsredis_setstr( p1, '%s', preset_name);
+  
+  p2 = lsredis_get_obj( '%s\&.presets\&.%d\&.position', motor_name, plength-1);
+  lsredis_setstr( p2, '%\&.3f', dval);
+  
+  lsredis_setstr( presets_length_p, '%ld', plength);
+
+  pthread_mutex_unlock( &lsredis_preset_list_mutex);
+  lsredis_load_presets( motor_name);
+}
+.fi
+.SS "void lsredis_setstr (\fBlsredis_obj_t\fP *p, char *fmt, \&.\&.\&.)"
+
+.PP
+Set the value and update redis\&. Note that lsredis_set_value sets the value based on redis while here we set redis based on the value Arbitray maximum string length set here\&. TODO: Probably this limit should be removed at some point\&.
+.PP
+redisAsyncCommandArgv used instead of redisAsyncCommand 'cause it's easier (and possible) to deal with strings that would otherwise cause hiredis to emit a bad command, like those containing spaces\&. < up the count of times we need to see ourselves published before we start listening to others again
+.PP
+< Unlock to prevent deadlock in case the service routine needs to set our value
+.PP
+< redisAsyncCommandArgv shouldn't need to access this after it's made up it's packet (before it returns) so we should be OK with this location disappearing soon\&.
+.PP
+< At this point the key is considered created 
+.PP
+Definition at line 307 of file lsredis\&.c\&.
+.PP
+.nf
+                                                       {
+  va_list arg_ptr;
+  char v[512];
+  char *argv[4];
+
+  va_start( arg_ptr, fmt);
+  vsnprintf( v, sizeof(v)-1, fmt, arg_ptr);
+  v[sizeof(v)-1] = 0;
+  va_end( arg_ptr);
+  
+  pthread_mutex_lock( &p->mutex);
+
+  //
+  // Don't send an update if a good value has not changed
+  //
+  if( p->creating == 0 && p->valid && strcmp( v, p->value) == 0) {
+    // nothing to do
+    pthread_mutex_unlock( &p->mutex);
+    return;
+  }
+
+  p->wait_for_me++;                     
+  pthread_mutex_unlock( &p->mutex);     
+
+
+  argv[0] = 'HSET';
+  argv[1] = p->key;
+  argv[2] = 'VALUE';
+  argv[3] = v;          
+
+
+  pthread_mutex_lock( &lsredis_mutex);
+  while( lsredis_running == 0)
+    pthread_cond_wait( &lsredis_cond, &lsredis_mutex);
+
+  redisAsyncCommand( wrac, NULL, NULL, 'MULTI');
+  redisAsyncCommandArgv( wrac, NULL, NULL, 4, (const char **)argv, NULL);
+
+  redisAsyncCommand( wrac, NULL, NULL, 'PUBLISH %s %s', lsredis_publisher, p->key);
+  redisAsyncCommand( wrac, NULL, NULL, 'EXEC');
+  pthread_mutex_unlock( &lsredis_mutex);
+
+  // Assume redis will take exactly the value we sent it
+  //
+  pthread_mutex_lock( &p->mutex);
+  _lsredis_set_value( p, v);
+  p->creating = 0;                      
+  pthread_cond_signal( &p->cond);
+  pthread_mutex_unlock( &p->mutex);
+}
+.fi
+.SS "void lstest_main ()"
+
+.PP
+Definition at line 92 of file lstest\&.c\&.
+.PP
+.nf
+                   {
+  lstest_lspmac_est_move_time();
+}
+.fi
+.SS "void lstimer_init ()"
+
+.PP
+Initialize the timer list and pthread stuff\&. 
+.PP
+Definition at line 270 of file lstimer\&.c\&.
+.PP
+.nf
+                    {
+  pthread_mutexattr_t mutex_initializer;
+  int i;
+
+  for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
+    lstimer_list[i]\&.shots = 0;
+  }
+
+
+  pthread_mutexattr_init( &mutex_initializer);
+  pthread_mutexattr_settype( &mutex_initializer, PTHREAD_MUTEX_RECURSIVE);
+
+  pthread_mutex_init( &lstimer_mutex, &mutex_initializer);
+  pthread_cond_init(  &lstimer_cond, NULL);
+}
+.fi
+.SS "pthread_t* lstimer_run ()"
+
+.PP
+Start up our thread\&. 
+.PP
+Definition at line 288 of file lstimer\&.c\&.
+.PP
+.nf
+                         {
+  pthread_create( &lstimer_thread, NULL, lstimer_worker, NULL);
+  return &lstimer_thread;
+}
+.fi
+.SS "void lstimer_set_timer (char *event, intshots, unsigned long intsecs, unsigned long intnsecs)"
+
+.PP
+Create a timer\&. \fBParameters:\fP
+.RS 4
+\fIevent\fP Name of the event to send when the timer goes off 
+.br
+\fIshots\fP Number of times to run\&. 0 means never, -1 means forever 
+.br
+\fIsecs\fP Number of seconds to wait 
+.br
+\fInsecs\fP Number of nano-seconds to run in addition to secs 
+.RE
+.PP
+
+.PP
+Definition at line 63 of file lstimer\&.c\&.
+.PP
+.nf
+                                                                                                 {
+  int i;
+  struct timespec now;
+
+  // Time we were called\&.  Delay is based on call time, not queued time
+  //
+  clock_gettime( CLOCK_REALTIME, &now);
+  
+
+  // Make sure our event is registered (saves a tiny bit of time later)
+  //
+  lsevents_preregister_event( event);
+
+  pthread_mutex_lock( &lstimer_mutex);
+
+  for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
+    if( lstimer_list[i]\&.shots == 0)
+      break;
+  }
+
+  if( i == LSTIMER_LIST_LENGTH) {
+    pthread_mutex_unlock( &lstimer_mutex);
+    
+    lslogging_log_message( 'lstimer_set_timer: out of timers for event: %s, shots: %d,  secs: %u, nsecs: %u',
+                          event, shots, secs, nsecs);
+    return;
+  }
+
+  strncpy( lstimer_list[i]\&.event, event, LSEVENTS_EVENT_LENGTH - 1);
+  lstimer_list[i]\&.event[LSEVENTS_EVENT_LENGTH - 1] = 0;
+  lstimer_list[i]\&.shots        = shots;
+  lstimer_list[i]\&.delay_secs   = secs;
+  lstimer_list[i]\&.delay_nsecs  = nsecs;
+
+  lstimer_list[i]\&.next_secs    = secs + now\&.tv_sec + (now\&.tv_nsec + nsecs) / 1000000000;
+  lstimer_list[i]\&.next_nsecs   = (now\&.tv_nsec + nsecs) % 1000000000;
+  lstimer_list[i]\&.last_secs    = 0;
+  lstimer_list[i]\&.last_nsecs   = 0;
+  
+  lstimer_list[i]\&.ncalls       = 0;
+  lstimer_list[i]\&.init_secs    = now\&.tv_sec;
+  lstimer_list[i]\&.init_nsecs   = now\&.tv_nsec;
+
+  if( shots != 0) {
+    lstimer_active_timers++;
+    new_timer++;
+  }
+
+  pthread_cond_signal(  &lstimer_cond);
+  pthread_mutex_unlock( &lstimer_mutex);
+}
+.fi
+.SS "void lstimer_unset_timer (char *event)"
+
+.PP
+Unsets all timers for the given event\&. 
+.PP
+Definition at line 46 of file lstimer\&.c\&.
+.PP
+.nf
+                                       {
+  int i;
+
+  for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
+    if( strcmp( event, lstimer_list[i]\&.event) == 0) {
+      lstimer_list[i]\&.shots = 0;
+    }
+  }
+}
+.fi
+.SS "void lsupdate_init ()"
+
+.SS "pthread_t* lsupdate_run ()"
+
+.SS "void md2cmds_init ()"
+
+.PP
+Initialize the md2cmds module\&. 
+.PP
+Definition at line 2072 of file md2cmds\&.c\&.
+.PP
+.nf
+                    {
+  ENTRY hloader, *hrtnval;
+  int i, err;
+  int ncmds;
+
+  pthread_mutexattr_t mutex_initializer;
+
+  pthread_mutexattr_init( &mutex_initializer);
+  pthread_mutexattr_settype( &mutex_initializer, PTHREAD_MUTEX_RECURSIVE);
+
+  pthread_mutex_init( &md2cmds_mutex, &mutex_initializer);
+  pthread_cond_init( &md2cmds_cond, NULL);
+
+
+  pthread_mutex_init( &md2cmds_moving_mutex, &mutex_initializer);
+  pthread_cond_init(  &md2cmds_moving_cond, NULL);
+
+  pthread_mutex_init( &md2cmds_homing_mutex, &mutex_initializer);
+  pthread_cond_init(  &md2cmds_homing_cond, NULL);
+
+  err = regcomp( &md2cmds_cmd_regex, ' *([^ ]+) (([^ ]+)\\\&.presets\\\&.\&.)*([^ ]*) *([^ ]*)', REG_EXTENDED);
+  if( err != 0) {
+    int nerrmsg;
+    char *errmsg;
+
+    nerrmsg = regerror( err, &md2cmds_cmd_regex, NULL, 0);
+    if( nerrmsg > 0) {
+      errmsg = calloc( nerrmsg, sizeof( char));
+      nerrmsg = regerror( err, &md2cmds_cmd_regex, errmsg, nerrmsg);
+      lslogging_log_message( 'md2cmds_init: %s', errmsg);
+      free( errmsg);
+    }
+  }
+
+  md2cmds_md_status_code = lsredis_get_obj( 'md2_status_code');
+  lsredis_setstr( md2cmds_md_status_code, '7');
+
+  ncmds = sizeof(md2cmds_cmd_kvs)/sizeof(md2cmds_cmd_kvs[0]);
+  if( pgpmac_use_pg) {
+    ncmds += sizeof(md2cmds_cmd_pg_kvs)/sizeof(md2cmds_cmd_pg_kvs[0]);
+  }
+
+  hcreate_r( 2 * ncmds, &md2cmds_hmap);
+
+  for( i=0; i<sizeof(md2cmds_cmd_kvs)/sizeof(md2cmds_cmd_kvs[0]); i++) {
+    hloader\&.key  = md2cmds_cmd_kvs[i]\&.k;
+    hloader\&.data = md2cmds_cmd_kvs[i]\&.v;
+    err = hsearch_r( hloader, ENTER, &hrtnval, &md2cmds_hmap);
+    if( err == 0) {
+      lslogging_log_message( 'md2cmds_init: hsearch_r returned an error for item %d: %s', i, strerror( errno));
+    }
+  }
+
+  if( pgpmac_use_pg) {
+    for( i=0; i<sizeof(md2cmds_cmd_pg_kvs)/sizeof(md2cmds_cmd_pg_kvs[0]); i++) {
+      hloader\&.key  = md2cmds_cmd_pg_kvs[i]\&.k;
+      hloader\&.data = md2cmds_cmd_pg_kvs[i]\&.v;
+      err = hsearch_r( hloader, ENTER, &hrtnval, &md2cmds_hmap);
+      if( err == 0) {
+        lslogging_log_message( 'md2cmds_init: hsearch_r returned an error for item %d: %s', i, strerror( errno));
+      }
+    }
+  }
+}
+.fi
+.SS "void md2cmds_push_queue (char *action)"
+
+.PP
+Definition at line 79 of file md2cmds\&.c\&.
+.PP
+.nf
+                                       {
+
+  if( pthread_mutex_trylock( &md2cmds_mutex) == 0) {
+    strncpy( md2cmds_cmd, action, MD2CMDS_CMD_LENGTH-1);
+    md2cmds_cmd[MD2CMDS_CMD_LENGTH-1] = 0;
+    pthread_cond_signal( &md2cmds_cond);
+    pthread_mutex_unlock( &md2cmds_mutex);
+  } else {
+    lslogging_log_message( 'md2cmds_push_queue: MD2 command '%s' ignored\&.  Already running '%s'', action, md2cmds_cmd);
+  }
+}
+.fi
+.SS "pthread_t* md2cmds_run ()"
+
+.PP
+Start up the thread\&. 
+.PP
+Definition at line 2139 of file md2cmds\&.c\&.
+.PP
+.nf
+                         {
+  pthread_create( &md2cmds_thread, NULL,                md2cmds_worker, NULL);
+  lsevents_add_listener( '^omega crossed zero$',        md2cmds_rotate_cb);
+  lsevents_add_listener( '^omega In Position$',         md2cmds_maybe_rotate_done_cb);
+  lsevents_add_listener( '\&.+ (Moving|In Position)$',    md2cmds_maybe_done_moving_cb);
+  lsevents_add_listener( '(\&.+) (Homing|Homed)$',        md2cmds_maybe_done_homing_cb);
+  lsevents_add_listener( '^capz (Moving|In Position)$', md2cmds_time_capz_cb);
+  lsevents_add_listener( '^Coordsys 1 Stopped$',        md2cmds_coordsys_1_stopped_cb);
+  lsevents_add_listener( '^Coordsys 2 Stopped$',        md2cmds_coordsys_2_stopped_cb);
+  lsevents_add_listener( '^Coordsys 3 Stopped$',        md2cmds_coordsys_3_stopped_cb);
+  lsevents_add_listener( '^Coordsys 4 Stopped$',        md2cmds_coordsys_4_stopped_cb);
+  lsevents_add_listener( '^Coordsys 5 Stopped$',        md2cmds_coordsys_5_stopped_cb);
+  lsevents_add_listener( '^Coordsys 7 Stopped$',        md2cmds_coordsys_7_stopped_cb);
+  lsevents_add_listener( '^cam\&.zoom Moving$',            md2cmds_set_scale_cb);
+  lsevents_add_listener( '^(align\\\&.(x|y|z)|centering\&.(x|y)) In Position$', md2cmds_ca_last_cb);
+  lsevents_add_listener( '^LSPMAC Done Initializing$',  md2cmds_lspmac_ready_cb);
+
+  return &md2cmds_thread;
+}
+.fi
+.SS "void pgpmac_printf (char *fmt, \&.\&.\&.)"
+
+.PP
+Terminal output routine ala printf\&. \fBParameters:\fP
+.RS 4
+\fIfmt\fP Printf style formating string 
+.RE
+.PP
+
+.PP
+Definition at line 477 of file pgpmac\&.c\&.
+.PP
+.nf
+                     {
+  va_list arg_ptr;
+
+  pthread_mutex_lock( &ncurses_mutex);
+
+  va_start( arg_ptr, fmt);
+  vwprintw( term_output, fmt, arg_ptr);
+  va_end( arg_ptr);
+
+  wnoutrefresh( term_output);
+  doupdate();
+  pthread_mutex_unlock( &ncurses_mutex);
+
+}
+.fi
+.SS "void pgpmac_request_stay_of_execution (intsecs)"
+
+.PP
+Postpone the day of reckoning This assumes the quit_cb routine is called once a second\&. 
+.PP
+Definition at line 498 of file pgpmac\&.c\&.
+.PP
+.nf
+                                                 {
+  pthread_mutex_lock( &doomsday_mutex);
+  if( secs > doomsday_count)
+    doomsday_count = secs;
+  pthread_mutex_unlock( &doomsday_mutex);
+}
+.fi
+.SS "void PmacSockSendline (char *s)"
+
+.SH "Variable Documentation"
+.PP 
+.SS "\fBlspmac_motor_t\fP* alignx"
+
+.PP
+Alignment stage X\&. 
+.PP
+Definition at line 101 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* aligny"
+
+.PP
+Alignment stage Y\&. 
+.PP
+Definition at line 102 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* alignz"
+
+.PP
+Alignment stage X\&. 
+.PP
+Definition at line 103 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* anal"
+
+.PP
+Polaroid analyzer motor\&. 
+.PP
+Definition at line 104 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* apery"
+
+.PP
+Aperture Y\&. 
+.PP
+Definition at line 106 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* aperz"
+
+.PP
+Aperture Z\&. 
+.PP
+Definition at line 107 of file lspmac\&.c\&.
+.SS "\fBlspmac_bi_t\fP* arm_parked"
+
+.PP
+(whose arm? parked where?) 
+.PP
+Definition at line 144 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* blight"
+
+.PP
+Back Light DAC\&. 
+.PP
+Definition at line 118 of file lspmac\&.c\&.
+.SS "\fBlspmac_bi_t\fP* blight_down"
+
+.PP
+Backlight is down\&. 
+.PP
+Definition at line 134 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* blight_f"
+
+.PP
+Back light scale factor\&. 
+.PP
+Definition at line 127 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* blight_ud"
+
+.PP
+Back light Up/Down actuator\&. 
+.PP
+Definition at line 122 of file lspmac\&.c\&.
+.SS "\fBlspmac_bi_t\fP* blight_up"
+
+.PP
+Backlight is up\&. 
+.PP
+Definition at line 135 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* capy"
+
+.PP
+Capillary Y\&. 
+.PP
+Definition at line 108 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* capz"
+
+.PP
+Capillary Z\&. 
+.PP
+Definition at line 109 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* cenx"
+
+.PP
+Centering Table X\&. 
+.PP
+Definition at line 111 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* ceny"
+
+.PP
+Centering Table Y\&. 
+.PP
+Definition at line 112 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* cryo"
+
+.PP
+Move the cryostream towards or away from the crystal\&. 
+.PP
+Definition at line 123 of file lspmac\&.c\&.
+.SS "\fBlspmac_bi_t\fP* cryo_back"
+
+.PP
+cryo is in the back position 
+.PP
+Definition at line 136 of file lspmac\&.c\&.
+.SS "\fBlspmac_bi_t\fP* cryo_switch"
+
+.PP
+that little toggle switch for the cryo 
+.PP
+Definition at line 133 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* dryer"
+
+.PP
+blow air on the scintilator to dry it off 
+.PP
+Definition at line 124 of file lspmac\&.c\&.
+.SS "\fBlspmac_bi_t\fP* etel_init_ok"
+
+.PP
+ETEL initialized OK\&. 
+.PP
+Definition at line 141 of file lspmac\&.c\&.
+.SS "\fBlspmac_bi_t\fP* etel_on"
+
+.PP
+ETEL is on\&. 
+.PP
+Definition at line 140 of file lspmac\&.c\&.
+.SS "\fBlspmac_bi_t\fP* etel_ready"
+
+.PP
+ETEL is ready\&. 
+.PP
+Definition at line 139 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* flight"
+
+.PP
+Front Light DAC\&. 
+.PP
+Definition at line 117 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* flight_f"
+
+.PP
+Front light scale factor\&. 
+.PP
+Definition at line 128 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* flight_oo"
+
+.PP
+Turn front light on/off\&. 
+.PP
+Definition at line 126 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* fluo"
+
+.PP
+Move the fluorescence detector in/out\&. 
+.PP
+Definition at line 125 of file lspmac\&.c\&.
+.SS "\fBlspmac_bi_t\fP* fluor_back"
+
+.PP
+fluor is in the back position 
+.PP
+Definition at line 137 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* fscint"
+
+.PP
+Scintillator Piezo DAC\&. 
+.PP
+Definition at line 119 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* fshut"
+
+.PP
+Fast shutter\&. 
+.PP
+Definition at line 116 of file lspmac\&.c\&.
+.SS "\fBlspmac_bi_t\fP* hp_air"
+
+.PP
+High pressure air OK\&. 
+.PP
+Definition at line 132 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* kappa"
+
+.PP
+Kappa\&. 
+.PP
+Definition at line 113 of file lspmac\&.c\&.
+.SS "\fBlspmac_bi_t\fP* lp_air"
+
+.PP
+Low pressure air OK\&. 
+.PP
+Definition at line 131 of file lspmac\&.c\&.
+.SS "\fBlspg_demandairrights_t\fP lspg_demandairrights"
+
+.PP
+our demandairrights object 
+.PP
+Definition at line 68 of file lspg\&.c\&.
+.SS "\fBlspg_getcenter_t\fP lspg_getcenter"
+
+.PP
+the getcenter object 
+.PP
+Definition at line 67 of file lspg\&.c\&.
+.SS "\fBlspg_getcurrentsampleid_t\fP lspg_getcurrentsampleid"
+
+.PP
+our currentsample id 
+.PP
+Definition at line 69 of file lspg\&.c\&.
+.SS "\fBlspg_nextsample_t\fP lspg_nextsample"
+
+.PP
+the very next sample 
+.PP
+Definition at line 65 of file lspg\&.c\&.
+.SS "\fBlspg_nextshot_t\fP lspg_nextshot"
+
+.PP
+the nextshot object 
+.PP
+Definition at line 66 of file lspg\&.c\&.
+.SS "\fBlspg_starttransfer_t\fP lspg_starttransfer"
+
+.PP
+start a sample transfer 
+.PP
+Definition at line 70 of file lspg\&.c\&.
+.SS "\fBlspg_waitcryo_t\fP lspg_waitcryo"
+
+.PP
+signal the robot 
+.PP
+Definition at line 71 of file lspg\&.c\&.
+.SS "\fBlspmac_motor_t\fP lspmac_motors[]"
+
+.PP
+All our motors\&. 
+.PP
+Definition at line 96 of file lspmac\&.c\&.
+.SS "pthread_cond_t lspmac_moving_cond"
+
+.PP
+Wait for motor(s) to finish moving condition\&. 
+.PP
+Definition at line 70 of file lspmac\&.c\&.
+.SS "int lspmac_moving_flags"
+
+.PP
+Flag used to implement motor moving condition\&. 
+.PP
+Definition at line 71 of file lspmac\&.c\&.
+.SS "pthread_mutex_t lspmac_moving_mutex"
+
+.PP
+Coordinate moving motors between threads\&. 
+.PP
+Definition at line 69 of file lspmac\&.c\&.
+.SS "int lspmac_nmotors"
+
+.PP
+The number of motors we manage\&. 
+.PP
+Definition at line 97 of file lspmac\&.c\&.
+.SS "pthread_cond_t lspmac_shutter_cond"
+
+.PP
+Allows waiting for the shutter status to change\&. 
+.PP
+Definition at line 68 of file lspmac\&.c\&.
+.SS "int lspmac_shutter_has_opened"
+
+.PP
+Indicates that the shutter had opened, perhaps briefly even if the state did not change\&. 
+.PP
+Definition at line 66 of file lspmac\&.c\&.
+.SS "pthread_mutex_t lspmac_shutter_mutex"
+
+.PP
+Coordinates threads reading shutter status\&. 
+.PP
+Definition at line 67 of file lspmac\&.c\&.
+.SS "int lspmac_shutter_state"
+
+.PP
+State of the shutter, used to detect changes\&. 
+.PP
+Definition at line 65 of file lspmac\&.c\&.
+.SS "pthread_cond_t lsredis_cond"
+
+.PP
+Definition at line 75 of file lsredis\&.c\&.
+.SS "pthread_mutex_t lsredis_mutex"
+
+.PP
+Definition at line 74 of file lsredis\&.c\&.
+.SS "int lsredis_running"
+
+.PP
+Definition at line 76 of file lsredis\&.c\&.
+.SS "pthread_mutex_t md2_status_mutex"
+
+.PP
+Synchronize reading/writting status buffer\&. 
+.PP
+Definition at line 352 of file lspmac\&.c\&.
+.SS "char md2cmds_cmd[]"
+
+.PP
+our command; 
+.PP
+Definition at line 24 of file md2cmds\&.c\&.
+.SS "pthread_cond_t md2cmds_cond"
+
+.PP
+condition to signal when it's time to run an md2 command 
+.PP
+Definition at line 10 of file md2cmds\&.c\&.
+.SS "\fBlsredis_obj_t\fP* md2cmds_md_status_code"
+
+.PP
+Definition at line 26 of file md2cmds\&.c\&.
+.SS "pthread_mutex_t md2cmds_mutex"
+
+.PP
+mutex for the condition 
+.PP
+Definition at line 11 of file md2cmds\&.c\&.
+.SS "pthread_cond_t md2cmds_pg_cond"
+
+.SS "pthread_mutex_t md2cmds_pg_mutex"
+
+.SS "\fBlspmac_bi_t\fP* minikappa_ok"
+
+.PP
+Minikappa is OK (whatever that means) 
+.PP
+Definition at line 142 of file lspmac\&.c\&.
+.SS "pthread_mutex_t ncurses_mutex"
+
+.PP
+allow more than one thread access to the screen 
+.PP
+Definition at line 242 of file pgpmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* omega"
+
+.PP
+MD2 omega axis (the air bearing) 
+.PP
+Definition at line 100 of file lspmac\&.c\&.
+.SS "struct timespec omega_zero_time"
+
+.PP
+Time we believe that omega crossed zero\&. 
+.PP
+Definition at line 80 of file lspmac\&.c\&.
+.SS "int pgpmac_use_autoscint"
+
+.PP
+non-zero to automatically move the alignment stage when the scintillator moves (redis hash AUTOSCINT in config\&.HOSTNAME sets this) 
+.PP
+Definition at line 247 of file pgpmac\&.c\&.
+.SS "int pgpmac_use_pg"
+
+.PP
+non-zero to start up lspg thread, 0 to not (reids hash PG in config\&.HOSTNAME sets this) 
+.PP
+Definition at line 246 of file pgpmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* phi"
+
+.PP
+Phi (not data collection axis) 
+.PP
+Definition at line 114 of file lspmac\&.c\&.
+.SS "pthread_cond_t pmac_queue_cond"
+
+.PP
+wait for a command to be sent to PMAC before continuing 
+.PP
+Definition at line 86 of file lspmac\&.c\&.
+.SS "pthread_mutex_t pmac_queue_mutex"
+
+.PP
+manage access to the pmac command queue 
+.PP
+Definition at line 85 of file lspmac\&.c\&.
+.SS "\fBlspmac_bi_t\fP* sample_detected"
+
+.PP
+smart magnet detected sample 
+.PP
+Definition at line 138 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* scint"
+
+.PP
+Scintillator Z\&. 
+.PP
+Definition at line 110 of file lspmac\&.c\&.
+.SS "\fBlspmac_bi_t\fP* shutter_open"
+
+.PP
+shutter is open (note in pmc says this is a slow input) 
+.PP
+Definition at line 145 of file lspmac\&.c\&.
+.SS "\fBlspmac_bi_t\fP* smart_mag_err"
+
+.PP
+smart magnet error (coil broken perhaps) 
+.PP
+Definition at line 146 of file lspmac\&.c\&.
+.SS "\fBlspmac_bi_t\fP* smart_mag_off"
+
+.PP
+smart magnet is off 
+.PP
+Definition at line 147 of file lspmac\&.c\&.
+.SS "\fBlspmac_bi_t\fP* smart_mag_on"
+
+.PP
+smart magnet is on 
+.PP
+Definition at line 143 of file lspmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* smart_mag_oo"
+
+.PP
+Smart Magnet on/off\&. 
+.PP
+Definition at line 121 of file lspmac\&.c\&.
+.SS "WINDOW* term_input"
+
+.PP
+place to put the cursor 
+.PP
+Definition at line 238 of file pgpmac\&.c\&.
+.SS "WINDOW* term_output"
+
+.PP
+place to print stuff out 
+.PP
+Definition at line 237 of file pgpmac\&.c\&.
+.SS "WINDOW* term_status"
+
+.PP
+shutter, lamp, air, etc status 
+.PP
+Definition at line 239 of file pgpmac\&.c\&.
+.SS "WINDOW* term_status2"
+
+.PP
+shutter, lamp, air, etc status 
+.PP
+Definition at line 240 of file pgpmac\&.c\&.
+.SS "\fBlspmac_motor_t\fP* zoom"
+
+.PP
+Optical zoom\&. 
+.PP
+Definition at line 105 of file lspmac\&.c\&.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for LS-CAT PGPMAC from the source code\&.
