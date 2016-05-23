@@ -339,6 +339,15 @@ typedef struct lspg_nextshot_struct {
   double dskappa;		//!< dataset defined starting kappa angle
   int dskappa_isnull;
 
+  double dsfrate;		//!< frame rate (images per degree)
+  int dsfrate_isnull;
+
+  double dssrate;		//!< spindle rate (degrees per second)
+  int dssrate_isnull;
+
+  double dsrange;		//!< frame rate (degrees shutter is open)
+  int dsrange_isnull;
+
   double dsdist;		//!< dataset defined detector distance
   int dsdist_isnull;
 
@@ -392,6 +401,15 @@ typedef struct lspg_nextshot_struct {
 
   double dskappa2;		//!< next image kappa position
   int dskappa2_isnull;
+
+  double dsfrate2;		//!< frame rate (images per degree)
+  int dsfrate2_isnull;
+
+  double dssrate2;		//!< spindle rate (degrees per second)
+  int dssrate2_isnull;
+
+  double dsrange2;		//!< frame rate (degrees shutter is open)
+  int dsrange2_isnull;
 
   double dsdist2;		//!< next image distance
   int dsdist2_isnull;
