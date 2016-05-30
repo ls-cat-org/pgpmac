@@ -72,12 +72,12 @@ void lstimer_set_timer( char *event, int shots, unsigned long int secs, unsigned
   //
   clock_gettime( CLOCK_REALTIME, &now);
   
+  pthread_mutex_lock( &lstimer_mutex);
 
   // Make sure our event is registered (saves a tiny bit of time later)
   //
   lsevents_preregister_event( event);
 
-  pthread_mutex_lock( &lstimer_mutex);
 
   for (i=0; i<LSTIMER_LIST_LENGTH; i++) {
     if (strcmp(lstimer_list[i].event, event) == 0) {
