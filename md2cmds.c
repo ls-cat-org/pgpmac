@@ -1605,7 +1605,7 @@ int md2cmds_shutterless( const char *dummy) {
   }  
 
   lslogging_log_message("shutterless 1");
-
+  
   //
   // Set up monitoring of the detector state and, by the way, get the
   // current state.
@@ -1624,7 +1624,7 @@ int md2cmds_shutterless( const char *dummy) {
     return 1;
   }
   lslogging_log_message("shutterless 2");
-
+  
   omega_u2c   = lsredis_getd( omega->u2c);
   omega_np    = lsredis_getd( omega->neutral_pos);
   omega_ma    = lsredis_getd( omega->max_accel);
@@ -1647,276 +1647,314 @@ int md2cmds_shutterless( const char *dummy) {
     cy1 = lsredis_getd( lsredis_get_obj("centers.1.cy"));
     ay1 = lsredis_getd( lsredis_get_obj("centers.1.ay"));
   }
-
-  lspg_nextshot_call();
-  lspg_nextshot_wait();
-  if (lspg_nextshot.query_error) {
-    lsredis_sendStatusReport(1, "Cound not retrieve next shot info.");
-    lslogging_log_message("md2cmds_shutterless: query error retriveing next shot info. Aborting");
-    lsevents_send_event("Shutterless Collection Aborted");
-    lsredis_setstr(collection_running, "False");
-    return 1;
-  }
-
-  lslogging_log_message("shutterless 3");
-
-  if (lspg_nextshot.no_rows_returned) {
-    lslogging_log_message("lspg_nextshot returned no rows");
-    lsredis_sendStatusReport(0, "No more images to collect");
-    lsredis_setstr(collection_running, "False");
-    lspg_nextshot_done();
-    return 0;
-  }
-
-
-  if ( lspg_nextshot.dssrate <= 0.1) {
-    exp_time = lspg_nextshot.dsexp;
-  } else {
-    if (strcmp(lspg_nextshot.stype, "shutterless")==0) {
-      exp_time = lspg_nextshot.dsrange  / lspg_nextshot.dssrate;
-    } else {
-      exp_time = lspg_nextshot.dsowidth / lspg_nextshot.dssrate;
-    }
-  }
-  skey     = lspg_nextshot.skey;
-  sindex   = lspg_nextshot.sindex;
-  lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Preparing')", skey);
-  lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Preparing\"}", skey);
-  lsredis_sendStatusReport( 0, "Preparing Shutterless %d", sindex);
-
-
-  q1  = exp_time * 1000.0;
-  q10 = omega_u2c * (lspg_nextshot.sstart + omega_np);
-
-  if (strcmp(lspg_nextshot.stype, "shutterless")==0) {
-    q12 = omega_u2c * (lspg_nextshot.sstart + lspg_nextshot.dsrange  + omega_np);
-  } else {
-    q12 = omega_u2c * (lspg_nextshot.sstart + lspg_nextshot.dsowidth + omega_np);
-  }
-
-  // acceleration = acceleration time (mSec) + kludge factor of dubious utility
-  q2 = ((q12 - q10) / q1) / omega_ma + 100;
-
-  // alignment y start and end
-  q15 = ay_u2c * (ay0 + ay_np);
-  q17 = ay_u2c * (ay1 + ay_np);
   
-  // centering x start and end
-  q20 = cx_u2c * (cx0 + cx_np);
-  q22 = cx_u2c * (cx1 + cx_np);
+  while(1) {
+    lspg_nextshot_call();
+    lspg_nextshot_wait();
 
-  // centering y start and end
-  q25 = cy_u2c * (cy0 + cy_np);
-  q27 = cy_u2c * (cy1 + cy_np);
-
-  if (q1 > 0) {
-    q4  = (q12-q10) / q1;	// Omega velocity in counts/msec
-    q5  = q4*q2/2 + p178;       // Backup distance for Omega (in counts)
-  } else {
-    q5 = 0;
-  }
-
-  /*
-  ** Move omega to the initial position
-  ** TODO: calculate the actual starting position, not just the shutter open position
-  */
-  if (fabs(lspmac_getPosition( omega)) > 360.0) {
-    md2cmds_home_prep();
-    lspmac_home1_queue( omega);
-    if( md2cmds_home_wait( 20.0)) {
-      lslogging_log_message( "md2cmds_shutterless: homing omega timed out.  Shutterless aborted");
-      lsevents_send_event( "Shutterless Collection Aborted");
+    if (lspg_nextshot.query_error) {
+      lsredis_sendStatusReport(1, "Cound not retrieve next shot info.");
+      lslogging_log_message("md2cmds_shutterless: query error retriveing next shot info. Aborting");
+      lsevents_send_event("Shutterless Collection Aborted");
       lsredis_setstr(collection_running, "False");
+      return 1;
+    }
+
+    lslogging_log_message("shutterless 3");
+
+    if (lspg_nextshot.no_rows_returned) {
+      lslogging_log_message("lspg_nextshot returned no rows");
+      lsredis_sendStatusReport(0, "No more images to collect");
+      lsredis_setstr(collection_running, "False");
+      lspg_nextshot_done();
+      break;
+    }
+
+    if ( lspg_nextshot.dssrate <= 0.1) {
+      exp_time = lspg_nextshot.dsexp;
+    } else {
+      if (strcmp(lspg_nextshot.stype, "shutterless")==0) {
+	exp_time = lspg_nextshot.dsrange  / lspg_nextshot.dssrate;
+      } else {
+	exp_time = lspg_nextshot.dsowidth / lspg_nextshot.dssrate;
+      }
+    }
+    skey     = lspg_nextshot.skey;
+    sindex   = lspg_nextshot.sindex;
+    lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Preparing')", skey);
+    lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Preparing\"}", skey);
+    lsredis_sendStatusReport( 0, "Preparing Shutterless %d", sindex);
+    
+    
+    q1  = exp_time * 1000.0;
+    q10 = omega_u2c * (lspg_nextshot.sstart + omega_np);
+    
+    if (strcmp(lspg_nextshot.stype, "shutterless")==0) {
+      q12 = omega_u2c * (lspg_nextshot.sstart + lspg_nextshot.dsrange  + omega_np);
+    } else {
+      q12 = omega_u2c * (lspg_nextshot.sstart + lspg_nextshot.dsowidth + omega_np);
+    }
+    
+    // acceleration = acceleration time (mSec) + kludge factor of dubious utility
+    q2 = ((q12 - q10) / q1) / omega_ma + 100;
+    
+    // alignment y start and end
+    q15 = ay_u2c * (ay0 + ay_np);
+    q17 = ay_u2c * (ay1 + ay_np);
+    
+    // centering x start and end
+    q20 = cx_u2c * (cx0 + cx_np);
+    q22 = cx_u2c * (cx1 + cx_np);
+    
+    // centering y start and end
+    q25 = cy_u2c * (cy0 + cy_np);
+    q27 = cy_u2c * (cy1 + cy_np);
+    
+    if (q1 > 0) {
+      q4  = (q12-q10) / q1;	// Omega velocity in counts/msec
+      q5  = q4*q2/2 + p178;       // Backup distance for Omega (in counts)
+    } else {
+      q5 = 0;
+    }
+    
+    /*
+    ** Move omega to the initial position
+    ** TODO: calculate the actual starting position, not just the shutter open position
+    */
+    if (fabs(lspmac_getPosition( omega)) > 360.0) {
+      md2cmds_home_prep();
+      lspmac_home1_queue( omega);
+      if( md2cmds_home_wait( 20.0)) {
+	lslogging_log_message( "md2cmds_shutterless: homing omega timed out.  Shutterless aborted");
+	lsevents_send_event( "Shutterless Collection Aborted");
+	lsredis_setstr(collection_running, "False");
+	lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+	lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
+	return 1;
+      }
+    }
+    
+    err = lspmac_est_move_time( &move_time, &mmask,
+				omega,  0, NULL, lspg_nextshot.sstart - q5/omega_u2c,
+				NULL);
+    if( err) {
+      lsevents_send_event( "Shutterless Collection Aborted");
+      lsredis_sendStatusReport( 1, "Failed to move omega to start position.");
+      lspg_nextshot_done();
+      lsredis_setstr( collection_running, "False");
       lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
       lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
       return 1;
     }
-  }
-
-  err = lspmac_est_move_time( &move_time, &mmask,
-			      omega,  0, NULL, lspg_nextshot.sstart - q5/omega_u2c,
-			      NULL);
-  if( err) {
-    lsevents_send_event( "Shutterless Collection Aborted");
-    lsredis_sendStatusReport( 1, "Failed to move omega to start position.");
+    
+    err = lspmac_est_move_time_wait( move_time+10, mmask, NULL);
+    if( err) {
+      lsredis_sendStatusReport( 1, "Moving omega failed.");
+      lsevents_send_event( "Shutterless Collection Aborted");
+      lspg_nextshot_done();
+      lsredis_setstr( collection_running, "False");
+      lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
+      lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+      return 1;
+    }
+    
+    // We don't need these query results anymore
     lspg_nextshot_done();
-    lsredis_setstr( collection_running, "False");
-    lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
-    lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
-    return 1;
-  }
-  
-  err = lspmac_est_move_time_wait( move_time+10, mmask, NULL);
-  if( err) {
-    lsredis_sendStatusReport( 1, "Moving omega failed.");
-    lsevents_send_event( "Shutterless Collection Aborted");
-    lspg_nextshot_done();
-    lsredis_setstr( collection_running, "False");
-    lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
-    lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
-    return 1;
-  }
-
-  // We don't need these query results anymore
-  lspg_nextshot_done();
-
-  lslogging_log_message("shutterless 3...");
-
-  //
-  // prepare the database and detector to expose On exit theexp
-  // detector.state_machine is in the state Arm or, if the detector
-  // was not ready, in the state Init.
-  //
-  if( lspg_eiger_run_prep_all( skey,
-			     kappa->position,
-			     phi->position,
-			     cenx->position,
-			     ceny->position,
-			     alignx->position,
-			     aligny->position,
-			     alignz->position
-			     )) {
-    lslogging_log_message( "md2cmds_shutterless: eiger run prep query error, aborting");
-    lsredis_sendStatusReport( 1, "Preparing MD2 failed");
-    lsevents_send_event( "Shutterless Collection Aborted");
-    lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
-    lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
-    lsredis_setstr( collection_running, "False");
-    return 1;
-  }
-
-  lslogging_log_message("shutterless 4");
-
-  //
-  // Wait for the detector to drop its lock indicating that it is ready for the exposure
-  //
-  clock_gettime( CLOCK_REALTIME, &now);
-  timeout.tv_sec  = now.tv_sec + 60;
-  timeout.tv_nsec = now.tv_nsec;
-
-  err = 0;
-  pthread_mutex_lock( &detector_state_mutex);
-  while (err == 0 && detector_state_int != 3) {
-    err = pthread_cond_timedwait( &detector_state_cond, &detector_state_mutex, &timeout);
-  }
-
-  if( err == ETIMEDOUT) {
+    
+    lslogging_log_message("shutterless 3...");
+    
+    //
+    // prepare the database and detector to expose On exit theexp
+    // detector.state_machine is in the state Arm or, if the detector
+    // was not ready, in the state Init.
+    //
+    if( lspg_eiger_run_prep_all( skey,
+				 kappa->position,
+				 phi->position,
+				 cenx->position,
+				 ceny->position,
+				 alignx->position,
+				 aligny->position,
+				 alignz->position
+				 )) {
+      lslogging_log_message( "md2cmds_shutterless: eiger run prep query error, aborting");
+      lsredis_sendStatusReport( 1, "Preparing MD2 failed");
+      lsevents_send_event( "Shutterless Collection Aborted");
+      lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+      lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
+      lsredis_setstr( collection_running, "False");
+      return 1;
+    }
+    
+    lslogging_log_message("shutterless 4");
+    
+    //
+    // Wait for the detector to arm itself
+    //
+    clock_gettime( CLOCK_REALTIME, &now);
+    timeout.tv_sec  = now.tv_sec + 60;
+    timeout.tv_nsec = now.tv_nsec;
+    
+    err = 0;
+    pthread_mutex_lock( &detector_state_mutex);
+    while (err == 0 && detector_state_int != 3) {
+      err = pthread_cond_timedwait( &detector_state_cond, &detector_state_mutex, &timeout);
+    }
+    
+    if( err == ETIMEDOUT) {
+      pthread_mutex_unlock( &detector_state_mutex);
+      lslogging_log_message( "md2cmds_shutterless: Timed out waiting for detector to be armed.  Shutterless Collection aborted.");
+      lsredis_sendStatusReport( 1, "Timed out waiting for detector to be armed.");
+      
+      lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
+      
+      lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
+      lsevents_send_event( "Shutterless Collection Aborted");
+      lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+      lsredis_setstr( collection_running, "False");
+      return 1;
+    }
     pthread_mutex_unlock( &detector_state_mutex);
-    lslogging_log_message( "md2cmds_shutterless: Timed out waiting for detector to be armed.  Shutterless Collection aborted.");
-    lsredis_sendStatusReport( 1, "Timed out waiting for detector to be armed.");
-
-    lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
-
-    lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
-    lsevents_send_event( "Shutterless Collection Aborted");
-    lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
-    lsredis_setstr( collection_running, "False");
-    return 1;
-  }
-  pthread_mutex_unlock( &detector_state_mutex);
-  lslogging_log_message("shutterless 4");
-
-
-  md2cmds_setAxis( aligny, 'Y', lsredis_getl( aligny->coord_num), 1);
-  md2cmds_setAxis( cenx,   'Z', lsredis_getl( cenx->coord_num),   1);
-  md2cmds_setAxis( ceny,   'U', lsredis_getl( ceny->coord_num),   1);
-
-  lsredis_sendStatusReport( 0, "Exposing Frames %d", sindex);
-  lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Exposing')", skey);
-  lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Exposing\"}", skey);
-
-  lspmac_set_motion_flags( NULL, omega, NULL);
-  lspmac_SockSendDPline( "Exposure",
-			 "&1 P178=%.1f P179=%.1f Q1=%.1f Q2=%.1f Q10=%.1f Q12=%.1f Q15=%.1f Q17=%.1f Q20=%.1f Q22=%.1f Q25=%.1f Q27=%.1f M431=1",
-			 p178, p179, q1, q2, q10, q12, q15, q17, q20, q22, q25, q27
-			 );
-
-  lspmac_SockSendDPline(  NULL, "B231R");
-
-  lslogging_log_message("shutterless 5");
-  //
-  // wait for the shutter to open
-  //
-  clock_gettime( CLOCK_REALTIME, &now);
-  timeout.tv_sec  = now.tv_sec + (int)(q2/1000+1) + 2;	// round the acceleration time up and add a couple of seconds for the command to be taken 
-  timeout.tv_nsec = now.tv_nsec;
-  err = 0;
-
-  pthread_mutex_lock( &md2cmds_shutter_mutex);
-  while( err == 0 && !md2cmds_shutter_open_flag)
-    err = pthread_cond_timedwait( &md2cmds_shutter_cond, &md2cmds_shutter_mutex, &timeout);
-
-  if( err == ETIMEDOUT) {
+    lslogging_log_message("shutterless 4");
+    
+    md2cmds_setAxis( aligny, 'Y', lsredis_getl( aligny->coord_num), 1);
+    md2cmds_setAxis( cenx,   'Z', lsredis_getl( cenx->coord_num),   1);
+    md2cmds_setAxis( ceny,   'U', lsredis_getl( ceny->coord_num),   1);
+    
+    lsredis_sendStatusReport( 0, "Exposing Frames %d", sindex);
+    lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Exposing')", skey);
+    lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Exposing\"}", skey);
+    
+    lspmac_set_motion_flags( NULL, omega, NULL);
+    lspmac_SockSendDPline( "Exposure",
+			   "&1 P178=%.1f P179=%.1f Q1=%.1f Q2=%.1f Q10=%.1f Q12=%.1f Q15=%.1f Q17=%.1f Q20=%.1f Q22=%.1f Q25=%.1f Q27=%.1f M431=1",
+			   p178, p179, q1, q2, q10, q12, q15, q17, q20, q22, q25, q27
+			   );
+    
+    lspmac_SockSendDPline(  NULL, "B231R");
+    
+    lslogging_log_message("shutterless 5");
+    //
+    // wait for the shutter to open
+    //
+    clock_gettime( CLOCK_REALTIME, &now);
+    timeout.tv_sec  = now.tv_sec + (int)(q2/1000+1) + 2;	// round the acceleration time up and add a couple of seconds for the command to be taken 
+    timeout.tv_nsec = now.tv_nsec;
+    err = 0;
+    
+    pthread_mutex_lock( &md2cmds_shutter_mutex);
+    while( err == 0 && !md2cmds_shutter_open_flag)
+      err = pthread_cond_timedwait( &md2cmds_shutter_cond, &md2cmds_shutter_mutex, &timeout);
+    
+    if( err == ETIMEDOUT) {
+      pthread_mutex_unlock( &md2cmds_shutter_mutex);
+      lslogging_log_message( "md2cmds_shutterless: Timed out waiting for shutter to open.  Data collection aborted.");
+      lspmac_abort();
+      lsredis_sendStatusReport( 1, "Timed out waiting for shutter to open.");
+      lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
+      lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
+      lsevents_send_event( "Shutterless Collection Aborted");
+      lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+      lsredis_setstr( collection_running, "False");
+      md2cmds_setAxis( ceny,   lsredis_getc( ceny->axis),   1, lsredis_getl( ceny->coord_num));
+      md2cmds_setAxis( cenx,   lsredis_getc( cenx->axis),   1, lsredis_getl( cenx->coord_num));
+      md2cmds_setAxis( aligny, lsredis_getc( aligny->axis), 1, lsredis_getl( aligny->coord_num));
+      return 1;
+    }
     pthread_mutex_unlock( &md2cmds_shutter_mutex);
-    lslogging_log_message( "md2cmds_shutterless: Timed out waiting for shutter to open.  Data collection aborted.");
-    lspmac_abort();
-    lsredis_sendStatusReport( 1, "Timed out waiting for shutter to open.");
-    lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
-    lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
-    lsevents_send_event( "Shutterless Collection Aborted");
-    lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
-    lsredis_setstr( collection_running, "False");
+    
+    lslogging_log_message("shutterless 6");
+    
+    //
+    // wait for the shutter to close
+    //
+    clock_gettime( CLOCK_REALTIME, &now);
+    lslogging_log_message( "md2cmds_shutterless: waiting %f seconds for the shutter to close", 4 + exp_time);
+    timeout.tv_sec  = now.tv_sec + 4 + ceil(exp_time);	// hopefully 4 seconds is long enough to never miss a legitimate shutter close and short enough to bail when something is really wrong
+    timeout.tv_nsec = now.tv_nsec;
+    
+    err = 0;
+    
+    pthread_mutex_lock( &md2cmds_shutter_mutex);
+    while( err == 0 && md2cmds_shutter_open_flag)
+      err = pthread_cond_timedwait( &md2cmds_shutter_cond, &md2cmds_shutter_mutex, &timeout);
+    
+    if( err == ETIMEDOUT) {
+      pthread_mutex_unlock( &md2cmds_shutter_mutex);
+      lsredis_sendStatusReport( 1, "Timed out waiting for shutter to close.");
+      lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
+      lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
+      lslogging_log_message( "md2cmds_shutterless: Timed out waiting for shutter to close.  Shutterless collection aborted.");
+      lsevents_send_event( "Shutterless Collection Aborted");
+      lsredis_setstr( collection_running, "False");
+      lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+      md2cmds_setAxis( ceny,   lsredis_getc( ceny->axis),   1, lsredis_getl( ceny->coord_num));
+      md2cmds_setAxis( cenx,   lsredis_getc( cenx->axis),   1, lsredis_getl( cenx->coord_num));
+      md2cmds_setAxis( aligny, lsredis_getc( aligny->axis), 1, lsredis_getl( aligny->coord_num));
+      return 1;
+    }
+    pthread_mutex_unlock( &md2cmds_shutter_mutex);
+    
+    lslogging_log_message("shutterless 7");
+    
+    //
+    // Signal the detector to start reading out
+    //
+    lsredis_setstr( detector_state_redis, "{\"state\": \"Done\", \"expires\": %lld}", (long long)time(NULL)*1000 + 20000);
+    lsredis_sendStatusReport( 0, "Reading Shutterless %d", sindex);
+
+    //
+    // Update the shot status
+    //
+    lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Writing')", skey);
+    lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Writing\"}", skey);
+    
+    lslogging_log_message("shutterless 7.1");
+    
+    //
+    // Return the axes definitions to their original state
+    //
     md2cmds_setAxis( ceny,   lsredis_getc( ceny->axis),   1, lsredis_getl( ceny->coord_num));
     md2cmds_setAxis( cenx,   lsredis_getc( cenx->axis),   1, lsredis_getl( cenx->coord_num));
     md2cmds_setAxis( aligny, lsredis_getc( aligny->axis), 1, lsredis_getl( aligny->coord_num));
-    return 1;
+    
+    //
+    // reset shutter has opened flag
+    //
+    lspmac_SockSendDPline( NULL, "P3005=0");
+
+    lslogging_log_message("shutterless 8");
+    
+    //
+    // Wait for the detector to be done
+    //
+    clock_gettime( CLOCK_REALTIME, &now);
+    timeout.tv_sec  = now.tv_sec + 60;
+    timeout.tv_nsec = now.tv_nsec;
+    
+    err = 0;
+    pthread_mutex_lock( &detector_state_mutex);
+    while (err == 0 && detector_state_int != 4) {
+      err = pthread_cond_timedwait( &detector_state_cond, &detector_state_mutex, &timeout);
+    }
+    
+    if( err == ETIMEDOUT) {
+      pthread_mutex_unlock( &detector_state_mutex);
+      lslogging_log_message( "md2cmds_shutterless: Timed out waiting for detector to finish up.  Shutterless Collection aborted.");
+      lsredis_sendStatusReport( 1, "Timed out waiting for detector to finish.");
+      
+      lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
+      
+      lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
+      lsevents_send_event( "Shutterless Collection Aborted");
+      lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+      lsredis_setstr( collection_running, "False");
+      return 1;
+    }
+    pthread_mutex_unlock( &detector_state_mutex);
+
+
   }
-  pthread_mutex_unlock( &md2cmds_shutter_mutex);
-
-  lslogging_log_message("shutterless 6");
-
-  //
-  // wait for the shutter to close
-  //
-  clock_gettime( CLOCK_REALTIME, &now);
-  lslogging_log_message( "md2cmds_shutterless: waiting %f seconds for the shutter to close", 4 + exp_time);
-  timeout.tv_sec  = now.tv_sec + 4 + ceil(exp_time);	// hopefully 4 seconds is long enough to never miss a legitimate shutter close and short enough to bail when something is really wrong
-  timeout.tv_nsec = now.tv_nsec;
-
-  err = 0;
-
-  pthread_mutex_lock( &md2cmds_shutter_mutex);
-  while( err == 0 && md2cmds_shutter_open_flag)
-    err = pthread_cond_timedwait( &md2cmds_shutter_cond, &md2cmds_shutter_mutex, &timeout);
-
-  if( err == ETIMEDOUT) {
-    pthread_mutex_unlock( &md2cmds_shutter_mutex);
-    lsredis_sendStatusReport( 1, "Timed out waiting for shutter to close.");
-    lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
-    lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
-    lslogging_log_message( "md2cmds_shutterless: Timed out waiting for shutter to close.  Shutterless collection aborted.");
-    lsevents_send_event( "Shutterless Collection Aborted");
-    lsredis_setstr( collection_running, "False");
-    lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
-    md2cmds_setAxis( ceny,   lsredis_getc( ceny->axis),   1, lsredis_getl( ceny->coord_num));
-    md2cmds_setAxis( cenx,   lsredis_getc( cenx->axis),   1, lsredis_getl( cenx->coord_num));
-    md2cmds_setAxis( aligny, lsredis_getc( aligny->axis), 1, lsredis_getl( aligny->coord_num));
-    return 1;
-  }
-  pthread_mutex_unlock( &md2cmds_shutter_mutex);
-
-  lslogging_log_message("shutterless 7");
-
-  //
-  // Signal the detector to start reading out
-  //
-  lsredis_setstr( detector_state_redis, "{\"state\": \"Done\", \"expires\": %lld}", (long long)time(NULL)*1000 + 20000);
-  lsredis_sendStatusReport( 0, "Reading Shutterless %d", sindex);
-
-  lslogging_log_message("shutterless 7.1");
-
-  //
-  // Return the axes definitions to their original state
-  //
-  md2cmds_setAxis( ceny,   lsredis_getc( ceny->axis),   1, lsredis_getl( ceny->coord_num));
-  md2cmds_setAxis( cenx,   lsredis_getc( cenx->axis),   1, lsredis_getl( cenx->coord_num));
-  md2cmds_setAxis( aligny, lsredis_getc( aligny->axis), 1, lsredis_getl( aligny->coord_num));
-
-  //
-  // reset shutter has opened flag
-  //
-  lspmac_SockSendDPline( NULL, "P3005=0");
-
   lslogging_log_message("shutterless Data Collection Done");
 
   return 0;
