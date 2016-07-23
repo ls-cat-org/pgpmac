@@ -34,51 +34,65 @@ void detector_state_push_queue(char *dummy_event) {
   pthread_mutex_unlock( &detector_state_queue_mutex);
 }
 
-
-
-
-/** Really stupid JSON parser that only works for the detector state
- ** machine.  TODO: implement an actual solution such as
- ** http://zserge.com/jsmn.html
- */
-void detector_state_machine_state() {
-  static char *lastState = NULL;
+int detector_state_machine_state() {
+  static char *(the_states[]) = {"Init", "Ready", "Arm", "Armed", "Done", NULL};
+  int i;
   char *detector_state_text;
-  char *tok;
   long long expires;
   time_t now;
   int newTimeout;
-  char new_detector_state_text[256];
-  
+  char *tmp_string;
+  json_t *detector_state_obj;
+  json_error_t json_err;
+  json_t *detector_state_json;
+  json_t *detector_expires_json;
+  int set_new_state;
+    
+  newTimeout    = 10;
+
   detector_state_text    = lsredis_getstr( detector_state_redis);
-
-  newTimeout = 10;
-  new_detector_state_text[0] = 0;
-
-  if (strstr(detector_state_text, "Init") != NULL) {
-    detector_state_int = 0;
-  } else if (strstr(detector_state_text, "Ready") != NULL) {
-    detector_state_int = 1;
-  } else if (strstr(detector_state_text, "Armed") != NULL) {
-    // must test Armed before Arm
-    detector_state_int = 3;
-  } else if (strstr(detector_state_text, "Arm") != NULL) {
-    detector_state_int = 2;
-  } else if (strstr(detector_state_text, "Done") != NULL) {
-    detector_state_int = 4;
-  } else {
-    // error condition
-    detector_state_int = 0;
+  detector_state_obj     = json_loads(detector_state_text, JSON_DECODE_INT_AS_REAL, &json_err);
+  if (!detector_state_obj) {
+    lslogging_log_message( "Could not decode detector state: %s", detector_state_text);
+    free(detector_state_text);
+    return newTimeout;
   }
-  
-  expires = 0;
-  tok = strstr(detector_state_text, "expires");
-  if (tok != NULL) {
-    tok = strstr( tok, ":");
-    if (tok != NULL) {
-      expires = strtoll(tok+1, NULL, 10);
+
+  detector_state_json = json_object_get(detector_state_obj, "state");
+  if (!detector_state_json || json_typeof(detector_state_json) != JSON_STRING) {
+    lslogging_log_message( "Could not find detector state in json dict: %s", detector_state_text);
+    json_decref(detector_state_obj);
+    free(detector_state_text);
+    return newTimeout;
+  }
+
+  detector_expires_json = json_object_get(detector_state_obj,"expires");
+  if (!detector_expires_json || json_typeof(detector_expires_json) != JSON_REAL) {
+    lslogging_log_message( "Could not find legal detector expires in json dict: %s  got type %d", detector_state_text, detector_expires_json ? json_typeof(detector_expires_json) : -1);
+    json_decref(detector_state_json);
+    json_decref(detector_state_obj);
+    free(detector_state_text);
+    return newTimeout;
+  }
+
+  set_new_state = 0;
+
+  for (i=0; the_states[i]; i++) {
+    if (strcmp(the_states[i], json_string_value(detector_state_json)) == 0) {
+      detector_state_int = i;
+      break;
     }
   }
+  //
+  // Did we really find a new state?  If not then we must go to the Init state
+  //
+  if (the_states[i] == NULL) {
+    // went past the end of the list
+    lslogging_log_message( "Failed to find legal state in %s", detector_state_text);
+    detector_state_int = 0;
+  }
+
+  expires = (long long)floor(json_real_value(detector_expires_json));
     
   now = time(NULL);
     
@@ -97,14 +111,17 @@ void detector_state_machine_state() {
       //
       // Tell the detector to read out, but if it doesn't in 25 seconds just reset things
       //
-      snprintf( new_detector_state_text, sizeof(new_detector_state_text)-1, "{\"state\": \"Done\", \"expires\": %lld}", (long long)time(NULL)*1000 + 20000);
-      new_detector_state_text[sizeof(new_detector_state_text)-1] = 0;
+      json_integer_set(detector_expires_json, (long long)now*1000 + 20000);
+      json_string_set(detector_state_json, "Done");
 
+      set_new_state = 1;
       newTimeout = 25;
     } else {
+      json_integer_set(detector_expires_json, 0);
+      json_string_set(detector_state_json, "Init");
+
+      set_new_state = 1;
       newTimeout = 60;
-      snprintf( new_detector_state_text, sizeof(new_detector_state_text)-1, "{\"state\": \"Init\", \"expires\": 0}");
-      new_detector_state_text[sizeof(new_detector_state_text)-1] = 0;
     }
   } else {
     if (expires) {
@@ -112,21 +129,23 @@ void detector_state_machine_state() {
     } else {
       newTimeout = 10;
     }
-
-    if (lastState) {
-      free(lastState);
-    }
-
-    lastState = detector_state_text;
   }
 
-  lstimer_unset_timer( "DETECTOR_STATE_MACHINE");
-  lstimer_set_timer( "DETECTOR_STATE_MACHINE", 1, newTimeout, 0);
+  json_object_set(detector_state_obj, "state", detector_state_json);
+  json_object_set(detector_state_obj, "expires", detector_expires_json);
 
-
-  if (new_detector_state_text[0]) {
-    lsredis_setstr(detector_state_redis, new_detector_state_text);
+  if (set_new_state) {
+    tmp_string = json_dumps(detector_state_obj, 0);
+    lsredis_setstr(detector_state_redis, tmp_string);
+    free(tmp_string);
   }
+
+  json_decref(detector_expires_json);
+  json_decref(detector_state_json);
+  json_decref(detector_state_obj);
+  free(detector_state_text);
+
+  return newTimeout;
 }
 
 
@@ -136,6 +155,7 @@ void detector_state_machine_state() {
 void *detector_state_worker(
 		     void *dummy
 		     ) {
+  int newTimeout = 10;
 
   detector_state_redis = lsredis_get_obj("detector.state_machine");
 
@@ -155,12 +175,15 @@ void *detector_state_worker(
     pthread_cond_signal(  &detector_state_queue_cond);
     pthread_mutex_unlock( &detector_state_queue_mutex);
 
+    lstimer_unset_timer( "DETECTOR_STATE_MACHINE");
+    
     pthread_mutex_lock( &detector_state_mutex);
-    detector_state_machine_state();
+    newTimeout = detector_state_machine_state();
 
     pthread_cond_signal( &detector_state_cond);
     pthread_mutex_unlock( &detector_state_mutex);
 
+    lstimer_set_timer( "DETECTOR_STATE_MACHINE", 1, newTimeout, 0);
   }
   return NULL;
 }
