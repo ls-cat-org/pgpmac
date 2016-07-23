@@ -32,6 +32,7 @@
 #include <hiredis/async.h>
 #include <search.h>
 #include <ctype.h>
+#include <jansson.h>
 
 /** Redis Object
  *  Basic object whose value is sychronized with our redis db
