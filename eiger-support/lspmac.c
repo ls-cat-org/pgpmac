@@ -3137,8 +3137,7 @@ int lspmac_est_move_time( double *est_time, int *mmaskp, lspmac_motor_t *mp_1, i
 	  //
 	  Tt = 2.0 * sqrt( fabs(D)/A);
 	}
-
-	lslogging_log_message( "lspmac_est_move_time: Motor: %s  D: %f  VV/A: %f  Tt: %f", mp->name, D, V*V/A, Tt);
+	lslogging_log_message( "lspmac_est_move_time: Motor: %s ep: %f   D: %f  VV/A: %f  Tt: %f", mp->name, ep, D, V*V/A, Tt);
       }  else {
 	//
 	// TODO: insert move time based for DAC or BO motor like objects;
