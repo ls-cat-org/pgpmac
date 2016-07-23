@@ -1,8 +1,8 @@
 /*! \file md2cmds.c
  *  \brief Implements commands to run the md2 diffractometer attached to a PMAC controled by postgresql
- *  \date 2012
+ *  \date 2012 - 2016
  *  \author Keith Brister
- *  \copyright All Rights Reserved
+ *  \copyright Northwestern University All Rights Reserved
  */
 #include "pgpmac.h"
 
@@ -1660,7 +1660,7 @@ int md2cmds_shutterless( const char *dummy) {
       return 1;
     }
 
-    lslogging_log_message("shutterless 3");
+    lslogging_log_message("shutterless 3: active = %d", lspg_nextshot.active);
 
     if (lspg_nextshot.no_rows_returned) {
       lslogging_log_message("lspg_nextshot returned no rows");
@@ -1668,6 +1668,77 @@ int md2cmds_shutterless( const char *dummy) {
       lsredis_setstr(collection_running, "False");
       lspg_nextshot_done();
       break;
+    }
+
+    //
+    // The loop explorer uses the old interpolation methods which is
+    // not compatable with our use of the centering points here.
+    // Hopefully just checking the center points array length is
+    // enough to catch this mode.  TODO: make it clearer, ie, add
+    // another flag to indicate that we are in the explorer mode.
+    //
+    if( clength <= 1 && lspg_nextshot.active) {
+      lsredis_set_preset( "centering.x", "Beam", lspg_nextshot.cx);
+      lsredis_set_preset( "centering.y", "Beam", lspg_nextshot.cy);
+      lsredis_set_preset( "align.x",     "Beam", lspg_nextshot.ax);
+      lsredis_set_preset( "align.y",     "Beam", lspg_nextshot.ay);
+      lsredis_set_preset( "align.z",     "Beam", lspg_nextshot.az);
+
+      lsredis_setstr(lsredis_get_obj("centers.0.cx"), "%0.3f", lspg_nextshot.cx);
+      lsredis_setstr(lsredis_get_obj("centers.0.cy"), "%0.3f", lspg_nextshot.cy);
+      lsredis_setstr(lsredis_get_obj("centers.0.ax"), "%0.3f", lspg_nextshot.ax);
+      lsredis_setstr(lsredis_get_obj("centers.0.ay"), "%0.3f", lspg_nextshot.ay);
+      lsredis_setstr(lsredis_get_obj("centers.0.az"), "%0.3f", lspg_nextshot.az);
+
+
+      cx0 = lspg_nextshot.cx;
+      cy0 = lspg_nextshot.cy;
+      ay0 = lspg_nextshot.ay;
+
+      cx1 = lspg_nextshot.cx;
+      cy1 = lspg_nextshot.cy;
+      ay1 = lspg_nextshot.ay;
+
+      //
+      // Normally ax (focus) and az (spindle height) do not move.
+      // However, if, we ever want to then the ax and az code is here.
+      // cx, cy, and cz is built into to the PMAC routing and has been
+      // stripped out.
+      //
+
+      if(
+	 //
+	 // Don't move if we are within 0.1 microns of our destination
+	 //
+	 (fabs( lspg_nextshot.ax - alignx->position) > 0.0001) ||
+	 (fabs( lspg_nextshot.az - alignz->position) > 0.0001)) {
+
+
+	lslogging_log_message( "md2cmds_shutterless: moving center to ax=%f, az=%f", lspg_nextshot.ax, lspg_nextshot.az);
+
+	err = lspmac_est_move_time( &move_time, &mmask,
+				    alignx, 0, NULL, lspg_nextshot.ax,
+				    alignz, 0, NULL, lspg_nextshot.az,
+				    NULL);
+	if( err) {
+	  lsevents_send_event( "Shutterless Collection Aborted");
+	  lsredis_sendStatusReport( 1, "Failed to start moving to next sample position.");
+	  lspg_nextshot_done();
+	  lsredis_setstr( collection_running, "False");
+	  lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+	  return 1;
+	}
+
+	err = lspmac_est_move_time_wait( move_time+10, mmask, NULL);
+	if( err) {
+	  lsredis_sendStatusReport( 1, "Moving to next sample position failed.");
+	  lsevents_send_event( "Shutterless Collection Aborted");
+	  lspg_nextshot_done();
+	  lsredis_setstr( collection_running, "False");
+	  lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+	  return 1;
+	}
+      }
     }
 
     if ( lspg_nextshot.dssrate <= 0.1) {
