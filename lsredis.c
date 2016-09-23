@@ -624,7 +624,7 @@ lsredis_obj_t *_lsredis_get_obj( char *key) {
     errno = 0;
     err = hsearch_r( htab_input, ENTER, &htab_output, &lsredis_htab);
     if( err == 0) {
-      lslogging_log_message( "_lsredis_get_obj: hseach error on enter.  errno=%d", errno);
+      lslogging_log_message( "_lsredis_get_obj: hsearch error on enter.  errno=%d: %s", errno, strerror(errno));
     }
 
     //

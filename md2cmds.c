@@ -40,7 +40,7 @@ All positions are in millimeters or degrees.
 
  run <motor> <command>                      Run a special command on <motor> where <command> is one of "home", "spin", "stop"
 
- segment                                    Like collect but only used for line segment mode with the Eiger
+ shutterless                                Like collect but only used for line segment shutterless mode with the Eiger
 
  set <motor> <preset>                       Set <motor>'s current position as <preset>.  <preset> will be created if it does not currently exist.
 
@@ -151,7 +151,7 @@ int md2cmds_phase_change(     const char *);
 int md2cmds_run_cmd(          const char *);
 int md2cmds_rotate(           const char *);
 int md2cmds_nonrotate(        const char *);
-int md2cmds_segment(          const char *);
+int md2cmds_shutterless(      const char *);
 int md2cmds_set(              const char *);
 int md2cmds_settransferpoint( const char *);
 int md2cmds_setbackvector(    const char *);
@@ -182,7 +182,7 @@ static md2cmds_cmd_kv_t md2cmds_cmd_pg_kvs[] = {
   { "collect",          md2cmds_collect},
   { "nonrotate",        md2cmds_nonrotate},
   { "rotate",           md2cmds_rotate},
-  { "segment",          md2cmds_segment},
+  { "shutterless",      md2cmds_shutterless},
   { "settransferpoint", md2cmds_settransferpoint},
   { "transfer",         md2cmds_transfer}
 };
@@ -1537,11 +1537,11 @@ void md2cmds_setAxis(lspmac_motor_t *mp, char axis, int old_coord, int new_coord
 }
 
 
-/** Segment data collection
+/** Shutterless line segment data collection
  ** \param dummy Unused
  ** returns non-zero on error
  */
-int md2cmds_segment( const char *dummy) {
+int md2cmds_shutterless( const char *dummy) {
   long long skey;	//!< px.shots key of our exposure
   int sindex;		//!< px.shots sindex of our shot
   double exp_time;	//!< Exposure Time from postgresql in seconds
@@ -1572,7 +1572,7 @@ int md2cmds_segment( const char *dummy) {
   struct timespec now, timeout;	//!< setup timeouts for shutter
   int err;
 
-  lsevents_send_event("Segment Collection Starting");
+  lsevents_send_event("Shutterless Collection Starting");
   collection_running = lsredis_get_obj("collection.running");
   lsredis_setstr(collection_running, "True");
 
@@ -1603,8 +1603,8 @@ int md2cmds_segment( const char *dummy) {
   lspg_nextshot_wait();
   if (lspg_nextshot.query_error) {
     lsredis_sendStatusReport(1, "Cound not regrieve next shot info.");
-    lslogging_log_message("md2cmds_segment: query error retriveing next shot info. Aborting");
-    lsevents_send_event("Segment Collection Aborted");
+    lslogging_log_message("md2cmds_shutterless: query error retriveing next shot info. Aborting");
+    lsevents_send_event("Shutterless Collection Aborted");
     lsredis_setstr(collection_running, "False");
     return 1;
   }
@@ -1620,12 +1620,12 @@ int md2cmds_segment( const char *dummy) {
   sindex   = lspg_nextshot.sindex;
   lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Preparing')", skey);
   lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Preparing\"}", skey);
-  lsredis_sendStatusReport( 0, "Preparing Segment %d", sindex);
+  lsredis_sendStatusReport( 0, "Preparing Shutterless %d", sindex);
 
   q1  = lspg_nextshot.dsexp * 1000.0;
 
   q10 = omega_u2c * (lspg_nextshot.sstart + omega_np);
-  q12 = omega_u2c * (lspg_nextshot.sstart + lspg_nextshot.dsowidth + omega_np);
+  q12 = omega_u2c * (lspg_nextshot.sstart + lspg_nextshot.dsrange + omega_np);
   
   //   (    velocity    ) / max acceleration = acceleration time (mSec) + kludge factor of dubious utility
   q2 = ((q12 - q10) / q1) / omega_ma + 100;
@@ -1659,9 +1659,9 @@ int md2cmds_segment( const char *dummy) {
 			     aligny->position,
 			     alignz->position
 			     )) {
-    lslogging_log_message( "md2cmds_segment: seq run prep query error, aborting");
+    lslogging_log_message( "md2cmds_shutterless: seq run prep query error, aborting");
     lsredis_sendStatusReport( 1, "Preparing MD2 failed");
-    lsevents_send_event( "Segment Collection Aborted");
+    lsevents_send_event( "Shutterless Collection Aborted");
     lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
     lsredis_setstr( collection_running, "False");
     return 1;
@@ -1699,11 +1699,11 @@ int md2cmds_segment( const char *dummy) {
 
   if( err == ETIMEDOUT) {
     pthread_mutex_unlock( &md2cmds_shutter_mutex);
-    lslogging_log_message( "md2cmds_segment: Timed out waiting for shutter to open.  Data collection aborted.");
+    lslogging_log_message( "md2cmds_shutterless: Timed out waiting for shutter to open.  Data collection aborted.");
     lsredis_sendStatusReport( 1, "Timed out waiting for shutter to open.");
     lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
     lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
-    lsevents_send_event( "Segment Collection Aborted");
+    lsevents_send_event( "Shutterless Collection Aborted");
     lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
     lsredis_setstr( collection_running, "False");
     md2cmds_setAxis( ceny,   lsredis_getc( ceny->axis),   1, lsredis_getl( ceny->coord_num));
@@ -1718,7 +1718,7 @@ int md2cmds_segment( const char *dummy) {
   // wait for the shutter to close
   //
   clock_gettime( CLOCK_REALTIME, &now);
-  lslogging_log_message( "md2cmds_collect: waiting %f seconds for the shutter to close", 4 + exp_time);
+  lslogging_log_message( "md2cmds_shutterless: waiting %f seconds for the shutter to close", 4 + exp_time);
   timeout.tv_sec  = now.tv_sec + 4 + ceil(exp_time);	// hopefully 4 seconds is long enough to never miss a legitimate shutter close and short enough to bail when something is really wrong
   timeout.tv_nsec = now.tv_nsec;
 
@@ -1733,8 +1733,8 @@ int md2cmds_segment( const char *dummy) {
     lsredis_sendStatusReport( 1, "Timed out waiting for shutter to close.");
     lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
     lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
-    lslogging_log_message( "md2cmds_segment: Timed out waiting for shutter to close.  Data collection aborted.");
-    lsevents_send_event( "Segment Collection Aborted");
+    lslogging_log_message( "md2cmds_shutterless: Timed out waiting for shutter to close.  Data collection aborted.");
+    lsevents_send_event( "Shutterless Collection Aborted");
     lsredis_setstr( collection_running, "False");
     lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
     md2cmds_setAxis( ceny,   lsredis_getc( ceny->axis),   1, lsredis_getl( ceny->coord_num));
@@ -1748,7 +1748,7 @@ int md2cmds_segment( const char *dummy) {
   // Signal the detector to start reading out
   //
   lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
-  lsredis_sendStatusReport( 0, "Reading Segment %d", sindex);
+  lsredis_sendStatusReport( 0, "Reading Shutterless %d", sindex);
 
   //
   // Return the axes definitions to their original state
@@ -1941,8 +1941,8 @@ int md2cmds_collect( const char *dummy) {
     //
     p180 = lspg_nextshot.dsexp * 1000.0;
     p170 = u2c * (lspg_nextshot.sstart + neutral_pos);
-    p171 = u2c * lspg_nextshot.dsowidth;
-    p173 = fabs(p180) < 1.e-4 ? 0.0 : u2c * lspg_nextshot.dsowidth / p180;
+    p171 = u2c * lspg_nextshot.dsrange;
+    p173 = fabs(p180) < 1.e-4 ? 0.0 : u2c * lspg_nextshot.dsrange / p180;
     p175 = p173/max_accel;
 
 
