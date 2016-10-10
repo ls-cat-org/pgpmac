@@ -93,7 +93,7 @@ extras = [
     {"k" : "overlay.centers.8.width",  "v" : "1000"},
     {"k" : "overlay.centers.8.height", "v" : "100"},
     {"k" : "overlay.centers.length",   "v" : "9"},
-    {"k" : "overlay.curentCenter",     "v" : "3"},
+    {"k" : "overlay.currentCenter",    "v" : "3"},
     {"k" : "cam.CenterX",              "v" : "384"},
     {"k" : "cam.CenterY",              "v" : "288"},
     {"k" : "detector.state",           "v" : '{"skey": 0, "sstate": "Unknown", "msg": ""}',
