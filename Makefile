@@ -1,7 +1,8 @@
-VERSION= 1.0
+VERSION= 1.1
 # 
 # Makefile for pgpmac project
-# (C) 2012 - 2013 by Keith Brister and Northwesern University
+# (C) 2012 - 2016 by Northwesern University
+# Author: Keith Brister
 # All Rights Reserved
 #
 
@@ -17,7 +18,7 @@ pgpmac: pgpmac.c pgpmac.h lspg.o lsredis.o lspmac.o md2cmds.o lslogging.o lseven
 
 dist:
 	ln -fs . ls-cat-pgpmac-$(VERSION)
-	tar czvf ls-cat-pgpmac-$(VERSION).tar.gz ls-cat-pgpmac-$(VERSION)/*.c ls-cat-pgpmac-$(VERSION)/*.h ls-cat-pgpmac-$(VERSION)/pmac_md2.sql ls-cat-pgpmac-$(VERSION)/Makefile ls-cat-pgpmac-$(VERSION)/pmac_md2_ls-cat.pmc ls-cat-pgpmac-$(VERSION)/pgpmac.pdf
+	tar czvf ls-cat-pgpmac-$(VERSION).tar.gz ls-cat-pgpmac-$(VERSION)/*.c ls-cat-pgpmac-$(VERSION)/*.h ls-cat-pgpmac-$(VERSION)/pmac_md2.sql ls-cat-pgpmac-$(VERSION)/Makefile ls-cat-pgpmac-$(VERSION)/pmac_md2_ls-cat.pmc
 	rm -f ls-cat-pgpmac-$(VERSION)
 
 install: pgpmac
@@ -30,7 +31,7 @@ clean:
 	-@rm *.o pgpmac 2>/dev/null
 
 docs:   *.c *.h Makefile
-	/usr/local/bin/doxygen
+	/usr/bin/doxygen
 	(cd docs/latex && make)
 
 lstimer.o: lstimer.c pgpmac.h Makefile
