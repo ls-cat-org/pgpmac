@@ -1546,8 +1546,8 @@ int md2cmds_shutterless( const char *dummy) {
   long long skey;	//!< px.shots key of our exposure
   int sindex;		//!< px.shots sindex of our shot
   double exp_time;	//!< Exposure Time from postgresql in seconds
-  double p178;		//!< Shutter opening time (mSecs)
-  double p179;		//!< Shutter closing time (mSecs)
+  double p6510;		//!< Shutter opening time in msec
+  double p6511;		//!< Shutter closing time in msec
   double q1;            //!< Exposure Time in mSec
   double q2;            //!< Acceleration Time in mSecs
   double q4;		//!< Omega velocity in counts/msec
@@ -1581,11 +1581,11 @@ int md2cmds_shutterless( const char *dummy) {
   int mmask;
 
   //
-  // currently we do not deal well with a non-zero shutter open/close
-  // time.  Once we do we'll need to use those values here.
+  // Make a guess at the correct value.  TODO: measure and place in
+  // redis variables.
   //
-  p178 = 0;
-  p179 = 0;
+  p6510 = 2;
+  p6511 = 2;
 
   lslogging_log_message("shutterless 0");
 
@@ -1783,7 +1783,7 @@ int md2cmds_shutterless( const char *dummy) {
     
     if (q1 > 0) {
       q4  = (q12-q10) / q1;	// Omega velocity in counts/msec
-      q5  = q4*q2/2 + p178;       // Backup distance for Omega (in counts)
+      q5  = q4*q2/2;           // Backup distance for Omega (in counts)
     } else {
       q5 = 0;
     }
@@ -1898,8 +1898,8 @@ int md2cmds_shutterless( const char *dummy) {
     
     lspmac_set_motion_flags( NULL, omega, NULL);
     lspmac_SockSendDPline( "Exposure",
-			   "&1 P178=%.1f P179=%.1f Q1=%.1f Q2=%.1f Q10=%.1f Q12=%.1f Q15=%.1f Q17=%.1f Q20=%.1f Q22=%.1f Q25=%.1f Q27=%.1f M431=1",
-			   p178, p179, q1, q2, q10, q12, q15, q17, q20, q22, q25, q27
+			   "&1 P6510=%.1f P6511=%.1f Q1=%.1f Q2=%.1f Q10=%.1f Q12=%.1f Q15=%.1f Q17=%.1f Q20=%.1f Q22=%.1f Q25=%.1f Q27=%.1f",
+			   p6510, p6511, q1, q2, q10, q12, q15, q17, q20, q22, q25, q27
 			   );
     
     lspmac_SockSendDPline(  NULL, "B231R");
@@ -2282,7 +2282,7 @@ int md2cmds_collect( const char *dummy) {
     lsredis_sendStatusReport( 0, "Exposing %s %d", issnap ? "Snap" : "Frame", sindex);
     lspmac_set_motion_flags( &mmask, omega, NULL);
     lspmac_SockSendDPline( "Exposure",
-			   "&1 P170=%.1f P171=%.1f P173=%.1f P174=0 P175=%.1f P176=0 P177=1 P178=0 P180=%.1f M431=1 &1B131R",
+			   "&1 P170=%.1f P171=%.1f P173=%.1f P174=0 P175=%.1f P176=0 P177=1 P178=0 P180=%.1f &1B131R",
 			   p170,         p171,     p173,            p175,                          p180);
 
     //
