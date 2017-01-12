@@ -4697,7 +4697,7 @@ pthread_t *lspmac_run() {
       //
       // Set the PMAC to be consistant with redis
       //
-      lspmac_SockSendDPline( NULL, "I%d16=%f I%d17=%f I%d28=%d", motor_num, lsredis_getd( mp->max_speed), motor_num, lsredis_getd( mp->max_accel), motor_num, lsredis_getl( mp->in_position_band));
+      lspmac_SockSendDPline( NULL, "I%d16=%f I%d22=%f I%d17=%f I%d28=%d", motor_num, lsredis_getd( mp->max_speed), lsredis_getd( mp->max_speed), motor_num, lsredis_getd( mp->max_accel), motor_num, lsredis_getl( mp->in_position_band));
     }    
 
     // if there is a problem with "active" then don't do anything
