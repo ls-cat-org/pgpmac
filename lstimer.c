@@ -47,7 +47,7 @@ void lstimer_unset_timer( char *event) {
   int i;
 
   for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
-    if( strcmp( event, lstimer_list[i].event) == 0) {
+    if( strcmp( event, lstimer_list[i].event) == 0 && lstimer_list[i].shots != 0) {
       lstimer_list[i].shots = 0;
     }
   }
