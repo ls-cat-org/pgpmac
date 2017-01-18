@@ -1546,10 +1546,11 @@ int md2cmds_shutterless( const char *dummy) {
   long long skey;	//!< px.shots key of our exposure
   int sindex;		//!< px.shots sindex of our shot
   double exp_time;	//!< Exposure Time from postgresql in seconds
-  double p6510;		//!< Shutter opening time in msec
+  //double p6510;		//!< Shutter opening time in msec
   double p6511;		//!< Shutter closing time in msec
   double q1;            //!< Exposure Time in mSec
   double q2;            //!< Acceleration Time in mSecs
+  double q3;            //!< Time at constant velocity before triggering detector
   double q4;		//!< Omega velocity in counts/msec
   double q5;		//!< Backup distance
   double q10;		//!< Omega open position in counts
@@ -1584,8 +1585,8 @@ int md2cmds_shutterless( const char *dummy) {
   // Make a guess at the correct value.  TODO: measure and place in
   // redis variables.
   //
-  p6510 = 2;
-  p6511 = 2;
+  //p6510 =  10;	// Imperical value: use scope to measure fast-shutter/shutter-box edges
+  p6511 =   2;
 
   lslogging_log_message("shutterless 0");
 
@@ -1766,9 +1767,12 @@ int md2cmds_shutterless( const char *dummy) {
       q12 = omega_u2c * (lspg_nextshot.sstart + lspg_nextshot.dsowidth + omega_np);
     }
     
-    // acceleration = acceleration time (mSec) + kludge factor of dubious utility
-    q2 = ((q12 - q10) / q1) / omega_ma + 100;
-    
+    // acceleration time (mSec)
+    q2 = ((q12 - q10) / q1) / omega_ma * 2;
+
+    // time to run at constant velocity before triggering the detector (TODO: do we really need this?)
+    q3 = 100;
+
     // alignment y start and end
     q15 = ay_u2c * (ay0 + ay_np);
     q17 = ay_u2c * (ay1 + ay_np);
@@ -1898,8 +1902,8 @@ int md2cmds_shutterless( const char *dummy) {
     
     lspmac_set_motion_flags( NULL, omega, NULL);
     lspmac_SockSendDPline( "Exposure",
-			   "&1 P6510=%.1f P6511=%.1f Q1=%.1f Q2=%.1f Q10=%.1f Q12=%.1f Q15=%.1f Q17=%.1f Q20=%.1f Q22=%.1f Q25=%.1f Q27=%.1f",
-			   p6510, p6511, q1, q2, q10, q12, q15, q17, q20, q22, q25, q27
+			   "&1 P6511=%.1f Q1=%.1f Q2=%.1f Q3=%.1f Q10=%.1f Q12=%.1f Q15=%.1f Q17=%.1f Q20=%.1f Q22=%.1f Q25=%.1f Q27=%.1f",
+			   p6511, q1, q2, q3, q10, q12, q15, q17, q20, q22, q25, q27
 			   );
     
     lspmac_SockSendDPline(  NULL, "B231R");
@@ -1941,7 +1945,7 @@ int md2cmds_shutterless( const char *dummy) {
     //
     clock_gettime( CLOCK_REALTIME, &now);
     lslogging_log_message( "md2cmds_shutterless: waiting %f seconds for the shutter to close", 4 + exp_time);
-    timeout.tv_sec  = now.tv_sec + 4 + ceil(exp_time);	// hopefully 4 seconds is long enough to never miss a legitimate shutter close and short enough to bail when something is really wrong
+    timeout.tv_sec  = now.tv_sec + 10 + ceil(exp_time);	// hopefully 10 seconds is long enough to never miss a legitimate shutter close and short enough to bail when something is really wrong
     timeout.tv_nsec = now.tv_nsec;
     
     err = 0;
