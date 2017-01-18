@@ -504,7 +504,7 @@ extern lspmac_bi_t    *smart_mag_err;
 extern lspmac_bi_t    *smart_mag_off;
 extern lspmac_bi_t    *shutter_open;
 extern lspmac_bi_t    *sb_shutter_open;
-extern lspmac_bi_t    *sb_shutter_enabled;
+extern lspmac_bi_t    *sb_shutter_not_enabled;
 
 extern struct timespec omega_zero_time;
 
