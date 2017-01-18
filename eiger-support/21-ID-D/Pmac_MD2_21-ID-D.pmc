@@ -3649,7 +3649,7 @@ OPEN PLCC 0 CLEAR
 
   ; Maybe Open the shutter
   IF (P6500 = 1)
-    IF (I5211 <= 0)
+    IF (I5211 < 0)
       M1109 = 1
       COMMAND "&1MOVETIME"	; I5114 should contian # ms from end of motion to close shutter
       P6500 = 2
@@ -3658,8 +3658,8 @@ OPEN PLCC 0 CLEAR
 
   ; Maybe Close the shutter
   IF (P6500 = 2)
-    IF (I5111 <= 0)
-      M1109 = 1
+    IF (I5111 < 0)
+      M1109 = 0
       P6500 = 0
     ENDIF
   ENDIF
@@ -3673,25 +3673,36 @@ OPEN PLCC 0 CLEAR
     P6010 = (M190/(I1008*32))     ; Capillary Z position (Counts)
     P6015 = (M191/(I1108*32))     ; Scintillator Z position (Counts)
 
-    IF (P6010 < P6000 OR P6010 > P6001)
+    IF (P6010<P6000  OR P6010>P6001)
       P6011 = 0                   ; Capillary not in position
     ENDIF
 
-    IF (P6015 < P6002 OR P6015 > P6003)
+    IF (P6015<P6002 OR P6015>P6003)
       P6016 = 0                   ; Scintillator not in position
     ENDIF
 
-    IF (P6011 != 1 OR P6016 != 1) ; See if both are in position
-      M1108 = 1		; Disable Shutter
-    ELSE
+    IF (P6011=1 OR P6016=1) ; See if either is in position
       M1108 = 0		; Enable Shutter
+    ELSE
+      M1108 = 1		; Disable Shutter
     ENDIF
   ENDIF
 
-EndIf
+CLOSE
 
-Close
-Enable PLCC 0
+
+OPEN PLC 1 CLEAR
+  ; Our initialization PLC
+  ;
+  M1108 = 1     ; Start with shutter disabled
+  M1109 = 0     ; And with the shutter closed
+
+  ENABLE PLCC 0,2 ; Our main plcs
+
+  DISABLE PLC 1   ; We are an initialization plc
+
+CLOSE
+
 
 
 ; ======================== LS-CAT Modifications below
@@ -3726,7 +3737,7 @@ M1113=0
 M1114->y:$78C05,6,1     ; OUT14
 M1114=0
 
-M1115->y:$78C05,7,1     ; OUT15
+M1115->y:$78C05,7,1     ; OUT15   ETEL enable (also on JH2 ?)
 M1115=0
 
 ;
@@ -4286,7 +4297,8 @@ CLOSE
 ;
 ;
 ;   Q1    Exposure Time     (mSec)
-;   Q2    Acceleration time (mSec)
+;   Q2    Acceleration time (I117 when omega limits acceleration))  (mSec)
+;   Q3    Time to run at constant velocity before opening shutter (mSec)
 ;
 ;   Q4    Calculated X velocity in counts/mSec
 ;   Q5    Calculated X distance needed to get a running start (counts)
@@ -4318,7 +4330,7 @@ CLOSE
 ;   Q27 U Desired Shutter Close Position
 ;   Q28 U Calculated Ending Position
 ;
-;   Q50 Time from end of move to open shutter (ms)
+;   Q50 Time from start of move to open shutter (ms)
 ;   Q51 Time from end of move to close shutter (ms)
 
 
@@ -4330,14 +4342,14 @@ FastShutterOpenHist = 0 ; clear shutter openings history
 PhiScan = 1
 ;;
 IF (Q10 != Q12)               ; Delta Omega is non-zero
-  Q4  = (Q12-Q10) / Q1;
-  Q5  = Q4*Q2/2               ; Backup distance for X.
+  Q4  = (Q12-Q10) / Q1;       ; Velocity of sample exposure segment
+  Q5  = Q4*Q2/2 + Q4*Q3       ; Backup distance for X.
   Q6  = Q5/(Q12-Q10)          ; Backup distance scaled to delta X to calculate how far to move back the other axes.
   Q7  = Q4*Q2/2               ; Wind down distance for X.
   Q8  = Q7/(Q12-Q10)          ; Scaled wind down distance.
 
-  Q51 = Q7 / Q4 * 2           ; Time from end of move to start closing the shutter (ms)
-  Q50 = Q5 / Q4 * 2 - P6510   ; Time from start of move to start opening the shutter (ms)
+  Q50 = Q2 + Q3 - P6510       ; Time from start of move to start opening the shutter (ms)
+  Q51 = Q2                    ; Time from end of move to start closing the shutter (ms)
 
   ;;
   ;; Calculate starting positions
@@ -4354,7 +4366,7 @@ IF (Q10 != Q12)               ; Delta Omega is non-zero
   Q28 = Q27 + Q8*(Q27-Q25)    ; U Ending Position
   ;;
   ABS(X,Y,Z,U)
-  RAPID X(Q10) Y(Q15) Z(Q20) U(Q25)      ;  Move motors to starting position
+  RAPID X(Q11) Y(Q16) Z(Q21) U(Q26)      ;  Move motors to starting position
   DWELL0
   LINEAR
   FRAX(X)                 ;  Use X (presumably Omega) to calculate the feed rate (the others start and end at the same time)
@@ -4388,6 +4400,11 @@ IF (Q10 != Q12)               ; Delta Omega is non-zero
   ;;
   I5114 = -Q51                  ; Set up register so movetime executed from PLC will close the shutter at the right time
   I5211 = Q50 * 8388607 / I10   ; Number of servo cycles until shutter should open
+  IF (I5211 < 0)		; See if we should open the shutter now
+    M1109 = 1			; Open the shutter now
+    DWELL (P6510)               ; Wait for the shutter to open (PLCC 0 will try to open it again, shouldn't be a big deal)
+  END IF
+  I5111 = 8000000               ; Some big number to keep shutter from closing immediately, number replaced by MOVETIME after shutter opens
   P6500 = 1			; Tell PLCC 0 to manage the shutter state
   ;;
   ;; Move'm
@@ -4395,6 +4412,7 @@ IF (Q10 != Q12)               ; Delta Omega is non-zero
   X(Q13) Y(Q18) Z(Q23) U(Q28)
   DWELL0
   Cmd "m1124=0" ;FShutterScanEnable=0
+  Cmd "m1109=0" ; Close the shutter box shutter
   DWELL0
   If (FastShutterHasOpened = 1)
     FastShutterOpenHist =  FastShutterOpenHist + 1
