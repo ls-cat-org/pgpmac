@@ -144,7 +144,7 @@ lspmac_bi_t    *smart_mag_err;			//!< smart magnet error (coil broken perhaps)
 lspmac_bi_t    *smart_mag_off;			//!< smart magnet is off
 lspmac_bi_t    *shutter_open;			//!< shutter is open (note in pmc says this is a slow input)
 lspmac_bi_t    *sb_shutter_open;		//!< Shutter open signal sent to shutter box
-lspmac_bi_t    *sb_shutter_enabled;		//!< shutter enabled signal sent to shutter box
+lspmac_bi_t    *sb_shutter_not_enabled;		//!< shutter enabled signal sent to shutter box
 
 
 //! Regex to pick out preset name and corresponding position
@@ -1229,7 +1229,10 @@ void lspmac_shutter_read(
 			 ) {
   char *fmt;
   int sb_open;
-  int sb_enabled;
+  int sb_not_enabled;
+  int close_shutter;
+
+  close_shutter = 0;	// flag set when shutter is disabled and the shutter is open
   //
   // track the shutter state and signal if it has changed
   //
@@ -1251,19 +1254,27 @@ void lspmac_shutter_read(
     pthread_cond_signal( &(mp->cond));
   }
 
-  sb_open    = lspmac_getBIPosition(sb_shutter_open);
-  sb_enabled = lspmac_getBIPosition(sb_shutter_enabled);
+  sb_open        = lspmac_getBIPosition(sb_shutter_open);
+  sb_not_enabled = lspmac_getBIPosition(sb_shutter_not_enabled);
 
   pthread_mutex_lock( &ncurses_mutex);
-  if (!sb_enabled) {
+  if (sb_not_enabled) {
     mvwprintw( term_status2, 1, 1, "Shutter Disabled");
     mp->position = 0;
+
+    if( md2_status.fs_is_open) {
+      // Shutter is logically open but is disabled by the shutter box.
+      // We set a flag here to close it at the end of this routine so
+      // that it does not open when it becomes enabled again.
+      close_shutter = 1;
+    }
+
   } else {
-    if( !sb_open) {
-      mvwprintw( term_status2, 1, 1, "Shutter Open  ");
+    if( sb_open) {
+      mvwprintw( term_status2, 1, 1, "Shutter Open    ");
       mp->position = 1;
     } else {
-      mvwprintw( term_status2, 1, 1, "Shutter Closed");
+      mvwprintw( term_status2, 1, 1, "Shutter Closed  ");
       mp->position = 0;
     }
   }
@@ -1274,13 +1285,23 @@ void lspmac_shutter_read(
     mp->not_done    = 0;
     fmt = lsredis_getstr( fshut->redis_fmt);
     lsredis_setstr( fshut->redis_position, fmt, fshut->position);
-    lsredis_setstr( fshut->status_str, "%s", fshut->reported_position == 0 ? "Open" : "Closed");
-    free(fmt);
-    fshut->reported_position = fshut->position;
-    pthread_cond_signal( &(mp->cond));
+    if (sb_not_enabled) {
+      lsredis_setstr( fshut->status_str, "Disabled");
+    } else {
+      lsredis_setstr( fshut->status_str, "%s", fshut->reported_position == 0 ? "Open" : "Closed");
+      free(fmt);
+      fshut->reported_position = fshut->position;
+      pthread_cond_signal( &(mp->cond));
+    }
   }
 
   pthread_mutex_unlock( &(mp->mutex));
+
+  if (close_shutter) {
+    // We found the shutter "open" but disabled.  Formally "close" it
+    // now.
+    fshut->moveAbs( fshut, 0);
+  }
 }
 
 /** Home the motor.
@@ -1897,14 +1918,14 @@ void lspmac_get_status_cb(
   // 0x0020  5    OUT5   M1105	{smartmagnet on/off: note in pmc says this is not used}
   // 0x0040  6    OUT6   M1106	1=SmartMag, 0=Permanent Mag
   // 0x0080  7    OUT7
-  // 0x0100  8    OUT8   M1108 Shutter Box Shutter Enable
-  // 0x0200  9    OUT9   M1109 Shutter Box Shutter Open
-  // 0x0400 10    OUT10
-  // 0x0800 11    OUT11
-  // 0x1000 12    OUT12
-  // 0x2000 13    OUT13
-  // 0x400  14    OUT14
-  // 0x800  15    OUT15
+  // 0x0100  8    
+  // 0x0200  9    
+  // 0x0400 10    
+  // 0x0800 11    
+  // 0x1000 12    
+  // 0x2000 13    
+  // 0x4000 14    
+  // 0x8000 15    
 
   
 
@@ -1915,13 +1936,13 @@ void lspmac_get_status_cb(
 
   // acc11c_6	OUTPUTS
   // mask   bit
-  // 0x0001   0	M1040   {SC Sample transfer is on}
-  // 0x0002   1
-  // 0x0004   2
-  // 0x0008   3
-  // 0x0010   4
-  // 0x0020   5
-  // 0x0040   6
+  // 0x0001   0	OUT8   M1108 Shutter Box Shutter Enable
+  // 0x0002   1	OUT9   M1109 Shutter Box Shutter Open	 
+  // 0x0004   2	OUT10					 
+  // 0x0008   3	OUT11					 
+  // 0x0010   4	OUT12					 
+  // 0x0020   5	OUT13					 
+  // 0x0040   6	OUT14					 
   // 0x0080   7	M1115   Etel Enable
   // 0x0100   8 M1124   Fast Shutter Enable
   // 0x0200   9 M1125   Fast Shutter Manual Enable
@@ -3047,17 +3068,36 @@ int lspmac_est_move_time( double *est_time, int *mmaskp, lspmac_motor_t *mp_1, i
      *      A   = the motor acceleration, Here it's the maximum acceleration.
      *
      *      V = A * At   
-     *
+     * 
      *      or  At = V/A
      *
      *      The Total Time (Tt) is
      *
      *      Tt = Ct + 2 * At
      *
+     *      Distance traveled during ramp up/down:
      *
+     *      Da = 0.5 * V * At
      *
-     *      If we had infinite acceleration the total time would be D/V.  To account for finite acceleration we just need to
-     *      adjust this for the average velocity while accelerating (0.5 V).  This neatly adds a single V/A term:
+     *      Which in terms of V and A gives
+     *
+     *      Da = 0.5 * V * V / A
+     *
+     *      Total distance traveled at constant velocity is
+     *
+     *      Dc = D - 2 * Da
+     *
+     *      Dc = D - V*V/A
+     *
+     *      Tt = Dc / V + 2 * Da / (0.5 V)
+     *
+     *      Tt = (D - V*V/A)/V + 4 * (0.5 * V * V / A) / V
+     *
+     *      Tt = D/V - V/A + 2 * V/A
+     *
+     *      Or just Tt = D + V/A
+     *
+     *      Check: at infinite acceleration the total time is just D/V.
      *
      *      (1)     Tt = D/V  + V/A
      *
@@ -3840,7 +3880,6 @@ lspmac_motor_t *lspmac_motor_init(
   lsevents_preregister_event( "%s In Position",  d->name);
   lsevents_preregister_event( "%s Move Aborted", d->name);
 
-
   return d;
 }
 
@@ -4046,25 +4085,25 @@ void lspmac_init(
     blight_f      = lspmac_soft_motor_init( &(lspmac_motors[25]), "backLight.factor",  lspmac_moveabs_blight_factor_queue);
     flight_f      = lspmac_soft_motor_init( &(lspmac_motors[26]), "frontLight.factor", lspmac_moveabs_flight_factor_queue);
 
-    lp_air          = lspmac_bi_init( &(lspmac_bis[ 0]),   "lowpressureair",   &(md2_status.acc11c_1),  0x01, "Low Pressure Air OK",  "Low Pressure Air Failed",  "OK",      "Failed");
-    hp_air          = lspmac_bi_init( &(lspmac_bis[ 1]),   "highpressureair",  &(md2_status.acc11c_1),  0x02, "High Pressure Air OK", "High Pressure Air Failed", "OK",      "Failed");
-    cryo_switch     = lspmac_bi_init( &(lspmac_bis[ 2]),   "cryoswitch",       &(md2_status.acc11c_1),  0x04, "CryoSwitchChanged",    "CryoSwitchChanged",        "On",      "Off");
-    blight_down     = lspmac_bi_init( &(lspmac_bis[ 3]),   "backLightDown",    &(md2_status.acc11c_1),  0x08, "Backlight Down",       "Backlight Not Down",       "Down",    "Not Down");
-    blight_up       = lspmac_bi_init( &(lspmac_bis[ 4]),   "backLightUp",      &(md2_status.acc11c_1),  0x10, "Backlight Up",         "Backlight Not Up",         "Up",      "Not Up");
-    cryo_back       = lspmac_bi_init( &(lspmac_bis[ 5]),   "cryoBack",         &(md2_status.acc11c_1),  0x40, "Cryo Back",            "Cryo Not Back",            "Back",    "Not Back");
-    fluor_back	    = lspmac_bi_init( &(lspmac_bis[ 6]),   "detectorParked",   &(md2_status.acc11c_2),  0x01, "Fluor. Det. Parked",   "Fluor. Det. Not Parked",   "Parked",  "Not Parked");
-    sample_detected = lspmac_bi_init( &(lspmac_bis[ 7]),   "sampleDetector",   &(md2_status.acc11c_2),  0x02, NULL,                   NULL,                       "Present", "Absent" );
-    etel_ready      = lspmac_bi_init( &(lspmac_bis[ 8]),   "etelReady",        &(md2_status.acc11c_2),  0x20, "ETEL Ready",           "ETEL Not Ready",           "Ready",   "Not Ready");
-    etel_on         = lspmac_bi_init( &(lspmac_bis[ 9]),   "etelOn",           &(md2_status.acc11c_2),  0x40, "ETEL On",              "ETEL Off",                 "On",      "Off");
-    etel_init_ok    = lspmac_bi_init( &(lspmac_bis[10]),   "etelOk",           &(md2_status.acc11c_2),  0x80, "ETEL Init OK",         "ETEL Init Not OK",         "OK",      "Not OK");
-    minikappa_ok    = lspmac_bi_init( &(lspmac_bis[11]),   "miniKappaOk",      &(md2_status.acc11c_3),  0x01, "Minikappa OK",         "Minikappa Not OK",         "OK",      "Not OK");
-    smart_mag_on    = lspmac_bi_init( &(lspmac_bis[12]),   "smartMagnetOn",    &(md2_status.acc11c_3),  0x04, "Smart Magnet On",      "Smart Magnet Not On",      "On",      "Not On");
-    arm_parked      = lspmac_bi_init( &(lspmac_bis[13]),   "armParked",        &(md2_status.acc11c_3),  0x08, "Arm Parked",           "Arm Not Parked",           "Parked",  "Not Parked");
-    smart_mag_err   = lspmac_bi_init( &(lspmac_bis[14]),   "smartMagnetError", &(md2_status.acc11c_3),  0x10, "Smart Magnet Error",   "Smart Magnet OK",          "Error",   "OK");
-    shutter_open    = lspmac_bi_init( &(lspmac_bis[15]),   "shutterOpen",      &(md2_status.acc11c_3), 0x100, "Detector Triggered",   "Detector Not Triggered",   "Trig",    "Not Trig");
-    smart_mag_off   = lspmac_bi_init( &(lspmac_bis[16]),   "smartMagnetOff",   &(md2_status.acc11c_5),  0x01, "Smart Magnet Off",     "Smart Magnet Not Off",     "Off",     "Not Off");
-    sb_shutter_open = lspmac_bi_init( &(lspmac_bis[17]),   "sbShutterOpen",    &(md2_status.acc11c_5),0x0200, "Shutter Closed",       "Shutter Open",             "Not Open","Open");
-    sb_shutter_enabled= lspmac_bi_init( &(lspmac_bis[18]), "sbShutterEnabled", &(md2_status.acc11c_5),0x0100, "Shutter Enabled",      "Shutter Disabled",         "Disabled","Enabled");
+    lp_air             = lspmac_bi_init( &(lspmac_bis[ 0]), "lowpressureair",   &(md2_status.acc11c_1),  0x01, "Low Pressure Air OK",  "Low Pressure Air Failed",  "OK",      "Failed");
+    hp_air             = lspmac_bi_init( &(lspmac_bis[ 1]), "highpressureair",  &(md2_status.acc11c_1),  0x02, "High Pressure Air OK", "High Pressure Air Failed", "OK",      "Failed");
+    cryo_switch        = lspmac_bi_init( &(lspmac_bis[ 2]), "cryoswitch",       &(md2_status.acc11c_1),  0x04, "CryoSwitchChanged",    "CryoSwitchChanged",        "On",      "Off");
+    blight_down        = lspmac_bi_init( &(lspmac_bis[ 3]), "backLightDown",    &(md2_status.acc11c_1),  0x08, "Backlight Down",       "Backlight Not Down",       "Down",    "Not Down");
+    blight_up          = lspmac_bi_init( &(lspmac_bis[ 4]), "backLightUp",      &(md2_status.acc11c_1),  0x10, "Backlight Up",         "Backlight Not Up",         "Up",      "Not Up");
+    cryo_back          = lspmac_bi_init( &(lspmac_bis[ 5]), "cryoBack",         &(md2_status.acc11c_1),  0x40, "Cryo Back",            "Cryo Not Back",            "Back",    "Not Back");
+    fluor_back	       = lspmac_bi_init( &(lspmac_bis[ 6]), "detectorParked",   &(md2_status.acc11c_2),  0x01, "Fluor. Det. Parked",   "Fluor. Det. Not Parked",   "Parked",  "Not Parked");
+    sample_detected    = lspmac_bi_init( &(lspmac_bis[ 7]), "sampleDetector",   &(md2_status.acc11c_2),  0x02, NULL,                   NULL,                       "Present", "Absent" );
+    etel_ready         = lspmac_bi_init( &(lspmac_bis[ 8]), "etelReady",        &(md2_status.acc11c_2),  0x20, "ETEL Ready",           "ETEL Not Ready",           "Ready",   "Not Ready");
+    etel_on            = lspmac_bi_init( &(lspmac_bis[ 9]), "etelOn",           &(md2_status.acc11c_2),  0x40, "ETEL On",              "ETEL Off",                 "On",      "Off");
+    etel_init_ok       = lspmac_bi_init( &(lspmac_bis[10]), "etelOk",           &(md2_status.acc11c_2),  0x80, "ETEL Init OK",         "ETEL Init Not OK",         "OK",      "Not OK");
+    minikappa_ok       = lspmac_bi_init( &(lspmac_bis[11]), "miniKappaOk",      &(md2_status.acc11c_3),  0x01, "Minikappa OK",         "Minikappa Not OK",         "OK",      "Not OK");
+    smart_mag_on       = lspmac_bi_init( &(lspmac_bis[12]), "smartMagnetOn",    &(md2_status.acc11c_3),  0x04, "Smart Magnet On",      "Smart Magnet Not On",      "On",      "Not On");
+    arm_parked         = lspmac_bi_init( &(lspmac_bis[13]), "armParked",        &(md2_status.acc11c_3),  0x08, "Arm Parked",           "Arm Not Parked",           "Parked",  "Not Parked");
+    smart_mag_err      = lspmac_bi_init( &(lspmac_bis[14]), "smartMagnetError", &(md2_status.acc11c_3),  0x10, "Smart Magnet Error",   "Smart Magnet OK",          "Error",   "OK");
+    shutter_open       = lspmac_bi_init( &(lspmac_bis[15]), "shutterOpen",      &(md2_status.acc11c_3), 0x100, "Shutter Open",         "Shutter Not Open",         "Open",    "Not Open");
+    smart_mag_off      = lspmac_bi_init( &(lspmac_bis[16]), "smartMagnetOff",   &(md2_status.acc11c_5),  0x01, "Smart Magnet Off",     "Smart Magnet Not Off",     "Off",     "Not Off");
+    sb_shutter_open    = lspmac_bi_init( &(lspmac_bis[17]), "sbShutterOpen",    &(md2_status.acc11c_6),  0x02, "Shutter Box Open",     "Shutter Box Closed",       "Open",    "Not Open");
+    sb_shutter_not_enabled = lspmac_bi_init( &(lspmac_bis[18]), "sbShutterEnabled", &(md2_status.acc11c_6),  0x01, "Shutter Box Disabled", "Shutter Box Enabled",      "Disabled","Enabled");
 
 
     // Set up hash table
@@ -4154,10 +4193,9 @@ void lspmac_init(
   }
 
   lspmac_SockSendDPline( NULL, "I5=0");			// disable plcc's
-  lspmac_SockSendDPline( NULL, "P2100=0");		// Don't let plcc0 control the shutter
+  //  lspmac_SockSendDPline( NULL, "P2100=0");		// Don't let plcc0 control the shutter
   lspmac_SockSendDPline( NULL, "I36=1");                // Don't let ^A put a disabled motor into closed loop mode
-  lspmac_SockSendDPline( NULL, "ENABLE PLCC 0,2,3");	// use plcc0 (Probably not needed but allows easy reset with M2000=0) plcc2 is ours used to fill db memory with status
-  lspmac_SockSendDPline( NULL, "DISABLE PLCC 1");	// Don't use plcc 1, it's embl's status routine for old md2 code
+  lspmac_SockSendDPline( NULL, "ENABLE PLC 1");		// PLC 1 is our initialization plc that activates whichever other PLCs and PLCCs are needed
   lspmac_SockSendDPline( NULL, "I5=3");			// allow the enabled plcc's to run
 
 
@@ -4721,7 +4759,15 @@ pthread_t *lspmac_run() {
       //
       // Set the PMAC to be consistant with redis
       //
-      lspmac_SockSendDPline( NULL, "I%d16=%f I%d17=%f I%d28=%d", motor_num, lsredis_getd( mp->max_speed), motor_num, lsredis_getd( mp->max_accel), motor_num, lsredis_getl( mp->in_position_band));
+      lspmac_SockSendDPline( NULL, "I%d16=%f I%d22=%f I%d17=%f I%d19=%f I%d28=%d",
+			     //     Ixx16 Max Prog Velocity         |       Ixx22  Jog Speed
+			     motor_num, lsredis_getd( mp->max_speed), motor_num, lsredis_getd( mp->max_speed),
+			     //
+			     //       Ixx17 Max Prog Accel.         |       Ixx19  Jog/Home Accel
+			     motor_num, lsredis_getd( mp->max_accel), motor_num, lsredis_getd( mp->max_accel),
+			     //
+			     //      Ixx28  In-Position Band
+			     motor_num, lsredis_getl( mp->in_position_band));
     }    
 
     // if there is a problem with "active" then don't do anything
