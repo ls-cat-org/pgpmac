@@ -48,7 +48,7 @@ void lstimer_unset_timer( char *event) {
 
   pthread_mutex_lock( &lstimer_mutex);
   for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
-    if( strcmp( event, lstimer_list[i].event) == 0) {
+    if( strcmp( event, lstimer_list[i].event) == 0 && lstimer_list[i].shots != 0) {
       lstimer_list[i].shots = 0;
       lstimer_active_timers = lstimer_active_timers>0 ? lstimer_active_timers-1 : 0;  // shouldn't need to test for zero
       //lslogging_log_message("lstimer_unset_timer: unset timer %d for event %s", i, event);
