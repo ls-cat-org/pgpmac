@@ -68,6 +68,8 @@ pthread_mutex_t lspmac_moving_mutex;		//!< Coordinate moving motors between thre
 pthread_cond_t  lspmac_moving_cond;		//!< Wait for motor(s) to finish moving condition
 int lspmac_moving_flags;			//!< Flag used to implement motor moving condition
 
+static double lspmac_saved_analPosition=0;	//!< the analizer is the home motor we cannot home. Use the last known position in case we have to home it
+
 static uint16_t lspmac_control_char = 0;	//!< The control character we've sent
 
 static pthread_mutex_t lspmac_ascii_mutex;	//!< Keep too many processes from sending commands at once
@@ -1135,7 +1137,7 @@ pmac_cmd_queue_t *lspmac_SockSendControlCharPrint(
 						  char c	/**< The control character to send			*/
 						  ) {
   lspmac_control_char = c;
-  //  return lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDCTRLCHAR, c, 0, 1400, NULL, lspmac_SendControlReplyPrintCB, 0, event);
+  //  return lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDCTRLCHAR, c, 0, 1400, NULL, lspmac_SendControlReplyPrintCB, 0, event, 0);
   return lspmac_send_command( VR_UPLOAD, VR_CTRL_RESPONSE, c, 0, 1400, NULL, lspmac_SendControlReplyPrintCB, 0, event);
 }
 
@@ -1396,7 +1398,7 @@ void lspmac_home1_queue(
   //
 
   if( active && (~(mp->status1) & 0x040000)) {
-      lspmac_SockSendDPline( mp->name, "#%d$*", motor_num);
+    lspmac_SockSendDPline( mp->name, "#%d$*", motor_num);
   }
 
   pthread_mutex_unlock( &(mp->mutex));
@@ -2195,7 +2197,9 @@ void lspmac_SockSendDPqueue() {
   lspmac_ascii_busy = 1;
   pthread_mutex_unlock( &lspmac_ascii_mutex);
 
-  lslogging_log_message( "lspmac_SockSendDPqueue: %s", qp->pl);
+  if (qp->pl && *(qp->pl)) {
+    lslogging_log_message( "lspmac_SockSendDPqueue: %s", qp->pl);
+  }
 
   clrdata = 0;		// set the control word to zero
   lspmac_send_command( VR_UPLOAD, VR_PMAC_SETMEM, 0x0f40, 0, 4, (char *)&clrdata, NULL, 1, NULL);
@@ -4195,10 +4199,13 @@ void lspmac_init(
   lspmac_SockSendDPline( NULL, "I5=0");			// disable plcc's
   //  lspmac_SockSendDPline( NULL, "P2100=0");		// Don't let plcc0 control the shutter
   lspmac_SockSendDPline( NULL, "I36=1");                // Don't let ^A put a disabled motor into closed loop mode
+
+  lspmac_saved_analPosition = lsredis_getd(anal->redis_position);
+  lslogging_log_message( "Saved lightPolar last position: %f", lspmac_saved_analPosition);
+
+
   lspmac_SockSendDPline( NULL, "ENABLE PLC 1");		// PLC 1 is our initialization plc that activates whichever other PLCs and PLCCs are needed
   lspmac_SockSendDPline( NULL, "I5=3");			// allow the enabled plcc's to run
-
-
 }
 
 
@@ -4286,6 +4293,19 @@ void lspmac_backLight_up_cb( char *event) {
  */
 void lspmac_backLight_down_cb( char *event) {
   blight->moveAbs( blight, 0.0);
+}
+
+void lspmac_anal_in_position_cb( char *event) {
+  static int first_time=1;
+  if (first_time) {
+    first_time = 0;
+    return;
+  }
+  lspmac_saved_analPosition = lspmac_getPosition(anal);
+}
+
+void lspmac_anal_homed_cb( char *event) {
+  lsredis_setstr(anal->neutral_pos, "%.3f", -lspmac_saved_analPosition);
 }
 
 /** Set the backlight intensity whenever the zoom is changed (and the backlight is up)
@@ -4705,8 +4725,10 @@ pthread_t *lspmac_run() {
     lsevents_add_listener( "^scint In Position$",        lspmac_scint_maybe_turn_on_dryer_cb);
     lsevents_add_listener( "^scint Moving$",             lspmac_scint_maybe_turn_off_dryer_cb);
     lsevents_add_listener( "^scintDried$",               lspmac_scint_dried_cb);
-    lsevents_add_listener( "^backLight 1$" ,	       lspmac_backLight_up_cb);
-    lsevents_add_listener( "^backLight 0$" ,	       lspmac_backLight_down_cb);
+    lsevents_add_listener( "^backLight 1$" ,	         lspmac_backLight_up_cb);
+    lsevents_add_listener( "^backLight 0$" ,	         lspmac_backLight_down_cb);
+    lsevents_add_listener( "^lightPolar In Position$",   lspmac_anal_in_position_cb);
+    lsevents_add_listener( "^lightPolar Homed$",         lspmac_anal_homed_cb);
     lsevents_add_listener( "^cam.zoom Moving$",          lspmac_light_zoom_cb);
     //    lsevents_add_listener( "^Quitting Program$",         lspmac_quitting_cb);
     lsevents_add_listener( "^Control-[BCFGV] accepted$", lspmac_request_control_response_cb);
