@@ -33,12 +33,34 @@ static lslogging_queue_t lslogging_queue[LSLOGGING_QUEUE_LENGTH];	//!< Our entir
 static unsigned int lslogging_on = 0;	//!< next location to add to the queue
 static unsigned int lslogging_off= 0;	//!< next location to remove from the queue
 
+static regex_t lslogging_ignore_regex;
+
+//static char *lslogging_ignorable = "^.*I5112=\\(4000\\*8388607/I10\\).*$|^EVENT: Heartbeat$|^lspmac_get_ascii_cb:.*responded$|^EVENT: Check Detector Position$";
+static char *lslogging_ignorable = "^.*I5112=\\(4000\\*8388607/I10\\).*$|^EVENT: Heartbeat$|^EVENT: Check Detector Position$";
+
+
 //! Initialize the lslogging objects
 void lslogging_init() {
+  int err;
+
   pthread_mutex_init( &lslogging_mutex, NULL);
   pthread_cond_init(  &lslogging_cond, NULL);
 
   lslogging_file = fopen( LSLOGGING_FILE_NAME, "w");
+
+  err = regcomp (&lslogging_ignore_regex, lslogging_ignorable, REG_EXTENDED | REG_NOSUB);
+  if (err != 0) {
+    int nerrmsg;
+    char *errmsg;
+
+    nerrmsg = regerror(err, &lslogging_ignore_regex, NULL, 0);
+    if (nerrmsg > 0) {
+      errmsg = calloc(nerrmsg, sizeof(char));
+      nerrmsg = regerror(err, &lslogging_ignore_regex, errmsg, nerrmsg);
+      fprintf(lslogging_file, "lslogging initialization error: problem with regexp: %s\n", errmsg);
+      free(errmsg);
+    }
+  }
 }
 
 /** The routine everyone will be talking about.
@@ -74,9 +96,7 @@ void lslogging_log_message( char *fmt, ...) {
 /** Log most events
  */
 void lslogging_event_cb( char *event) {
-  if( strcmp( event, "Timer Update KVs") != 0 && strstr( event, "accepted")==NULL && strstr( event, "queued")==NULL && strstr( event, "Heartbeat")==NULL) {
     lslogging_log_message( "EVENT: %s", event);
-  }
 }
 
 
@@ -101,20 +121,23 @@ void *lslogging_worker(
     
     off = (lslogging_off++) % LSLOGGING_QUEUE_LENGTH;
 
-    localtime_r( &(lslogging_queue[off].ltime.tv_sec), &coarsetime);
-    strftime( tstr, sizeof(tstr)-1, "%Y-%m-%d %H:%M:%S", &coarsetime);
-    tstr[sizeof(tstr)-1] = 0;
-    msecs = lslogging_queue[off].ltime.tv_nsec / 1000;
-    fprintf( lslogging_file, "%s.%.06u  %s\n", tstr, msecs, lslogging_queue[off].lmsg);
-    fflush( lslogging_file);
+    if (regexec(&lslogging_ignore_regex, lslogging_queue[off].lmsg, 0, NULL, 0)) {
 
-    lsredis_log( "%s.%.06u  %s\n", tstr, msecs, lslogging_queue[off].lmsg);
+      localtime_r( &(lslogging_queue[off].ltime.tv_sec), &coarsetime);
+      strftime( tstr, sizeof(tstr)-1, "%Y-%m-%d %H:%M:%S", &coarsetime);
+      tstr[sizeof(tstr)-1] = 0;
+      msecs = lslogging_queue[off].ltime.tv_nsec / 1000;
+      fprintf( lslogging_file, "%s.%.06u  %s\n", tstr, msecs, lslogging_queue[off].lmsg);
+      fflush( lslogging_file);
 
-    //
-    // If the newline comes after the string then only a blank line comes out
-    // in the ncurses terminal.  Don't know why.
-    //
-    pgpmac_printf( "\n%s", lslogging_queue[off].lmsg);
+      lsredis_log( "%s.%.06u  %s\n", tstr, msecs, lslogging_queue[off].lmsg);
+
+      //
+      // If the newline comes after the string then only a blank line comes out
+      // in the ncurses terminal.  Don't know why.
+      //
+      pgpmac_printf( "\n%s", lslogging_queue[off].lmsg);
+    }
   }
 }
 
