@@ -68,6 +68,8 @@ pthread_mutex_t lspmac_moving_mutex;		//!< Coordinate moving motors between thre
 pthread_cond_t  lspmac_moving_cond;		//!< Wait for motor(s) to finish moving condition
 int lspmac_moving_flags;			//!< Flag used to implement motor moving condition
 
+static double lspmac_saved_analPosition=0;	//!< the analizer is the home motor we cannot home. Use the last known position in case we have to home it
+
 static uint16_t lspmac_control_char = 0;	//!< The control character we've sent
 
 static pthread_mutex_t lspmac_ascii_mutex;	//!< Keep too many processes from sending commands at once
@@ -2812,6 +2814,36 @@ int lspmac_moveabs_blight_factor_queue( lspmac_motor_t *mp, double pos) {
 }
 
 
+void lspmac_blight_factor_read( lspmac_motor_t *mp) {
+  char *fmt;
+  double blight_u2c;
+  double pos;
+
+  pthread_mutex_lock( &blight->mutex);
+  blight_u2c = lsredis_getd(blight->u2c);
+  pthread_mutex_unlock( &blight->mutex);
+
+  pos = blight_u2c * 100;
+
+  pthread_mutex_lock( &mp->mutex);
+  //
+  // blight_factor u2c should always be 1.  Add code here if this is
+  // no longer the case
+  //
+  mp->position        = pos;
+  mp->actual_pos_cnts = pos;
+  if (fabs(mp->reported_position - mp->position) >= lsredis_getd(mp->update_resolution)) {
+    fmt = lsredis_getstr(mp->redis_fmt);
+    lsredis_setstr( mp->redis_position, fmt, mp->position);
+    free(fmt);
+    mp->reported_position = mp->position;
+  }
+
+  pthread_mutex_unlock( &mp->mutex);
+}
+
+
+
 /** Special motion program to collect centering video
  */
 void lspmac_video_rotate( double secs) {
@@ -3891,17 +3923,17 @@ lspmac_motor_t *lspmac_dac_init(
 /** Dummy routine to read a soft motor
  */
 void lspmac_soft_motor_read( lspmac_motor_t *p) {
-
+  
 }
 
 
-lspmac_motor_t *lspmac_soft_motor_init( lspmac_motor_t *d, char *name, int (*moveAbs)(lspmac_motor_t *, double)) {
+lspmac_motor_t *lspmac_soft_motor_init( lspmac_motor_t *d, char *name, int (*moveAbs)(lspmac_motor_t *, double), void (*reader)(lspmac_motor_t *)) {
 
   _lspmac_motor_init( d, name);
 
   d->moveAbs      = moveAbs;
   d->jogAbs       = moveAbs;
-  d->read         = lspmac_soft_motor_read;
+  d->read         = reader;
   d->actual_pos_cnts_p = calloc( sizeof(int), 1);
   *d->actual_pos_cnts_p = 0;
 
@@ -4019,9 +4051,9 @@ void lspmac_init(
     cryo          = lspmac_bo_init( &(lspmac_motors[21]), "cryo",       "M1102=%d", &(md2_status.acc11c_5), 0x04);
     dryer         = lspmac_bo_init( &(lspmac_motors[22]), "dryer",      "M1103=%d", &(md2_status.acc11c_5), 0x08);
     fluo          = lspmac_bo_init( &(lspmac_motors[23]), "fluo",       "M1104=%d", &(md2_status.acc11c_5), 0x10);
-    flight_oo     = lspmac_soft_motor_init( &(lspmac_motors[24]), "frontLight",        lspmac_moveabs_frontlight_oo_queue);
-    blight_f      = lspmac_soft_motor_init( &(lspmac_motors[25]), "backLight.factor",  lspmac_moveabs_blight_factor_queue);
-    flight_f      = lspmac_soft_motor_init( &(lspmac_motors[26]), "frontLight.factor", lspmac_moveabs_flight_factor_queue);
+    flight_oo     = lspmac_soft_motor_init( &(lspmac_motors[24]), "frontLight",        lspmac_moveabs_frontlight_oo_queue, lspmac_soft_motor_read);
+    blight_f      = lspmac_soft_motor_init( &(lspmac_motors[25]), "backLight.factor",  lspmac_moveabs_blight_factor_queue, lspmac_blight_factor_read);
+    flight_f      = lspmac_soft_motor_init( &(lspmac_motors[26]), "frontLight.factor", lspmac_moveabs_flight_factor_queue, lspmac_soft_motor_read);
 
     lp_air          = lspmac_bi_init( &(lspmac_bis[ 0]), "lowpressureair",   &(md2_status.acc11c_1),  0x01, "Low Pressure Air OK",  "Low Pressure Air Failed",  "OK",      "Failed");
     hp_air          = lspmac_bi_init( &(lspmac_bis[ 1]), "highpressureair",  &(md2_status.acc11c_1),  0x02, "High Pressure Air OK", "High Pressure Air Failed", "OK",      "Failed");
@@ -4132,6 +4164,10 @@ void lspmac_init(
   lspmac_SockSendDPline( NULL, "I5=0");			// disable plcc's
   lspmac_SockSendDPline( NULL, "P2100=0");		// Don't let plcc0 control the shutter
   lspmac_SockSendDPline( NULL, "I36=1");                // Don't let ^A put a disabled motor into closed loop mode
+
+  lspmac_saved_analPosition = lsredis_getd(anal->redis_position);
+  lslogging_log_message( "Saved lightPolar last position: %f", lspmac_saved_analPosition);
+
   lspmac_SockSendDPline( NULL, "ENABLE PLCC 0,2");	// use plcc0 (Probably not needed but allows easy reset with M2000=0) plcc2 is ours used to fill db memory with status
   lspmac_SockSendDPline( NULL, "DISABLE PLCC 1");	// Don't use plcc 1, it's embl's status routine for old md2 code
   lspmac_SockSendDPline( NULL, "I5=3");			// allow the enabled plcc's to run
@@ -4224,6 +4260,19 @@ void lspmac_backLight_up_cb( char *event) {
  */
 void lspmac_backLight_down_cb( char *event) {
   blight->moveAbs( blight, 0.0);
+}
+
+void lspmac_anal_in_position_cb( char *event) {
+  static int first_time=1;
+  if (first_time) {
+    first_time = 0;
+    return;
+  }
+  lspmac_saved_analPosition = lspmac_getPosition(anal);
+}
+
+void lspmac_anal_homed_cb( char *event) {
+  lsredis_setstr(anal->neutral_pos, "%.3f", -lspmac_saved_analPosition);
 }
 
 /** Set the backlight intensity whenever the zoom is changed (and the backlight is up)
@@ -4611,8 +4660,6 @@ void lspmac_command_done_cb( char *event) {
   return;
 }
 
-
-
 void lspmac_spin( lspmac_motor_t *mp) {
   if( strcmp( mp->name, "omega")==0) {
     lspmac_SockSendDPline( NULL, "&%d", lsredis_getl( mp->coord_num));
@@ -4621,7 +4668,6 @@ void lspmac_spin( lspmac_motor_t *mp) {
   }
   return;
 }
-
 
 /** Start up the lspmac thread
  */
@@ -4643,8 +4689,10 @@ pthread_t *lspmac_run() {
     lsevents_add_listener( "^scint In Position$",        lspmac_scint_maybe_turn_on_dryer_cb);
     lsevents_add_listener( "^scint Moving$",             lspmac_scint_maybe_turn_off_dryer_cb);
     lsevents_add_listener( "^scintDried$",               lspmac_scint_dried_cb);
-    lsevents_add_listener( "^backLight 1$" ,	       lspmac_backLight_up_cb);
-    lsevents_add_listener( "^backLight 0$" ,	       lspmac_backLight_down_cb);
+    lsevents_add_listener( "^backLight 1$" ,	         lspmac_backLight_up_cb);
+    lsevents_add_listener( "^backLight 0$" ,	         lspmac_backLight_down_cb);
+    lsevents_add_listener( "^lightPolar In Position$",   lspmac_anal_in_position_cb);
+    lsevents_add_listener( "^lightPolar Homed$",         lspmac_anal_homed_cb);
     lsevents_add_listener( "^cam.zoom Moving$",          lspmac_light_zoom_cb);
     //    lsevents_add_listener( "^Quitting Program$",         lspmac_quitting_cb);
     lsevents_add_listener( "^Control-[BCFGV] accepted$", lspmac_request_control_response_cb);
@@ -4660,8 +4708,6 @@ pthread_t *lspmac_run() {
       evts[sizeof(evts)-1] = 0;
       lsevents_add_listener( evts, lspmac_command_done_cb);
     }
-
-
 
     lspmac_zoom_lut_setup();
     lspmac_flight_lut_setup();
