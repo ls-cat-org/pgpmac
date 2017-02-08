@@ -411,6 +411,10 @@ void md2cmds_organs_move_presets( char *pay, char *paz, char *pcy, char *pcz, ch
 int md2cmds_robotMount_start( double *move_time, int *mmask) {
   *mmask = 0;
   int err;
+  double kappa_home_time;
+  
+  kappa_home_time = lsredis_getd( lsredis_get_obj("kappa.home_time"));
+
   md2cmds_home_prep();
 
   //
@@ -432,6 +436,9 @@ int md2cmds_robotMount_start( double *move_time, int *mmask) {
                               fluo,      1, NULL,    0.0,
                               zoom,      0, NULL,    1.0,
                               NULL);
+
+  *move_time = *move_time > kappa_home_time ? *move_time : kappa_home_time;
+
   return err;
 }
 
