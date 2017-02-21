@@ -2313,7 +2313,7 @@ void lspg_quitting_cb( char *event) {
 }
 
 
-/** Initiallize the lspg module
+/** Initialize the lspg module
  */
 void lspg_init() {
   pthread_mutex_init( &lspg_queue_mutex, NULL);
