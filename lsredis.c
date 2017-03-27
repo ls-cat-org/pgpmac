@@ -108,9 +108,6 @@ static int lsredis_preset_n = 0;				// number of entries in the hash table
 static int lsredis_preset_max_n = 1024;				// size of the hash table
 static pthread_mutex_t lsredis_preset_list_mutex;
 
-
-
-
 /** Log the reply
  */
 void lsredis_debugCB( redisAsyncContext *ac, void *reply, void *privdata) {
