@@ -610,8 +610,6 @@ int md2cmds_transfer( const char *dummy) {
     return 1;
   }
 
-  
-
   // Move the cryo back
   //
   cryo->moveAbs( cryo, 1);
