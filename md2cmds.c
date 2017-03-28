@@ -30,6 +30,8 @@ All positions are in millimeters or degrees.
 
  collect                                    Start collecting data
 
+ homestages				    Home centering stages and alignment stages
+
  moveAbs  <motor> <position_or_presetName>  Move the given motor to the said position.  Common preset names are "In", "Out", "Cover".
 
  moveRel  <motor> <relative_position>       Move the given motor by the relative amount from its current position
@@ -47,6 +49,8 @@ All positions are in millimeters or degrees.
  settransferpoint                           Set the current motor positions at the alignment point for robot transfers.
 
  setbackvector                              Set the current alignment stage position as the Back preset and the difference between Back and Beam as Back_Vector
+
+ setbeamstoplimits		            Set P6000 and P6001 for the pmac plcc0 check of the beamstop position.  Sets current position +/- 100 microns
 
  setsamplebeam                              Set the current alignment and centering positions as the the Beam preset for the respective stages
 
@@ -145,14 +149,16 @@ void md2cmds_mvcenter_move(double, double, double, double, double);
 int md2cmds_abort(            const char *);
 int md2cmds_collect(          const char *);
 int md2cmds_goto_point(       const char *);
+int md2cmds_homestages(       const char *);
 int md2cmds_moveAbs(          const char *);
 int md2cmds_moveRel(          const char *);
 int md2cmds_phase_change(     const char *);
 int md2cmds_run_cmd(          const char *);
 int md2cmds_rotate(           const char *);
 int md2cmds_nonrotate(        const char *);
-int md2cmds_shutterless(          const char *);
+int md2cmds_shutterless(      const char *);
 int md2cmds_set(              const char *);
+int md2cmds_setbeamstoplimits(const char *);
 int md2cmds_settransferpoint( const char *);
 int md2cmds_setbackvector(    const char *);
 int md2cmds_setsamplebeam(    const char *);
@@ -166,12 +172,14 @@ static md2cmds_cmd_kv_t md2cmds_cmd_kvs[] = {
   { "abort",            md2cmds_abort},
   { "changeMode",       md2cmds_phase_change},
   { "gotoPoint",        md2cmds_goto_point},
+  { "homestages",       md2cmds_homestages},
   { "moveAbs",          md2cmds_moveAbs},
   { "moveRel",          md2cmds_moveRel},
   { "run",              md2cmds_run_cmd},
   { "test",             md2cmds_test},
   { "set",              md2cmds_set},
   { "setbackvector",    md2cmds_setbackvector},
+  { "setbeamstoplimits",md2cmds_setbeamstoplimits},
   { "setsamplebeam",    md2cmds_setsamplebeam}
 };
 
@@ -411,6 +419,9 @@ void md2cmds_organs_move_presets( char *pay, char *paz, char *pcy, char *pcz, ch
 int md2cmds_robotMount_start( double *move_time, int *mmask) {
   *mmask = 0;
   int err;
+  double kappa_home_time;
+
+  kappa_home_time = lsredis_getd( lsredis_get_obj("kappa.home_time"));
   md2cmds_home_prep();
 
   //
@@ -432,6 +443,8 @@ int md2cmds_robotMount_start( double *move_time, int *mmask) {
                               fluo,      1, NULL,    0.0,
                               zoom,      0, NULL,    1.0,
                               NULL);
+  *move_time = *move_time > kappa_home_time ? *move_time : kappa_home_time;
+
   return err;
 }
 
@@ -1237,6 +1250,21 @@ int md2cmds_phase_safe() {
   }
 
   lsevents_send_event( "Mode safe Done");
+  return 0;
+}
+
+int md2cmds_homestages( const char *ccmd) {
+  md2cmds_home_prep();
+  lspmac_home1_queue(cenx);
+  lspmac_home1_queue(ceny);
+  lspmac_home1_queue(alignx);
+  lspmac_home1_queue(aligny);
+  lspmac_home1_queue(alignz);
+
+  if (md2cmds_home_wait( 60.0)) {
+    lslogging_log_message( "md2cmds_homestages: Waited for a minutes homing stages.  Got bored.");
+    return 1;
+  }
   return 0;
 }
 
@@ -3070,6 +3098,34 @@ int md2cmds_setsamplebeam( const char *cmd) {
   lsredis_set_preset( "centering.x", "Beam", cx);
   lsredis_set_preset( "centering.y", "Beam", cy);
 
+  return 0;
+}
+
+/** Set the beamstop limits that plcc 0 checks for the shutter enable
+ *  signal
+ */
+
+int md2cmds_setbeamstoplimits( const char *cmd) {
+  double u2c;
+  double position;
+  int upper_limit;
+  int lower_limit;
+
+  u2c      = lsredis_getd( capz->u2c);
+  position = lspmac_getPosition( capz);
+  
+  upper_limit = (position + 0.1) * u2c;
+  lower_limit = (position - 0.1) * u2c;
+
+  lsredis_setstr( lsredis_get_obj("fastShutter.capzLowCts"),  "%d", lower_limit);
+  lsredis_setstr( lsredis_get_obj("fastShutter.capzHighCts"), "%d", upper_limit);
+
+  lspmac_SockSendDPline( NULL, "P6000=%d P6001=%d", lower_limit, upper_limit);
+  //
+  lspmac_SockSendDPline( NULL, "i5=0");
+  lspmac_SockSendDPline( NULL, "save");
+  lspmac_SockSendDPline( NULL, "i5=3");
+  //
   return 0;
 }
 
