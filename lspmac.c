@@ -2860,6 +2860,33 @@ int lspmac_moveabs_blight_factor_queue( lspmac_motor_t *mp, double pos) {
   return 0;
 }
 
+void lspmac_blight_factor_read( lspmac_motor_t *mp) {
+  char *fmt;
+  double blight_u2c;
+  double pos;
+
+  pthread_mutex_lock( &blight->mutex);
+  blight_u2c = lsredis_getd(blight->u2c);
+  pthread_mutex_unlock( &blight->mutex);
+
+  pos = blight_u2c * 100;
+
+  pthread_mutex_lock( &mp->mutex);
+  //
+  // blight_factor u2c should always be 1.  Add code here if this is
+  // no longer the case
+  //
+  mp->position        = pos;
+  mp->actual_pos_cnts = pos;
+  if (fabs(mp->reported_position - mp->position) >= lsredis_getd(mp->update_resolution)) {
+    fmt = lsredis_getstr(mp->redis_fmt);
+    lsredis_setstr( mp->redis_position, fmt, mp->position);
+    free(fmt);
+    mp->reported_position = mp->position;
+  }
+
+  pthread_mutex_unlock( &mp->mutex);
+}
 
 /** Special motion program to collect centering video
  */
@@ -3954,6 +3981,8 @@ lspmac_motor_t *lspmac_dac_init(
   return d;
 }
 
+
+
 /** Dummy routine to read a soft motor
  */
 void lspmac_soft_motor_read( lspmac_motor_t *p) {
@@ -3961,19 +3990,18 @@ void lspmac_soft_motor_read( lspmac_motor_t *p) {
 }
 
 
-lspmac_motor_t *lspmac_soft_motor_init( lspmac_motor_t *d, char *name, int (*moveAbs)(lspmac_motor_t *, double)) {
+lspmac_motor_t *lspmac_soft_motor_init( lspmac_motor_t *d, char *name, int (*moveAbs)(lspmac_motor_t *, double), void (*reader)(lspmac_motor_t *)) {
 
   _lspmac_motor_init( d, name);
 
   d->moveAbs      = moveAbs;
   d->jogAbs       = moveAbs;
-  d->read         = lspmac_soft_motor_read;
+  d->read         = reader;
   d->actual_pos_cnts_p = calloc( sizeof(int), 1);
   *d->actual_pos_cnts_p = 0;
 
   return d;
 }
-
 
 /** Initialize binary input
  */
@@ -4085,9 +4113,9 @@ void lspmac_init(
     cryo          = lspmac_bo_init( &(lspmac_motors[21]), "cryo",       "M1102=%d", &(md2_status.acc11c_5), 0x04);
     dryer         = lspmac_bo_init( &(lspmac_motors[22]), "dryer",      "M1103=%d", &(md2_status.acc11c_5), 0x08);
     fluo          = lspmac_bo_init( &(lspmac_motors[23]), "fluo",       "M1104=%d", &(md2_status.acc11c_5), 0x10);
-    flight_oo     = lspmac_soft_motor_init( &(lspmac_motors[24]), "frontLight",        lspmac_moveabs_frontlight_oo_queue);
-    blight_f      = lspmac_soft_motor_init( &(lspmac_motors[25]), "backLight.factor",  lspmac_moveabs_blight_factor_queue);
-    flight_f      = lspmac_soft_motor_init( &(lspmac_motors[26]), "frontLight.factor", lspmac_moveabs_flight_factor_queue);
+    flight_oo     = lspmac_soft_motor_init( &(lspmac_motors[24]), "frontLight",        lspmac_moveabs_frontlight_oo_queue, lspmac_soft_motor_read);
+    blight_f      = lspmac_soft_motor_init( &(lspmac_motors[25]), "backLight.factor",  lspmac_moveabs_blight_factor_queue, lspmac_blight_factor_read);
+    flight_f      = lspmac_soft_motor_init( &(lspmac_motors[26]), "frontLight.factor", lspmac_moveabs_flight_factor_queue, lspmac_soft_motor_read);
 
     lp_air             = lspmac_bi_init( &(lspmac_bis[ 0]), "lowpressureair",   &(md2_status.acc11c_1),  0x01, "Low Pressure Air OK",  "Low Pressure Air Failed",  "OK",      "Failed");
     hp_air             = lspmac_bi_init( &(lspmac_bis[ 1]), "highpressureair",  &(md2_status.acc11c_1),  0x02, "High Pressure Air OK", "High Pressure Air Failed", "OK",      "Failed");
