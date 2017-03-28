@@ -765,11 +765,28 @@ void lspg_demandairrights_call() {
  */
 int lspg_demandairrights_wait() {
   int rtn;
+  lsredis_obj_t *robotInExclusionZone;
+  int sentMessage;
+
   pthread_mutex_lock( &lspg_demandairrights.mutex);
   while( lspg_demandairrights.new_value_ready == 0 && lspg_demandairrights.query_error == 0)
     pthread_cond_wait( &lspg_demandairrights.cond, &lspg_demandairrights.mutex);
   rtn = lspg_demandairrights.query_error;
   pthread_mutex_unlock( &lspg_demandairrights.mutex);
+
+  robotInExclusionZone = lsredis_get_obj("robot.inExclusionZone");
+  sentMessage = 0;
+  while (lsredis_getb(robotInExclusionZone) != 0) {
+    if (sentMessage==0) {
+      lsredis_sendStatusReport( 0, "Waiting for robot to leave exclusion zone.");
+      sentMessage = 1;
+    }
+    sleep(1);
+  }
+
+  if (sentMessage) {
+      lsredis_sendStatusReport( 0, "");
+  }
 
   return rtn;
 }
