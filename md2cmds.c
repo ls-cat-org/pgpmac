@@ -22,37 +22,37 @@ Here are the MD2 commands.  Anything MD2 command that you can use from the remot
 All positions are in millimeters or degrees.
 
 <pre>
- Command                                    Meaning
+ Command                                     Meaning
 
- abort                                      Stop the current motion and put the system into a known state
+ abort                                       Stop the current motion and put the system into a known state
 
- changeMode  <mode>                         Where <mode> is one of "manualMount", "robotMount", "center", "dataCollection", "beamLocation", "safe"
+ changeMode  <mode>                          Where <mode> is one of "manualMount", "robotMount", "center", "dataCollection", "beamLocation", "safe"
 
- collect                                    Start collecting data
+ collect                                     Start collecting data
 
- moveAbs  <motor> <position_or_presetName>  Move the given motor to the said position.  Common preset names are "In", "Out", "Cover".
+ moveAbs  <motor> <position_or_presetName>   Move the given motor to the said position.  Common preset names are "In", "Out", "Cover".
 
- moveRel  <motor> <relative_position>       Move the given motor by the relative amount from its current position
+ moveRel  <motor> <relative_position>        Move the given motor by the relative amount from its current position
 
- nonrotate                                  Used for local centering when we do not want to trigger movie making
+ nonrotate                                   Used for local centering when we do not want to trigger movie making
 
- rotate                                     Used for remote centering where we do want to make a movie
+ rotate                                      Used for remote centering where we do want to make a movie
 
- run <motor> <command>                      Run a special command on <motor> where <command> is one of "home", "spin", "stop"
+ run <motor> <command>                       Run a special command on <motor> where <command> is one of "home", "spin", "stop"
 
- segment                                    Like collect but only used for line segment mode with the Eiger
+ segment                                     Like collect but only used for line segment mode with the Eiger
 
- set <motor> <preset>                       Set <motor>'s current position as <preset>.  <preset> will be created if it does not currently exist.
+ set <motor1> [<motor2>...<motorN>] <preset> Set all named motors current position as <preset>.  <preset> will be created if it does not currently exist.
 
- settransferpoint                           Set the current motor positions at the alignment point for robot transfers.
+ settransferpoint                            Set the current motor positions at the alignment point for robot transfers.
 
- setbackvector                              Set the current alignment stage position as the Back preset and the difference between Back and Beam as Back_Vector
+ setbackvector                               Set the current alignment stage position as the Back preset and the difference between Back and Beam as Back_Vector
 
- setsamplebeam                              Set the current alignment and centering positions as the the Beam preset for the respective stages
+ setsamplebeam                               Set the current alignment and centering positions as the the Beam preset for the respective stages
 
- test                                       Run unit tests (which are not very complete at this point)
+ test                                        Run unit tests (which are not very complete at this point)
 
- transfer                                   Transfer the next transfer
+ transfer                                    Transfer the next transfer
 
 </pre>
 
@@ -133,6 +133,8 @@ static double md2cmds_capz_moving_time = NAN;
 static struct hsearch_data md2cmds_hmap;
 
 static regex_t md2cmds_cmd_regex;
+
+static regex_t md2cmds_cmd_set_regex;
 
 typedef struct md2cmds_cmd_kv_struct {
   char *k;
@@ -2809,58 +2811,71 @@ int md2cmds_setsamplebeam( const char *cmd) {
 }
 
 int md2cmds_set( const char *cmd) {
+  static const char *id = "md2cmds_set";
   int err, i;
   lspmac_motor_t *mp;
-  regmatch_t pmatch[16];
+  regmatch_t pmatch[32];
   char motor_name[64];
   char preset_name[64];
-  char cp[64];
+  char cp[512];
   double rp;
+  int preset_index;
   
   if( strlen(cmd) > sizeof( cp)-1) {
-    lslogging_log_message( "md2cmds_set: command too long '%s'", cmd);
+    lslogging_log_message( "%s: command too long '%s'", id, cmd);
     return 1;
   }
 
-  lslogging_log_message( "md2cmds_set: recieved '%s'", cmd);
-  
+  lslogging_log_message( "%s: recieved '%s'", id, cmd);
 
-
-  err = regexec( &md2cmds_cmd_regex, cmd, 16, pmatch, 0);
+  err = regexec( &md2cmds_cmd_set_regex, cmd, 32, pmatch, REG_EXTENDED);
   if( err) {
-    lslogging_log_message( "md2cmds_set: no match found from '%s'", cmd);
+    lslogging_log_message( "%s: no match found from '%s'", id, cmd);
     return 1;
   }
 
-  for( i=0; i<16; i++) {
-    if( pmatch[i].rm_so == -1)
-      continue;
-    lslogging_log_message( "md2cmds_run_cmd: %d '%.*s'", i, pmatch[i].rm_eo - pmatch[i].rm_so, cmd+pmatch[i].rm_so);
+  //
+  // Find the last entry as that is the name of our preset
+  //
+  preset_index = -1;
+  for( i=1; i<32; i++) {
+    if( (pmatch[i].rm_so == -1) || (pmatch[i].rm_eo == pmatch[i].rm_so)) {
+      preset_index = i-1;
+      break;
+    }
+    lslogging_log_message( "%s: %d '%.*s'", id, i, pmatch[i].rm_eo - pmatch[i].rm_so, cmd+pmatch[i].rm_so);
   }
 
-  //
-  // get motor name
-  //
-  snprintf( motor_name, sizeof( motor_name)-1, "%.*s", pmatch[4].rm_eo - pmatch[4].rm_so, cmd+pmatch[4].rm_so);
-  motor_name[sizeof( motor_name)-1] = 0;
-
-  mp = lspmac_find_motor_by_name( motor_name);
-  if( mp == NULL) {
-    lslogging_log_message( "md2cmds_set: could not find motor '%s'", cp);
+  if (preset_index < 3) {
+    lslogging_log_message("%s: bad preset index %d", id, preset_index);
     return 1;
   }
-  rp = lsredis_getd( mp->redis_position);
-
 
   //
   // get preset name
   //
-  snprintf( preset_name, sizeof( preset_name)-1, "%.*s", pmatch[5].rm_eo - pmatch[5].rm_so, cmd+pmatch[5].rm_so);
+  snprintf(preset_name, sizeof(preset_name)-1, "%.*s", pmatch[preset_index].rm_eo - pmatch[preset_index].rm_so, cmd+pmatch[preset_index].rm_so);
   preset_name[sizeof(preset_name)-1] = 0;
 
+  lslogging_log_message("%s: preset name: %s", id, preset_name);
 
-  lsredis_set_preset( motor_name, preset_name, rp);
+  //
+  // Loop through the motors and set the preset to the current position
+  //
+  for(i=2; i<preset_index; i++) {
+    snprintf(motor_name, sizeof(motor_name)-1, "%.*s", pmatch[i].rm_eo - pmatch[i].rm_so, cmd+pmatch[i].rm_so);
+    motor_name[sizeof(motor_name)-1] = 0;
+    lslogging_log_message("%s: motor name: %s", id, motor_name);
 
+    mp = lspmac_find_motor_by_name( motor_name);
+    if( mp == NULL) {
+      lslogging_log_message( "%s: could not find motor '%s'", id, cp);
+      return 1;
+    }
+
+    rp = lsredis_getd( mp->redis_position);
+    lsredis_set_preset( motor_name, preset_name, rp);
+  }
   return 0;
 }
 
@@ -3054,6 +3069,19 @@ void md2cmds_init() {
     if( nerrmsg > 0) {
       errmsg = calloc( nerrmsg, sizeof( char));
       nerrmsg = regerror( err, &md2cmds_cmd_regex, errmsg, nerrmsg);
+      lslogging_log_message( "md2cmds_init: %s", errmsg);
+      free( errmsg);
+    }
+  }
+  err = regcomp( &md2cmds_cmd_set_regex, " *([^ ]+) +([^ ]*) +([^ ]*) *([^ ]*) *([^ ]*) *([^ ]*) *([^ ]*) *([^ ]*) *([^ ]*) *([^ ]*) *([^ ]*) *([^ ]*) *([^ ]*) *([^ ]*) *([^ ]*) *([^ ]*) *([^ ]*) *([^ ]*) *([^ ]*)", REG_EXTENDED);
+  if( err != 0) {
+    int nerrmsg;
+    char *errmsg;
+
+    nerrmsg = regerror( err, &md2cmds_cmd_set_regex, NULL, 0);
+    if( nerrmsg > 0) {
+      errmsg = calloc( nerrmsg, sizeof( char));
+      nerrmsg = regerror( err, &md2cmds_cmd_set_regex, errmsg, nerrmsg);
       lslogging_log_message( "md2cmds_init: %s", errmsg);
       free( errmsg);
     }
