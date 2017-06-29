@@ -2814,6 +2814,34 @@ int lspmac_moveabs_blight_factor_queue( lspmac_motor_t *mp, double pos) {
 }
 
 
+void lspmac_flight_factor_read( lspmac_motor_t *mp) {
+  char *fmt;
+  double flight_u2c;
+  double pos;
+
+  pthread_mutex_lock( &flight->mutex);
+  flight_u2c = lsredis_getd(flight->u2c);
+  pthread_mutex_unlock( &flight->mutex);
+
+  pos = flight_u2c * 100;
+
+  pthread_mutex_lock( &mp->mutex);
+  //
+  // flight_factor u2c should always be 1.  Add code here if this is
+  // no longer the case
+  //
+  mp->position        = pos;
+  mp->actual_pos_cnts = pos;
+  if (fabs(mp->reported_position - mp->position) >= lsredis_getd(mp->update_resolution)) {
+    fmt = lsredis_getstr(mp->redis_fmt);
+    lsredis_setstr( mp->redis_position, fmt, mp->position);
+    free(fmt);
+    mp->reported_position = mp->position;
+  }
+
+  pthread_mutex_unlock( &mp->mutex);
+}
+
 void lspmac_blight_factor_read( lspmac_motor_t *mp) {
   char *fmt;
   double blight_u2c;
@@ -4053,7 +4081,7 @@ void lspmac_init(
     fluo          = lspmac_bo_init( &(lspmac_motors[23]), "fluo",       "M1104=%d", &(md2_status.acc11c_5), 0x10);
     flight_oo     = lspmac_soft_motor_init( &(lspmac_motors[24]), "frontLight",        lspmac_moveabs_frontlight_oo_queue, lspmac_soft_motor_read);
     blight_f      = lspmac_soft_motor_init( &(lspmac_motors[25]), "backLight.factor",  lspmac_moveabs_blight_factor_queue, lspmac_blight_factor_read);
-    flight_f      = lspmac_soft_motor_init( &(lspmac_motors[26]), "frontLight.factor", lspmac_moveabs_flight_factor_queue, lspmac_soft_motor_read);
+    flight_f      = lspmac_soft_motor_init( &(lspmac_motors[26]), "frontLight.factor", lspmac_moveabs_flight_factor_queue, lspmac_flight_factor_read);
 
     lp_air          = lspmac_bi_init( &(lspmac_bis[ 0]), "lowpressureair",   &(md2_status.acc11c_1),  0x01, "Low Pressure Air OK",  "Low Pressure Air Failed",  "OK",      "Failed");
     hp_air          = lspmac_bi_init( &(lspmac_bis[ 1]), "highpressureair",  &(md2_status.acc11c_1),  0x02, "High Pressure Air OK", "High Pressure Air Failed", "OK",      "Failed");
@@ -4548,6 +4576,13 @@ void lspmac_flight_lut_setup() {
     }
     flight->lut[2*i]   = i;
     flight->lut[2*i+1] = 32767.0 * lsredis_getd( p) / 100.0;
+  }
+  for( i=0; i<flight->nlut; i++) {
+    lslogging_log_message( "lspmac_flight_lut_setup:  i: %d  x: %f  y: %f  y(lut): %f  x(rlut): %f",
+			   i, flight->lut[2*i], flight->lut[2*i+1],
+			   lspmac_lut( flight->nlut, flight->lut, flight->lut[2*i]),
+			   lspmac_rlut( flight->nlut, flight->lut, flight->lut[2*i+1])
+			   );
   }
   pthread_mutex_unlock( &flight->mutex);
 }
