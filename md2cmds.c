@@ -34,6 +34,8 @@ All positions are in millimeters or degrees.
 
  moveAbs  <motor> <position_or_presetName>  Move the given motor to the said position.  Common preset names are "In", "Out", "Cover".
 
+ movePreset <motor1>...<motorN> <preset>    Move all the listed motors to the named preset
+
  moveRel  <motor> <relative_position>       Move the given motor by the relative amount from its current position
 
  nonrotate                                  Used for local centering when we do not want to trigger movie making
@@ -153,6 +155,7 @@ int md2cmds_collect(          const char *);
 int md2cmds_goto_point(       const char *);
 int md2cmds_homestages(       const char *);
 int md2cmds_moveAbs(          const char *);
+int md2cmds_movePreset(       const char *);
 int md2cmds_moveRel(          const char *);
 int md2cmds_phase_change(     const char *);
 int md2cmds_run_cmd(          const char *);
@@ -176,6 +179,7 @@ static md2cmds_cmd_kv_t md2cmds_cmd_kvs[] = {
   { "gotoPoint",        md2cmds_goto_point},
   { "homestages",       md2cmds_homestages},
   { "moveAbs",          md2cmds_moveAbs},
+  { "movePreset",       md2cmds_movePreset},
   { "moveRel",          md2cmds_moveRel},
   { "run",              md2cmds_run_cmd},
   { "test",             md2cmds_test},
@@ -192,7 +196,7 @@ static md2cmds_cmd_kv_t md2cmds_cmd_pg_kvs[] = {
   { "collect",          md2cmds_collect},
   { "nonrotate",        md2cmds_nonrotate},
   { "rotate",           md2cmds_rotate},
-  { "shutterless",          md2cmds_shutterless},
+  { "shutterless",      md2cmds_shutterless},
   { "settransferpoint", md2cmds_settransferpoint},
   { "transfer",         md2cmds_transfer}
 };
@@ -676,6 +680,7 @@ int md2cmds_transfer( const char *dummy) {
 int md2cmds_moveAbs(
 		    const char *ccmd			/**< [in] The full command string to parse, ie, "moveAbs omega 180"	*/
 		    ) {
+  static const char *id = "md2cmds_moveAbs";
   char *cmd;
   char *ignore;
   char *ptr;
@@ -686,7 +691,9 @@ int md2cmds_moveAbs(
   lspmac_motor_t *mp;
   int err, prec;
   double move_time;
+  int n_motor;
 
+  n_motor = 0;
   // ignore nothing
   if( ccmd == NULL || *ccmd == 0) {
     return 1;
@@ -700,7 +707,7 @@ int md2cmds_moveAbs(
   //
   ignore = strtok_r( cmd, " ", &ptr);
   if( ignore == NULL) {
-    lslogging_log_message( "md2cmds_moveAbs: ignoring blank command '%s'", cmd);
+    lslogging_log_message( "%s: ignoring blank command '%s'", id,cmd);
     lsredis_sendStatusReport( 1, "moveAbs ignoring blank command");
     free( cmd);
     return 1;
@@ -709,78 +716,85 @@ int md2cmds_moveAbs(
   // The first string should be "moveAbs" cause that's how we got here.
   // Toss it.
   
-  mtr = strtok_r( NULL, " ", &ptr);
-  if( mtr == NULL) {
-    lslogging_log_message( "md2cmds_moveAbs: missing motor name");
-    lsredis_sendStatusReport( 1, "moveAbs motor name not given");
-    free( cmd);
-    return 1;
-  }
-
-  mp = lspmac_find_motor_by_name( mtr);
-  if( mp == NULL) {
-    lslogging_log_message( "md2cmds_moveAbs: cannot find motor %s", mtr);
-    lsredis_sendStatusReport( 1, "moveAbs can't find motor named %s", mtr);
-    free( cmd);
-    return 1;
-  }
-
-  pos = strtok_r( NULL, " ", &ptr);
-  if( pos == NULL) {
-    lslogging_log_message( "md2cmds_moveAbs: missing position");
-    lsredis_sendStatusReport( 1, "moveAbs couldn't figure out where to move %s", mtr);
-    free( cmd);
-    return 1;
-  }
-
-
-  fpos = strtod( pos, &endptr);
-  if( pos == endptr) {
-    //
-    // Maybe we have a preset.  Give it a whirl
-    //
-    lsredis_sendStatusReport( 0, "moving  %s to '%s'", mtr, pos);
-
-    err = lspmac_est_move_time( &move_time, NULL,
-				mp, 1, pos, 0.0,
-				NULL);
-
-    if( err) {
-      lsredis_sendStatusReport( 1, "Failed to move motor %s to '%s'", mp->name, pos);
-      free( cmd);
-      return err;
+  //
+  //  Allow multiple motor/position pairs
+  //
+  // TODO: move them all at the same time
+  //
+  err = 0;
+  while(1) {
+    mtr = strtok_r( NULL, " ", &ptr);
+    if( mtr == NULL) {
+      if (n_motor == 0) {
+	lslogging_log_message("%s: no motor found in command %s\n", id, ccmd);
+	err = 1;
+      }
+      break;
     }
 
-    err = lspmac_est_move_time_wait( move_time + 10.0, 0, mp, NULL);
+    n_motor++;
 
-    if( err) {
-      lsredis_sendStatusReport( 1, "Timed out waiting %.1f seconds for motor %s to finish moving", move_time+10.0, mp->name);
-    } else {
+    mp = lspmac_find_motor_by_name( mtr);
+    if( mp == NULL) {
+      lslogging_log_message( "%s: cannot find motor %s", id, mtr);
+      lsredis_sendStatusReport( 1, "moveAbs can't find motor named %s", mtr);
+      err = 1;
+      break;
+    }
+
+    pos = strtok_r( NULL, " ", &ptr);
+    if( pos == NULL) {
+      lslogging_log_message( "%s: missing position", id);
+      lsredis_sendStatusReport( 1, "moveAbs couldn't figure out where to move %s", mtr);
+      err = 1;
+      break;
+    }
+
+    fpos = strtod( pos, &endptr);
+    if( pos == endptr) {
+      //
+      // Maybe we have a preset.  Give it a whirl
+      //
+      lsredis_sendStatusReport( 0, "moving  %s to '%s'", mtr, pos);
+      
+      err = lspmac_est_move_time( &move_time, NULL,
+				  mp, 1, pos, 0.0,
+				  NULL);
+      
+      if( err) {
+	lsredis_sendStatusReport( 1, "Failed to move motor %s to '%s'", mp->name, pos);
+	break;
+      }
+      
+      err = lspmac_est_move_time_wait( move_time + 10.0, 0, mp, NULL);
+      
+      if( err) {
+	lsredis_sendStatusReport( 1, "Timed out waiting %.1f seconds for motor %s to finish moving", move_time+10.0, mp->name);
+	break;
+      }
       lsredis_sendStatusReport( 0, "%s", "");
-    }
-    free( cmd);
-    return err;
-  }
-
-  prec = lsredis_getl( mp->printPrecision);
-  if( mp != NULL && mp->moveAbs != NULL) {
-    pgpmac_printf( "Moving %s to %f\n", mtr, fpos);
-    lsredis_sendStatusReport( 0, "moving  %s to %.*f", mtr, prec, fpos);
-    err = lspmac_est_move_time( &move_time, NULL,
-				mp, 1, NULL, fpos,
-				NULL);
-    
-    if( err) {
-      lsredis_sendStatusReport( 1, "Failed to move motor %s to '%.3f'", mp->name, fpos);
-      free( cmd);
-      return err;
+      continue;
     }
 
-    err = lspmac_est_move_time_wait( move_time + 10.0, 0, mp, NULL);
-    if( err) {
-      lsredis_sendStatusReport( 1, "Timed out waiting %.1f seconds for motor %s to finish moving", move_time+10.0, mp->name);
-    } else {
-      lsredis_sendStatusReport( 0, "%s", "");
+    prec = lsredis_getl( mp->printPrecision);
+    if( mp != NULL && mp->moveAbs != NULL) {
+      pgpmac_printf( "Moving %s to %f\n", mtr, fpos);
+      lsredis_sendStatusReport( 0, "moving  %s to %.*f", mtr, prec, fpos);
+      err = lspmac_est_move_time( &move_time, NULL,
+				  mp, 1, NULL, fpos,
+				  NULL);
+      
+      if( err) {
+	lsredis_sendStatusReport( 1, "Failed to move motor %s to '%.3f'", mp->name, fpos);
+	break;
+      }
+      
+      err = lspmac_est_move_time_wait( move_time + 10.0, 0, mp, NULL);
+      if( err) {
+	lsredis_sendStatusReport( 1, "Timed out waiting %.1f seconds for motor %s to finish moving", move_time+10.0, mp->name);
+      } else {
+	lsredis_sendStatusReport( 0, "%s", "");
+      }
     }
   }
 
@@ -3196,6 +3210,92 @@ int md2cmds_set( const char *cmd) {
 
     rp = lsredis_getd( mp->redis_position);
     lsredis_set_preset( motor_name, preset_name, rp);
+  }
+  return 0;
+}
+
+int md2cmds_movePreset( const char *cmd) {
+  static const char *id = "md2cmds_movePreset";
+  int err, i;
+  lspmac_motor_t *mp;
+  regmatch_t pmatch[32];
+  char motor_name[64];
+  char preset_name[64];
+  char cp[512];
+  int preset_index;
+  double move_time;
+  
+  if( strlen(cmd) > sizeof( cp)-1) {
+    lslogging_log_message( "%s: command too long '%s'", id, cmd);
+    return 1;
+  }
+
+  lslogging_log_message( "%s: recieved '%s'", id, cmd);
+
+  // use the set_regex for movePreset
+  err = regexec( &md2cmds_cmd_set_regex, cmd, 32, pmatch, REG_EXTENDED);
+  if( err) {
+    lslogging_log_message( "%s: no match found from '%s'", id, cmd);
+    return 1;
+  }
+
+  //
+  // Find the last entry as that is the name of our preset
+  //
+  preset_index = -1;
+  for( i=1; i<32; i++) {
+    if( (pmatch[i].rm_so == -1) || (pmatch[i].rm_eo == pmatch[i].rm_so)) {
+      preset_index = i-1;
+      break;
+    }
+    lslogging_log_message( "%s: %d '%.*s'", id, i, pmatch[i].rm_eo - pmatch[i].rm_so, cmd+pmatch[i].rm_so);
+  }
+
+  if (preset_index < 3) {
+    lslogging_log_message("%s: bad preset index %d", id, preset_index);
+    return 1;
+  }
+
+  //
+  // get preset name
+  //
+  snprintf(preset_name, sizeof(preset_name)-1, "%.*s", pmatch[preset_index].rm_eo - pmatch[preset_index].rm_so, cmd+pmatch[preset_index].rm_so);
+  preset_name[sizeof(preset_name)-1] = 0;
+
+  lslogging_log_message("%s: preset name: %s", id, preset_name);
+
+  //
+  // Loop through the motors and move them to the requested location
+  //
+  // TODO: move them at the same time.
+  //
+  for(i=2; i<preset_index; i++) {
+    snprintf(motor_name, sizeof(motor_name)-1, "%.*s", pmatch[i].rm_eo - pmatch[i].rm_so, cmd+pmatch[i].rm_so);
+    motor_name[sizeof(motor_name)-1] = 0;
+    lslogging_log_message("%s: motor name: %s", id, motor_name);
+
+    mp = lspmac_find_motor_by_name( motor_name);
+    if( mp == NULL) {
+      lslogging_log_message( "%s: could not find motor '%s'", id, cp);
+      return 1;
+    }
+
+    err = lspmac_est_move_time( &move_time, NULL,
+				mp, 1, preset_name, 0.0,
+				NULL);
+
+    if( err) {
+      lsredis_sendStatusReport( 1, "Failed to move motor %s to '%s'", mp->name, preset_name);
+      return err;
+    }
+
+    err = lspmac_est_move_time_wait( move_time + 10.0, 0, mp, NULL);
+
+    if( err) {
+      lsredis_sendStatusReport( 1, "Timed out waiting %.1f seconds for motor %s to finish moving", move_time+10.0, mp->name);
+    } else {
+      lsredis_sendStatusReport( 0, "%s", "");
+    }
   }
   return 0;
 }
