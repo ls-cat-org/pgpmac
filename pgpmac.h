@@ -534,7 +534,7 @@ extern int lspmac_moving_flags;
 
 extern pthread_mutex_t md2_status_mutex;
 
-#define MD2CMDS_CMD_LENGTH  32
+#define MD2CMDS_CMD_LENGTH  1024
 extern char md2cmds_cmd[];			// our command;
 
 extern lsredis_obj_t *md2cmds_md_status_code;
