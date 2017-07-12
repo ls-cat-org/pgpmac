@@ -641,6 +641,7 @@ lsredis_obj_t *_lsredis_get_obj( char *key) {
 
 
 lsredis_obj_t *lsredis_get_obj( char *fmt, ...) {
+  static const char *id = "lsredis_get_obj";
   lsredis_obj_t *rtn;
   va_list arg_ptr;
   char k[512];
@@ -651,6 +652,12 @@ lsredis_obj_t *lsredis_get_obj( char *fmt, ...) {
   vsnprintf( k, sizeof(k)-1, fmt, arg_ptr);
   k[sizeof(k)-1] = 0;
   va_end( arg_ptr);
+
+  if (!lsredis_head) {
+    lslogging_log_message("%s: no lsredis_head.  Not good", id);
+    return NULL;
+  }
+
 
   nkp = strlen(k) + strlen( lsredis_head) + 16;		// 16 is overkill. I know. Get over it.
   kp = calloc( nkp, sizeof( char));
@@ -1280,6 +1287,7 @@ void lsredis_sendStatusReport( int severity, char *fmt, ...) {
 
 
 void lsredis_configCB( redisAsyncContext *ac, void *reply, void *privdata) {
+  static const char *id = "lsredis_configCB";
   redisReply *r, *r2, *r3;
   int i;
   char *errmsg;
@@ -1288,12 +1296,12 @@ void lsredis_configCB( redisAsyncContext *ac, void *reply, void *privdata) {
   r = reply;
 
   if( r == NULL) {
-    lslogging_log_message( "lsredis_configCB: null reply, cannot configure, bad things will happen");
+    lslogging_log_message( "%s: null reply, cannot configure, bad things will happen", id);
     return;
   }
 
   if( r->type != REDIS_REPLY_ARRAY || (r->elements % 2) != 0) {
-    lslogging_log_message( "lsredis_configCB: could not understand config reply.  Bad things will happen.");
+    lslogging_log_message( "%s: could not understand config reply.  Bad things will happen.", id);
     return;
   }
 
@@ -1355,7 +1363,7 @@ void lsredis_configCB( redisAsyncContext *ac, void *reply, void *privdata) {
 
 
   if( redisAsyncCommand( subac, lsredis_subCB, NULL, "PSUBSCRIBE REDIS_PV_CONNECTOR REDIS_PG_CONNECTOR REDIS_NODE_CONNECTOR mk_pgpmac_redis UI* MD2-*") == REDIS_ERR) {
-    lslogging_log_message( "Error sending PSUBSCRIBE command");
+    lslogging_log_message( "%s: Error sending PSUBSCRIBE command", id);
   }
   redisAsyncCommand( roac, lsredis_keysCB, NULL, "KEYS *");
 
@@ -1370,6 +1378,7 @@ void lsredis_configCB( redisAsyncContext *ac, void *reply, void *privdata) {
  *  \param head Prepend this (+ a dot) to the beginning of requested objects
  */
 void lsredis_init() {
+  static const char *id = "lsredis_init";
   int err;
 
 
@@ -1378,7 +1387,7 @@ void lsredis_init() {
   //
   err = hcreate_r( 8192, &lsredis_htab);
   if( err == 0) {
-    lslogging_log_message( "lsredis_init: Cannot create hash table.  Really bad things are going to happen.  hcreate_r returned %d", err);
+    lslogging_log_message( "%s: Cannot create hash table.  Really bad things are going to happen.  hcreate_r returned %d", id, err);
   }
 
   pthread_cond_init( &lsredis_cond, NULL);
@@ -1399,7 +1408,7 @@ void lsredis_init() {
 
   roac = redisAsyncConnect("127.0.0.1", 6379);
   if( roac->err) {
-    lslogging_log_message( "Error: %s", roac->errstr);
+    lslogging_log_message( "%s: Error: %s", id, roac->errstr);
   }
 
   rofd.fd           = roac->c.fd;
@@ -1441,18 +1450,19 @@ void lsredis_init() {
 }
 
 void lsredis_config() {
+  static const char *id = "lsredis_config";
   char hostname[128], lhostname[128];
   int i;
 
   if( gethostname( hostname, sizeof(hostname)-1)) {
-    lslogging_log_message( "lsredis_init: cannot get our own host name.  Cannot configure redis variables.");
+    lslogging_log_message( "%s: cannot get our own host name.  Cannot configure redis variables.", id);
   } else {
     for( i=0; i<strlen(hostname); i++) {
       lhostname[i] = tolower( hostname[i]);
     }
     lhostname[i] = 0;
 
-    lslogging_log_message( "lsredis_init: our host name is '%s'", lhostname);
+    lslogging_log_message( "%s: our host name is '%s'", id, lhostname);
     redisAsyncCommand( roac, lsredis_configCB, NULL, "hgetall config.%s", lhostname);
   }
   
@@ -1569,7 +1579,6 @@ void *lsredis_worker(  void *dummy) {
 
   lsevents_add_listener( "^Heartbeat$", lsredis_heartbeat_cb);
   lstimer_set_timer( "Heartbeat", -1, 1, 0);
-
 
   while(1) {
     nfda = 1;
