@@ -150,6 +150,7 @@ int md2cmds_goto_point(       const char *);
 int md2cmds_moveAbs(          const char *);
 int md2cmds_moveRel(          const char *);
 int md2cmds_phase_change(     const char *);
+int md2cmds_preSet(           const char *);
 int md2cmds_run_cmd(          const char *);
 int md2cmds_rotate(           const char *);
 int md2cmds_nonrotate(        const char *);
@@ -170,6 +171,7 @@ static md2cmds_cmd_kv_t md2cmds_cmd_kvs[] = {
   { "gotoPoint",        md2cmds_goto_point},
   { "moveAbs",          md2cmds_moveAbs},
   { "moveRel",          md2cmds_moveRel},
+  { "preSet",           md2cmds_preSet},
   { "run",              md2cmds_run_cmd},
   { "test",             md2cmds_test},
   { "set",              md2cmds_set},
@@ -666,117 +668,351 @@ int md2cmds_transfer( const char *dummy) {
  *  Returns non zero on error
  */
 int md2cmds_moveAbs(
-		    const char *ccmd			/**< [in] The full command string to parse, ie, "moveAbs omega 180"	*/
+		    const char *cmd			/**< [in] The full command string to parse, ie, "moveAbs omega 180"	*/
 		    ) {
-  char *cmd;
-  char *ignore;
-  char *ptr;
-  char *mtr;
-  char *pos;
+  static const char *id = "md2cmds_moveAbs";
   double fpos;
   char *endptr;
   lspmac_motor_t *mp;
   int err, prec;
   double move_time;
+  regmatch_t pmatch[32];
+  char motor_name[64];
+  char preset_name[64];
+  char position_string[64];
+  int preset_index;
+  int i;
+  double rp;
 
   // ignore nothing
-  if( ccmd == NULL || *ccmd == 0) {
+  if( cmd == NULL || *cmd == 0) {
     return 1;
   }
 
-  // operate on a copy of the string since strtok_r will modify its argument
   //
-  cmd = strdup( ccmd);
-
-  // Parse the command string
+  // "parse" our command line
   //
-  ignore = strtok_r( cmd, " ", &ptr);
-  if( ignore == NULL) {
-    lslogging_log_message( "md2cmds_moveAbs: ignoring blank command '%s'", cmd);
-    lsredis_sendStatusReport( 1, "moveAbs ignoring blank command");
-    free( cmd);
+  err = regexec( &md2cmds_cmd_set_regex, cmd, 32, pmatch, REG_EXTENDED);
+  if( err) {
+    lslogging_log_message( "%s: no match found from '%s'", id, cmd);
     return 1;
   }
 
-  // The first string should be "moveAbs" cause that's how we got here.
-  // Toss it.
+  // entire string is match index 0
+  //   1         2        3               N+1      N+2         N+3
+  // moveAbs <motor1> <position1>[ ... <motorN> <positionN>] [preset]
   
-  mtr = strtok_r( NULL, " ", &ptr);
-  if( mtr == NULL) {
-    lslogging_log_message( "md2cmds_moveAbs: missing motor name");
-    lsredis_sendStatusReport( 1, "moveAbs motor name not given");
-    free( cmd);
-    return 1;
+  //
+  //  Allow multiple motor/position pairs
+  //
+  // TODO: move them all at the same time
+  //
+  
+  // Look for an even numbered match (M) that does not have an odd
+  // numbered match (M+1).  That's our preset.  If there is no such
+  // match then there is no preset.  We'll start by trying to find the
+  // last blank even numbered argument.  The smallest index that can
+  // have a preset name is 4 (a single motor name followed by a single
+  // position followed by a prefix name).  Hence, we start our search
+  // at index 6.  If it's blank AND index 5 is blank then index 4 is
+  // our preset name. (and so forth counting by twos).
+  //
+  preset_index = -1;
+  for(i=4; i<30; i+=2) {
+    if (pmatch[i+2].rm_so == -1 || (pmatch[i+2].rm_eo == pmatch[i+2].rm_so)) {
+      if ((pmatch[i+1].rm_so == -1 || (pmatch[i+1].rm_eo == pmatch[i+1].rm_so))) {
+	if ((pmatch[i].rm_so != -1 && (pmatch[i].rm_eo > pmatch[i].rm_so))) {
+	  preset_index = i;
+	}
+      }
+      break;
+    }
   }
 
-  mp = lspmac_find_motor_by_name( mtr);
-  if( mp == NULL) {
-    lslogging_log_message( "md2cmds_moveAbs: cannot find motor %s", mtr);
-    lsredis_sendStatusReport( 1, "moveAbs can't find motor named %s", mtr);
-    free( cmd);
-    return 1;
+  //
+  // maybe get preset name
+  //
+  if (preset_index > -1) {
+    snprintf(preset_name, sizeof(preset_name)-1, "%.*s", pmatch[preset_index].rm_eo - pmatch[preset_index].rm_so, cmd+pmatch[preset_index].rm_so);
+    preset_name[sizeof(preset_name)-1] = 0;
+    lslogging_log_message("%s: found preset set request for preset %s  index %d  eo %d  so %d", id, preset_name, preset_index, pmatch[preset_index].rm_eo, pmatch[preset_index].rm_so);
   }
+  
+  //
+  // Loop over motors
+  //
+  for (i=2; i<31; i+=2) {
+    if (i == preset_index) {
+      // end of line when preset is defined
+      break;
+    }
 
-  pos = strtok_r( NULL, " ", &ptr);
-  if( pos == NULL) {
-    lslogging_log_message( "md2cmds_moveAbs: missing position");
-    lsredis_sendStatusReport( 1, "moveAbs couldn't figure out where to move %s", mtr);
-    free( cmd);
-    return 1;
-  }
+    if (pmatch[i].rm_so == -1 || (pmatch[i].rm_eo == pmatch[i].rm_so)) {
+      // end of line when no preset is defined
+      break;
+    }
 
-
-  fpos = strtod( pos, &endptr);
-  if( pos == endptr) {
     //
-    // Maybe we have a preset.  Give it a whirl
+    // Get our motor name
     //
-    lsredis_sendStatusReport( 0, "moving  %s to '%s'", mtr, pos);
+    snprintf(motor_name, sizeof(motor_name)-1, "%.*s", pmatch[i].rm_eo - pmatch[i].rm_so, cmd+pmatch[i].rm_so);
+    motor_name[sizeof(motor_name)-1] = 0;
+    lslogging_log_message("%s: motor name: %s", id, motor_name);
 
-    err = lspmac_est_move_time( &move_time, NULL,
-				mp, 1, pos, 0.0,
-				NULL);
-
-    if( err) {
-      lsredis_sendStatusReport( 1, "Failed to move motor %s to '%s'", mp->name, pos);
-      free( cmd);
-      return err;
+    mp = lspmac_find_motor_by_name( motor_name);
+    if( mp == NULL) {
+      lslogging_log_message( "%s: cannot find motor %s", id, motor_name);
+      lsredis_sendStatusReport( 1, "moveAbs can't find motor named %s", motor_name);
+      err = 1;
+      break;
     }
 
-    err = lspmac_est_move_time_wait( move_time + 10.0, 0, mp, NULL);
+    //
+    // Get our position as a string (cause it might be a prefix name
+    // or might be a floating point number.
+    //
+    snprintf(position_string, sizeof(position_string)-1, "%.*s", pmatch[i+1].rm_eo - pmatch[i+1].rm_so, cmd+pmatch[i+1].rm_so);
+    position_string[sizeof(position_string)-1] = 0;
 
-    if( err) {
-      lsredis_sendStatusReport( 1, "Timed out waiting %.1f seconds for motor %s to finish moving", move_time+10.0, mp->name);
-    } else {
+    fpos = strtod(position_string, &endptr);
+    if( endptr == position_string) {
+      //
+      // Maybe we have a preset.  Give it a whirl
+      //
+      lsredis_sendStatusReport( 0, "moving  %s to '%s'", motor_name, position_string);
+      
+      err = lspmac_est_move_time( &move_time, NULL,
+				  mp, 1, position_string, 0.0,
+				  NULL);
+      
+      if( err) {
+	lsredis_sendStatusReport( 1, "Failed to move motor %s to '%s'", mp->name, position_string);
+	break;
+      }
+      
+      err = lspmac_est_move_time_wait( move_time + 10.0, 0, mp, NULL);
+      
+      if( err) {
+	lsredis_sendStatusReport( 1, "Timed out waiting %.1f seconds for motor %s to finish moving", move_time+10.0, mp->name);
+	//
+	// error.  Too bad.
+	break;
+      }
       lsredis_sendStatusReport( 0, "%s", "");
+      //
+      // go to the next motor
+      continue;
     }
-    free( cmd);
-    return err;
+
+    //
+    // Here we have a numeric position to move the motor to
+    //
+    prec = lsredis_getl( mp->printPrecision);
+    if( mp != NULL && mp->moveAbs != NULL) {
+      pgpmac_printf( "Moving %s to %f\n", motor_name, fpos);
+      lsredis_sendStatusReport( 0, "moving  %s to %.*f", motor_name, prec, fpos);
+      err = lspmac_est_move_time( &move_time, NULL,
+				  mp, 1, NULL, fpos,
+				  NULL);
+      
+      if( err) {
+	lsredis_sendStatusReport( 1, "Failed to move motor %s to '%.3f'", mp->name, fpos);
+	break;
+      }
+      
+      err = lspmac_est_move_time_wait( move_time + 10.0, 0, mp, NULL);
+      if( err) {
+	lsredis_sendStatusReport( 1, "Timed out waiting %.1f seconds for motor %s to finish moving", move_time+10.0, mp->name);
+      } else {
+	lsredis_sendStatusReport( 0, "%s", "");
+      }
+    }
   }
 
-  prec = lsredis_getl( mp->printPrecision);
-  if( mp != NULL && mp->moveAbs != NULL) {
-    pgpmac_printf( "Moving %s to %f\n", mtr, fpos);
-    lsredis_sendStatusReport( 0, "moving  %s to %.*f", mtr, prec, fpos);
-    err = lspmac_est_move_time( &move_time, NULL,
-				mp, 1, NULL, fpos,
-				NULL);
-    
-    if( err) {
-      lsredis_sendStatusReport( 1, "Failed to move motor %s to '%.3f'", mp->name, fpos);
-      free( cmd);
-      return err;
-    }
+  if (err == 0 && preset_index > -1) {
+    //
+    // OK, we have no errors AND we have a preset
+    //
+    // We assume that if any motor did not make it to its requested
+    // position then we do not want any of the presets set for any of
+    // the motors.  Hence, we travel through the motor list again and
+    // set the presets one by one.
+    //
+    for (i=2; i<31; i+=2) {
+      if (i == preset_index) {
+	// end of line when preset is defined
+	break;
+      }
+      
+      if (pmatch[i].rm_so == -1 || (pmatch[i].rm_eo == pmatch[i].rm_so)) {
+	// end of line when no preset is defined
+	break;
+      }
+      
+      //
+      // Get our motor name
+      //
+      snprintf(motor_name, sizeof(motor_name)-1, "%.*s", pmatch[i].rm_eo - pmatch[i].rm_so, cmd+pmatch[i].rm_so);
+      motor_name[sizeof(motor_name)-1] = 0;
+      lslogging_log_message("%s: motor name: %s", id, motor_name);
+      mp = lspmac_find_motor_by_name(motor_name);
+      //
+      // Not likely the motor would be found previously but not found
+      // now.  Hence, no error check for NULL mp here.
+      //
+      
 
-    err = lspmac_est_move_time_wait( move_time + 10.0, 0, mp, NULL);
-    if( err) {
-      lsredis_sendStatusReport( 1, "Timed out waiting %.1f seconds for motor %s to finish moving", move_time+10.0, mp->name);
-    } else {
-      lsredis_sendStatusReport( 0, "%s", "");
+      rp = lsredis_getd( mp->redis_position);
+      lsredis_set_preset( motor_name, preset_name, rp);
+      lslogging_log_message("%s: set preset %s for motor %s to position %f", id, preset_name, motor_name, rp);
+
+    }
+  }
+  return err;
+}
+
+/** 
+ *  Set a named preset to the requested position without first moving the motor there
+ */
+int md2cmds_preSet(
+		    const char *cmd			/**< [in] The full command string to parse, ie, "moveAbs omega 180"	*/
+		    ) {
+  static const char *id = "md2cmds_preSet";
+  double fpos;
+  char *endptr;
+  lspmac_motor_t *mp;
+  int err;
+  regmatch_t pmatch[32];
+  char motor_name[64];
+  char preset_name[64];
+  char position_string[64];
+  int preset_index;
+  int i;
+
+  // ignore nothing
+  if( cmd == NULL || *cmd == 0) {
+    return 1;
+  }
+
+  //
+  // "parse" our command line
+  //
+  err = regexec( &md2cmds_cmd_set_regex, cmd, 32, pmatch, REG_EXTENDED);
+  if( err) {
+    lslogging_log_message( "%s: no match found from '%s'", id, cmd);
+    return 1;
+  }
+
+  // entire string is match index 0
+  //   1         2        3               N+1      N+2         N+3
+  // moveAbs <motor1> <position1>[ ... <motorN> <positionN>] [preset]
+  
+  //
+  //  Allow multiple motor/position pairs
+  //
+  // TODO: move them all at the same time
+  //
+  
+  // Look for an even numbered match (M) that does not have an odd
+  // numbered match (M+1).  That's our preset.  If there is no such
+  // match then there is no preset.  We'll start by trying to find the
+  // last blank even numbered argument.  The smallest index that can
+  // have a preset name is 4 (a single motor name followed by a single
+  // position followed by a prefix name).  Hence, we start our search
+  // at index 6.  If it's blank AND index 5 is blank then index 4 is
+  // our preset name. (and so forth counting by twos).
+  //
+  preset_index = -1;
+  for(i=4; i<30; i+=2) {
+    if (pmatch[i+2].rm_so == -1 || (pmatch[i+2].rm_eo == pmatch[i+2].rm_so)) {
+      if ((pmatch[i+1].rm_so == -1 || (pmatch[i+1].rm_eo == pmatch[i+1].rm_so))) {
+	if ((pmatch[i].rm_so != -1 && (pmatch[i].rm_eo > pmatch[i].rm_so))) {
+	  preset_index = i;
+	}
+      }
+      break;
     }
   }
 
-  free( cmd);
+  if (preset_index == -1) {
+    lslogging_log_message("%s: no preset found at the end of the command string '%s'", id, cmd);
+    return 1;
+  }
+
+
+  //
+  // get preset name
+  //
+  snprintf(preset_name, sizeof(preset_name)-1, "%.*s", pmatch[preset_index].rm_eo - pmatch[preset_index].rm_so, cmd+pmatch[preset_index].rm_so);
+  preset_name[sizeof(preset_name)-1] = 0;
+  lslogging_log_message("%s: found preset set request for preset %s  index %d  eo %d  so %d", id, preset_name, preset_index, pmatch[preset_index].rm_eo, pmatch[preset_index].rm_so);
+
+  
+  //
+  // Loop over motors
+  //
+  for (i=2; i<31; i+=2) {
+    if (i == preset_index) {
+      // end of line when preset is defined
+      break;
+    }
+
+    if (pmatch[i].rm_so == -1 || (pmatch[i].rm_eo == pmatch[i].rm_so)) {
+      // end of line when no preset is defined
+      break;
+    }
+
+    //
+    // Get our motor name
+    //
+    snprintf(motor_name, sizeof(motor_name)-1, "%.*s", pmatch[i].rm_eo - pmatch[i].rm_so, cmd+pmatch[i].rm_so);
+    motor_name[sizeof(motor_name)-1] = 0;
+    lslogging_log_message("%s: motor name: %s", id, motor_name);
+
+    mp = lspmac_find_motor_by_name( motor_name);
+    if( mp == NULL) {
+      lslogging_log_message( "%s: cannot find motor %s", id, motor_name);
+      lsredis_sendStatusReport( 1, "moveAbs can't find motor named %s", motor_name);
+      err = 1;
+      break;
+    }
+
+    //
+    // Get our position as a string (cause it might be a prefix name
+    // or might be a floating point number.
+    //
+    snprintf(position_string, sizeof(position_string)-1, "%.*s", pmatch[i+1].rm_eo - pmatch[i+1].rm_so, cmd+pmatch[i+1].rm_so);
+    position_string[sizeof(position_string)-1] = 0;
+
+    fpos = strtod(position_string, &endptr);
+    if( endptr == position_string) {
+      //
+      // We didn't find a number, perhaps we have a named preset
+      //
+
+      if (strcmp(position_string, "current") == 0) {
+	// Special prefix named 'current' means just to use the motor's current position
+	mp = lspmac_find_motor_by_name(motor_name);
+	if (mp == NULL) {
+	  lslogging_log_message("%s: could not find a motor named '%s'", id, motor_name);
+	  continue;
+	}
+	fpos = lsredis_getd(mp->redis_position);
+      } else {
+	// look up the normal prefix
+	err = lsredis_find_preset(motor_name, position_string, &fpos);
+	if (err == 0) {
+	  lslogging_log_message("%s: could not find preset named '%s' for motor %s", id, position_string, motor_name);
+	  continue;
+	}
+      }
+    }
+
+    // by hook or by crook we now have fpos containing the position
+    // that we'd like to call prefix_name
+
+    lsredis_set_preset(motor_name, preset_name, fpos);
+  }
   return err;
 }
 
@@ -784,96 +1020,188 @@ int md2cmds_moveAbs(
  *  Returns non zero on error
  */
 int md2cmds_moveRel(
-		    const char *ccmd			/**< [in] The full command string to parse, ie, "moveAbs omega 180"	*/
+		    const char *cmd			/**< [in] The full command string to parse, ie, "moveAbs omega 180"	*/
 		    ) {
-  char *cmd;
-  char *ignore;
-  char *ptr;
-  char *mtr;
-  char *pos;
+
+  static const char *id = "md2cmds_moveRel";
   double fpos;
   char *endptr;
   lspmac_motor_t *mp;
+  int err, prec;
   double move_time;
-  int err;
+  regmatch_t pmatch[32];
+  char motor_name[64];
+  char preset_name[64];
+  char position_string[64];
+  int preset_index;
+  int i;
+  double rp;
 
   // ignore nothing
-  if( ccmd == NULL || *ccmd == 0) {
+  if( cmd == NULL || *cmd == 0) {
     return 1;
   }
 
-  // operate on a copy of the string since strtok_r will modify its argument
   //
-  cmd = strdup( ccmd);
-
-  // Parse the command string
+  // "parse" our command line
   //
-  ignore = strtok_r( cmd, " ", &ptr);
-  if( ignore == NULL) {
-    lslogging_log_message( "md2cmds_moveAbs: ignoring blank command '%s'", cmd);
-    free( cmd);
+  err = regexec( &md2cmds_cmd_set_regex, cmd, 32, pmatch, REG_EXTENDED);
+  if( err) {
+    lslogging_log_message( "%s: no match found from '%s'", id, cmd);
     return 1;
   }
 
-  // The first string should be "moveAbs" cause that's how we got here.
-  // Toss it.
+  // entire string is match index 0
+  //   1         2       3             N+1     N+2       N+3
+  // moveRel <motor1> <delta1>[ ... <motorN> <deltaN>] [preset]
   
-  mtr = strtok_r( NULL, " ", &ptr);
-  if( mtr == NULL) {
-    lslogging_log_message( "md2cmds_moveRel: missing motor name");
-    free( cmd);
-    return 1;
-  }
-
-  mp = lspmac_find_motor_by_name( mtr);
-
-  if( mp == NULL) {
-    lslogging_log_message( "md2cmds_moveRel: cannot find motor %s", mtr);
-    free( cmd);
-    return 1;
-  }
-
-  pos = strtok_r( NULL, " ", &ptr);
-  if( pos == NULL) {
-    lslogging_log_message( "md2cmds_moveRel: missing position");
-    free( cmd);
-    return 1;
-  }
-
-  fpos = strtod( pos, &endptr);
-  if( pos == endptr) {
-    //
-    // No incrememtnal position found
-    //
-    lslogging_log_message( "md2cmds_moveRel: no new position requested");
-    return 1;
-  }
-
-  if( mp != NULL) {
-    lslogging_log_message( "Moving %s by %.3f from %.3f.  That is, to %.3f\n", mtr, fpos, lspmac_getPosition(mp), lspmac_getPosition(mp) + fpos);
-    fpos += lspmac_getPosition( mp);
-
-    err = lspmac_est_move_time( &move_time, NULL,
-				mp, 1, NULL, fpos,
-				NULL);
-    
-    if( err) {
-      lsredis_sendStatusReport( 1, "Failed to move motor %s to '%.3f'", mp->name, fpos);
-      free( cmd);
-      return err;
-    }
-
-    err = lspmac_est_move_time_wait( move_time + 4.0, 0, mp, NULL);
-    if( err) {
-      lsredis_sendStatusReport( 1, "Timed out waiting %.1f seconds for motor %s to finish moving", move_time+4.0, mp->name);
-    } else {
-      lsredis_sendStatusReport( 0, "%s", "");
+  //
+  //  Allow multiple motor/position pairs
+  //
+  // TODO: move them all at the same time
+  //
+  
+  // Look for an even numbered match (M) that does not have an odd
+  // numbered match (M+1).  That's our preset.  If there is no such
+  // match then there is no preset.  We'll start by trying to find the
+  // last blank even numbered argument.  The smallest index that can
+  // have a preset name is 4 (a single motor name followed by a single
+  // position followed by a prefix name).  Hence, we start our search
+  // at index 6.  If it's blank AND index 5 is blank then index 4 is
+  // our preset name. (and so forth counting by twos).
+  //
+  preset_index = -1;
+  for(i=4; i<30; i+=2) {
+    if (pmatch[i+2].rm_so == -1 || (pmatch[i+2].rm_eo == pmatch[i+2].rm_so)) {
+      if ((pmatch[i+1].rm_so == -1 || (pmatch[i+1].rm_eo == pmatch[i+1].rm_so))) {
+	if ((pmatch[i].rm_so != -1 && (pmatch[i].rm_eo > pmatch[i].rm_so))) {
+	  preset_index = i;
+	}
+      }
+      break;
     }
   }
 
-  free( cmd);
+  //
+  // maybe get preset name
+  //
+  if (preset_index > -1) {
+    snprintf(preset_name, sizeof(preset_name)-1, "%.*s", pmatch[preset_index].rm_eo - pmatch[preset_index].rm_so, cmd+pmatch[preset_index].rm_so);
+    preset_name[sizeof(preset_name)-1] = 0;
+    lslogging_log_message("%s: found preset set request for preset %s  index %d  eo %d  so %d", id, preset_name, preset_index, pmatch[preset_index].rm_eo, pmatch[preset_index].rm_so);
+  }
+  
+  //
+  // Loop over motors
+  //
+  for (i=2; i<31; i+=2) {
+    if (i == preset_index) {
+      // end of line when preset is defined
+      break;
+    }
+
+    if (pmatch[i].rm_so == -1 || (pmatch[i].rm_eo == pmatch[i].rm_so)) {
+      // end of line when no preset is defined
+      break;
+    }
+
+    //
+    // Get our motor name
+    //
+    snprintf(motor_name, sizeof(motor_name)-1, "%.*s", pmatch[i].rm_eo - pmatch[i].rm_so, cmd+pmatch[i].rm_so);
+    motor_name[sizeof(motor_name)-1] = 0;
+    lslogging_log_message("%s: motor name: %s", id, motor_name);
+
+    mp = lspmac_find_motor_by_name( motor_name);
+    if( mp == NULL) {
+      lslogging_log_message( "%s: cannot find motor %s", id, motor_name);
+      lsredis_sendStatusReport( 1, "can't find motor named %s", motor_name);
+      err = 1;
+      break;
+    }
+
+    //
+    // Get our position as a string (cause it might be a prefix name
+    // or might be a floating point number.
+    //
+    snprintf(position_string, sizeof(position_string)-1, "%.*s", pmatch[i+1].rm_eo - pmatch[i+1].rm_so, cmd+pmatch[i+1].rm_so);
+    position_string[sizeof(position_string)-1] = 0;
+
+    fpos = lsredis_getd(mp->redis_position) + strtod(position_string, &endptr);
+    if( endptr == position_string) {
+      //
+      // Maybe we have a preset.  Unfortunately moveRel presets are currently not supported.  Perhaps they should be.
+      //
+      lslogging_log_message("%s: We have may have a relative move using a preset.  Not currently supported. Sorry.", id);
+      continue;
+    }
+
+    //
+    // Here we have a numeric position to move the motor to
+    //
+    prec = lsredis_getl( mp->printPrecision);
+    if( mp != NULL && mp->moveAbs != NULL) {
+      pgpmac_printf( "Moving %s to %f\n", motor_name, fpos);
+      lsredis_sendStatusReport( 0, "moving  %s to %.*f", motor_name, prec, fpos);
+      err = lspmac_est_move_time( &move_time, NULL,
+				  mp, 1, NULL, fpos,
+				  NULL);
+      
+      if( err) {
+	lsredis_sendStatusReport( 1, "Failed to move motor %s to '%.3f'", mp->name, fpos);
+	break;
+      }
+      
+      err = lspmac_est_move_time_wait( move_time + 10.0, 0, mp, NULL);
+      if( err) {
+	lsredis_sendStatusReport( 1, "Timed out waiting %.1f seconds for motor %s to finish moving", move_time+10.0, mp->name);
+      } else {
+	lsredis_sendStatusReport( 0, "%s", "");
+      }
+    }
+  }
+
+  if (err == 0 && preset_index > -1) {
+    //
+    // OK, we have no errors AND we have a preset
+    //
+    // We assume that if any motor did not make it to its requested
+    // position then we do not want any of the presets set for any of
+    // the motors.  Hence, we travel through the motor list again and
+    // set the presets one by one.
+    //
+    for (i=2; i<31; i+=2) {
+      if (i == preset_index) {
+	// end of line when preset is defined
+	break;
+      }
+      
+      if (pmatch[i].rm_so == -1 || (pmatch[i].rm_eo == pmatch[i].rm_so)) {
+	// end of line when no preset is defined
+	break;
+      }
+      
+      //
+      // Get our motor name
+      //
+      snprintf(motor_name, sizeof(motor_name)-1, "%.*s", pmatch[i].rm_eo - pmatch[i].rm_so, cmd+pmatch[i].rm_so);
+      motor_name[sizeof(motor_name)-1] = 0;
+      lslogging_log_message("%s: motor name: %s", id, motor_name);
+      mp = lspmac_find_motor_by_name(motor_name);
+      //
+      // Not likely the motor would be found previously but not found
+      // now.  Hence, no error check for NULL mp here.
+      //
+      
+
+      rp = lsredis_getd( mp->redis_position);
+      lsredis_set_preset( motor_name, preset_name, rp);
+      lslogging_log_message("%s: set preset %s for motor %s to position %f", id, preset_name, motor_name, rp);
+    }
+  }
   return err;
 }
+
 
 
 
