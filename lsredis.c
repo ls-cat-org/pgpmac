@@ -993,6 +993,7 @@ int lsredis_find_preset( char *motor_name, char *preset_name, double *dval) {
  *  create a new preset if we can't find it
  */
 void lsredis_set_preset( char *motor_name, char *preset_name, double dval) {
+  static const char *id = "lsredis_set_preset";
   char s[512];
   int plength;
   int err;
@@ -1002,6 +1003,16 @@ void lsredis_set_preset( char *motor_name, char *preset_name, double dval) {
   lsredis_obj_t *p1, *p2, *presets_length_p;
   lsredis_preset_list_t *pl;
   struct timespec timeout;
+
+  if (preset_name[0] == 0) {
+    lslogging_log_message("%s: no preset name given", id);
+    return;
+  }
+
+  if (lspmac_find_motor_by_name(preset_name) != NULL) {
+    lslogging_log_message("%s: Oddly, a preset is being given the same name as a motor.  Probably not what we want: %s", id, preset_name);
+    return;
+  }
 
   mp = lspmac_find_motor_by_name( motor_name);
   if( mp) {
