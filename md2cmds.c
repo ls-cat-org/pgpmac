@@ -254,7 +254,7 @@ int md2cmds_home_wait( double timeout_secs) {
 
 
 void md2cmds_motion_reset_cb( char *evt) {
-  lsredis_setstr( md2cmds_md_status_code, "%s", "4");
+  lsredis_setstr( md2cmds_md_status_code, "%s", "3");
   pthread_mutex_lock( &md2cmds_moving_mutex);
   md2cmds_moving_count = 0;
   pthread_cond_signal( &md2cmds_moving_cond);
