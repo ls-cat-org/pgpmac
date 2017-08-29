@@ -34,8 +34,6 @@ All positions are in millimeters or degrees.
 
  moveAbs  <motor> <position_or_presetName>  Move the given motor to the said position.  Common preset names are "In", "Out", "Cover".
 
- movePreset <motor1>...<motorN> <preset>    Move all the listed motors to the named preset
-
  moveRel  <motor> <relative_position>       Move the given motor by the relative amount from its current position
 
  nonrotate                                  Used for local centering when we do not want to trigger movie making
@@ -155,7 +153,6 @@ int md2cmds_collect(          const char *);
 int md2cmds_goto_point(       const char *);
 int md2cmds_homestages(       const char *);
 int md2cmds_moveAbs(          const char *);
-int md2cmds_movePreset(       const char *);
 int md2cmds_moveRel(          const char *);
 int md2cmds_phase_change(     const char *);
 int md2cmds_preSet(           const char *);
@@ -180,7 +177,6 @@ static md2cmds_cmd_kv_t md2cmds_cmd_kvs[] = {
   { "gotoPoint",        md2cmds_goto_point},
   { "homestages",       md2cmds_homestages},
   { "moveAbs",          md2cmds_moveAbs},
-  { "movePreset",       md2cmds_movePreset},
   { "moveRel",          md2cmds_moveRel},
   { "preSet",           md2cmds_preSet},
   { "run",              md2cmds_run_cmd},
@@ -266,7 +262,7 @@ int md2cmds_home_wait( double timeout_secs) {
 
 
 void md2cmds_motion_reset_cb( char *evt) {
-  lsredis_setstr( md2cmds_md_status_code, "%s", "4");
+  lsredis_setstr( md2cmds_md_status_code, "%s", "3");
   pthread_mutex_lock( &md2cmds_moving_mutex);
   md2cmds_moving_count = 0;
   pthread_cond_signal( &md2cmds_moving_cond);
@@ -1028,103 +1024,192 @@ int md2cmds_preSet(
   return err;
 }
 
+
 /** Move a motor to the position requested
  *  Returns non zero on error
  */
 int md2cmds_moveRel(
-		    const char *ccmd			/**< [in] The full command string to parse, ie, "moveAbs omega 180"	*/
+		    const char *cmd			/**< [in] The full command string to parse, ie, "moveAbs omega 180"	*/
 		    ) {
-  char *cmd;
-  char *ignore;
-  char *ptr;
-  char *mtr;
-  char *pos;
+
+  static const char *id = "md2cmds_moveRel";
   double fpos;
   char *endptr;
   lspmac_motor_t *mp;
+  int err, prec;
   double move_time;
-  int err;
+  regmatch_t pmatch[32];
+  char motor_name[64];
+  char preset_name[64];
+  char position_string[64];
+  int preset_index;
+  int i;
+  double rp;
 
   // ignore nothing
-  if( ccmd == NULL || *ccmd == 0) {
+  if( cmd == NULL || *cmd == 0) {
     return 1;
   }
 
-  // operate on a copy of the string since strtok_r will modify its argument
   //
-  cmd = strdup( ccmd);
-
-  // Parse the command string
+  // "parse" our command line
   //
-  ignore = strtok_r( cmd, " ", &ptr);
-  if( ignore == NULL) {
-    lslogging_log_message( "md2cmds_moveRel: ignoring blank command '%s'", cmd);
-    free( cmd);
+  err = regexec( &md2cmds_cmd_set_regex, cmd, 32, pmatch, REG_EXTENDED);
+  if( err) {
+    lslogging_log_message( "%s: no match found from '%s'", id, cmd);
     return 1;
   }
 
-  // The first string should be "moveAbs" cause that's how we got here.
-  // Toss it.
+  // entire string is match index 0
+  //   1         2       3             N+1     N+2       N+3
+  // moveRel <motor1> <delta1>[ ... <motorN> <deltaN>] [preset]
   
-  mtr = strtok_r( NULL, " ", &ptr);
-  if( mtr == NULL) {
-    lslogging_log_message( "md2cmds_moveRel: missing motor name");
-    free( cmd);
-    return 1;
-  }
-
-  mp = lspmac_find_motor_by_name( mtr);
-
-  if( mp == NULL) {
-    lslogging_log_message( "md2cmds_moveRel: cannot find motor %s", mtr);
-    free( cmd);
-    return 1;
-  }
-
-  pos = strtok_r( NULL, " ", &ptr);
-  if( pos == NULL) {
-    lslogging_log_message( "md2cmds_moveRel: missing position");
-    free( cmd);
-    return 1;
-  }
-
-  fpos = strtod( pos, &endptr);
-  if( pos == endptr) {
-    //
-    // No incrememtnal position found
-    //
-    lslogging_log_message( "md2cmds_moveRel: no new position requested");
-    return 1;
-  }
-
-  if( mp != NULL) {
-    lslogging_log_message( "Moving %s by %.3f from %.3f.  That is, to %.3f\n", mtr, fpos, lspmac_getPosition(mp), lspmac_getPosition(mp) + fpos);
-    fpos += lspmac_getPosition( mp);
-
-    err = lspmac_est_move_time( &move_time, NULL,
-				mp, 1, NULL, fpos,
-				NULL);
-    
-    if( err) {
-      lsredis_sendStatusReport( 1, "Failed to move motor %s to '%.3f'", mp->name, fpos);
-      free( cmd);
-      return err;
-    }
-
-    err = lspmac_est_move_time_wait( move_time + 4.0, 0, mp, NULL);
-    if( err) {
-      lsredis_sendStatusReport( 1, "Timed out waiting %.1f seconds for motor %s to finish moving", move_time+4.0, mp->name);
-    } else {
-      lsredis_sendStatusReport( 0, "%s", "");
+  //
+  //  Allow multiple motor/position pairs
+  //
+  // TODO: move them all at the same time
+  //
+  
+  // Look for an even numbered match (M) that does not have an odd
+  // numbered match (M+1).  That's our preset.  If there is no such
+  // match then there is no preset.  We'll start by trying to find the
+  // last blank even numbered argument.  The smallest index that can
+  // have a preset name is 4 (a single motor name followed by a single
+  // position followed by a prefix name).  Hence, we start our search
+  // at index 6.  If it's blank AND index 5 is blank then index 4 is
+  // our preset name. (and so forth counting by twos).
+  //
+  preset_index = -1;
+  for(i=4; i<30; i+=2) {
+    if (pmatch[i+2].rm_so == -1 || (pmatch[i+2].rm_eo == pmatch[i+2].rm_so)) {
+      if ((pmatch[i+1].rm_so == -1 || (pmatch[i+1].rm_eo == pmatch[i+1].rm_so))) {
+	if ((pmatch[i].rm_so != -1 && (pmatch[i].rm_eo > pmatch[i].rm_so))) {
+	  preset_index = i;
+	}
+      }
+      break;
     }
   }
 
-  free( cmd);
+  //
+  // maybe get preset name
+  //
+  if (preset_index > -1) {
+    snprintf(preset_name, sizeof(preset_name)-1, "%.*s", pmatch[preset_index].rm_eo - pmatch[preset_index].rm_so, cmd+pmatch[preset_index].rm_so);
+    preset_name[sizeof(preset_name)-1] = 0;
+    lslogging_log_message("%s: found preset set request for preset %s  index %d  eo %d  so %d", id, preset_name, preset_index, pmatch[preset_index].rm_eo, pmatch[preset_index].rm_so);
+  }
+  
+  //
+  // Loop over motors
+  //
+  for (i=2; i<31; i+=2) {
+    if (i == preset_index) {
+      // end of line when preset is defined
+      break;
+    }
+
+    if (pmatch[i].rm_so == -1 || (pmatch[i].rm_eo == pmatch[i].rm_so)) {
+      // end of line when no preset is defined
+      break;
+    }
+
+    //
+    // Get our motor name
+    //
+    snprintf(motor_name, sizeof(motor_name)-1, "%.*s", pmatch[i].rm_eo - pmatch[i].rm_so, cmd+pmatch[i].rm_so);
+    motor_name[sizeof(motor_name)-1] = 0;
+    lslogging_log_message("%s: motor name: %s", id, motor_name);
+
+    mp = lspmac_find_motor_by_name( motor_name);
+    if( mp == NULL) {
+      lslogging_log_message( "%s: cannot find motor %s", id, motor_name);
+      lsredis_sendStatusReport( 1, "can't find motor named %s", motor_name);
+      err = 1;
+      break;
+    }
+
+    //
+    // Get our position as a string (cause it might be a prefix name
+    // or might be a floating point number.
+    //
+    snprintf(position_string, sizeof(position_string)-1, "%.*s", pmatch[i+1].rm_eo - pmatch[i+1].rm_so, cmd+pmatch[i+1].rm_so);
+    position_string[sizeof(position_string)-1] = 0;
+
+    fpos = lsredis_getd(mp->redis_position) + strtod(position_string, &endptr);
+    if( endptr == position_string) {
+      //
+      // Maybe we have a preset.  Unfortunately moveRel presets are currently not supported.  Perhaps they should be.
+      //
+      lslogging_log_message("%s: We have may have a relative move using a preset.  Not currently supported. Sorry.", id);
+      continue;
+    }
+
+    //
+    // Here we have a numeric position to move the motor to
+    //
+    prec = lsredis_getl( mp->printPrecision);
+    if( mp != NULL && mp->moveAbs != NULL) {
+      pgpmac_printf( "Moving %s to %f\n", motor_name, fpos);
+      lsredis_sendStatusReport( 0, "moving  %s to %.*f", motor_name, prec, fpos);
+      err = lspmac_est_move_time( &move_time, NULL,
+				  mp, 1, NULL, fpos,
+				  NULL);
+      
+      if( err) {
+	lsredis_sendStatusReport( 1, "Failed to move motor %s to '%.3f'", mp->name, fpos);
+	break;
+      }
+      
+      err = lspmac_est_move_time_wait( move_time + 10.0, 0, mp, NULL);
+      if( err) {
+	lsredis_sendStatusReport( 1, "Timed out waiting %.1f seconds for motor %s to finish moving", move_time+10.0, mp->name);
+      } else {
+	lsredis_sendStatusReport( 0, "%s", "");
+      }
+    }
+  }
+
+  if (err == 0 && preset_index > -1) {
+    //
+    // OK, we have no errors AND we have a preset
+    //
+    // We assume that if any motor did not make it to its requested
+    // position then we do not want any of the presets set for any of
+    // the motors.  Hence, we travel through the motor list again and
+    // set the presets one by one.
+    //
+    for (i=2; i<31; i+=2) {
+      if (i == preset_index) {
+	// end of line when preset is defined
+	break;
+      }
+      
+      if (pmatch[i].rm_so == -1 || (pmatch[i].rm_eo == pmatch[i].rm_so)) {
+	// end of line when no preset is defined
+	break;
+      }
+      
+      //
+      // Get our motor name
+      //
+      snprintf(motor_name, sizeof(motor_name)-1, "%.*s", pmatch[i].rm_eo - pmatch[i].rm_so, cmd+pmatch[i].rm_so);
+      motor_name[sizeof(motor_name)-1] = 0;
+      lslogging_log_message("%s: motor name: %s", id, motor_name);
+      mp = lspmac_find_motor_by_name(motor_name);
+      //
+      // Not likely the motor would be found previously but not found
+      // now.  Hence, no error check for NULL mp here.
+      //
+      
+
+      rp = lsredis_getd( mp->redis_position);
+      lsredis_set_preset( motor_name, preset_name, rp);
+      lslogging_log_message("%s: set preset %s for motor %s to position %f", id, preset_name, motor_name, rp);
+    }
+  }
   return err;
 }
-
-
-
 
 
 /** Go to the manual mount phase
@@ -1850,6 +1935,7 @@ int md2cmds_shutterless( const char *dummy) {
   int ds;
   double move_time;
   int mmask;
+  int explore_mode;
 
   //
   // Make a guess at the correct value.  TODO: measure and place in
@@ -1863,6 +1949,8 @@ int md2cmds_shutterless( const char *dummy) {
   lsevents_send_event("Shutterless Collection Starting");
   collection_running = lsredis_get_obj("collection.running");
   lsredis_setstr(collection_running, "True");
+
+  explore_mode = lsredis_getl(lsredis_get_obj("detector.explore_mode"));
 
   //
   // Go to data collection mode
@@ -1884,9 +1972,12 @@ int md2cmds_shutterless( const char *dummy) {
   pthread_mutex_lock( &detector_state_mutex);
   ds = detector_state_int;
   pthread_mutex_unlock( &detector_state_mutex);
-  if (ds != 1) {
+
+  lslogging_log_message("explore_mode: %d detector_state_int: %d", explore_mode, ds);
+
+  if ((explore_mode && ds != 3) || (!explore_mode && ds != 1)) {
     //
-    // The detector is not ready, abort now
+    // The detector is not ready or is not armed, abort now
     //
     lsredis_sendStatusReport(1, "Detector does not appear to be ready");
     lslogging_log_message("md2cmds_shutterless: Detector is not in ready state");
@@ -1895,6 +1986,7 @@ int md2cmds_shutterless( const char *dummy) {
     return 1;
   }
   lslogging_log_message("shutterless 2");
+
   
   omega_u2c   = lsredis_getd( omega->u2c);
   omega_np    = lsredis_getd( omega->neutral_pos);
@@ -1942,7 +2034,7 @@ int md2cmds_shutterless( const char *dummy) {
     }
 
     //
-    // The loop explorer uses the old interpolation methods which is
+    // The loop explorer uses the old interpolation methods which are
     // not compatable with our use of the centering points here.
     // Hopefully just checking the center points array length is
     // enough to catch this mode.  TODO: make it clearer, ie, add
@@ -2026,7 +2118,6 @@ int md2cmds_shutterless( const char *dummy) {
     lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Preparing')", skey);
     lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Preparing\"}", skey);
     lsredis_sendStatusReport( 0, "Preparing Shutterless %d", sindex);
-    
     
     q1  = exp_time * 1000.0;
     q10 = omega_u2c * (lspg_nextshot.sstart + omega_np);
@@ -2136,31 +2227,34 @@ int md2cmds_shutterless( const char *dummy) {
     //
     // Wait for the detector to arm itself
     //
-    clock_gettime( CLOCK_REALTIME, &now);
-    timeout.tv_sec  = now.tv_sec + 60;
-    timeout.tv_nsec = now.tv_nsec;
-    
-    err = 0;
-    pthread_mutex_lock( &detector_state_mutex);
-    while (err == 0 && detector_state_int != 3) {
-      err = pthread_cond_timedwait( &detector_state_cond, &detector_state_mutex, &timeout);
-    }
-    
-    if( err == ETIMEDOUT) {
+    if (!explore_mode) {
+      clock_gettime( CLOCK_REALTIME, &now);
+      timeout.tv_sec  = now.tv_sec + 60;
+      timeout.tv_nsec = now.tv_nsec;
+      
+      err = 0;
+      pthread_mutex_lock( &detector_state_mutex);
+      while (err == 0 && detector_state_int != 3) {
+	err = pthread_cond_timedwait( &detector_state_cond, &detector_state_mutex, &timeout);
+      }
+      
+      if( err == ETIMEDOUT) {
+	pthread_mutex_unlock( &detector_state_mutex);
+	lslogging_log_message( "md2cmds_shutterless: Timed out waiting for detector to be armed.  Shutterless Collection aborted.");
+	lsredis_sendStatusReport( 1, "Timed out waiting for detector to be armed.");
+	
+	lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
+	
+	lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
+	lsevents_send_event( "Shutterless Collection Aborted");
+	lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+	lsredis_setstr( collection_running, "False");
+	return 1;
+      }
       pthread_mutex_unlock( &detector_state_mutex);
-      lslogging_log_message( "md2cmds_shutterless: Timed out waiting for detector to be armed.  Shutterless Collection aborted.");
-      lsredis_sendStatusReport( 1, "Timed out waiting for detector to be armed.");
-      
-      lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
-      
-      lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
-      lsevents_send_event( "Shutterless Collection Aborted");
-      lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
-      lsredis_setstr( collection_running, "False");
-      return 1;
     }
-    pthread_mutex_unlock( &detector_state_mutex);
-    lslogging_log_message("shutterless 4");
+
+    lslogging_log_message("shutterless 4b");
     
     md2cmds_setAxis( aligny, 'Y', lsredis_getl( aligny->coord_num), 1);
     md2cmds_setAxis( cenx,   'Z', lsredis_getl( cenx->coord_num),   1);
@@ -2242,17 +2336,19 @@ int md2cmds_shutterless( const char *dummy) {
     
     lslogging_log_message("shutterless 7");
     
-    //
-    // Signal the detector to start reading out
-    //
-    lsredis_setstr( detector_state_redis, "{\"state\": \"Done\", \"expires\": %lld}", (long long)time(NULL)*1000 + 20000);
-    lsredis_sendStatusReport( 0, "Reading Shutterless %d", sindex);
-
+    if (!explore_mode) {
+      //
+      // Signal the detector to start reading out
+      //
+      lsredis_setstr( detector_state_redis, "{\"state\": \"Done\", \"expires\": %lld}", (long long)time(NULL)*1000 + 20000);
+      lsredis_sendStatusReport( 0, "Reading Shutterless %d", sindex);
+    }
+    
     //
     // Update the shot status
     //
-    lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Writing')", skey);
-    lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Writing\"}", skey);
+    lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Done')", skey);
+    lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Done\"}", skey);
     
     lslogging_log_message("shutterless 7.1");
     
@@ -2277,28 +2373,28 @@ int md2cmds_shutterless( const char *dummy) {
     timeout.tv_sec  = now.tv_sec + 60;
     timeout.tv_nsec = now.tv_nsec;
     
-    err = 0;
-    pthread_mutex_lock( &detector_state_mutex);
-    while (err == 0 && detector_state_int != 4) {
-      err = pthread_cond_timedwait( &detector_state_cond, &detector_state_mutex, &timeout);
-    }
+    if (!explore_mode) {
+      err = 0;
+      pthread_mutex_lock( &detector_state_mutex);
+      while (err == 0 && detector_state_int != 4) {
+	err = pthread_cond_timedwait( &detector_state_cond, &detector_state_mutex, &timeout);
+      }
     
-    if( err == ETIMEDOUT) {
+      if( err == ETIMEDOUT) {
+	pthread_mutex_unlock( &detector_state_mutex);
+	lslogging_log_message( "md2cmds_shutterless: Timed out waiting for detector to finish up.  Shutterless Collection aborted.");
+	lsredis_sendStatusReport( 1, "Timed out waiting for detector to finish.");
+      
+	lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
+      
+	lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
+	lsevents_send_event( "Shutterless Collection Aborted");
+	lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+	lsredis_setstr( collection_running, "False");
+	return 1;
+      }
       pthread_mutex_unlock( &detector_state_mutex);
-      lslogging_log_message( "md2cmds_shutterless: Timed out waiting for detector to finish up.  Shutterless Collection aborted.");
-      lsredis_sendStatusReport( 1, "Timed out waiting for detector to finish.");
-      
-      lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
-      
-      lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
-      lsevents_send_event( "Shutterless Collection Aborted");
-      lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
-      lsredis_setstr( collection_running, "False");
-      return 1;
     }
-    pthread_mutex_unlock( &detector_state_mutex);
-
-
   }
   lslogging_log_message("shutterless Data Collection Done");
 
@@ -3440,93 +3536,6 @@ int md2cmds_set( const char *cmd) {
   }
   return 0;
 }
-
-int md2cmds_movePreset( const char *cmd) {
-  static const char *id = "md2cmds_movePreset";
-  int err, i;
-  lspmac_motor_t *mp;
-  regmatch_t pmatch[32];
-  char motor_name[64];
-  char preset_name[64];
-  char cp[512];
-  int preset_index;
-  double move_time;
-  
-  if( strlen(cmd) > sizeof( cp)-1) {
-    lslogging_log_message( "%s: command too long '%s'", id, cmd);
-    return 1;
-  }
-
-  lslogging_log_message( "%s: recieved '%s'", id, cmd);
-
-  // use the set_regex for movePreset
-  err = regexec( &md2cmds_cmd_set_regex, cmd, 32, pmatch, REG_EXTENDED);
-  if( err) {
-    lslogging_log_message( "%s: no match found from '%s'", id, cmd);
-    return 1;
-  }
-
-  //
-  // Find the last entry as that is the name of our preset
-  //
-  preset_index = -1;
-  for( i=1; i<32; i++) {
-    if( (pmatch[i].rm_so == -1) || (pmatch[i].rm_eo == pmatch[i].rm_so)) {
-      preset_index = i-1;
-      break;
-    }
-    lslogging_log_message( "%s: %d '%.*s'", id, i, pmatch[i].rm_eo - pmatch[i].rm_so, cmd+pmatch[i].rm_so);
-  }
-
-  if (preset_index < 3) {
-    lslogging_log_message("%s: bad preset index %d", id, preset_index);
-    return 1;
-  }
-
-  //
-  // get preset name
-  //
-  snprintf(preset_name, sizeof(preset_name)-1, "%.*s", pmatch[preset_index].rm_eo - pmatch[preset_index].rm_so, cmd+pmatch[preset_index].rm_so);
-  preset_name[sizeof(preset_name)-1] = 0;
-
-  lslogging_log_message("%s: preset name: %s", id, preset_name);
-
-  //
-  // Loop through the motors and move them to the requested location
-  //
-  // TODO: move them at the same time.
-  //
-  for(i=2; i<preset_index; i++) {
-    snprintf(motor_name, sizeof(motor_name)-1, "%.*s", pmatch[i].rm_eo - pmatch[i].rm_so, cmd+pmatch[i].rm_so);
-    motor_name[sizeof(motor_name)-1] = 0;
-    lslogging_log_message("%s: motor name: %s", id, motor_name);
-
-    mp = lspmac_find_motor_by_name( motor_name);
-    if( mp == NULL) {
-      lslogging_log_message( "%s: could not find motor '%s'", id, cp);
-      return 1;
-    }
-
-    err = lspmac_est_move_time( &move_time, NULL,
-				mp, 1, preset_name, 0.0,
-				NULL);
-
-    if( err) {
-      lsredis_sendStatusReport( 1, "Failed to move motor %s to '%s'", mp->name, preset_name);
-      return err;
-    }
-
-    err = lspmac_est_move_time_wait( move_time + 10.0, 0, mp, NULL);
-
-    if( err) {
-      lsredis_sendStatusReport( 1, "Timed out waiting %.1f seconds for motor %s to finish moving", move_time+10.0, mp->name);
-    } else {
-      lsredis_sendStatusReport( 0, "%s", "");
-    }
-  }
-  return 0;
-}
-
 
 /** Our worker thread
  */
