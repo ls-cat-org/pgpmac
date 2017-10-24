@@ -96,7 +96,13 @@ int detector_state_machine_state() {
     
   now = time(NULL);
     
-  if (expires == 0) {
+  //
+  // Init state does not expire.  If expires is zero or state_int is
+  // zero then we do not consider the current state to have expired.
+  // Note that the Init state is the only one that does not expire so
+  // the following test appears to be a tad redundant.
+  //
+  if (expires == 0 || detector_state_int == 0) {
     detector_state_expired = 0;
   } else {
     if (expires < (long long)now*1000) {
@@ -107,26 +113,25 @@ int detector_state_machine_state() {
   }
     
   if (detector_state_expired) {
-    if (detector_state_int == 4) {
-      //
-      // Tell the detector to read out, but if it doesn't in 25 seconds just reset things
-      //
-      json_integer_set(detector_expires_json, (long long)now*1000 + 20000);
-      json_string_set(detector_state_json, "Done");
+    //
+    // Reset the detector
+    //
+    json_integer_set(detector_expires_json, 0);
+    json_string_set(detector_state_json, "Init");
 
-      set_new_state = 1;
-      newTimeout = 25;
-    } else {
-      json_integer_set(detector_expires_json, 0);
-      json_string_set(detector_state_json, "Init");
-
-      set_new_state = 1;
-      newTimeout = 60;
-    }
+    set_new_state = 1;
+    newTimeout = 60;
   } else {
+    //
+    // Wait a little beyond the expiration timestamp before we check
+    // again.
+    //
     if (expires) {
       newTimeout = expires/1000 - now + 1;
     } else {
+      //
+      // Give it 10 seconds
+      //
       newTimeout = 10;
     }
   }
