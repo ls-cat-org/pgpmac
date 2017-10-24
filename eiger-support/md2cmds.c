@@ -1891,8 +1891,6 @@ void md2cmds_setAxis(lspmac_motor_t *mp, char axis, int old_coord, int new_coord
 
 }
 
-
-
 /** Shutterless data collection
  ** \param dummy Unused
  ** returns non-zero on error
@@ -1936,6 +1934,13 @@ int md2cmds_shutterless( const char *dummy) {
   double move_time;
   int mmask;
   int explore_mode;
+  int n_data_files;
+  char file_name_temp[256];
+  json_t *j_tmp_obj;
+  json_t *j_expected_files;
+  lsredis_obj_t *expected_files;
+  char *expected_files_str;
+  int i;
 
   //
   // Make a guess at the correct value.  TODO: measure and place in
@@ -1947,6 +1952,8 @@ int md2cmds_shutterless( const char *dummy) {
   lslogging_log_message("shutterless 0");
 
   lsevents_send_event("Shutterless Collection Starting");
+  expected_files = lsredis_get_obj("expected_files");
+
   collection_running = lsredis_get_obj("collection.running");
   lsredis_setstr(collection_running, "True");
 
@@ -2031,6 +2038,20 @@ int md2cmds_shutterless( const char *dummy) {
       lsredis_setstr(collection_running, "False");
       lspg_nextshot_done();
       break;
+    }
+
+    //
+    // Calculate the number of datafiles to have the xfer process look for.
+    //
+    // The number of images per datafile is configurable with the
+    // defaule being 1000.  TODO: use redis to store this value, have
+    // eigerServer enforce it and read it here instead of assuming
+    // it's 1000.
+    //
+    if (strcmp(lspg_nextshot.stype, "shutterless")==0) {
+      n_data_files = (lspg_nextshot.dsfrate * lspg_nextshot.dsrange)/1000 +1;
+    } else {
+      n_data_files = 1;
     }
 
     //
@@ -2396,6 +2417,27 @@ int md2cmds_shutterless( const char *dummy) {
       pthread_mutex_unlock( &detector_state_mutex);
     }
   }
+
+  j_expected_files = json_array();
+  
+  snprintf(file_name_temp, sizeof(file_name_temp)-1, "%s/%s_master.h5", lspg_nextshot.dsdir, lspg_nextshot.sfn);
+  file_name_temp[sizeof(file_name_temp)-1] = 0;
+  j_tmp_obj = json_string(file_name_temp);
+  json_array_append_new(j_expected_files, j_tmp_obj);
+
+  for (i=0; i< n_data_files; i++) {
+    snprintf(file_name_temp, sizeof(file_name_temp)-1, "%s/%s_data_%06d.h5", lspg_nextshot.dsdir, lspg_nextshot.sfn, i+1);
+    file_name_temp[sizeof(file_name_temp)-1] = 0;
+    j_tmp_obj = json_string(file_name_temp);
+    json_array_append_new(j_expected_files, j_tmp_obj);
+  }
+  expected_files_str = json_dumps(j_expected_files, 0);
+  lsredis_setstr(expected_files, expected_files_str);
+  free(expected_files_str);
+  json_decref(j_expected_files);
+
+  lslogging_log_message("shutterless Data Collection Expecting %d data files for file %s/%s", n_data_files, lspg_nextshot.dsdir, lspg_nextshot.sfn);
+
   lslogging_log_message("shutterless Data Collection Done");
 
   return 0;

@@ -25,9 +25,13 @@ install: pgpmac
 	-@rm /tmp/pgpmac.log 2>/dev/null
 
 .SILENT: clean
-
 clean:
 	-@rm *.o pgpmac 2>/dev/null
+
+.SILENT: distclean
+distclean:
+	-@rm *.o pgpmac 2>/dev/null
+	-@rm ls-cat-pgpmac-*.gz
 
 docs:   *.c *.h Makefile
 	/usr/local/bin/doxygen
