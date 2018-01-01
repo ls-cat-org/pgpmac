@@ -758,6 +758,8 @@ int main(
 
   md2cmds_init();
 
+  lsraster_init();
+
   setupTermWindow();
 
 
@@ -770,6 +772,8 @@ int main(
     ourThreads[nOurThreads++] = lspg_run();
 
   ourThreads[nOurThreads++] = md2cmds_run();
+
+  ourThreads[nOurThreads++] = lsraster_run();
 
   pthread_create( &sigterm_thread, NULL, sigtermWorker, NULL);
   ourThreads[nOurThreads++] = &sigterm_thread;

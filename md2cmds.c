@@ -36,6 +36,8 @@ All positions are in millimeters or degrees.
 
  nonrotate                                   Used for local centering when we do not want to trigger movie making
 
+ raster <key>				     Trigger raster scan for key
+
  rotate                                      Used for remote centering where we do want to make a movie
 
  run <motor> <command>                       Run a special command on <motor> where <command> is one of "home", "spin", "stop"
@@ -151,6 +153,7 @@ int md2cmds_moveAbs(          const char *);
 int md2cmds_moveRel(          const char *);
 int md2cmds_phase_change(     const char *);
 int md2cmds_preSet(           const char *);
+int md2cmds_raster(           const char *);
 int md2cmds_run_cmd(          const char *);
 int md2cmds_rotate(           const char *);
 int md2cmds_nonrotate(        const char *);
@@ -172,6 +175,7 @@ static md2cmds_cmd_kv_t md2cmds_cmd_kvs[] = {
   { "moveAbs",          md2cmds_moveAbs},
   { "moveRel",          md2cmds_moveRel},
   { "preSet",           md2cmds_preSet},
+  { "raster",           md2cmds_raster},
   { "run",              md2cmds_run_cmd},
   { "test",             md2cmds_test},
   { "set",              md2cmds_set},
@@ -1202,11 +1206,6 @@ int md2cmds_moveRel(
   return err;
 }
 
-
-
-
-
-
 /** Go to the manual mount phase
  */
 int md2cmds_phase_manualMount() {
@@ -1257,8 +1256,6 @@ int md2cmds_phase_manualMount() {
   return 0;
 }
 
-
-
 /** Go to robot mount phase
  *  Normally this would not be called as md2cmds_transfer would put things into the correct position
  *  If you need to change the behaviour of this function be sure to change md2cmds_transfer as well.
@@ -1277,6 +1274,8 @@ int md2cmds_phase_robotMount() {
   return md2cmds_robotMount_finish( move_time, mmask);
 }
 
+/** Go to fluorescence mode
+ */
 int md2cmds_phase_fluorescence() {
   double move_time;
   int mmask, err;
@@ -1318,8 +1317,6 @@ int md2cmds_phase_fluorescence() {
 
   return 0;
 }
-
-
 
 /** Go to center phase
  */
@@ -1392,6 +1389,8 @@ int md2cmds_phase_fastCentering() {
   return 0;
 }
 
+/* Go to centering mode without change the zoom
+ */
 int md2cmds_phase_centerNoZoom() {
   double move_time;
   int mmask, err;
@@ -1427,8 +1426,6 @@ int md2cmds_phase_centerNoZoom() {
   lsevents_send_event( "Mode center no zoom Done");
   return 0;
 }
-
-
 
 /** Go to data collection phase
  */
@@ -1525,7 +1522,6 @@ int md2cmds_phase_beamLocation() {
   return 0;
 }
 
-
 /** Go to safe phase
  */
 int md2cmds_phase_safe() {
@@ -1575,6 +1571,8 @@ int md2cmds_phase_safe() {
   return 0;
 }
 
+/** Set centering and alignment motors to a predefined point
+ */
 int md2cmds_goto_point( const char *ccmd) {
   char *cmd;		// command that brought us here
   char *ignore;	        // likely the string 'gotoPoint' since that is how we were called
@@ -1743,9 +1741,6 @@ int md2cmds_phase_change( const char *ccmd) {
   return err;
 }
 
-
-
-
 /** Move the centering and alignment tables
  */
 void md2cmds_mvcenter_move(
@@ -1801,7 +1796,6 @@ void md2cmds_maybe_done_moving_cb( char *event) {
   pthread_mutex_unlock( &md2cmds_moving_mutex);
   
 }
-
 
 /** Track motors homing
  */
@@ -1871,6 +1865,43 @@ void md2cmds_setAxis(lspmac_motor_t *mp, char axis, int old_coord, int new_coord
 
 }
 
+/** call up a predifined raster line 
+ *
+ */
+
+int md2cmds_raster( const char *cmd) {
+  static const char *id = "md2cmds_raster";
+  int err, i;
+  regmatch_t pmatch[16];
+  char key[256];
+  
+  if( strlen(cmd) > sizeof( key)-1) {
+    lslogging_log_message( "%s: command too long '%s'", id, cmd);
+    return 1;
+  }
+  
+  err = regexec( &md2cmds_cmd_regex, cmd, 16, pmatch, 0);
+  if( err) {
+    lslogging_log_message( "%s: no match found from '%s'", id, cmd);
+    return 1;
+  }
+
+  for( i=0; i<16; i++) {
+    if( pmatch[i].rm_so == -1)
+      continue;
+    lslogging_log_message( "%s: %d '%.*s'", id, i, pmatch[i].rm_eo - pmatch[i].rm_so, cmd+pmatch[i].rm_so);
+  }
+
+  //
+  // get our key
+  //
+  snprintf( key, sizeof( key)-1, "%.*s", pmatch[4].rm_eo - pmatch[4].rm_so, cmd+pmatch[4].rm_so);
+  key[sizeof( key)-1] = 0;
+
+  lsraster_step(key);
+
+  return 0;
+}
 
 /** Segment data collection
  ** \param dummy Unused

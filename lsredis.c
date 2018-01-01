@@ -1485,6 +1485,25 @@ void lsredis_config() {
 }
 
 
+/** Return the head string
+ *  But only after we've read it.
+ *  
+ */
+const char *lsredis_get_head() {
+  const char *id = "lsredis_get_head";
+
+  (void) (id);
+
+  pthread_mutex_lock( &lsredis_config_mutex);
+  while( lsredis_head == NULL) {
+    pthread_cond_wait( &lsredis_config_cond, &lsredis_config_mutex);
+  }
+  pthread_mutex_unlock( &lsredis_config_mutex);
+
+  return(lsredis_head);
+}
+
+
 /** service the socket requests
  */
 void lsredis_fd_service( struct pollfd *evt) {
@@ -1631,7 +1650,6 @@ void *lsredis_worker(  void *dummy) {
     }
   }
 }
-
 
 pthread_t *lsredis_run() {
   pthread_create( &lsredis_thread, NULL, lsredis_worker, NULL);

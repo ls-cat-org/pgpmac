@@ -13,8 +13,8 @@ VERSION= 1.1
 #
 PG_INCLUDE = -I /usr/include/postgresql
 
-pgpmac: pgpmac.c pgpmac.h lspg.o lsredis.o lspmac.o md2cmds.o lslogging.o lsevents.o lstimer.o lstest.o Makefile
-	gcc -g -pthread -o pgpmac pgpmac.c  ${PG_INCLUDE} -Wall md2cmds.o lspmac.o lspg.o lsredis.o lslogging.o lsevents.o lstimer.o lstest.o -lpq -lncurses -lpthread -lrt -lhiredis -lm
+pgpmac: pgpmac.c pgpmac.h lspg.o lsredis.o lspmac.o md2cmds.o lslogging.o lsevents.o lstimer.o lstest.o lsraster.o Makefile
+	gcc -g -pthread -o pgpmac pgpmac.c  ${PG_INCLUDE} -Wall md2cmds.o lspmac.o lspg.o lsredis.o lslogging.o lsevents.o lstimer.o lstest.o lsraster.o -lpq -lncurses -lpthread -lrt -lhiredis -lm
 
 dist:
 	ln -fs . ls-cat-pgpmac-$(VERSION)
@@ -33,6 +33,9 @@ clean:
 docs:   *.c *.h Makefile
 	/usr/bin/doxygen
 	(cd docs/latex && make)
+
+lsraster.o: lsraster.c pgpmac.h Makefile
+	gcc -g -pthread -c lsraster.c ${PG_INCLUDE} -Wall
 
 lstimer.o: lstimer.c pgpmac.h Makefile
 	gcc -g -pthread -c lstimer.c ${PG_INCLUDE} -Wall
