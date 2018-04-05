@@ -33,6 +33,9 @@
 #include <search.h>
 #include <ctype.h>
 #include <jansson.h>
+#include <syslog.h>
+
+#define FILEID __FILE__ " "
 
 /** Redis Object
  *  Basic object whose value is sychronized with our redis db
