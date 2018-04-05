@@ -720,9 +720,7 @@ int main(
   //
   // Everyone needs to be able to log messages
   lslogging_init();
-  // no need to save the thread since we'll not be running in one.
-  lslogging_run();
-  //  ourThreads[nOurThreads++] = lslogging_run();
+  ourThreads[nOurThreads++] = lslogging_run();
 
   // Everyone needs to send and listen for events
   //
