@@ -23,7 +23,7 @@ dist:
 
 install: pgpmac
 	install -p pgpmac /usr/local/bin
-	-@rm /tmp/pgpmac.log 2>/dev/null
+	./maybe_install_pgpmac_rsyslogd.sh
 
 .SILENT: clean
 
