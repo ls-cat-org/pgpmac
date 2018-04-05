@@ -73,8 +73,13 @@ void lslogging_log_message(char *fmt, ...) {
 /** Log most events
  */
 void lslogging_event_cb( char *event) {
-  if( strcmp( event, "Timer Update KVs") != 0 && strstr( event, "accepted")==NULL && strstr( event, "queued")==NULL && strstr( event, "Heartbeat")==NULL) {
-    lslogging_log_message( "EVENT: %s", event);
+  if(
+     strcmp(event, "Timer Update KVs") != 0
+     && strstr(event, "accepted")==NULL
+     && strstr(event, "queued")==NULL
+     && strstr(event, "Check Detector Position") == NULL
+     && strstr(event, "Heartbeat")==NULL) {
+    lslogging_log_message("EVENT: %s", event);
   }
 }
 
