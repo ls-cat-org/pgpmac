@@ -114,14 +114,14 @@ void *lslogging_worker(
 		      void *dummy	/**< [in] Required by protocol but unused	*/
 		      ) {
 
-
   struct tm coarsetime;
   char tstr[64];
   unsigned int msecs;
   unsigned int off;
 
+  pthread_mutex_lock( &lslogging_mutex);
+
   while( 1) {
-    pthread_mutex_lock( &lslogging_mutex);
     while( lslogging_on == lslogging_off) {
       pthread_cond_wait( &lslogging_cond, &lslogging_mutex);
     }
@@ -142,8 +142,6 @@ void *lslogging_worker(
       //
       pgpmac_printf( "\n%s", lslogging_queue[off].lmsg);
     }
-
-    pthread_mutex_unlock( &lslogging_mutex);
   }
 }
 
