@@ -35,11 +35,12 @@ typedef struct lstimer_list_struct {
 
 static lstimer_list_t lstimer_list[LSTIMER_LIST_LENGTH];	//!< Our timer list
 
-static pthread_t lstimer_thread;	//!< the timer thread
-static pthread_mutex_t lstimer_mutex;	//!< protect the timer list
-static pthread_cond_t  lstimer_cond;	//!< allows us to be idle when there is nothing to do
-static timer_t lstimer_timerid;		//!< our real time timer
-static int new_timer = 0;		//!< indicate that a new timer exists and a call to service_timers is required
+static pthread_t lstimer_thread;		//!< the timer thread
+static pthread_mutex_t lstimer_mutex;		//!< protect the timer list
+static pthread_cond_t  lstimer_cond;		//!< allows us to be idle when there is nothing to do
+static timer_t lstimer_timerid;			//!< our real time timer
+static int new_timer = 0;			//!< indicate that a new timer exists and a call to service_timers is required
+static int check_timers = 0;			//!< set by timer interupt
 
 /** Unsets all timers for the given event
  */
@@ -47,13 +48,25 @@ void lstimer_unset_timer( char *event) {
   int i;
 
   pthread_mutex_lock( &lstimer_mutex);
+
   for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
     if( strcmp( event, lstimer_list[i].event) == 0 && lstimer_list[i].shots != 0) {
       lstimer_list[i].shots = 0;
-      lstimer_active_timers = lstimer_active_timers>0 ? lstimer_active_timers-1 : 0;  // shouldn't need to test for zero
-      //lslogging_log_message("lstimer_unset_timer: unset timer %d for event %s", i, event);
+      if (lstimer_active_timers > 0) {
+	lstimer_active_timers--;
+      }
+      if (lstimer_active_timers == 0) {
+	break;
+      }
     }
   }
+
+  // Set this flag and trigger the signal in case a timer interupt
+  // came in while we were futzing around.
+  //
+  check_timers = 1;
+  pthread_cond_signal( &lstimer_cond);
+
   pthread_mutex_unlock( &lstimer_mutex);
 }
 
@@ -65,8 +78,17 @@ void lstimer_unset_timer( char *event) {
  * \param nsecs  Number of nano-seconds to run in addition to secs
  */
 void lstimer_set_timer( char *event, int shots, unsigned long int secs, unsigned long int nsecs) {
+  static const char *id = FILEID "lstimer_set_timer";
   int i;
   struct timespec now;
+
+  // shots == 0 is a no-op
+  //
+  if (shots == 0) {
+    lslogging_log_message("%s: tried to set a timer with 0 shots for event %s", id, event);
+    return;
+  }
+
 
   // Time we were called.  Delay is based on call time, not queued time
   //
@@ -74,59 +96,71 @@ void lstimer_set_timer( char *event, int shots, unsigned long int secs, unsigned
   
   pthread_mutex_lock( &lstimer_mutex);
 
-  // Make sure our event is registered (saves a tiny bit of time later)
-  //
-  lsevents_preregister_event( event);
-
-
-  for (i=0; i<LSTIMER_LIST_LENGTH; i++) {
-    if (strcmp(lstimer_list[i].event, event) == 0) {
-      if (lstimer_list[i].shots != 0) {
-	// We'll increment this later so if we don't do this we'll
-	// incorrectly be adding one.
-	lstimer_active_timers--;
-	new_timer--;
+  do {
+    // Make sure our event is registered (saves a tiny bit of time later)
+    //
+    // Return value is the current list of callbacks trigger by our
+    // event, possibly NULL.
+    //
+    lsevents_preregister_event( event);
+    
+    //
+    // See if we already have an active timer for this event.
+    //
+    for (i=0; i<LSTIMER_LIST_LENGTH; i++) {
+      if (strcmp(lstimer_list[i].event, event) == 0) {
+	if (lstimer_list[i].shots != 0) {
+	  // We'll increment this further down so if we don't do this
+	  // now we'll be incorrectly be adding one later.
+	  lstimer_active_timers--;
+	  new_timer--;
+	}
+	break;
       }
+    }
+    
+    //
+    // No existing timer for this event exists.  Take over the first
+    // inactive time we can find.
+    //
+    if (i == LSTIMER_LIST_LENGTH) {
+      for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
+	if( lstimer_list[i].shots == 0)
+	  break;
+      }
+    }
+    
+    //
+    // Well, this is awkward.  There are no more timer slots available.
+    // Probably there is a big bad bug somewhere.
+    //
+    if( i == LSTIMER_LIST_LENGTH) {
+      lslogging_log_message( "lstimer_set_timer: out of timers for event: %s, shots: %d,  secs: %u, nsecs: %u",
+			     event, shots, secs, nsecs);
       break;
     }
-  }
 
-  if (i == LSTIMER_LIST_LENGTH) {
-    for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
-      if( lstimer_list[i].shots == 0)
-	break;
-    }
-  }
-
-  if( i == LSTIMER_LIST_LENGTH) {
-    pthread_mutex_unlock( &lstimer_mutex);
+    //
+    // Set up our new timer
+    //
+    strncpy( lstimer_list[i].event, event, LSEVENTS_EVENT_LENGTH - 1);
+    lstimer_list[i].event[LSEVENTS_EVENT_LENGTH - 1] = 0;
+    lstimer_list[i].shots        = shots;
+    lstimer_list[i].delay_secs   = secs;
+    lstimer_list[i].delay_nsecs  = nsecs;
     
-    lslogging_log_message( "lstimer_set_timer: out of timers for event: %s, shots: %d,  secs: %u, nsecs: %u",
-			  event, shots, secs, nsecs);
-    return;
-  }
-
-  strncpy( lstimer_list[i].event, event, LSEVENTS_EVENT_LENGTH - 1);
-  lstimer_list[i].event[LSEVENTS_EVENT_LENGTH - 1] = 0;
-  lstimer_list[i].shots        = shots;
-  lstimer_list[i].delay_secs   = secs;
-  lstimer_list[i].delay_nsecs  = nsecs;
-
-  lstimer_list[i].next_secs    = secs + now.tv_sec + (now.tv_nsec + nsecs) / 1000000000;
-  lstimer_list[i].next_nsecs   = (now.tv_nsec + nsecs) % 1000000000;
-  lstimer_list[i].last_secs    = 0;
-  lstimer_list[i].last_nsecs   = 0;
-  
-  lstimer_list[i].ncalls       = 0;
-  lstimer_list[i].init_secs    = now.tv_sec;
-  lstimer_list[i].init_nsecs   = now.tv_nsec;
-
-  if( shots != 0) {
+    lstimer_list[i].next_secs    = secs + now.tv_sec + (now.tv_nsec + nsecs) / 1000000000;
+    lstimer_list[i].next_nsecs   = (now.tv_nsec + nsecs) % 1000000000;
+    lstimer_list[i].last_secs    = 0;
+    lstimer_list[i].last_nsecs   = 0;
+    
+    lstimer_list[i].ncalls       = 0;
+    lstimer_list[i].init_secs    = now.tv_sec;
+    lstimer_list[i].init_nsecs   = now.tv_nsec;
+    
     lstimer_active_timers++;
     new_timer++;
-  }
-
-  //lslogging_log_message("lstimer_set_timer: active_timers=%d, new_timer=%d, event=%s", lstimer_active_timers, new_timer, lstimer_list[i].event);
+  } while (0);
 
   pthread_cond_signal(  &lstimer_cond);
   pthread_mutex_unlock( &lstimer_mutex);
@@ -158,7 +192,7 @@ static void service_timers() {
   then.tv_nsec = (now.tv_nsec + LSTIMER_RESOLUTION_NSECS) % 1000000000;
 
   found_active = 0;
-  for( i=0; i<lstimer_active_timers && i<LSTIMER_LIST_LENGTH; i++) {
+  for( i=0; (found_active < lstimer_active_timers) && (i<LSTIMER_LIST_LENGTH); i++) {
     p = &(lstimer_list[i]);
     if( p->shots != 0) {
       found_active++;
@@ -178,12 +212,19 @@ static void service_timers() {
 	  //
 	  // Take this timer out of the mix
 	  lstimer_active_timers--;
+	  //
+	  // And rejigger found_active so we do not stop looking for active timers too soon
+	  //
+	  found_active--;
 	} else {
 	  p->next_secs  = p->init_secs + (p->ncalls+1) * p->delay_secs + (p->init_nsecs + (p->ncalls+1)*p->delay_nsecs)/1000000000;
 	  p->next_nsecs = (p->init_nsecs + (p->ncalls+1)*p->delay_nsecs) % 1000000000;
 	}
       }
 
+      //
+      // See when we need to come back here again next
+      //
       if( found_active == 1) {
 	soonest.tv_sec  = p->next_secs;
 	soonest.tv_nsec = p->next_nsecs;
@@ -196,6 +237,9 @@ static void service_timers() {
     }
   }
 
+  //
+  // set up the next interupt
+  //
   if( soonest.tv_sec != 0) {
     its.it_value.tv_sec     = soonest.tv_sec;
     its.it_value.tv_nsec    = soonest.tv_nsec;
@@ -208,9 +252,12 @@ static void service_timers() {
 /** Service the signal
  */
 static void handler( int sig, siginfo_t *si, void *dummy) {
-  pthread_mutex_lock( &lstimer_mutex);
-  service_timers();
-  pthread_mutex_unlock( &lstimer_mutex);
+  
+  if (pthread_mutex_trylock(&lstimer_mutex) == 0) {
+    check_timers = 1;
+    pthread_cond_signal( &lstimer_cond);
+    pthread_mutex_unlock(&lstimer_mutex);
+  }
 }
 
 /** Our worker.
@@ -255,14 +302,13 @@ static void *lstimer_worker(
   while( 1) {
     pthread_mutex_lock( &lstimer_mutex);
 
-    while( new_timer == 0)
+    while( new_timer == 0 && check_timers == 0)
       pthread_cond_wait( &lstimer_cond, &lstimer_mutex);
 
     // ignore signals so we don't service the signal while we are already in the
     // service routine
     //
     pthread_sigmask( SIG_SETMASK, &mask, NULL);
-    
 
     //
     // Setting up the timer interval is in the handler
@@ -271,9 +317,10 @@ static void *lstimer_worker(
     service_timers();
 
     //
-    // Reset our flag
+    // Reset our flags
     //
     new_timer = 0;
+    check_timers = 0;
 
     pthread_mutex_unlock( &lstimer_mutex);
 
@@ -288,18 +335,18 @@ static void *lstimer_worker(
 /** Initialize the timer list and pthread stuff.
  */
 void lstimer_init() {
-  pthread_mutexattr_t mutex_initializer;
   int i;
 
   for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
     lstimer_list[i].shots = 0;
   }
 
-
-  pthread_mutexattr_init( &mutex_initializer);
-  pthread_mutexattr_settype( &mutex_initializer, PTHREAD_MUTEX_RECURSIVE);
-
-  pthread_mutex_init( &lstimer_mutex, &mutex_initializer);
+  //
+  // recursive is needed to handle a race condition where the interupt
+  // triggers when we have the mutex but before we can turn off the
+  // signal.
+  //
+  pthread_mutex_init( &lstimer_mutex, NULL);
   pthread_cond_init(  &lstimer_cond, NULL);
 }
 
