@@ -1982,7 +1982,18 @@ int md2cmds_shutterless( const char *dummy) {
 
   lslogging_log_message("explore_mode: %d detector_state_int: %d", explore_mode, ds);
 
-  if ((explore_mode && ds != 3) || (!explore_mode && ds != 1)) {
+  clock_gettime( CLOCK_REALTIME, &now);
+  timeout.tv_sec  = now.tv_sec + 20;
+  timeout.tv_nsec = now.tv_nsec;
+      
+  err = 0;
+  pthread_mutex_lock(&detector_state_mutex);
+  while (err == 0 && ((explore_mode && detector_state_int != 3) || (!explore_mode && detector_state_int != 1))) {
+    err = pthread_cond_timedwait(&detector_state_cond, &detector_state_mutex, &timeout);
+  }
+  pthread_mutex_unlock(&detector_state_mutex);
+  
+  if (err == ETIMEDOUT) {
     //
     // The detector is not ready or is not armed, abort now
     //
@@ -2258,9 +2269,9 @@ int md2cmds_shutterless( const char *dummy) {
       while (err == 0 && detector_state_int != 3) {
 	err = pthread_cond_timedwait( &detector_state_cond, &detector_state_mutex, &timeout);
       }
+      pthread_mutex_unlock( &detector_state_mutex);
       
       if( err == ETIMEDOUT) {
-	pthread_mutex_unlock( &detector_state_mutex);
 	lslogging_log_message( "md2cmds_shutterless: Timed out waiting for detector to be armed.  Shutterless Collection aborted.");
 	lsredis_sendStatusReport( 1, "Timed out waiting for detector to be armed.");
 	
@@ -2272,7 +2283,6 @@ int md2cmds_shutterless( const char *dummy) {
 	lsredis_setstr( collection_running, "False");
 	return 1;
       }
-      pthread_mutex_unlock( &detector_state_mutex);
     }
 
     lslogging_log_message("shutterless 4b");
@@ -2391,7 +2401,7 @@ int md2cmds_shutterless( const char *dummy) {
     // Wait for the detector to be done
     //
     clock_gettime( CLOCK_REALTIME, &now);
-    timeout.tv_sec  = now.tv_sec + 60;
+    timeout.tv_sec  = now.tv_sec + 20;
     timeout.tv_nsec = now.tv_nsec;
     
     if (!explore_mode) {
@@ -2400,9 +2410,9 @@ int md2cmds_shutterless( const char *dummy) {
       while (err == 0 && detector_state_int != 4) {
 	err = pthread_cond_timedwait( &detector_state_cond, &detector_state_mutex, &timeout);
       }
-    
+      pthread_mutex_unlock( &detector_state_mutex);
+
       if( err == ETIMEDOUT) {
-	pthread_mutex_unlock( &detector_state_mutex);
 	lslogging_log_message( "md2cmds_shutterless: Timed out waiting for detector to finish up.  Shutterless Collection aborted.");
 	lsredis_sendStatusReport( 1, "Timed out waiting for detector to finish.");
       
@@ -2414,7 +2424,6 @@ int md2cmds_shutterless( const char *dummy) {
 	lsredis_setstr( collection_running, "False");
 	return 1;
       }
-      pthread_mutex_unlock( &detector_state_mutex);
     }
   }
 
