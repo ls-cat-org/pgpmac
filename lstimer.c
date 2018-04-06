@@ -39,8 +39,9 @@ static pthread_t lstimer_thread;		//!< the timer thread
 static pthread_mutex_t lstimer_mutex;		//!< protect the timer list
 static pthread_cond_t  lstimer_cond;		//!< allows us to be idle when there is nothing to do
 static timer_t lstimer_timerid;			//!< our real time timer
-static int new_timer = 0;			//!< indicate that a new timer exists and a call to service_timers is required
+static int new_timer    = 0;			//!< indicate that a new timer exists and a call to service_timers is required
 static int check_timers = 0;			//!< set by timer interupt
+static int got_signal   = 0;
 
 /** Unsets all timers for the given event
  */
@@ -252,12 +253,7 @@ static void service_timers() {
 /** Service the signal
  */
 static void handler( int sig, siginfo_t *si, void *dummy) {
-  
-  if (pthread_mutex_trylock(&lstimer_mutex) == 0) {
-    check_timers = 1;
-    pthread_cond_signal( &lstimer_cond);
-    pthread_mutex_unlock(&lstimer_mutex);
-  }
+  got_signal = 1;
 }
 
 /** Our worker.
@@ -270,6 +266,8 @@ static void *lstimer_worker(
   struct sigevent  sev;
   struct sigaction sa;
   sigset_t mask;
+  struct timespec timeout, now;
+  int err;
 
   // See example at http://www.kernel.org/doc/man-pages/online/pages/man2/timer_create.2.html
   //
@@ -292,9 +290,8 @@ static void *lstimer_worker(
   timer_create( CLOCK_REALTIME, &sev, &lstimer_timerid);
 
 
-  // Block timer signal for now since we really 
-  // want to be sure we do not own a lock on the timer mutex
-  // while servicing the signal
+  //
+  // Prepare to block the timer signal while in the service routine
   //
   sigemptyset( &mask);
   sigaddset( &mask, SIGRTMIN);
@@ -302,8 +299,27 @@ static void *lstimer_worker(
   while( 1) {
     pthread_mutex_lock( &lstimer_mutex);
 
-    while( new_timer == 0 && check_timers == 0)
-      pthread_cond_wait( &lstimer_cond, &lstimer_mutex);
+    clock_gettime( CLOCK_REALTIME, &now);
+    timeout.tv_sec  = now.tv_sec + 1;
+    timeout.tv_nsec = now.tv_nsec;
+
+    err = 0;
+    while( new_timer == 0 && check_timers == 0 && err == 0) {
+      err = pthread_cond_timedwait( &lstimer_cond, &lstimer_mutex, &timeout);
+    }
+
+    //
+    // Should probably only go on timeout if got_signal is non zero
+    // but there should be no harm done if it's zero as long as the
+    // timeout interval is not too short
+    //
+    if (err == ETIMEDOUT) {
+      got_signal = 0;
+    } else {
+      if (err != 0) {
+	continue;
+      }
+    }
 
     // ignore signals so we don't service the signal while we are already in the
     // service routine
@@ -336,6 +352,10 @@ static void *lstimer_worker(
  */
 void lstimer_init() {
   int i;
+  pthread_mutexattr_t mutex_initializer;
+
+  pthread_mutexattr_init( &mutex_initializer);
+  pthread_mutexattr_settype( &mutex_initializer, PTHREAD_MUTEX_RECURSIVE);
 
   for( i=0; i<LSTIMER_LIST_LENGTH; i++) {
     lstimer_list[i].shots = 0;
@@ -346,7 +366,7 @@ void lstimer_init() {
   // triggers when we have the mutex but before we can turn off the
   // signal.
   //
-  pthread_mutex_init( &lstimer_mutex, NULL);
+  pthread_mutex_init( &lstimer_mutex, &mutex_initializer);
   pthread_cond_init(  &lstimer_cond, NULL);
 }
 
