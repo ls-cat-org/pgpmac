@@ -120,9 +120,8 @@ void *lslogging_worker(
   unsigned int msecs;
   unsigned int off;
 
-  pthread_mutex_lock( &lslogging_mutex);
-
   while( 1) {
+    pthread_mutex_lock( &lslogging_mutex);
     while( lslogging_on == lslogging_off) {
       pthread_cond_wait( &lslogging_cond, &lslogging_mutex);
     }
