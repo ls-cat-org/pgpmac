@@ -101,7 +101,7 @@ void lstimer_set_timer( char *event, int shots, unsigned long int secs, unsigned
     // Make sure our event is registered (saves a tiny bit of time later)
     //
     // Return value is the current list of callbacks trigger by our
-    // event, possibly NULL.
+    // event, Possibly NULL.
     //
     lsevents_preregister_event( event);
     
@@ -136,8 +136,8 @@ void lstimer_set_timer( char *event, int shots, unsigned long int secs, unsigned
     // Probably there is a big bad bug somewhere.
     //
     if( i == LSTIMER_LIST_LENGTH) {
-      lslogging_log_message( "lstimer_set_timer: out of timers for event: %s, shots: %d,  secs: %u, nsecs: %u",
-			     event, shots, secs, nsecs);
+      lslogging_log_message("%s: out of timers for event: %s, shots: %d,  secs: %u, nsecs: %u",
+			     id, event, shots, secs, nsecs);
       break;
     }
 
@@ -263,6 +263,7 @@ static void handler( int sig, siginfo_t *si, void *dummy) {
 static void *lstimer_worker(
 		     void *dummy		//!< [in] required by protocol
 		     ) {
+  static const char *id = FILEID "lstimer_worker";
   struct sigevent  sev;
   struct sigaction sa;
   sigset_t mask;
@@ -278,7 +279,7 @@ static void *lstimer_worker(
   sa.sa_sigaction = handler;
   sigemptyset(&sa.sa_mask);
   if (sigaction(SIGRTMIN, &sa, NULL) == -1) {
-    lslogging_log_message( "lstimer_worker: sigaction failed");
+    lslogging_log_message("%s: sigaction failed", id);
     exit( -1);
   }
 
