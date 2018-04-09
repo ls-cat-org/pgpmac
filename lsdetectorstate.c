@@ -37,6 +37,11 @@ void detector_state_push_queue(char *dummy_event) {
   pthread_mutex_unlock( &detector_state_queue_mutex);
 }
 
+//
+// Redis onSet function.
+//
+// Called whenever detector.state_machine is set.
+//
 int detector_state_machine_state() {
   static const char *id = FILEID "detector_state_machine_state";
   static char *(the_states[]) = {"Init", "Ready", "Arm", "Armed", "Done", NULL};
@@ -51,9 +56,10 @@ int detector_state_machine_state() {
   json_error_t json_err;
   json_t *detector_state_json;
   json_t *detector_expires_json;
-  int set_new_state;
+  json_t *detector_int_expires_json;
     
   detector_expires_json = NULL;
+  detector_int_expires_json = NULL;
   detector_state_json   = NULL;
   detector_state_obj    = NULL;
   detector_state_text   = NULL;
@@ -61,6 +67,9 @@ int detector_state_machine_state() {
   newTimeout    = 10;
   
   do {
+    //
+    // Get our redis varialbe and parse the JSON it is supposed to contain
+    //
     detector_state_text    = lsredis_getstr( detector_state_redis);
     detector_state_obj     = json_loads(detector_state_text, JSON_DECODE_INT_AS_REAL, &json_err);
     if (!detector_state_obj) {
@@ -68,95 +77,84 @@ int detector_state_machine_state() {
       break;
     }
     
+    //
+    // Parse the state string and convert it to an integer using "the_states"
+    //
     detector_state_json = json_object_get(detector_state_obj, "state");
     if (!detector_state_json || json_typeof(detector_state_json) != JSON_STRING) {
       lslogging_log_message( "%s: Could not find detector state in json dict: %s", id, detector_state_text);
       break;
     }
-    
-    detector_expires_json = json_object_get(detector_state_obj,"expires");
-    if (!detector_expires_json || json_typeof(detector_expires_json) != JSON_REAL) {
-      lslogging_log_message( "%s: Could not find legal detector expires in json dict: %s  got type %d",
-			     id, detector_state_text, detector_expires_json ? json_typeof(detector_expires_json) : -1);
-      break;
-    }
-    
-    set_new_state = 0;
-    
     for (i=0; the_states[i]; i++) {
       if (strcmp(the_states[i], json_string_value(detector_state_json)) == 0) {
 	detector_state_int = i;
 	break;
       }
     }
-    //
-    // Did we really find a new state?  If not then we must go to the Init state
-    //
     if (the_states[i] == NULL) {
-      // went past the end of the list
+      // went past the end of the list.  Just reset the detector.
+      // 
       lslogging_log_message("%s: Failed to find legal state in %s", id, detector_state_text);
       detector_state_int = 0;
     }
     
+    // Parse the "expires": the epoch in milliseconds at which the current state expires
+    //
+    detector_expires_json = json_object_get(detector_state_obj,"expires");
+    if (!detector_expires_json || json_typeof(detector_expires_json) != JSON_REAL) {
+      lslogging_log_message( "%s: Could not find legal detector expires in json dict: %s  got type %d",
+			     id, detector_state_text, detector_expires_json ? json_typeof(detector_expires_json) : -1);
+      break;
+    }
     expires = (long long)floor(json_real_value(detector_expires_json));
     
+    //
+    // Init state does not expire.  If 'expires' is zero and
+    // 'detector_state_int' is zero then we do not consider the
+    // current state to have expired.
+    //
+    if (expires == 0 && detector_state_int == 0) {
+      // There is nothing we need to do here as we are already in the
+      // init state with expires=0.
+      break;
+    }      
+
     now_time = time(NULL);	// time_t
     now = now_time;		// convert to long long
     
-    //
-    // Init state does not expire.  If expires is zero or state_int is
-    // zero then we do not consider the current state to have expired.
-    // Note that the Init state is the only one that does not expire so
-    // the following test appears to be a tad redundant.
-    //
-    if (expires == 0 || detector_state_int == 0) {
-      detector_state_expired = 0;
-    } else {
-      if (expires < now*1000) {
-	detector_state_expired = 1;
-      } else {
-	detector_state_expired = 0;
-      }
-    }
-    
-    if (detector_state_expired) {
+    if (expires < now*1000) {
       //
-      // Reset the detector
+      // Reset the detector and be done
       //
-      json_integer_set(detector_expires_json, 0);
+      detector_int_expires_json = json_integer(0);
+      json_object_set(detector_state_obj, "expires", detector_int_expires_json);
+
       json_string_set(detector_state_json, "Init");
-      
-      set_new_state = 1;
-      newTimeout = 60;
-    } else {
-      //
-      // Wait a little beyond the expiration timestamp before we check
-      // again.
-      //
-      if (expires) {
-	newTimeout = expires/1000 - now + 1;
-	if (newTimeout <= 0) {
-	  newTimeout = 10;
-	}
-      } else {
-	//
-	// Give it 10 seconds
-	//
-	newTimeout = 10;
-      }
-    }
-    
-    json_object_set(detector_state_obj, "state", detector_state_json);
-    json_object_set(detector_state_obj, "expires", detector_expires_json);
-    
-    if (set_new_state) {
+      json_object_set(detector_state_obj, "state",   detector_state_json);
+
       tmp_string = json_dumps(detector_state_obj, 0);
       lsredis_setstr(detector_state_redis, tmp_string);
       free(tmp_string);
+
+      newTimeout = 60;
+      break;
+    }
+
+    //
+    // Here the current state has not expired so we'll look again
+    // later.
+    //
+    newTimeout = expires/1000 - now + 1;
+
+    if (newTimeout <= 0) {
+      newTimeout = 10;
     }
   } while(0);
 
   if (detector_expires_json) {
+    json_decref(detector_expires_json);
+  }
+  if (detector_int_expires_json) {
     json_decref(detector_expires_json);
   }
   if (detector_state_json) {
@@ -184,21 +182,27 @@ void *detector_state_worker(void *dummy) {
 
   detector_state_redis = lsredis_get_obj("detector.state_machine");
 
-  lsredis_set_onSet( lsredis_get_obj("detector.state_machine"), detector_state_push_queue);
-  lsevents_add_listener( "^DETECTOR_STATE_MACHINE$",            detector_state_push_queue);
+  lsredis_set_onSet( detector_state_redis, detector_state_push_queue);
+  lsevents_add_listener( "^DETECTOR_STATE_MACHINE$", detector_state_push_queue);
 
-  pthread_mutex_lock( &detector_state_queue_mutex);
 
   while( 1) {
     //
     // Wait for a request to come in
     //
+    pthread_mutex_lock(&detector_state_queue_mutex);
     while( detector_state_queue_off == detector_state_queue_on)
-      pthread_cond_wait( &detector_state_queue_cond, &detector_state_queue_mutex);
+      pthread_cond_wait(&detector_state_queue_cond, &detector_state_queue_mutex);
 
     detector_state_queue_off++;
 
+    pthread_mutex_unlock(&detector_state_queue_mutex);
+
+    pthread_mutex_lock(&detector_state_mutex);
     newTimeout = detector_state_machine_state();
+
+    pthread_cond_signal(&detector_state_cond);
+    pthread_mutex_unlock(&detector_state_mutex);
 
     lstimer_set_timer( "DETECTOR_STATE_MACHINE", 1, newTimeout, 0);
   }
