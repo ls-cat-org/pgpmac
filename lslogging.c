@@ -69,8 +69,6 @@ void lslogging_log_message(char *fmt, ...) {
 
   (void) id;
 
-
-
   clock_gettime( CLOCK_REALTIME, &theTime);
 
   va_start( arg_ptr, fmt);
@@ -103,7 +101,8 @@ void lslogging_event_cb( char *event) {
      && strstr(event, "accepted")==NULL
      && strstr(event, "queued")==NULL
      && strstr(event, "Check Detector Position") == NULL
-     && strstr(event, "Heartbeat")==NULL) {
+     && strstr(event, "Heartbeat")==NULL
+     && strstr(event, "DETECTOR_STATE_MACHINE")==NULL) {
     lslogging_log_message("EVENT: %s", event);
   }
 }
