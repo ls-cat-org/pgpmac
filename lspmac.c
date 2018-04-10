@@ -24,132 +24,131 @@
  State    Description
   -1      Reset the connection
    0      Detached: need to connect to tcp port
-   1	  Idle (waiting for a command to send to the pmac)
-   2	  Send command
-   3	  Waiting for command acknowledgement (no further response expected)
-   4	  Waiting for control character acknowledgement (further response expected)
-   5	  Waiting for command acknowledgement (further response expected)
-   6	  Waiting for get memory response
-   7	  Send controlresponse
-   8	  Send readready
-   9	  Waiting for acknowledgement of "readready"
-  10	  Send readbuffer
-  11	  Waiting for control response
-  12	  Waiting for readbuffer response
+   1      Idle (waiting for a command to send to the pmac)
+   2      Send command
+   3      Waiting for command acknowledgement (no further response expected)
+   4      Waiting for control character acknowledgement (further response expected)
+   5      Waiting for command acknowledgement (further response expected)
+   6      Waiting for get memory response
+   7      Send controlresponse
+   8      Send readready
+   9      Waiting for acknowledgement of "readready"
+  10      Send readbuffer
+  11      Waiting for control response
+  12      Waiting for readbuffer response
 
 </pre>
 */
 
-
-#define LS_PMAC_STATE_RESET	-1
+#define LS_PMAC_STATE_RESET     -1
 #define LS_PMAC_STATE_DETACHED  0
-#define LS_PMAC_STATE_IDLE	1
-#define LS_PMAC_STATE_SC	2
-#define LS_PMAC_STATE_WACK_NFR	3
-#define LS_PMAC_STATE_WACK_CC	4
-#define LS_PMAC_STATE_WACK	5
-#define LS_PMAC_STATE_GMR	6
-#define LS_PMAC_STATE_CR	7
-#define LS_PMAC_STATE_RR	8
-#define LS_PMAC_STATE_WACK_RR	9
+#define LS_PMAC_STATE_IDLE      1
+#define LS_PMAC_STATE_SC        2
+#define LS_PMAC_STATE_WACK_NFR  3
+#define LS_PMAC_STATE_WACK_CC   4
+#define LS_PMAC_STATE_WACK      5
+#define LS_PMAC_STATE_GMR       6
+#define LS_PMAC_STATE_CR        7
+#define LS_PMAC_STATE_RR        8
+#define LS_PMAC_STATE_WACK_RR   9
 #define LS_PMAC_STATE_GB       10
 #define LS_PMAC_STATE_WCR      11
 #define LS_PMAC_STATE_WGB      12
-static int ls_pmac_state = LS_PMAC_STATE_DETACHED;	//!< Current state of the PMAC communications state machine
+static int ls_pmac_state = LS_PMAC_STATE_DETACHED;      //!< Current state of the PMAC communications state machine
 
 //#define SHOW_RATE
 
-void lspmac_get_ascii( char *);			//!< Forward declarateion
+void lspmac_get_ascii( char *);                 //!< Forward declarateion
 
-static int lspmac_running = 1;			//!< exit worker thread when zero
-int lspmac_shutter_state;			//!< State of the shutter, used to detect changes
-int lspmac_shutter_has_opened_globally;		//!< Indicates that the shutter had opened, perhaps briefly even if the state did not change
-pthread_mutex_t lspmac_moving_mutex;		//!< Coordinate moving motors between threads
-pthread_cond_t  lspmac_moving_cond;		//!< Wait for motor(s) to finish moving condition
-int lspmac_moving_flags;			//!< Flag used to implement motor moving condition
+static int lspmac_running = 1;                  //!< exit worker thread when zero
+int lspmac_shutter_state;                       //!< State of the shutter, used to detect changes
+int lspmac_shutter_has_opened_globally;         //!< Indicates that the shutter had opened, perhaps briefly even if the state did not change
+pthread_mutex_t lspmac_moving_mutex;            //!< Coordinate moving motors between threads
+pthread_cond_t  lspmac_moving_cond;             //!< Wait for motor(s) to finish moving condition
+int lspmac_moving_flags;                        //!< Flag used to implement motor moving condition
 
-static double lspmac_saved_analPosition=0;	//!< the analizer is the home motor we cannot home. Use the last known position in case we have to home it
+static double lspmac_saved_analPosition=0;      //!< the analizer is the home motor we cannot home. Use the last known position in case we have to home it
 
-static uint16_t lspmac_control_char = 0;	//!< The control character we've sent
+static uint16_t lspmac_control_char = 0;        //!< The control character we've sent
 
-static pthread_mutex_t lspmac_ascii_mutex;	//!< Keep too many processes from sending commands at once
-static int lspmac_ascii_busy = 0;		//!< flag for condition to wait for
+static pthread_mutex_t lspmac_ascii_mutex;      //!< Keep too many processes from sending commands at once
+static int lspmac_ascii_busy = 0;               //!< flag for condition to wait for
 
-static int omega_zero_search = 0;		//!< Indicate we'd really like to know when omega crosses zero
-static double omega_zero_velocity = 0;		//!< rate (cnts/sec) that omega was traveling when it crossed zero
-struct timespec omega_zero_time;		//!< Time we believe that omega crossed zero
-static struct timespec lspmac_status_time;	//!< Time the status was read
-static struct timespec lspmac_status_last_time;	//!< Time the status was read
+static int omega_zero_search = 0;               //!< Indicate we'd really like to know when omega crosses zero
+static double omega_zero_velocity = 0;          //!< rate (cnts/sec) that omega was traveling when it crossed zero
+struct timespec omega_zero_time;                //!< Time we believe that omega crossed zero
+static struct timespec lspmac_status_time;      //!< Time the status was read
+static struct timespec lspmac_status_last_time; //!< Time the status was read
 
-static pthread_t pmac_thread;			//!< our thread to manage access and communication to the pmac
-pthread_mutex_t pmac_queue_mutex;		//!< manage access to the pmac command queue
-pthread_cond_t  pmac_queue_cond;		//!< wait for a command to be sent to PMAC before continuing
-static struct pollfd pmacfd;		        //!< our poll structure
+static pthread_t pmac_thread;                   //!< our thread to manage access and communication to the pmac
+pthread_mutex_t pmac_queue_mutex;               //!< manage access to the pmac command queue
+pthread_cond_t  pmac_queue_cond;                //!< wait for a command to be sent to PMAC before continuing
+static struct pollfd pmacfd;                    //!< our poll structure
 
-static int getivars = 0;			//!< flag set at initialization to send i vars to db
-static int getmvars = 0;			//!< flag set at initialization to send m vars to db
+static int getivars = 0;                        //!< flag set at initialization to send i vars to db
+static int getmvars = 0;                        //!< flag set at initialization to send m vars to db
 
-lspmac_bi_t lspmac_bis[32];			//!< array of binary inputs
-int lspmac_nbis = 0;				//!< number of active binary inputs
+lspmac_bi_t lspmac_bis[32];                     //!< array of binary inputs
+int lspmac_nbis = 0;                            //!< number of active binary inputs
 
 #define LSPMAC_MAX_MOTORS 48
 lspmac_motor_t lspmac_motors[LSPMAC_MAX_MOTORS];//!< All our motors
-int lspmac_nmotors = 0;				//!< The number of motors we manage
-struct hsearch_data motors_ht;			//!< A hash table to find motors by name
+int lspmac_nmotors = 0;                         //!< The number of motors we manage
+struct hsearch_data motors_ht;                  //!< A hash table to find motors by name
 
-lspmac_motor_t *omega;				//!< MD2 omega axis (the air bearing)
-lspmac_motor_t *alignx;				//!< Alignment stage X
-lspmac_motor_t *aligny;				//!< Alignment stage Y
-lspmac_motor_t *alignz;				//!< Alignment stage X
-lspmac_motor_t *anal;				//!< Polaroid analyzer motor
-lspmac_motor_t *zoom;				//!< Optical zoom
-lspmac_motor_t *apery;				//!< Aperture Y
-lspmac_motor_t *aperz;				//!< Aperture Z
-lspmac_motor_t *capy;				//!< Capillary Y
-lspmac_motor_t *capz;				//!< Capillary Z
-lspmac_motor_t *scint;				//!< Scintillator Z
-lspmac_motor_t *cenx;				//!< Centering Table X
-lspmac_motor_t *ceny;				//!< Centering Table Y
-lspmac_motor_t *kappa;				//!< Kappa
-lspmac_motor_t *phi;				//!< Phi (not data collection axis)
+lspmac_motor_t *omega;                          //!< MD2 omega axis (the air bearing)
+lspmac_motor_t *alignx;                         //!< Alignment stage X
+lspmac_motor_t *aligny;                         //!< Alignment stage Y
+lspmac_motor_t *alignz;                         //!< Alignment stage X
+lspmac_motor_t *anal;                           //!< Polaroid analyzer motor
+lspmac_motor_t *zoom;                           //!< Optical zoom
+lspmac_motor_t *apery;                          //!< Aperture Y
+lspmac_motor_t *aperz;                          //!< Aperture Z
+lspmac_motor_t *capy;                           //!< Capillary Y
+lspmac_motor_t *capz;                           //!< Capillary Z
+lspmac_motor_t *scint;                          //!< Scintillator Z
+lspmac_motor_t *cenx;                           //!< Centering Table X
+lspmac_motor_t *ceny;                           //!< Centering Table Y
+lspmac_motor_t *kappa;                          //!< Kappa
+lspmac_motor_t *phi;                            //!< Phi (not data collection axis)
 
-lspmac_motor_t *fshut;				//!< Fast shutter
-lspmac_motor_t *flight;				//!< Front Light DAC
-lspmac_motor_t *blight;				//!< Back Light DAC
-lspmac_motor_t *fscint;				//!< Scintillator Piezo DAC
+lspmac_motor_t *fshut;                          //!< Fast shutter
+lspmac_motor_t *flight;                         //!< Front Light DAC
+lspmac_motor_t *blight;                         //!< Back Light DAC
+lspmac_motor_t *fscint;                         //!< Scintillator Piezo DAC
 
-lspmac_motor_t *smart_mag_oo;			//!< Smart Magnet on/off
-lspmac_motor_t *blight_ud;			//!< Back light Up/Down actuator
-lspmac_motor_t *cryo;				//!< Move the cryostream towards or away from the crystal
-lspmac_motor_t *dryer;				//!< blow air on the scintilator to dry it off
-lspmac_motor_t *fluo;				//!< Move the fluorescence detector in/out
-lspmac_motor_t *flight_oo;			//!< Turn front light on/off
-lspmac_motor_t *blight_f;			//!< Back light scale factor
-lspmac_motor_t *flight_f;			//!< Front light scale factor
+lspmac_motor_t *smart_mag_oo;                   //!< Smart Magnet on/off
+lspmac_motor_t *blight_ud;                      //!< Back light Up/Down actuator
+lspmac_motor_t *cryo;                           //!< Move the cryostream towards or away from the crystal
+lspmac_motor_t *dryer;                          //!< blow air on the scintilator to dry it off
+lspmac_motor_t *fluo;                           //!< Move the fluorescence detector in/out
+lspmac_motor_t *flight_oo;                      //!< Turn front light on/off
+lspmac_motor_t *blight_f;                       //!< Back light scale factor
+lspmac_motor_t *flight_f;                       //!< Front light scale factor
 
 
-lspmac_bi_t    *lp_air;				//!< Low pressure air OK
-lspmac_bi_t    *hp_air;				//!< High pressure air OK
-lspmac_bi_t    *cryo_switch;			//!< that little toggle switch for the cryo
-lspmac_bi_t    *blight_down;			//!< Backlight is down
-lspmac_bi_t    *blight_up;			//!< Backlight is up
-lspmac_bi_t    *cryo_back;			//!< cryo is in the back position
-lspmac_bi_t    *fluor_back;			//!< fluor is in the back position
-lspmac_bi_t    *sample_detected;		//!< smart magnet detected sample
-lspmac_bi_t    *etel_ready;			//!< ETEL is ready
-lspmac_bi_t    *etel_on;			//!< ETEL is on
-lspmac_bi_t    *etel_init_ok;			//!< ETEL initialized OK
-lspmac_bi_t    *minikappa_ok;			//!< Minikappa is OK (whatever that means)
-lspmac_bi_t    *smart_mag_on;			//!< smart magnet is on
-lspmac_bi_t    *arm_parked;			//!< (whose arm?  parked where?)
-lspmac_bi_t    *shutter_open;			//!< shutter is open (note in pmc says this is a slow input)
-lspmac_bi_t    *smart_mag_err;			//!< smart magnet error (coil broken perhaps)
-lspmac_bi_t    *smart_mag_off;			//!< smart magnet is off
-
+lspmac_bi_t    *lp_air;                         //!< Low pressure air OK
+lspmac_bi_t    *hp_air;                         //!< High pressure air OK
+lspmac_bi_t    *cryo_switch;                    //!< that little toggle switch for the cryo
+lspmac_bi_t    *blight_down;                    //!< Backlight is down
+lspmac_bi_t    *blight_up;                      //!< Backlight is up
+lspmac_bi_t    *cryo_back;                      //!< cryo is in the back position
+lspmac_bi_t    *fluor_back;                     //!< fluor is in the back position
+lspmac_bi_t    *sample_detected;                //!< smart magnet detected sample
+lspmac_bi_t    *etel_ready;                     //!< ETEL is ready
+lspmac_bi_t    *etel_on;                        //!< ETEL is on
+lspmac_bi_t    *etel_init_ok;                   //!< ETEL initialized OK
+lspmac_bi_t    *minikappa_ok;                   //!< Minikappa is OK (whatever that means)
+lspmac_bi_t    *smart_mag_on;                   //!< smart magnet is on
+lspmac_bi_t    *arm_parked;                     //!< (whose arm?  parked where?)
+lspmac_bi_t    *smart_mag_err;                  //!< smart magnet error (coil broken perhaps)
+lspmac_bi_t    *smart_mag_off;                  //!< smart magnet is off
+lspmac_bi_t    *shutter_open;                   //!< shutter is open (note in pmc says this is a slow input)
+lspmac_bi_t    *sb_shutter_open;                //!< Shutter open signal sent to shutter box
+lspmac_bi_t    *sb_shutter_not_enabled;         //!< shutter enabled signal sent to shutter box
 
 //! Regex to pick out preset name and corresponding position
 #define LSPMAC_PRESET_REGEX "(.*\\.%s\\.presets)\\.([0-9]+)\\.(name|position)"
-
 
 //! The PMAC (only) listens on this port
 #define PMACPORT 1025
@@ -160,44 +159,44 @@ lspmac_bi_t    *smart_mag_off;			//!< smart magnet is off
 //
 #define pmac_cmd_size 8
 
-#define VR_UPLOAD		0xc0
-#define VR_DOWNLOAD		0x40
+#define VR_UPLOAD               0xc0
+#define VR_DOWNLOAD             0x40
 
-#define VR_PMAC_SENDLINE	0xb0
-#define VR_PMAC_GETLINE		0xb1
-#define VR_PMAC_FLUSH		0xb3
-#define VR_PMAC_GETMEM		0xb4
-#define VR_PMAC_SETMEM		0xb5
-#define VR_PMAC_SENDCTRLCHAR	0xb6
-#define VR_PMAC_SETBIT		0xba
-#define VR_PMAC_SETBITS		0xbb
-#define VR_PMAC_PORT		0xbe
-#define VR_PMAC_GETRESPONSE	0xbf
-#define VR_PMAC_READREADY	0xc2
-#define VR_CTRL_RESPONSE	0xc4
-#define VR_PMAC_GETBUFFER	0xc5
-#define VR_PMAC_WRITEBUFFER	0xc6
-#define VR_PMAC_WRITEERROR	0xc7
-#define VR_FWDOWNLOAD		0xcb
-#define VR_IPADDRESS		0xe0
+#define VR_PMAC_SENDLINE        0xb0
+#define VR_PMAC_GETLINE         0xb1
+#define VR_PMAC_FLUSH           0xb3
+#define VR_PMAC_GETMEM          0xb4
+#define VR_PMAC_SETMEM          0xb5
+#define VR_PMAC_SENDCTRLCHAR    0xb6
+#define VR_PMAC_SETBIT          0xba
+#define VR_PMAC_SETBITS         0xbb
+#define VR_PMAC_PORT            0xbe
+#define VR_PMAC_GETRESPONSE     0xbf
+#define VR_PMAC_READREADY       0xc2
+#define VR_CTRL_RESPONSE        0xc4
+#define VR_PMAC_GETBUFFER       0xc5
+#define VR_PMAC_WRITEBUFFER     0xc6
+#define VR_PMAC_WRITEERROR      0xc7
+#define VR_FWDOWNLOAD           0xcb
+#define VR_IPADDRESS            0xe0
 
 
-static unsigned char dbmem[64*1024];		//!< double buffered memory
-static int dbmemIn = 0;				//!< next location
+static unsigned char dbmem[64*1024];            //!< double buffered memory
+static int dbmemIn = 0;                         //!< next location
 
 //! Minimum time between commands to the pmac
 //
 //#define PMAC_MIN_CMD_TIME 40000.0
 #define PMAC_MIN_CMD_TIME 10000.0
-static struct timeval pmac_time_sent, now;	//!< used to ensure we do not send commands to the pmac too often.  Only needed for non-DB commands.
+static struct timeval pmac_time_sent, now;      //!< used to ensure we do not send commands to the pmac too often.  Only needed for non-DB commands.
 
 //! Size of the PMAC command queue.
 #define PMAC_CMD_QUEUE_LENGTH 2048
-static pmac_cmd_t rr_cmd, gb_cmd, cr_cmd;		//!< commands to send out "readready", "getbuffer", "controlresponse" (initialized in main)
-static pmac_cmd_queue_t ethCmdQueue[PMAC_CMD_QUEUE_LENGTH];	//!< PMAC command queue
-static unsigned int ethCmdOn    = 0;				//!< points to next empty PMAC command queue position
-static unsigned int ethCmdOff   = 0;				//!< points to current command (or none if == ethCmdOn)
-static unsigned int ethCmdReply = 0;				//!< Used like ethCmdOff only to deal with the pmac reply to a command
+static pmac_cmd_t rr_cmd, gb_cmd, cr_cmd;               //!< commands to send out "readready", "getbuffer", "controlresponse" (initialized in main)
+static pmac_cmd_queue_t ethCmdQueue[PMAC_CMD_QUEUE_LENGTH];     //!< PMAC command queue
+static unsigned int ethCmdOn    = 0;                            //!< points to next empty PMAC command queue position
+static unsigned int ethCmdOff   = 0;                            //!< points to current command (or none if == ethCmdOn)
+static unsigned int ethCmdReply = 0;                            //!< Used like ethCmdOff only to deal with the pmac reply to a command
 
 //! Decode the errors perhaps returned by the PMAC
 static char *pmac_error_strs[] = {
@@ -226,7 +225,6 @@ static char *pmac_error_strs[] = {
   "ERR022: FREAD attempted but the flash memory is bad"
 };
 
-
 //! The block of memory retrieved in a status request.
 
 //
@@ -251,8 +249,6 @@ static char *pmac_error_strs[] = {
 // Gather data starts at $600450 (per turbo pmac user manual)
 //
 
-
-
 typedef  struct md2StatusStruct {
   //
   // Pmac stores data in 24 bit or 48 bit words
@@ -268,107 +264,106 @@ typedef  struct md2StatusStruct {
   // And so forth
   //
   //
-  int dummy1;			// 0x000		$60100 
-  int omega_status_1;		// 0x004		$60101 
-  int alignx_status_1;		// 0x008		$60102
-  int aligny_status_1;		// 0x00C		$60103
-  int alignz_status_1;		// 0x010		$60104
-  int analyzer_status_1;	// 0x014		$60105
-  int zoom_status_1;		// 0x018		$60106
-  int aperturey_status_1;	// 0x01C		$60107
-  int aperturez_status_1;	// 0x020		$60108
-  int capy_status_1;		// 0x024		$60109
-  int capz_status_1;		// 0x028		$6010A
-  int scint_status_1;		// 0x02C		$6010B
-  int centerx_status_1;		// 0x030		$6010C
-  int centery_status_1;		// 0x034		$6010D
-  int kappa_status_1;		// 0x038		$6010E
-  int phi_status_1;		// 0x03C		$6010F
+  int dummy1;                   // 0x000                $60100
+  int omega_status_1;           // 0x004                $60101
+  int alignx_status_1;          // 0x008                $60102
+  int aligny_status_1;          // 0x00C                $60103
+  int alignz_status_1;          // 0x010                $60104
+  int analyzer_status_1;        // 0x014                $60105
+  int zoom_status_1;            // 0x018                $60106
+  int aperturey_status_1;       // 0x01C                $60107
+  int aperturez_status_1;       // 0x020                $60108
+  int capy_status_1;            // 0x024                $60109
+  int capz_status_1;            // 0x028                $6010A
+  int scint_status_1;           // 0x02C                $6010B
+  int centerx_status_1;         // 0x030                $6010C
+  int centery_status_1;         // 0x034                $6010D
+  int kappa_status_1;           // 0x038                $6010E
+  int phi_status_1;             // 0x03C                $6010F
 
-  int dummy2;			// 0x040		$60110
-  int omega_status_2;		// 0x044		$60111
-  int alignx_status_2;		// 0x048		$60112
-  int aligny_status_2;		// 0x04C		$60113
-  int alignz_status_2;		// 0x050		$60114
-  int analyzer_status_2;	// 0x054		$60115
-  int zoom_status_2;		// 0x058		$60116
-  int aperturey_status_2;	// 0x05C		$60117
-  int aperturez_status_2;	// 0x060		$60118
-  int capy_status_2;		// 0x064		$60119
-  int capz_status_2;		// 0x068		$6011A
-  int scint_status_2;		// 0x06C		$6011B
-  int centerx_status_2;		// 0x070		$6011C
-  int centery_status_2;		// 0x074		$6011D
-  int kappa_status_2;		// 0x078		$6011E
-  int phi_status_2;		// 0x07C		$6011F
+  int dummy2;                   // 0x040                $60110
+  int omega_status_2;           // 0x044                $60111
+  int alignx_status_2;          // 0x048                $60112
+  int aligny_status_2;          // 0x04C                $60113
+  int alignz_status_2;          // 0x050                $60114
+  int analyzer_status_2;        // 0x054                $60115
+  int zoom_status_2;            // 0x058                $60116
+  int aperturey_status_2;       // 0x05C                $60117
+  int aperturez_status_2;       // 0x060                $60118
+  int capy_status_2;            // 0x064                $60119
+  int capz_status_2;            // 0x068                $6011A
+  int scint_status_2;           // 0x06C                $6011B
+  int centerx_status_2;         // 0x070                $6011C
+  int centery_status_2;         // 0x074                $6011D
+  int kappa_status_2;           // 0x078                $6011E
+  int phi_status_2;             // 0x07C                $6011F
 
-  int dummy3;			// 0x080		$60120
-  int omega_act_pos;		// 0x084		$60121
-  int alignx_act_pos;		// 0x088		$60122
-  int aligny_act_pos;		// 0x08C		$60123
-  int alignz_act_pos;		// 0x090		$60124
-  int analyzer_act_pos;		// 0x094		$60125
-  int zoom_act_pos;		// 0x098		$60126
-  int aperturey_act_pos;	// 0x09C		$60127
-  int aperturez_act_pos;	// 0x0A0		$60128
-  int capy_act_pos;		// 0x0A4		$60129
-  int capz_act_pos;		// 0x0A8		$6012A
-  int scint_act_pos;		// 0x0AC		$6012B
-  int centerx_act_pos;		// 0x0B0		$6012C
-  int centery_act_pos;		// 0x0B4		$6012D
-  int kappa_act_pos;		// 0x0B8		$6012E
-  int phi_act_pos;		// 0x0BC		$6012F
+  int dummy3;                   // 0x080                $60120
+  int omega_act_pos;            // 0x084                $60121
+  int alignx_act_pos;           // 0x088                $60122
+  int aligny_act_pos;           // 0x08C                $60123
+  int alignz_act_pos;           // 0x090                $60124
+  int analyzer_act_pos;         // 0x094                $60125
+  int zoom_act_pos;             // 0x098                $60126
+  int aperturey_act_pos;        // 0x09C                $60127
+  int aperturez_act_pos;        // 0x0A0                $60128
+  int capy_act_pos;             // 0x0A4                $60129
+  int capz_act_pos;             // 0x0A8                $6012A
+  int scint_act_pos;            // 0x0AC                $6012B
+  int centerx_act_pos;          // 0x0B0                $6012C
+  int centery_act_pos;          // 0x0B4                $6012D
+  int kappa_act_pos;            // 0x0B8                $6012E
+  int phi_act_pos;              // 0x0BC                $6012F
 
+  int acc11c_1;                 // 0x0C0                $60130
+  int acc11c_2;                 // 0x0C4                $60131
+  int acc11c_3;                 // 0x0C8                $60132
+  int acc11c_5;                 // 0x0CC                $60133
+  int acc11c_6;                 // 0x0D0                $60134
+  int front_dac;                // 0x0D4                $60135
+  int back_dac;                 // 0x0D8                $60136
+  int scint_piezo;              // 0x0DC                $60137
 
-  int acc11c_1;			// 0x0C0		$60130
-  int acc11c_2;			// 0x0C4		$60131
-  int acc11c_3;			// 0x0C8		$60132
-  int acc11c_5;			// 0x0CC		$60133
-  int acc11c_6;			// 0x0D0		$60134
-  int front_dac;		// 0x0D4		$60135
-  int back_dac;			// 0x0D8		$60136
-  int scint_piezo;		// 0x0DC		$60137
+  int dummy4;                   // 0x0E0                $60138
+  int dummy5;                   // 0x0E4                $60139
+  int dummy6;                   // 0x0E8                $6013A
+  int dummy7;                   // 0x0EC                $6013B
+  int dummy8;                   // 0x0F0                $6013C
+  int dummy9;                   // 0x0F4                $6013D
+  int dummyA;                   // 0x0F8                $6013E
+  int dummyB;                   // 0x0FC                $6013F
 
-  int dummy4;			// 0x0E0		$60138
-  int dummy5;			// 0x0E4		$60139
-  int dummy6;			// 0x0E8		$6013A
-  int dummy7;			// 0x0EC		$6013B
-  int dummy8;			// 0x0F0		$6013C
-  int dummy9;			// 0x0F4		$6013D
-  int dummyA;			// 0x0F8		$6013E
-  int dummyB;			// 0x0FC		$6013F
+  int fs_is_open;               // 0x100                $60140
+  int phiscan;                  // 0x104                $60141
+  int fs_has_opened;            // 0x108                $60142
+  int fs_has_opened_globally;   // 0x10C                $60143
+  int number_passes;            // 0x110                $60144
 
-  int fs_is_open;		// 0x100		$60140
-  int phiscan;			// 0x104		$60141
-  int fs_has_opened;		// 0x108		$60142
-  int fs_has_opened_globally;	// 0x10C		$60143
-  int number_passes;		// 0x110		$60144
-
-  int moving_flags;		// 0x114		$60145
+  int moving_flags;             // 0x114                $60145
 
 } md2_status_t;
 
-static md2_status_t md2_status;		//!< Buffer for MD2 Status
-pthread_mutex_t md2_status_mutex;	//!< Synchronize reading/writting status buffer
+static md2_status_t md2_status;         //!< Buffer for MD2 Status
+pthread_mutex_t md2_status_mutex;       //!< Synchronize reading/writting status buffer
 
 
 typedef struct lspmac_ascii_buffers_struct {
-  //                               here		DPRAM		PMAC
-  uint16_t command_buf;		// 0x000	$0E9C		$0603A7
-  uint16_t command_buf_cc;	// 0x002	$0E9E		
-  char command_str[160];	// 0x004	$0EA0		$0603A8
-  uint16_t response_buf;	// 0x0A4	$0F40		$0603D0
-  uint16_t response_n;		// 0x0A6	$0F42
-  char response_str[256];	// 0x0A8	$0F44		$0603D1
-				// 0x1A8	$1044		$060411
+  //                               here         DPRAM           PMAC
+  uint16_t command_buf;         // 0x000        $0E9C           $0603A7
+  uint16_t command_buf_cc;      // 0x002        $0E9E
+  char command_str[160];        // 0x004        $0EA0           $0603A8
+  uint16_t response_buf;        // 0x0A4        $0F40           $0603D0
+  uint16_t response_n;          // 0x0A6        $0F42
+  char response_str[256];       // 0x0A8        $0F44           $0603D1
+                                // 0x1A8        $1044           $060411
 } lspmac_ascii_buffers_t;
 static lspmac_ascii_buffers_t lspmac_ascii_buffers;
 pthread_mutex_t lspmac_ascii_buffers_mutex;
 
 #define LSPMAC_DPASCII_QUEUE_LENGTH 1024
 typedef struct lspmac_dpascii_queue_struct {
-  char *event;			// pointer to location that wants the cmd_queue pointer
-  char pl[160];			// Our payload
+  char *event;                  // pointer to location that wants the cmd_queue pointer
+  char pl[160];                 // Our payload
 } lspmac_dpascii_queue_t;
 
 static lspmac_dpascii_queue_t lspmac_dpascii_queue[LSPMAC_DPASCII_QUEUE_LENGTH];
@@ -376,10 +371,10 @@ static uint32_t lspmac_dpascii_on  = 0;
 static uint32_t lspmac_dpascii_off = 0;
 
 typedef struct lspmac_combined_move_struct {
-  int    Delta;			// change from curent position in counts
-  int    moveme;		// flag: non-zero means move this motor
-  int    coord_num;		// Our coordinate system
-  int    axis;			// The axes to move
+  int    Delta;                 // change from curent position in counts
+  int    moveme;                // flag: non-zero means move this motor
+  int    coord_num;             // Our coordinate system
+  int    axis;                  // The axes to move
 } lspmac_combined_move_t;
 
 
@@ -393,10 +388,10 @@ typedef struct lspmac_combined_move_struct {
  */
 
 double lspmac_lut(
-		  int nlut,		/**< [in] number of entries in lookup table					*/
-		  double *lut,		/**< [in] The lookup table: even indicies are the x values, odd are the y's	*/
-		  double x		/**< [in] The x value we are looking up.					*/
-		  ) {
+                  int nlut,             /**< [in] number of entries in lookup table                                     */
+                  double *lut,          /**< [in] The lookup table: even indicies are the x values, odd are the y's     */
+                  double x              /**< [in] The x value we are looking up.                                        */
+                  ) {
   int i, foundone;
   double m;
   double y1, y2, x1, x2, y;
@@ -407,36 +402,36 @@ double lspmac_lut(
       x1 = lut[i];
       y1 = lut[i+1];
       if( i < 2*nlut - 2) {
-	x2 = lut[i+2];
-	y2 = lut[i+3];
+        x2 = lut[i+2];
+        y2 = lut[i+3];
       }
 
       //
       // First one too big?  Use the y value of the first element
       //
       if( i == 0 && x1 > x) {
-	y = y1;
-	foundone = 1;
-	break;
+        y = y1;
+        foundone = 1;
+        break;
       }
 
       //
       // Look for equality
       //
       if( x1 == x) {
-	y = y1;
-	foundone = 1;
-	break;
+        y = y1;
+        foundone = 1;
+        break;
       }
 
       //
       // Maybe interpolate
       //
       if( (i < 2*nlut-2) && x < x2) {
-	m = (y2 - y1) / (x2 - x1);
-	y = m*(x - x1) + y1;
-	foundone = 1;
-	break;
+        m = (y2 - y1) / (x2 - x1);
+        y = m*(x - x1) + y1;
+        foundone = 1;
+        break;
       }
     }
     if( foundone == 0) {
@@ -451,10 +446,10 @@ double lspmac_lut(
 }
 
 double lspmac_rlut(
-		   int nlut,		/**< [in] number of entries in lookup table					*/
-		   double *lut,		/**< [in] our lookup table							*/
-		   double y		/**< [in] the y value for which we need an x					*/
-		   ) {
+                   int nlut,            /**< [in] number of entries in lookup table                                     */
+                   double *lut,         /**< [in] our lookup table                                                      */
+                   double y             /**< [in] the y value for which we need an x                                    */
+                   ) {
   int i, foundone, up;
   double m;
   double y1, y2, x1, x2, x;
@@ -477,34 +472,34 @@ double lspmac_rlut(
       x1 = lut[i];
       y1 = lut[i+1];
       if( i < 2*nlut - 2) {
-	x2 = lut[i+2];
-	y2 = lut[i+3];
+        x2 = lut[i+2];
+        y2 = lut[i+3];
       }
       //
       // see if y is before the beginning of the table
       //
       if( i==0 && ( up ? y1 > y : y1 < y)) {
-	x = x1;
-	foundone = 1;
-	break;
+        x = x1;
+        foundone = 1;
+        break;
       }
       //
       // Did we, perhaps, nail it?
       //
       if( y1 == y) {
-	x = x1;
-	foundone = 1;
-	break;
+        x = x1;
+        foundone = 1;
+        break;
       }
 
       //
       // Interpolate between the two values (if we've not bumped our heads on the end of the table)
       //
       if( (i < 2*nlut-2) && (up ? y < y2 : y > y2)) {
-	m = (x2 - x1) / (y2 - y1);
-	x = m * (y - y1) + x1;
-	foundone = 1;
-	break;
+        m = (x2 - x1) / (y2 - y1);
+        x = m * (y - y1) + x1;
+        foundone = 1;
+        break;
       }
     }
     //
@@ -518,19 +513,16 @@ double lspmac_rlut(
   return 0.0;
 }
 
-
-
 /** Prints a hex dump of the given data.
  *  Used to debug packet data.
  */
-
 void hex_dump(
-	      int n,		/**< [in] Number of bytes passed in s	*/
-	      unsigned char *s		/**< [in] Data to dump			*/
-	      ) {
+              int n,            /**< [in] Number of bytes passed in s   */
+              unsigned char *s          /**< [in] Data to dump                  */
+              ) {
 
-  int i;	// row counter
-  int j;	// column counter
+  int i;        // row counter
+  int j;        // column counter
   unsigned char outs[128], outs1[4];
 
   for( i=0; n > 0; i++) {
@@ -538,7 +530,7 @@ void hex_dump(
     sprintf( (char *)outs, "%04d: ", 16*i);
     for( j=0; j<16 && n > 0; j++) {
       if( j==8)
-	strcat( (char *)outs, "  ");
+        strcat( (char *)outs, "  ");
       sprintf( (char *)outs1, " %02x",  *(s + 16*i + j));
       strcat( (char *)outs, (char *)outs1);
       n--;
@@ -552,8 +544,8 @@ void hex_dump(
  */
 
 char *cleanstr(
-	      char *s	/**< [in] String to print to terminal.	*/
-	      ) {
+              char *s   /**< [in] String to print to terminal.  */
+              ) {
   char t[256];
   int i;
 
@@ -571,15 +563,14 @@ char *cleanstr(
 /** Connect to the PMAC socket.
  *  Establish or reestablish communications.
  */
-
 void lsConnect(
-	       char *ipaddr	/**< [in] String representation of the IP address (dot quad or FQN)	*/
-	       ) {
-  int psock;			// our socket: value stored in pmacfda.fd
-  int err;			// error code from some system calls
-  struct sockaddr_in *addrP;	// our address structure to connect to
-  struct addrinfo ai_hints;	// required for getaddrinfo
-  struct addrinfo *ai_resultP;	// linked list of address structures (we'll always pick the first)
+               char *ipaddr     /**< [in] String representation of the IP address (dot quad or FQN)     */
+               ) {
+  int psock;                    // our socket: value stored in pmacfda.fd
+  int err;                      // error code from some system calls
+  struct sockaddr_in *addrP;    // our address structure to connect to
+  struct addrinfo ai_hints;     // required for getaddrinfo
+  struct addrinfo *ai_resultP;  // linked list of address structures (we'll always pick the first)
 
   pmacfd.fd     = -1;
   pmacfd.events = 0;
@@ -625,8 +616,6 @@ void lsConnect(
 
 }
 
-
-
 /** Clear the queue as part of PMAC reinitialization
  */
 void lspmac_reset_queue() {
@@ -643,8 +632,8 @@ void lspmac_reset_queue() {
  */
 
 pmac_cmd_queue_t *lspmac_push_queue(
-				    pmac_cmd_queue_t *cmd	/**< Command to send to the PMAC	*/
-				    ) {
+                                    pmac_cmd_queue_t *cmd       /**< Command to send to the PMAC        */
+                                    ) {
   pmac_cmd_queue_t *rtn;
 
   pthread_mutex_lock( &pmac_queue_mutex);
@@ -681,7 +670,6 @@ pmac_cmd_queue_t *lspmac_pop_queue() {
   return rtn;
 }
 
-
 /** Remove the next command queue item that is waiting for a reply.
  *  We always need a reply to know we are done with a given command.
  *  Returns the item.
@@ -705,17 +693,17 @@ pmac_cmd_queue_t *lspmac_pop_reply() {
  *  The queued command is returned.
  */
 pmac_cmd_queue_t *lspmac_send_command(
-				      int rqType,		/**< [in] VR_UPLOAD or VR_DOWNLOAD			*/
-				      int rq,			/**< [in] PMAC command (see PMAC User Manual		*/
-				      int wValue,		/**< [in] Command argument 1				*/
-				      int wIndex,		/**< [in] Command argument 2				*/
-				      int wLength,		/**< [in] Length of data array				*/
-				      char *data,		/**< [in] Data array (or NULL)				*/
-				      void (*responseCB)(pmac_cmd_queue_t *, int, char *),
-				      /**< [in] Function to call when a response is read from the PMAC			*/
-				      int no_reply,		/**< [in] Flag, non-zero means no reply is expected	*/
-				      char *event		/**< [in] base name for events				*/
-				      ) {
+                                      int rqType,               /**< [in] VR_UPLOAD or VR_DOWNLOAD                      */
+                                      int rq,                   /**< [in] PMAC command (see PMAC User Manual            */
+                                      int wValue,               /**< [in] Command argument 1                            */
+                                      int wIndex,               /**< [in] Command argument 2                            */
+                                      int wLength,              /**< [in] Length of data array                          */
+                                      char *data,               /**< [in] Data array (or NULL)                          */
+                                      void (*responseCB)(pmac_cmd_queue_t *, int, char *),
+                                      /**< [in] Function to call when a response is read from the PMAC                  */
+                                      int no_reply,             /**< [in] Flag, non-zero means no reply is expected     */
+                                      char *event               /**< [in] base name for events                          */
+                                      ) {
   static pmac_cmd_queue_t cmd;
 
   cmd.pcmd.RequestType = rqType;
@@ -724,7 +712,7 @@ pmac_cmd_queue_t *lspmac_send_command(
   cmd.pcmd.wIndex      = htons(wIndex);
   cmd.pcmd.wLength     = htons(wLength);
   cmd.onResponse       = responseCB;
-  cmd.no_reply	       = no_reply;
+  cmd.no_reply         = no_reply;
   cmd.event            = event;
 
   //
@@ -754,14 +742,12 @@ pmac_cmd_queue_t *lspmac_send_command(
   return lspmac_push_queue( &cmd);
 }
 
-
 /** Reset the PMAC socket from the PMAC side.
  *  Puts the PMAC into a known communications state
  */
 void lspmac_SockFlush() {
   lspmac_send_command( VR_DOWNLOAD, VR_PMAC_FLUSH, 0, 0, 0, NULL, NULL, 1, NULL);
 }
-
 
 /** Clear the queue and put the PMAC into a known state.
  */
@@ -775,15 +761,13 @@ void lspmac_Reset() {
   lspmac_SockFlush();
 }
 
-
-
 /** The service routing detected an error condition.
  *  Scan the response buffer for an error code
  *  and print it out.
  */
 void lspmac_Error(
-		  char *buff	/**< [in] Buffer returned by PMAC perhaps containing a NULL terminated message.	*/
-		  ) {
+                  char *buff    /**< [in] Buffer returned by PMAC perhaps containing a NULL terminated message. */
+                  ) {
   int err;
   //
   // assume buff points to a 1400 byte array of stuff read from the pmac
@@ -799,22 +783,20 @@ void lspmac_Error(
   lspmac_Reset();
 }
 
-
 /** Service routine for packet coming from the PMAC.
  *  All communications is asynchronous so this is the only
  *  place incomming packets are handled
  */
-
 void lspmac_Service(
-		    struct pollfd *evt		/**< [in] pollfd object returned by poll		*/
-		    ) {
-  static char *receiveBuffer = NULL;	// the buffer inwhich to stick our incomming characters
-  static int receiveBufferSize = 0;		// size of receiveBuffer
-  static int receiveBufferIn = 0;		// next location to write to in receiveBuffer
-  pmac_cmd_queue_t *cmd;			// maybe the command we are servicing
-  ssize_t nsent, nread;				// nbytes dealt with
-  int i;					// loop counter
-  int foundEOCR;				// end of command response flag
+                    struct pollfd *evt          /**< [in] pollfd object returned by poll                */
+                    ) {
+  static char *receiveBuffer = NULL;    // the buffer inwhich to stick our incomming characters
+  static int receiveBufferSize = 0;             // size of receiveBuffer
+  static int receiveBufferIn = 0;               // next location to write to in receiveBuffer
+  pmac_cmd_queue_t *cmd;                        // maybe the command we are servicing
+  ssize_t nsent, nread;                         // nbytes dealt with
+  int i;                                        // loop counter
+  int foundEOCR;                                // end of command response flag
 
   if( evt->revents & (POLLERR | POLLHUP | POLLNVAL)) {
     if( evt->fd != -1) {
@@ -837,52 +819,52 @@ void lspmac_Service(
     case LS_PMAC_STATE_SC:
       cmd = lspmac_pop_queue();
       if( cmd == NULL)
-	return;
+        return;
 
       if( cmd->pcmd.Request == VR_PMAC_GETMEM) {
-	nsent = send( evt->fd, cmd, pmac_cmd_size, 0);
-	if( nsent != pmac_cmd_size) {
-	  lslogging_log_message( "Could only send %d of %d bytes....Not good.", (int)nsent, (int)(pmac_cmd_size));
-	}
+        nsent = send( evt->fd, cmd, pmac_cmd_size, 0);
+        if( nsent != pmac_cmd_size) {
+          lslogging_log_message( "Could only send %d of %d bytes....Not good.", (int)nsent, (int)(pmac_cmd_size));
+        }
       } else {
-	nsent = send( evt->fd, cmd, pmac_cmd_size + ntohs(cmd->pcmd.wLength), 0);
-	gettimeofday( &pmac_time_sent, NULL);
-	if( nsent != pmac_cmd_size + ntohs(cmd->pcmd.wLength)) {
-	  lslogging_log_message( "Could only send %d of %d bytes....Not good.", (int)nsent, (int)(pmac_cmd_size + ntohs(cmd->pcmd.wLength)));
-	}
+        nsent = send( evt->fd, cmd, pmac_cmd_size + ntohs(cmd->pcmd.wLength), 0);
+        gettimeofday( &pmac_time_sent, NULL);
+        if( nsent != pmac_cmd_size + ntohs(cmd->pcmd.wLength)) {
+          lslogging_log_message( "Could only send %d of %d bytes....Not good.", (int)nsent, (int)(pmac_cmd_size + ntohs(cmd->pcmd.wLength)));
+        }
       }
 
       if( cmd->pcmd.Request == VR_PMAC_SENDCTRLCHAR)
-	ls_pmac_state = LS_PMAC_STATE_WACK_CC;
+        ls_pmac_state = LS_PMAC_STATE_WACK_CC;
       else if( cmd->pcmd.Request == VR_CTRL_RESPONSE)
-	ls_pmac_state = LS_PMAC_STATE_IDLE;
+        ls_pmac_state = LS_PMAC_STATE_IDLE;
       else if( cmd->pcmd.Request == VR_PMAC_GETMEM)
-	ls_pmac_state = LS_PMAC_STATE_GMR;
+        ls_pmac_state = LS_PMAC_STATE_GMR;
       else if( cmd->no_reply == 0)
-	ls_pmac_state = LS_PMAC_STATE_WACK;
+        ls_pmac_state = LS_PMAC_STATE_WACK;
       else
-	ls_pmac_state = LS_PMAC_STATE_WACK_NFR;
+        ls_pmac_state = LS_PMAC_STATE_WACK_NFR;
       break;
 
     case LS_PMAC_STATE_CR:
       /*
       switch( lspmac_control_char) {
-      case 0x0002:	// Control-B    Report status word for 8 motors
-      case 0x0003:	// Control-C    Report all coordinate system status words
-      case 0x0006:	// Control-F    Report following errors for 8 motors
-      case 0x0010:	// Control-P    Report positions for 8 motors
-      case 0x0016:	// Control-V    Report velocity on 8 motors
+      case 0x0002:      // Control-B    Report status word for 8 motors
+      case 0x0003:      // Control-C    Report all coordinate system status words
+      case 0x0006:      // Control-F    Report following errors for 8 motors
+      case 0x0010:      // Control-P    Report positions for 8 motors
+      case 0x0016:      // Control-V    Report velocity on 8 motors
       default:
-	cr_cmd.wValue = htons(lspmac_control_char);
-	cr_cmd.wLength = htons( 1400);
-	nsent = send( evt->fd, &cr_cmd, pmac_cmd_size, 0);
-	gettimeofday( &pmac_time_sent, NULL);
-	ls_pmac_state = LS_PMAC_STATE_WCR;
-	break;
+        cr_cmd.wValue = htons(lspmac_control_char);
+        cr_cmd.wLength = htons( 1400);
+        nsent = send( evt->fd, &cr_cmd, pmac_cmd_size, 0);
+        gettimeofday( &pmac_time_sent, NULL);
+        ls_pmac_state = LS_PMAC_STATE_WCR;
+        break;
       default:
-	ls_pmac_state = LS_PMAC_STATE_IDLE;
+        ls_pmac_state = LS_PMAC_STATE_IDLE;
       }
-	*/
+        */
       break;
 
     case LS_PMAC_STATE_RR:
@@ -907,12 +889,12 @@ void lspmac_Service(
       receiveBufferSize += 1400;
       newbuff = calloc( receiveBufferSize, sizeof( unsigned char));
       if( newbuff == NULL) {
-	lslogging_log_message( "lspmac_Service: Out of memory");
-	exit( -1);
+        lslogging_log_message( "lspmac_Service: Out of memory");
+        exit( -1);
       }
       if( receiveBuffer != NULL) {
-	memcpy( newbuff, receiveBuffer, receiveBufferIn);
-	free(receiveBuffer);
+        memcpy( newbuff, receiveBuffer, receiveBufferIn);
+        free(receiveBuffer);
       }
       receiveBuffer = newbuff;
     }
@@ -930,22 +912,22 @@ void lspmac_Service(
       // other commands end in 6 if OK, 7 if not
       //
       for( i=receiveBufferIn; i<receiveBufferIn+nread; i++) {
-	if( receiveBuffer[i] == 7) {
-	  //
-	  // Error condition
-	  //
-	  lspmac_Error( &(receiveBuffer[i]));
-	  receiveBufferIn = 0;
-	  return;
-	}
-	if( receiveBuffer[i] == 6) {
-	  //
-	  // End of command response
-	  //
-	  foundEOCR = 1;
-	  receiveBuffer[i] = 0;
-	  break;
-	}
+        if( receiveBuffer[i] == 7) {
+          //
+          // Error condition
+          //
+          lspmac_Error( &(receiveBuffer[i]));
+          receiveBufferIn = 0;
+          return;
+        }
+        if( receiveBuffer[i] == 6) {
+          //
+          // End of command response
+          //
+          foundEOCR = 1;
+          receiveBuffer[i] = 0;
+          break;
+        }
       }
       receiveBufferIn = i;
     }
@@ -969,9 +951,9 @@ void lspmac_Service(
     case LS_PMAC_STATE_WACK_RR:
       receiveBufferIn -= 2;
       if( receiveBuffer[receiveBufferIn])
-	ls_pmac_state = LS_PMAC_STATE_GB;
+        ls_pmac_state = LS_PMAC_STATE_GB;
       else
-	ls_pmac_state = LS_PMAC_STATE_RR;
+        ls_pmac_state = LS_PMAC_STATE_RR;
       receiveBuffer[receiveBufferIn] = 0;
       break;
     case LS_PMAC_STATE_GMR:
@@ -985,14 +967,13 @@ void lspmac_Service(
       break;
     case LS_PMAC_STATE_WGB:
       if( foundEOCR) {
-	cmd = lspmac_pop_reply();
-	ls_pmac_state = LS_PMAC_STATE_IDLE;
+        cmd = lspmac_pop_reply();
+        ls_pmac_state = LS_PMAC_STATE_IDLE;
       } else {
-	ls_pmac_state = LS_PMAC_STATE_RR;
+        ls_pmac_state = LS_PMAC_STATE_RR;
       }
       break;
     }
-
 
     if( cmd != NULL && cmd->onResponse != NULL) {
       cmd->onResponse( cmd, receiveBufferIn, receiveBuffer);
@@ -1001,17 +982,15 @@ void lspmac_Service(
   }
 }
 
-
-
 /** Receive a reply that does not require multiple buffers
  */
 void lspmac_GetShortReplyCB(
-			    pmac_cmd_queue_t *cmd,	/**< [in] Queue item this is a reply to		*/
-			    int nreceived,		/**< [in] Number of bytes received		*/
-			    char *buff			/**< [in] The buffer of bytes			*/
-			    ) {
+                            pmac_cmd_queue_t *cmd,      /**< [in] Queue item this is a reply to         */
+                            int nreceived,              /**< [in] Number of bytes received              */
+                            char *buff                  /**< [in] The buffer of bytes                   */
+                            ) {
 
-  char *sp;	// pointer to the command this is a reply to
+  char *sp;     // pointer to the command this is a reply to
   char *tmp;
 
   if( nreceived < 1400)
@@ -1035,11 +1014,11 @@ void lspmac_GetShortReplyCB(
  *  Followed by a hex dump of the response.
  */
 void lspmac_SendControlReplyPrintCB(
-				    pmac_cmd_queue_t *cmd,	/**< [in] Queue item this is a reply to		*/
-				    int nreceived,		/**< [in] Number of bytes received		*/
-				    char *buff			/**< [in] Buffer of bytes received		*/
-				    ) {
-  
+                                    pmac_cmd_queue_t *cmd,      /**< [in] Queue item this is a reply to         */
+                                    int nreceived,              /**< [in] Number of bytes received              */
+                                    char *buff                  /**< [in] Buffer of bytes received              */
+                                    ) {
+
   char *sp;
   int i;
 
@@ -1058,12 +1037,11 @@ void lspmac_SendControlReplyPrintCB(
   free( sp);
 }
 
-
 /** Service a reply to the getmem command.
  * \param cmd Queue item this is a reply to
  * \param nreceived Number of bytes received
  * \param buff Buffer of bytes recieved
- *  
+ *
  */
 void lspmac_GetmemReplyCB( pmac_cmd_queue_t *cmd, int nreceived, char *buff) {
 
@@ -1078,20 +1056,20 @@ void lspmac_GetmemReplyCB( pmac_cmd_queue_t *cmd, int nreceived, char *buff) {
 /** Request a chunk of memory to be returned.
  */
 pmac_cmd_queue_t *lspmac_SockGetmem(
-				    int offset,			/**< [in] Offset in PMAC Double Buffer		*/
-				    int nbytes			/**< [in] Number of bytes to request		*/
-				    )  {
+                                    int offset,                 /**< [in] Offset in PMAC Double Buffer          */
+                                    int nbytes                  /**< [in] Number of bytes to request            */
+                                    )  {
   return lspmac_send_command( VR_UPLOAD,   VR_PMAC_GETMEM, offset, 0, nbytes, NULL, lspmac_GetmemReplyCB, 0, NULL);
 }
 
 /** Send a one line command.
  *  Uses printf style arguments.
  */
-pmac_cmd_queue_t *lspmac_SockSendline( 
-				      char *event,		/**< [in] base name for events				*/
-				      char *fmt,		/**< [in] Printf style format string			*/
-				      ...			/*        other arguments required by format string	*/
-				       ) {
+pmac_cmd_queue_t *lspmac_SockSendline(
+                                      char *event,              /**< [in] base name for events                          */
+                                      char *fmt,                /**< [in] Printf style format string                    */
+                                      ...                       /*        other arguments required by format string     */
+                                       ) {
   va_list arg_ptr;
   char payload[1400];
 
@@ -1105,16 +1083,13 @@ pmac_cmd_queue_t *lspmac_SockSendline(
   return lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( payload), payload, lspmac_GetShortReplyCB, 0, event);
 }
 
-
-
-
 /** Send a command and ignore the response
  */
 pmac_cmd_queue_t *lspmac_SockSendline_nr(
-					 char *event,		/**< [in] base name for events				*/
-					 char *fmt,		/**< [in] Printf style format string			*/
-					 ...			/*        Other arguments required by format string	*/
-					 ) {
+                                         char *event,           /**< [in] base name for events                          */
+                                         char *fmt,             /**< [in] Printf style format string                    */
+                                         ...                    /*        Other arguments required by format string     */
+                                         ) {
   va_list arg_ptr;
   char s[512];
 
@@ -1131,11 +1106,11 @@ pmac_cmd_queue_t *lspmac_SockSendline_nr(
 /** Send a control character
  */
 pmac_cmd_queue_t *lspmac_SockSendControlCharPrint(
-						  char *event,	/**< [in] base name for events				*/
-						  char c	/**< The control character to send			*/
-						  ) {
+                                                  char *event,  /**< [in] base name for events                          */
+                                                  char c        /**< The control character to send                      */
+                                                  ) {
   lspmac_control_char = c;
-  //  return lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDCTRLCHAR, c, 0, 1400, NULL, lspmac_SendControlReplyPrintCB, 0, event);
+  //  return lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDCTRLCHAR, c, 0, 1400, NULL, lspmac_SendControlReplyPrintCB, 0, event, 0);
   return lspmac_send_command( VR_UPLOAD, VR_CTRL_RESPONSE, c, 0, 1400, NULL, lspmac_SendControlReplyPrintCB, 0, event);
 }
 
@@ -1151,8 +1126,8 @@ void lspmac_Getmem() {
  *  This is the read method for the binary i/o motor class
  */
 void lspmac_bo_read(
-		    lspmac_motor_t *mp		/**< [in] The motor			*/
-		    ) {
+                    lspmac_motor_t *mp          /**< [in] The motor                     */
+                    ) {
   int pos, changed;
   char *fmt;
 
@@ -1187,8 +1162,8 @@ void lspmac_bo_read(
 /** Read a DAC motor position
  */
 void lspmac_dac_read(
-		     lspmac_motor_t *mp		/**< [in] The motor			*/
-		     ) {
+                     lspmac_motor_t *mp         /**< [in] The motor                     */
+                     ) {
   double u2c;
   char *fmt;
 
@@ -1221,13 +1196,18 @@ void lspmac_dac_read(
 /** Fast shutter read routine
  *  The shutter is mildly complicated in that we need to take into account the fact that
  *  the shutter can open and close again between status updates.  This means that we need
- *  to rely on a PCL program running in the PMAC to monitor the shutter state and let us
+ *  to rely on a PLC program running in the PMAC to monitor the shutter state and let us
  *  know that this has happened.
  */
 void lspmac_shutter_read(
-			 lspmac_motor_t *mp	/**< [in] The motor object associated with the fast shutter	*/
-			 ) {
+                         lspmac_motor_t *mp     /**< [in] The motor object associated with the fast shutter     */
+                         ) {
   char *fmt;
+  int sb_open;
+  int sb_not_enabled;
+  int close_shutter;
+
+  close_shutter = 0;    // flag set when shutter is disabled and the shutter is open
   //
   // track the shutter state and signal if it has changed
   //
@@ -1249,13 +1229,29 @@ void lspmac_shutter_read(
     pthread_cond_signal( &(mp->cond));
   }
 
+  sb_open        = lspmac_getBIPosition(sb_shutter_open);
+  sb_not_enabled = lspmac_getBIPosition(sb_shutter_not_enabled);
+
   pthread_mutex_lock( &ncurses_mutex);
-  if( md2_status.fs_is_open) {
-    mvwprintw( term_status2, 1, 1, "Shutter Open  ");
-    mp->position = 1;
-  } else {
-    mvwprintw( term_status2, 1, 1, "Shutter Closed");
+  if (sb_not_enabled) {
+    mvwprintw( term_status2, 1, 1, "Shutter Disabled");
     mp->position = 0;
+
+    if( md2_status.fs_is_open) {
+      // Shutter is logically open but is disabled by the shutter box.
+      // We set a flag here to close it at the end of this routine so
+      // that it does not open when it becomes enabled again.
+      close_shutter = 1;
+    }
+
+  } else {
+    if( sb_open) {
+      mvwprintw( term_status2, 1, 1, "Shutter Open    ");
+      mp->position = 1;
+    } else {
+      mvwprintw( term_status2, 1, 1, "Shutter Closed  ");
+      mp->position = 0;
+    }
   }
   pthread_mutex_unlock( &ncurses_mutex);
 
@@ -1264,20 +1260,30 @@ void lspmac_shutter_read(
     mp->not_done    = 0;
     fmt = lsredis_getstr( fshut->redis_fmt);
     lsredis_setstr( fshut->redis_position, fmt, fshut->position);
-    lsredis_setstr( fshut->status_str, "%s", fshut->reported_position == 0 ? "Open" : "Closed");
-    free(fmt);
-    fshut->reported_position = fshut->position;
-    pthread_cond_signal( &(mp->cond));
+    if (sb_not_enabled) {
+      lsredis_setstr( fshut->status_str, "Disabled");
+    } else {
+      lsredis_setstr( fshut->status_str, "%s", fshut->reported_position == 0 ? "Open" : "Closed");
+      free(fmt);
+      fshut->reported_position = fshut->position;
+      pthread_cond_signal( &(mp->cond));
+    }
   }
 
   pthread_mutex_unlock( &(mp->mutex));
+
+  if (close_shutter) {
+    // We found the shutter "open" but disabled.  Formally "close" it
+    // now.
+    fshut->moveAbs( fshut, 0);
+  }
 }
 
 /** Home the motor.
  */
 void lspmac_home1_queue(
-			lspmac_motor_t *mp			/**< [in] motor we are concerned about		*/
-			) {
+                        lspmac_motor_t *mp                      /**< [in] motor we are concerned about          */
+                        ) {
   int i;
   int nogo;
   int motor_num;
@@ -1295,15 +1301,14 @@ void lspmac_home1_queue(
   if( mp->homing) {
     pthread_mutex_unlock( &(mp->mutex));
     return;
-  }    
-
+  }
 
   active     = lsredis_getb( mp->active);
   motor_num  = lsredis_getl( mp->motor_num);
   coord_num  = lsredis_getl( mp->coord_num);
   home       = lsredis_get_string_array( mp->home);
   home_group = lsredis_getl( mp->home_group);
-  
+
   // Each of the motors should have this defined
   // but let's not seg fault if home is missing
   //
@@ -1331,18 +1336,18 @@ void lspmac_home1_queue(
       // only let one motor at a time home  in a given coordinate system
       //
       if( m2->homing)
-	nogo = 1;
+        nogo = 1;
     } else {
       if( lsredis_getl( m2->home_group) < home_group) {
-	pthread_mutex_lock( &(m2->mutex));
-	//
-	//  Don't go on if
-	//
-	// we are homing or ( not in position       while     in open loop)
-	//
-	if( m2->homing || (((m2->status2 & 0x01)==0) && ((m2->status1 & 0x040000) != 0)))
-	  nogo = 1;
-	pthread_mutex_unlock( &(m2->mutex));
+        pthread_mutex_lock( &(m2->mutex));
+        //
+        //  Don't go on if
+        //
+        // we are homing or ( not in position       while     in open loop)
+        //
+        if( m2->homing || (((m2->status2 & 0x01)==0) && ((m2->status1 & 0x040000) != 0)))
+          nogo = 1;
+        pthread_mutex_unlock( &(m2->mutex));
       }
     }
     if( nogo) {
@@ -1352,7 +1357,7 @@ void lspmac_home1_queue(
   }
   mp->homing   = 1;
   lslogging_log_message( "%s homing = %d", mp->name, mp->homing);
-  mp->not_done = 1;	// set up waiting for cond
+  mp->not_done = 1;     // set up waiting for cond
   mp->motion_seen = 0;
   // This opens the control loop.
   // The status routine should notice this and the fact that
@@ -1365,7 +1370,7 @@ void lspmac_home1_queue(
   //
 
   if( active && (~(mp->status1) & 0x040000)) {
-      lspmac_SockSendDPline( mp->name, "#%d$*", motor_num);
+    lspmac_SockSendDPline( mp->name, "#%d$*", motor_num);
   }
 
   pthread_mutex_unlock( &(mp->mutex));
@@ -1385,10 +1390,9 @@ void lspmac_home1_queue(
 
 /** Second stage of homing
  */
-
 void lspmac_home2_queue(
-			lspmac_motor_t *mp			/**< [in] motor we are concerned about		*/
-			) {
+                        lspmac_motor_t *mp                      /**< [in] motor we are concerned about          */
+                        ) {
 
   char **spp;
   char **home;
@@ -1403,7 +1407,7 @@ void lspmac_home2_queue(
   home = lsredis_get_string_array( mp->home);
 
   //
-  // We don't have any motors that have a null home text array so 
+  // We don't have any motors that have a null home text array so
   // there is currently no need to worry about this case other than
   // not to seg fault
   //
@@ -1437,12 +1441,11 @@ double lspmac_getPosition( lspmac_motor_t *mp) {
   return rtn;
 }
 
-
 /** Read the position and status of a normal PMAC motor
  */
 void lspmac_pmacmotor_read(
-			   lspmac_motor_t *mp		/**< [in] Our motor		*/
-			   ) {
+                           lspmac_motor_t *mp           /**< [in] Our motor             */
+                           ) {
   char s[512], *sp;
   int homing1, homing2;
   double u2c;
@@ -1466,7 +1469,7 @@ void lspmac_pmacmotor_read(
   //
   if( mp->status2 & 1 && mp->status2 == *mp->status2_p && abs( mp->actual_pos_cnts - *mp->actual_pos_cnts_p) > 256) {
     //    lslogging_log_message( "Instantaneous change: %s old status1: %0x, new status1: %0x, old status2: %0x, new status2: %0x, old cnts: %0x, new cnts: %0x",
-    //    			   mp->name, mp->status1, *mp->status1_p, mp->status2, *mp->status2_p, mp->actual_pos_cnts, *mp->actual_pos_cnts_p);
+    //                             mp->name, mp->status1, *mp->status1_p, mp->status2, *mp->status2_p, mp->actual_pos_cnts, *mp->actual_pos_cnts_p);
 
     //
     // At this point we'll just log the event and return
@@ -1487,7 +1490,6 @@ void lspmac_pmacmotor_read(
     return;
   }
 
-
   // Send an event if inPosition has changed
   //
   if( (mp->status2 & 0x000001) != (*mp->status2_p & 0x000001)) {
@@ -1502,7 +1504,7 @@ void lspmac_pmacmotor_read(
 
   //
   // maybe look for omega zero crossing
-  // 
+  //
   if( motor_num == 1 && omega_zero_search && *mp->actual_pos_cnts_p >=0 && mp->actual_pos_cnts < 0) {
     int secs, nsecs;
 
@@ -1514,18 +1516,17 @@ void lspmac_pmacmotor_read(
       omega_zero_time.tv_sec = lspmac_status_time.tv_sec  - secs;
       omega_zero_time.tv_nsec= lspmac_status_time.tv_nsec;
       if( omega_zero_time.tv_nsec < nsecs) {
-	omega_zero_time.tv_sec  -= 1;
-	omega_zero_time.tv_nsec += 1000000000;
+        omega_zero_time.tv_sec  -= 1;
+        omega_zero_time.tv_nsec += 1000000000;
       }
       omega_zero_time.tv_nsec -= nsecs;
 
       lsevents_send_event( "omega crossed zero");
       lslogging_log_message("lspmac_pmacmotor_read: omega zero secs %d  nsecs %d ozt.tv_sec %ld  ozt.tv_nsec  %ld, motor cnts %d",
-			    secs, nsecs, omega_zero_time.tv_sec, omega_zero_time.tv_nsec, *mp->actual_pos_cnts_p);
+                            secs, nsecs, omega_zero_time.tv_sec, omega_zero_time.tv_nsec, *mp->actual_pos_cnts_p);
     }
     omega_zero_search = 0;
   }
-
 
   // Make local copies so we can inspect them in other threads
   // without having to grab the status mutex
@@ -1610,8 +1611,6 @@ void lspmac_pmacmotor_read(
   lsredis_setstr( mp->pos_limit_hit, mp->status1 & 0x200000 ? "1" : "0");
   lsredis_setstr( mp->neg_limit_hit, mp->status1 & 0x400000 ? "1" : "0");
 
-
-
   // set flag if we are not homed
   homing1 = 0;
   //                        ~(homed flag)
@@ -1671,7 +1670,7 @@ void lspmac_pmacmotor_read(
       sp = "In Position";
 
     mvwprintw( mp->win, 6, 1, "%*s", LS_DISPLAY_WINDOW_WIDTH-2, sp);
-  
+
     lsredis_setstr( mp->status_str, sp);
   }
   wnoutrefresh( mp->win);
@@ -1699,15 +1698,14 @@ int lspmac_getBIPosition( lspmac_bi_t *bip) {
   return rtn;
 }
 
-
 /** Service routing for status upate
  *  This updates positions and status information.
  */
 void lspmac_get_status_cb(
-			  pmac_cmd_queue_t *cmd,		/**< [in] The command that generated this reply	*/
-			  int nreceived,			/**< [in] Number of bytes received		*/
-			  char *buff				/**< [in] The Big Byte Buffer			*/
-			  ) {
+                          pmac_cmd_queue_t *cmd,                /**< [in] The command that generated this reply */
+                          int nreceived,                        /**< [in] Number of bytes received              */
+                          char *buff                            /**< [in] The Big Byte Buffer                   */
+                          ) {
   #ifdef SHOW_RATE
   static struct timespec ts1;
   static struct timespec ts2;
@@ -1734,7 +1732,6 @@ void lspmac_get_status_cb(
   //
   pthread_mutex_unlock( &md2_status_mutex);
 
-
   //
   // track the coordinate system moving flags
   //
@@ -1746,15 +1743,14 @@ void lspmac_get_status_cb(
     mask = 1;
     for( i=1; i<=16; i++, mask <<= 1) {
       if( ((lspmac_moving_flags & mask) != 0) && ((md2_status.moving_flags & mask) == 0)) {
-	// Falling edge: send event
-	lsevents_send_event( "Coordsys %d Stopped", i);
+        // Falling edge: send event
+        lsevents_send_event( "Coordsys %d Stopped", i);
       }
     }
     lspmac_moving_flags = md2_status.moving_flags;
     pthread_cond_signal( &lspmac_moving_cond);
   }
   pthread_mutex_unlock( &lspmac_moving_mutex);
-
 
   //
   // Read the motor positions
@@ -1769,7 +1765,7 @@ void lspmac_get_status_cb(
   for( i=0; i<lspmac_nbis; i++) {
     int newValue = 0;
     bp = &(lspmac_bis[i]);
-    
+
     pthread_mutex_lock( &(bp->mutex));
 
     bp->position = (*(bp->ptr) & bp->mask) == 0 ? 0 : 1;
@@ -1778,29 +1774,29 @@ void lspmac_get_status_cb(
       newValue       = 1;
       bp->first_time = 0;
       if( bp->position==1 && bp->changeEventOn != NULL && bp->changeEventOn[0] != 0) {
-	  lsevents_send_event( bp->changeEventOn);
-	  if( bp->onStatus != NULL)
-	    lsredis_setstr( bp->status_str, bp->onStatus);
+          lsevents_send_event( bp->changeEventOn);
+          if( bp->onStatus != NULL)
+            lsredis_setstr( bp->status_str, bp->onStatus);
       }
       if( bp->position==0 && bp->changeEventOff != NULL && bp->changeEventOff[0] != 0) {
-	  lsevents_send_event( bp->changeEventOff);
-	  if( bp->offStatus != NULL)
-	    lsredis_setstr( bp->status_str, bp->offStatus);
+          lsevents_send_event( bp->changeEventOff);
+          if( bp->offStatus != NULL)
+            lsredis_setstr( bp->status_str, bp->offStatus);
       }
     } else {
       if( bp->position != bp->previous) {
-	if( bp->position==1 && bp->changeEventOn != NULL && bp->changeEventOn[0] != 0) {
-	  newValue = 1;
-	  lsevents_send_event( bp->changeEventOn);
-	  if( bp->onStatus != NULL)
-	    lsredis_setstr( bp->status_str, bp->onStatus);
-	}
-	if(bp->position==0 && bp->changeEventOff != NULL && bp->changeEventOff[0] != 0) {
-	  newValue = 1;
-	  lsevents_send_event( bp->changeEventOff);
-	  if( bp->offStatus != NULL)
-	    lsredis_setstr( bp->status_str, bp->offStatus);
-	}
+        if( bp->position==1 && bp->changeEventOn != NULL && bp->changeEventOn[0] != 0) {
+          newValue = 1;
+          lsevents_send_event( bp->changeEventOn);
+          if( bp->onStatus != NULL)
+            lsredis_setstr( bp->status_str, bp->onStatus);
+        }
+        if(bp->position==0 && bp->changeEventOff != NULL && bp->changeEventOff[0] != 0) {
+          newValue = 1;
+          lsevents_send_event( bp->changeEventOff);
+          if( bp->offStatus != NULL)
+            lsredis_setstr( bp->status_str, bp->offStatus);
+        }
       }
     }
     bp->previous = bp->position;
@@ -1813,27 +1809,27 @@ void lspmac_get_status_cb(
 
   pthread_mutex_lock( &ncurses_mutex);
 
-  // acc11c_1	INPUTS
+  // acc11c_1   INPUTS
   // mask  bit
-  // 0x01  0	M1000	Air pressure OK
-  // 0x02  1	M1001	Air bearing OK
-  // 0x04  2	M1002	Cryo switch
-  // 0x08  3    M1003	Backlight Down
-  // 0x10  4    M1004	Backlight Up
+  // 0x01  0    M1000   Air pressure OK
+  // 0x02  1    M1001   Air bearing OK
+  // 0x04  2    M1002   Cryo switch
+  // 0x08  3    M1003   Backlight Down
+  // 0x10  4    M1004   Backlight Up
   // 0x20  5
-  // 0x40  6	M1006	Cryo is back
+  // 0x40  6    M1006   Cryo is back
 
   //
-  // acc11c_2	INPUTS
+  // acc11c_2   INPUTS
   // mask  bit
-  // 0x01  0	M1008	Fluor Detector back
-  // 0x02  1	M1009	Sample Detected
-  // 0x04  2	M1020	{SC load request}
-  // 0x08  3	M1021	{SC move cryo back request}
-  // 0x10  4	M1022	{SC sample magnet control}
-  // 0x20  5	M1013	Etel Ready
-  // 0x40  6	M1014	Etel On
-  // 0x80  7	M1015	Etel Init OK
+  // 0x01  0    M1008   Fluor Detector back
+  // 0x02  1    M1009   Sample Detected
+  // 0x04  2    M1020   {SC load request}
+  // 0x08  3    M1021   {SC move cryo back request}
+  // 0x10  4    M1022   {SC sample magnet control}
+  // 0x20  5    M1013   Etel Ready
+  // 0x40  6    M1014   Etel On
+  // 0x80  7    M1015   Etel Init OK
 
   if( md2_status.acc11c_2 & 0x01) {
     mvwprintw( term_status2, 3, 10, "%*s", -8, "Fluor Out");
@@ -1846,65 +1842,76 @@ void lspmac_get_status_cb(
   } else {
     mvwprintw( term_status2, 4, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Dryer Off");
   }
+  /*
   if( md2_status.acc11c_2 & 0x02) {
     mvwprintw( term_status2, 2, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Cap Dectected    ");
   } else {
     mvwprintw( term_status2, 2, 1, "%*s", -(LS_DISPLAY_WINDOW_WIDTH-2), "Cap Not Dectected");
   }
+  */
   wnoutrefresh( term_status2);
 
-
-  // acc11c_3	INPUTS
+  // acc11c_3   INPUTS
   // mask  bit
-  // 0x01  0	M1025	Minikappa OK
-  // 0x02  1    M1023	{SC unload request}
-  // 0x04  2    M1024	Smartmagnet is on (note in pmc saying this is not used in VB interface)
-  // 0x08  3	M1027	Arm Parked
-  // 0x10  4    M1031	Smartmagnet error (coil is broken)
+  // 0x01  0    M1025   Minikappa OK
+  // 0x02  1    M1023   {SC unload request}
+  // 0x04  2    M1024   Smartmagnet is on (note in pmc saying this is not used in VB interface)
+  // 0x08  3    M1027   Arm Parked
+  // 0x10  4    M1031   Smartmagnet error (coil is broken)
   // 0x20  5
   // 0x40  6
   // 0x80  7
-  // 0x100 8    M1048	Shutter is open (note in pmc says: slow input !!!)
+  // 0x100 8    M1048   Shutter is open (note in pmc says: slow input !!!)
 
-  // acc11c_4	INPUTS
+  // acc11c_4   INPUTS
   // mask  bit
-  // 0x01  0    M1031	{laser mirror is back}
-  // 0x02  1    M1032	{laser PSS OK}
-  // 0x04  2    M1033	{laser shutter open}
-
-  
+  // 0x01  0    M1031   {laser mirror is back}
+  // 0x02  1    M1032   {laser PSS OK}
+  // 0x04  2    M1033   {laser shutter open}
 
 
-  // acc11c_5	OUTPUTS
+
+
+  // acc11c_5   OUTPUTS
   // mask  bit
-  // 0x01  0    M1100	Mag Off
-  // 0x02  1    M1191	Condenser Out
-  // 0x04  2    M1102	Cryo Back
-  // 0x08  3    M1103	Dryer On
-  // 0x10  4    M1104	FluoDet Out
-  // 0x20  5    M1105	{smartmagnet on/off: note in pmc says this is not used}
-  // 0x40  6    M1106	1=SmartMag, 0=Permanent Mag
-  //
+  // 0x0001  0    OUT0   M1100  Mag Off
+  // 0x0002  1    OUT1   M1191  Condenser Out
+  // 0x0004  2    OUT2   M1102  Cryo Back
+  // 0x0008  3    OUT3   M1103  Dryer On
+  // 0x0010  4    OUT4   M1104  FluoDet Out
+  // 0x0020  5    OUT5   M1105  {smartmagnet on/off: note in pmc says this is not used}
+  // 0x0040  6    OUT6   M1106  1=SmartMag, 0=Permanent Mag
+  // 0x0080  7    OUT7
+  // 0x0100  8
+  // 0x0200  9
+  // 0x0400 10
+  // 0x0800 11
+  // 0x1000 12
+  // 0x2000 13
+  // 0x4000 14
+  // 0x8000 15
+
+
 
   if( md2_status.acc11c_5 & 0x04)
     mvwprintw( term_status2, 3, 1, "%*s", -8, "Cryo Out");
   else
     mvwprintw( term_status2, 3, 1, "%*s", -8, "Cryo In ");
 
-  // acc11c_6	OUTPUTS
+  // acc11c_6   OUTPUTS
   // mask   bit
-  // 0x0001   0	M1040   {SC Sample transfer is on}
-  // 0x0002   1
-  // 0x0004   2
-  // 0x0008   3
-  // 0x0010   4
-  // 0x0020   5
-  // 0x0040   6
-  // 0x0080   7	M1115   Etel Enable
+  // 0x0001   0 OUT8   M1108 Shutter Box Shutter Enable
+  // 0x0002   1 OUT9   M1109 Shutter Box Shutter Open
+  // 0x0004   2 OUT10
+  // 0x0008   3 OUT11
+  // 0x0010   4 OUT12
+  // 0x0020   5 OUT13
+  // 0x0040   6 OUT14
+  // 0x0080   7 M1115   Etel Enable
   // 0x0100   8 M1124   Fast Shutter Enable
   // 0x0200   9 M1125   Fast Shutter Manual Enable
   // 0x0400  10 M1126   Fast Shutter On
-  // 0x0800  11  
+  // 0x0800  11
   // 0x1000  12 M1128   ADC1 gain bit 0
   // 0x2000  13 M1129   ADC1 gain bit 1
   // 0x4000  14 M1130   ADC2 gain bit 0
@@ -1969,7 +1976,6 @@ void lspmac_get_ascii_cb( pmac_cmd_queue_t *cmd, int nreceived, char *buff) {
   pthread_mutex_lock( &lspmac_ascii_mutex);
   memcpy( &lspmac_ascii_buffers, buff, sizeof(lspmac_ascii_buffers));
 
-
   //
   // The response is not ready yet
   // This will be an infinite loop if we queue a command that does not
@@ -1999,16 +2005,16 @@ void lspmac_get_ascii_cb( pmac_cmd_queue_t *cmd, int nreceived, char *buff) {
       bcd2 = (lspmac_ascii_buffers.response_buf & 0x00f0) >> 4;
       bcd3 = (lspmac_ascii_buffers.response_buf & 0x0f00) >> 8;
       errcode = (bcd3 * 10 + bcd2) * 10 + bcd1;
-      
+
       if( errcode >= sizeof( pmac_error_strs)/sizeof( *pmac_error_strs))
-	errcode = 0;
+        errcode = 0;
       lslogging_log_message( "lspmac_get_ascii_cb: Error returned for %s: %s", lspmac_ascii_buffers.command_str, pmac_error_strs[errcode]);
       //
       // Command not allowed during program execution.
       //
       // Requeue it;
       if( errcode == 1) {
-	lspmac_dpascii_off--;
+        lspmac_dpascii_off--;
       }
     } else {
       //
@@ -2025,33 +2031,33 @@ void lspmac_get_ascii_cb( pmac_cmd_queue_t *cmd, int nreceived, char *buff) {
       // 0x0F42 (X:$0603D0) contains the number of characters in the
       // string (plus one)."
       //
-      
-      if( cmd->event != NULL && strncmp( cmd->event, "Control-", 8) == 0) {
-	lslogging_log_message( "%s: %s", cmd->event, lspmac_ascii_buffers.response_str);
-	need_more = 0;
-      } else {	
-	if( lspmac_ascii_buffers.response_n > 1)
-	  lslogging_log_message( "lspmac_get_ascii_cb: '%s'   '%s'", lspmac_ascii_buffers.command_str, lspmac_ascii_buffers.response_str);
-	else
-	  lslogging_log_message( "lspmac_get_ascii_cb: '%s'   responded", lspmac_ascii_buffers.command_str);
 
-	//
-	// 5.  "If Bits 0 – 7 of the Host-Input Control Word had
-	// contained the value $0D (13 decimal, “CR”), this was not the
-	// last line in the response, and steps 1 – 4 should be
-	// repeated. If they had contained the value $06 (6 decimal,
-	// “ACK”), this was the last line in the response."
-	//
-	if( (lspmac_ascii_buffers.response_buf & 0x00ff) == 0x0d) {
-	  need_more = 1;
-	} else {
-	  need_more = 0;
-	
-	  if( cmd->event != NULL && *(cmd->event) != 0)
-	    lsevents_send_event( "%s command accepted", cmd->event);
-	}
+      if( cmd->event != NULL && strncmp( cmd->event, "Control-", 8) == 0) {
+        lslogging_log_message( "%s: %s", cmd->event, lspmac_ascii_buffers.response_str);
+        need_more = 0;
+      } else {
+        if( lspmac_ascii_buffers.response_n > 1)
+          lslogging_log_message( "lspmac_get_ascii_cb: '%s'   '%s'", lspmac_ascii_buffers.command_str, lspmac_ascii_buffers.response_str);
+        else
+          lslogging_log_message( "lspmac_get_ascii_cb: '%s'   responded", lspmac_ascii_buffers.command_str);
+
+        //
+        // 5.  "If Bits 0 – 7 of the Host-Input Control Word had
+        // contained the value $0D (13 decimal, “CR”), this was not the
+        // last line in the response, and steps 1 – 4 should be
+        // repeated. If they had contained the value $06 (6 decimal,
+        // “ACK”), this was the last line in the response."
+        //
+        if( (lspmac_ascii_buffers.response_buf & 0x00ff) == 0x0d) {
+          need_more = 1;
+        } else {
+          need_more = 0;
+
+          if( cmd->event != NULL && *(cmd->event) != 0)
+            lsevents_send_event( "%s command accepted", cmd->event);
+        }
       }
-    } 
+    }
   }
 
   pthread_mutex_unlock( &lspmac_ascii_mutex);
@@ -2063,7 +2069,7 @@ void lspmac_get_ascii_cb( pmac_cmd_queue_t *cmd, int nreceived, char *buff) {
   // to 0. Turbo PMAC will not send another response line until it sees
   // this register set to 0."
   //
-  clrdata = 0;		// set the control word to zero
+  clrdata = 0;          // set the control word to zero
 
   if( need_more) {
     lspmac_send_command( VR_UPLOAD, VR_PMAC_SETMEM, 0x0f40, 0, 4, (char *)&clrdata, lspmac_more_ascii_cb, 1, NULL);
@@ -2093,7 +2099,7 @@ void lspmac_SockSendDPline( char *event, char *fmt, ...) {
   va_list arg_ptr;
   uint32_t index;
   char *pl;
-  
+
   pthread_mutex_lock( &lspmac_ascii_mutex);
   index = lspmac_dpascii_on++ % LSPMAC_DPASCII_QUEUE_LENGTH;
 
@@ -2124,7 +2130,6 @@ void lspmac_request_control_response_cb( char *event) {
 
 }
 
-
 void lspmac_SockSendDPControlCharCB( pmac_cmd_queue_t *cmd, int nreceived, char *buf) {
   if( cmd->event != NULL && *(cmd->event))
     lsevents_send_event( "%s accepted", cmd->event);
@@ -2141,7 +2146,6 @@ void lspmac_SockSendDPControlChar( char *event, char c) {
     lsevents_send_event( "%s queued", event);
 }
 
-
 void lspmac_SockSendDPqueue() {
   lspmac_dpascii_queue_t *qp;
   uint32_t mask;
@@ -2152,9 +2156,11 @@ void lspmac_SockSendDPqueue() {
   lspmac_ascii_busy = 1;
   pthread_mutex_unlock( &lspmac_ascii_mutex);
 
-  lslogging_log_message( "lspmac_SockSendDPqueue: %s", qp->pl);
+  if (qp->pl && *(qp->pl)) {
+    lslogging_log_message( "lspmac_SockSendDPqueue: %s", qp->pl);
+  }
 
-  clrdata = 0;		// set the control word to zero
+  clrdata = 0;          // set the control word to zero
   lspmac_send_command( VR_UPLOAD, VR_PMAC_SETMEM, 0x0f40, 0, 4, (char *)&clrdata, NULL, 1, NULL);
   lspmac_send_command( VR_UPLOAD, VR_PMAC_SETMEM, 0x0e9c, 0, 4, (char *)&clrdata, NULL, 1, NULL);
 
@@ -2193,10 +2199,10 @@ void lspmac_abort() {
  *  Update our Postgresql database with the results
  */
 void lspmac_GetAllIVarsCB(
-			  pmac_cmd_queue_t *cmd,	/**< [in] The command that gave this response	*/
-			  int nreceived,		/**< [in] Number of bytes received		*/
-			  char *buff			/**< [in] The byte buffer			*/
-			  ) {
+                          pmac_cmd_queue_t *cmd,        /**< [in] The command that gave this response   */
+                          int nreceived,                /**< [in] Number of bytes received              */
+                          char *buff                    /**< [in] The byte buffer                       */
+                          ) {
   static char qs[LS_PG_QUERY_STRING_LENGTH];
   char *sp;
   int i;
@@ -2218,10 +2224,10 @@ void lspmac_GetAllIVars() {
  *  Update our database with the results
  */
 void lspmac_GetAllMVarsCB(
-			  pmac_cmd_queue_t *cmd,	/**< [in] The command that started this		*/
-			  int nreceived,		/**< [in] Number of bytes received		*/
-			  char *buff			/**< [in] Our byte buffer			*/
-			  ) {
+                          pmac_cmd_queue_t *cmd,        /**< [in] The command that started this         */
+                          int nreceived,                /**< [in] Number of bytes received              */
+                          char *buff                    /**< [in] Our byte buffer                       */
+                          ) {
   static char qs[LS_PG_QUERY_STRING_LENGTH];
   char *sp;
   int i;
@@ -2239,14 +2245,12 @@ void lspmac_GetAllMVars() {
   lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen( cmds), cmds, lspmac_GetAllMVarsCB, 0, NULL);
 }
 
-
-
 /** Send a command that does not need to deal with the reply
  */
 void lspmac_sendcmd_nocb(
-			 char *fmt,		/**< [in] A printf style format string			*/
-			 ...			/*        Arguments required by the format string	*/
-			 ) {
+                         char *fmt,             /**< [in] A printf style format string                  */
+                         ...                    /*        Arguments required by the format string       */
+                         ) {
   static char tmps[1024];
   va_list arg_ptr;
 
@@ -2258,16 +2262,14 @@ void lspmac_sendcmd_nocb(
   lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen(tmps), tmps, NULL, 0, NULL);
 }
 
-
-
 /** PMAC command with call back
  */
 void lspmac_sendcmd(
-			char *event,						/**< [in] base name for events		       */
-			void (*responseCB)(pmac_cmd_queue_t *, int, char *),	/**< [in] our callback routine                 */
-			char *fmt,						/**< [in] printf style format string           */
-			...							/*        Arguments specified by format string */
-			) {
+                        char *event,                                            /**< [in] base name for events                 */
+                        void (*responseCB)(pmac_cmd_queue_t *, int, char *),    /**< [in] our callback routine                 */
+                        char *fmt,                                              /**< [in] printf style format string           */
+                        ...                                                     /*        Arguments specified by format string */
+                        ) {
   static char tmps[1024];
   va_list arg_ptr;
 
@@ -2279,13 +2281,10 @@ void lspmac_sendcmd(
   lspmac_send_command( VR_DOWNLOAD, VR_PMAC_SENDLINE, 0, 0, strlen(tmps), tmps, responseCB, 0, event);
 }
 
-
 /** State machine logic.
  *  Given the current state, generate the next one
  */
 void lspmac_next_state() {
-
-
   //
   // Connect to the pmac and perhaps initialize it.
   // OK, this is slightly more than just the state
@@ -2305,19 +2304,19 @@ void lspmac_next_state() {
     //
     if( ls_pmac_state != LS_PMAC_STATE_DETACHED) {
       lspmac_SockFlush();
-      
+
       //
       // Harvest the I and M variables in case we need them
       // one day.
       //
       if( getmvars) {
-	lspmac_GetAllMVars();
-	getmvars = 0;
+        lspmac_GetAllMVars();
+        getmvars = 0;
       }
-      
+
       if( getivars) {
-	lspmac_GetAllIVars();
-	getivars = 0;
+        lspmac_GetAllIVars();
+        getivars = 0;
       }
     }
   }
@@ -2338,7 +2337,6 @@ void lspmac_next_state() {
 
   if( ls_pmac_state == LS_PMAC_STATE_IDLE && ethCmdOn != ethCmdOff)
     ls_pmac_state = LS_PMAC_STATE_SC;
-
 
   //
   // Set the events flag
@@ -2361,9 +2359,6 @@ void lspmac_next_state() {
 
       lspmac_get_status();
     }
-
-
-
   //
   // These states require that we listen for packets
   //
@@ -2376,7 +2371,7 @@ void lspmac_next_state() {
   case LS_PMAC_STATE_GMR:
     pmacfd.events = POLLIN;
     break;
-    
+
   //
   // These states require that we send packets out.
   //
@@ -2398,12 +2393,11 @@ void lspmac_next_state() {
   }
 }
 
-
 /** Our lspmac worker thread.
  */
 void *lspmac_worker(
-		    void *dummy		/**< [in] Unused but required by pthread library		*/
-		    ) {
+                    void *dummy         /**< [in] Unused but required by pthread library                */
+                    ) {
   static int disconnected_notify = 0;
   static int old_state;
 
@@ -2420,7 +2414,7 @@ void *lspmac_worker(
 
     if( pmacfd.fd == -1) {
       if( disconnected_notify == 0)
-	lslogging_log_message( "lspmac_worker: PMAC not connected");
+        lslogging_log_message( "lspmac_worker: PMAC not connected");
       disconnected_notify = 1;
       //
       // At this point we assume we became disconnected due to something like a hard boot of the MD2 PMAC
@@ -2454,9 +2448,9 @@ void *lspmac_worker(
 /** Move method for dac motor objects (ie, lights)
  */
 int lspmac_movedac_queue(
-			  lspmac_motor_t *mp,		/**< [in] Our motor						*/
-			  double requested_position	/**< [in] Desired x postion (look up and send y position)	*/
-			  ) {
+                          lspmac_motor_t *mp,           /**< [in] Our motor                                             */
+                          double requested_position     /**< [in] Desired x postion (look up and send y position)       */
+                          ) {
   double u2c;
 
   pthread_mutex_lock( &(mp->mutex));
@@ -2471,8 +2465,7 @@ int lspmac_movedac_queue(
     mp->requested_pos_cnts = u2c * lspmac_lut( mp->nlut, mp->lut, requested_position);
 
     lslogging_log_message( "lspmac_movedac_queue: motor %s requested position %f  requested counts %d  u2c %f",
-			   mp->name, mp->requested_position, mp->requested_pos_cnts, u2c);
-
+                           mp->name, mp->requested_position, mp->requested_pos_cnts, u2c);
     //
     // fake the move
     //
@@ -2497,13 +2490,12 @@ int lspmac_movedac_queue(
   return 0;
 }
 
-
 /** Move method for the zoom motor
  */
 int lspmac_movezoom_queue(
-			   lspmac_motor_t *mp,			/**< [in] the zoom motor		*/
-			   double requested_position		/**< [in] our desired zoom		*/
-			   ) {
+                           lspmac_motor_t *mp,                  /**< [in] the zoom motor                */
+                           double requested_position            /**< [in] our desired zoom              */
+                           ) {
   int motor_num;
   int in_position_band;
 
@@ -2544,7 +2536,7 @@ int lspmac_movezoom_queue(
     mp->not_done     = 1;
     mp->motion_seen  = 0;
     mp->command_sent = 0;
-    
+
     lspmac_SockSendDPline( mp->name, "#%d j=%d", motor_num, mp->requested_pos_cnts);
   }
   pthread_mutex_unlock( &(mp->mutex));
@@ -2594,17 +2586,15 @@ int lspmac_test_preset( lspmac_motor_t *mp, char *preset_name, double tolerance)
   return 0;
 }
 
-
-
 /** Move method for the fast shutter
  *
  *  Slightly more complicated than a binary io as some flags need
  *  to be set up.
  */
 int lspmac_moveabs_fshut_queue(
-				lspmac_motor_t *mp,		/**< The fast shutter motor instance				*/
-				double requested_position	/**< 1 (open) or 0 (close), really				*/
-				) {
+                                lspmac_motor_t *mp,             /**< The fast shutter motor instance                            */
+                                double requested_position       /**< 1 (open) or 0 (close), really                              */
+                                ) {
   pthread_mutex_lock( &(mp->mutex));
 
   mp->requested_position = requested_position;
@@ -2613,14 +2603,14 @@ int lspmac_moveabs_fshut_queue(
   mp->requested_pos_cnts = requested_position;
   if( requested_position != 0) {
     //
-   // ScanEnable=0, ManualEnable=1, ManualOn=1
+    // ScanEnable=0, ManualEnable=1, ManualOn=1, ShutterOpen=1 (w/shutter box)
     //
-    lspmac_SockSendDPline( mp->name, "M1124=0 M1125=1 M1126=1");
+    lspmac_SockSendDPline( mp->name, "M1124=0 M1125=1 M1126=1 M1109=1");
   } else {
     //
-    // ManualOn=0, ManualEnable=0, ScanEnable=0
+    // ManualOn=0, ManualEnable=0, ScanEnable=0, ShutterOpen=0 (w/shutter box)
     //
-    lspmac_SockSendDPline( mp->name, "M1126=0 M1125=0 M1124=0");
+    lspmac_SockSendDPline( mp->name, "M1126=0 M1125=0 M1124=0 M1109=0");
   }
 
   pthread_mutex_unlock( &(mp->mutex));
@@ -2632,11 +2622,9 @@ int lspmac_moveabs_fshut_queue(
 /** Move method for binary i/o motor objects
  */
 int lspmac_moveabs_bo_queue(
-			      lspmac_motor_t *mp,		/**< [in] A binary i/o motor object		*/
-			      double requested_position		/**< [in] a 1 or a 0 request to move		*/
-			      ) {
-
-
+                              lspmac_motor_t *mp,               /**< [in] A binary i/o motor object             */
+                              double requested_position         /**< [in] a 1 or a 0 request to move            */
+                              ) {
   pthread_mutex_lock( &(mp->mutex));
   mp->requested_position = requested_position == 0.0 ? 0.0 : 1.0;
   mp->requested_pos_cnts = requested_position == 0.0 ? 0 : 1;
@@ -2665,7 +2653,6 @@ int lspmac_moveabs_bo_queue(
   return 0;
 }
 
-
 /** timed motor move
  *  \param mp Our motor object
  *  \param start Beginning of motion
@@ -2673,23 +2660,23 @@ int lspmac_moveabs_bo_queue(
  *  \param time to move it in (secs)
  */
 void lspmac_moveabs_timed_queue(
-				lspmac_motor_t *mp,
-				double start,
-				double delta,
-				double time
-				) {
-  // 240		LS-CAT Timed X move
-  //		Q10    = Starting X value (cnts)
-  //		Q11    = Delta X value   (cnts)
-  //		Q12    = Time to run between the two points (mSec)
-  //		Q13    = Acceleration time (msecs)
-  //		Q100   = 1 << (coord sys no - 1)
+                                lspmac_motor_t *mp,
+                                double start,
+                                double delta,
+                                double time
+                                ) {
+  // 240                LS-CAT Timed X move
+  //            Q10    = Starting X value (cnts)
+  //            Q11    = Delta X value   (cnts)
+  //            Q12    = Time to run between the two points (mSec)
+  //            Q13    = Acceleration time (msecs)
+  //            Q100   = 1 << (coord sys no - 1)
 
-  int q10;	 // Starting value (counts)
-  int q11;	 // Delta (counts)
-  int q12;	 // Time to run (msecs)
-  int q13;	 // Acceleration time (msecs)
-  int q100;	 // 1 << (coord sys no - 1)
+  int q10;       // Starting value (counts)
+  int q11;       // Delta (counts)
+  int q12;       // Time to run (msecs)
+  int q13;       // Acceleration time (msecs)
+  int q100;      // 1 << (coord sys no - 1)
   int coord_num; // our coordinate number
   double u2c;
   double neutral_pos;
@@ -2710,7 +2697,7 @@ void lspmac_moveabs_timed_queue(
     return;
   }
 
-  mp->not_done    = 1;		//!< Flags needed for wait routine
+  mp->not_done    = 1;          //!< Flags needed for wait routine
   mp->motion_seen = 0;
 
   mp->requested_position = start + delta;
@@ -2813,7 +2800,6 @@ int lspmac_moveabs_blight_factor_queue( lspmac_motor_t *mp, double pos) {
   return 0;
 }
 
-
 void lspmac_flight_factor_read( lspmac_motor_t *mp) {
   char *fmt;
   double flight_u2c;
@@ -2870,15 +2856,13 @@ void lspmac_blight_factor_read( lspmac_motor_t *mp) {
   pthread_mutex_unlock( &mp->mutex);
 }
 
-
-
 /** Special motion program to collect centering video
  */
 void lspmac_video_rotate( double secs) {
-  double q10;		// starting position (counts)
-  double q11;		// delta counts
-  double q12;		// milliseconds to run over delta
-  
+  double q10;           // starting position (counts)
+  double q11;           // delta counts
+  double q12;           // milliseconds to run over delta
+
   double u2c;
   double neutral_pos;
 
@@ -2894,15 +2878,12 @@ void lspmac_video_rotate( double secs) {
   q10 = neutral_pos * u2c;
   q11 = 360.0 * u2c;
   q12 = 1000 * secs;
-  
 
-  omega_zero_velocity = 360.0 * u2c / secs;	// counts/second to back calculate zero crossing time
+  omega_zero_velocity = 360.0 * u2c / secs;     // counts/second to back calculate zero crossing time
 
   lspmac_SockSendDPline( omega->name, "&1 Q10=%.1f Q11=%.1f Q12=%.1f Q13=(I117) Q14=(I116) B240R", q10, q11, q12);
   pthread_mutex_unlock( &(omega->mutex));
 }
-
-
 
 /** Set the coordinate system motion flags (m5075)
  *  for the null terminated list of motors that we are planning
@@ -2927,8 +2908,8 @@ int lspmac_set_motion_flags( int *mmaskp, lspmac_motor_t *mp_1, ...) {
 
   if( mp_1==NULL)
     return 0;
-  
-  
+
+
   //
   // add the coordinate system flags to mmask
   //
@@ -2941,14 +2922,14 @@ int lspmac_set_motion_flags( int *mmaskp, lspmac_motor_t *mp_1, ...) {
     cn = lsredis_getl( mp->coord_num);
     if( cn < 1 || cn > 16)
       continue;
-    
+
     mmask |= 1 << (cn - 1);
   }
   va_end( arg_ptr);
 
   if( mmaskp != NULL)
     *mmaskp = mmask;
-    
+
   //
   // It could be the flag is already what we want.  We might set up a race condition if we
   // try to set it again.  (so don't)
@@ -2959,12 +2940,12 @@ int lspmac_set_motion_flags( int *mmaskp, lspmac_motor_t *mp_1, ...) {
     need_flag = 0;
   else
     need_flag = 1;
-  
+
   pthread_mutex_unlock( &lspmac_moving_mutex);
 
   if( !need_flag)
     return 0;
-  
+
   //
   // Set m5075 and make sure it propagates
   //
@@ -2978,14 +2959,13 @@ int lspmac_set_motion_flags( int *mmaskp, lspmac_motor_t *mp_1, ...) {
     err = pthread_cond_timedwait( &lspmac_moving_cond, &lspmac_moving_mutex, &timeout);
 
   pthread_mutex_unlock( &lspmac_moving_mutex);
-  
+
   if( err == ETIMEDOUT) {
     lslogging_log_message( "lspmac_set_motion_flags: timed out waiting for motion %d flag to be set", mmask);
     return 1;
   }
   return 0;
 }
-
 
 /** Move the motors and estimate the time it'll take to finish the job.
  * Returns the estimate time and the coordinate system mask to wait for
@@ -3016,15 +2996,15 @@ int lspmac_est_move_time( double *est_time, int *mmaskp, lspmac_motor_t *mp_1, i
     min_pos,
     max_pos,
     neutral_pos,
-    u2c,		//!< units to counts
-    D,			//!< The total distance we need to go
-    V,			//!< Our maximum velocity
-    A,			//!< Our maximum acceleration
+    u2c,                //!< units to counts
+    D,                  //!< The total distance we need to go
+    V,                  //!< Our maximum velocity
+    A,                  //!< Our maximum acceleration
     Tt;                 //!< Total time for this motor
   int err;
   int jog;
   int i;
-  uint32_t m5075;		//!< coordinate system motion flags
+  uint32_t m5075;               //!< coordinate system motion flags
 
   // reset our coordinate flags and command strings
   //
@@ -3061,7 +3041,7 @@ int lspmac_est_move_time( double *est_time, int *mmaskp, lspmac_motor_t *mp_1, i
      *  i :             /                                \           |
      *  t :            /                                  \          |
      *  y :___________/....................................\_________v___________
-     *                |      |         Time              
+     *                |      |         Time
      *                |      |
      *             -->|      |<-- Acceleration Time  (At)
      *                |
@@ -3082,7 +3062,7 @@ int lspmac_est_move_time( double *est_time, int *mmaskp, lspmac_motor_t *mp_1, i
      *
      *      A   = the motor acceleration, Here it's the maximum acceleration.
      *
-     *      V = A * At   
+     *      V = A * At
      *
      *      or  At = V/A
      *
@@ -3090,10 +3070,29 @@ int lspmac_est_move_time( double *est_time, int *mmaskp, lspmac_motor_t *mp_1, i
      *
      *      Tt = Ct + 2 * At
      *
+     *      Distance traveled during ramp up/down:
      *
+     *      Da = 0.5 * V * At
      *
-     *      If we had infinite acceleration the total time would be D/V.  To account for finite acceleration we just need to
-     *      adjust this for the average velocity while accelerating (0.5 V).  This neatly adds a single V/A term:
+     *      Which in terms of V and A gives
+     *
+     *      Da = 0.5 * V * V / A
+     *
+     *      Total distance traveled at constant velocity is
+     *
+     *      Dc = D - 2 * Da
+     *
+     *      Dc = D - V*V/A
+     *
+     *      Tt = Dc / V + 2 * Da / (0.5 V)
+     *
+     *      Tt = (D - V*V/A)/V + 4 * (0.5 * V * V / A) / V
+     *
+     *      Tt = D/V - V/A + 2 * V/A
+     *
+     *      Or just Tt = D + V/A
+     *
+     *      Check: at infinite acceleration the total time is just D/V.
      *
      *      (1)     Tt = D/V  + V/A
      *
@@ -3106,7 +3105,7 @@ int lspmac_est_move_time( double *est_time, int *mmaskp, lspmac_motor_t *mp_1, i
      *      D = A * (0.5*Tt)^2
      *
      *      or
-     *      
+     *
      *      (2)    Tt = 2 * sqrt( D/A)
      *
      *
@@ -3121,7 +3120,7 @@ int lspmac_est_move_time( double *est_time, int *mmaskp, lspmac_motor_t *mp_1, i
      *      So when D > 2 * Da, or
      *
      *      D > V^2 / A
-     *         
+     *
      *      we need to use equation (1) otherwise we need to use equation (2)
      *
      */
@@ -3130,7 +3129,6 @@ int lspmac_est_move_time( double *est_time, int *mmaskp, lspmac_motor_t *mp_1, i
       lslogging_log_message( "lspmac_est_move_time: WARNING: bad motor structure.  Check that your motor list is NULL terminated.");
       break;
     }
-
 
     //lslogging_log_message( "lspmac_est_move_time: find motor %s, jog %d, preset %s, endpoint %f",
     //mp->name, jog, ps == NULL ? "NULL" : ps, ep);
@@ -3142,12 +3140,12 @@ int lspmac_est_move_time( double *est_time, int *mmaskp, lspmac_motor_t *mp_1, i
       // get the real endpoint if a preset was mentioned
       //
       if( ps != NULL && *ps != 0) {
-	err = lsredis_find_preset( mp->name, ps, &maybe_ep);
-	if( err == 0) {
-	  lslogging_log_message( "lspmac_est_move_time: bad preset name '%s' for motor '%s', move not attempted", ps, mp->name);
-	  return 1;
-	}
-	ep = maybe_ep;
+        err = lsredis_find_preset( mp->name, ps, &maybe_ep);
+        if( err == 0) {
+          lslogging_log_message( "lspmac_est_move_time: bad preset name '%s' for motor '%s', move not attempted", ps, mp->name);
+          return 1;
+        }
+        ep = maybe_ep;
       }
 
       u2c = lsredis_getd( mp->u2c);
@@ -3156,14 +3154,14 @@ int lspmac_est_move_time( double *est_time, int *mmaskp, lspmac_motor_t *mp_1, i
       // For look up tables user units are (or should be) counts and u2c should be 1
       //
       if( mp->nlut > 0 && mp->lut != NULL) {
-	u2c = 1.0;
-	D = lspmac_lut( mp->nlut, mp->lut, ep) - lspmac_lut( mp->nlut, mp->lut, lspmac_getPosition( mp));
+        u2c = 1.0;
+        D = lspmac_lut( mp->nlut, mp->lut, ep) - lspmac_lut( mp->nlut, mp->lut, lspmac_getPosition( mp));
       } else {
-	D = ep - lspmac_getPosition( mp);				// User units
+        D = ep - lspmac_getPosition( mp);                               // User units
       }
 
-      V = lsredis_getd( mp->max_speed) / u2c * 1000.;		// User units per second
-      A = lsredis_getd( mp->max_accel) / u2c * 1000. * 1000;	// User units per second per second
+      V = lsredis_getd( mp->max_speed) / u2c * 1000.;           // User units per second
+      A = lsredis_getd( mp->max_accel) / u2c * 1000. * 1000;    // User units per second per second
 
 
       neutral_pos = lsredis_getd( mp->neutral_pos);
@@ -3171,38 +3169,37 @@ int lspmac_est_move_time( double *est_time, int *mmaskp, lspmac_motor_t *mp_1, i
       max_pos     = lsredis_getd( mp->max_pos) - neutral_pos;
 
       if( ep < min_pos || ep > max_pos) {
-	lslogging_log_message( "lspmac_est_move_time: Motor %s Requested position %f out of range: min=%f, max=%f", mp->name, ep, min_pos, max_pos);
-	lsevents_send_event( "%s Move Aborted", mp->name);
-	return 1;
+        lslogging_log_message( "lspmac_est_move_time: Motor %s Requested position %f out of range: min=%f, max=%f", mp->name, ep, min_pos, max_pos);
+        lsevents_send_event( "%s Move Aborted", mp->name);
+        return 1;
       }
 
       mp->requested_position = ep;
       mp->requested_pos_cnts = u2c * (mp->requested_position + neutral_pos);
 
-
       //
       // Don't bother with motors without velocity or acceleration defined
       //
       if( V > 0.0 && A > 0.0) {
-	if( fabs(D) > V*V/A) {
-	  //
-	  // Normal ramp up, constant velocity, and ramp down
-	  //
-	  Tt = fabs(D)/V + V/A;
-	} else {
-	  //
-	  // Never reach constantant velocity, just ramp up a bit and back down
-	  //
-	  Tt = 2.0 * sqrt( fabs(D)/A);
-	}
+        if( fabs(D) > V*V/A) {
+          //
+          // Normal ramp up, constant velocity, and ramp down
+          //
+          Tt = fabs(D)/V + V/A;
+        } else {
+          //
+          // Never reach constantant velocity, just ramp up a bit and back down
+          //
+          Tt = 2.0 * sqrt( fabs(D)/A);
+        }
 
-	lslogging_log_message( "lspmac_est_move_time: Motor: %s  D: %f  VV/A: %f  Tt: %f", mp->name, D, V*V/A, Tt);
+        lslogging_log_message( "lspmac_est_move_time: Motor: %s ep: %f   D: %f  VV/A: %f  Tt: %f", mp->name, ep, D, V*V/A, Tt);
       }  else {
-	//
-	// TODO: insert move time based for DAC or BO motor like objects;
-	// For now assume 100 msec;
-	//
-	Tt = 0.1;
+        //
+        // TODO: insert move time based for DAC or BO motor like objects;
+        // For now assume 100 msec;
+        //
+        Tt = 0.1;
       }
 
       // Perhaps flag a coordinate system
@@ -3211,67 +3208,66 @@ int lspmac_est_move_time( double *est_time, int *mmaskp, lspmac_motor_t *mp_1, i
       // have an axis defined if we are also moving one that does.  It's a limitation, I guess.
       //
       if( jog != 1 &&
-	  mp->coord_num != NULL && lsredis_getl( mp->coord_num) > 0 && lsredis_getl( mp->coord_num) <= 16 &&
-	  mp->motor_num != NULL && lsredis_getl( mp->motor_num) > 0 && mp->axis != NULL && lsredis_getc( mp->axis) != 0) {
-	int axis;
-	int motor_num;
+          mp->coord_num != NULL && lsredis_getl( mp->coord_num) > 0 && lsredis_getl( mp->coord_num) <= 16 &&
+          mp->motor_num != NULL && lsredis_getl( mp->motor_num) > 0 && mp->axis != NULL && lsredis_getc( mp->axis) != 0) {
+        int axis;
+        int motor_num;
 
-	motor_num = lsredis_getl( mp->motor_num);
+        motor_num = lsredis_getl( mp->motor_num);
 
-	axis = lsredis_getc( mp->axis);
-	for( j=0; j<sizeof(axes); j++) {
-	  if( axis == axes[j])
-	    break;
-	}
+        axis = lsredis_getc( mp->axis);
+        for( j=0; j<sizeof(axes); j++) {
+          if( axis == axes[j])
+            break;
+        }
 
-	if( j < sizeof( axes)) {
-	  //
-	  // Store the motion request for a normal PMAC motor
-	  //
-	  int cn;
-	  int in_position_band;
+        if( j < sizeof( axes)) {
+          //
+          // Store the motion request for a normal PMAC motor
+          //
+          int cn;
+          int in_position_band;
 
-	  cn = lsredis_getl( mp->coord_num);
-	  in_position_band = lsredis_getl( mp->in_position_band);
+          cn = lsredis_getl( mp->coord_num);
+          in_position_band = lsredis_getl( mp->in_position_band);
 
-	  motions[motor_num - 1].coord_num = cn;
-	  motions[motor_num - 1].axis      = j;
-	  motions[motor_num - 1].Delta     = D * u2c;
-	  //
-	  // Don't ask to run a motion program if we are already where we want to be
-	  //
-	  // Deadband is 10 counts except for zoom which is 100.
-	  // We use Ixx28 In-Position Band which has units of 1/16 count
-	  //
-	  //
-	  if( abs(motions[motor_num - 1].Delta)*16 >= in_position_band) {
-	    m5075 |= (1 << (cn - 1));
-	    motions[motor_num - 1].moveme    = 1;
-	  }	  
-	  lslogging_log_message( "lspmac_est_move_time: moveme=%d  motor '%s' motions index=%d coord_num=%d axis=%d Delta=%d   m5075=%u",
-				 motions[motor_num-1].moveme,  mp->name, motor_num -1, motions[motor_num-1].coord_num, motions[motor_num-1].axis, motions[motor_num-1].Delta,
-				 m5075);
-	}
+          motions[motor_num - 1].coord_num = cn;
+          motions[motor_num - 1].axis      = j;
+          motions[motor_num - 1].Delta     = D * u2c;
+          //
+          // Don't ask to run a motion program if we are already where we want to be
+          //
+          // Deadband is 10 counts except for zoom which is 100.
+          // We use Ixx28 In-Position Band which has units of 1/16 count
+          //
+          //
+          if( abs(motions[motor_num - 1].Delta)*16 >= in_position_band) {
+            m5075 |= (1 << (cn - 1));
+            motions[motor_num - 1].moveme    = 1;
+          }
+          lslogging_log_message( "lspmac_est_move_time: moveme=%d  motor '%s' motions index=%d coord_num=%d axis=%d Delta=%d   m5075=%u",
+                                 motions[motor_num-1].moveme,  mp->name, motor_num -1, motions[motor_num-1].coord_num, motions[motor_num-1].axis, motions[motor_num-1].Delta,
+                                 m5075);
+        }
       } else {
-	//
-	// Here we are dealing with a DAC or BO motor or just want to jog.
-	//
-	if( mp->jogAbs( mp, ep)) {
-	  lslogging_log_message( "lspmac_est_move_time: motor %s failed to queue move of distance %f from %f", mp->name, D, lspmac_getPosition(mp));
-	  lsevents_send_event( "Move Aborted");
-	  return 1;
-	}
+        //
+        // Here we are dealing with a DAC or BO motor or just want to jog.
+        //
+        if( mp->jogAbs( mp, ep)) {
+          lslogging_log_message( "lspmac_est_move_time: motor %s failed to queue move of distance %f from %f", mp->name, D, lspmac_getPosition(mp));
+          lsevents_send_event( "Move Aborted");
+          return 1;
+        }
       }
       //
       // Update the estimated time
       //
       local_est_time = local_est_time < Tt ? Tt : local_est_time;
       if( est_time != NULL) {
-	*est_time = local_est_time;
+        *est_time = local_est_time;
       }
       lslogging_log_message( "lspmac_est_move_time: est_time=%f", local_est_time);
     }
-
 
     mp = va_arg( arg_ptr, lspmac_motor_t *);
     if( mp == NULL)
@@ -3284,74 +3280,68 @@ int lspmac_est_move_time( double *est_time, int *mmaskp, lspmac_motor_t *mp_1, i
   }
   va_end( arg_ptr);
 
-  
   // Set the motion program flags
   //
   if( m5075 != 0) {
     if( mmaskp != NULL)
-      *mmaskp |= m5075;	// Tell the caller about our new mask
+      *mmaskp |= m5075; // Tell the caller about our new mask
 
-    
     pthread_mutex_lock( &lspmac_moving_mutex);
     moving_flags = lspmac_moving_flags;
     pthread_mutex_unlock( &lspmac_moving_mutex);
 
     if( (moving_flags & m5075) != m5075) {
       lspmac_SockSendDPline( NULL, "M5075=(M5075 | %d)", m5075);
-    
 
       pthread_mutex_lock( &lspmac_moving_mutex);
       clock_gettime( CLOCK_REALTIME, &timeout);
       //
-      timeout.tv_sec += 2;	// 2 seconds should be more than enough time to set the flags
+      timeout.tv_sec += 2;      // 2 seconds should be more than enough time to set the flags
       err = 0;
       while( err == 0 && ((lspmac_moving_flags & m5075) != m5075))
-	err = pthread_cond_timedwait( &lspmac_moving_cond, &lspmac_moving_mutex, &timeout);
+        err = pthread_cond_timedwait( &lspmac_moving_cond, &lspmac_moving_mutex, &timeout);
       moving_flags = lspmac_moving_flags;
       pthread_mutex_unlock( &lspmac_moving_mutex);
-    
+
       if( ((moving_flags & m5075) != m5075) && err == ETIMEDOUT) {
-	lslogging_log_message( "lspmac_est_move_time: Timed out waiting for moving flags.  lspmac_moving_flags = 0x%0x, looking for 0x%0x  test exp: 0x%0x  test: %d",
-			       moving_flags, m5075, (moving_flags & m5075), (moving_flags & m5075) != m5075);
-	lsevents_send_event( "Combined Move Aborted");
-	return 1;
+        lslogging_log_message( "lspmac_est_move_time: Timed out waiting for moving flags.  lspmac_moving_flags = 0x%0x, looking for 0x%0x  test exp: 0x%0x  test: %d",
+                               moving_flags, m5075, (moving_flags & m5075), (moving_flags & m5075) != m5075);
+        lsevents_send_event( "Combined Move Aborted");
+        return 1;
       }
     }
   }
-
 
   for( i=1; i<=16; i++) {
     //
     // Loop over coordinate systems
     //
     foundone = 0;
-    
+
     for( j=0; j<9; j++)
       qs[j] = 0;
-    
+
     for( j=0; j<31; j++) {
       //
       // Loop over motors
       //
       if( motions[j].moveme && motions[j].coord_num == i) {
-	if( abs(motions[j].Delta) > 0) {
-	  qs[(int)(motions[j].axis)] = motions[j].Delta;
-	  foundone=1;
-	}
+        if( abs(motions[j].Delta) > 0) {
+          qs[(int)(motions[j].axis)] = motions[j].Delta;
+          foundone=1;
+        }
       }
     }
-    
+
     if( foundone) {
       sprintf( s, "&%d Q40=%d Q41=%d Q42=%d Q43=%d Q44=%d Q45=%d Q46=%d Q47=%d Q48=%d Q49=%.1f Q100=%d B180R",
-	       i, qs[0], qs[1], qs[2], qs[3], qs[4], qs[5], qs[6], qs[7], qs[8], local_est_time * 1000., 1 << (i-1));
-      
+               i, qs[0], qs[1], qs[2], qs[3], qs[4], qs[5], qs[6], qs[7], qs[8], local_est_time * 1000., 1 << (i-1));
+
       lspmac_SockSendDPline( NULL, s);
-      
     }
   }
   return 0;
 }
-
 
 /** wait for motion to stop
  * returns non-zero if the wait timed out
@@ -3405,24 +3395,20 @@ int lspmac_est_move_time_wait( double move_time, int cmask, lspmac_motor_t *mp_1
   return 0;
 }
 
-
-
-
-
 /** Move method for normal stepper and servo motor objects
  *  Returns non-zero on abort, zero if OK
  */
 int lspmac_move_or_jog_abs_queue(
-				 lspmac_motor_t *mp,			/**< [in] The motor to move			*/
-				 double requested_position,		/**< [in] Where to move it			*/
-				 int use_jog				/**< [in] 1 to force jog, 0 for motion prog	*/
-				 ) {
-  char *fmt;			//!< format string for coordinate system move
-  int q100;			//!< coordinate system bit
-  int requested_pos_cnts;	//!< the requested position in units of "counts"
-  int coord_num, motor_num;	//!< motor and coordinate system;
-  int active;			//!< 0= don't use this motor, 1= do use it
-  char *axis;			//!< our axis
+                                 lspmac_motor_t *mp,                    /**< [in] The motor to move                     */
+                                 double requested_position,             /**< [in] Where to move it                      */
+                                 int use_jog                            /**< [in] 1 to force jog, 0 for motion prog     */
+                                 ) {
+  char *fmt;                    //!< format string for coordinate system move
+  int q100;                     //!< coordinate system bit
+  int requested_pos_cnts;       //!< the requested position in units of "counts"
+  int coord_num, motor_num;     //!< motor and coordinate system;
+  int active;                   //!< 0= don't use this motor, 1= do use it
+  char *axis;                   //!< our axis
   double u2c;
   double neutral_pos;
   double min_pos, max_pos;
@@ -3432,7 +3418,7 @@ int lspmac_move_or_jog_abs_queue(
 
   pthread_mutex_lock( &(mp->mutex));
 
-  active	   = lsredis_getb(   mp->active);
+  active           = lsredis_getb(   mp->active);
   u2c              = lsredis_getd(   mp->u2c);
   motor_num        = lsredis_getl(   mp->motor_num);
   coord_num        = lsredis_getl(   mp->coord_num);
@@ -3489,15 +3475,13 @@ int lspmac_move_or_jog_abs_queue(
 
   }
 
-
   if( (neg_limit_hit && (requested_position < mp->position)) || (pos_limit_hit && (requested_position > mp->position))) {
     pthread_mutex_unlock( &(mp->mutex));
     lslogging_log_message( "lspmac_move_or_jog_abs_queue: %s Moving wrong way on limit: requested position=%f  current position=%f  low limit=%d high limit=%d",
-			   mp->name, requested_position, mp->position, neg_limit_hit, pos_limit_hit);
+                           mp->name, requested_position, mp->position, neg_limit_hit, pos_limit_hit);
     lsevents_send_event( "%s Move Aborted", mp->name);
     return 2;
   }
-
 
   mp->requested_position = requested_position;
   if( mp->nlut > 0 && mp->lut != NULL) {
@@ -3523,7 +3507,7 @@ int lspmac_move_or_jog_abs_queue(
     mp->not_done     = 0;
     mp->motion_seen  = 1;
     mp->command_sent = 1;
-    
+
     pthread_mutex_unlock( &(mp->mutex));
 
     lsevents_send_event( "%s In Position", mp->name);
@@ -3553,13 +3537,13 @@ int lspmac_move_or_jog_abs_queue(
     //
     // TODO: Have all moves estimate how long they'll take and use that here
     //
-    timeout.tv_sec  = now.tv_sec + 60.0;		// a long timeout, but we might really be moving something that takes this long (or longer)
+    timeout.tv_sec  = now.tv_sec + 60.0;                // a long timeout, but we might really be moving something that takes this long (or longer)
     timeout.tv_nsec = now.tv_nsec;
 
     err = 0;
     while( err == 0 &&  (lspmac_moving_flags & q100) != 0)
       err = pthread_cond_timedwait( &lspmac_moving_cond, &lspmac_moving_mutex, &timeout);
-    
+
     pthread_mutex_unlock( &lspmac_moving_mutex);
 
     if( err == ETIMEDOUT) {
@@ -3572,7 +3556,7 @@ int lspmac_move_or_jog_abs_queue(
     // Set the "we are moving this coordinate system" flag
     //
     lspmac_SockSendDPline( NULL, "M5075=(M5075 | %d)", q100);
-    
+
     switch( *axis) {
     case 'A':
       fmt = "&%d Q16=%d Q100=%d B146R";
@@ -3613,9 +3597,8 @@ int lspmac_move_or_jog_abs_queue(
     //
     // Make sure the flag has been seen
     //
-
     clock_gettime( CLOCK_REALTIME, &now);
-    timeout.tv_sec  = now.tv_sec + 4.0;		// also a long timeout.  This should really only take a few milliseconds on a slow day
+    timeout.tv_sec  = now.tv_sec + 4.0;         // also a long timeout.  This should really only take a few milliseconds on a slow day
     timeout.tv_nsec = now.tv_nsec;
 
     pthread_mutex_lock( &lspmac_moving_mutex);
@@ -3650,10 +3633,10 @@ int lspmac_move_or_jog_abs_queue(
  *  returns 0 on success, non-zero on error
  */
 int lspmac_move_or_jog_preset_queue(
-				     lspmac_motor_t *mp,	/**< [in] Our motor				*/
-				     char *preset,		/**< [in] the name of the preset		*/
-				     int use_jog		/**< [in[ 1 to force jog, 0 to try motion prog	*/
-				     ) {
+                                     lspmac_motor_t *mp,        /**< [in] Our motor                             */
+                                     char *preset,              /**< [in] the name of the preset                */
+                                     int use_jog                /**< [in[ 1 to force jog, 0 to try motion prog  */
+                                     ) {
   double pos;
   int err;
   int rtn;
@@ -3674,14 +3657,13 @@ int lspmac_move_or_jog_preset_queue(
   return rtn;
 }
 
-
 /** Use coordinate system motion program, if available, to move motor to requested position
  */
 int lspmac_moveabs_queue(
-			  lspmac_motor_t *mp,			/**< [in] The motor to move			*/
-			  double requested_position		/**< [in] Where to move it			*/
-			  ) {
-  
+                          lspmac_motor_t *mp,                   /**< [in] The motor to move                     */
+                          double requested_position             /**< [in] Where to move it                      */
+                          ) {
+
   return lspmac_move_or_jog_abs_queue( mp, requested_position, 0);
 }
 
@@ -3689,13 +3671,12 @@ int lspmac_moveabs_queue(
 /** Use jog to move motor to requested position
  */
 int lspmac_jogabs_queue(
-			  lspmac_motor_t *mp,			/**< [in] The motor to move			*/
-			  double requested_position		/**< [in] Where to move it			*/
-			  ) {
-  
+                          lspmac_motor_t *mp,                   /**< [in] The motor to move                     */
+                          double requested_position             /**< [in] Where to move it                      */
+                          ) {
+
   return lspmac_move_or_jog_abs_queue( mp, requested_position, 1);
 }
-
 
 /** Wait for motor to finish moving.
  *  Assume motion already queued, now just wait
@@ -3717,13 +3698,13 @@ int lspmac_moveabs_wait( lspmac_motor_t *mp, double timeout_secs) {
 
   timeout.tv_sec  = now.tv_sec  + (long)floor( isecs);
   timeout.tv_nsec = now.tv_nsec + (long)floor( fsecs * 1.0e9);
-  
+
   timeout.tv_sec  += timeout.tv_nsec / 1000000000;
   timeout.tv_nsec %= 1000000000;
 
   err = 0;
   pthread_mutex_lock( &(mp->mutex));
-  
+
   while( err == 0 && mp->command_sent == 0)
     err = pthread_cond_timedwait( &mp->cond, &mp->mutex, &timeout);
   pthread_mutex_unlock( &(mp->mutex));
@@ -3744,7 +3725,7 @@ int lspmac_moveabs_wait( lspmac_motor_t *mp, double timeout_secs) {
   pthread_mutex_lock( &(mp->mutex));
   while( err == 0 && mp->motion_seen == 0)
     err = pthread_cond_timedwait( &(mp->cond), &(mp->mutex), &timeout);
-  
+
   if( err != 0) {
     if( err != ETIMEDOUT) {
       lslogging_log_message( "lspmac_moveabs_wait: unexpected error from timedwait: %d  tv_sec %ld   tv_nsec %ld", err, timeout.tv_sec, timeout.tv_nsec);
@@ -3761,7 +3742,6 @@ int lspmac_moveabs_wait( lspmac_motor_t *mp, double timeout_secs) {
   while( err == 0 && mp->not_done)
     err = pthread_cond_timedwait( &(mp->cond), &(mp->mutex), &timeout);
 
-  
   if( err != 0) {
     if( err != ETIMEDOUT) {
       lslogging_log_message( "lspmac_moveabs_wait: unexpected error from timedwait: %d  tv_sec %ld   tv_nsec %ld", err, timeout.tv_sec, timeout.tv_nsec);
@@ -3795,30 +3775,30 @@ void _lspmac_motor_init( lspmac_motor_t *d, char *name) {
 
   d->magic               = LSPMAC_MAGIC_NUMBER;
   d->name                = strdup(name);
-  d->active		 = lsredis_get_obj( "%s.active",	    d->name);
-  d->active_init	 = lsredis_get_obj( "%s.active_init",	    d->name);
-  d->axis		 = lsredis_get_obj( "%s.axis",	            d->name);
-  d->coord_num		 = lsredis_get_obj( "%s.coord_num",         d->name);
-  d->home		 = lsredis_get_obj( "%s.home",	            d->name);
+  d->active              = lsredis_get_obj( "%s.active",            d->name);
+  d->active_init         = lsredis_get_obj( "%s.active_init",       d->name);
+  d->axis                = lsredis_get_obj( "%s.axis",              d->name);
+  d->coord_num           = lsredis_get_obj( "%s.coord_num",         d->name);
+  d->home                = lsredis_get_obj( "%s.home",              d->name);
   d->home_group          = lsredis_get_obj( "%s.homeGroup",         d->name);
   d->in_position_band    = lsredis_get_obj( "%s.in_position_band",  d->name);
-  d->inactive_init	 = lsredis_get_obj( "%s.inactive_init",	    d->name);
-  d->redis_fmt		 = lsredis_get_obj( "%s.format",            d->name);
-  d->max_accel		 = lsredis_get_obj( "%s.max_accel",         d->name);
-  d->max_speed		 = lsredis_get_obj( "%s.max_speed",         d->name);
+  d->inactive_init       = lsredis_get_obj( "%s.inactive_init",     d->name);
+  d->redis_fmt           = lsredis_get_obj( "%s.format",            d->name);
+  d->max_accel           = lsredis_get_obj( "%s.max_accel",         d->name);
+  d->max_speed           = lsredis_get_obj( "%s.max_speed",         d->name);
   d->max_pos             = lsredis_get_obj( "%s.maxPosition",       d->name);
   d->min_pos             = lsredis_get_obj( "%s.minPosition",       d->name);
-  d->motor_num		 = lsredis_get_obj( "%s.motor_num",         d->name);
+  d->motor_num           = lsredis_get_obj( "%s.motor_num",         d->name);
   d->neg_limit_hit       = lsredis_get_obj( "%s.negLimitSet",       d->name);
   d->neutral_pos         = lsredis_get_obj( "%s.neutralPosition",   d->name);
   d->redis_position      = lsredis_get_obj( "%s.position",          d->name);
   d->pos_limit_hit       = lsredis_get_obj( "%s.posLimitSet",       d->name);
   d->precision           = lsredis_get_obj( "%s.precision",         d->name);
-  d->printf_fmt		 = lsredis_get_obj( "%s.printf",            d->name);
+  d->printf_fmt          = lsredis_get_obj( "%s.printf",            d->name);
   d->printPrecision      = lsredis_get_obj( "%s.printPrecision",    d->name);
   d->status_str          = lsredis_get_obj( "%s.status_str",        d->name);
   d->u2c                 = lsredis_get_obj( "%s.u2c",               d->name);
-  d->unit		 = lsredis_get_obj( "%s.unit",              d->name);
+  d->unit                = lsredis_get_obj( "%s.unit",              d->name);
   d->update_resolution   = lsredis_get_obj( "%s.update_resolution", d->name);
   d->lut                 = NULL;
   d->nlut                = 0;
@@ -3838,21 +3818,20 @@ void _lspmac_motor_init( lspmac_motor_t *d, char *name) {
   lsredis_load_presets( d->name);
 }
 
-
 /** Initialize a pmac stepper or servo motor
  */
 lspmac_motor_t *lspmac_motor_init(
-				  lspmac_motor_t *d,				/**< [in,out] An uninitialize motor object		*/
-				  int wy,					/**< [in] Curses status window row index		*/
-				  int wx,					/**< [in] Curses status window column index		*/
-				  int *posp,					/**< [in] Pointer to position status			*/
-				  int *stat1p,					/**< [in] Pointer to 1st status word			*/
-				  int *stat2p,					/**< [in] Pointer to 2nd status word			*/
-				  char *wtitle,					/**< [in] Title for this motor (to display)		*/
-				  char *name,					/**< [in] This motor's name		                */
-				  int (*moveAbs)(lspmac_motor_t *,double),	/**< [in] Method to use to move this motor (motion program preferred)	*/
-				  int (*jogAbs)(lspmac_motor_t *,double)	/**< [in] Method to use to jog this motor  (jog preferred)		*/
-				  ) {
+                                  lspmac_motor_t *d,                            /**< [in,out] An uninitialize motor object              */
+                                  int wy,                                       /**< [in] Curses status window row index                */
+                                  int wx,                                       /**< [in] Curses status window column index             */
+                                  int *posp,                                    /**< [in] Pointer to position status                    */
+                                  int *stat1p,                                  /**< [in] Pointer to 1st status word                    */
+                                  int *stat2p,                                  /**< [in] Pointer to 2nd status word                    */
+                                  char *wtitle,                                 /**< [in] Title for this motor (to display)             */
+                                  char *name,                                   /**< [in] This motor's name                             */
+                                  int (*moveAbs)(lspmac_motor_t *,double),      /**< [in] Method to use to move this motor (motion program preferred)   */
+                                  int (*jogAbs)(lspmac_motor_t *,double)        /**< [in] Method to use to jog this motor  (jog preferred)              */
+                                  ) {
 
   _lspmac_motor_init( d, name);
 
@@ -3877,15 +3856,14 @@ lspmac_motor_t *lspmac_motor_init(
   lsevents_preregister_event( "%s In Position",  d->name);
   lsevents_preregister_event( "%s Move Aborted", d->name);
 
-
   return d;
 }
 
 /** Initalize the fast shutter motor
  */
 lspmac_motor_t *lspmac_fshut_init(
-				  lspmac_motor_t *d		/**< [in] Our uninitialized motor object	*/
-				  ) {
+                                  lspmac_motor_t *d             /**< [in] Our uninitialized motor object        */
+                                  ) {
 
   _lspmac_motor_init( d, "fastShutter");
 
@@ -3896,17 +3874,16 @@ lspmac_motor_t *lspmac_fshut_init(
   return d;
 }
 
-
 /** Initialize binary i/o motor
  */
 
 lspmac_motor_t *lspmac_bo_init(
-				lspmac_motor_t *d,		/**< [in] Our uninitialized motor object				*/
-				char *name,			/**< [in] Name of motor to coordinate with DB				*/
-				char *write_fmt,		/**< [in] Format string used to generate PMAC command to move motor	*/
-				int *read_ptr,			/**< [in] Pointer to byte in md2_status to find position		*/
-				int read_mask			/**< [in] Bitmask to find position in *read_ptr				*/
-				) {
+                                lspmac_motor_t *d,              /**< [in] Our uninitialized motor object                                */
+                                char *name,                     /**< [in] Name of motor to coordinate with DB                           */
+                                char *write_fmt,                /**< [in] Format string used to generate PMAC command to move motor     */
+                                int *read_ptr,                  /**< [in] Pointer to byte in md2_status to find position                */
+                                int read_mask                   /**< [in] Bitmask to find position in *read_ptr                         */
+                                ) {
 
   _lspmac_motor_init( d, name);
 
@@ -3914,7 +3891,7 @@ lspmac_motor_t *lspmac_bo_init(
   d->jogAbs            = lspmac_moveabs_bo_queue;
   d->read              = lspmac_bo_read;
   d->write_fmt         = strdup( write_fmt);
-  d->read_ptr	       = read_ptr;
+  d->read_ptr          = read_ptr;
   d->read_mask         = read_mask;
 
   lsevents_preregister_event( "%s 1", d->name);
@@ -3930,13 +3907,13 @@ lspmac_motor_t *lspmac_bo_init(
  *  queue is allowed to be processed.
  */
 lspmac_motor_t *lspmac_dac_init(
-				/**< [out] Returns the (almost) initialized motor object			*/
-				lspmac_motor_t *d,		/**< [in,out] unitintialized motor		*/
-				int *posp,			/**< [in] Location of current position		*/
-				char *mvar,			/**< [in] M variable, ie, "M1200"		*/
-				char *name,			/**< [in] name to coordinate with DB		*/
-				int (*moveAbs)(lspmac_motor_t *,double)	/**< [in] Method to use to move this motor		*/
-				) {
+                                /**< [out] Returns the (almost) initialized motor object                        */
+                                lspmac_motor_t *d,              /**< [in,out] unitintialized motor              */
+                                int *posp,                      /**< [in] Location of current position          */
+                                char *mvar,                     /**< [in] M variable, ie, "M1200"               */
+                                char *name,                     /**< [in] name to coordinate with DB            */
+                                int (*moveAbs)(lspmac_motor_t *,double) /**< [in] Method to use to move this motor              */
+                                ) {
 
   _lspmac_motor_init( d, name);
   d->moveAbs           = moveAbs;
@@ -3951,7 +3928,7 @@ lspmac_motor_t *lspmac_dac_init(
 /** Dummy routine to read a soft motor
  */
 void lspmac_soft_motor_read( lspmac_motor_t *p) {
-  
+
 }
 
 
@@ -3967,7 +3944,6 @@ lspmac_motor_t *lspmac_soft_motor_init( lspmac_motor_t *d, char *name, int (*mov
 
   return d;
 }
-
 
 /** Initialize binary input
  */
@@ -4006,7 +3982,7 @@ void lspmac_full_card_reset_cb( char *event) {
   lspmac_running = 0;
   pthread_join( pmac_thread, NULL);
   pthread_mutex_lock( &pmac_queue_mutex);
-  
+
   ethCmdOn    = 0;
   ethCmdOff   = 0;
   ethCmdReply = 0;
@@ -4020,13 +3996,12 @@ void lspmac_full_card_reset_cb( char *event) {
   lspmac_run();
 }
 
-
 /** Initialize this module
  */
 void lspmac_init(
-		 int ivarsflag,		/**< [in]  Set global flag to harvest i variables			*/
-		 int mvarsflag		/**< [in]  Set global flag to harvest m variables			*/
-		 ) {
+                 int ivarsflag,         /**< [in]  Set global flag to harvest i variables                       */
+                 int mvarsflag          /**< [in]  Set global flag to harvest m variables                       */
+                 ) {
   static int first_time = 1;
   int i;
   int err;
@@ -4050,7 +4025,6 @@ void lspmac_init(
     //
     // Initialize the motor objects
     //
-
     p = &md2_status;
 
     omega  = lspmac_motor_init( &(lspmac_motors[ 0]), 0, 0, &p->omega_act_pos,     &p->omega_status_1,     &p->omega_status_2,     "Omega   #1 &1 X", "omega",       lspmac_moveabs_queue, lspmac_jogabs_queue);
@@ -4083,25 +4057,25 @@ void lspmac_init(
     blight_f      = lspmac_soft_motor_init( &(lspmac_motors[25]), "backLight.factor",  lspmac_moveabs_blight_factor_queue, lspmac_blight_factor_read);
     flight_f      = lspmac_soft_motor_init( &(lspmac_motors[26]), "frontLight.factor", lspmac_moveabs_flight_factor_queue, lspmac_flight_factor_read);
 
-    lp_air          = lspmac_bi_init( &(lspmac_bis[ 0]), "lowpressureair",   &(md2_status.acc11c_1),  0x01, "Low Pressure Air OK",  "Low Pressure Air Failed",  "OK",      "Failed");
-    hp_air          = lspmac_bi_init( &(lspmac_bis[ 1]), "highpressureair",  &(md2_status.acc11c_1),  0x02, "High Pressure Air OK", "High Pressure Air Failed", "OK",      "Failed");
-    cryo_switch     = lspmac_bi_init( &(lspmac_bis[ 2]), "cryoswitch",       &(md2_status.acc11c_1),  0x04, "CryoSwitchChanged",    "CryoSwitchChanged",        "On",      "Off");
-    blight_down     = lspmac_bi_init( &(lspmac_bis[ 3]), "backLightDown",    &(md2_status.acc11c_1),  0x08, "Backlight Down",       "Backlight Not Down",       "Down",    "Not Down");
-    blight_up       = lspmac_bi_init( &(lspmac_bis[ 4]), "backLightUp",      &(md2_status.acc11c_1),  0x10, "Backlight Up",         "Backlight Not Up",         "Up",      "Not Up");
-    cryo_back       = lspmac_bi_init( &(lspmac_bis[ 5]), "cryoBack",         &(md2_status.acc11c_1),  0x40, "Cryo Back",            "Cryo Not Back",            "Back",    "Not Back");
-    fluor_back	    = lspmac_bi_init( &(lspmac_bis[ 6]), "detectorParked",   &(md2_status.acc11c_2),  0x01, "Fluor. Det. Parked",   "Fluor. Det. Not Parked",   "Parked",  "Not Parked");
-    sample_detected = lspmac_bi_init( &(lspmac_bis[ 7]), "sampleDetector",   &(md2_status.acc11c_2),  0x02, NULL,                   NULL,                       "Present", "Absent" );
-    etel_ready      = lspmac_bi_init( &(lspmac_bis[ 8]), "etelReady",        &(md2_status.acc11c_2),  0x20, "ETEL Ready",           "ETEL Not Ready",           "Ready",   "Not Ready");
-    etel_on         = lspmac_bi_init( &(lspmac_bis[ 9]), "etelOn",           &(md2_status.acc11c_2),  0x40, "ETEL On",              "ETEL Off",                 "On",      "Off");
-    etel_init_ok    = lspmac_bi_init( &(lspmac_bis[10]), "etelOk",           &(md2_status.acc11c_2),  0x80, "ETEL Init OK",         "ETEL Init Not OK",         "OK",      "Not OK");
-    minikappa_ok    = lspmac_bi_init( &(lspmac_bis[11]), "miniKappaOk",      &(md2_status.acc11c_3),  0x01, "Minikappa OK",         "Minikappa Not OK",         "OK",      "Not OK");
-    smart_mag_on    = lspmac_bi_init( &(lspmac_bis[12]), "smartMagnetOn",    &(md2_status.acc11c_3),  0x04, "Smart Magnet On",      "Smart Magnet Not On",      "On",      "Not On");
-    arm_parked      = lspmac_bi_init( &(lspmac_bis[13]), "armParked",        &(md2_status.acc11c_3),  0x08, "Arm Parked",           "Arm Not Parked",           "Parked",  "Not Parked");
-    smart_mag_err   = lspmac_bi_init( &(lspmac_bis[14]), "smartMagnetError", &(md2_status.acc11c_3),  0x10, "Smart Magnet Error",   "Smart Magnet OK",          "Error",   "OK");
-    shutter_open    = lspmac_bi_init( &(lspmac_bis[15]), "shutterOpen",      &(md2_status.acc11c_3), 0x100, "Shutter Open",         "Shutter Not Open",         "Open",    "Not Open");
-    smart_mag_off   = lspmac_bi_init( &(lspmac_bis[16]), "smartMagnetOff",   &(md2_status.acc11c_5),  0x01, "Smart Magnet Off",     "Smart Magnet Not Off",     "Off",     "Not Off");
-  
-
+    lp_air             = lspmac_bi_init( &(lspmac_bis[ 0]), "lowpressureair",   &(md2_status.acc11c_1),  0x01, "Low Pressure Air OK",  "Low Pressure Air Failed",  "OK",      "Failed");
+    hp_air             = lspmac_bi_init( &(lspmac_bis[ 1]), "highpressureair",  &(md2_status.acc11c_1),  0x02, "High Pressure Air OK", "High Pressure Air Failed", "OK",      "Failed");
+    cryo_switch        = lspmac_bi_init( &(lspmac_bis[ 2]), "cryoswitch",       &(md2_status.acc11c_1),  0x04, "CryoSwitchChanged",    "CryoSwitchChanged",        "On",      "Off");
+    blight_down        = lspmac_bi_init( &(lspmac_bis[ 3]), "backLightDown",    &(md2_status.acc11c_1),  0x08, "Backlight Down",       "Backlight Not Down",       "Down",    "Not Down");
+    blight_up          = lspmac_bi_init( &(lspmac_bis[ 4]), "backLightUp",      &(md2_status.acc11c_1),  0x10, "Backlight Up",         "Backlight Not Up",         "Up",      "Not Up");
+    cryo_back          = lspmac_bi_init( &(lspmac_bis[ 5]), "cryoBack",         &(md2_status.acc11c_1),  0x40, "Cryo Back",            "Cryo Not Back",            "Back",    "Not Back");
+    fluor_back         = lspmac_bi_init( &(lspmac_bis[ 6]), "detectorParked",   &(md2_status.acc11c_2),  0x01, "Fluor. Det. Parked",   "Fluor. Det. Not Parked",   "Parked",  "Not Parked");
+    sample_detected    = lspmac_bi_init( &(lspmac_bis[ 7]), "sampleDetector",   &(md2_status.acc11c_2),  0x02, NULL,                   NULL,                       "Present", "Absent" );
+    etel_ready         = lspmac_bi_init( &(lspmac_bis[ 8]), "etelReady",        &(md2_status.acc11c_2),  0x20, "ETEL Ready",           "ETEL Not Ready",           "Ready",   "Not Ready");
+    etel_on            = lspmac_bi_init( &(lspmac_bis[ 9]), "etelOn",           &(md2_status.acc11c_2),  0x40, "ETEL On",              "ETEL Off",                 "On",      "Off");
+    etel_init_ok       = lspmac_bi_init( &(lspmac_bis[10]), "etelOk",           &(md2_status.acc11c_2),  0x80, "ETEL Init OK",         "ETEL Init Not OK",         "OK",      "Not OK");
+    minikappa_ok       = lspmac_bi_init( &(lspmac_bis[11]), "miniKappaOk",      &(md2_status.acc11c_3),  0x01, "Minikappa OK",         "Minikappa Not OK",         "OK",      "Not OK");
+    smart_mag_on       = lspmac_bi_init( &(lspmac_bis[12]), "smartMagnetOn",    &(md2_status.acc11c_3),  0x04, "Smart Magnet On",      "Smart Magnet Not On",      "On",      "Not On");
+    arm_parked         = lspmac_bi_init( &(lspmac_bis[13]), "armParked",        &(md2_status.acc11c_3),  0x08, "Arm Parked",           "Arm Not Parked",           "Parked",  "Not Parked");
+    smart_mag_err      = lspmac_bi_init( &(lspmac_bis[14]), "smartMagnetError", &(md2_status.acc11c_3),  0x10, "Smart Magnet Error",   "Smart Magnet OK",          "Error",   "OK");
+    shutter_open       = lspmac_bi_init( &(lspmac_bis[15]), "shutterOpen",      &(md2_status.acc11c_3), 0x100, "Shutter Open",         "Shutter Not Open",         "Open",    "Not Open");
+    smart_mag_off      = lspmac_bi_init( &(lspmac_bis[16]), "smartMagnetOff",   &(md2_status.acc11c_5),  0x01, "Smart Magnet Off",     "Smart Magnet Not Off",     "Off",     "Not Off");
+    sb_shutter_open    = lspmac_bi_init( &(lspmac_bis[17]), "sbShutterOpen",    &(md2_status.acc11c_6),  0x02, "Shutter Box Open",     "Shutter Box Closed",       "Open",    "Not Open");
+    sb_shutter_not_enabled = lspmac_bi_init( &(lspmac_bis[18]), "sbShutterEnabled", &(md2_status.acc11c_6),  0x01, "Shutter Box Disabled", "Shutter Box Enabled",      "Disabled","Enabled");
 
     // Set up hash table
     //
@@ -4115,12 +4089,10 @@ void lspmac_init(
       entry_in.data  = &(lspmac_motors[i]);
       err = hsearch_r( entry_in, ENTER, &entry_outp, &motors_ht);
       if( err == 0) {
-	lslogging_log_message( "lspmac_init: hsearch_r failed for motor %s: '%s'", lspmac_motors[i].name, strerror( errno));
-	exit( -1);
+        lslogging_log_message( "lspmac_init: hsearch_r failed for motor %s: '%s'", lspmac_motors[i].name, strerror( errno));
+        exit( -1);
       }
     }
-
-
 
     //
     // Initialize several commands that get called, perhaps, alot
@@ -4149,11 +4121,10 @@ void lspmac_init(
     //
     // Initialize some mutexs and conditions
     //
-
     pthread_mutex_init( &pmac_queue_mutex, NULL);
     pthread_cond_init(  &pmac_queue_cond, NULL);
 
-    lspmac_shutter_state = 0;				// assume the shutter is now closed: not a big deal if we are wrong
+    lspmac_shutter_state = 0;                           // assume the shutter is now closed: not a big deal if we are wrong
     pmacfd.fd = -1;
 
     pthread_mutex_init( &lspmac_moving_mutex, &mutex_initializer);
@@ -4170,7 +4141,6 @@ void lspmac_init(
     lsevents_preregister_event( "Abort Request accepted");
     lsevents_preregister_event( "Reset queued");
     lsevents_preregister_event( "Reset command accepted");
-  
 
     for( i=1; i<=16; i++) {
       lsevents_preregister_event( "Coordsys %d Stopped", i);
@@ -4189,20 +4159,16 @@ void lspmac_init(
     lspmac_send_command( VR_UPLOAD, VR_PMAC_SETMEM, 0x0e9e, 0, 4, (char *)&cc, NULL, 1, NULL);
   }
 
-  lspmac_SockSendDPline( NULL, "I5=0");			// disable plcc's
-  lspmac_SockSendDPline( NULL, "P2100=0");		// Don't let plcc0 control the shutter
+  lspmac_SockSendDPline( NULL, "I5=0");                 // disable plcc's
+  //  lspmac_SockSendDPline( NULL, "P2100=0");          // Don't let plcc0 control the shutter
   lspmac_SockSendDPline( NULL, "I36=1");                // Don't let ^A put a disabled motor into closed loop mode
 
   lspmac_saved_analPosition = lsredis_getd(anal->redis_position);
   lslogging_log_message( "Saved lightPolar last position: %f", lspmac_saved_analPosition);
 
-  lspmac_SockSendDPline( NULL, "ENABLE PLCC 0,2");	// use plcc0 (Probably not needed but allows easy reset with M2000=0) plcc2 is ours used to fill db memory with status
-  lspmac_SockSendDPline( NULL, "DISABLE PLCC 1");	// Don't use plcc 1, it's embl's status routine for old md2 code
-  lspmac_SockSendDPline( NULL, "I5=3");			// allow the enabled plcc's to run
-
-
+  lspmac_SockSendDPline( NULL, "ENABLE PLC 1");         // PLC 1 is our initialization plc that activates whichever other PLCs and PLCCs are needed
+  lspmac_SockSendDPline( NULL, "I5=3");                 // allow the enabled plcc's to run
 }
-
 
 void lspmac_cryoSwitchChanged_cb( char *event) {
   static int first_time = 1;  // Workaround to keep cryo from pulling back on startup
@@ -4271,7 +4237,7 @@ void lspmac_scint_maybe_turn_off_dryer_cb( char *event) {
     return;
 
   dryer->moveAbs( dryer, 0.0);
-  
+
   lstimer_unset_timer( "scintDried");
 
 }
@@ -4336,17 +4302,16 @@ void lspmac_quitting_cb( char *event) {
   pgpmac_request_stay_of_execution( 1);
   fshut->moveAbs( fshut, 0.0);
   dryer->moveAbs( dryer, 0.0);
-  
+
   lspmac_est_move_time( &move_time, &mmask,
-			aperz,  1, "Cover", 0.0,
-			capz,   1, "Cover", 0.0,
-			scint,  1, "Cover", 0.0,
-			blight, 1,  NULL,   0.0,
-			flight, 1,  NULL,   0.0,
-			NULL);
-  
+                        aperz,  1, "Cover", 0.0,
+                        capz,   1, "Cover", 0.0,
+                        scint,  1, "Cover", 0.0,
+                        blight, 1,  NULL,   0.0,
+                        flight, 1,  NULL,   0.0,
+                        NULL);
+
   pgpmac_request_stay_of_execution( ((int)move_time) + 2);
-  
 }
 
 /** Perhaps we need to move the sample out of the way
@@ -4375,7 +4340,7 @@ void lspmac_scint_maybe_move_sample_cb( char *event) {
   pthread_mutex_lock( &scint->mutex);
   scint_target = scint->requested_position;
   pthread_mutex_unlock( &scint->mutex);
-  
+
   // Reset the trigger if we are not on our way up
   if( scint_target < 10.0) {
     trigger = 1;
@@ -4387,7 +4352,7 @@ void lspmac_scint_maybe_move_sample_cb( char *event) {
   if( !trigger)
     return;
 
-  
+
   // Lower our flag
   trigger = 0;
 
@@ -4404,7 +4369,7 @@ void lspmac_scint_maybe_move_sample_cb( char *event) {
   astage[1] = aligny;
   astage[2] = alignz;
   abort     = 0;
-  
+
   for( i=0; i<3 && !abort; i++) {
     neutral_pos = lsredis_getd( astage[i]->neutral_pos);
     min_pos     = lsredis_getd( astage[i]->min_pos) - neutral_pos;
@@ -4413,15 +4378,15 @@ void lspmac_scint_maybe_move_sample_cb( char *event) {
       abort = 1;
     } else {
       if( pos < min_pos || pos > max_pos)
-	abort = 1;
+        abort = 1;
     }
   }
   if( !abort) {
     err = lspmac_est_move_time( NULL, NULL,
-				alignx, 0, "Back", 0.0,
-				aligny, 0, "Back", 0.0,
-				alignz, 0, "Back", 0.0,
-				NULL);
+                                alignx, 0, "Back", 0.0,
+                                aligny, 0, "Back", 0.0,
+                                alignz, 0, "Back", 0.0,
+                                NULL);
     if( err)
       abort = 1;
   }
@@ -4455,7 +4420,7 @@ void lspmac_scint_maybe_return_sample_cb( char *event) {
   pthread_mutex_lock( &scint->mutex);
   scint_target = scint->requested_position;
   pthread_mutex_unlock( &scint->mutex);
-  
+
   // Reset trigger if we are not decending
   if( scint_target >= 10.0) {
     trigger = 1;
@@ -4485,7 +4450,7 @@ void lspmac_scint_maybe_return_sample_cb( char *event) {
     pthread_mutex_lock( &astage[i]->mutex);
     not_done = astage[i]->not_done;
     pthread_mutex_unlock( &astage[i]->mutex);
-    
+
     // When we go from beamlocation back to centering then md2cmds
     // starts us moving (to the correct place).  If this is the case
     // then not_done should be true and we should do nothing here.
@@ -4499,13 +4464,12 @@ void lspmac_scint_maybe_return_sample_cb( char *event) {
   //
   if( nfound != 3) {
     lspmac_est_move_time( NULL, NULL,
-			  alignx, 0, "Beam",  0.0,
-			  aligny, 0, "Beam",  0.0,
-			  alignz, 0, "Beam",  0.0,
-			  NULL);
+                          alignx, 0, "Beam",  0.0,
+                          aligny, 0, "Beam",  0.0,
+                          alignz, 0, "Beam",  0.0,
+                          NULL);
   }
 }
-
 
 /** Turn off the dryer
  *  \param event required by protocol
@@ -4514,7 +4478,6 @@ void lspmac_scint_dried_cb( char *event) {
   lslogging_log_message( "lspmac_scint_dried_cb: Stopping dryer");
   dryer->moveAbs( dryer, 0.0);
 }
-
 
 /** Set up lookup table for zoom
  */
@@ -4579,10 +4542,10 @@ void lspmac_flight_lut_setup() {
   }
   for( i=0; i<flight->nlut; i++) {
     lslogging_log_message( "lspmac_flight_lut_setup:  i: %d  x: %f  y: %f  y(lut): %f  x(rlut): %f",
-			   i, flight->lut[2*i], flight->lut[2*i+1],
-			   lspmac_lut( flight->nlut, flight->lut, flight->lut[2*i]),
-			   lspmac_rlut( flight->nlut, flight->lut, flight->lut[2*i+1])
-			   );
+                           i, flight->lut[2*i], flight->lut[2*i+1],
+                           lspmac_lut( flight->nlut, flight->lut, flight->lut[2*i]),
+                           lspmac_rlut( flight->nlut, flight->lut, flight->lut[2*i+1])
+                           );
   }
   pthread_mutex_unlock( &flight->mutex);
 }
@@ -4621,10 +4584,10 @@ void lspmac_blight_lut_setup() {
   }
   for( i=0; i<blight->nlut; i++) {
     lslogging_log_message( "lspmac_blight_lut_setup:  i: %d  x: %f  y: %f  y(lut): %f  x(rlut): %f",
-			   i, blight->lut[2*i], blight->lut[2*i+1],
-			   lspmac_lut( blight->nlut, blight->lut, blight->lut[2*i]),
-			   lspmac_rlut( blight->nlut, blight->lut, blight->lut[2*i+1])
-			   );
+                           i, blight->lut[2*i], blight->lut[2*i+1],
+                           lspmac_lut( blight->nlut, blight->lut, blight->lut[2*i]),
+                           lspmac_rlut( blight->nlut, blight->lut, blight->lut[2*i+1])
+                           );
   }
   pthread_mutex_unlock( &blight->mutex);
 }
@@ -4654,14 +4617,14 @@ lspmac_motor_t *lspmac_find_motor_by_name( char *name) {
   lspmac_motor_t *rtn;
   ENTRY entry_in, *entry_outp;
   int err;
-  
+
   entry_in.key  = name;
   entry_in.data = NULL;
   err = hsearch_r( entry_in, FIND, &entry_outp, &motors_ht);
   if( err == 0) {
     lslogging_log_message( "lspmac_find_motor_by_name: hsearch_r failed for motor '%s': %s", name, strerror( errno));
     return NULL;
-  }    
+  }
   rtn = entry_outp->data;
 
   return rtn;
@@ -4724,8 +4687,8 @@ pthread_t *lspmac_run() {
     lsevents_add_listener( "^scint In Position$",        lspmac_scint_maybe_turn_on_dryer_cb);
     lsevents_add_listener( "^scint Moving$",             lspmac_scint_maybe_turn_off_dryer_cb);
     lsevents_add_listener( "^scintDried$",               lspmac_scint_dried_cb);
-    lsevents_add_listener( "^backLight 1$" ,	         lspmac_backLight_up_cb);
-    lsevents_add_listener( "^backLight 0$" ,	         lspmac_backLight_down_cb);
+    lsevents_add_listener( "^backLight 1$" ,             lspmac_backLight_up_cb);
+    lsevents_add_listener( "^backLight 0$" ,             lspmac_backLight_down_cb);
     lsevents_add_listener( "^lightPolar In Position$",   lspmac_anal_in_position_cb);
     lsevents_add_listener( "^lightPolar Homed$",         lspmac_anal_homed_cb);
     lsevents_add_listener( "^cam.zoom Moving$",          lspmac_light_zoom_cb);
@@ -4754,7 +4717,6 @@ pthread_t *lspmac_run() {
   // Clear the command interfaces
   //
   // lspmac_SockSendControlCharPrint( "Control-X", '\x18'); // why does this kill the initialzation?
-
   {
     uint32_t cc;
     cc = 0;
@@ -4778,14 +4740,14 @@ pthread_t *lspmac_run() {
       // Set the PMAC to be consistant with redis
       //
       lspmac_SockSendDPline( NULL, "I%d16=%f I%d22=%f I%d17=%f I%d19=%f I%d28=%d",
-			     //     Ixx16 Max Prog Velocity         |       Ixx22  Jog Speed
-			     motor_num, lsredis_getd( mp->max_speed), motor_num, lsredis_getd( mp->max_speed),
-			     //
-			     //       Ixx17 Max Prog Accel.         |       Ixx19  Jog/Home Accel
-			     motor_num, lsredis_getd( mp->max_accel), motor_num, lsredis_getd( mp->max_accel),
-			     //
-			     //      Ixx28  In-Position Band
-			     motor_num, lsredis_getl( mp->in_position_band));
+                             //     Ixx16 Max Prog Velocity         |       Ixx22  Jog Speed
+                             motor_num, lsredis_getd( mp->max_speed), motor_num, lsredis_getd( mp->max_speed),
+                             //
+                             //       Ixx17 Max Prog Accel.         |       Ixx19  Jog/Home Accel
+                             motor_num, lsredis_getd( mp->max_accel), motor_num, lsredis_getd( mp->max_accel),
+                             //
+                             //      Ixx28  In-Position Band
+                             motor_num, lsredis_getl( mp->in_position_band));
     }
 
     // if there is a problem with "active" then don't do anything
@@ -4806,10 +4768,28 @@ pthread_t *lspmac_run() {
     }
     if( inits != NULL) {
       while( *inits != NULL) {
-	lspmac_SockSendDPline( NULL, *inits);
-	inits++;
+        lspmac_SockSendDPline( NULL, *inits);
+        inits++;
       }
     }
+  }
+
+  //
+  // Special fast shutter enable values
+  //
+  {
+    int capz_low;
+    int capz_high;
+    int scint_low;
+    int scint_high;
+
+    capz_low   = lsredis_getl(lsredis_get_obj("fastShutter.capzLowCts"));
+    capz_high  = lsredis_getl(lsredis_get_obj("fastShutter.capzHighCts"));
+    scint_low  = lsredis_getl(lsredis_get_obj("fastShutter.scintLowCts"));
+    scint_high = lsredis_getl(lsredis_get_obj("fastShutter.scintHighCts"));
+
+    lspmac_SockSendDPline( NULL, "P6000=%d P6001=%d P6002=%d P6003=%d", capz_low, capz_high, scint_low, scint_high);
+
   }
 
   lsevents_send_event( "LSPMAC Done Initializing");
