@@ -32,6 +32,7 @@
 #include <hiredis/async.h>
 #include <search.h>
 #include <ctype.h>
+#include <jansson.h>
 #include <syslog.h>
 
 #define FILEID __FILE__ " "
@@ -342,6 +343,15 @@ typedef struct lspg_nextshot_struct {
   double dskappa;		//!< dataset defined starting kappa angle
   int dskappa_isnull;
 
+  double dsfrate;		//!< frame rate (images per degree)
+  int dsfrate_isnull;
+
+  double dssrate;		//!< spindle rate (degrees per second)
+  int dssrate_isnull;
+
+  double dsrange;		//!< frame rate (degrees shutter is open)
+  int dsrange_isnull;
+
   double dsdist;		//!< dataset defined detector distance
   int dsdist_isnull;
 
@@ -396,6 +406,15 @@ typedef struct lspg_nextshot_struct {
   double dskappa2;		//!< next image kappa position
   int dskappa2_isnull;
 
+  double dsfrate2;		//!< frame rate (images per degree)
+  int dsfrate2_isnull;
+
+  double dssrate2;		//!< spindle rate (degrees per second)
+  int dssrate2_isnull;
+
+  double dsrange2;		//!< frame rate (degrees shutter is open)
+  int dsrange2_isnull;
+
   double dsdist2;		//!< next image distance
   int dsdist2_isnull;
 
@@ -428,6 +447,9 @@ typedef struct lspg_nextshot_struct {
 
 } lspg_nextshot_t;		//!< definition of the next image to be taken (and the one after that, too!)
 
+
+extern int detector_state_int;
+extern int detector_state_expired;
 
 extern int pgpmac_use_pg;
 extern int pgpmac_use_autoscint;
@@ -481,9 +503,11 @@ extern lspmac_bi_t    *etel_init_ok;
 extern lspmac_bi_t    *minikappa_ok;
 extern lspmac_bi_t    *smart_mag_on;
 extern lspmac_bi_t    *arm_parked;
-extern lspmac_bi_t    *shutter_open;
-extern lspmac_bi_t    *smart_mag_off;
 extern lspmac_bi_t    *smart_mag_err;
+extern lspmac_bi_t    *smart_mag_off;
+extern lspmac_bi_t    *shutter_open;
+extern lspmac_bi_t    *sb_shutter_open;
+extern lspmac_bi_t    *sb_shutter_not_enabled;
 
 extern struct timespec omega_zero_time;
 
@@ -518,6 +542,13 @@ extern char md2cmds_cmd[];			// our command;
 
 extern lsredis_obj_t *md2cmds_md_status_code;
 
+extern void detector_state_push_queue(char *dummy_event);
+extern pthread_t *detector_state_run();
+extern void detector_state_init();
+extern pthread_mutex_t detector_state_mutex;
+extern pthread_cond_t detector_state_cond;
+extern lsredis_obj_t *detector_state_redis;
+
 extern char **lspg_array2ptrs( char *);
 extern char **lsredis_get_string_array( lsredis_obj_t *p);
 extern void lspmac_SockSendDPline( char *, char *fmt, ...);
@@ -551,6 +582,7 @@ extern void lspg_nextshot_wait();
 extern void lspg_query_push(void (*cb)( lspg_query_queue_t *, PGresult *), void (*ecb)(), char *fmt, ...);
 extern pthread_t *lspg_run();
 extern int lspg_seq_run_prep_all( long long skey, double kappa, double phi, double cx, double cy, double ax, double ay, double az);
+extern int lspg_eiger_run_prep_all( long long skey, double kappa, double phi, double cx, double cy, double ax, double ay, double az);
 extern void lspg_starttransfer_call( unsigned int nextsample, int sample_detected, double ax, double ay, double az, double horz, double vert, double esttime);
 extern void lspg_starttransfer_done();
 extern void lspg_starttransfer_wait();
