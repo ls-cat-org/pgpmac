@@ -28,12 +28,32 @@ static lslogging_queue_t lslogging_queue[LSLOGGING_QUEUE_LENGTH];	//!< Our entir
 static unsigned int lslogging_on = 0;	//!< next location to add to the queue
 static unsigned int lslogging_off= 0;	//!< next location to remove from the queue
 
+static regex_t lslogging_ignore_regex;
+static char *lslogging_ignorable = "^.*I5112=\\(4000\\*8388607/I10\\).*$|^EVENT: Heartbeat$|^EVENT: Check Detector Position$";
+
 //! Initialize the lslogging objects
 void lslogging_init() {
+  static const char *id = FILEID "lslogging_init";
+  int err;
+
   pthread_mutex_init( &lslogging_mutex, NULL);
   pthread_cond_init(  &lslogging_cond, NULL);
 
   openlog("pgpmac", LOG_PID, LOG_USER);
+
+  err = regcomp (&lslogging_ignore_regex, lslogging_ignorable, REG_EXTENDED | REG_NOSUB);
+  if (err != 0) {
+    int nerrmsg;
+    char *errmsg;
+    
+    nerrmsg = regerror(err, &lslogging_ignore_regex, NULL, 0);
+    if (nerrmsg > 0) {
+      errmsg = calloc(nerrmsg, sizeof(char));
+      nerrmsg = regerror(err, &lslogging_ignore_regex, errmsg, nerrmsg);
+      syslog(LOG_INFO, "%s initialization error: problem with regexp: %s\n", id, errmsg);
+      free(errmsg);
+    }
+  }
 }
 
 /** The routine everyone will be talking to.
@@ -51,32 +71,39 @@ void lslogging_log_message(char *fmt, ...) {
 
   clock_gettime( CLOCK_REALTIME, &theTime);
 
-  va_start(arg_ptr, fmt);
-  vsyslog(LOG_INFO, fmt, arg_ptr);
-  va_end(arg_ptr);
-
   va_start( arg_ptr, fmt);
   vsnprintf( msg, sizeof(msg)-1, fmt, arg_ptr);
   va_end( arg_ptr);
   msg[sizeof(msg)-1]=0;
 
-  pthread_mutex_lock(&lslogging_mutex);
+  if (regexec(&lslogging_ignore_regex, msg, 0, NULL, 0)) {
+    va_start(arg_ptr, fmt);
+    vsyslog(LOG_INFO, fmt, arg_ptr);
+    va_end(arg_ptr);
 
-  on = (lslogging_on++) % LSLOGGING_QUEUE_LENGTH;
-  strncpy( lslogging_queue[on].lmsg, msg, LSLOGGING_MSG_LENGTH - 1);
-  lslogging_queue[on].lmsg[LSLOGGING_MSG_LENGTH-1] = 0;
-  
-  memcpy( &(lslogging_queue[on].ltime), &theTime, sizeof(theTime));
-
-  pthread_cond_signal(&lslogging_cond);
-  pthread_mutex_unlock(&lslogging_mutex);
+    pthread_mutex_lock( &lslogging_mutex);
+    
+    on = (lslogging_on++) % LSLOGGING_QUEUE_LENGTH;
+    strncpy( lslogging_queue[on].lmsg, msg, LSLOGGING_MSG_LENGTH - 1);
+    lslogging_queue[on].lmsg[LSLOGGING_MSG_LENGTH-1] = 0;
+    
+    memcpy( &(lslogging_queue[on].ltime), &theTime, sizeof(theTime));
+    pthread_cond_signal(  &lslogging_cond);
+    pthread_mutex_unlock( &lslogging_mutex);
+  }
 }
 
 /** Log most events
  */
 void lslogging_event_cb( char *event) {
-  if( strcmp( event, "Timer Update KVs") != 0 && strstr( event, "accepted")==NULL && strstr( event, "queued")==NULL && strstr( event, "Heartbeat")==NULL) {
-    lslogging_log_message( "EVENT: %s", event);
+  if(
+     strcmp(event, "Timer Update KVs") != 0
+     && strstr(event, "accepted")==NULL
+     && strstr(event, "queued")==NULL
+     && strstr(event, "Check Detector Position") == NULL
+     && strstr(event, "Heartbeat")==NULL
+     && strstr(event, "DETECTOR_STATE_MACHINE")==NULL) {
+    lslogging_log_message("EVENT: %s", event);
   }
 }
 
@@ -85,7 +112,6 @@ void lslogging_event_cb( char *event) {
 void *lslogging_worker(
 		      void *dummy	/**< [in] Required by protocol but unused	*/
 		      ) {
-
 
   struct tm coarsetime;
   char tstr[64];
@@ -101,18 +127,20 @@ void *lslogging_worker(
     
     off = (lslogging_off++) % LSLOGGING_QUEUE_LENGTH;
 
-    localtime_r( &(lslogging_queue[off].ltime.tv_sec), &coarsetime);
-    strftime( tstr, sizeof(tstr)-1, "%Y-%m-%d %H:%M:%S", &coarsetime);
-    tstr[sizeof(tstr)-1] = 0;
-    msecs = lslogging_queue[off].ltime.tv_nsec / 1000;
-
-    lsredis_log( "%s.%.06u  %s\n", tstr, msecs, lslogging_queue[off].lmsg);
-
-    //
-    // If the newline comes after the string then only a blank line comes out
-    // in the ncurses terminal.  Don't know why.
-    //
-    pgpmac_printf( "\n%s", lslogging_queue[off].lmsg);
+    if (regexec(&lslogging_ignore_regex, lslogging_queue[off].lmsg, 0, NULL, 0)) {
+      localtime_r( &(lslogging_queue[off].ltime.tv_sec), &coarsetime);
+      strftime( tstr, sizeof(tstr)-1, "%Y-%m-%d %H:%M:%S", &coarsetime);
+      tstr[sizeof(tstr)-1] = 0;
+      msecs = lslogging_queue[off].ltime.tv_nsec / 1000;
+      
+      lsredis_log( "%s.%.06u  %s\n", tstr, msecs, lslogging_queue[off].lmsg);
+      
+      //
+      // If the newline comes after the string then only a blank line comes out
+      // in the ncurses terminal.  Don't know why.
+      //
+      pgpmac_printf( "\n%s", lslogging_queue[off].lmsg);
+    }
   }
 }
 
