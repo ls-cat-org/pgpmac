@@ -30,25 +30,29 @@ All positions are in millimeters or degrees.
 
  collect                                     Start collecting data
 
+ homestages                                  Home centering stages and alignment stages
+
  moveAbs  <motor> <position_or_presetName>   Move the given motor to the said position.  Common preset names are "In", "Out", "Cover".
 
  moveRel  <motor> <relative_position>        Move the given motor by the relative amount from its current position
 
  nonrotate                                   Used for local centering when we do not want to trigger movie making
 
- raster <key>				     Trigger raster scan for key
+ raster <key>                                Trigger raster scan for key
 
  rotate                                      Used for remote centering where we do want to make a movie
 
  run <motor> <command>                       Run a special command on <motor> where <command> is one of "home", "spin", "stop"
 
- segment                                     Like collect but only used for line segment mode with the Eiger
+ shutterless                                 Like collect but only used for line segment mode with the Eiger
 
  set <motor1> [<motor2>...<motorN>] <preset> Set all named motors current position as <preset>.  <preset> will be created if it does not currently exist.
 
  settransferpoint                            Set the current motor positions at the alignment point for robot transfers.
 
  setbackvector                               Set the current alignment stage position as the Back preset and the difference between Back and Beam as Back_Vector
+
+ setbeamstoplimits                           Set P6000 and P6001 for the pmac plcc0 check of the beamstop position.  Sets current position +/- 100 microns
 
  setsamplebeam                               Set the current alignment and centering positions as the the Beam preset for the respective stages
 
@@ -102,32 +106,32 @@ alignment stage is moved while in "center" or "dataCollection" mode.
 */
 
 
-pthread_cond_t  md2cmds_cond;		//!< condition to signal when it's time to run an md2 command
-pthread_mutex_t md2cmds_mutex;		//!< mutex for the condition
+pthread_cond_t  md2cmds_cond;           //!< condition to signal when it's time to run an md2 command
+pthread_mutex_t md2cmds_mutex;          //!< mutex for the condition
 
-int md2cmds_moving_queue_wait = 0;	//! wait for command to have been dequeued and run
-pthread_cond_t  md2cmds_moving_cond;	//!< coordinate call and response
-pthread_mutex_t md2cmds_moving_mutex;	//!< message passing between md2cmds and pg
+int md2cmds_moving_queue_wait = 0;      //! wait for command to have been dequeued and run
+pthread_cond_t  md2cmds_moving_cond;    //!< coordinate call and response
+pthread_mutex_t md2cmds_moving_mutex;   //!< message passing between md2cmds and pg
 
-int md2cmds_homing_count = 0;		//!< We've asked a motor to home
-pthread_cond_t md2cmds_homing_cond;	//!< coordinate homing and homed
-pthread_mutex_t md2cmds_homing_mutex;	//!< our mutex;
+int md2cmds_homing_count = 0;           //!< We've asked a motor to home
+pthread_cond_t md2cmds_homing_cond;     //!< coordinate homing and homed
+pthread_mutex_t md2cmds_homing_mutex;   //!< our mutex;
 
-int md2cmds_shutter_open_flag = 0;	//!< Our own shutter open flag (may not work for very short open times
+int md2cmds_shutter_open_flag = 0;      //!< Our own shutter open flag (may not work for very short open times
 pthread_cond_t  md2cmds_shutter_cond;
 pthread_mutex_t md2cmds_shutter_mutex;
 
 int md2cmds_moving_count = 0;
 
-char md2cmds_cmd[MD2CMDS_CMD_LENGTH];	//!< our command;
+char md2cmds_cmd[MD2CMDS_CMD_LENGTH];   //!< our command;
 
 lsredis_obj_t *md2cmds_md_status_code;
 
 static pthread_t md2cmds_thread;
 
-static int rotating = 0;		//!< flag: when omega is in position after a rotate we want to re-home omega
+static int rotating = 0;                //!< flag: when omega is in position after a rotate we want to re-home omega
 
-static int abort_requested = 0;		//!< flag: indicates an out of band abort request
+static int abort_requested = 0;         //!< flag: indicates an out of band abort request
 static pthread_mutex_t abort_requested_mutex;
 
 static double md2cmds_capz_moving_time = NAN;
@@ -149,6 +153,7 @@ void md2cmds_mvcenter_move(double, double, double, double, double);
 int md2cmds_abort(            const char *);
 int md2cmds_collect(          const char *);
 int md2cmds_goto_point(       const char *);
+int md2cmds_homestages(       const char *);
 int md2cmds_moveAbs(          const char *);
 int md2cmds_moveRel(          const char *);
 int md2cmds_phase_change(     const char *);
@@ -157,8 +162,9 @@ int md2cmds_raster(           const char *);
 int md2cmds_run_cmd(          const char *);
 int md2cmds_rotate(           const char *);
 int md2cmds_nonrotate(        const char *);
-int md2cmds_segment(          const char *);
+int md2cmds_shutterless(      const char *);
 int md2cmds_set(              const char *);
+int md2cmds_setbeamstoplimits(const char *);
 int md2cmds_settransferpoint( const char *);
 int md2cmds_setbackvector(    const char *);
 int md2cmds_setsamplebeam(    const char *);
@@ -172,6 +178,7 @@ static md2cmds_cmd_kv_t md2cmds_cmd_kvs[] = {
   { "abort",            md2cmds_abort},
   { "changeMode",       md2cmds_phase_change},
   { "gotoPoint",        md2cmds_goto_point},
+  { "homestages",       md2cmds_homestages},
   { "moveAbs",          md2cmds_moveAbs},
   { "moveRel",          md2cmds_moveRel},
   { "preSet",           md2cmds_preSet},
@@ -180,6 +187,7 @@ static md2cmds_cmd_kv_t md2cmds_cmd_kvs[] = {
   { "test",             md2cmds_test},
   { "set",              md2cmds_set},
   { "setbackvector",    md2cmds_setbackvector},
+  { "setbeamstoplimits",md2cmds_setbeamstoplimits},
   { "setsamplebeam",    md2cmds_setsamplebeam}
 };
 
@@ -190,7 +198,7 @@ static md2cmds_cmd_kv_t md2cmds_cmd_pg_kvs[] = {
   { "collect",          md2cmds_collect},
   { "nonrotate",        md2cmds_nonrotate},
   { "rotate",           md2cmds_rotate},
-  { "segment",          md2cmds_segment},
+  { "shutterless",      md2cmds_shutterless},
   { "settransferpoint", md2cmds_settransferpoint},
   { "transfer",         md2cmds_transfer}
 };
@@ -404,12 +412,12 @@ void md2cmds_organs_move_presets( char *pay, char *paz, char *pcy, char *pcz, ch
   
   //
   // 170          LS-CAT Move U, V, W, X, Y, Z Absolute
-  // 	       	      Q40     = X Value
-  //		      Q41     = Y Value
-  // 		      Q42     = Z Value
-  //		      Q43     = U Value
-  //		      Q44     = V Value
-  //		      Q45     = W Value
+  //                  Q40     = X Value
+  //                  Q41     = Y Value
+  //                  Q42     = Z Value
+  //                  Q43     = U Value
+  //                  Q44     = V Value
+  //                  Q45     = W Value
   //
   
   lspmac_SockSendDPline( "organs", "&5 Q40=0 Q41=%d Q42=%d Q43=%d Q44=%d Q45=%d Q100=16 B170R", cay, caz, ccy, ccz, csz);
@@ -454,14 +462,14 @@ int md2cmds_robotMount_finish( double move_time, int mmask) {
   int err;
 
   err = lspmac_est_move_time_wait( move_time + 10.0, mmask,
-				   apery,
-				   aperz,
-				   capz,
-				   scint,
-				   blight_ud,
-				   cryo,
-				   fluo,
-				   NULL);
+                                   apery,
+                                   aperz,
+                                   capz,
+                                   scint,
+                                   blight_ud,
+                                   cryo,
+                                   fluo,
+                                   NULL);
   if( err) {
     lsevents_send_event( "Mode robotMount Aborted");
     return err;
@@ -559,7 +567,7 @@ int md2cmds_transfer( const char *dummy) {
   // If so then we need to abort after we're done moving stuff
   //
   lslogging_log_message( "md2cmds_transfer: no_rows_returned %d, starttransfer %d",
-			 lspg_starttransfer.no_rows_returned, lspg_starttransfer.starttransfer);
+                         lspg_starttransfer.no_rows_returned, lspg_starttransfer.starttransfer);
   if( lspg_starttransfer.no_rows_returned || lspg_starttransfer.starttransfer != 1)
     abort_now = 1;
   else
@@ -672,8 +680,8 @@ int md2cmds_transfer( const char *dummy) {
  *  Returns non zero on error
  */
 int md2cmds_moveAbs(
-		    const char *cmd			/**< [in] The full command string to parse, ie, "moveAbs omega 180"	*/
-		    ) {
+                    const char *cmd                     /**< [in] The full command string to parse, ie, "moveAbs omega 180"     */
+                    ) {
   static const char *id = "md2cmds_moveAbs";
   double fpos;
   char *endptr;
@@ -725,9 +733,9 @@ int md2cmds_moveAbs(
   for(i=4; i<30; i+=2) {
     if (pmatch[i+2].rm_so == -1 || (pmatch[i+2].rm_eo == pmatch[i+2].rm_so)) {
       if ((pmatch[i+1].rm_so == -1 || (pmatch[i+1].rm_eo == pmatch[i+1].rm_so))) {
-	if ((pmatch[i].rm_so != -1 && (pmatch[i].rm_eo > pmatch[i].rm_so))) {
-	  preset_index = i;
-	}
+        if ((pmatch[i].rm_so != -1 && (pmatch[i].rm_eo > pmatch[i].rm_so))) {
+          preset_index = i;
+        }
       }
       break;
     }
@@ -786,21 +794,21 @@ int md2cmds_moveAbs(
       lsredis_sendStatusReport( 0, "moving  %s to '%s'", motor_name, position_string);
       
       err = lspmac_est_move_time( &move_time, NULL,
-				  mp, 1, position_string, 0.0,
-				  NULL);
+                                  mp, 1, position_string, 0.0,
+                                  NULL);
       
       if( err) {
-	lsredis_sendStatusReport( 1, "Failed to move motor %s to '%s'", mp->name, position_string);
-	break;
+        lsredis_sendStatusReport( 1, "Failed to move motor %s to '%s'", mp->name, position_string);
+        break;
       }
       
       err = lspmac_est_move_time_wait( move_time + 10.0, 0, mp, NULL);
       
       if( err) {
-	lsredis_sendStatusReport( 1, "Timed out waiting %.1f seconds for motor %s to finish moving", move_time+10.0, mp->name);
-	//
-	// error.  Too bad.
-	break;
+        lsredis_sendStatusReport( 1, "Timed out waiting %.1f seconds for motor %s to finish moving", move_time+10.0, mp->name);
+        //
+        // error.  Too bad.
+        break;
       }
       lsredis_sendStatusReport( 0, "%s", "");
       //
@@ -816,19 +824,19 @@ int md2cmds_moveAbs(
       pgpmac_printf( "Moving %s to %f\n", motor_name, fpos);
       lsredis_sendStatusReport( 0, "moving  %s to %.*f", motor_name, prec, fpos);
       err = lspmac_est_move_time( &move_time, NULL,
-				  mp, 1, NULL, fpos,
-				  NULL);
+                                  mp, 1, NULL, fpos,
+                                  NULL);
       
       if( err) {
-	lsredis_sendStatusReport( 1, "Failed to move motor %s to '%.3f'", mp->name, fpos);
-	break;
+        lsredis_sendStatusReport( 1, "Failed to move motor %s to '%.3f'", mp->name, fpos);
+        break;
       }
       
       err = lspmac_est_move_time_wait( move_time + 10.0, 0, mp, NULL);
       if( err) {
-	lsredis_sendStatusReport( 1, "Timed out waiting %.1f seconds for motor %s to finish moving", move_time+10.0, mp->name);
+        lsredis_sendStatusReport( 1, "Timed out waiting %.1f seconds for motor %s to finish moving", move_time+10.0, mp->name);
       } else {
-	lsredis_sendStatusReport( 0, "%s", "");
+        lsredis_sendStatusReport( 0, "%s", "");
       }
     }
   }
@@ -844,13 +852,13 @@ int md2cmds_moveAbs(
     //
     for (i=2; i<31; i+=2) {
       if (i == preset_index) {
-	// end of line when preset is defined
-	break;
+        // end of line when preset is defined
+        break;
       }
       
       if (pmatch[i].rm_so == -1 || (pmatch[i].rm_eo == pmatch[i].rm_so)) {
-	// end of line when no preset is defined
-	break;
+        // end of line when no preset is defined
+        break;
       }
       
       //
@@ -879,8 +887,8 @@ int md2cmds_moveAbs(
  *  Set a named preset to the requested position without first moving the motor there
  */
 int md2cmds_preSet(
-		    const char *cmd			/**< [in] The full command string to parse, ie, "moveAbs omega 180"	*/
-		    ) {
+                    const char *cmd                     /**< [in] The full command string to parse, ie, "moveAbs omega 180"     */
+                    ) {
   static const char *id = "md2cmds_preSet";
   double fpos;
   char *endptr;
@@ -930,9 +938,9 @@ int md2cmds_preSet(
   for(i=4; i<30; i+=2) {
     if (pmatch[i+2].rm_so == -1 || (pmatch[i+2].rm_eo == pmatch[i+2].rm_so)) {
       if ((pmatch[i+1].rm_so == -1 || (pmatch[i+1].rm_eo == pmatch[i+1].rm_so))) {
-	if ((pmatch[i].rm_so != -1 && (pmatch[i].rm_eo > pmatch[i].rm_so))) {
-	  preset_index = i;
-	}
+        if ((pmatch[i].rm_so != -1 && (pmatch[i].rm_eo > pmatch[i].rm_so))) {
+          preset_index = i;
+        }
       }
       break;
     }
@@ -995,20 +1003,20 @@ int md2cmds_preSet(
       //
 
       if (strcmp(position_string, "current") == 0) {
-	// Special prefix named 'current' means just to use the motor's current position
-	mp = lspmac_find_motor_by_name(motor_name);
-	if (mp == NULL) {
-	  lslogging_log_message("%s: could not find a motor named '%s'", id, motor_name);
-	  continue;
-	}
-	fpos = lsredis_getd(mp->redis_position);
+        // Special prefix named 'current' means just to use the motor's current position
+        mp = lspmac_find_motor_by_name(motor_name);
+        if (mp == NULL) {
+          lslogging_log_message("%s: could not find a motor named '%s'", id, motor_name);
+          continue;
+        }
+        fpos = lsredis_getd(mp->redis_position);
       } else {
-	// look up the normal prefix
-	err = lsredis_find_preset(motor_name, position_string, &fpos);
-	if (err == 0) {
-	  lslogging_log_message("%s: could not find preset named '%s' for motor %s", id, position_string, motor_name);
-	  continue;
-	}
+        // look up the normal prefix
+        err = lsredis_find_preset(motor_name, position_string, &fpos);
+        if (err == 0) {
+          lslogging_log_message("%s: could not find preset named '%s' for motor %s", id, position_string, motor_name);
+          continue;
+        }
       }
     }
 
@@ -1024,8 +1032,8 @@ int md2cmds_preSet(
  *  Returns non zero on error
  */
 int md2cmds_moveRel(
-		    const char *cmd			/**< [in] The full command string to parse, ie, "moveAbs omega 180"	*/
-		    ) {
+                    const char *cmd                     /**< [in] The full command string to parse, ie, "moveAbs omega 180"     */
+                    ) {
 
   static const char *id = "md2cmds_moveRel";
   double fpos;
@@ -1078,9 +1086,9 @@ int md2cmds_moveRel(
   for(i=4; i<30; i+=2) {
     if (pmatch[i+2].rm_so == -1 || (pmatch[i+2].rm_eo == pmatch[i+2].rm_so)) {
       if ((pmatch[i+1].rm_so == -1 || (pmatch[i+1].rm_eo == pmatch[i+1].rm_so))) {
-	if ((pmatch[i].rm_so != -1 && (pmatch[i].rm_eo > pmatch[i].rm_so))) {
-	  preset_index = i;
-	}
+        if ((pmatch[i].rm_so != -1 && (pmatch[i].rm_eo > pmatch[i].rm_so))) {
+          preset_index = i;
+        }
       }
       break;
     }
@@ -1148,19 +1156,19 @@ int md2cmds_moveRel(
       pgpmac_printf( "Moving %s to %f\n", motor_name, fpos);
       lsredis_sendStatusReport( 0, "moving  %s to %.*f", motor_name, prec, fpos);
       err = lspmac_est_move_time( &move_time, NULL,
-				  mp, 1, NULL, fpos,
-				  NULL);
+                                  mp, 1, NULL, fpos,
+                                  NULL);
       
       if( err) {
-	lsredis_sendStatusReport( 1, "Failed to move motor %s to '%.3f'", mp->name, fpos);
-	break;
+        lsredis_sendStatusReport( 1, "Failed to move motor %s to '%.3f'", mp->name, fpos);
+        break;
       }
       
       err = lspmac_est_move_time_wait( move_time + 10.0, 0, mp, NULL);
       if( err) {
-	lsredis_sendStatusReport( 1, "Timed out waiting %.1f seconds for motor %s to finish moving", move_time+10.0, mp->name);
+        lsredis_sendStatusReport( 1, "Timed out waiting %.1f seconds for motor %s to finish moving", move_time+10.0, mp->name);
       } else {
-	lsredis_sendStatusReport( 0, "%s", "");
+        lsredis_sendStatusReport( 0, "%s", "");
       }
     }
   }
@@ -1176,13 +1184,13 @@ int md2cmds_moveRel(
     //
     for (i=2; i<31; i+=2) {
       if (i == preset_index) {
-	// end of line when preset is defined
-	break;
+        // end of line when preset is defined
+        break;
       }
       
       if (pmatch[i].rm_so == -1 || (pmatch[i].rm_eo == pmatch[i].rm_so)) {
-	// end of line when no preset is defined
-	break;
+        // end of line when no preset is defined
+        break;
       }
       
       //
@@ -1241,12 +1249,12 @@ int md2cmds_phase_manualMount() {
   //
 
   err = lspmac_est_move_time_wait( move_time+10.0, mmask,
-				   capz,
-				   scint,
-				   blight_ud,
-				   cryo,
-				   fluo,
-				   NULL);
+                                   capz,
+                                   scint,
+                                   blight_ud,
+                                   cryo,
+                                   fluo,
+                                   NULL);
   if( err) {
     lsevents_send_event( "Mode manualMount Aborted");
     return err;
@@ -1287,15 +1295,15 @@ int md2cmds_phase_fluorescence() {
 
   mmask = 0;
   err = lspmac_est_move_time( &move_time, &mmask,
-			      apery,      0, "In",    0.0,
-			      aperz,      0, "In",    0.0,
-			      capy,       0, "In",    0.0,
-			      capz,       0, "Out",   0.0,
-			      scint,      0, "Cover", 0.0,
-			      blight_ud,  1, NULL,    0.0,
-			      cryo,       1, NULL,    0.0,
-			      fluo,       1, NULL,    1.0,
-			      NULL);
+                              apery,      0, "In",    0.0,
+                              aperz,      0, "In",    0.0,
+                              capy,       0, "In",    0.0,
+                              capz,       0, "Out",   0.0,
+                              scint,      0, "Cover", 0.0,
+                              blight_ud,  1, NULL,    0.0,
+                              cryo,       1, NULL,    0.0,
+                              fluo,       1, NULL,    1.0,
+                              NULL);
   if( err) {
     lsevents_send_event( "Mode fluorescence Aborted");
     lsredis_sendStatusReport( 1, "Error starting motors");
@@ -1303,9 +1311,9 @@ int md2cmds_phase_fluorescence() {
   }
 
   err = lspmac_est_move_time_wait( move_time + 10.0, mmask,
-				   cryo,
-				   fluo,
-				   NULL);
+                                   cryo,
+                                   fluo,
+                                   NULL);
   if( err) {
     lsevents_send_event( "Mode fluorescence Aborted");
     lsredis_sendStatusReport( 0, "Gave up waiting for motors");
@@ -1332,11 +1340,11 @@ int md2cmds_phase_center() {
 
   mmask = 0;
   err = lspmac_est_move_time( &move_time, &mmask,
-			      alignx,    0, "Beam", 0.0,
-			      aligny,    0, "Beam", 0.0,
-			      alignz,    0, "Beam", 0.0,
-			      cenx,      0, "Beam", 0.0,
-			      ceny,      0, "Beam", 0.0,
+                              alignx,    0, "Beam", 0.0,
+                              aligny,    0, "Beam", 0.0,
+                              alignz,    0, "Beam", 0.0,
+                              cenx,      0, "Beam", 0.0,
+                              ceny,      0, "Beam", 0.0,
                               apery,     0, "In",    0.0,
                               aperz,     0, "In",    0.0,
                               capy,      0, "In",    0.0,
@@ -1353,9 +1361,9 @@ int md2cmds_phase_center() {
   }
 
   err = lspmac_est_move_time_wait( move_time + 10.0, mmask,
-				   cryo,
-				   fluo,
-				   NULL);
+                                   cryo,
+                                   fluo,
+                                   NULL);
   if( err) {
     lsevents_send_event( "Mode center Aborted");
     return err;
@@ -1375,16 +1383,16 @@ int md2cmds_phase_fastCentering() {
   // Move 'em
   //
   lspmac_est_move_time( NULL, NULL,
-			apery,     0, "In",    0.0,
-			aperz,     0, "In",    0.0,
-			capy,      0, "In",    0.0,
-			capz,      0, "Out",    0.0,
-			scint,     0, "Cover", 0.0,
-			blight_ud, 1, NULL,    1.0,
-			zoom,      1, NULL,    1.0,
-			cryo,      1, NULL,    0.0,
-			fluo,      1, NULL,    0.0,
-			NULL);
+                        apery,     0, "In",    0.0,
+                        aperz,     0, "In",    0.0,
+                        capy,      0, "In",    0.0,
+                        capz,      0, "Out",    0.0,
+                        scint,     0, "Cover", 0.0,
+                        blight_ud, 1, NULL,    1.0,
+                        zoom,      1, NULL,    1.0,
+                        cryo,      1, NULL,    0.0,
+                        fluo,      1, NULL,    0.0,
+                        NULL);
   lsevents_send_event( "Mode fast center done");
   return 0;
 }
@@ -1415,9 +1423,9 @@ int md2cmds_phase_centerNoZoom() {
   }
 
   err = lspmac_est_move_time_wait( move_time + 10.0, mmask,
-				   cryo,
-				   fluo,
-				   NULL);
+                                   cryo,
+                                   fluo,
+                                   NULL);
   if( err) {
     lsevents_send_event( "Mode center no zoom Aborted");
     return err;
@@ -1438,11 +1446,11 @@ int md2cmds_phase_dataCollection() {
   mmask = 0;
 
   err = lspmac_est_move_time( &move_time, &mmask,
-			      alignx,    0, "Beam", 0.0,
-			      aligny,    0, "Beam", 0.0,
-			      alignz,    0, "Beam", 0.0,
-			      cenx,      0, "Beam", 0.0,
-			      ceny,      0, "Beam", 0.0,
+                              alignx,    0, "Beam", 0.0,
+                              aligny,    0, "Beam", 0.0,
+                              alignz,    0, "Beam", 0.0,
+                              cenx,      0, "Beam", 0.0,
+                              ceny,      0, "Beam", 0.0,
                               apery,     1, "In",      0.0,
                               aperz,     1, "In",      0.0,
                               capy,      1, "In",      0.0,
@@ -1460,15 +1468,15 @@ int md2cmds_phase_dataCollection() {
   }
 
   err = lspmac_est_move_time_wait( move_time + 10.0, mmask,
-				   apery,
-				   aperz,
-				   capy,
-				   capz,
-				   scint,
-				   blight_ud,
-				   cryo,
-				   fluo,
-				   NULL);
+                                   apery,
+                                   aperz,
+                                   capy,
+                                   capz,
+                                   scint,
+                                   blight_ud,
+                                   cryo,
+                                   fluo,
+                                   NULL);
 
   if( err) {
     lsevents_send_event( "Mode dataCollection Aborted");
@@ -1491,7 +1499,7 @@ int md2cmds_phase_beamLocation() {
   mmask = 0;
   err = lspmac_est_move_time( &move_time, &mmask,
                               //motor   jog, preset,      position if no preset
-			      kappa,      0, NULL,           0.0,
+                              kappa,      0, NULL,           0.0,
                               apery,      0, "In",           0.0,
                               aperz,      0, "Out",          0.0,
                               capy,       0, "In",           0.0,
@@ -1509,10 +1517,10 @@ int md2cmds_phase_beamLocation() {
   }
 
   err = lspmac_est_move_time_wait( move_time + 10.0, mmask,
-				   blight_ud,
-				   cryo,
-				   fluo,
-				   NULL);
+                                   blight_ud,
+                                   cryo,
+                                   fluo,
+                                   NULL);
   if( err) {
     lsevents_send_event( "Mode beamLocation Aborted");
     return err;
@@ -1553,15 +1561,15 @@ int md2cmds_phase_safe() {
   }
 
   err = lspmac_est_move_time_wait( move_time + 10.0, mmask,
-				   apery,
-				   aperz,
-				   capy,
-				   capz,
-				   scint,
-				   blight_ud,
-				   cryo,
-				   fluo,
-				   NULL);
+                                   apery,
+                                   aperz,
+                                   capy,
+                                   capz,
+                                   scint,
+                                   blight_ud,
+                                   cryo,
+                                   fluo,
+                                   NULL);
   if( err) {
     lsevents_send_event( "Mode safe Aborted");
     return err;
@@ -1571,13 +1579,28 @@ int md2cmds_phase_safe() {
   return 0;
 }
 
+int md2cmds_homestages( const char *ccmd) {
+  md2cmds_home_prep();
+  lspmac_home1_queue(cenx);
+  lspmac_home1_queue(ceny);
+  lspmac_home1_queue(alignx);
+  lspmac_home1_queue(aligny);
+  lspmac_home1_queue(alignz);
+
+  if (md2cmds_home_wait( 60.0)) {
+    lslogging_log_message( "md2cmds_homestages: Waited for a minutes homing stages.  Got bored.");
+    return 1;
+  }
+  return 0;
+}
+
 /** Set centering and alignment motors to a predefined point
  */
 int md2cmds_goto_point( const char *ccmd) {
-  char *cmd;		// command that brought us here
-  char *ignore;	        // likely the string 'gotoPoint' since that is how we were called
-  char *ptr;		// pointer to the next item to parse in 'cmd'
-  char *pts;		// a string version of the point number
+  char *cmd;            // command that brought us here
+  char *ignore;         // likely the string 'gotoPoint' since that is how we were called
+  char *ptr;            // pointer to the next item to parse in 'cmd'
+  char *pts;            // a string version of the point number
   char *endptr;
   int pt;
   int clength;
@@ -1639,19 +1662,19 @@ int md2cmds_goto_point( const char *ccmd) {
 
 
   err = lspmac_est_move_time( &move_time, &mmask,
-			      cenx,    0, NULL, cx,
-			      ceny,    0, NULL, cy,
-			      alignx,  0, NULL, ax,
-			      aligny,  0, NULL, ay,
-			      alignz,  0, NULL, az,
-			      NULL);
+                              cenx,    0, NULL, cx,
+                              ceny,    0, NULL, cy,
+                              alignx,  0, NULL, ax,
+                              aligny,  0, NULL, ay,
+                              alignz,  0, NULL, az,
+                              NULL);
   if( err) {
     lsevents_send_event( "gotoPoint failed");
     return err;
   }
 
   err = lspmac_est_move_time_wait( move_time + 5.0, mmask,
-				   NULL);
+                                   NULL);
 
   if( err) {
     lsevents_send_event( "gotoPoint failed");
@@ -1744,12 +1767,12 @@ int md2cmds_phase_change( const char *ccmd) {
 /** Move the centering and alignment tables
  */
 void md2cmds_mvcenter_move(
-			   double cx,	/**< [in] Requested Centering Table X		*/
-			   double cy,	/**< [in] Requested Centering Table Y		*/
-			   double ax,	/**< [in] Requested Alignment Table X		*/
-			   double ay,	/**< [in] Requested Alignment Table Y		*/
-			   double az	/**< [in] Requested Alignment Table Z		*/
-			   ) {
+                           double cx,   /**< [in] Requested Centering Table X           */
+                           double cy,   /**< [in] Requested Centering Table Y           */
+                           double ax,   /**< [in] Requested Alignment Table X           */
+                           double ay,   /**< [in] Requested Alignment Table Y           */
+                           double az    /**< [in] Requested Alignment Table Z           */
+                           ) {
   
   //
   // centering stage is coordinate system 2
@@ -1832,10 +1855,10 @@ void md2cmds_kappaphi_move( double kappa_deg, double phi_deg) {
   kc = md2cmds_prep_axis( kappa, kappa_deg);
   pc = md2cmds_prep_axis( kappa, phi_deg);
 
-  //  ;150		LS-CAT Move X, Y Absolute
-  //  ;			Q20    = X Value
-  //  ;			Q21    = Y Value
-  //  ;			Q100   = 1 << (coord sys no  - 1)
+  //  ;150              LS-CAT Move X, Y Absolute
+  //  ;                 Q20    = X Value
+  //  ;                 Q21    = Y Value
+  //  ;                 Q100   = 1 << (coord sys no  - 1)
 
   lspmac_SockSendDPline( "kappaphi_move", "&7 Q20=%d Q21=%d Q100=64", kc, pc);
 }
@@ -1903,45 +1926,121 @@ int md2cmds_raster( const char *cmd) {
   return 0;
 }
 
-/** Segment data collection
+/** Shutterless data collection
  ** \param dummy Unused
  ** returns non-zero on error
  */
-int md2cmds_segment( const char *dummy) {
-  long long skey;	//!< px.shots key of our exposure
-  int sindex;		//!< px.shots sindex of our shot
-  double exp_time;	//!< Exposure Time from postgresql in seconds
+int md2cmds_shutterless( const char *dummy) {
+  long long skey;       //!< px.shots key of our exposure
+  int sindex;           //!< px.shots sindex of our shot
+  double exp_time;      //!< Exposure Time from postgresql in seconds
+  //double p6510;               //!< Shutter opening time in msec
+  double p6511;         //!< Shutter closing time in msec
   double q1;            //!< Exposure Time in mSec
   double q2;            //!< Acceleration Time in mSecs
-  double q10;		//!< Omega open position in counts
-  double q12;		//!< Omega close position in counts
+  double q3;            //!< Time at constant velocity before triggering detector
+  double q4;            //!< Omega velocity in counts/msec
+  double q5;            //!< Backup distance
+  double q10;           //!< Omega open position in counts
+  double q12;           //!< Omega close position in counts
   double q15;           //!< Center X open position in counts
   double q17;           //!< Center X close position in counts
   double q20;           //!< Center Y open position in counts
-  double q22;		//!< Center Y close position in counts
+  double q22;           //!< Center Y close position in counts
   double q25;           //!< Align Y open position in counts
   double q27;           //!< Align Y close position in counts
-  double omega_u2c;	//!< Omega degrees to counts conversion
-  double omega_np;	//!< Omega home mark position where we measure omega from
-  double omega_ma;	//!< our maximum acceleration for omega
-  double cx_u2c;	//!< Center X mm to counts conversion
-  double cx_np;		//!< Center X neutral position
-  double cy_u2c;	//!< Center Y mm to counts conversion
-  double cy_np;		//!< Center Y neutral position
-  double ay_u2c;	//!< Align Y mm to counts conversion
-  double ay_np;		//!< Align Y neutral position
+  double omega_u2c;     //!< Omega degrees to counts conversion
+  double omega_np;      //!< Omega home mark position where we measure omega from
+  double omega_ma;      //!< our maximum acceleration for omega
+  double cx_u2c;        //!< Center X mm to counts conversion
+  double cx_np;         //!< Center X neutral position
+  double cy_u2c;        //!< Center Y mm to counts conversion
+  double cy_np;         //!< Center Y neutral position
+  double ay_u2c;        //!< Align Y mm to counts conversion
+  double ay_np;         //!< Align Y neutral position
   lsredis_obj_t *collection_running;
-  int clength;		//!< Length of centers array
-  double cx0, cx1;	//!< Center X points
-  double cy0, cy1;	//!< Center Y points
-  double ay0, ay1;	//!< Align Y points
-  struct timespec now, timeout;	//!< setup timeouts for shutter
+  int clength;          //!< Length of centers array
+  double cx0, cx1;      //!< Center X points
+  double cy0, cy1;      //!< Center Y points
+  double ay0, ay1;      //!< Align Y points
+  struct timespec now, timeout; //!< setup timeouts for shutter
   int err;
+  int ds;
+  double move_time;
+  int mmask;
+  int explore_mode;
+  int n_data_files;
+  char file_name_temp[256];
+  json_t *j_tmp_obj;
+  json_t *j_expected_files;
+  lsredis_obj_t *expected_files;
+  char *expected_files_str;
+  int i;
 
-  lsevents_send_event("Segment Collection Starting");
+  //
+  // Make a guess at the correct value.  TODO: measure and place in
+  // redis variables.
+  //
+  //p6510 =  10;        // Imperical value: use scope to measure fast-shutter/shutter-box edges
+  p6511 =   2;
+
+  lslogging_log_message("shutterless 0");
+
+  lsevents_send_event("Shutterless Collection Starting");
+  expected_files = lsredis_get_obj("expected_files");
+
   collection_running = lsredis_get_obj("collection.running");
   lsredis_setstr(collection_running, "True");
 
+  explore_mode = lsredis_getl(lsredis_get_obj("detector.explore_mode"));
+
+  //
+  // Go to data collection mode
+  //
+  lsredis_sendStatusReport( 0, "Putting MD2 in data collection mode");
+  if( md2cmds_phase_change( "changeMode dataCollection")) {
+    lsredis_sendStatusReport( 1, "Failed to put MD2 into data collection mode within a reasonable amount of time.");
+    lsevents_send_event( "Shutterless Collection Aborted");
+    lsredis_setstr( collection_running, "False");
+    return 1;
+  }  
+
+  lslogging_log_message("shutterless 1");
+  
+  //
+  // Set up monitoring of the detector state and, by the way, get the
+  // current state.
+  //
+  pthread_mutex_lock( &detector_state_mutex);
+  ds = detector_state_int;
+  pthread_mutex_unlock( &detector_state_mutex);
+
+  lslogging_log_message("explore_mode: %d detector_state_int: %d", explore_mode, ds);
+
+  clock_gettime( CLOCK_REALTIME, &now);
+  timeout.tv_sec  = now.tv_sec + 20;
+  timeout.tv_nsec = now.tv_nsec;
+      
+  err = 0;
+  pthread_mutex_lock(&detector_state_mutex);
+  while (err == 0 && ((explore_mode && detector_state_int != 3) || (!explore_mode && detector_state_int != 1))) {
+    err = pthread_cond_timedwait(&detector_state_cond, &detector_state_mutex, &timeout);
+  }
+  pthread_mutex_unlock(&detector_state_mutex);
+  
+  if (err == ETIMEDOUT) {
+    //
+    // The detector is not ready or is not armed, abort now
+    //
+    lsredis_sendStatusReport(1, "Detector does not appear to be ready");
+    lslogging_log_message("md2cmds_shutterless: Detector is not in ready state");
+    lsevents_send_event("Shutterless Collection Aborted");
+    lsredis_setstr(collection_running, "False");
+    return 1;
+  }
+  lslogging_log_message("shutterless 2");
+
+  
   omega_u2c   = lsredis_getd( omega->u2c);
   omega_np    = lsredis_getd( omega->neutral_pos);
   omega_ma    = lsredis_getd( omega->max_accel);
@@ -1964,169 +2063,426 @@ int md2cmds_segment( const char *dummy) {
     cy1 = lsredis_getd( lsredis_get_obj("centers.1.cy"));
     ay1 = lsredis_getd( lsredis_get_obj("centers.1.ay"));
   }
+  
+  while(1) {
+    lspg_nextshot_call();
+    lspg_nextshot_wait();
 
-  lspg_nextshot_call();
-  lspg_nextshot_wait();
-  if (lspg_nextshot.query_error) {
-    lsredis_sendStatusReport(1, "Cound not regrieve next shot info.");
-    lslogging_log_message("md2cmds_segment: query error retriveing next shot info. Aborting");
-    lsevents_send_event("Segment Collection Aborted");
-    lsredis_setstr(collection_running, "False");
-    return 1;
-  }
+    if (lspg_nextshot.query_error) {
+      lsredis_sendStatusReport(1, "Cound not retrieve next shot info.");
+      lslogging_log_message("md2cmds_shutterless: query error retriveing next shot info. Aborting");
+      lsevents_send_event("Shutterless Collection Aborted");
+      lsredis_setstr(collection_running, "False");
+      return 1;
+    }
 
-  if (lspg_nextshot.no_rows_returned) {
-    lsredis_sendStatusReport(0, "No more images to collect");
+    lslogging_log_message("shutterless 3: active = %d", lspg_nextshot.active);
+
+    if (lspg_nextshot.no_rows_returned) {
+      lslogging_log_message("lspg_nextshot returned no rows");
+      lsredis_sendStatusReport(0, "No more images to collect");
+      lsredis_setstr(collection_running, "False");
+      lspg_nextshot_done();
+      break;
+    }
+
+    //
+    // Calculate the number of datafiles to have the xfer process look for.
+    //
+    // The number of images per datafile is configurable with the
+    // defaule being 1000.  TODO: use redis to store this value, have
+    // eigerServer enforce it and read it here instead of assuming
+    // it's 1000.
+    //
+    if (strcmp(lspg_nextshot.stype, "shutterless")==0) {
+      n_data_files = (lspg_nextshot.dsfrate * lspg_nextshot.dsrange)/1000 +1;
+    } else {
+      n_data_files = 1;
+    }
+
+    //
+    // The loop explorer uses the old interpolation methods which are
+    // not compatable with our use of the centering points here.
+    // Hopefully just checking the center points array length is
+    // enough to catch this mode.  TODO: make it clearer, ie, add
+    // another flag to indicate that we are in the explorer mode.
+    //
+    if( clength <= 1 && lspg_nextshot.active) {
+      lsredis_set_preset( "centering.x", "Beam", lspg_nextshot.cx);
+      lsredis_set_preset( "centering.y", "Beam", lspg_nextshot.cy);
+      lsredis_set_preset( "align.x",     "Beam", lspg_nextshot.ax);
+      lsredis_set_preset( "align.y",     "Beam", lspg_nextshot.ay);
+      lsredis_set_preset( "align.z",     "Beam", lspg_nextshot.az);
+
+      lsredis_setstr(lsredis_get_obj("centers.0.cx"), "%0.3f", lspg_nextshot.cx);
+      lsredis_setstr(lsredis_get_obj("centers.0.cy"), "%0.3f", lspg_nextshot.cy);
+      lsredis_setstr(lsredis_get_obj("centers.0.ax"), "%0.3f", lspg_nextshot.ax);
+      lsredis_setstr(lsredis_get_obj("centers.0.ay"), "%0.3f", lspg_nextshot.ay);
+      lsredis_setstr(lsredis_get_obj("centers.0.az"), "%0.3f", lspg_nextshot.az);
+
+
+      cx0 = lspg_nextshot.cx;
+      cy0 = lspg_nextshot.cy;
+      ay0 = lspg_nextshot.ay;
+
+      cx1 = lspg_nextshot.cx;
+      cy1 = lspg_nextshot.cy;
+      ay1 = lspg_nextshot.ay;
+
+      //
+      // Normally ax (focus) and az (spindle height) do not move.
+      // However, if, we ever want to then the ax and az code is here.
+      // cx, cy, and cz is built into to the PMAC routing and has been
+      // stripped out.
+      //
+
+      if(
+         //
+         // Don't move if we are within 0.1 microns of our destination
+         //
+         (fabs( lspg_nextshot.ax - alignx->position) > 0.0001) ||
+         (fabs( lspg_nextshot.az - alignz->position) > 0.0001)) {
+
+
+        lslogging_log_message( "md2cmds_shutterless: moving center to ax=%f, az=%f", lspg_nextshot.ax, lspg_nextshot.az);
+
+        err = lspmac_est_move_time( &move_time, &mmask,
+                                    alignx, 0, NULL, lspg_nextshot.ax,
+                                    alignz, 0, NULL, lspg_nextshot.az,
+                                    NULL);
+        if( err) {
+          lsevents_send_event( "Shutterless Collection Aborted");
+          lsredis_sendStatusReport( 1, "Failed to start moving to next sample position.");
+          lspg_nextshot_done();
+          lsredis_setstr( collection_running, "False");
+          lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+          return 1;
+        }
+
+        err = lspmac_est_move_time_wait( move_time+10, mmask, NULL);
+        if( err) {
+          lsredis_sendStatusReport( 1, "Moving to next sample position failed.");
+          lsevents_send_event( "Shutterless Collection Aborted");
+          lspg_nextshot_done();
+          lsredis_setstr( collection_running, "False");
+          lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+          return 1;
+        }
+      }
+    }
+
+    if ( lspg_nextshot.dssrate <= 0.1) {
+      exp_time = lspg_nextshot.dsexp;
+    } else {
+      if (strcmp(lspg_nextshot.stype, "shutterless")==0) {
+        exp_time = lspg_nextshot.dsrange  / lspg_nextshot.dssrate;
+      } else {
+        exp_time = lspg_nextshot.dsowidth / lspg_nextshot.dssrate;
+      }
+    }
+    skey     = lspg_nextshot.skey;
+    sindex   = lspg_nextshot.sindex;
+    lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Preparing')", skey);
+    lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Preparing\"}", skey);
+    lsredis_sendStatusReport( 0, "Preparing Shutterless %d", sindex);
+    
+    q1  = exp_time * 1000.0;
+    q10 = omega_u2c * (lspg_nextshot.sstart + omega_np);
+    
+    if (strcmp(lspg_nextshot.stype, "shutterless")==0) {
+      q12 = omega_u2c * (lspg_nextshot.sstart + lspg_nextshot.dsrange  + omega_np);
+    } else {
+      q12 = omega_u2c * (lspg_nextshot.sstart + lspg_nextshot.dsowidth + omega_np);
+    }
+    
+    // acceleration time (mSec)
+    q2 = ((q12 - q10) / q1) / omega_ma * 2;
+
+    // time to run at constant velocity before triggering the detector (TODO: do we really need this?)
+    q3 = 100;
+
+    // alignment y start and end
+    q15 = ay_u2c * (ay0 + ay_np);
+    q17 = ay_u2c * (ay1 + ay_np);
+    
+    // centering x start and end
+    q20 = cx_u2c * (cx0 + cx_np);
+    q22 = cx_u2c * (cx1 + cx_np);
+    
+    // centering y start and end
+    q25 = cy_u2c * (cy0 + cy_np);
+    q27 = cy_u2c * (cy1 + cy_np);
+    
+    if (q1 > 0) {
+      q4  = (q12-q10) / q1;     // Omega velocity in counts/msec
+      q5  = q4*q2/2;           // Backup distance for Omega (in counts)
+    } else {
+      q5 = 0;
+    }
+    
+    /*
+    ** Move omega to the initial position
+    ** TODO: calculate the actual starting position, not just the shutter open position
+    */
+    if (fabs(lspmac_getPosition( omega)) > 360.0) {
+      md2cmds_home_prep();
+      lspmac_home1_queue( omega);
+      if( md2cmds_home_wait( 20.0)) {
+        lslogging_log_message( "md2cmds_shutterless: homing omega timed out.  Shutterless aborted");
+        lsevents_send_event( "Shutterless Collection Aborted");
+        lsredis_setstr(collection_running, "False");
+        lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+        lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
+        return 1;
+      }
+    }
+    
+    err = lspmac_est_move_time( &move_time, &mmask,
+                                omega,  0, NULL, lspg_nextshot.sstart - q5/omega_u2c,
+                                NULL);
+    if( err) {
+      lsevents_send_event( "Shutterless Collection Aborted");
+      lsredis_sendStatusReport( 1, "Failed to move omega to start position.");
+      lspg_nextshot_done();
+      lsredis_setstr( collection_running, "False");
+      lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+      lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
+      return 1;
+    }
+    
+    err = lspmac_est_move_time_wait( move_time+10, mmask, NULL);
+    if( err) {
+      lsredis_sendStatusReport( 1, "Moving omega failed.");
+      lsevents_send_event( "Shutterless Collection Aborted");
+      lspg_nextshot_done();
+      lsredis_setstr( collection_running, "False");
+      lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
+      lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+      return 1;
+    }
+    
+    // We don't need these query results anymore
     lspg_nextshot_done();
-    return 0;
-  }
+    
+    lslogging_log_message("shutterless 3...");
+    
+    //
+    // prepare the database and detector to expose On exit theexp
+    // detector.state_machine is in the state Arm or, if the detector
+    // was not ready, in the state Init.
+    //
+    if( lspg_eiger_run_prep_all( skey,
+                                 kappa->position,
+                                 phi->position,
+                                 cenx->position,
+                                 ceny->position,
+                                 alignx->position,
+                                 aligny->position,
+                                 alignz->position
+                                 )) {
+      lslogging_log_message( "md2cmds_shutterless: eiger run prep query error, aborting");
+      lsredis_sendStatusReport( 1, "Preparing MD2 failed");
+      lsevents_send_event( "Shutterless Collection Aborted");
+      lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+      lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
+      lsredis_setstr( collection_running, "False");
+      return 1;
+    }
+    
+    lslogging_log_message("shutterless 4");
+    
+    //
+    // Wait for the detector to arm itself
+    //
+    if (!explore_mode) {
+      clock_gettime( CLOCK_REALTIME, &now);
+      timeout.tv_sec  = now.tv_sec + 60;
+      timeout.tv_nsec = now.tv_nsec;
+      
+      err = 0;
+      pthread_mutex_lock( &detector_state_mutex);
+      while (err == 0 && detector_state_int != 3) {
+        err = pthread_cond_timedwait( &detector_state_cond, &detector_state_mutex, &timeout);
+      }
+      pthread_mutex_unlock( &detector_state_mutex);
+      
+      if( err == ETIMEDOUT) {
+        lslogging_log_message( "md2cmds_shutterless: Timed out waiting for detector to be armed.  Shutterless Collection aborted.");
+        lsredis_sendStatusReport( 1, "Timed out waiting for detector to be armed.");
+        
+        lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
+        
+        lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
+        lsevents_send_event( "Shutterless Collection Aborted");
+        lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+        lsredis_setstr( collection_running, "False");
+        return 1;
+      }
+    }
 
-  exp_time = lspg_nextshot.dsexp;
-  skey     = lspg_nextshot.skey;
-  sindex   = lspg_nextshot.sindex;
-  lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Preparing')", skey);
-  lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Preparing\"}", skey);
-  lsredis_sendStatusReport( 0, "Preparing Segment %d", sindex);
-
-  q1  = lspg_nextshot.dsexp * 1000.0;
-
-  q10 = omega_u2c * (lspg_nextshot.sstart + omega_np);
-  q12 = omega_u2c * (lspg_nextshot.sstart + lspg_nextshot.dsowidth + omega_np);
-  
-  //   (    velocity    ) / max acceleration = acceleration time (mSec) + kludge factor of dubious utility
-  q2 = ((q12 - q10) / q1) / omega_ma + 100;
-
-  // alignment y start and end
-  q15 = ay_u2c * (ay0 + ay_np);
-  q17 = ay_u2c * (ay1 + ay_np);
-  
-  // centering x start and end
-  q20 = cx_u2c * (cx0 + cx_np);
-  q22 = cx_u2c * (cx1 + cx_np);
-
-  // centering y start and end
-  q25 = cy_u2c * (cy0 + cy_np);
-  q27 = cy_u2c * (cy1 + cy_np);
-
-  // We don't need these query results anymore
-  lspg_nextshot_done();
-
-  //
-  // prepare the database and detector to expose
-  // On exit we own the diffractometer lock and
-  // have checked that all is OK with the detector
-  //
-  if( lspg_seq_run_prep_all( skey,
-			     kappa->position,
-			     phi->position,
-			     cenx->position,
-			     ceny->position,
-			     alignx->position,
-			     aligny->position,
-			     alignz->position
-			     )) {
-    lslogging_log_message( "md2cmds_segment: seq run prep query error, aborting");
-    lsredis_sendStatusReport( 1, "Preparing MD2 failed");
-    lsevents_send_event( "Segment Collection Aborted");
-    lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
-    lsredis_setstr( collection_running, "False");
-    return 1;
-  }
-
-  //
-  // Wait for the detector to drop its lock indicating that it is ready for the exposure
-  //
-  lspg_lock_detector_all();
-  lspg_unlock_detector_all();
-
-  md2cmds_setAxis( aligny, 'Y', lsredis_getl( aligny->coord_num), 1);
-  md2cmds_setAxis( cenx,   'Z', lsredis_getl( cenx->coord_num),   1);
-  md2cmds_setAxis( ceny,   'U', lsredis_getl( ceny->coord_num),   1);
-
-  lsredis_sendStatusReport( 0, "Exposing Frames %d", sindex);
-  lspmac_set_motion_flags( NULL, omega, NULL);
-  lspmac_SockSendDPline( "Exposure",
-			 "&1 Q1=%.1f Q2=%.1f Q10=%.1f Q12=%.1f Q15=%.1f Q17=%.1f Q20=%.1f Q22=%.1f Q25=%.1f Q27=%.1f M431=1 B231R",
-			 q1, q2, q10, q12, q15, q17, q20, q22, q25, q27
-			 );
-
-  //
-  // wait for the shutter to open
-  //
-  clock_gettime( CLOCK_REALTIME, &now);
-  timeout.tv_sec  = now.tv_sec + 10;
-  timeout.tv_nsec = now.tv_nsec;
-
-  err = 0;
-
-  pthread_mutex_lock( &md2cmds_shutter_mutex);
-  while( err == 0 && !md2cmds_shutter_open_flag)
-    err = pthread_cond_timedwait( &md2cmds_shutter_cond, &md2cmds_shutter_mutex, &timeout);
-
-  if( err == ETIMEDOUT) {
+    lslogging_log_message("shutterless 4b");
+    
+    md2cmds_setAxis( aligny, 'Y', lsredis_getl( aligny->coord_num), 1);
+    md2cmds_setAxis( cenx,   'Z', lsredis_getl( cenx->coord_num),   1);
+    md2cmds_setAxis( ceny,   'U', lsredis_getl( ceny->coord_num),   1);
+    
+    lsredis_sendStatusReport( 0, "Exposing Frames %d", sindex);
+    lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Exposing')", skey);
+    lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Exposing\"}", skey);
+    
+    lspmac_set_motion_flags( NULL, omega, NULL);
+    lspmac_SockSendDPline( "Exposure",
+                           "&1 P6511=%.1f Q1=%.1f Q2=%.1f Q3=%.1f Q10=%.1f Q12=%.1f Q15=%.1f Q17=%.1f Q20=%.1f Q22=%.1f Q25=%.1f Q27=%.1f",
+                           p6511, q1, q2, q3, q10, q12, q15, q17, q20, q22, q25, q27
+                           );
+    
+    lspmac_SockSendDPline(  NULL, "B231R");
+    
+    lslogging_log_message("shutterless 5");
+    //
+    // wait for the shutter to open
+    //
+    clock_gettime( CLOCK_REALTIME, &now);
+    timeout.tv_sec  = now.tv_sec + (int)(q2/1000+1) + 2;        // round the acceleration time up and add a couple of seconds for the command to be taken 
+    timeout.tv_nsec = now.tv_nsec;
+    err = 0;
+    
+    pthread_mutex_lock( &md2cmds_shutter_mutex);
+    while( err == 0 && !md2cmds_shutter_open_flag)
+      err = pthread_cond_timedwait( &md2cmds_shutter_cond, &md2cmds_shutter_mutex, &timeout);
+    
+    if( err == ETIMEDOUT) {
+      pthread_mutex_unlock( &md2cmds_shutter_mutex);
+      lslogging_log_message( "md2cmds_shutterless: Timed out waiting for shutter to open.  Data collection aborted.");
+      lspmac_abort();
+      lsredis_sendStatusReport( 1, "Timed out waiting for shutter to open.");
+      lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
+      lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
+      lsevents_send_event( "Shutterless Collection Aborted");
+      lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+      lsredis_setstr( collection_running, "False");
+      md2cmds_setAxis( ceny,   lsredis_getc( ceny->axis),   1, lsredis_getl( ceny->coord_num));
+      md2cmds_setAxis( cenx,   lsredis_getc( cenx->axis),   1, lsredis_getl( cenx->coord_num));
+      md2cmds_setAxis( aligny, lsredis_getc( aligny->axis), 1, lsredis_getl( aligny->coord_num));
+      return 1;
+    }
     pthread_mutex_unlock( &md2cmds_shutter_mutex);
-    lslogging_log_message( "md2cmds_segment: Timed out waiting for shutter to open.  Data collection aborted.");
-    lsredis_sendStatusReport( 1, "Timed out waiting for shutter to open.");
-    lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
-    lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
-    lsevents_send_event( "Segment Collection Aborted");
-    lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
-    lsredis_setstr( collection_running, "False");
+    
+    lslogging_log_message("shutterless 6");
+    
+    //
+    // wait for the shutter to close
+    //
+    clock_gettime( CLOCK_REALTIME, &now);
+    lslogging_log_message( "md2cmds_shutterless: waiting %f seconds for the shutter to close", 4 + exp_time);
+    timeout.tv_sec  = now.tv_sec + 10 + ceil(exp_time); // hopefully 10 seconds is long enough to never miss a legitimate shutter close and short enough to bail when something is really wrong
+    timeout.tv_nsec = now.tv_nsec;
+    
+    err = 0;
+    
+    pthread_mutex_lock( &md2cmds_shutter_mutex);
+    while( err == 0 && md2cmds_shutter_open_flag)
+      err = pthread_cond_timedwait( &md2cmds_shutter_cond, &md2cmds_shutter_mutex, &timeout);
+    
+    if( err == ETIMEDOUT) {
+      pthread_mutex_unlock( &md2cmds_shutter_mutex);
+      lsredis_sendStatusReport( 1, "Timed out waiting for shutter to close.");
+      lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
+      lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
+      lslogging_log_message( "md2cmds_shutterless: Timed out waiting for shutter to close.  Shutterless collection aborted.");
+      lsevents_send_event( "Shutterless Collection Aborted");
+      lsredis_setstr( collection_running, "False");
+      lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+      md2cmds_setAxis( ceny,   lsredis_getc( ceny->axis),   1, lsredis_getl( ceny->coord_num));
+      md2cmds_setAxis( cenx,   lsredis_getc( cenx->axis),   1, lsredis_getl( cenx->coord_num));
+      md2cmds_setAxis( aligny, lsredis_getc( aligny->axis), 1, lsredis_getl( aligny->coord_num));
+      return 1;
+    }
+    pthread_mutex_unlock( &md2cmds_shutter_mutex);
+    
+    lslogging_log_message("shutterless 7");
+    
+    if (!explore_mode) {
+      //
+      // Signal the detector to start reading out
+      //
+      lsredis_setstr( detector_state_redis, "{\"state\": \"Done\", \"expires\": %lld}", (long long)time(NULL)*1000 + 20000);
+      lsredis_sendStatusReport( 0, "Reading Shutterless %d", sindex);
+    }
+    
+    //
+    // Update the shot status
+    //
+    lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Done')", skey);
+    lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Done\"}", skey);
+    
+    lslogging_log_message("shutterless 7.1");
+    
+    //
+    // Return the axes definitions to their original state
+    //
     md2cmds_setAxis( ceny,   lsredis_getc( ceny->axis),   1, lsredis_getl( ceny->coord_num));
     md2cmds_setAxis( cenx,   lsredis_getc( cenx->axis),   1, lsredis_getl( cenx->coord_num));
     md2cmds_setAxis( aligny, lsredis_getc( aligny->axis), 1, lsredis_getl( aligny->coord_num));
-    return 1;
+    
+    //
+    // reset shutter has opened flag
+    //
+    lspmac_SockSendDPline( NULL, "P3005=0");
+
+    lslogging_log_message("shutterless 8");
+    
+    //
+    // Wait for the detector to be done
+    //
+    clock_gettime( CLOCK_REALTIME, &now);
+    timeout.tv_sec  = now.tv_sec + 20;
+    timeout.tv_nsec = now.tv_nsec;
+    
+    if (!explore_mode) {
+      err = 0;
+      pthread_mutex_lock( &detector_state_mutex);
+      while (err == 0 && detector_state_int != 4) {
+        err = pthread_cond_timedwait( &detector_state_cond, &detector_state_mutex, &timeout);
+      }
+      pthread_mutex_unlock( &detector_state_mutex);
+
+      if( err == ETIMEDOUT) {
+        lslogging_log_message( "md2cmds_shutterless: Timed out waiting for detector to finish up.  Shutterless Collection aborted.");
+        lsredis_sendStatusReport( 1, "Timed out waiting for detector to finish.");
+      
+        lsredis_setstr( detector_state_redis, "{\"state\": \"Init\", \"expires\": 0}");
+      
+        lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
+        lsevents_send_event( "Shutterless Collection Aborted");
+        lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+        lsredis_setstr( collection_running, "False");
+        return 1;
+      }
+    }
   }
-  pthread_mutex_unlock( &md2cmds_shutter_mutex);
 
+  j_expected_files = json_array();
+  
+  snprintf(file_name_temp, sizeof(file_name_temp)-1, "%s/%s_master.h5", lspg_nextshot.dsdir, lspg_nextshot.sfn);
+  file_name_temp[sizeof(file_name_temp)-1] = 0;
+  j_tmp_obj = json_string(file_name_temp);
+  json_array_append_new(j_expected_files, j_tmp_obj);
 
-  //
-  // wait for the shutter to close
-  //
-  clock_gettime( CLOCK_REALTIME, &now);
-  lslogging_log_message( "md2cmds_collect: waiting %f seconds for the shutter to close", 4 + exp_time);
-  timeout.tv_sec  = now.tv_sec + 4 + ceil(exp_time);	// hopefully 4 seconds is long enough to never miss a legitimate shutter close and short enough to bail when something is really wrong
-  timeout.tv_nsec = now.tv_nsec;
-
-  err = 0;
-
-  pthread_mutex_lock( &md2cmds_shutter_mutex);
-  while( err == 0 && md2cmds_shutter_open_flag)
-    err = pthread_cond_timedwait( &md2cmds_shutter_cond, &md2cmds_shutter_mutex, &timeout);
-
-  if( err == ETIMEDOUT) {
-    pthread_mutex_unlock( &md2cmds_shutter_mutex);
-    lsredis_sendStatusReport( 1, "Timed out waiting for shutter to close.");
-    lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
-    lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
-    lslogging_log_message( "md2cmds_segment: Timed out waiting for shutter to close.  Data collection aborted.");
-    lsevents_send_event( "Segment Collection Aborted");
-    lsredis_setstr( collection_running, "False");
-    lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
-    md2cmds_setAxis( ceny,   lsredis_getc( ceny->axis),   1, lsredis_getl( ceny->coord_num));
-    md2cmds_setAxis( cenx,   lsredis_getc( cenx->axis),   1, lsredis_getl( cenx->coord_num));
-    md2cmds_setAxis( aligny, lsredis_getc( aligny->axis), 1, lsredis_getl( aligny->coord_num));
-    return 1;
+  for (i=0; i< n_data_files; i++) {
+    snprintf(file_name_temp, sizeof(file_name_temp)-1, "%s/%s_data_%06d.h5", lspg_nextshot.dsdir, lspg_nextshot.sfn, i+1);
+    file_name_temp[sizeof(file_name_temp)-1] = 0;
+    j_tmp_obj = json_string(file_name_temp);
+    json_array_append_new(j_expected_files, j_tmp_obj);
   }
-  pthread_mutex_unlock( &md2cmds_shutter_mutex);
+  expected_files_str = json_dumps(j_expected_files, 0);
+  lsredis_setstr(expected_files, expected_files_str);
+  free(expected_files_str);
+  json_decref(j_expected_files);
 
-  //
-  // Signal the detector to start reading out
-  //
-  lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
-  lsredis_sendStatusReport( 0, "Reading Segment %d", sindex);
+  lslogging_log_message("shutterless Data Collection Expecting %d data files for file %s/%s", n_data_files, lspg_nextshot.dsdir, lspg_nextshot.sfn);
 
-  //
-  // Return the axes definitions to their original state
-  //
-  md2cmds_setAxis( ceny,   lsredis_getc( ceny->axis),   1, lsredis_getl( ceny->coord_num));
-  md2cmds_setAxis( cenx,   lsredis_getc( cenx->axis),   1, lsredis_getl( cenx->coord_num));
-  md2cmds_setAxis( aligny, lsredis_getc( aligny->axis), 1, lsredis_getl( aligny->coord_num));
-
-  //
-  // reset shutter has opened flag
-  //
-  lspmac_SockSendDPline( NULL, "P3005=0");
+  lslogging_log_message("shutterless Data Collection Done");
 
   return 0;
 }
@@ -2136,22 +2492,22 @@ int md2cmds_segment( const char *dummy) {
  *  returns non-zero on error
  */
 int md2cmds_collect( const char *dummy) {
-  long long skey;	//!< shots table key of shot to be taken
-  int sindex;		//!< index of shot to be taken
-  int issnap;		//!< flag if this is a snap shot instead of a normal shot
+  long long skey;       //!< shots table key of shot to be taken
+  int sindex;           //!< index of shot to be taken
+  int issnap;           //!< flag if this is a snap shot instead of a normal shot
   double exp_time;      //!< Exposure time (saved to compute shutter timeout)
-  double p170;		//!< start cnts
-  double p171;		//!< delta cnts
-  double p173;		//!< omega velocity cnts/msec
+  double p170;          //!< start cnts
+  double p171;          //!< delta cnts
+  double p173;          //!< omega velocity cnts/msec
 
-  double p175;		//!< acceleration time (msec)
-  double p180;		//!< exposure time (msec)
-  double u2c;		//!< unit to counts conversion
-  double neutral_pos;	//!< nominal zero offset
-  double max_accel;	//!< maximum acceleration allowed for omega
-  double kappa_pos;	//!< current kappa position in case we need to move phi only
-  double phi_pos;	//!< current phi position in case we need to move kappa only
-  struct timespec now, timeout;	//!< setup timeouts for shutter
+  double p175;          //!< acceleration time (msec)
+  double p180;          //!< exposure time (msec)
+  double u2c;           //!< unit to counts conversion
+  double neutral_pos;   //!< nominal zero offset
+  double max_accel;     //!< maximum acceleration allowed for omega
+  double kappa_pos;     //!< current kappa position in case we need to move phi only
+  double phi_pos;       //!< current phi position in case we need to move kappa only
+  struct timespec now, timeout; //!< setup timeouts for shutter
   int err;
   double move_time;
   int mmask;
@@ -2224,44 +2580,44 @@ int md2cmds_collect( const char *dummy) {
       lsredis_set_preset( "align.z",     "Beam", lspg_nextshot.az);
 
       if(
-	 //
-	 // Don't move if we are within 0.1 microns of our destination
-	 //
-	 (fabs( lspg_nextshot.cx - cenx->position) > 0.0001) ||
-	 (fabs( lspg_nextshot.cy - ceny->position) > 0.0001) ||
-	 (fabs( lspg_nextshot.ax - alignx->position) > 0.0001) ||
-	 (fabs( lspg_nextshot.ay - aligny->position) > 0.0001) ||
-	 (fabs( lspg_nextshot.az - alignz->position) > 0.0001)) {
+         //
+         // Don't move if we are within 0.1 microns of our destination
+         //
+         (fabs( lspg_nextshot.cx - cenx->position) > 0.0001) ||
+         (fabs( lspg_nextshot.cy - ceny->position) > 0.0001) ||
+         (fabs( lspg_nextshot.ax - alignx->position) > 0.0001) ||
+         (fabs( lspg_nextshot.ay - aligny->position) > 0.0001) ||
+         (fabs( lspg_nextshot.az - alignz->position) > 0.0001)) {
 
 
-	lslogging_log_message( "md2cmds_collect: moving center to cx=%f, cy=%f, ax=%f, ay=%f, az=%f",lspg_nextshot.cx, lspg_nextshot.cy, lspg_nextshot.ax, lspg_nextshot.ay, lspg_nextshot.az);
+        lslogging_log_message( "md2cmds_collect: moving center to cx=%f, cy=%f, ax=%f, ay=%f, az=%f",lspg_nextshot.cx, lspg_nextshot.cy, lspg_nextshot.ax, lspg_nextshot.ay, lspg_nextshot.az);
 
-	err = lspmac_est_move_time( &move_time, &mmask,
-				    cenx,   0, NULL, lspg_nextshot.cx,
-				    ceny,   0, NULL, lspg_nextshot.cy,
-				    alignx, 0, NULL, lspg_nextshot.ax,
-				    aligny, 0, NULL, lspg_nextshot.ay,
-				    alignz, 0, NULL, lspg_nextshot.az,
-				    NULL);
-	if( err) {
-	  lsevents_send_event( "Data Collection Aborted");
-	  lsredis_sendStatusReport( 1, "Failed to start moving to next sample position.");
-	  lspg_nextshot_done();
-	  lsredis_setstr( collection_running, "False");
-	  lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
-	  return 1;
-	}
+        err = lspmac_est_move_time( &move_time, &mmask,
+                                    cenx,   0, NULL, lspg_nextshot.cx,
+                                    ceny,   0, NULL, lspg_nextshot.cy,
+                                    alignx, 0, NULL, lspg_nextshot.ax,
+                                    aligny, 0, NULL, lspg_nextshot.ay,
+                                    alignz, 0, NULL, lspg_nextshot.az,
+                                    NULL);
+        if( err) {
+          lsevents_send_event( "Data Collection Aborted");
+          lsredis_sendStatusReport( 1, "Failed to start moving to next sample position.");
+          lspg_nextshot_done();
+          lsredis_setstr( collection_running, "False");
+          lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+          return 1;
+        }
 
-	err = lspmac_est_move_time_wait( move_time+10, mmask, NULL);
-	if( err) {
-	  lsredis_sendStatusReport( 1, "Moving to next sample position failed.");
-	  lsevents_send_event( "Data Collection Aborted");
-	  //	  lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");   // Should we even have the diffractometer lock at this point?
-	  lspg_nextshot_done();
-	  lsredis_setstr( collection_running, "False");
-	  lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
-	  return 1;
-	}
+        err = lspmac_est_move_time_wait( move_time+10, mmask, NULL);
+        if( err) {
+          lsredis_sendStatusReport( 1, "Moving to next sample position failed.");
+          lsevents_send_event( "Data Collection Aborted");
+          //      lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");   // Should we even have the diffractometer lock at this point?
+          lspg_nextshot_done();
+          lsredis_setstr( collection_running, "False");
+          lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+          return 1;
+        }
       }
     }
 
@@ -2276,29 +2632,29 @@ int md2cmds_collect( const char *dummy) {
       lslogging_log_message( "md2cmds_collect: move phy/kappa: kappa=%f  phi=%f", kappa_pos, phi_pos);
 
       err = lspmac_est_move_time( &move_time, &mmask,
-				  kappa, 0, NULL, kappa_pos,
-				  phi,   0, NULL, phi_pos,
-				  NULL);
+                                  kappa, 0, NULL, kappa_pos,
+                                  phi,   0, NULL, phi_pos,
+                                  NULL);
       if( err) {
-	lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
-	lsevents_send_event( "Data Collection Aborted");
-	lsredis_sendStatusReport( 1, "Moving Kappa failed");
-	lspg_nextshot_done();
-	lsredis_setstr( collection_running, "False");
-	lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
-	return 1;
-      }	
+        lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
+        lsevents_send_event( "Data Collection Aborted");
+        lsredis_sendStatusReport( 1, "Moving Kappa failed");
+        lspg_nextshot_done();
+        lsredis_setstr( collection_running, "False");
+        lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+        return 1;
+      } 
 
       err = lspmac_est_move_time_wait( move_time + 10, mmask, NULL);
       if( err) {
-	lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
-	lsevents_send_event( "Data Collection Aborted");
-	lsredis_sendStatusReport( 1, "Moving Kappa timed out");
-	lspg_nextshot_done();
-	lsredis_setstr( collection_running, "False");
-	lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
-	return 1;
-      }	
+        lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
+        lsevents_send_event( "Data Collection Aborted");
+        lsredis_sendStatusReport( 1, "Moving Kappa timed out");
+        lspg_nextshot_done();
+        lsredis_setstr( collection_running, "False");
+        lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+        return 1;
+      } 
     }
 
   
@@ -2323,14 +2679,14 @@ int md2cmds_collect( const char *dummy) {
     // have checked that all is OK with the detector
     //
     if( lspg_seq_run_prep_all( skey,
-			       kappa->position,
-			       phi->position,
-			       cenx->position,
-			       ceny->position,
-			       alignx->position,
-			       aligny->position,
-			       alignz->position
-			       )) {
+                               kappa->position,
+                               phi->position,
+                               cenx->position,
+                               ceny->position,
+                               alignx->position,
+                               aligny->position,
+                               alignz->position
+                               )) {
       lslogging_log_message( "md2cmds_collect: seq run prep query error, aborting");
       lsredis_sendStatusReport( 1, "Preparing MD2 failed");
       lsevents_send_event( "Data Collection Aborted");
@@ -2353,18 +2709,18 @@ int md2cmds_collect( const char *dummy) {
     if( md2cmds_shutter_open_flag) {
       fshut->moveAbs( fshut, 0);
       while( err == 0 && md2cmds_shutter_open_flag)
-	err = pthread_cond_timedwait( &md2cmds_shutter_cond, &md2cmds_shutter_mutex, &timeout);
+        err = pthread_cond_timedwait( &md2cmds_shutter_cond, &md2cmds_shutter_mutex, &timeout);
 
       if( err == ETIMEDOUT) {
-	pthread_mutex_unlock( &md2cmds_shutter_mutex);
-	lsredis_sendStatusReport( 1, "Timed out waiting for shutter closed confirmation.");
-	lslogging_log_message( "md2cmds_collect: Timed out waiting for shutter to be confirmed closed.  Data collection aborted.");
-	lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
-	lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
-	lsevents_send_event( "Data Collection Aborted");
-	lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
-	lsredis_setstr( collection_running, "False");
-	return 1;
+        pthread_mutex_unlock( &md2cmds_shutter_mutex);
+        lsredis_sendStatusReport( 1, "Timed out waiting for shutter closed confirmation.");
+        lslogging_log_message( "md2cmds_collect: Timed out waiting for shutter to be confirmed closed.  Data collection aborted.");
+        lspg_query_push( NULL, NULL, "SELECT px.shots_set_state(%lld, 'Error')", skey);
+        lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");
+        lsevents_send_event( "Data Collection Aborted");
+        lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);
+        lsredis_setstr( collection_running, "False");
+        return 1;
       }
     }
     pthread_mutex_unlock( &md2cmds_shutter_mutex);
@@ -2382,8 +2738,8 @@ int md2cmds_collect( const char *dummy) {
     lsredis_sendStatusReport( 0, "Exposing %s %d", issnap ? "Snap" : "Frame", sindex);
     lspmac_set_motion_flags( &mmask, omega, NULL);
     lspmac_SockSendDPline( "Exposure",
-			   "&1 P170=%.1f P171=%.1f P173=%.1f P174=0 P175=%.1f P176=0 P177=1 P178=0 P180=%.1f M431=1 &1B131R",
-			   p170,         p171,     p173,            p175,                          p180);
+                           "&1 P170=%.1f P171=%.1f P173=%.1f P174=0 P175=%.1f P176=0 P177=1 P178=0 P180=%.1f M431=1 &1B131R",
+                           p170,         p171,     p173,            p175,                          p180);
 
     //
     // We could look for the "Exposure command accepted" event at this point.
@@ -2420,7 +2776,7 @@ int md2cmds_collect( const char *dummy) {
     //
     clock_gettime( CLOCK_REALTIME, &now);
     lslogging_log_message( "md2cmds_collect: waiting %f seconds for the shutter to close", 4 + exp_time);
-    timeout.tv_sec  = now.tv_sec + 4 + ceil(exp_time);	// hopefully 4 seconds is long enough to never miss a legitimate shutter close and short enough to bail when something is really wrong
+    timeout.tv_sec  = now.tv_sec + 4 + ceil(exp_time);  // hopefully 4 seconds is long enough to never miss a legitimate shutter close and short enough to bail when something is really wrong
     timeout.tv_nsec = now.tv_nsec;
 
     err = 0;
@@ -2480,14 +2836,14 @@ int md2cmds_collect( const char *dummy) {
       
     if( !lspg_nextshot.active2_isnull && lspg_nextshot.active2) {
       if(
-	 (fabs( lspg_nextshot.cx2 - cenx->position) > 0.1) ||
-	 (fabs( lspg_nextshot.cy2 - ceny->position) > 0.1) ||
-	 (fabs( lspg_nextshot.ax2 - alignx->position) > 0.1) ||
-	 (fabs( lspg_nextshot.ay2 - aligny->position) > 0.1) ||
-	 (fabs( lspg_nextshot.az2 - alignz->position) > 0.1)) {
+         (fabs( lspg_nextshot.cx2 - cenx->position) > 0.1) ||
+         (fabs( lspg_nextshot.cy2 - ceny->position) > 0.1) ||
+         (fabs( lspg_nextshot.ax2 - alignx->position) > 0.1) ||
+         (fabs( lspg_nextshot.ay2 - aligny->position) > 0.1) ||
+         (fabs( lspg_nextshot.az2 - alignz->position) > 0.1)) {
 
-	md2cmds_move_prep();
-	md2cmds_mvcenter_move( lspg_nextshot.cx, lspg_nextshot.cy, lspg_nextshot.ax, lspg_nextshot.ay, lspg_nextshot.az);
+        md2cmds_move_prep();
+        md2cmds_mvcenter_move( lspg_nextshot.cx, lspg_nextshot.cy, lspg_nextshot.ax, lspg_nextshot.ay, lspg_nextshot.az);
       }
     }
   }
@@ -2558,7 +2914,7 @@ int md2cmds_rotate( const char *dummy) {
     zm = 1;
   } else {
     lslogging_log_message( "md2cmds_rotate: getcenter returned dcx %f, dcy %f, dax %f, day %f, daz %f, zoom %d",
-			   lspg_getcenter.dcx, lspg_getcenter.dcy, lspg_getcenter.dax, lspg_getcenter.day, lspg_getcenter.daz,lspg_getcenter.zoom);
+                           lspg_getcenter.dcx, lspg_getcenter.dcy, lspg_getcenter.dax, lspg_getcenter.day, lspg_getcenter.daz,lspg_getcenter.zoom);
 
     if( lspg_getcenter.zoom_isnull == 0) {
       zm = lspg_getcenter.zoom;
@@ -2580,7 +2936,7 @@ int md2cmds_rotate( const char *dummy) {
     if( lspg_getcenter.dax_isnull == 0) {
       err = lsredis_find_preset( "align.x", "Back_Vector", &bax);
       if( err == 0)
-	bax = 0.0;
+        bax = 0.0;
 
       ax  += lspg_getcenter.dax;
       lsredis_set_preset( "align.x", "Beam", ax);
@@ -2591,17 +2947,17 @@ int md2cmds_rotate( const char *dummy) {
     if( lspg_getcenter.day_isnull == 0) {
       err = lsredis_find_preset( "align.y", "Back_Vector", &bay);
       if( err == 0)
-	bay = 0.0;
+        bay = 0.0;
 
       ay  += lspg_getcenter.day;
       lsredis_set_preset( "align.y", "Beam", ay);
       lsredis_set_preset( "align.y", "Back", ay + bay);
     }
-			  
+                          
     if( lspg_getcenter.daz_isnull == 0) {
       err = lsredis_find_preset( "align.z", "Back_Vector", &baz);
       if( err == 0)
-	baz = 0.0;
+        baz = 0.0;
 
       az  += lspg_getcenter.daz;
       lsredis_set_preset( "align.z", "Beam", az);
@@ -2611,15 +2967,15 @@ int md2cmds_rotate( const char *dummy) {
   lspg_getcenter_done();
 
   if( lspmac_est_move_time( &move_time, &mmask,
-			    scint,  1,  "Cover", 0.0,
-			    capz,   1,  "Out",   0.0,
-			    cenx,   0,  NULL,    cx,
-			    ceny,   0,  NULL,    cy,
-			    alignx, 0,  NULL,    ax,
-			    aligny, 0,  NULL,    ay,
-			    alignz, 0,  NULL,    az,
-			    zoom,   1,  NULL,    zm,
-			    NULL)) {
+                            scint,  1,  "Cover", 0.0,
+                            capz,   1,  "Out",   0.0,
+                            cenx,   0,  NULL,    cx,
+                            ceny,   0,  NULL,    cy,
+                            alignx, 0,  NULL,    ax,
+                            aligny, 0,  NULL,    ay,
+                            alignz, 0,  NULL,    az,
+                            zoom,   1,  NULL,    zm,
+                            NULL)) {
     lslogging_log_message( "md2cmds_rotate: organ motion request failed");
     lsevents_send_event( "Rotate Aborted");
     return 1;
@@ -2627,10 +2983,10 @@ int md2cmds_rotate( const char *dummy) {
 
   move_time += 3;
   if( lspmac_est_move_time_wait( move_time, mmask,
-				 scint,
-				 capz,
-				 zoom,
-				 NULL)) {
+                                 scint,
+                                 capz,
+                                 zoom,
+                                 NULL)) {
     lslogging_log_message( "md2cmds_rotate: organ motion timed out %f seconds", move_time);
     lsevents_send_event( "Rotate Aborted");
     return 1;
@@ -2674,15 +3030,15 @@ void md2cmds_rotate_cb( char *event) {
   
   usecs = omega_zero_time.tv_nsec / 1000;
   lspg_query_push( NULL, NULL, "SELECT px.trigcam('%d-%d-%d %d:%d:%d.%06d', %d, 0.0, 90.0)",
-		   t.tm_year+1900, t.tm_mon+1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec, usecs,
-		   (int)(lspmac_getPosition( zoom)));
+                   t.tm_year+1900, t.tm_mon+1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec, usecs,
+                   (int)(lspmac_getPosition( zoom)));
 
   if( ozt == NULL)
     ozt = lsredis_get_obj( "omega.rotate.time");
 
   lsredis_setstr( ozt, "{\"timestamp\": \"%04d-%02d-%02dT%02d:%02d:%02d.%06dZ\", \"zoom\": %d, \"angle\": 0.0, \"velocity\": 90.0, \"hash\": \"%s\"}",
-		  t.tm_year+1900, t.tm_mon+1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec, usecs,
-		  (int)(lspmac_getPosition( zoom)), (lspg_getcenter.hash == NULL ? "unknown" : lspg_getcenter.hash));
+                  t.tm_year+1900, t.tm_mon+1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec, usecs,
+                  (int)(lspmac_getPosition( zoom)), (lspg_getcenter.hash == NULL ? "unknown" : lspg_getcenter.hash));
   
 }
 
@@ -2747,7 +3103,7 @@ int md2cmds_nonrotate( const char *dummy) {
     zm = 1;
   } else {
     lslogging_log_message( "md2cmds_nonrotate: getcenter returned dcx %f, dcy %f, dax %f, day %f, daz %f, zoom %d",
-			   lspg_getcenter.dcx, lspg_getcenter.dcy, lspg_getcenter.dax, lspg_getcenter.day, lspg_getcenter.daz,lspg_getcenter.zoom);
+                           lspg_getcenter.dcx, lspg_getcenter.dcy, lspg_getcenter.dax, lspg_getcenter.day, lspg_getcenter.daz,lspg_getcenter.zoom);
 
     if( lspg_getcenter.zoom_isnull == 0) {
       zm = lspg_getcenter.zoom;
@@ -2769,7 +3125,7 @@ int md2cmds_nonrotate( const char *dummy) {
     if( lspg_getcenter.dax_isnull == 0) {
       err = lsredis_find_preset( "align.x", "Back_Vector", &bax);
       if( err == 0)
-	bax = 0.0;
+        bax = 0.0;
 
       ax  += lspg_getcenter.dax;
       lsredis_set_preset( "align.x", "Beam", ax);
@@ -2781,17 +3137,17 @@ int md2cmds_nonrotate( const char *dummy) {
     if( lspg_getcenter.day_isnull == 0) {
       err = lsredis_find_preset( "align.y", "Back_Vector", &bay);
       if( err == 0)
-	bay = 0.0;
+        bay = 0.0;
 
       ay  += lspg_getcenter.day;
       lsredis_set_preset( "align.y", "Beam", ay);
       lsredis_set_preset( "align.y", "Back", ay + bay);
     }
-			  
+                          
     if( lspg_getcenter.daz_isnull == 0) {
       err = lsredis_find_preset( "align.z", "Back_Vector", &baz);
       if( err == 0)
-	baz = 0.0;
+        baz = 0.0;
 
       az  += lspg_getcenter.daz;
       lsredis_set_preset( "align.z", "Beam", az);
@@ -2801,15 +3157,15 @@ int md2cmds_nonrotate( const char *dummy) {
   lspg_getcenter_done();
 
   if( lspmac_est_move_time( &move_time, &mmask,
-			    scint,  1,  "Cover", 0.0,
-			    capz,   1,  "Out", 0.0,
-			    cenx,   0,  NULL,    cx,
-			    ceny,   0,  NULL,    cy,
-			    alignx, 0,  NULL,    ax,
-			    aligny, 0,  NULL,    ay,
-			    alignz, 0,  NULL,    az,
-			    zoom,   1,  NULL,    zm,
-			    NULL)) {
+                            scint,  1,  "Cover", 0.0,
+                            capz,   1,  "Out", 0.0,
+                            cenx,   0,  NULL,    cx,
+                            ceny,   0,  NULL,    cy,
+                            alignx, 0,  NULL,    ax,
+                            aligny, 0,  NULL,    ay,
+                            alignz, 0,  NULL,    az,
+                            zoom,   1,  NULL,    zm,
+                            NULL)) {
     lslogging_log_message( "md2cmds_nonrotate: organ motion request failed");
     lsevents_send_event( "Local Centering Aborted");
     return 1;
@@ -2817,10 +3173,10 @@ int md2cmds_nonrotate( const char *dummy) {
 
   move_time += 3;
   if( lspmac_est_move_time_wait( move_time, mmask,
-				 scint,
-				 capz,
-				 zoom,
-				 NULL)) {
+                                 scint,
+                                 capz,
+                                 zoom,
+                                 NULL)) {
     lslogging_log_message( "md2cmds_nonrotate: organ motion timed out %f seconds", move_time);
     lsevents_send_event( "Local Centering Aborted");
     return 1;
@@ -2892,7 +3248,7 @@ void md2cmds_set_scale_cb( char *event) {
 /** Time the capillary motion for the transfer routine
  */
 void md2cmds_time_capz_cb( char *event) {
-  static struct timespec capz_timestarted;	//!< track the time spent moving capz
+  static struct timespec capz_timestarted;      //!< track the time spent moving capz
   struct timespec now;
   int nsec, sec;
 
@@ -3109,8 +3465,8 @@ int md2cmds_settransferpoint( const char *cmd) {
  *
 */
 int md2cmds_setbackvector( const char *cmd) {
-  double ax, ay, az;	// current positions
-  double axb, ayb, azb;	// preset Beam positions
+  double ax, ay, az;    // current positions
+  double axb, ayb, azb; // preset Beam positions
   double dx, dy, dz;    // the vector components
 
   //
@@ -3149,7 +3505,7 @@ int md2cmds_setbackvector( const char *cmd) {
  *
 */
 int md2cmds_setsamplebeam( const char *cmd) {
-  double ax, ay, az, cx, cy;	// current positions
+  double ax, ay, az, cx, cy;    // current positions
   
   //
   // get the current position
@@ -3166,6 +3522,34 @@ int md2cmds_setsamplebeam( const char *cmd) {
   lsredis_set_preset( "centering.x", "Beam", cx);
   lsredis_set_preset( "centering.y", "Beam", cy);
 
+  return 0;
+}
+
+/** Set the beamstop limits that plcc 0 checks for the shutter enable
+ *  signal
+ */
+
+int md2cmds_setbeamstoplimits( const char *cmd) {
+  double u2c;
+  double position;
+  int upper_limit;
+  int lower_limit;
+
+  u2c      = lsredis_getd( capz->u2c);
+  position = lspmac_getPosition( capz);
+  
+  upper_limit = (position + 0.1) * u2c;
+  lower_limit = (position - 0.1) * u2c;
+
+  lsredis_setstr( lsredis_get_obj("fastShutter.capzLowCts"),  "%d", lower_limit);
+  lsredis_setstr( lsredis_get_obj("fastShutter.capzHighCts"), "%d", upper_limit);
+
+  lspmac_SockSendDPline( NULL, "P6000=%d P6001=%d", lower_limit, upper_limit);
+  //
+  lspmac_SockSendDPline( NULL, "i5=0");
+  lspmac_SockSendDPline( NULL, "save");
+  lspmac_SockSendDPline( NULL, "i5=3");
+  //
   return 0;
 }
 
@@ -3242,8 +3626,8 @@ int md2cmds_set( const char *cmd) {
 /** Our worker thread
  */
 void *md2cmds_worker(
-		     void *dummy		/**> [in] Unused but required by protocol		*/
-		     ) {
+                     void *dummy                /**> [in] Unused but required by protocol               */
+                     ) {
 
   ENTRY hsearcher, *hrtnval;
   char theCmd[32], *sp;
@@ -3265,8 +3649,8 @@ void *md2cmds_worker(
     //
     for( i=0, sp=md2cmds_cmd; i<sizeof( theCmd)-1; i++, sp++) {
       if( *sp == 0 || *sp == ' ') {
-	theCmd[i] = 0;
-	break;
+        theCmd[i] = 0;
+        break;
       }
       theCmd[i] = *sp;
     }
@@ -3287,10 +3671,10 @@ void *md2cmds_worker(
       cmdp = (md2cmds_cmd_kv_t *)hrtnval;
       err = cmdp->v( md2cmds_cmd);
       if( err) {
-	lslogging_log_message( "md2cmds_worker: Command failed: '%s'", md2cmds_cmd);
-	//
-	// At this point we'd clear the queue but the queue is currently too short to bother doing that
-	//
+        lslogging_log_message( "md2cmds_worker: Command failed: '%s'", md2cmds_cmd);
+        //
+        // At this point we'd clear the queue but the queue is currently too short to bother doing that
+        //
       }
     }
 
@@ -3349,14 +3733,14 @@ void md2cmds_ca_last_cb( char *event) {
     motor_name[0] = 0;
     for( i=0; i<sizeof(motor_name)-1; i++) {
       if( event[i] == ' ')
-	break;
+        break;
       motor_name[i] = event[i];
       motor_name[i+1] = 0;
     }
     if( i < sizeof(motor_name)) {
       mp = lspmac_find_motor_by_name( motor_name);
       if( mp != NULL ) {
-	lsredis_set_preset( motor_name, "Beam", lspmac_getPosition( mp));
+        lsredis_set_preset( motor_name, "Beam", lspmac_getPosition( mp));
       }
     }
   }
@@ -3471,7 +3855,7 @@ void md2cmds_init() {
       hloader.data = md2cmds_cmd_pg_kvs[i].v;
       err = hsearch_r( hloader, ENTER, &hrtnval, &md2cmds_hmap);
       if( err == 0) {
-	lslogging_log_message( "md2cmds_init: hsearch_r returned an error for item %d: %s", i, strerror( errno));
+        lslogging_log_message( "md2cmds_init: hsearch_r returned an error for item %d: %s", i, strerror( errno));
       }
     }
   }
@@ -3512,7 +3896,7 @@ pthread_t *md2cmds_run() {
   lsevents_add_listener( "^Coordsys 4 Stopped$",        md2cmds_coordsys_4_stopped_cb);
   lsevents_add_listener( "^Coordsys 5 Stopped$",        md2cmds_coordsys_5_stopped_cb);
   lsevents_add_listener( "^Coordsys 7 Stopped$",        md2cmds_coordsys_7_stopped_cb);
-  lsevents_add_listener( "^cam.zoom Moving$",	        md2cmds_set_scale_cb);
+  lsevents_add_listener( "^cam.zoom Moving$",           md2cmds_set_scale_cb);
   lsevents_add_listener( "^LSPMAC Done Initializing$",  md2cmds_lspmac_ready_cb);
   lsevents_add_listener( "^Abort Requested$",           md2cmds_lspmac_abort_cb);
   lsevents_add_listener( "^Quitting Program$",          md2cmds_quitting_cb);
