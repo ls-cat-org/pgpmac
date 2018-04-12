@@ -873,7 +873,6 @@ int md2cmds_moveAbs(
       // now.  Hence, no error check for NULL mp here.
       //
       
-
       rp = lsredis_getd( mp->redis_position);
       lsredis_set_preset( motor_name, preset_name, rp);
       lslogging_log_message("%s: set preset %s for motor %s to position %f", id, preset_name, motor_name, rp);
