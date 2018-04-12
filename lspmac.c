@@ -4614,15 +4614,17 @@ void lspmac_fscint_lut_setup() {
 }
 
 lspmac_motor_t *lspmac_find_motor_by_name( char *name) {
+  static const char *id = FILEID "lspmac_find_motor_by_name";
   lspmac_motor_t *rtn;
   ENTRY entry_in, *entry_outp;
   int err;
+
+  (void)id;
 
   entry_in.key  = name;
   entry_in.data = NULL;
   err = hsearch_r( entry_in, FIND, &entry_outp, &motors_ht);
   if( err == 0) {
-    lslogging_log_message( "lspmac_find_motor_by_name: hsearch_r failed for motor '%s': %s", name, strerror( errno));
     return NULL;
   }
   rtn = entry_outp->data;
