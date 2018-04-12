@@ -3545,11 +3545,7 @@ int md2cmds_setbeamstoplimits( const char *cmd) {
   lsredis_setstr( lsredis_get_obj("fastShutter.capzHighCts"), "%d", upper_limit);
 
   lspmac_SockSendDPline( NULL, "P6000=%d P6001=%d", lower_limit, upper_limit);
-  //
-  lspmac_SockSendDPline( NULL, "i5=0");
-  lspmac_SockSendDPline( NULL, "save");
-  lspmac_SockSendDPline( NULL, "i5=3");
-  //
+
   return 0;
 }
 
