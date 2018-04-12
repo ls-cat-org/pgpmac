@@ -748,6 +748,9 @@ int main(
   ourThreads[nOurThreads++] = lsredis_run();
   lsredis_config();
 
+  detector_state_init();
+  ourThreads[nOurThreads++] = detector_state_run();
+
   //
   // These need to be all initialized before any are run
   //
