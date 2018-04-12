@@ -1,7 +1,7 @@
-VERSION= 1.1
+VERSION= 1.2
 # 
 # Makefile for pgpmac project
-# (C) 2012 - 2016 by Northwesern University
+# (C) 2012 - 2018 by Northwesern University
 # Author: Keith Brister
 # All Rights Reserved
 #
@@ -13,12 +13,12 @@ VERSION= 1.1
 #
 PG_INCLUDE = -I /usr/include/postgresql
 
-pgpmac: pgpmac.c pgpmac.h lspg.o lsredis.o lspmac.o md2cmds.o lslogging.o lsevents.o lstimer.o lstest.o lsraster.o Makefile
-	gcc -g -pthread -o pgpmac pgpmac.c  ${PG_INCLUDE} -Wall md2cmds.o lspmac.o lspg.o lsredis.o lslogging.o lsevents.o lstimer.o lstest.o lsraster.o -lpq -lncurses -lpthread -lrt -lhiredis -lm
+pgpmac: pgpmac.c pgpmac.h lspg.o lsredis.o lspmac.o md2cmds.o lslogging.o lsevents.o lstimer.o lstest.o lsdetectorstate.o lsraster.o Makefile
+	gcc -g -pthread -o pgpmac pgpmac.c  ${PG_INCLUDE} -Wall md2cmds.o lspmac.o lspg.o lsredis.o lslogging.o lsevents.o lstimer.o lsdetectorstate.o lstest.o lsraster.o -lpq -lncurses -lpthread -lrt -lhiredis -lm -ljansson
 
 dist:
 	ln -fs . ls-cat-pgpmac-$(VERSION)
-	tar czvf ls-cat-pgpmac-$(VERSION).tar.gz ls-cat-pgpmac-$(VERSION)/*.c ls-cat-pgpmac-$(VERSION)/*.h ls-cat-pgpmac-$(VERSION)/pmac_md2.sql ls-cat-pgpmac-$(VERSION)/Makefile ls-cat-pgpmac-$(VERSION)/pmac_md2_ls-cat.pmc
+	tar czvf ls-cat-pgpmac-$(VERSION).tar.gz ls-cat-pgpmac-$(VERSION)/*.c ls-cat-pgpmac-$(VERSION)/*.h ls-cat-pgpmac-$(VERSION)/pmac_md2.sql ls-cat-pgpmac-$(VERSION)/Makefile ls-cat-pgpmac-$(VERSION)/21-ID-*/*.pmc
 	rm -f ls-cat-pgpmac-$(VERSION)
 
 install: pgpmac
@@ -29,6 +29,7 @@ install: pgpmac
 
 clean:
 	-@rm *.o pgpmac 2>/dev/null
+	-@rm ls-cat-pgpmac-*.gz
 
 docs:   *.c *.h Makefile
 	/usr/bin/doxygen
@@ -39,6 +40,9 @@ lsraster.o: lsraster.c pgpmac.h Makefile
 
 lstimer.o: lstimer.c pgpmac.h Makefile
 	gcc -g -pthread -c lstimer.c ${PG_INCLUDE} -Wall
+
+lsdetectorstate.o: lsdetectorstate.c pgpmac.h Makefile
+	gcc -g -pthread -c lsdetectorstate.c ${PG_INCLUDE} -Wall
 
 lsevents.o: lsevents.c pgpmac.h Makefile
 	gcc -g -pthread -c lsevents.c ${PG_INCLUDE} -Wall

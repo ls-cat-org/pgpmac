@@ -813,9 +813,11 @@ void lspg_nextshot_cb(
   static int got_col_nums=0;
   static int
     dsdir_c, dspid_c, dsowidth_c, dsoscaxis_c, dsexp_c, skey_c, sstart_c, sfn_c, dsphi_c,
-    dsomega_c, dskappa_c, dsdist_c, dsnrg_c, dshpid_c, cx_c, cy_c, ax_c, ay_c, az_c,
+    dsomega_c, dskappa_c, dsfrate_c, dssrate_c, dsrange_c,
+    dsdist_c, dsnrg_c, dshpid_c, cx_c, cy_c, ax_c, ay_c, az_c,
     active_c, sindex_c, stype_c,
-    dsowidth2_c, dsoscaxis2_c, dsexp2_c, sstart2_c, dsphi2_c, dsomega2_c, dskappa2_c, dsdist2_c, dsnrg2_c,
+    dsowidth2_c, dsoscaxis2_c, dsexp2_c, sstart2_c, dsphi2_c,
+    dsomega2_c, dskappa2_c, dsfrate2_c, dssrate2_c, dsrange2_c, dsdist2_c, dsnrg2_c,
     cx2_c, cy2_c, ax2_c, ay2_c, az2_c, active2_c, sindex2_c, stype2_c;
   
   pthread_mutex_lock( &(lspg_nextshot.mutex));
@@ -840,6 +842,9 @@ void lspg_nextshot_cb(
     dsphi_c      = PQfnumber( pgr, "dsphi");
     dsomega_c    = PQfnumber( pgr, "dsomega");
     dskappa_c    = PQfnumber( pgr, "dskappa");
+    dsfrate_c    = PQfnumber( pgr, "dsfrate");
+    dssrate_c    = PQfnumber( pgr, "dssrate");
+    dsrange_c    = PQfnumber( pgr, "dsrange");
     dsdist_c     = PQfnumber( pgr, "dsdist");
     dsnrg_c      = PQfnumber( pgr, "dsnrg");
     dshpid_c     = PQfnumber( pgr, "dshpid");
@@ -858,6 +863,9 @@ void lspg_nextshot_cb(
     dsphi2_c     = PQfnumber( pgr, "dsphi2");
     dsomega2_c   = PQfnumber( pgr, "dsomega2");
     dskappa2_c   = PQfnumber( pgr, "dskappa2");
+    dsfrate2_c   = PQfnumber( pgr, "dsfrate2");
+    dssrate2_c   = PQfnumber( pgr, "dssrate2");
+    dsrange2_c   = PQfnumber( pgr, "dsrange2");
     dsdist2_c    = PQfnumber( pgr, "dsdist2");
     dsnrg2_c     = PQfnumber( pgr, "dsnrg2");
     cx2_c        = PQfnumber( pgr, "cx2");
@@ -940,6 +948,18 @@ void lspg_nextshot_cb(
   if( lspg_nextshot.dskappa_isnull == 0)
     lspg_nextshot.dskappa  = atof( PQgetvalue( pgr,0, dskappa_c));
 
+  lspg_nextshot.dsfrate_isnull = PQgetisnull( pgr, 0, dsfrate_c);
+  if( lspg_nextshot.dsfrate_isnull == 0)
+    lspg_nextshot.dsfrate = atof( PQgetvalue( pgr, 0, dsfrate_c));
+
+  lspg_nextshot.dssrate_isnull = PQgetisnull( pgr, 0, dssrate_c);
+  if( lspg_nextshot.dssrate_isnull == 0)
+    lspg_nextshot.dssrate = atof( PQgetvalue( pgr, 0, dssrate_c));
+
+  lspg_nextshot.dsrange_isnull = PQgetisnull( pgr, 0, dsrange_c);
+  if( lspg_nextshot.dsrange_isnull == 0)
+    lspg_nextshot.dsrange = atof( PQgetvalue( pgr, 0, dsrange_c));
+
   lspg_nextshot.dsdist_isnull = PQgetisnull( pgr, 0, dsdist_c);
   if( lspg_nextshot.dsdist_isnull == 0)
     lspg_nextshot.dsdist   = atof( PQgetvalue( pgr,0, dsdist_c));
@@ -1007,6 +1027,18 @@ void lspg_nextshot_cb(
   lspg_nextshot.dskappa2_isnull = PQgetisnull( pgr, 0, dskappa2_c);
   if( lspg_nextshot.dskappa2_isnull == 0)
     lspg_nextshot.dskappa2  = atof( PQgetvalue( pgr,0, dskappa2_c));
+
+  lspg_nextshot.dsfrate2_isnull = PQgetisnull( pgr, 0, dsfrate2_c);
+  if( lspg_nextshot.dsfrate2_isnull == 0)
+    lspg_nextshot.dsfrate2 = atof( PQgetvalue( pgr, 0, dsfrate2_c));
+
+  lspg_nextshot.dssrate2_isnull = PQgetisnull( pgr, 0, dssrate2_c);
+  if( lspg_nextshot.dssrate2_isnull == 0)
+    lspg_nextshot.dssrate2 = atof( PQgetvalue( pgr, 0, dssrate2_c));
+
+  lspg_nextshot.dsrange2_isnull = PQgetisnull( pgr, 0, dsrange2_c);
+  if( lspg_nextshot.dsrange2_isnull == 0)
+    lspg_nextshot.dsrange2 = atof( PQgetvalue( pgr, 0, dsrange2_c));
 
   lspg_nextshot.dsdist2_isnull = PQgetisnull( pgr, 0, dsdist2_c);
   if( lspg_nextshot.dsdist2_isnull == 0)
@@ -1498,6 +1530,109 @@ int lspg_seq_run_prep_all(
   lspg_seq_run_prep_wait();
   rtn = lspg_seq_run_prep.query_error;
   lspg_seq_run_prep_done();
+  return rtn;
+}
+
+/** Data collection running object
+ */
+typedef struct lspg_eiger_run_prep_struct {
+  pthread_mutex_t mutex;
+  pthread_cond_t  cond;
+  int new_value_ready;
+  int query_error;
+} lspg_eiger_run_prep_t;
+static lspg_eiger_run_prep_t lspg_eiger_run_prep;
+
+/** Initialize the data collection object
+ */
+void lspg_eiger_run_prep_init() {
+  lspg_eiger_run_prep.new_value_ready = 0;
+  lspg_eiger_run_prep.query_error     = 0;
+  pthread_mutex_init( &(lspg_eiger_run_prep.mutex), NULL);
+  pthread_cond_init(  &(lspg_eiger_run_prep.cond),  NULL);
+}
+
+/** Callback for the eiger_run_prep query
+ */
+void lspg_eiger_run_prep_cb(
+			  lspg_query_queue_t *qqp,	/**< [in] The query item that generated this callback	*/
+			  PGresult *pgr			/**< [in] The result of the query			*/
+			  ) {
+  pthread_mutex_lock( &(lspg_eiger_run_prep.mutex));
+  lspg_eiger_run_prep.new_value_ready = 1;
+  pthread_cond_signal( &(lspg_eiger_run_prep.cond));
+  pthread_mutex_unlock( &(lspg_eiger_run_prep.mutex));
+}
+
+
+/** Callback for eiger_run error
+ */
+void lspg_eiger_run_prep_error_cb() {
+  pthread_mutex_lock( & (lspg_eiger_run_prep.mutex));
+  lspg_eiger_run_prep.query_error = 1;
+  pthread_cond_signal( &(lspg_eiger_run_prep.cond));
+  pthread_mutex_unlock( &(lspg_eiger_run_prep.mutex));
+}
+
+
+/** queue up the eiger_run_prep query
+ */
+void lspg_eiger_run_prep_call(
+			    long long skey,		/**< [in] px.shots key for this image			*/
+			    double kappa,		/**< [in] current kappa postion				*/
+			    double phi,			/**< [in] current phi postition				*/
+			    double cx,			/**< [in] current center table x			*/
+			    double cy,			/**< [in] current center table y			*/
+			    double ax,			/**< [in] current alignment table x			*/
+			    double ay,			/**< [in] current alignment table y			*/
+			    double az			/**< [in] current alignment table z			*/
+			    ) {
+  pthread_mutex_lock( &(lspg_eiger_run_prep.mutex));
+  lspg_eiger_run_prep.new_value_ready = 0;
+  lspg_eiger_run_prep.query_error     = 0;
+  pthread_mutex_unlock( &(lspg_eiger_run_prep.mutex));
+
+  lspg_query_push( lspg_eiger_run_prep_cb, lspg_eiger_run_prep_error_cb, 
+		   "SELECT eiger.seq_run_prep( %lld, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f, %.3f)",
+		   skey, kappa, phi, cx, cy, ax, ay, az);
+}
+
+/** Wait for seq run prep query to return
+ */
+void lspg_eiger_run_prep_wait() {
+  pthread_mutex_lock( &(lspg_eiger_run_prep.mutex));
+  while( lspg_eiger_run_prep.new_value_ready == 0 && lspg_eiger_run_prep.query_error == 0)
+    pthread_cond_wait( &(lspg_eiger_run_prep.cond), &(lspg_eiger_run_prep.mutex));
+}
+
+/** Indicate we are done waiting
+ */
+void lspg_eiger_run_prep_done() {
+  pthread_mutex_unlock( &(lspg_eiger_run_prep.mutex));
+}
+
+/** Convinence function to call seq run prep
+ */
+int lspg_eiger_run_prep_all(
+			    long long skey,		/**< [in] px.shots key for this image			*/
+			    double kappa,		/**< [in] current kappa postion				*/
+			    double phi,			/**< [in] current phi postition				*/
+			    double cx,			/**< [in] current center table x			*/
+			    double cy,			/**< [in] current center table y			*/
+			    double ax,			/**< [in] current alignment table x			*/
+			    double ay,			/**< [in] current alignment table y			*/
+			    double az			/**< [in] current alignment table z			*/
+			   ) {
+  int rtn;
+  lslogging_log_message( "lspg_eiger_run_prep: starting call");
+  lslogging_log_message( "lspg_eiger_run_prep: 2");
+  lspg_eiger_run_prep_call( skey, kappa, phi, cx, cy, ax, ay, az);
+  lslogging_log_message( "lspg_eiger_run_prep: starting wait");
+  lspg_eiger_run_prep_wait();
+  lslogging_log_message( "lspg_eiger_run_prep: starting done");
+  rtn = lspg_eiger_run_prep.query_error;
+  lspg_eiger_run_prep_done();
+  lslogging_log_message( "lspg_eiger_run_prep: finished");
   return rtn;
 }
 
@@ -2345,6 +2480,7 @@ void lspg_init() {
   lspg_nextsample_init();
   lspg_nextshot_init();
   lspg_seq_run_prep_init();
+  lspg_eiger_run_prep_init();
   lspg_starttransfer_init();
   lspg_wait_for_detector_init();
   lspg_waitcryo_init();
