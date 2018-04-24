@@ -80,16 +80,16 @@ void *lsraster_worker(void *dummy) {
     do {
       reply = redisCommand(lsraster_redisContext, "RPOPLPUSH %s %s_working", lsraster_current_key, lsraster_current_key);
       if (!reply) {
-	lslogging_log_message("%s: RPOPLPUSH failed for key %s", id, lsraster_current_key);
-	break;
+        lslogging_log_message("%s: RPOPLPUSH failed for key %s", id, lsraster_current_key);
+        break;
       }
       if (reply->type == REDIS_REPLY_ERROR) {
-	lslogging_log_message("%s: RPOPLPUSH failed for key %s: %s", id, lsraster_current_key, reply->str);
-	break;
+        lslogging_log_message("%s: RPOPLPUSH failed for key %s: %s", id, lsraster_current_key, reply->str);
+        break;
       }
 
       if (reply->type == REDIS_REPLY_NIL) {
-	break;
+        break;
       }
 
       lslogging_log_message("%s: params: %s", id, reply->str);
@@ -98,12 +98,12 @@ void *lsraster_worker(void *dummy) {
 
       reply2 = redisCommand(lsraster_redisContext, "LREM %s_working 0 %s", lsraster_current_key, reply->str);
       if (!reply2) {
-	lslogging_log_message("%s: LREM failed for key %s", id, lsraster_current_key);
-	break;
+        lslogging_log_message("%s: LREM failed for key %s", id, lsraster_current_key);
+        break;
       }      
       if (reply2->type == REDIS_REPLY_ERROR) {
-	lslogging_log_message("%s: LREM failed for key %s: %s", id, lsraster_current_key, reply2->str);
-	break;
+        lslogging_log_message("%s: LREM failed for key %s: %s", id, lsraster_current_key, reply2->str);
+        break;
       }
       
     } while(0);
