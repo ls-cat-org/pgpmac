@@ -1680,6 +1680,8 @@ int md2cmds_goto_point( const char *ccmd) {
     return err;
   }
 
+  md2cmds_setsamplebeam( "dummy argument");
+
   lsevents_send_event( "gotoPoint Done");
 
   //  md2cmds_mvcenter_move( cx, cy, ax, ay, az);
