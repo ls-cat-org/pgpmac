@@ -243,6 +243,8 @@ pthread_mutex_t doomsday_mutex;		//!< avoid thread collision while resetting the
 
 int pgpmac_use_pg = 0;			//!< non-zero to start up lspg thread, 0 to not (reids hash PG in config.HOSTNAME sets this)
 int pgpmac_use_autoscint = 0;		//!< non-zero to automatically move the alignment stage when the scintillator moves (redis hash AUTOSCINT in config.HOSTNAME sets this)
+int pgmac_use_detector_state_machine = 0; //!< non-zero to use the detector.state_machine redis key instead of postgresql locks to control the detector
+int pgpmac_monitor_detector_position = 0; //!< check the position of the detector to enable shutter when detector is not in the beam path (needed for 21-ID-D and E)
 
 //
 // globals
