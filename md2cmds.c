@@ -3940,6 +3940,10 @@ pthread_t *md2cmds_run() {
   lsevents_add_listener( "^Shutter Not Open$",          md2cmds_shutter_not_open_cb);
   lsredis_sendStatusReport( 0, "MD2 Started");
 
+  if (pgmac_monitor_detector_position) {
+    lsevents_add_listener( "^Check Detector Position$",   md2cmds_detector_position_cb);
+    lstimer_set_timer( "Check Detector Position", -1, 2, 0);
+  }
 
   return &md2cmds_thread;
 }
