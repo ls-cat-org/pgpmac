@@ -454,6 +454,9 @@ extern int detector_state_expired;
 extern int pgpmac_use_pg;
 extern int pgpmac_use_autoscint;
 
+extern int pgmac_use_detector_state_machine;
+extern int pgpmac_monitor_detector_position;
+
 extern lspg_nextshot_t lspg_nextshot;
 
 extern lspmac_motor_t lspmac_motors[];
