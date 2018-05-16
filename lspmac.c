@@ -3925,6 +3925,8 @@ lspmac_motor_t *lspmac_dac_init(
   return d;
 }
 
+
+
 /** Dummy routine to read a soft motor
  */
 void lspmac_soft_motor_read( lspmac_motor_t *p) {
@@ -4166,8 +4168,11 @@ void lspmac_init(
   lspmac_saved_analPosition = lsredis_getd(anal->redis_position);
   lslogging_log_message( "Saved lightPolar last position: %f", lspmac_saved_analPosition);
 
-  lspmac_SockSendDPline( NULL, "ENABLE PLC 1");         // PLC 1 is our initialization plc that activates whichever other PLCs and PLCCs are needed
-  lspmac_SockSendDPline( NULL, "I5=3");                 // allow the enabled plcc's to run
+  lspmac_saved_analPosition = lsredis_getd(anal->redis_position);
+  lslogging_log_message( "Saved lightPolar last position: %f", lspmac_saved_analPosition);
+
+  lspmac_SockSendDPline( NULL, "ENABLE PLC 1");		// PLC 1 is our initialization plc that activates whichever other PLCs and PLCCs are needed
+  lspmac_SockSendDPline( NULL, "I5=3");			// allow the enabled plcc's to run
 }
 
 void lspmac_cryoSwitchChanged_cb( char *event) {

@@ -1,8 +1,8 @@
 /*! \file md2cmds.c
  *  \brief Implements commands to run the md2 diffractometer attached to a PMAC controled by postgresql
- *  \date 2012
+ *  \date 2012 - 2016
  *  \author Keith Brister
- *  \copyright All Rights Reserved
+ *  \copyright Northwestern University All Rights Reserved
  */
 #include "pgpmac.h"
 
@@ -30,7 +30,13 @@ All positions are in millimeters or degrees.
 
  collect                                     Start collecting data
 
+<<<<<<< variant A
  homestages                                  Home centering stages and alignment stages
+>>>>>>> variant B
+ homestages				    Home centering stages and alignment stages
+
+ moveAbs  <motor> <position_or_presetName>  Move the given motor to the said position.  Common preset names are "In", "Out", "Cover".
+======= end
 
  moveAbs  <motor> <position_or_presetName>   Move the given motor to the said position.  Common preset names are "In", "Out", "Cover".
 
@@ -40,7 +46,7 @@ All positions are in millimeters or degrees.
 
  raster <key>                                Trigger raster scan for key
 
- rotate                                      Used for remote centering where we do want to make a movie
+ shutterless                                    Like collect but only used for line segment mode with the Eiger
 
  run <motor> <command>                       Run a special command on <motor> where <command> is one of "home", "spin", "stop"
 
@@ -48,7 +54,9 @@ All positions are in millimeters or degrees.
 
  set <motor1> [<motor2>...<motorN>] <preset> Set all named motors current position as <preset>.  <preset> will be created if it does not currently exist.
 
- settransferpoint                            Set the current motor positions at the alignment point for robot transfers.
+ setbeamstoplimits		            Set P6000 and P6001 for the pmac plcc0 check of the beamstop position.  Sets current position +/- 100 microns
+
+ setsamplebeam                              Set the current alignment and centering positions as the the Beam preset for the respective stages
 
  setbackvector                               Set the current alignment stage position as the Back preset and the difference between Back and Beam as Back_Vector
 
@@ -1026,6 +1034,7 @@ int md2cmds_preSet(
   }
   return err;
 }
+
 
 /** Move a motor to the position requested
  *  Returns non zero on error
@@ -3412,6 +3421,7 @@ int md2cmds_run_cmd( const char *cmd) {
 }
 
 int md2cmds_settransferpoint( const char *cmd) {
+  static const char *id = "md2cmds_settransferpoint";
   double ax, ay, az, cx, cy;
 
   md2cmds_home_prep();
@@ -3427,7 +3437,7 @@ int md2cmds_settransferpoint( const char *cmd) {
   lspmac_home1_queue( omega);
 
   if( md2cmds_home_wait( 30.0)) {
-    lslogging_log_message( "md2cmds_settransferpoint: homing routines taking too long.  Aborting transfer.");
+    lslogging_log_message( "%s: homing routines taking too long.  Aborting transfer.", id);
     lsevents_send_event( "Settransferpoint Aborted");
     return 1;
   }
@@ -3442,7 +3452,7 @@ int md2cmds_settransferpoint( const char *cmd) {
   // Wait for the homing routines to finish
   //
   if( md2cmds_home_wait( 30.0)) {
-    lslogging_log_message( "md2cmds_settransferpoint: homing routines taking too long.  Aborting transfer.");
+    lslogging_log_message( "%s: homing routines taking too long.  Aborting transfer.", id);
     lsevents_send_event( "Settransferpoint Aborted");
     return 1;
   }
@@ -3618,7 +3628,6 @@ int md2cmds_set( const char *cmd) {
   }
   return 0;
 }
-
 
 /** Our worker thread
  */
@@ -3813,6 +3822,47 @@ void md2cmds_detector_position_cb( char *event) {
   }
 }
 
+void md2cmds_detector_position_cb( char *event) {
+  static int sb_shutter_enabled = -1;	// 0 not enabled, 1 enabled, -1 unintialized
+  lsredis_obj_t *detector_height_obj;
+  lsredis_obj_t *detector_safe_height_obj;
+  lsredis_obj_t *detector_cover_obj;
+
+  int last_sb_shutter_enabled;
+  double detector_height;
+  double detector_safe_height;
+  int    detector_cover;
+
+  last_sb_shutter_enabled = sb_shutter_enabled;
+  sb_shutter_enabled = 0;
+
+  detector_cover_obj       = lsredis_get_obj("detector.cover");
+
+  detector_cover = lsredis_getl( detector_cover_obj);
+  if (!detector_cover) {
+    sb_shutter_enabled = 1;
+  } else {
+    detector_height_obj      = lsredis_get_obj("detector.height");
+    detector_safe_height_obj = lsredis_get_obj("detector.safe_height");
+
+    detector_height      = lsredis_getd( detector_height_obj);
+    detector_safe_height = lsredis_getd( detector_safe_height_obj);
+
+    if (detector_height >= detector_safe_height) {
+      sb_shutter_enabled = 1;
+    }
+  }
+
+  if (sb_shutter_enabled) {
+    lspmac_SockSendDPline( NULL, "I5112=(4000*8388607/I10)");
+  } else {
+    if ( last_sb_shutter_enabled != sb_shutter_enabled) {
+      lspmac_SockSendDPline( NULL, "I5112=-1");
+    }
+  }
+}
+
+
 /** Initialize the md2cmds module
  */
 void md2cmds_init() {
@@ -3837,7 +3887,6 @@ void md2cmds_init() {
 
   pthread_mutex_init( &md2cmds_shutter_mutex, &mutex_initializer);
   pthread_cond_init(  &md2cmds_shutter_cond, NULL);
-
 
   err = regcomp( &md2cmds_cmd_regex, " *([^ ]+) (([^ ]+)\\.presets\\..)*([^ ]*) *([^ ]*)", REG_EXTENDED);
   if( err != 0) {
@@ -3938,6 +3987,8 @@ pthread_t *md2cmds_run() {
   lsevents_add_listener( "^Quitting Program$",          md2cmds_quitting_cb);
   lsevents_add_listener( "^Shutter Open$",              md2cmds_shutter_open_cb);
   lsevents_add_listener( "^Shutter Not Open$",          md2cmds_shutter_not_open_cb);
+  lsevents_add_listener( "^Check Detector Position$",   md2cmds_detector_position_cb);
+
   lsredis_sendStatusReport( 0, "MD2 Started");
 
   if (pgpmac_monitor_detector_position) {

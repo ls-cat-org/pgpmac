@@ -1,8 +1,7 @@
 VERSION= 1.2
 # 
 # Makefile for pgpmac project
-# (C) 2012 - 2018 by Northwesern University
-# Author: Keith Brister
+# (C) 2012 - 2018 by Keith Brister and Northwesern University
 # All Rights Reserved
 #
 
@@ -26,8 +25,12 @@ install: pgpmac
 	./maybe_install_pgpmac_rsyslogd.sh
 
 .SILENT: clean
-
 clean:
+	-@rm *.o pgpmac 2>/dev/null
+	-@rm ls-cat-pgpmac-*.gz
+
+.SILENT: distclean
+distclean:
 	-@rm *.o pgpmac 2>/dev/null
 	-@rm ls-cat-pgpmac-*.gz
 

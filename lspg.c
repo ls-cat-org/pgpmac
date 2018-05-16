@@ -1767,6 +1767,11 @@ void lspg_nextaction_cb(
   if( strcmp( action, "noAction") == 0)
     return;
   
+  if( strcmp( action, "collect") == 0) {
+    md2cmds_push_queue( "segment");
+    return;
+  }
+
   md2cmds_push_queue( action);
 
 }
