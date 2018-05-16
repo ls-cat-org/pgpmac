@@ -1344,6 +1344,10 @@ void lsredis_configCB( redisAsyncContext *ac, void *reply, void *privdata) {
       pgpmac_use_autoscint = r3->str[0] == '0' ? 0 : 1;
     }
 
+    if (strcmp(r2->str, "DETECTOR_STATE_MACHINE")==0) {
+      pgmac_use_detector_state_machine = r3->str[0] == '1' ? 1 : 0;
+    }
+
     //
     // reg expression to select keys we will be keeping a local copy of
     //
