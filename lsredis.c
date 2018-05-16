@@ -1348,6 +1348,10 @@ void lsredis_configCB( redisAsyncContext *ac, void *reply, void *privdata) {
       pgmac_use_detector_state_machine = r3->str[0] == '1' ? 1 : 0;
     }
 
+    if (strcmp(r2->str, "MONITOR_DETECTOR_POSITION")==0) {
+      pgpmac_monitor_detector_position = r3->str[0] == '0' ? 0 : 1;
+    }
+
     //
     // reg expression to select keys we will be keeping a local copy of
     //
