@@ -3822,46 +3822,6 @@ void md2cmds_detector_position_cb( char *event) {
   }
 }
 
-void md2cmds_detector_position_cb( char *event) {
-  static int sb_shutter_enabled = -1;	// 0 not enabled, 1 enabled, -1 unintialized
-  lsredis_obj_t *detector_height_obj;
-  lsredis_obj_t *detector_safe_height_obj;
-  lsredis_obj_t *detector_cover_obj;
-
-  int last_sb_shutter_enabled;
-  double detector_height;
-  double detector_safe_height;
-  int    detector_cover;
-
-  last_sb_shutter_enabled = sb_shutter_enabled;
-  sb_shutter_enabled = 0;
-
-  detector_cover_obj       = lsredis_get_obj("detector.cover");
-
-  detector_cover = lsredis_getl( detector_cover_obj);
-  if (!detector_cover) {
-    sb_shutter_enabled = 1;
-  } else {
-    detector_height_obj      = lsredis_get_obj("detector.height");
-    detector_safe_height_obj = lsredis_get_obj("detector.safe_height");
-
-    detector_height      = lsredis_getd( detector_height_obj);
-    detector_safe_height = lsredis_getd( detector_safe_height_obj);
-
-    if (detector_height >= detector_safe_height) {
-      sb_shutter_enabled = 1;
-    }
-  }
-
-  if (sb_shutter_enabled) {
-    lspmac_SockSendDPline( NULL, "I5112=(4000*8388607/I10)");
-  } else {
-    if ( last_sb_shutter_enabled != sb_shutter_enabled) {
-      lspmac_SockSendDPline( NULL, "I5112=-1");
-    }
-  }
-}
-
 
 /** Initialize the md2cmds module
  */
