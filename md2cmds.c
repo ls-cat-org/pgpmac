@@ -30,13 +30,7 @@ All positions are in millimeters or degrees.
 
  collect                                     Start collecting data
 
-<<<<<<< variant A
- homestages                                  Home centering stages and alignment stages
->>>>>>> variant B
- homestages				    Home centering stages and alignment stages
-
- moveAbs  <motor> <position_or_presetName>  Move the given motor to the said position.  Common preset names are "In", "Out", "Cover".
-======= end
+ homestages				     Home centering stages and alignment stages
 
  moveAbs  <motor> <position_or_presetName>   Move the given motor to the said position.  Common preset names are "In", "Out", "Cover".
 
@@ -46,7 +40,7 @@ All positions are in millimeters or degrees.
 
  raster <key>                                Trigger raster scan for key
 
- shutterless                                    Like collect but only used for line segment mode with the Eiger
+ shutterless                                 Like collect but only used for line segment mode with the Eiger
 
  run <motor> <command>                       Run a special command on <motor> where <command> is one of "home", "spin", "stop"
 
@@ -54,9 +48,9 @@ All positions are in millimeters or degrees.
 
  set <motor1> [<motor2>...<motorN>] <preset> Set all named motors current position as <preset>.  <preset> will be created if it does not currently exist.
 
- setbeamstoplimits		            Set P6000 and P6001 for the pmac plcc0 check of the beamstop position.  Sets current position +/- 100 microns
+ setbeamstoplimits		             Set P6000 and P6001 for the pmac plcc0 check of the beamstop position.  Sets current position +/- 100 microns
 
- setsamplebeam                              Set the current alignment and centering positions as the the Beam preset for the respective stages
+ setsamplebeam                               Set the current alignment and centering positions as the the Beam preset for the respective stages
 
  setbackvector                               Set the current alignment stage position as the Back preset and the difference between Back and Beam as Back_Vector
 
