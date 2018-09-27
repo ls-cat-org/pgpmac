@@ -2452,6 +2452,7 @@ int lspmac_movedac_queue(
                           double requested_position     /**< [in] Desired x postion (look up and send y position)       */
                           ) {
   double u2c;
+  char *fmt;
 
   pthread_mutex_lock( &(mp->mutex));
 
@@ -2472,12 +2473,35 @@ int lspmac_movedac_queue(
     mp->not_done     = 1;
     mp->motion_seen  = 0;
     mp->command_sent = 1;
+
+    // fake the read: This allows everyone to read the newly set
+    // position before the pmac state is read
+
+    mp->actual_pos_cnts = mp->requested_pos_cnts;
+    if( mp->nlut >0 && mp->lut != NULL) {
+      if( u2c == 0.0)
+	u2c = 1.0;
+      mp->position = lspmac_rlut( mp->nlut, mp->lut, mp->actual_pos_cnts/u2c);
+    } else {
+      if (u2c != 0.0) {
+	mp->position = mp->actual_pos_cnts / u2c;
+      } else {
+	mp->position = mp->actual_pos_cnts;
+      }
+    }
+
+    fmt = lsredis_getstr(mp->redis_fmt);
+    lsredis_setstr( mp->redis_position, fmt, mp->position);
+    free(fmt);
+    mp->reported_position = mp->position;
+
     pthread_mutex_unlock( &mp->mutex);
 
     lsevents_send_event( "%s Moving", mp->name);
     lspmac_SockSendDPline( mp->name, "%s=%d", mp->dac_mvar, mp->requested_pos_cnts);
 
     pthread_mutex_lock( &mp->mutex);
+
     mp->not_done     = 0;
     mp->motion_seen  = 1;
     mp->command_sent = 1;
@@ -2487,6 +2511,7 @@ int lspmac_movedac_queue(
   }
 
   pthread_mutex_unlock( &(mp->mutex));
+
   return 0;
 }
 
