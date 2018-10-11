@@ -32,25 +32,21 @@ All positions are in millimeters or degrees.
 
  homestages				     Home centering stages and alignment stages
 
- moveAbs  <motor> <position_or_presetName>   Move the given motor to the said position.  Common preset names are "In", "Out", "Cover".
+ moveAbs  <motor1> <position_or_presetName 1>...<motorN> <position or presetName N> [<optional preset>]   Move the given motors to the said positions.  If given, the new positions will be as "optional Preset".
 
  moveRel  <motor> <relative_position>        Move the given motor by the relative amount from its current position
 
  nonrotate                                   Used for local centering when we do not want to trigger movie making
 
- raster <key>                                Trigger raster scan for key
+ preSet <motor1> <position1> ... <motorN> <positionN> [<preset>]  Set the motor positions at the given preset.  Motors are not moved.
 
- shutterless                                 Like collect but only used for line segment mode with the Eiger
+ raster <key>                                Trigger raster scan for key
 
  run <motor> <command>                       Run a special command on <motor> where <command> is one of "home", "spin", "stop"
 
  shutterless                                 Like collect but only used for line segment mode with the Eiger
 
  set <motor1> [<motor2>...<motorN>] <preset> Set all named motors current position as <preset>.  <preset> will be created if it does not currently exist.
-
- setbeamstoplimits		             Set P6000 and P6001 for the pmac plcc0 check of the beamstop position.  Sets current position +/- 100 microns
-
- setsamplebeam                               Set the current alignment and centering positions as the the Beam preset for the respective stages
 
  setbackvector                               Set the current alignment stage position as the Back preset and the difference between Back and Beam as Back_Vector
 
