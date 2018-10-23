@@ -3568,14 +3568,16 @@ int md2cmds_setsamplebeam( const char *cmd) {
 int md2cmds_setbeamstoplimits( const char *cmd) {
   double u2c;
   double position;
+  double neutral_pos;
   int upper_limit;
   int lower_limit;
 
   u2c      = lsredis_getd( capz->u2c);
   position = lspmac_getPosition( capz);
+  neutral_pos = lsredis_getd( capz->neutral_pos);
 
-  upper_limit = (position + 0.1) * u2c;
-  lower_limit = (position - 0.1) * u2c;
+  upper_limit = (position + neutral_pos + 0.1) * u2c;
+  lower_limit = (position + neutral_pos - 0.1) * u2c;
 
   lsredis_setstr( lsredis_get_obj("fastShutter.capzLowCts"),  "%d", lower_limit);
   lsredis_setstr( lsredis_get_obj("fastShutter.capzHighCts"), "%d", upper_limit);
