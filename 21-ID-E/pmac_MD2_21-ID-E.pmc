@@ -3674,15 +3674,15 @@ OPEN PLCC 0 CLEAR
     P6010 = (M190/(I1008*32))     ; Capillary Z position (Counts)
     P6015 = (M191/(I1108*32))     ; Scintillator Z position (Counts)
 
-    IF (P6010<P6000  OR P6010>P6001)
+    IF (P6010<P6000)  OR (P6010>P6001)
       P6011 = 0                   ; Capillary not in position
     ENDIF
 
-    IF (P6015<P6002 OR P6015>P6003)
+    IF (P6015<P6002) OR (P6015>P6003)
       P6016 = 0                   ; Scintillator not in position
     ENDIF
 
-    IF (P6011=1 OR P6016=1) ; See if either is in position
+    IF (P6011=1) OR (P6016=1) ; See if either is in position
       M1108 = 0         ; Enable Shutter
     ELSE
       M1108 = 1         ; Disable Shutter
