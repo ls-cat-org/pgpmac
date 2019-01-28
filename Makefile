@@ -20,8 +20,9 @@ dist:
 	tar czvf ls-cat-pgpmac-$(VERSION).tar.gz ls-cat-pgpmac-$(VERSION)/*.c ls-cat-pgpmac-$(VERSION)/*.h ls-cat-pgpmac-$(VERSION)/pmac_md2.sql ls-cat-pgpmac-$(VERSION)/Makefile ls-cat-pgpmac-$(VERSION)/21-ID-*/*.pmc
 	rm -f ls-cat-pgpmac-$(VERSION)
 
-install: pgpmac
+install: pgpmac maybe_install_pgpmac_rsyslogd.sh pgpmac.logrotate
 	install -p pgpmac /usr/local/bin
+	install pgpmac.logrotate /etc/logrotate.d/pgpmac
 	./maybe_install_pgpmac_rsyslogd.sh
 
 .SILENT: clean
