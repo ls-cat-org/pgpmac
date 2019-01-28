@@ -22,7 +22,7 @@ dist:
 
 install: pgpmac maybe_install_pgpmac_rsyslogd.sh pgpmac.logrotate
 	install -p pgpmac /usr/local/bin
-	install pgpmac.logrotate /etc/logrotate.d/pgpmac
+	install --mode 0644 pgpmac.logrotate /etc/logrotate.d/pgpmac
 	./maybe_install_pgpmac_rsyslogd.sh
 
 .SILENT: clean
