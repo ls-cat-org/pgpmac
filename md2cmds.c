@@ -612,6 +612,9 @@ int md2cmds_transfer( const char *dummy) {
     return 1;
   }
 
+  // simplest query yet!
+  lspg_query_push( NULL, NULL, "SELECT px.dropairrights()");
+
   //
   // Wait for the robot to unlock the cryo which signals us that we need to
   // move the cryo back and drop air rights
@@ -630,8 +633,6 @@ int md2cmds_transfer( const char *dummy) {
   lspmac_moveabs_wait( cryo, 10.0);
 
   transferAborted = 0;
-  // simplest query yet!
-  lspg_query_push( NULL, NULL, "SELECT px.dropairrights()");
 
   // wait for the result
   // TODO: find an easy way out of this in case of error
