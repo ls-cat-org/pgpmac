@@ -27,8 +27,8 @@ install: pgpmac maybe_install_pgpmac_rsyslogd.sh pgpmac.logrotate
 
 .SILENT: clean
 clean:
-	-@rm *.o pgpmac 2>/dev/null
-	-@rm ls-cat-pgpmac-*.gz
+	$(RM) *.o pgpmac 2>/dev/null
+	$(RM) ls-cat-pgpmac-*.gz 2>/dev/null
 
 .SILENT: distclean
 distclean:
