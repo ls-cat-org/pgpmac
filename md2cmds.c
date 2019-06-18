@@ -448,6 +448,7 @@ int md2cmds_robotMount_start( double *move_time, int *mmask) {
                               blight_ud, 1, NULL,    0.0,
                               cryo,      1, NULL,    0.0,
                               fluo,      1, NULL,    0.0,
+                              phi,       1, NULL,    0.0,
                               zoom,      0, NULL,    1.0,
                               NULL);
 
@@ -467,6 +468,7 @@ int md2cmds_robotMount_finish( double move_time, int mmask) {
                                    blight_ud,
                                    cryo,
                                    fluo,
+                                   phi,
                                    NULL);
   if( err) {
     lsevents_send_event( "Mode robotMount Aborted");
