@@ -68,6 +68,7 @@ pthread_cond_t  lspmac_moving_cond;             //!< Wait for motor(s) to finish
 int lspmac_moving_flags;                        //!< Flag used to implement motor moving condition
 
 static double lspmac_saved_analPosition=0;      //!< the analizer is the home motor we cannot home. Use the last known position in case we have to home it
+static double lspmac_saved_phiPosition=0;       //!< the phi has no home switch.  Use the last known position in case we have to home it.
 
 static uint16_t lspmac_control_char = 0;        //!< The control character we've sent
 
@@ -4193,6 +4194,9 @@ void lspmac_init(
   lspmac_saved_analPosition = lsredis_getd(anal->redis_position);
   lslogging_log_message( "Saved lightPolar last position: %f", lspmac_saved_analPosition);
 
+  lspmac_saved_phiPosition = lsredis_getd(phi->redis_position);
+  lslogging_log_message( "Saved phi last position: %f", lspmac_saved_phiPosition);
+
   lspmac_SockSendDPline( NULL, "ENABLE PLC 1");		// PLC 1 is our initialization plc that activates whichever other PLCs and PLCCs are needed
   lspmac_SockSendDPline( NULL, "I5=3");			// allow the enabled plcc's to run
 }
@@ -4294,6 +4298,19 @@ void lspmac_anal_in_position_cb( char *event) {
 
 void lspmac_anal_homed_cb( char *event) {
   lsredis_setstr(anal->neutral_pos, "%.3f", -lspmac_saved_analPosition);
+}
+
+void lspmac_phi_in_position_cb( char *event) {
+  static int first_time=1;
+  if (first_time) {
+    first_time = 0;
+    return;
+  }
+  lspmac_saved_phiPosition = lspmac_getPosition(phi);
+}
+
+void lspmac_phi_homed_cb( char *event) {
+  lsredis_setstr(phi->neutral_pos, "%.3f", -lspmac_saved_phiPosition);
 }
 
 /** Set the backlight intensity whenever the zoom is changed (and the backlight is up)
@@ -4720,6 +4737,8 @@ pthread_t *lspmac_run() {
     lsevents_add_listener( "^backLight 0$" ,             lspmac_backLight_down_cb);
     lsevents_add_listener( "^lightPolar In Position$",   lspmac_anal_in_position_cb);
     lsevents_add_listener( "^lightPolar Homed$",         lspmac_anal_homed_cb);
+    lsevents_add_listener( "^phi In Position$",          lspmac_phi_in_position_cb);
+    lsevents_add_listener( "^phi Homed$",                lspmac_phi_homed_cb);
     lsevents_add_listener( "^cam.zoom Moving$",          lspmac_light_zoom_cb);
     //    lsevents_add_listener( "^Quitting Program$",         lspmac_quitting_cb);
     lsevents_add_listener( "^Control-[BCFGV] accepted$", lspmac_request_control_response_cb);
