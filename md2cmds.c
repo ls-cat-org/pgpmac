@@ -448,7 +448,6 @@ int md2cmds_robotMount_start( double *move_time, int *mmask) {
                               blight_ud, 1, NULL,    0.0,
                               cryo,      1, NULL,    0.0,
                               fluo,      1, NULL,    0.0,
-                              phi,       1, NULL,    0.0,
                               zoom,      0, NULL,    1.0,
                               NULL);
 
@@ -459,6 +458,8 @@ int md2cmds_robotMount_start( double *move_time, int *mmask) {
 
 int md2cmds_robotMount_finish( double move_time, int mmask) {
   int err;
+  double phi_move_time;
+  int phi_mmask;
 
   err = lspmac_est_move_time_wait( move_time + 10.0, mmask,
                                    apery,
@@ -468,7 +469,6 @@ int md2cmds_robotMount_finish( double move_time, int mmask) {
                                    blight_ud,
                                    cryo,
                                    fluo,
-                                   phi,
                                    NULL);
   if( err) {
     lsevents_send_event( "Mode robotMount Aborted");
@@ -481,6 +481,25 @@ int md2cmds_robotMount_finish( double move_time, int mmask) {
     lsevents_send_event( "Mode robotMount Aborted");
     return err;
   }
+
+  phi_mmask = 0;
+  err = lspmac_est_move_time( &phi_move_time, &phi_mmask,
+			      phi, 1, NULL, 0.0,
+			      NULL);
+  if (err) {
+    lslogging_log_message("md2cmds_phase_robotMount: failed to start moving phi. Mode robotMount Aborted");
+    return err;
+  }
+
+  err = lspmac_est_move_time_wait( phi_move_time+4.0, phi_mmask,
+				   phi,
+				   NULL);
+  if( err) {
+    lsevents_send_event( "Mode robotMount Aborted");
+    return err;
+  }
+
+
 
   lsevents_send_event( "Mode robotMount Done");
 
