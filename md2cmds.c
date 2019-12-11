@@ -1527,7 +1527,7 @@ int md2cmds_phase_beamLocation() {
                               scint,      0, "Scintillator", 0.0,
                               blight,     1, NULL,           0.0,
                               blight_ud,  1, NULL,           0.0,
-                              zoom,       0, NULL,           1.0,
+                              zoom,       0, NULL,           6.0,
                               cryo,       1, NULL,           0.0,
                               fluo,       1, NULL,           0.0,
                               NULL);
