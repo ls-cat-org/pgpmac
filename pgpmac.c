@@ -563,7 +563,7 @@ void pgpmac_printf(
   pthread_mutex_lock( &ncurses_mutex);
 
   va_start( arg_ptr, fmt);
-  vwprintw( term_output, fmt, arg_ptr);
+  vw_printw( term_output, fmt, arg_ptr);
   va_end( arg_ptr);
 
   wnoutrefresh( term_output);

@@ -18,6 +18,7 @@
 #include <errno.h>
 #include <poll.h>
 #include <libpq-fe.h>
+#include <stdarg.h>
 #include <ncurses.h>
 #include <math.h>
 #include <pthread.h>
