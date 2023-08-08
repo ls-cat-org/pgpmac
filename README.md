@@ -1,4 +1,4 @@
-# pgpmac
+# pmac
 
 TODO: Please add more documentation here on what this does, and how to install it.
 
