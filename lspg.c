@@ -2121,6 +2121,10 @@ PQnoticeProcessor lspg_notice_processor( void *arg, const char *msg) {
 /** Connect to the pg server
  */
 void lspg_pg_connect() {
+  static const char default_pg_host[] = "10.1.0.3";
+  static const char default_pg_db[]   = "ls";
+  static const char default_pg_user[] = "lsuser";
+  char connect_str[1024];
   int err;
 
   if( q == NULL)
@@ -2131,8 +2135,8 @@ void lspg_pg_connect() {
 
     if( lspg_time_sent.tv_sec != 0) {
       //
-      // Reality check: if it's less the about 10 seconds since the last failed attempt
-      // the just chill.
+      // Reality check: if it's less the about 10 seconds since the last failed attempt,
+      // then just chill.
       //
       gettimeofday( &now, NULL);
       if( now.tv_sec - lspg_time_sent.tv_sec < 10) {
@@ -2140,7 +2144,28 @@ void lspg_pg_connect() {
       }
     }
 
-    q = PQconnectStart( "dbname=ls user=lsuser hostaddr=10.1.0.3");
+    char* hostname = getenv("LS_POSTGRES_HOSTNAME");
+    if (hostname == NULL) {
+      hostname = default_pg_host;
+    }
+    char* database = getenv("LS_POSTGRES_DATABASE");
+    if (database == NULL) {
+      database = default_pg_db;
+    }
+    char* username = getenv("LS_POSTGRES_USERNAME");
+    if (username == NULL) {
+      username = default_pg_user;
+    }
+    int connect_strlen = snprintf(connect_str, sizeof(connect_str), "dbname=%s user=%s hostaddr=%s",
+				  database, username, hostname);
+    if (connect_strlen < 0 || connect_strlen > (sizeof(connect_str)-1) ) {
+      lslogging_log_message("Cannot connect to database: LS_POSTGRES_HOSTNAME, LS_POSTGRES_DATABASE,"
+			    " and LS_POSTGRES_USERNAME must each be valid ASCII strings of 64"
+			    " characters or less.");
+      exit(-1);
+    }
+    
+    q = PQconnectStart(connect_str);
     if( q == NULL) {
       lslogging_log_message( "Out of memory (lspg_pg_connect)");
       exit( -1);
