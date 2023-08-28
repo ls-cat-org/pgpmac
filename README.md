@@ -1,8 +1,10 @@
-# pmac
+# pgpmac
 
 TODO: Please add more documentation here on what this does, and how to install it.
 
 ### Environment variables
+
+LS_PMAC_HOSTNAME (default: "192.6.94.5") : The hostname of the Power PMAC server where pgpmac submits PMAC commands.
 
 LS_POSTGRES_DATABASE (default: "ls") : The name of the PostgreSQL database pgpmac uses for its message queue and state database.
 

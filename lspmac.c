@@ -2286,6 +2286,7 @@ void lspmac_sendcmd(
  *  Given the current state, generate the next one
  */
 void lspmac_next_state() {
+  static const char default_pmac_host[] = "192.6.94.5";
   //
   // Connect to the pmac and perhaps initialize it.
   // OK, this is slightly more than just the state
@@ -2298,7 +2299,11 @@ void lspmac_next_state() {
     // We'll need to audit the code if we decide to implement
     // multiple PMACs so might as well wait til then.
     //
-    lsConnect( "192.6.94.5");
+    char pmac_host = getenv("LS_PMAC_HOSTNAME");
+    if (pmac_host == NULL) {
+      pmac_host = default_pmac_host;
+    }
+    lsConnect(pmac_host);
 
     //
     // If the connect was successful we can proceed with the initialization
