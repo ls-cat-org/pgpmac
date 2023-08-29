@@ -2,7 +2,27 @@
 
 TODO: Please add more documentation here on what this does, and how to install it.
 
-### Environment variables
+### Dependencies
+##### RHEL/CentOS/Fedora:
+postgresql-devel
+ncurses-devel
+hiredis-devel
+jansson-devel
+
+##### Ubuntu:
+libpq-dev
+libncurses-dev
+libhiredis-dev
+libjansson-dev
+
+### Installation
+make
+sudo make install
+python2 mk_pgpmac_redis.py
+psql -f pmac_md2.sql
+psql -f zoom_e.sql
+
+### Configuration (Environment Variables)
 
 LS_PMAC_HOSTNAME (default: "192.6.94.5") : The hostname of the Power PMAC server where pgpmac submits PMAC commands.
 
