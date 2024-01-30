@@ -1,6 +1,14 @@
-# pgpmac
+# (DEPRECATED) pgpmac - MD2 controller for 3-click centering 
+ATTENTION: This library is deprecated, as the Arinax MD3 has its own Redis-based control interface.
 
-TODO: Please add more documentation here on what this does, and how to install it.
+pgpmac is the controller which moves the MD2 microdiffractometer to center the beam on a sample, a process known 
+as 3-click centering.
+
+It uses a Postgres database as a message queue; clients issue commands in the form of INSERT statements, which 
+pgpmac consumes (SELECT+DELETE) and translates into Power PMAC commands to adjust the position of the various 
+parts of the MD2.
+
+pgpmac is also used by clients to query the current state of the MD2 via SELECT statements.
 
 ### Dependencies
 ##### RHEL/CentOS/Fedora:
