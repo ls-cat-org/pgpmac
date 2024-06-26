@@ -2121,7 +2121,7 @@ PQnoticeProcessor lspg_notice_processor( void *arg, const char *msg) {
 /** Connect to the pg server
  */
 void lspg_pg_connect() {
-  static const char default_pg_host[] = "10.1.0.3";
+  static const char default_pg_host[] = "postgres.ls-cat.net";
   static const char default_pg_db[]   = "ls";
   static const char default_pg_user[] = "lsuser";
   char connect_str[1024];
@@ -2144,15 +2144,15 @@ void lspg_pg_connect() {
       }
     }
 
-    char* hostname = getenv("LS_POSTGRES_HOSTNAME");
+    const char* hostname = getenv("LS_POSTGRES_HOSTNAME");
     if (hostname == NULL) {
       hostname = default_pg_host;
     }
-    char* database = getenv("LS_POSTGRES_DATABASE");
+    const char* database = getenv("LS_POSTGRES_DATABASE");
     if (database == NULL) {
       database = default_pg_db;
     }
-    char* username = getenv("LS_POSTGRES_USERNAME");
+    const char* username = getenv("LS_POSTGRES_USERNAME");
     if (username == NULL) {
       username = default_pg_user;
     }
