@@ -565,7 +565,7 @@ char *cleanstr(
  *  Establish or reestablish communications.
  */
 void lsConnect(
-               char *ipaddr     /**< [in] String representation of the IP address (dot quad or FQN)     */
+               const char *ipaddr     /**< [in] String representation of the IP address (dot quad or FQN)     */
                ) {
   int psock;                    // our socket: value stored in pmacfda.fd
   int err;                      // error code from some system calls
@@ -2299,7 +2299,7 @@ void lspmac_next_state() {
     // We'll need to audit the code if we decide to implement
     // multiple PMACs so might as well wait til then.
     //
-    char pmac_host = getenv("LS_PMAC_HOSTNAME");
+    const char* pmac_host = getenv("LS_PMAC_HOSTNAME");
     if (pmac_host == NULL) {
       pmac_host = default_pmac_host;
     }
@@ -3964,8 +3964,11 @@ void lspmac_soft_motor_read( lspmac_motor_t *p) {
 
 }
 
-
-lspmac_motor_t *lspmac_soft_motor_init( lspmac_motor_t *d, char *name, int (*moveAbs)(lspmac_motor_t *, double), void (*reader)(lspmac_motor_t *)) {
+typedef int (*moveAbsFunc)(lspmac_motor_t *, double);
+typedef void (*readerFunc)(lspmac_motor_t *);
+lspmac_motor_t *lspmac_soft_motor_init(lspmac_motor_t *d, char *name,
+				       moveAbsFunc moveAbs,
+				       readerFunc reader) {
 
   _lspmac_motor_init( d, name);
 
@@ -3980,7 +3983,9 @@ lspmac_motor_t *lspmac_soft_motor_init( lspmac_motor_t *d, char *name, int (*mov
 
 /** Initialize binary input
  */
-lspmac_bi_t *lspmac_bi_init( lspmac_bi_t *d, char *name, int *ptr, int mask, char *onEvent, char *offEvent, char *onStatus, char *offStatus) {
+lspmac_bi_t *lspmac_bi_init(lspmac_bi_t *d, char *name, int *ptr, int mask,
+			    char *onEvent, char *offEvent, char *onStatus,
+			    char *offStatus) {
   pthread_mutexattr_t mutex_initializer;
   // Use recursive mutexs
   //
