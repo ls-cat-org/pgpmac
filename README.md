@@ -24,11 +24,13 @@ libhiredis-dev
 libjansson-dev
 
 ### Installation
+```
 make
 sudo make install
 python2 mk_pgpmac_redis.py
 psql -f pmac_md2.sql
 psql -f zoom_e.sql
+```
 
 ### Configuration (Environment Variables)
 
