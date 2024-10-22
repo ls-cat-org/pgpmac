@@ -2124,7 +2124,7 @@ void lspg_pg_connect() {
   static const char default_pg_host[] = "postgres.ls-cat.net";
   static const char default_pg_db[]   = "ls";
   static const char default_pg_user[] = "lsuser";
-  char connect_str[1024];
+  char connect_str[512];
   int err;
 
   if( q == NULL)
@@ -2157,8 +2157,8 @@ void lspg_pg_connect() {
       username = default_pg_user;
     }
     int connect_strlen = snprintf(connect_str, sizeof(connect_str), "dbname=%s user=%s hostaddr=%s",
-				  database, username, hostname);
-    if (connect_strlen < 0 || connect_strlen > (sizeof(connect_str)-1) ) {
+			      database, username, hostname);
+    if (connect_strlen <= 0 || connect_strlen >= sizeof(connect_str)) {
       lslogging_log_message("Cannot connect to database: LS_POSTGRES_HOSTNAME, LS_POSTGRES_DATABASE,"
 			    " and LS_POSTGRES_USERNAME must each be valid ASCII strings of 64"
 			    " characters or less.");
@@ -2166,21 +2166,21 @@ void lspg_pg_connect() {
     }
     
     q = PQconnectStart(connect_str);
-    if( q == NULL) {
-      lslogging_log_message( "Out of memory (lspg_pg_connect)");
+    if (q == NULL) {
+      lslogging_log_message("Out of memory (lspg_pg_connect)");
       exit( -1);
     }
 
-    err = PQstatus( q);
-    if( err == CONNECTION_BAD) {
-      lslogging_log_message( "Trouble connecting to database");
-
+    err = PQstatus(q);
+    if (err == CONNECTION_BAD) {
+      lslogging_log_message("Trouble connecting to database, %s", PQerrorMessage(q));
       gettimeofday( &lspg_time_sent, NULL);
       return;
     }
-    err = PQsetnonblocking( q, 1);
-    if( err != 0) {
-      lslogging_log_message( "Odd, could not set database connection to nonblocking");
+    err = PQsetnonblocking(q, 1);
+    if (err != 0) {
+      lslogging_log_message("Odd, could not set database connection to nonblocking, %s",
+			    PQerrorMessage(q));
     }
 
     ls_pg_state = LS_PG_STATE_INIT_POLL;
