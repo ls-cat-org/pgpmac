@@ -2156,7 +2156,7 @@ void lspg_pg_connect() {
     if (username == NULL) {
       username = default_pg_user;
     }
-    int connect_strlen = snprintf(connect_str, sizeof(connect_str), "dbname=%s user=%s hostaddr=%s",
+    int connect_strlen = snprintf(connect_str, sizeof(connect_str), "dbname=%s user=%s host=%s",
 			      database, username, hostname);
     if (connect_strlen <= 0 || connect_strlen >= sizeof(connect_str)) {
       lslogging_log_message("Cannot connect to database: LS_POSTGRES_HOSTNAME, LS_POSTGRES_DATABASE,"
