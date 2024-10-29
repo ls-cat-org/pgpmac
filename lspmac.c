@@ -561,60 +561,102 @@ char *cleanstr(
   return strdup( s);
 }
 
-/** Connect to the PMAC socket.
- *  Establish or reestablish communications.
+/** 
+ * Connect to the PMAC socket.,
+ * Establish or reestablish communications.
+ * @param addr - The IP address or hostname of the PMAC.
  */
-void lsConnect(
-               const char *ipaddr     /**< [in] String representation of the IP address (dot quad or FQN)     */
-               ) {
-  int psock;                    // our socket: value stored in pmacfda.fd
-  int err;                      // error code from some system calls
-  struct sockaddr_in *addrP;    // our address structure to connect to
-  struct addrinfo ai_hints;     // required for getaddrinfo
-  struct addrinfo *ai_resultP;  // linked list of address structures (we'll always pick the first)
+void lsConnect(const char *ipaddr) {
+  static const int max_retries = 3;
 
-  pmacfd.fd     = -1;
-  pmacfd.events = 0;
-
-  // Initial buffer(s)
-  memset( &ai_hints,  0, sizeof( ai_hints));
-
-  ai_hints.ai_family   = AF_INET;
-  ai_hints.ai_socktype = SOCK_STREAM;
-
-
-  //
-  // get address
-  //
-  err = getaddrinfo( ipaddr, NULL, &ai_hints, &ai_resultP);
-  if( err != 0) {
-
-    lslogging_log_message( "Could not find address: %s", gai_strerror( err));
-
-    return;
+  int gai_error = 0;
+  struct addrinfo gai_hints;
+  struct addrinfo* gai_result = NULL;
+  struct sockaddr* pmacSockAddr = NULL;
+  socklen_t pmacSockAddrLen = 0;
+  
+  lslogging_log_message("lsConnect(%s:%d)", ipaddr, PMACPORT);
+  memset(&gai_hints, 0, sizeof(gai_hints));
+  gai_hints.ai_family   = AF_INET; // Prefer IPv4, allow IPv6.
+  gai_hints.ai_socktype = SOCK_STREAM;
+  gai_error = getaddrinfo(ipaddr, NULL, &gai_hints, &gai_result);
+  if (gai_error != 0) {
+    lslogging_log_message("lsConnect: getaddrinfo(%s) failed, %s",
+			  ipaddr, gai_strerror(gai_error));
+    goto lsConnect_error;
   }
 
-
-  addrP = (struct sockaddr_in *)ai_resultP->ai_addr;
-  addrP->sin_port = htons( PMACPORT);
-
-
-  psock = socket( PF_INET, SOCK_STREAM, 0);
-  if( psock == -1) {
-    lslogging_log_message( "Could not create socket");
-    return;
+  // We only care about the first result in getaddrinfo, assuming there are
+  // multiple (e.g. an A record and an AAAA record for the same hostname).
+  pmacSockAddr = gai_result->ai_addr;
+  switch(pmacSockAddr->sa_family) {
+  case AF_INET:
+    ((struct sockaddr_in*)pmacSockAddr)->sin_port = htons(PMACPORT);
+    pmacSockAddrLen = sizeof(struct sockaddr_in);
+    break;
+  case AF_INET6:
+    ((struct sockaddr_in6*)pmacSockAddr)->sin6_port = htons(PMACPORT);
+    pmacSockAddrLen = sizeof(struct sockaddr_in6);
+    break;
+  default:
+    lslogging_log_message("lsConnect: cannot resolve %s to an IP address",
+			  pmacSockAddr->sa_family);
+    goto lsConnect_error;
   }
 
-  err = connect( psock, (const struct sockaddr *)addrP, sizeof( *addrP));
-  if( err != 0) {
-    lslogging_log_message( "Could not connect socket: %s", strerror( errno));
-    return;
+  if (pmacfd.fd >= 0) { // cleanup fd from previous connection
+    close(pmacfd.fd);
+    pmacfd.fd = -1;
+  }
+  pmacfd.fd = socket(pmacSockAddr->sa_family, SOCK_STREAM, 0);
+  if (pmacfd.fd < 0) {
+    lslogging_log_message("lsConnect: socket() failed w/ errno=%d, %s",
+			  errno, strerror(errno));
+    goto lsConnect_error;
   }
 
+  for (int i=0; i < max_retries; ++i) {
+    if (connect(pmacfd.fd, pmacSockAddr, pmacSockAddrLen) == 0) {
+      break; // success
+    }
+
+    // Check for retry-able errors. Other than EAGAIN, retrying most of these
+    // is fruitless unless we're just waiting on a PMAC restart.
+    lslogging_log_message("lsConnect: connect(%s:%d) failed w/ errno=%d, %s",
+			  pmacSockAddr->sa_data, PMACPORT,
+			  errno, strerror(errno));
+    switch (errno) {
+    case EAGAIN:
+    case ETIMEDOUT:
+    case ENETUNREACH:
+    case ECONNREFUSED:
+      if (i >= max_retries) {
+	lslogging_log_message("lsConnect: max number of retries exceeded (%d)",
+			      max_retries);
+	goto lsConnect_error;
+      }
+      lslogging_log_message("lsConnect: retrying connect()");
+      continue;
+    default:
+      goto lsConnect_error;
+    }
+  }
+
+  freeaddrinfo(gai_result);
   ls_pmac_state = LS_PMAC_STATE_IDLE;
-  pmacfd.fd     = psock;
   pmacfd.events = POLLIN;
+  lslogging_log_message("lsConnect(%s:%d): success", ipaddr, PMACPORT);
+  return;
 
+ lsConnect_error:
+  if (pmacfd.fd >= 0) {
+    close(pmacfd.fd);
+    pmacfd.fd = -1;
+  }
+  freeaddrinfo(gai_result);
+  ls_pmac_state = LS_PMAC_STATE_DETACHED;
+  pmacfd.events = 0;
+  exit(-1);
 }
 
 /** Clear the queue as part of PMAC reinitialization
@@ -2292,7 +2334,7 @@ void lspmac_next_state() {
   // OK, this is slightly more than just the state
   // machine logic...
   //
-  if( ls_pmac_state == LS_PMAC_STATE_DETACHED) {
+  if (ls_pmac_state == LS_PMAC_STATE_DETACHED) {
     //
     // TODO (eventually)
     // This ip address wont change in a single PMAC installation
@@ -2399,18 +2441,18 @@ void lspmac_next_state() {
   }
 }
 
-/** Our lspmac worker thread.
+/** 
+ * Our lspmac worker thread.
+ * @param unused { A do-nothing param required to pass this function into the 
+ * pthread API }
  */
-void *lspmac_worker(
-                    void *dummy         /**< [in] Unused but required by pthread library                */
-                    ) {
+void* lspmac_worker(void *unused) {
   static int disconnected_notify = 0;
-  static int old_state;
+  static int old_state = LS_PMAC_STATE_DETACHED;
+  int pollrtn = 0;
 
   old_state = ls_pmac_state;
   while( lspmac_running) {
-    int pollrtn;
-
     lspmac_next_state();
 
     if( ls_pmac_state != old_state) {
@@ -2439,9 +2481,12 @@ void *lspmac_worker(
     }
     disconnected_notify = 0;
 
-    pollrtn = poll( &pmacfd, 1, 10);
-    if( pollrtn) {
-      lspmac_Service( &pmacfd);
+    pollrtn = poll(&pmacfd, 1, 10);
+    if (pollrtn < 0) { // error
+      lslogging_log_message("lspmac_worker: poll(pmacfd) failed w/"
+			    " errno=%d, %s", errno, strerror(errno));
+    } else if (pollrtn > 0) { // have data
+      lspmac_Service(&pmacfd);
     }
   }
   pthread_exit( NULL);
