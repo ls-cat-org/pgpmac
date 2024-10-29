@@ -275,7 +275,12 @@ int lsredis_cmpnstr( lsredis_obj_t *p, char *s, int n) {
 }
 
 int lsredis_regexec( const regex_t *preg, lsredis_obj_t *p, size_t nmatch, regmatch_t *pmatch, int eflags) {
-  int rtn;
+  int rtn = 0;
+  if (preg->re_nsub <= 0) {
+    // Treat the regex as a "filter-in" regex filter.
+    // If it doesn't exist yet, treat it as a "no-match"
+    return REG_NOMATCH;
+  }
 
   pthread_mutex_lock( &p->mutex);
   while( p->valid == 0) 
@@ -593,9 +598,12 @@ lsredis_obj_t *_lsredis_get_obj( char *key) {
       lslogging_log_message( "_lsredis_get_obj: Out of memory");
       exit( -1);
     }
-    
-    err = regexec( &lsredis_key_select_regex, key, 2, pmatch, 0);
-    if( err == 0 && pmatch[1].rm_so != -1) {
+
+    // The regex is a "filter-in" criteria. If it doesn't exist, we treat it
+    // as "no-match" and what we plan to do as "no-go".
+    err = lsredis_key_select_regex.re_nsub > 0 ?
+      regexec(&lsredis_key_select_regex, key, 2, pmatch, 0) : REG_NOMATCH;
+    if (err == 0 && pmatch[1].rm_so != -1) {
       p->events_name = strndup( key+pmatch[1].rm_so, pmatch[1].rm_eo - pmatch[1].rm_so);
     } else {
       p->events_name = strdup( key);
@@ -793,7 +801,8 @@ void lsredis_subCB( redisAsyncContext *ac, void *reply, void *privdata) {
   //
   // see if we care
   //
-  if( regexec( &lsredis_key_select_regex, k, 0, NULL, 0) == 0) {
+  if (lsredis_key_select_regex.re_nsub > 0 &&
+      regexec(&lsredis_key_select_regex, k, 0, NULL, 0) == 0) {
     //
     // We should know about this one
     //
@@ -848,12 +857,15 @@ void lsredis_subCB( redisAsyncContext *ac, void *reply, void *privdata) {
 }
 
 
-void lsredis_maybe_add_key( char *k) {
-  if( regexec( &lsredis_key_select_regex, k, 0, NULL, 0) == 0) {
+void lsredis_maybe_add_key(char *k) {
+  // Add the key if it matches our regex filter-in criteria.
+  // If there's no regex, don't cache anything.
+  if (lsredis_key_select_regex.re_nsub > 0 &&
+      regexec(&lsredis_key_select_regex, k, 0, NULL, 0) == 0) {
     if (strstr(k, "state_machine")) {
-	lslogging_log_message("lsredis_maybe_add_key adding key %s", k);
-      }
-    _lsredis_get_obj( k);
+      lslogging_log_message("lsredis_maybe_add_key adding key %s", k);
+    }
+    _lsredis_get_obj(k);
   }
 }
 
@@ -1355,18 +1367,23 @@ void lsredis_configCB( redisAsyncContext *ac, void *reply, void *privdata) {
 
     //
     // reg expression to select keys we will be keeping a local copy of
+    // If we don't have a filter
     //
-    if( strcmp( r2->str, "RE")==0) {
-      err = regcomp( &lsredis_key_select_regex, r3->str, REG_EXTENDED);
-      if( err != 0) {
-	nerrmsg = regerror( err, &lsredis_key_select_regex, NULL, 0);
-	if( nerrmsg > 0) {
-	  errmsg = calloc( nerrmsg, sizeof( char));
-	  nerrmsg = regerror( err, &lsredis_key_select_regex, errmsg, nerrmsg);
-	  lslogging_log_message( "lsredis_configCB: %s", errmsg);
-	  free( errmsg);
+    if (strcmp(r2->str, "RE") == 0) {
+      if (lsredis_key_select_regex.re_nsub > 0) {
+	regfree(&lsredis_key_select_regex); // cleanup old compiled regex
+      }
+      err = regcomp(&lsredis_key_select_regex, r3->str, REG_EXTENDED);
+      if (err != 0) {
+	nerrmsg = regerror(err, &lsredis_key_select_regex, NULL, 0);
+	if (nerrmsg > 0) {
+	  errmsg = calloc(nerrmsg, sizeof(char));
+	  nerrmsg = regerror(err, &lsredis_key_select_regex, errmsg, nerrmsg);
+	  lslogging_log_message("lsredis_configCB: regcomp(%s) failed, %s",
+				r3->str, errmsg);
+	  free(errmsg);
 	}
-	exit( 1);
+	exit(1);
       }
     }
   }
