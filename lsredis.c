@@ -28,7 +28,7 @@
    or    REDIS_KV_CONNECTOR
    or    mk_pgpmac_redis
 </pre>
- * (this last value is used to support the now depreciated px.kvs table in the LS-CAT postgresql server).
+ * (this last value is used to support the now deprecated px.kvs table in the LS-CAT postgresql server).
  * We assume that all publishers that we are listening to ONLY publish key names that have changed.
  *
  * When someone else changes a value we invalidate our internal copy and issue a "HGET key VALUE" command.  Other threads
