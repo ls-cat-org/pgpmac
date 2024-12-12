@@ -142,7 +142,6 @@ void *lslogging_worker(void *dummy) {
 	snprintf(errbuf, (sizeof(errbuf)-1),
 		 "pgpmac - lslogging_worker, pthread_cond_wait failed w/"
 		 " status %d: %s", errcode, strerror(errcode));
-	errbuf[sizeof(errbuf)-1] = 0;
 	syslog(LOG_ERR, "%s", errbuf);
 	pgpmac_printf("\n%s", errbuf);
 	exit(-1);
