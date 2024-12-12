@@ -6,6 +6,7 @@
  */
 
 #include <stdbool.h>
+#include <stdio.h>
 #include "pgpmac.h"
 
 static pthread_t       lslogging_thread;	//!< our thread
@@ -32,6 +33,8 @@ static unsigned int lslogging_off = 0;	//!< next location to remove from the que
 static regex_t lslogging_ignore_regex;
 static const char lslogging_ignorable[] = "^.*I5112=\\(4000\\*8388607/I10\\).*$|^EVENT: Heartbeat$|^EVENT: Check Detector Position$";
 
+static FILE* logfile = NULL;
+
 //! Initialize the lslogging objects
 void lslogging_init() {
   static const char id[] = FILEID "lslogging_init";
@@ -55,8 +58,25 @@ void lslogging_init() {
       free(errmsg);
     }
   }
+
   lslogging_on  = 0; //!< next location to add to the queue
   lslogging_off = 0; //!< next location to remove from the queue
+
+  /*
+    The log file is in /tmp/ because we won't find anything helpful from pgpmac
+    in the event of system crashes/reboots, and we don't want to slow pgpmac
+    down by writing to disk. The log gets rewritten anew on restart because
+    this program was designed by Keith to run as an ncurses application
+    actively monitored from a screen session.
+
+    Do not imitate these bad practices elsewhere.
+  */
+  if (logfile) {
+    fclose(logfile);
+    logfile = NULL;
+  }
+  truncate("/tmp/pgpmac.log", 0);
+  logfile = fopen("/tmp/pgpmac.log", "w");
 }
 
 /** The routine everyone will be talking to.
@@ -64,28 +84,20 @@ void lslogging_init() {
  *  \param ... The arguments specified by fmt
  */
 void lslogging_log_message(const char *fmt, ...) {
-  static const char syslog_preface[] = "pgpmac: ";
-  char syslog_fmt[LSLOGGING_MSG_LENGTH];
   char msg[LSLOGGING_MSG_LENGTH];
   va_list arg_ptr;
 
   /*
-    Write the message to syslog right away (before anything else),
-    prepending the name of the program to the syslog message so
-    we can easily grep for our messages.
+    Write the message to the log file in /tmp right away (before anything else),
+    prepending the name of the program to the syslog message so we can easily
+    grep for our messages.
 
-    NOTE: We do not filter out any messages from being written to syslog.
+    NOTE: We do not filter out any messages from being written to the log file.
   */
-  memcpy(syslog_fmt, syslog_preface, (sizeof(syslog_preface) - 1));
-  strncpy(&(syslog_fmt[sizeof(syslog_preface)]), fmt,
-	  (sizeof(syslog_fmt) - sizeof(syslog_preface) - 1));
-  va_start(arg_ptr, fmt);
-  vsyslog(LOG_INFO, syslog_fmt, arg_ptr);
-  va_end(arg_ptr);
-
   va_start(arg_ptr, fmt);
   vsnprintf(msg, sizeof(msg)-1, fmt, arg_ptr);
   va_end(arg_ptr);
+  fprintf(logfile, "%s", msg);
   if (regexec(&lslogging_ignore_regex, msg, 0, NULL, 0)) {
     pthread_mutex_lock( &lslogging_mutex);
     {
@@ -99,7 +111,8 @@ void lslogging_log_message(const char *fmt, ...) {
       }
 
       // Fill in the message.
-      strncpy(lslogging_queue[lslogging_on].lmsg, msg, (LSLOGGING_MSG_LENGTH - 1));
+      strncpy(lslogging_queue[lslogging_on].lmsg, msg,
+	      (LSLOGGING_MSG_LENGTH - 1));
       lslogging_queue[lslogging_on].lmsg[LSLOGGING_MSG_LENGTH-1] = 0;
       clock_gettime(CLOCK_REALTIME, &(lslogging_queue[lslogging_on].ltime));
     }

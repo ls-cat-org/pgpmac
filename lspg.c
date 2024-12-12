@@ -495,15 +495,20 @@ void lspg_getcurrentsampleid_call() {
  */
 unsigned int lspg_getcurrentsampleid_read() {
   unsigned int rtn;
-  pthread_mutex_lock( &lspg_getcurrentsampleid.mutex);
-  while( lspg_getcurrentsampleid.new_value_ready == 0 && lspg_getcurrentsampleid.query_error == 0)
-    pthread_cond_wait( &lspg_getcurrentsampleid.cond, &lspg_getcurrentsampleid.mutex);
-  
-  if( lspg_getcurrentsampleid.getcurrentsampleid_isnull || lspg_getcurrentsampleid.query_error != 0)
-    rtn = -1;
-  else
-    rtn = lspg_getcurrentsampleid.getcurrentsampleid;
+  pthread_mutex_lock(&lspg_getcurrentsampleid.mutex);
+  while (lspg_getcurrentsampleid.new_value_ready == 0
+	 && lspg_getcurrentsampleid.query_error == 0) {
 
+    pthread_cond_wait(&lspg_getcurrentsampleid.cond,
+		      &lspg_getcurrentsampleid.mutex);
+  }
+  
+  if (lspg_getcurrentsampleid.getcurrentsampleid_isnull
+      || lspg_getcurrentsampleid.query_error != 0) {
+    rtn = -1;
+  } else {
+    rtn = lspg_getcurrentsampleid.getcurrentsampleid;
+  }
   pthread_mutex_unlock( &lspg_getcurrentsampleid.mutex);
   return rtn;
 }
@@ -522,7 +527,6 @@ static int lspg_getcurrentsampleid_abort = 0;
  *  Likey the robot crashed and the next sample is not comming anytime soon
  */
 void lspg_getcurrentsampleid_abort_cb( char *event) {
-  //
   pthread_mutex_lock( &lspg_getcurrentsampleid.mutex);
   lspg_getcurrentsampleid_abort = 1;
   pthread_cond_signal( &lspg_getcurrentsampleid.cond);
@@ -738,6 +742,7 @@ void lspg_demandairrights_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   lspg_demandairrights.new_value_ready = 1;
   pthread_cond_signal( &lspg_demandairrights.cond);
   pthread_mutex_unlock( &lspg_demandairrights.mutex);
+  lslogging_log_message("Received Air Rights");
 }
 
 /** handle airrights query error
@@ -747,18 +752,19 @@ void lspg_demandairrights_error_cb() {
   lspg_demandairrights.query_error = 1;
   pthread_cond_signal( &lspg_demandairrights.cond);
   pthread_mutex_unlock( &lspg_demandairrights.mutex);
-  lslogging_log_message( "Received Air Rights");
+  lslogging_log_message("Failed to Acquire Air Rights");
 }
 
 /** call for airrights
  */
 void lspg_demandairrights_call() {
-  lslogging_log_message( "Demanding Air Rights");
+  lslogging_log_message("Demanding Air Rights");
   pthread_mutex_lock( &lspg_demandairrights.mutex);
   lspg_demandairrights.new_value_ready = 0;
   lspg_demandairrights.query_error     = 0;
   pthread_mutex_unlock( &lspg_demandairrights.mutex);
-  lspg_query_push( lspg_demandairrights_cb, lspg_demandairrights_error_cb, "SELECT px.demandairrights()");
+  lspg_query_push(lspg_demandairrights_cb, lspg_demandairrights_error_cb,
+		  "SELECT px.demandairrights()");
 }
 
 /** wait for the air rights request to return
@@ -768,11 +774,15 @@ int lspg_demandairrights_wait() {
   lsredis_obj_t *robotInExclusionZone;
   int sentMessage;
 
-  pthread_mutex_lock( &lspg_demandairrights.mutex);
-  while( lspg_demandairrights.new_value_ready == 0 && lspg_demandairrights.query_error == 0)
-    pthread_cond_wait( &lspg_demandairrights.cond, &lspg_demandairrights.mutex);
+  pthread_mutex_lock(&lspg_demandairrights.mutex);
+  while(lspg_demandairrights.new_value_ready == 0
+	&& lspg_demandairrights.query_error == 0) {
+
+    pthread_cond_wait(&(lspg_demandairrights.cond),
+		      &(lspg_demandairrights.mutex));
+  }
   rtn = lspg_demandairrights.query_error;
-  pthread_mutex_unlock( &lspg_demandairrights.mutex);
+  pthread_mutex_unlock(&lspg_demandairrights.mutex);
 
   robotInExclusionZone = lsredis_get_obj("robot.inExclusionZone");
   sentMessage = 0;
@@ -2514,20 +2524,21 @@ void lspg_init() {
  */
 pthread_t *lspg_run() {
 
-  pthread_create( &lspg_thread, NULL, lspg_worker, NULL);
-  lsevents_add_listener( "^(appy|appz|capy|capz|scint) In Position$", lspg_check_preset_in_position_cb);
-  lsevents_add_listener( "^(appy|appz|capy|capz|scint) Moving$",      lspg_unset_current_preset_moving_cb);
-  lsevents_add_listener( "^Preset Changed (.+)",                      lspg_preset_changed_cb);
-  lsevents_add_listener( "^Sample(Detected|Absent)$",                 lspg_sample_detector_cb);
-  //  lsevents_add_listener( "^Timer Update KVs$",                        lspg_update_kvs_cb);
-  lsevents_add_listener( "^cam.zoom In Position$",                    lspg_set_scale_cb);
-  lsevents_add_listener( "^Quitting Program$",                        lspg_quitting_cb);
-  //  lstimer_set_timer(     "Timer Update KVs", -1, 0, 500000000);
+  pthread_create(&lspg_thread, NULL, lspg_worker, NULL);
+  lsevents_add_listener("^(appy|appz|capy|capz|scint) In Position$",
+			lspg_check_preset_in_position_cb);
+  lsevents_add_listener("^(appy|appz|capy|capz|scint) Moving$",
+			lspg_unset_current_preset_moving_cb);
+  lsevents_add_listener("^Preset Changed (.+)", lspg_preset_changed_cb);
+  lsevents_add_listener("^Sample(Detected|Absent)$", lspg_sample_detector_cb);
+  lsevents_add_listener("^cam.zoom In Position$", lspg_set_scale_cb);
+  lsevents_add_listener("^Quitting Program$", lspg_quitting_cb);
 
-  //
   // Make sure we own the airrights
-  //
-  lspg_demandairrights_all();
+  if (lspg_demandairrights_all() != 0) {
+    lslogging_log_message("lspg failed to acquire air rights");
+    exit(-1);
+  }
 
-  return( &lspg_thread);
+  return &lspg_thread;
 }
