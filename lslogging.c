@@ -97,7 +97,7 @@ void lslogging_log_message(const char *fmt, ...) {
   va_start(arg_ptr, fmt);
   vsnprintf(msg, sizeof(msg)-1, fmt, arg_ptr);
   va_end(arg_ptr);
-  fprintf(logfile, "%s", msg);
+  fprintf(logfile, "%s\n", msg);
   if (regexec(&lslogging_ignore_regex, msg, 0, NULL, 0)) {
     pthread_mutex_lock( &lslogging_mutex);
     {
