@@ -79,7 +79,9 @@ void lslogging_init() {
   logfile = fopen("/tmp/pgpmac.log", "w");
 }
 
-/** The routine everyone will be talking to.
+/** The routine everyone will be talking to, callable by every thread except
+ *  the logging worker thread.
+ *
  *  \param fmt A printf style formating string.
  *  \param ... The arguments specified by fmt
  */
