@@ -5,6 +5,7 @@
  * \copyright All Rights Reserved
  */
 
+#include <stdbool.h>
 #include "pgpmac.h"
 
 static pthread_t       lslogging_thread;	//!< our thread
@@ -14,22 +15,22 @@ static pthread_cond_t  lslogging_cond;		//!< We'll spend most of our time waitin
 //! Fixed maximum length messages to keep some form of sanity
 #define LSLOGGING_MSG_LENGTH 2048
 
-/** Our log object: time and message
+/** Our log object: timestamp and message
  */
 typedef struct lslogging_queue_struct {
   struct timespec ltime;		//!< time stamp: set when queued
   char lmsg[LSLOGGING_MSG_LENGTH];	//!< our message, truncated if too long
 } lslogging_queue_t;
 
-//! Modest length queue
+//! Statically-allocated circular buffer queue.
 #define LSLOGGING_QUEUE_LENGTH 8192
-static lslogging_queue_t lslogging_queue[LSLOGGING_QUEUE_LENGTH];	//!< Our entire queue.  Right here.  Every message we'll ever write.
+static lslogging_queue_t lslogging_queue[LSLOGGING_QUEUE_LENGTH];
 
-static unsigned int lslogging_on = 0;	//!< next location to add to the queue
-static unsigned int lslogging_off= 0;	//!< next location to remove from the queue
+static unsigned int lslogging_on  = 0;	//!< next location to add to the queue
+static unsigned int lslogging_off = 0;	//!< next location to remove from the queue
 
 static regex_t lslogging_ignore_regex;
-static char *lslogging_ignorable = "^.*I5112=\\(4000\\*8388607/I10\\).*$|^EVENT: Heartbeat$|^EVENT: Check Detector Position$";
+static const char lslogging_ignorable[] = "^.*I5112=\\(4000\\*8388607/I10\\).*$|^EVENT: Heartbeat$|^EVENT: Check Detector Position$";
 
 //! Initialize the lslogging objects
 void lslogging_init() {
@@ -41,7 +42,7 @@ void lslogging_init() {
 
   openlog("pgpmac", LOG_PID, LOG_USER);
 
-  err = regcomp (&lslogging_ignore_regex, lslogging_ignorable, REG_EXTENDED | REG_NOSUB);
+  err = regcomp(&lslogging_ignore_regex, lslogging_ignorable, REG_EXTENDED | REG_NOSUB);
   if (err != 0) {
     int nerrmsg;
     char *errmsg;
@@ -54,6 +55,8 @@ void lslogging_init() {
       free(errmsg);
     }
   }
+  lslogging_on  = 0; //!< next location to add to the queue
+  lslogging_off = 0; //!< next location to remove from the queue
 }
 
 /** The routine everyone will be talking to.
@@ -64,7 +67,6 @@ void lslogging_log_message(char *fmt, ...) {
   static const char *id = FILEID "lslogging_log_message";
   struct timespec theTime;
   char msg[LSLOGGING_MSG_LENGTH];
-  unsigned int on;
   va_list arg_ptr;
 
   (void) id;
@@ -81,15 +83,25 @@ void lslogging_log_message(char *fmt, ...) {
     vsyslog(LOG_INFO, fmt, arg_ptr);
     va_end(arg_ptr);
 
+    // Put the log message on a queue for slower redis and ncurses updates.
+    // If the queue is already maxed out, the oldest message gets overwritten.
     pthread_mutex_lock( &lslogging_mutex);
     
-    on = (lslogging_on++) % LSLOGGING_QUEUE_LENGTH;
-    strncpy( lslogging_queue[on].lmsg, msg, LSLOGGING_MSG_LENGTH - 1);
-    lslogging_queue[on].lmsg[LSLOGGING_MSG_LENGTH-1] = 0;
+    lslogging_on = (lslogging_on + 1) % LSLOGGING_QUEUE_LENGTH;
+    if (lslogging_on == lslogging_off) {
+      // If our circular buffer is full, the oldest message is now the one
+      // "in front" of the one we are inserting.
+      lslogging_off = (lslogging_on + 1) % LSLOGGING_QUEUE_LENGTH;
+    }
+    strncpy(lslogging_queue[lslogging_on].lmsg, msg, LSLOGGING_MSG_LENGTH - 1);
+    lslogging_queue[lslogging_on].lmsg[LSLOGGING_MSG_LENGTH-1] = 0;
+
+    memcpy(&(lslogging_queue[lslogging_on].ltime),
+	   &theTime, sizeof(theTime));
     
-    memcpy( &(lslogging_queue[on].ltime), &theTime, sizeof(theTime));
-    pthread_cond_signal(  &lslogging_cond);
-    pthread_mutex_unlock( &lslogging_mutex);
+    pthread_mutex_unlock(&lslogging_mutex);
+    
+    pthread_cond_signal(&lslogging_cond); // notify lslogging_worker
   }
 }
 
@@ -107,41 +119,54 @@ void lslogging_event_cb( char *event) {
   }
 }
 
-/** Service the queue, write to the file.
+/**
+ * Service the queue, write to the file.
+ * @param dummy unused parameter required by pthread_create()
  */
-void *lslogging_worker(
-		      void *dummy	/**< [in] Required by protocol but unused	*/
-		      ) {
-
+void *lslogging_worker(void *dummy) {
   struct tm coarsetime;
   char tstr[64];
   unsigned int msecs;
-  unsigned int off;
+  const char* lmsg;
+  int errcode;
+  char errbuf[1024];
 
-  pthread_mutex_lock( &lslogging_mutex);
-
-  while( 1) {
-    while( lslogging_on == lslogging_off) {
-      pthread_cond_wait( &lslogging_cond, &lslogging_mutex);
+  // The worker thread holds the lock by default, releases it when the queue is
+  // empty
+  pthread_mutex_lock(&lslogging_mutex);
+  while (true) {
+    // Yield until there is something in the queue.
+    while (lslogging_on == lslogging_off) {
+      errcode = pthread_cond_wait(&lslogging_cond, &lslogging_mutex);
+      if (errcode != 0) {
+	snprintf(errbuf, (sizeof(errbuf)-1),
+		 "pgpmac - lslogging_worker, pthread_cond_wait failed w/"
+		 " status %d: %s", errcode, strerror(errcode));
+	errbuf[sizeof(errbuf)-1] = 0;
+	syslog(LOG_ERR, "%s", errbuf);
+	pgpmac_printf("\n%s", errbuf);
+	exit(-1);
+      }
     }
-    
-    off = (lslogging_off++) % LSLOGGING_QUEUE_LENGTH;
 
-    if (regexec(&lslogging_ignore_regex, lslogging_queue[off].lmsg, 0, NULL, 0)) {
-      localtime_r( &(lslogging_queue[off].ltime.tv_sec), &coarsetime);
+    // Consume just one entry from the queue.
+    lslogging_off = (lslogging_off + 1) % LSLOGGING_QUEUE_LENGTH;
+    lmsg = lslogging_queue[lslogging_off].lmsg;
+    if (regexec(&lslogging_ignore_regex, lmsg, 0, NULL, 0)) {
+      localtime_r( &(lslogging_queue[lslogging_off].ltime.tv_sec), &coarsetime);
       strftime( tstr, sizeof(tstr)-1, "%Y-%m-%d %H:%M:%S", &coarsetime);
       tstr[sizeof(tstr)-1] = 0;
-      msecs = lslogging_queue[off].ltime.tv_nsec / 1000;
-      
-      lsredis_log( "%s.%.06u  %s\n", tstr, msecs, lslogging_queue[off].lmsg);
-      
+      msecs = lslogging_queue[lslogging_off].ltime.tv_nsec / 1000;
+      lsredis_log("%s.%.06u  %s\n", tstr, msecs, lmsg);
+
       //
       // If the newline comes after the string then only a blank line comes out
       // in the ncurses terminal.  Don't know why.
       //
-      pgpmac_printf( "\n%s", lslogging_queue[off].lmsg);
+      pgpmac_printf( "\n%s", lmsg);
     }
   }
+  pthread_mutex_unlock(&lslogging_mutex);
 }
 
 
