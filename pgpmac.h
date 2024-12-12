@@ -1,9 +1,11 @@
 /*! \file pgpmac.h
  *  \brief Headers for the entire pgpmac project
  *  \date 2012
- *  \author Keith Brister
- *  \copyright All Rights Reserved
+ *  \copyright Public Domain
  */
+#ifndef __LSCAT_PGPMAC_H
+#define __LSCAT_PGPMAC_H
+
 #define _GNU_SOURCE
 #include <stdint.h>
 #include <sys/ioctl.h>
@@ -515,7 +517,7 @@ extern lspmac_bi_t    *sb_shutter_not_enabled;
 
 extern struct timespec omega_zero_time;
 
-extern double lspmac_getPosition( lspmac_motor_t *);
+double lspmac_getPosition( lspmac_motor_t *);
 
 extern WINDOW *term_output;
 extern WINDOW *term_input;
@@ -546,110 +548,114 @@ extern char md2cmds_cmd[];			// our command;
 
 extern lsredis_obj_t *md2cmds_md_status_code;
 
-extern void detector_state_push_queue(char *dummy_event);
-extern pthread_t *detector_state_run();
-extern void detector_state_init();
+void detector_state_push_queue(char *dummy_event);
+pthread_t *detector_state_run();
+void detector_state_init();
 extern pthread_mutex_t detector_state_mutex;
 extern pthread_cond_t detector_state_cond;
 extern lsredis_obj_t *detector_state_redis;
 
-extern char **lspg_array2ptrs( char *);
-extern char **lsredis_get_string_array( lsredis_obj_t *p);
-extern void lspmac_SockSendDPline( char *, char *fmt, ...);
-extern pmac_cmd_queue_t *lspmac_SockSendline(char *, char *, ...);
-extern lsredis_obj_t *lsredis_get_obj( char *, ...);
-extern char *lsredis_getstr( lsredis_obj_t *p);
-extern void PmacSockSendline( char *s);
-extern unsigned int lspg_nextsample_all( int *err);
-extern char lsredis_getc( lsredis_obj_t *p);
-extern long int lsredis_getl( lsredis_obj_t *p);
-extern void lsevents_add_listener( char *, void (*cb)(char *));
-extern void lsevents_init();
-extern void lsevents_remove_listener( char *, void (*cb)(char *));
-extern pthread_t *lsevents_run();
-extern void lsevents_send_event( char *, ...);
-extern void lsevents_preregister_event( char *fmt, ...);
-extern void lslogging_init();
-extern void lslogging_log_message( char *fmt, ...);
-extern void lsredis_log( char *fmt, ...);
-extern pthread_t *lslogging_run();
-extern int lspg_demandairrights_all();
-extern void lspg_getcenter_call();
-extern void lspg_getcenter_done();
-extern void lspg_getcenter_wait();
-extern unsigned int  lspg_getcurrentsampleid_all();
-extern int lspg_getcurrentsampleid_wait_for_id( unsigned int test);
-extern void lspg_init();
-extern void lspg_nextshot_call();
-extern void lspg_nextshot_done();
-extern void lspg_nextshot_wait();
-extern void lspg_query_push(void (*cb)( lspg_query_queue_t *, PGresult *), void (*ecb)(), char *fmt, ...);
-extern pthread_t *lspg_run();
-extern int lspg_seq_run_prep_all( long long skey, double kappa, double phi, double cx, double cy, double ax, double ay, double az);
-extern int lspg_eiger_run_prep_all( long long skey, double kappa, double phi, double cx, double cy, double ax, double ay, double az);
-extern void lspg_starttransfer_call( unsigned int nextsample, int sample_detected, double ax, double ay, double az, double horz, double vert, double esttime);
-extern void lspg_starttransfer_done();
-extern void lspg_starttransfer_wait();
-extern void lspg_lock_detector_all();
-extern void lspg_unlock_detector_all();
-extern int lspg_waitcryo_all();
-extern void lspg_waitcryo_cb( lspg_query_queue_t *qqp, PGresult *pgr);
-extern void lspg_zoom_lut_call();
-extern int  lspmac_getBIPosition( lspmac_bi_t *);
-extern void lspmac_home1_queue(	lspmac_motor_t *mp);
-extern void lspmac_home2_queue(	lspmac_motor_t *mp);
-extern void lspmac_abort();
-extern void lspmac_spin( lspmac_motor_t *);
-extern void lspmac_init( int, int);
-extern int lspmac_jogabs_queue( lspmac_motor_t *, double);
-extern int lspmac_move_or_jog_abs_queue( lspmac_motor_t *mp, double requested_position,int use_jo);
-extern int lspmac_move_or_jog_preset_queue( lspmac_motor_t *, char *, int);
-extern void lspmac_move_or_jog_queue( lspmac_motor_t *, double, int);
-extern int lspmac_move_preset_queue( lspmac_motor_t *mp, char *preset_name);
-extern int lspmac_moveabs_queue( lspmac_motor_t *, double);
-extern int lspmac_jogabs_queue( lspmac_motor_t *, double);
-extern int lspmac_moveabs_wait(lspmac_motor_t *mp, double timeout);
-extern pthread_t *lspmac_run();
-extern void lspmac_video_rotate( double secs);
-extern int  lsredis_cmpnstr( lsredis_obj_t *p, char *s, int n);
-extern int  lsredis_cmpstr( lsredis_obj_t *p, char *s);
-extern int  lsredis_find_preset( char *base, char *preset_name, double *dval);
-extern int  lsredis_getb( lsredis_obj_t *p);
-extern double lsredis_getd( lsredis_obj_t *p);
-extern void lsredis_init();
-extern int  lsredis_regexec( const regex_t *preg, lsredis_obj_t *p, size_t nmatch, regmatch_t *pmatch, int eflags);
-extern pthread_t *lsredis_run();
-extern void lsredis_setstr( lsredis_obj_t *p, char *fmt, ...);
-extern void lsraster_init();
-extern pthread_t *lsraster_run();
-extern void lsraster_step(const char *key);
-extern void lstimer_set_timer( char *, int, unsigned long int, unsigned long int);
-extern void lstimer_unset_timer( char *event);
-extern void lstimer_init();
-extern pthread_t *lstimer_run();
-extern void lsupdate_init();
-extern pthread_t *lsupdate_run();
-extern void md2cmds_init();
-extern pthread_t *md2cmds_run();
-extern void pgpmac_printf( char *fmt, ...);
-extern void lstest_main();
-extern int lspmac_est_move_time( double *est_time, int *mmask, lspmac_motor_t *mp_1, int jog_1, char *preset_1, double end_point_1, ...);
-extern int lspmac_est_move_time_wait( double move_time, int cmask, lspmac_motor_t *mp_1, ...);
-extern void lsredis_set_preset( char *base, char *preset_name, double dval);
+char **lspg_array2ptrs( char *);
+char **lsredis_get_string_array( lsredis_obj_t *p);
+void lspmac_SockSendDPline( char *, char *fmt, ...);
+pmac_cmd_queue_t *lspmac_SockSendline(char *, char *, ...);
+lsredis_obj_t *lsredis_get_obj( char *, ...);
+char *lsredis_getstr( lsredis_obj_t *p);
+void PmacSockSendline( char *s);
+unsigned int lspg_nextsample_all( int *err);
+char lsredis_getc( lsredis_obj_t *p);
+long int lsredis_getl( lsredis_obj_t *p);
+void lsevents_add_listener( char *, void (*cb)(char *));
+void lsevents_init();
+void lsevents_remove_listener( char *, void (*cb)(char *));
+pthread_t *lsevents_run();
+void lsevents_send_event( char *, ...);
+void lsevents_preregister_event( char *fmt, ...);
+void lslogging_init();
+void lslogging_log_message(const char *fmt, ...);
+void lsredis_log( char *fmt, ...);
+pthread_t *lslogging_run();
+int lspg_demandairrights_all();
+void lspg_getcenter_call();
+void lspg_getcenter_done();
+void lspg_getcenter_wait();
+unsigned int  lspg_getcurrentsampleid_all();
+int lspg_getcurrentsampleid_wait_for_id( unsigned int test);
+void lspg_init();
+void lspg_nextshot_call();
+void lspg_nextshot_done();
+void lspg_nextshot_wait();
+void lspg_query_push(void (*cb)( lspg_query_queue_t *, PGresult *), void (*ecb)(), char *fmt, ...);
+pthread_t *lspg_run();
+int lspg_seq_run_prep_all( long long skey, double kappa, double phi, double cx, double cy, double ax, double ay, double az);
+int lspg_eiger_run_prep_all( long long skey, double kappa, double phi, double cx, double cy, double ax, double ay, double az);
+void lspg_starttransfer_call( unsigned int nextsample, int sample_detected, double ax, double ay, double az, double horz, double vert, double esttime);
+void lspg_starttransfer_done();
+void lspg_starttransfer_wait();
+void lspg_lock_detector_all();
+void lspg_unlock_detector_all();
+int lspg_waitcryo_all();
+void lspg_waitcryo_cb( lspg_query_queue_t *qqp, PGresult *pgr);
+void lspg_zoom_lut_call();
+int  lspmac_getBIPosition( lspmac_bi_t *);
+void lspmac_home1_queue(	lspmac_motor_t *mp);
+void lspmac_home2_queue(	lspmac_motor_t *mp);
+void lspmac_abort();
+void lspmac_spin( lspmac_motor_t *);
+void lspmac_init( int, int);
+int lspmac_jogabs_queue( lspmac_motor_t *, double);
+int lspmac_move_or_jog_abs_queue( lspmac_motor_t *mp, double requested_position,int use_jo);
+int lspmac_move_or_jog_preset_queue( lspmac_motor_t *, char *, int);
+void lspmac_move_or_jog_queue( lspmac_motor_t *, double, int);
+int lspmac_move_preset_queue( lspmac_motor_t *mp, char *preset_name);
+int lspmac_moveabs_queue( lspmac_motor_t *, double);
+int lspmac_jogabs_queue( lspmac_motor_t *, double);
+int lspmac_moveabs_wait(lspmac_motor_t *mp, double timeout);
+pthread_t *lspmac_run();
+void lspmac_video_rotate( double secs);
+int  lsredis_cmpnstr( lsredis_obj_t *p, char *s, int n);
+int  lsredis_cmpstr( lsredis_obj_t *p, char *s);
+int  lsredis_find_preset( char *base, char *preset_name, double *dval);
+int  lsredis_getb( lsredis_obj_t *p);
+double lsredis_getd( lsredis_obj_t *p);
+void lsredis_init();
+int  lsredis_regexec( const regex_t *preg, lsredis_obj_t *p, size_t nmatch, regmatch_t *pmatch, int eflags);
+pthread_t *lsredis_run();
+void lsredis_setstr( lsredis_obj_t *p, char *fmt, ...);
+void lsraster_init();
+pthread_t *lsraster_run();
+void lsraster_step(const char *key);
+void lstimer_set_timer( char *, int, unsigned long int, unsigned long int);
+void lstimer_unset_timer( char *event);
+void lstimer_init();
+pthread_t *lstimer_run();
+void lsupdate_init();
+pthread_t *lsupdate_run();
+void md2cmds_init();
+pthread_t *md2cmds_run();
+void pgpmac_printf( char *fmt, ...);
+void lstest_main();
+int lspmac_est_move_time( double *est_time, int *mmask, lspmac_motor_t *mp_1, int jog_1, char *preset_1, double end_point_1, ...);
+int lspmac_est_move_time_wait( double move_time, int cmask, lspmac_motor_t *mp_1, ...);
+void lsredis_set_preset( char *base, char *preset_name, double dval);
+
 extern pthread_mutex_t lsredis_mutex;
 extern pthread_cond_t  lsredis_cond;
 extern int lsredis_running;
-extern lsredis_obj_t *_lsredis_get_obj( char *key);
-extern lspmac_motor_t *lspmac_find_motor_by_name( char *name);
-extern int lsredis_find_preset_index_by_position( lspmac_motor_t *mp);
-extern int lsredis_find_preset_index_by_name( lspmac_motor_t *mp, char *searchPresetName);
+
+lsredis_obj_t *_lsredis_get_obj( char *key);
+lspmac_motor_t *lspmac_find_motor_by_name( char *name);
+int lsredis_find_preset_index_by_position( lspmac_motor_t *mp);
+int lsredis_find_preset_index_by_name( lspmac_motor_t *mp, char *searchPresetName);
 void lspmac_SockSendDPControlChar( char *event, char c);
-extern int lspmac_set_motion_flags( int *mmaskp, lspmac_motor_t *mp_1, ...);
-extern void lsredis_load_presets( char *motor_name);
-extern void pgpmac_request_stay_of_execution( int secs);
-extern void md2cmds_push_queue( char *action);
-extern pmac_cmd_queue_t *lspmac_SockSendControlCharPrint( char *event, char c);
-extern void lsredis_config();
-extern void lsredis_sendStatusReport( int severity, char *fmt, ...);
-extern void lsredis_set_onSet( lsredis_obj_t *p, void (*cb)());
-extern const char *lsredis_get_head();
+int lspmac_set_motion_flags( int *mmaskp, lspmac_motor_t *mp_1, ...);
+void lsredis_load_presets( char *motor_name);
+void pgpmac_request_stay_of_execution( int secs);
+void md2cmds_push_queue( char *action);
+pmac_cmd_queue_t *lspmac_SockSendControlCharPrint( char *event, char c);
+void lsredis_config();
+void lsredis_sendStatusReport( int severity, char *fmt, ...);
+void lsredis_set_onSet( lsredis_obj_t *p, void (*cb)());
+const char *lsredis_get_head();
+
+#endif // header guard

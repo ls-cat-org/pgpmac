@@ -34,7 +34,7 @@ static const char lslogging_ignorable[] = "^.*I5112=\\(4000\\*8388607/I10\\).*$|
 
 //! Initialize the lslogging objects
 void lslogging_init() {
-  static const char *id = FILEID "lslogging_init";
+  static const char id[] = FILEID "lslogging_init";
   int err;
 
   pthread_mutex_init( &lslogging_mutex, NULL);
@@ -63,45 +63,48 @@ void lslogging_init() {
  *  \param fmt A printf style formating string.
  *  \param ... The arguments specified by fmt
  */
-void lslogging_log_message(char *fmt, ...) {
-  static const char *id = FILEID "lslogging_log_message";
-  struct timespec theTime;
+void lslogging_log_message(const char *fmt, ...) {
+  static const char syslog_preface[] = "pgpmac: ";
+  char syslog_fmt[LSLOGGING_MSG_LENGTH];
   char msg[LSLOGGING_MSG_LENGTH];
   va_list arg_ptr;
 
-  (void) id;
+  /*
+    Write the message to syslog right away (before anything else),
+    prepending the name of the program to the syslog message so
+    we can easily grep for our messages.
 
-  clock_gettime( CLOCK_REALTIME, &theTime);
+    NOTE: We do not filter out any messages from being written to syslog.
+  */
+  memcpy(syslog_fmt, syslog_preface, (sizeof(syslog_preface) - 1));
+  strncpy(&(syslog_fmt[sizeof(syslog_preface)]), fmt,
+	  (sizeof(syslog_fmt) - sizeof(syslog_preface) - 1));
+  va_start(arg_ptr, fmt);
+  vsyslog(LOG_INFO, syslog_fmt, arg_ptr);
+  va_end(arg_ptr);
 
-  va_start( arg_ptr, fmt);
-  vsnprintf( msg, sizeof(msg)-1, fmt, arg_ptr);
-  va_end( arg_ptr);
-  msg[sizeof(msg)-1]=0;
-
+  va_start(arg_ptr, fmt);
+  vsnprintf(msg, sizeof(msg)-1, fmt, arg_ptr);
+  va_end(arg_ptr);
   if (regexec(&lslogging_ignore_regex, msg, 0, NULL, 0)) {
-    va_start(arg_ptr, fmt);
-    vsyslog(LOG_INFO, fmt, arg_ptr);
-    va_end(arg_ptr);
-
-    // Put the log message on a queue for slower redis and ncurses updates.
-    // If the queue is already maxed out, the oldest message gets overwritten.
     pthread_mutex_lock( &lslogging_mutex);
-    
-    lslogging_on = (lslogging_on + 1) % LSLOGGING_QUEUE_LENGTH;
-    if (lslogging_on == lslogging_off) {
-      // If our circular buffer is full, the oldest message is now the one
-      // "in front" of the one we are inserting.
-      lslogging_off = (lslogging_on + 1) % LSLOGGING_QUEUE_LENGTH;
-    }
-    strncpy(lslogging_queue[lslogging_on].lmsg, msg, LSLOGGING_MSG_LENGTH - 1);
-    lslogging_queue[lslogging_on].lmsg[LSLOGGING_MSG_LENGTH-1] = 0;
+    {
+      // Put the log message on a queue for slower redis and ncurses updates.
+      // If the queue is already maxed out, the oldest message gets overwritten.
+      lslogging_on = (lslogging_on + 1) % LSLOGGING_QUEUE_LENGTH;
+      if (lslogging_on == lslogging_off) {
+	// If our circular buffer is full, the oldest message is now the one
+	// "in front" of the one we are inserting.
+	lslogging_off = (lslogging_on + 1) % LSLOGGING_QUEUE_LENGTH;
+      }
 
-    memcpy(&(lslogging_queue[lslogging_on].ltime),
-	   &theTime, sizeof(theTime));
-    
+      // Fill in the message.
+      strncpy(lslogging_queue[lslogging_on].lmsg, msg, (LSLOGGING_MSG_LENGTH - 1));
+      lslogging_queue[lslogging_on].lmsg[LSLOGGING_MSG_LENGTH-1] = 0;
+      clock_gettime(CLOCK_REALTIME, &(lslogging_queue[lslogging_on].ltime));
+    }
     pthread_mutex_unlock(&lslogging_mutex);
-    
-    pthread_cond_signal(&lslogging_cond); // notify lslogging_worker
+    pthread_cond_signal(&lslogging_cond);
   }
 }
 
