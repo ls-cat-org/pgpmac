@@ -4455,8 +4455,20 @@ void lspmac_scint_maybe_move_sample_cb( char *event) {
   // Lower our flag
   trigger = 0;
 
-  capDetected = lsredis_getl( lsredis_get_obj( "capDetected"));
-  if( !capDetected) {
+  /*
+    0 means the camera detects no sample mounted.
+    1 means the spindle cam detected a sample is mounted.
+    All other values indicate an error (indeterminate state).
+
+    pgpmac doesn't know how to handle indeterminate/error state for "sample mounted",
+    so we must keep checking until we get a definite answer.
+  */
+  capDetected = -1;
+  while (capDetected != 0 && capDetected != 1) {
+    capDetected = lsredis_getl(lsredis_get_obj("capDetected"));
+  }
+  
+  if (capDetected == 0) {
     lslogging_log_message( "No cap detected: it's safe to move the scintillator without moving the sample");
     return;
   }
