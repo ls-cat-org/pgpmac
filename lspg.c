@@ -281,7 +281,7 @@ char **lspg_array2ptrs( char *a) {
  * \param qqp  The query that elicited this response
  * \param pgr  The resonse from postgresql
  */ 
-void lspg_allkvs_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+static void lspg_allkvs_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   int i;
   lsredis_obj_t *robj;
   
@@ -302,79 +302,19 @@ void lspg_allkvs_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   }
 }
 
-void lspg_allkvs_error_cb() {
+static void lspg_allkvs_error_cb() {
   lslogging_log_message( "query error getting kvs");
 }
 
 
-/** Perhaps update the px.kvs table in postgresql
- *  Should be triggered by a timer event
- */
-void lspg_update_kvs_cb( char *event) {
-  static char s[LS_PG_QUERY_STRING_LENGTH - 64], *fmt;
-  int i, need_comma, n;
-  lspmac_motor_t *mp;
-  int updateme;
-  double new_value;
-
-  s[0] = 0;
-  need_comma = 0;
-
-  for( i=0; i<lspmac_nmotors; i++ ) {
-    mp = &(lspmac_motors[i]);
-    pthread_mutex_lock( &mp->mutex);
-    if( fabs(mp->reported_pg_position - mp->position) >= lsredis_getd(mp->update_resolution)) {
-      new_value = mp->position;
-      mp->reported_pg_position = mp->position;
-      fmt = lsredis_getstr( mp->redis_fmt);	// borrow the redis format
-      updateme = 1;
-    } else {
-      updateme = 0;
-    }
-    pthread_mutex_unlock( &mp->mutex);
-    if( !updateme)
-      continue;
-    
-    n = strlen( s);
-    snprintf( &(s[n]), sizeof(s)-n-1, "%s%s.position,", need_comma++ ? "," : "", mp->name);
-
-    n = strlen( s);
-    snprintf( &(s[n]), sizeof(s)-n-1, fmt, new_value);
-
-    //
-    // And again for the original remote interface
-    // We'll be able to remove this, someday
-    //
-    n = strlen( s);
-    snprintf( &(s[n]), sizeof(s)-n-1, ",%s,",  mp->name);
-
-    n = strlen( s);
-    snprintf( &(s[n]), sizeof(s)-n-1, fmt, new_value);
-    free( fmt);
-
-    n = strlen( s);
-    if( n >= sizeof(s) - 64) {
-      lspg_query_push( NULL, NULL, "EXECUTE kvupdate('{%s}')", s);
-      s[0] = 0;
-      need_comma = 0;
-    }
-  }
-
-  if( strlen(s)) {
-    lspg_query_push( NULL, NULL, "EXECUTE kvupdate('{%s}')", s);
-  }
-}
-
-
-
-void lspg_starttransfer_init() {
+static void lspg_starttransfer_init() {
   lspg_starttransfer.new_value_ready = 0;
   lspg_starttransfer.query_error     = 0;
   pthread_mutex_init( &lspg_starttransfer.mutex, NULL);
   pthread_cond_init( &lspg_starttransfer.cond, NULL);
 }
 
-void lspg_starttransfer_cb( 
+static void lspg_starttransfer_cb( 
 		      lspg_query_queue_t *qqp,		/**< [in] Our nextsample query			*/
 		      PGresult *pgr			/**< [in] result of the query			*/
 		      ) {
@@ -398,7 +338,7 @@ void lspg_starttransfer_cb(
   pthread_mutex_unlock( &(lspg_starttransfer.mutex));
 }
 
-void lspg_starttransfer_error_cb( ) {
+static void lspg_starttransfer_error_cb( ) {
   pthread_mutex_lock( &(lspg_starttransfer.mutex));
   lspg_starttransfer.query_error = 1;
   pthread_cond_signal( &(lspg_starttransfer.cond));
@@ -443,7 +383,7 @@ int lspg_starttransfer_all( int *err, unsigned int nextsample, int sampledetecte
   return rtn;
 }
 
-void lspg_getcurrentsampleid_init() {
+static void lspg_getcurrentsampleid_init() {
   lspg_getcurrentsampleid.new_value_ready = 0;
   lspg_getcurrentsampleid.query_error     = 0;
   pthread_mutex_init( &lspg_getcurrentsampleid.mutex, NULL);
@@ -452,7 +392,7 @@ void lspg_getcurrentsampleid_init() {
 
 /** get currentsampleid
  */
-void lspg_getcurrentsampleid_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+static void lspg_getcurrentsampleid_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   pthread_mutex_lock( &lspg_getcurrentsampleid.mutex);
 
   lspg_getcurrentsampleid.new_value_ready = 1;
@@ -473,7 +413,7 @@ void lspg_getcurrentsampleid_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
 
 /** get currentsampleid error callback
  */
-void lspg_getcurrentsampleid_error_cb() {
+static void lspg_getcurrentsampleid_error_cb() {
   pthread_mutex_lock( &lspg_getcurrentsampleid.mutex);
   lspg_getcurrentsampleid.query_error = 1;
   pthread_cond_signal( &lspg_getcurrentsampleid.cond);
@@ -482,7 +422,7 @@ void lspg_getcurrentsampleid_error_cb() {
 
 /**
  */
-void lspg_getcurrentsampleid_call() {
+static void lspg_getcurrentsampleid_call() {
   pthread_mutex_lock( &lspg_getcurrentsampleid.mutex);
   lspg_getcurrentsampleid.new_value_ready = 0;
   lspg_getcurrentsampleid.query_error     = 0;
@@ -493,7 +433,7 @@ void lspg_getcurrentsampleid_call() {
 
 /**
  */
-unsigned int lspg_getcurrentsampleid_read() {
+static unsigned int lspg_getcurrentsampleid_read() {
   unsigned int rtn;
   pthread_mutex_lock(&lspg_getcurrentsampleid.mutex);
   while (lspg_getcurrentsampleid.new_value_ready == 0
@@ -526,7 +466,7 @@ static int lspg_getcurrentsampleid_abort = 0;
 /** interrupt waiting for currentsampleid
  *  Likey the robot crashed and the next sample is not comming anytime soon
  */
-void lspg_getcurrentsampleid_abort_cb( char *event) {
+static void lspg_getcurrentsampleid_abort_cb( char *event) {
   pthread_mutex_lock( &lspg_getcurrentsampleid.mutex);
   lspg_getcurrentsampleid_abort = 1;
   pthread_cond_signal( &lspg_getcurrentsampleid.cond);
@@ -559,7 +499,7 @@ int lspg_getcurrentsampleid_wait_for_id( unsigned int test) {
 
 /** Next Sample
  */
-void lspg_nextsample_cb( 
+static void lspg_nextsample_cb( 
 		      lspg_query_queue_t *qqp,		/**< [in] Our nextsample query			*/
 		      PGresult *pgr			/**< [in] result of the query			*/
 		      ) {
@@ -592,7 +532,7 @@ void lspg_nextsample_cb(
 
 /** Next Sample Query Error Callback
  */
-void lspg_nextsample_error_cb() {
+static void lspg_nextsample_error_cb() {
   pthread_mutex_lock( &(lspg_nextsample.mutex));
   lspg_nextsample.query_error = 1;
   pthread_cond_signal( &(lspg_nextsample.cond));
@@ -602,7 +542,7 @@ void lspg_nextsample_error_cb() {
 
 /** Initialize the nextsample variable, mutex, and condition
  */
-void lspg_nextsample_init() {
+static void lspg_nextsample_init() {
   memset( &lspg_nextsample, 0, sizeof( lspg_nextsample));
   pthread_mutex_init( &(lspg_nextsample.mutex), NULL);
   pthread_cond_init( &(lspg_nextsample.cond), NULL);
@@ -657,7 +597,7 @@ unsigned int lspg_nextsample_all( int *err) {
   return rtn;
 }
 
-void lspg_waitcryo_init() {
+static void lspg_waitcryo_init() {
   lspg_waitcryo.new_value_ready = 0;
   lspg_waitcryo.query_error     = 0;
   pthread_mutex_init( &lspg_waitcryo.mutex, NULL);
@@ -666,21 +606,21 @@ void lspg_waitcryo_init() {
 
 static int lspg_waitcryo_abort = 0;
 
-void lspg_waitcryo_abort_cb( char *event) {
+static void lspg_waitcryo_abort_cb( char *event) {
   pthread_mutex_lock( &lspg_waitcryo.mutex);
   lspg_waitcryo_abort = 1;
   pthread_cond_signal( &lspg_waitcryo.cond);
   pthread_mutex_unlock( &lspg_waitcryo.mutex);
 }
 
-void lspg_waitcryo_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+static void lspg_waitcryo_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   pthread_mutex_lock( &lspg_waitcryo.mutex);
   lspg_waitcryo.new_value_ready = 1;
   pthread_cond_signal( &lspg_waitcryo.cond);
   pthread_mutex_unlock( &lspg_waitcryo.mutex);
 }
 
-void lspg_waitcryo_error_cb() {
+static void lspg_waitcryo_error_cb() {
   pthread_mutex_lock( &lspg_waitcryo.mutex);
   lspg_waitcryo.query_error = 1;
   pthread_cond_signal( &lspg_waitcryo.cond);
@@ -728,7 +668,7 @@ int lspg_waitcryo_all() {
 
 /** initialize the demandairrights structure
  */
-void lspg_demandairrights_init() {
+static void lspg_demandairrights_init() {
   lspg_demandairrights.new_value_ready = 0;
   lspg_demandairrights.query_error     = 0;
   pthread_mutex_init( &lspg_demandairrights.mutex, NULL);
@@ -737,7 +677,7 @@ void lspg_demandairrights_init() {
 
 /** handle the airrights response
  */
-void lspg_demandairrights_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+static void lspg_demandairrights_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   pthread_mutex_lock( &lspg_demandairrights.mutex);
   lspg_demandairrights.new_value_ready = 1;
   pthread_cond_signal( &lspg_demandairrights.cond);
@@ -747,7 +687,7 @@ void lspg_demandairrights_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
 
 /** handle airrights query error
  */
-void lspg_demandairrights_error_cb() {
+static void lspg_demandairrights_error_cb() {
   pthread_mutex_lock( &lspg_demandairrights.mutex);
   lspg_demandairrights.query_error = 1;
   pthread_cond_signal( &lspg_demandairrights.cond);
@@ -757,7 +697,7 @@ void lspg_demandairrights_error_cb() {
 
 /** call for airrights
  */
-void lspg_demandairrights_call() {
+static void lspg_demandairrights_call() {
   lslogging_log_message("Demanding Air Rights");
   pthread_mutex_lock( &lspg_demandairrights.mutex);
   lspg_demandairrights.new_value_ready = 0;
@@ -769,7 +709,7 @@ void lspg_demandairrights_call() {
 
 /** wait for the air rights request to return
  */
-int lspg_demandairrights_wait() {
+static int lspg_demandairrights_wait() {
   int rtn;
   lsredis_obj_t *robotInExclusionZone;
   int sentMessage;
@@ -816,7 +756,7 @@ int lspg_demandairrights_all() {
  *  Suck it up.
  *  Return with the global object lspg_nextshot set.
  */
-void lspg_nextshot_cb(
+static void lspg_nextshot_cb(
 		      lspg_query_queue_t *qqp,		/**< [in] Our nextshot query			*/
 		      PGresult *pgr			/**< [in] result of the query			*/
 		      ) {
@@ -1095,7 +1035,7 @@ void lspg_nextshot_cb(
 
 /** next shot query error callback
  */
-void lspg_nextshot_error_cb() {
+static void lspg_nextshot_error_cb() {
   pthread_mutex_lock( &lspg_nextshot.mutex);
   lspg_nextshot.query_error = 1;
   pthread_cond_signal( &lspg_nextshot.cond);
@@ -1104,7 +1044,7 @@ void lspg_nextshot_error_cb() {
 
 /** Initialize the nextshot variable, mutex, and condition
  */
-void lspg_nextshot_init() {
+static void lspg_nextshot_init() {
   memset( &lspg_nextshot, 0, sizeof( lspg_nextshot));
   pthread_mutex_init( &(lspg_nextshot.mutex), NULL);
   pthread_cond_init( &(lspg_nextshot.cond), NULL);
@@ -1155,7 +1095,7 @@ static int lspg_wait_for_detector_abort = 0;
 /** interrupt waiting for detector
  *  Likey the robot crashed and the next sample is not comming anytime soon
  */
-void lspg_wait_for_detector_abort_cb( char *event) {
+static void lspg_wait_for_detector_abort_cb( char *event) {
   //
   pthread_mutex_lock( &lspg_wait_for_detector.mutex);
   lspg_wait_for_detector_abort = 1;
@@ -1165,7 +1105,7 @@ void lspg_wait_for_detector_abort_cb( char *event) {
 
 /** initialize the detector timing object
  */
-void lspg_wait_for_detector_init() {
+static void lspg_wait_for_detector_init() {
   lspg_wait_for_detector.new_value_ready = 0;
   lspg_wait_for_detector.query_error     = 0;
   pthread_mutex_init( &(lspg_wait_for_detector.mutex), NULL);
@@ -1174,7 +1114,7 @@ void lspg_wait_for_detector_init() {
 
 /** Callback for the wait for detector query
  */
-void lspg_wait_for_detector_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+static void lspg_wait_for_detector_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   pthread_mutex_lock( &(lspg_wait_for_detector.mutex));
   lspg_wait_for_detector.new_value_ready = 1;
   pthread_cond_signal(  &(lspg_wait_for_detector.cond));
@@ -1183,7 +1123,7 @@ void lspg_wait_for_detector_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
 
 /** wait for detector query error callback
  */
-void lspg_wait_for_detector_error_cb() {
+static void lspg_wait_for_detector_error_cb() {
   pthread_mutex_lock( &lspg_wait_for_detector.mutex);
   lspg_wait_for_detector.query_error = 1;
   pthread_cond_signal( &lspg_wait_for_detector.cond);
@@ -1231,78 +1171,6 @@ void lspg_wait_for_detector_all() {
   lspg_wait_for_detector_done();
 }
 
-
-/** Object used to impliment locking the diffractometer
- *  Critical to exposure timing
- */
-typedef struct lspg_lock_diffractometer_struct {
-  pthread_mutex_t mutex;
-  pthread_cond_t  cond;
-  int new_value_ready;
-  int query_error;
-} lspg_lock_diffractometer_t;
-static lspg_lock_diffractometer_t lspg_lock_diffractometer;
-
-/** initialize the diffractometer locking object
- */
-void lspg_lock_diffractometer_init() {
-  lspg_lock_diffractometer.new_value_ready = 0;
-  lspg_lock_diffractometer.query_error     = 0;
-  pthread_mutex_init( &(lspg_lock_diffractometer.mutex), NULL);
-  pthread_cond_init(  &(lspg_lock_diffractometer.cond), NULL);
-}
-
-/** Callback routine for a lock diffractometer query
- */
-void lspg_lock_diffractometer_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
-  pthread_mutex_lock( &(lspg_lock_diffractometer.mutex));
-  lspg_lock_diffractometer.new_value_ready = 1;
-  pthread_cond_signal( &(lspg_lock_diffractometer.cond));
-  pthread_mutex_unlock( &(lspg_lock_diffractometer.mutex));
-}
-
-/** lock diffractometer query error callback
- */
-void lspg_lock_diffractometer_error_cb() {
-  pthread_mutex_lock( &lspg_lock_diffractometer.mutex);
-  lspg_lock_diffractometer.query_error = 1;
-  pthread_cond_signal( &lspg_lock_diffractometer.cond);
-  pthread_mutex_unlock( &lspg_lock_diffractometer.mutex);
-}
-
-/** Request that the database grab the diffractometer lock
- */
-void lspg_lock_diffractometer_call() {
-  pthread_mutex_lock( &(lspg_lock_diffractometer.mutex));
-  lspg_lock_diffractometer.new_value_ready = 0;
-  lspg_lock_diffractometer.query_error     = 0;
-  pthread_mutex_unlock( &(lspg_lock_diffractometer.mutex));
-
-  lspg_query_push( lspg_lock_diffractometer_cb, lspg_lock_diffractometer_error_cb, "SELECT px.lock_diffractomter()");
-}
-
-/** Wait for the diffractometer lock
- */
-void lspg_lock_diffractometer_wait() {
-  pthread_mutex_lock( &(lspg_lock_diffractometer.mutex));
-  while( lspg_lock_diffractometer.new_value_ready == 0 && lspg_lock_diffractometer.query_error == 0)
-    pthread_cond_wait( &(lspg_lock_diffractometer.cond), &(lspg_lock_diffractometer.mutex));
-}
-
-/** Finish up the lock diffractometer call
- */
-void lspg_lock_diffractometer_done() {
-  pthread_mutex_unlock( &(lspg_lock_diffractometer.mutex));
-}
-
-/** Convience function that combines lock diffractometer calls
- */
-void lspg_lock_diffractometer_all() {
-  lspg_lock_diffractometer_call();
-  lspg_lock_diffractometer_wait();
-  lspg_lock_diffractometer_all();
-}
-
 /** lock detector object
  *  Implements detector lock for exposure control
  */
@@ -1316,7 +1184,7 @@ static lspg_lock_detector_t lspg_lock_detector;
 
 /** Initialize detector lock object
  */
-void lspg_lock_detector_init() {
+static void lspg_lock_detector_init() {
   lspg_lock_detector.new_value_ready = 0;
   lspg_lock_detector.query_error     = 0;
   pthread_mutex_init( &(lspg_lock_detector.mutex), NULL);
@@ -1325,7 +1193,7 @@ void lspg_lock_detector_init() {
 
 /** Callback for when the detector lock has be grabbed
  */
-void lspg_lock_detector_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+static void lspg_lock_detector_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   pthread_mutex_lock( &(lspg_lock_detector.mutex));
   lspg_lock_detector.new_value_ready = 1;
   pthread_cond_signal( &(lspg_lock_detector.cond));
@@ -1334,7 +1202,7 @@ void lspg_lock_detector_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
 
 /** lock detector query error callback
  */
-void lspg_lock_detector_error_cb() {
+static void lspg_lock_detector_error_cb() {
   pthread_mutex_lock( &lspg_lock_detector.mutex);
   lspg_lock_detector.query_error = 1;
   pthread_cond_signal( &lspg_lock_detector.cond);
@@ -1343,7 +1211,7 @@ void lspg_lock_detector_error_cb() {
 
 /** Request (demand) a detector lock
  */
-void lspg_lock_detector_call() {
+static void lspg_lock_detector_call() {
   pthread_mutex_lock( &(lspg_lock_detector.mutex));
   lspg_lock_detector.new_value_ready = 0;
   lspg_lock_detector.query_error     = 0;
@@ -1354,7 +1222,7 @@ void lspg_lock_detector_call() {
 
 /** Wait for the detector lock
  */
-void lspg_lock_detector_wait() {
+static void lspg_lock_detector_wait() {
   pthread_mutex_lock( &(lspg_lock_detector.mutex));
   while( lspg_lock_detector.new_value_ready == 0 && lspg_lock_detector.query_error == 0)
     pthread_cond_wait( &(lspg_lock_detector.cond), &(lspg_lock_detector.mutex));
@@ -1362,7 +1230,7 @@ void lspg_lock_detector_wait() {
 
 /** Finish waiting.
  */
-void lspg_lock_detector_done() {
+static void lspg_lock_detector_done() {
   pthread_mutex_unlock( &(lspg_lock_detector.mutex));
 }
 
@@ -1387,7 +1255,7 @@ static lspg_unlock_detector_t lspg_unlock_detector;
 
 /** Initialize detector unlock object
  */
-void lspg_unlock_detector_init() {
+static void lspg_unlock_detector_init() {
   lspg_unlock_detector.new_value_ready = 0;
   lspg_unlock_detector.query_error     = 0;
   pthread_mutex_init( &(lspg_unlock_detector.mutex), NULL);
@@ -1396,7 +1264,7 @@ void lspg_unlock_detector_init() {
 
 /** Callback for when the detector lock has been released
  */
-void lspg_unlock_detector_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+static void lspg_unlock_detector_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   pthread_mutex_lock( &(lspg_unlock_detector.mutex));
   lspg_unlock_detector.new_value_ready = 1;
   pthread_cond_signal( &(lspg_unlock_detector.cond));
@@ -1405,7 +1273,7 @@ void lspg_unlock_detector_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
 
 /** unlock detector query error callback
  */
-void lspg_unlock_detector_error_cb() {
+static void lspg_unlock_detector_error_cb() {
   pthread_mutex_lock( &lspg_unlock_detector.mutex);
   lspg_unlock_detector.query_error = 1;
   pthread_cond_signal( &lspg_unlock_detector.cond);
@@ -1414,7 +1282,7 @@ void lspg_unlock_detector_error_cb() {
 
 /** Release a detector lock
  */
-void lspg_unlock_detector_call() {
+static void lspg_unlock_detector_call() {
   pthread_mutex_lock( &(lspg_unlock_detector.mutex));
   lspg_unlock_detector.new_value_ready = 0;
   lspg_unlock_detector.query_error     = 0;
@@ -1425,7 +1293,7 @@ void lspg_unlock_detector_call() {
 
 /** Wait for the detector to be unlocked lock
  */
-void lspg_unlock_detector_wait() {
+static void lspg_unlock_detector_wait() {
   pthread_mutex_lock( &(lspg_unlock_detector.mutex));
   while( lspg_unlock_detector.new_value_ready == 0 && lspg_unlock_detector.query_error == 0)
     pthread_cond_wait( &(lspg_unlock_detector.cond), &(lspg_unlock_detector.mutex));
@@ -1433,7 +1301,7 @@ void lspg_unlock_detector_wait() {
 
 /** Finish waiting.
  */
-void lspg_unlock_detector_done() {
+static void lspg_unlock_detector_done() {
   pthread_mutex_unlock( &(lspg_unlock_detector.mutex));
 }
 
@@ -1457,7 +1325,7 @@ static lspg_seq_run_prep_t lspg_seq_run_prep;
 
 /** Initialize the data collection object
  */
-void lspg_seq_run_prep_init() {
+static void lspg_seq_run_prep_init() {
   lspg_seq_run_prep.new_value_ready = 0;
   lspg_seq_run_prep.query_error     = 0;
   pthread_mutex_init( &(lspg_seq_run_prep.mutex), NULL);
@@ -1466,7 +1334,7 @@ void lspg_seq_run_prep_init() {
 
 /** Callback for the seq_run_prep query
  */
-void lspg_seq_run_prep_cb(
+static void lspg_seq_run_prep_cb(
 			  lspg_query_queue_t *qqp,	/**< [in] The query item that generated this callback	*/
 			  PGresult *pgr			/**< [in] The result of the query			*/
 			  ) {
@@ -1479,7 +1347,7 @@ void lspg_seq_run_prep_cb(
 
 /** Callback for seq_run error
  */
-void lspg_seq_run_prep_error_cb() {
+static void lspg_seq_run_prep_error_cb() {
   pthread_mutex_lock( & (lspg_seq_run_prep.mutex));
   lspg_seq_run_prep.query_error = 1;
   pthread_cond_signal( &(lspg_seq_run_prep.cond));
@@ -1489,7 +1357,7 @@ void lspg_seq_run_prep_error_cb() {
 
 /** queue up the seq_run_prep query
  */
-void lspg_seq_run_prep_call(
+static void lspg_seq_run_prep_call(
 			    long long skey,		/**< [in] px.shots key for this image			*/
 			    double kappa,		/**< [in] current kappa postion				*/
 			    double phi,			/**< [in] current phi postition				*/
@@ -1511,7 +1379,7 @@ void lspg_seq_run_prep_call(
 
 /** Wait for seq run prep query to return
  */
-void lspg_seq_run_prep_wait() {
+static void lspg_seq_run_prep_wait() {
   pthread_mutex_lock( &(lspg_seq_run_prep.mutex));
   while( lspg_seq_run_prep.new_value_ready == 0 && lspg_seq_run_prep.query_error == 0)
     pthread_cond_wait( &(lspg_seq_run_prep.cond), &(lspg_seq_run_prep.mutex));
@@ -1519,7 +1387,7 @@ void lspg_seq_run_prep_wait() {
 
 /** Indicate we are done waiting
  */
-void lspg_seq_run_prep_done() {
+static void lspg_seq_run_prep_done() {
   pthread_mutex_unlock( &(lspg_seq_run_prep.mutex));
 }
 
@@ -1555,7 +1423,7 @@ static lspg_eiger_run_prep_t lspg_eiger_run_prep;
 
 /** Initialize the data collection object
  */
-void lspg_eiger_run_prep_init() {
+static void lspg_eiger_run_prep_init() {
   lspg_eiger_run_prep.new_value_ready = 0;
   lspg_eiger_run_prep.query_error     = 0;
   pthread_mutex_init( &(lspg_eiger_run_prep.mutex), NULL);
@@ -1564,7 +1432,7 @@ void lspg_eiger_run_prep_init() {
 
 /** Callback for the eiger_run_prep query
  */
-void lspg_eiger_run_prep_cb(
+static void lspg_eiger_run_prep_cb(
 			  lspg_query_queue_t *qqp,	/**< [in] The query item that generated this callback	*/
 			  PGresult *pgr			/**< [in] The result of the query			*/
 			  ) {
@@ -1577,7 +1445,7 @@ void lspg_eiger_run_prep_cb(
 
 /** Callback for eiger_run error
  */
-void lspg_eiger_run_prep_error_cb() {
+static void lspg_eiger_run_prep_error_cb() {
   pthread_mutex_lock( & (lspg_eiger_run_prep.mutex));
   lspg_eiger_run_prep.query_error = 1;
   pthread_cond_signal( &(lspg_eiger_run_prep.cond));
@@ -1587,7 +1455,7 @@ void lspg_eiger_run_prep_error_cb() {
 
 /** queue up the eiger_run_prep query
  */
-void lspg_eiger_run_prep_call(
+static void lspg_eiger_run_prep_call(
 			    long long skey,		/**< [in] px.shots key for this image			*/
 			    double kappa,		/**< [in] current kappa postion				*/
 			    double phi,			/**< [in] current phi postition				*/
@@ -1609,7 +1477,7 @@ void lspg_eiger_run_prep_call(
 
 /** Wait for seq run prep query to return
  */
-void lspg_eiger_run_prep_wait() {
+static void lspg_eiger_run_prep_wait() {
   pthread_mutex_lock( &(lspg_eiger_run_prep.mutex));
   while( lspg_eiger_run_prep.new_value_ready == 0 && lspg_eiger_run_prep.query_error == 0)
     pthread_cond_wait( &(lspg_eiger_run_prep.cond), &(lspg_eiger_run_prep.mutex));
@@ -1617,7 +1485,7 @@ void lspg_eiger_run_prep_wait() {
 
 /** Indicate we are done waiting
  */
-void lspg_eiger_run_prep_done() {
+static void lspg_eiger_run_prep_done() {
   pthread_mutex_unlock( &(lspg_eiger_run_prep.mutex));
 }
 
@@ -1648,7 +1516,7 @@ int lspg_eiger_run_prep_all(
 
 /** Retrieve the data to center the crystal
  */
-void lspg_getcenter_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+static void lspg_getcenter_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   static int
     zoom_c, dcx_c, dcy_c, dax_c, day_c, daz_c, hash_c;
 
@@ -1711,7 +1579,7 @@ void lspg_getcenter_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
 
 /** getcenter query error callback
  */
-void lspg_getcenter_error_cb() {
+static void lspg_getcenter_error_cb() {
   pthread_mutex_lock( &lspg_getcenter.mutex);
   lspg_getcenter.query_error = 1;
   pthread_cond_signal( &lspg_getcenter.cond);
@@ -1720,7 +1588,7 @@ void lspg_getcenter_error_cb() {
 
 /** Initialize getcenter object
  */
-void lspg_getcenter_init() {
+static void lspg_getcenter_init() {
   memset( &lspg_getcenter, 0, sizeof( lspg_getcenter));
   pthread_mutex_init( &(lspg_getcenter.mutex), NULL);
   pthread_cond_init( &(lspg_getcenter.cond), NULL);
@@ -1762,7 +1630,7 @@ void lspg_getcenter_all() {
 
 /** Queue the next MD2 instruction
  */
-void lspg_nextaction_cb(
+static void lspg_nextaction_cb(
 			lspg_query_queue_t *qqp,	/**< [in] The query that generated this result		*/
 			PGresult *pgr			/**< [in] The result					*/
 			) {
@@ -1780,11 +1648,11 @@ void lspg_nextaction_cb(
   md2cmds_push_queue( action);
 }
 
-void lspg_nextaction_error_cb() {
+static void lspg_nextaction_error_cb() {
   lslogging_log_message( "query error getting next md2 action");
 }
 
-void lspg_nexterrors_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+static void lspg_nexterrors_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   static int etid_col, etseverity_col, etterse_col, etverbose_col, etdetails_col;
   static int first_time=1;
   int i;
@@ -1814,18 +1682,18 @@ void lspg_nexterrors_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   }
 }
 
-void lspg_nexterrors_error_cb() {
+static void lspg_nexterrors_error_cb() {
   lslogging_log_message( "query error retrieving next error message");
 }
 
 
-void lspg_cmd_error_cb() {
+static void lspg_cmd_error_cb() {
   lslogging_log_message( "query error getting next md2 command");
 }
 
 /** Send strings directly to PMAC queue
  */
-void lspg_cmd_cb(
+static void lspg_cmd_cb(
 		 lspg_query_queue_t *qqp,		/**< [in] Our query					*/
 		 PGresult *pgr				/**< [in] Our result					*/
 		 ) {
@@ -2366,7 +2234,7 @@ void *lspg_worker(
   return NULL;
 }
 
-void lspg_preset_changed_cb( char *event) {
+static void lspg_preset_changed_cb( char *event) {
   static char base[] = "Preset Changed ";
   char *pn;
   lsredis_obj_t *p;
@@ -2392,7 +2260,7 @@ void lspg_preset_changed_cb( char *event) {
   //  lspg_query_push( NULL, NULL, "EXECUTE kvupdate('{%s,%s}'::text[])", pn, v);
 }
 
-void lspg_check_preset_in_position_cb( char *event) {
+static void lspg_check_preset_in_position_cb( char *event) {
   lspmac_motor_t *mp;
   char cp[64];
   int i;
@@ -2413,7 +2281,7 @@ void lspg_check_preset_in_position_cb( char *event) {
 
 }
 
-void lspg_unset_current_preset_moving_cb( char *event) {
+static void lspg_unset_current_preset_moving_cb( char *event) {
   lspmac_motor_t *mp;
   char cp[64];
   int i;
@@ -2436,7 +2304,7 @@ void lspg_unset_current_preset_moving_cb( char *event) {
 
 /** Fix up xscale, yscale, CenterX, and CenterY  when zoom changes
  */
-void lspg_set_scale_cb( char *event) {
+static void lspg_set_scale_cb( char *event) {
   int mag;
   lsredis_obj_t *px, *py;
   char *sx, *sy;
@@ -2473,7 +2341,7 @@ void lspg_set_scale_cb( char *event) {
 
 /** log magnet state
  */
-void lspg_sample_detector_cb( char *event) {
+static void lspg_sample_detector_cb( char *event) {
   int present;
   if( strcmp( event, "SampleDetected") == 0)
     present = 1;
@@ -2485,7 +2353,7 @@ void lspg_sample_detector_cb( char *event) {
 
 /** call back to handle signing out of the database
  */
-void lspg_quit_query_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
+static void lspg_quit_query_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
   ls_pg_state = LS_PG_STATE_QUITTING;
   PQfinish( q);
   lspg_running = 0;
@@ -2493,7 +2361,7 @@ void lspg_quit_query_cb( lspg_query_queue_t *qqp, PGresult *pgr) {
 
 /** Prepare to exit the program in a couple of seconds
  */
-void lspg_quitting_cb( char *event) {
+static void lspg_quitting_cb( char *event) {
   lspg_query_push( lspg_quit_query_cb, lspg_quit_query_cb, "SELECT px.dropairrights()");
 
 }
@@ -2510,7 +2378,6 @@ void lspg_init() {
   lspg_getcurrentsampleid_init();
   lspg_lock_detector_init();
   lspg_unlock_detector_init();
-  lspg_lock_diffractometer_init();
   lspg_nextsample_init();
   lspg_nextshot_init();
   lspg_seq_run_prep_init();

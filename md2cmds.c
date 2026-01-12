@@ -2669,7 +2669,6 @@ int md2cmds_collect( const char *dummy) {
         if( err) {
           lsredis_sendStatusReport( 1, "Moving to next sample position failed.");
           lsevents_send_event( "Data Collection Aborted");
-          //      lspg_query_push( NULL, NULL, "SELECT px.unlock_diffractometer()");   // Should we even have the diffractometer lock at this point?
           lspg_nextshot_done();
           lsredis_setstr( collection_running, "False");
           lsredis_setstr( lsredis_get_obj( "detector.state"), "{\"skey\": %lld, \"sstate\": \"Error\"}", skey);

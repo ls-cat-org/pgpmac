@@ -595,7 +595,6 @@ void lspg_starttransfer_wait();
 void lspg_lock_detector_all();
 void lspg_unlock_detector_all();
 int lspg_waitcryo_all();
-void lspg_waitcryo_cb( lspg_query_queue_t *qqp, PGresult *pgr);
 void lspg_zoom_lut_call();
 int  lspmac_getBIPosition( lspmac_bi_t *);
 void lspmac_home1_queue(	lspmac_motor_t *mp);
