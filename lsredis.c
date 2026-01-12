@@ -103,7 +103,9 @@ typedef struct lsredis_preset_list_struct {
 } lsredis_preset_list_t;
 
 static lsredis_preset_list_t *lsredis_preset_list = NULL;	// our list of presets
+
 static struct hsearch_data lsredis_preset_ht;			// hash table to find list items
+
 static int lsredis_preset_n = 0;				// number of entries in the hash table
 static int lsredis_preset_max_n = 1024;				// size of the hash table
 static pthread_mutex_t lsredis_preset_list_mutex;
@@ -949,6 +951,7 @@ void lsredis_load_presets( char *motor_name) {
       if( lsredis_preset_n >= lsredis_preset_max_n) {
 	lslogging_log_message( "lsredis_load_presets: increasing preset hash table size.  max now %d", lsredis_preset_max_n);
 	hdestroy_r( &lsredis_preset_ht);
+	memset(&lsredis_preset_ht, 0, sizeof(lsredis_preset_ht));
 	lsredis_preset_max_n *= 2;
 	hcreate_r( 2 * lsredis_preset_max_n, &lsredis_preset_ht);
 	for( pl = lsredis_preset_list; pl != NULL; pl = pl->next) {
@@ -1474,7 +1477,8 @@ void lsredis_init() {
 
   // separate hash table for the presets
   //
-  hcreate_r( lsredis_preset_max_n * 2, &lsredis_preset_ht);
+  memset(&lsredis_preset_ht, 0, sizeof(lsredis_preset_ht));
+  hcreate_r(lsredis_preset_max_n * 2, &lsredis_preset_ht);
 
   pthread_mutexattr_init( &mutex_initializer);
   pthread_mutexattr_settype( &mutex_initializer, PTHREAD_MUTEX_RECURSIVE);
